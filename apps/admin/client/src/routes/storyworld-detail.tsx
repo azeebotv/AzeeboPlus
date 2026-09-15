@@ -1,15 +1,19 @@
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import { asRecord, asArray, str, num, bool } from '@/lib/payload';
+import { asRecord, asArray, str, num } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 /**
- * Detail page for a single Agbala storyworld, backed by
- * GET /admin/agbala/storyworlds/:id. Renders the world's full record plus its
- * embedded character roster (same upstream payload), with publish/unpublish
- * and delete actions and cross-links to characters' storyworld listing.
+ * Detail page for a single Agbala storyworld.
+ *
+ * Upstream contract (vertical-service) is intentionally narrower than the
+ * admin proxy's surface: storyworlds are read-only upstream — there are no
+ * POST/PATCH/DELETE routes for worlds, so this page is deliberately
+ * read-only. What GET /admin/agbala/storyworlds/:id actually returns is the
+ * world's *titles* (upstream getTitles filtered by world), and characters
+ * live at the nested /vertical/characters?universe= route — both rendered
+ * here alongside the world metadata from the list endpoint.
  */
 
 const labelStyle: React.CSSProperties = {
@@ -29,22 +33,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const actionBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 8,
-  border: '1px solid var(--admin-surface)',
-  background: 'var(--admin-surface)',
-  color: 'var(--admin-text)',
-  fontSize: 13,
-  cursor: 'pointer',
-};
-
-const dangerBtn: React.CSSProperties = {
-  ...actionBtn,
-  borderColor: 'rgba(220,38,38,0.4)',
-  color: 'var(--admin-red)',
-};
-
 const chip: React.CSSProperties = {
   padding: '3px 10px',
   borderRadius: 999,
@@ -53,46 +41,50 @@ const chip: React.CSSProperties = {
   color: 'var(--admin-text-muted)',
 };
 
+const card: React.CSSProperties = {
+  padding: '12px 16px',
+  borderRadius: 10,
+  background: 'var(--admin-surface)',
+};
+
 export default function StoryworldDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [showDelete, setShowDelete] = useState(false);
 
-  const q = useQuery({
+  // World metadata lives on the list payload (name, description, counts).
+  const worldQ = useQuery({
+    queryKey: ['storyworld-meta', id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      const res = await adminApi.getStoryworlds();
+      const worlds = asArray<Record<string, unknown>>(res.success ? res.data : null);
+      return worlds.find((w) => str(w.id) === id) ?? null;
+    },
+  });
+
+  // GET storyworlds/:id → the world's titles, paginated.
+  const titlesQ = useQuery({
     queryKey: ['storyworld', id],
     enabled: Boolean(id),
     queryFn: async () => {
       const res = await adminApi.getStoryworldById(id as string);
-      return asRecord(res);
+      return asArray<Record<string, unknown>>(res.success ? res.data : null);
     },
   });
 
-  const sw = q.data ?? null;
-  const characters = asArray<Record<string, unknown>>(sw?.characters).map(asRecord);
+  // Characters are filterable by world/universe id on the nested route.
+  const charsQ = useQuery({
+    queryKey: ['storyworld-characters', id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      const res = await adminApi.getCharacters(id as string);
+      return asArray<Record<string, unknown>>(res.success ? res.data : null).map(asRecord);
+    },
+  });
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['storyworld', id] });
-    queryClient.invalidateQueries({ queryKey: ['admin', 'agbala'] });
-  };
-
-  const run = (fn: () => Promise<unknown>, okMsg: string) =>
-    fn()
-      .then(() => {
-        setActionError(null);
-        invalidate();
-        void q.refetch();
-        window.setTimeout(() => setActionError(okMsg), 0);
-      })
-      .catch((e: unknown) => setActionError((e as Error).message || 'Action failed'));
-
-  const togglePublish = () => {
-    const call = bool(sw?.isPublished)
-      ? adminApi.unpublishStoryworld(id as string)
-      : adminApi.publishStoryworld(id as string);
-    run(() => call, bool(sw?.isPublished) ? 'Storyworld unpublished.' : 'Storyworld published.');
-  };
+  const world = worldQ.data ?? null;
+  const titles = titlesQ.data ?? [];
+  const characters = charsQ.data ?? [];
 
   return (
     <div>
@@ -115,13 +107,9 @@ export default function StoryworldDetailPage() {
         <span>Back to Agbala</span>
       </button>
 
-      {q.isLoading ? (
+      {worldQ.isLoading ? (
         <p style={{ color: 'var(--admin-text-muted)' }}>Loading storyworld…</p>
-      ) : q.isError ? (
-        <p style={{ color: 'var(--admin-red)' }}>
-          Failed to load storyworld: {(q.error as Error).message}
-        </p>
-      ) : !sw || !sw.id ? (
+      ) : !world ? (
         <p style={{ color: 'var(--admin-text-muted)' }}>Storyworld not found.</p>
       ) : (
         <>
@@ -134,72 +122,30 @@ export default function StoryworldDetailPage() {
               flexWrap: 'wrap',
             }}
           >
-            {sw.imageUrl ? (
+            {str(world.imageUrl) ? (
               <img
-                src={str(sw.imageUrl)}
+                src={str(world.imageUrl)}
                 alt=""
                 style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover' }}
               />
             ) : null}
             <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-text)', margin: 0 }}>
-              {str(sw.title, 'Untitled world')}
+              {str(world.name, 'Untitled world')}
             </h1>
-            <span
+            <span style={chip}>{str(world.status, 'unknown')}</span>
+          </div>
+
+          {str(world.description) && (
+            <p
               style={{
-                padding: '3px 12px',
-                borderRadius: 999,
-                fontSize: 11,
-                fontWeight: 600,
-                backgroundColor: bool(sw.isPublished)
-                  ? 'rgba(16,185,129,0.15)'
-                  : 'rgba(107,114,128,0.15)',
-                color: bool(sw.isPublished)
-                  ? 'var(--admin-emerald)'
-                  : 'var(--admin-text-muted)',
+                color: 'var(--admin-text-muted)',
+                fontSize: 14,
+                marginBottom: 24,
+                maxWidth: 640,
               }}
             >
-              {bool(sw.isPublished) ? 'Published' : 'Draft'}
-            </span>
-          </div>
-
-          {actionError && (
-            <p style={{ color: actionError.endsWith('.') ? 'var(--admin-green)' : 'var(--admin-red)', marginBottom: 12 }}>
-              {actionError}
+              {str(world.description)}
             </p>
-          )}
-
-          <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
-            <button onClick={togglePublish} style={actionBtn}>
-              {bool(sw.isPublished) ? 'Unpublish' : 'Publish'}
-            </button>
-            {!showDelete ? (
-              <button onClick={() => setShowDelete(true)} style={dangerBtn}>
-                Delete
-              </button>
-            ) : (
-              <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-                <button
-                  onClick={() =>
-                    run(async () => {
-                      await adminApi.deleteStoryworld(sw.id);
-                      navigate('/agbala');
-                    }, '')
-                  }
-                  style={dangerBtn}
-                >
-                  Confirm delete
-                </button>
-                <button onClick={() => setShowDelete(false)} style={actionBtn}>
-                  Cancel
-                </button>
-              </span>
-            )}
-          </div>
-
-          {str(sw.description) && (
-            <div style={{ marginBottom: 24 }}>
-              <Field label="Description">{str(sw.description)}</Field>
-            </div>
           )}
 
           <div
@@ -207,22 +153,64 @@ export default function StoryworldDetailPage() {
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
               gap: 16,
-              marginBottom: 24,
+              marginBottom: 32,
             }}
           >
-            <Field label="Characters">{num(sw.characterCount)}</Field>
-            <Field label="Locations">{num(sw.locationCount ?? sw.pathCount)}</Field>
-            <Field label="Created">
-              {sw.createdAt ? new Date(str(sw.createdAt)).toLocaleDateString() : '-'}
-            </Field>
-            <Field label="Updated">
-              {sw.updatedAt ? new Date(str(sw.updatedAt)).toLocaleDateString() : '-'}
+            <Field label="Titles">{num(world.titleCount)}</Field>
+            <Field label="Characters">{num(world.characterCount)}</Field>
+            <Field label="Locations">{num(world.locationCount)}</Field>
+            <Field label="World ID">
+              <code style={{ fontSize: 12 }}>{str(world.id)}</code>
             </Field>
           </div>
 
+          <div style={{ marginBottom: 32 }}>
+            <p style={labelStyle}>Titles in this world</p>
+            {titlesQ.isLoading ? (
+              <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>Loading…</p>
+            ) : titles.length === 0 ? (
+              <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                No titles recorded for this world.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {titles.map((t) => (
+                  <div
+                    key={str(t.id)}
+                    style={{ ...card, display: 'flex', alignItems: 'center', gap: 12 }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontWeight: 600, fontSize: 14, margin: 0 }}>
+                        {str(t.name, str(t.title, 'Untitled'))}
+                      </p>
+                      {str(t.description) && (
+                        <p
+                          style={{
+                            color: 'var(--admin-text-muted)',
+                            fontSize: 12,
+                            margin: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {str(t.description)}
+                        </p>
+                      )}
+                    </div>
+                    {str(t.type) && <span style={chip}>{str(t.type)}</span>}
+                    <span style={chip}>{str(t.status, 'unknown')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div>
-            <p style={labelStyle}>Character roster</p>
-            {characters.length === 0 ? (
+            <p style={labelStyle}>Characters</p>
+            {charsQ.isLoading ? (
+              <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>Loading…</p>
+            ) : characters.length === 0 ? (
               <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
                 No characters recorded for this world.
               </p>
@@ -231,16 +219,9 @@ export default function StoryworldDetailPage() {
                 {characters.map((c) => (
                   <div
                     key={str(c.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '10px 14px',
-                      borderRadius: 10,
-                      background: 'var(--admin-surface)',
-                    }}
+                    style={{ ...card, display: 'flex', alignItems: 'center', gap: 12 }}
                   >
-                    {c.imageUrl ? (
+                    {str(c.imageUrl) ? (
                       <img
                         src={str(c.imageUrl)}
                         alt=""

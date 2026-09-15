@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { asRecord, asArray, str, num } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
@@ -29,16 +28,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const actionBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 8,
-  border: '1px solid var(--admin-surface)',
-  background: 'var(--admin-surface)',
-  color: 'var(--admin-text)',
-  fontSize: 13,
-  cursor: 'pointer',
-};
-
 const TIER_COLORS: Record<string, string> = {
   free: 'var(--admin-text-muted)',
   basic: 'var(--admin-blue, #3b82f6)',
@@ -50,28 +39,20 @@ const TIER_COLORS: Record<string, string> = {
 export default function PlanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [actionError, setActionError] = useState<string | null>(null);
 
   const q = useQuery({
     queryKey: ['subscription-plan', id],
     enabled: Boolean(id),
     queryFn: async () => {
       const res = await adminApi.getSubscriptionPlanById(id as string);
-      return asRecord(res);
+      return asRecord(res.success ? res.data : null);
     },
   });
 
   const plan = q.data ?? null;
-  const features = asArray<string>(plan?.features).map((f) => str(f)).filter(Boolean);
-
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['subscription-plan', id] });
-    queryClient.invalidateQueries({ queryKey: ['admin', 'subscriptions'] });
-    queryClient.invalidateQueries({ queryKey: ['admin', 'subscription-stats'] });
-  };
-
-  void invalidate;
+  const features = asArray<string>(plan?.features)
+    .map((f) => str(f))
+    .filter(Boolean);
 
   const status = str(plan?.status, 'unknown');
 
@@ -147,10 +128,6 @@ export default function PlanDetailPage() {
             </span>
           </div>
 
-          {actionError && (
-            <p style={{ color: 'var(--admin-red)', marginBottom: 12 }}>{actionError}</p>
-          )}
-
           {str(plan.description) && (
             <p
               style={{
@@ -196,7 +173,15 @@ export default function PlanDetailPage() {
           {features.length > 0 && (
             <div style={{ marginBottom: 24 }}>
               <Field label="Features">
-                <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <ul
+                  style={{
+                    margin: 0,
+                    paddingLeft: 18,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                  }}
+                >
                   {features.map((f, i) => (
                     <li key={`${i}-${f}`}>{f}</li>
                   ))}
@@ -215,7 +200,7 @@ export default function PlanDetailPage() {
             }}
           >
             <Field label="Plan ID">
-              <code style={{ fontSize: 12 }}>{plan.id}</code>
+              <code style={{ fontSize: 12 }}>{str(plan.id)}</code>
             </Field>
             <Field label="Created">
               {plan.createdAt ? new Date(str(plan.createdAt)).toLocaleString() : '-'}

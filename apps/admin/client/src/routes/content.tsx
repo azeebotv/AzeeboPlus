@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
-import { unwrapList } from '@/lib/payload';
+import { unwrapList, asArray } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 interface ContentItem {
   id: string;
@@ -38,6 +38,7 @@ export default function ContentPage() {
     description: '',
     mediaUrl: '',
     universeId: '',
+    creatorId: '',
   });
 
   const { data, isLoading, isError, error } = useQuery({
@@ -176,11 +177,24 @@ export default function ContentPage() {
     },
   });
 
+  // Backend create contract requires creatorId — offer the creator roster.
+  // GET /admin/users?role=creator returns a { users, total, ... } envelope.
+  const { data: creators = [] } = useQuery({
+    queryKey: ['admin', 'creators-for-content'],
+    queryFn: async () => {
+      const res = await adminApi.getCreators(1, 100);
+      return asArray<{ id: string; displayName?: string; email: string }>(
+        res.success ? res.data : null,
+        'users'
+      );
+    },
+  });
+
   const createContentMutation = useMutation({
     mutationFn: (data: Record<string, unknown>) => adminApi.createContent(data),
     onSuccess: () => {
       setShowCreate(false);
-      setCreateForm({ title: '', description: '', mediaUrl: '', universeId: '' });
+      setCreateForm({ title: '', description: '', mediaUrl: '', universeId: '', creatorId: '' });
       queryClient.invalidateQueries({ queryKey: ['admin', 'content'] });
     },
   });
@@ -1062,6 +1076,25 @@ export default function ContentPage() {
                   </option>
                 ))}
               </select>
+              <select
+                value={createForm.creatorId}
+                onChange={(e) => setCreateForm({ ...createForm, creatorId: e.target.value })}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                }}
+              >
+                <option value="">Select creator *</option>
+                {creators.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.displayName || c.email}
+                  </option>
+                ))}
+              </select>
               {createContentMutation.isError && (
                 <p style={{ color: 'var(--admin-red)', fontSize: 13, margin: 0 }}>
                   {(createContentMutation.error as Error)?.message || 'Create failed'}
@@ -1075,9 +1108,14 @@ export default function ContentPage() {
                       description: createForm.description || undefined,
                       mediaUrl: createForm.mediaUrl || undefined,
                       universeId: createForm.universeId || undefined,
+                      creatorId: createForm.creatorId || undefined,
                     })
                   }
-                  disabled={!createForm.title.trim() || createContentMutation.isPending}
+                  disabled={
+                    !createForm.title.trim() ||
+                    !createForm.creatorId ||
+                    createContentMutation.isPending
+                  }
                   style={{
                     padding: '10px 20px',
                     borderRadius: 8,
