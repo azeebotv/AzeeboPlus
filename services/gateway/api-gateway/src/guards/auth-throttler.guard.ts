@@ -8,6 +8,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { FeatureFlagService, gatewayFlags } from '@azeebo/feature-flags';
+import { HttpMetricsService } from '../metrics/http-metrics.service';
 import type Redis from 'ioredis';
 
 /**
@@ -49,7 +50,8 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     @Inject(ThrottlerStorage) storageService: ThrottlerStorage,
     @Inject(Reflector) reflector: Reflector,
     @Inject(FeatureFlagService)
-    private readonly featureFlagService: FeatureFlagService
+    private readonly featureFlagService: FeatureFlagService,
+    private readonly httpMetrics: HttpMetricsService
   ) {
     super(options, storageService, reflector);
     this.failClosed = process.env.RATE_LIMIT_FAIL_CLOSED === 'true';
@@ -179,9 +181,17 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
 
       if (count > limit) {
         this.logger.warn(`Auth rate limit exceeded for: ${identifier}`);
+        this.httpMetrics.recordAuthBlocked(identifier);
         throw new ThrottlerException('Too many authentication attempts. Please try again later.');
       }
 
+      this.httpMetrics.recordAuthRateLimit(
+        'ip',
+        identifier,
+        identifier,
+        Math.max(0, limit - count),
+        limit
+      );
       return Math.max(0, limit - count);
     } catch (error) {
       if (error instanceof ThrottlerException) throw error;
@@ -205,12 +215,20 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     if (entry && entry.resetTime > now) {
       if (entry.count >= limit) {
         this.logger.warn(`Auth rate limit exceeded for: ${identifier}`);
+        this.httpMetrics.recordAuthBlocked(identifier);
         throw new ThrottlerException('Too many authentication attempts. Please try again later.');
       }
       entry.count++;
     } else {
       this.inMemoryRequests.set(key, { count: 1, resetTime: now + this.AUTH_TTL * 1000 });
     }
+    this.httpMetrics.recordAuthRateLimit(
+      identifier.startsWith('acct:') ? 'account' : 'ip',
+      identifier,
+      identifier,
+      Math.max(0, limit - (entry?.count ?? 0)),
+      limit
+    );
 
     if (now - this.lastCleanupTime > this.CLEANUP_INTERVAL_MS) {
       this.lastCleanupTime = now;

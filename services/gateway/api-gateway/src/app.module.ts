@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { HttpMetricsModule } from './metrics/http-metrics.module';
 import { GatewayAuthGuard } from './guards/gateway-auth.guard';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
 import { CsrfMiddleware } from './common/csrf.middleware';
@@ -68,6 +69,7 @@ const universeSentinelDefaults = Object.fromEntries(
     ProxyModule,
     SecurityModule,
     FlagMetricsModule.register({ service: 'api-gateway' }),
+    HttpMetricsModule,
     // Gateway kill-switches: maintenance mode and new routes default OFF;
     // circuit breaker / CSRF / legacy redirects / caching default ON so ops can
     // disable them instantly during incidents.
@@ -173,6 +175,13 @@ export class AppModule implements NestModule {
         { path: 'api/auth/forgot-password', method: RequestMethod.ALL },
         { path: 'api/v1/auth/reset-password', method: RequestMethod.ALL },
         { path: 'api/auth/reset-password', method: RequestMethod.ALL },
+        // SPA cookie handoff: POST /auth/cookie runs immediately after login
+        // (no CSRF cookie yet — it IS the bootstrap); DELETE /auth/cookie is
+        // logout; GET /auth/csrf sets the CSRF cookie itself.
+        { path: 'api/v1/auth/cookie', method: RequestMethod.ALL },
+        { path: 'api/auth/cookie', method: RequestMethod.ALL },
+        { path: 'api/v1/auth/csrf', method: RequestMethod.ALL },
+        { path: 'api/auth/csrf', method: RequestMethod.ALL },
         { path: 'api/v1/users/*path', method: RequestMethod.GET },
         { path: 'api/v1/users/*path', method: RequestMethod.HEAD },
         { path: 'api/v1/users/*path', method: RequestMethod.OPTIONS },
