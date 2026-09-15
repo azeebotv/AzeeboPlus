@@ -11,6 +11,8 @@ import { HttpMetricsModule } from './metrics/http-metrics.module';
 import { GatewayAuthGuard } from './guards/gateway-auth.guard';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
 import { CsrfMiddleware } from './common/csrf.middleware';
+import { CsrfTokenRegistry } from './common/csrf-token-registry.service';
+import { CommonModule } from './common/common.module';
 import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
 import { ContentTypeValidationMiddleware } from './common/content-type-validation.middleware';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
@@ -67,6 +69,7 @@ const universeSentinelDefaults = Object.fromEntries(
     }),
     HealthModule,
     ProxyModule,
+    CommonModule,
     SecurityModule,
     FlagMetricsModule.register({ service: 'api-gateway' }),
     HttpMetricsModule,
@@ -132,6 +135,7 @@ const universeSentinelDefaults = Object.fromEntries(
   ],
   providers: [
     CsrfMiddleware,
+    CsrfTokenRegistry,
     LegacyRedirectMiddleware,
     {
       provide: APP_INTERCEPTOR,

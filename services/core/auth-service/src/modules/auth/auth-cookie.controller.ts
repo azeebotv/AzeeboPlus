@@ -1,8 +1,9 @@
 import { Controller, Post, Delete, Get, Body, Res, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Request, Response } from 'express';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 import { Public } from '@azeebo/security';
+import { RedisService } from '@azeebo/shared-services';
 
 export const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -27,6 +28,10 @@ export const COOKIE_OPTIONS = {
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthCookieController {
+  /** Redis key TTL for registered CSRF tokens (24h, matches the gateway). */
+  private static readonly CSRF_TOKEN_TTL_SECONDS = 24 * 60 * 60;
+
+  constructor(private readonly redis: RedisService) {}
   @Public()
   @Post('cookie')
   @ApiOperation({ summary: 'Set auth tokens as httpOnly cookies' })
@@ -60,9 +65,14 @@ export class AuthCookieController {
   @Public()
   @Get('csrf')
   @ApiOperation({ summary: 'Bootstrap the CSRF double-submit cookie' })
-  csrf(@Req() req: Request, @Res() res: Response): void {
+  async csrf(@Req() req: Request, @Res() res: Response): Promise<void> {
     // Mirrors the gateway CsrfMiddleware cookie contract: httpOnly + strict,
     // token readable by the client via the X-CSRF-Token response header.
+    // Minted tokens are registered in the SAME Redis registry the gateway
+    // validates against (key: csrf:token:<sha256>, TTL 24h) — otherwise a
+    // token bootstrapped here would fail the gateway's registry check.
+    // Best-effort: Redis hiccups skip registration rather than fail login
+    // bootstrapping (the gateway fails open on an unreachable registry).
     let token = req.cookies?.['_csrf'];
     if (!token) {
       token = randomBytes(32).toString('hex');
@@ -72,6 +82,15 @@ export class AuthCookieController {
         sameSite: 'strict' as const,
         path: '/',
       });
+    }
+    try {
+      await this.redis.set(
+        `csrf:token:${createHash('sha256').update(token).digest('hex')}`,
+        '1',
+        AuthCookieController.CSRF_TOKEN_TTL_SECONDS
+      );
+    } catch {
+      // Registration is best-effort; validation fails open without it.
     }
     res.setHeader('X-CSRF-Token', token);
     res.json({ success: true });
