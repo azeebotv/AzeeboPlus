@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { SystemSetting } from '@/lib/admin-types';
-import { unwrapList } from '@/lib/payload';
+import { unwrapList, asRecord, str as asStr } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 export default function SettingsPage() {
@@ -11,22 +11,28 @@ export default function SettingsPage() {
   const [editKey, setEditKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [testingKey, setTestingKey] = useState<string | null>(null);
-  const [testResults, setTestResults] = useState<Record<string, { ok: boolean; message: string }>>({});
+  const [testResults, setTestResults] = useState<Record<string, { ok: boolean; message: string }>>(
+    {}
+  );
 
   const handleTest = async (key: string) => {
     // extract provider name e.g. integrations.paystack -> paystack
-    const provider = key.includes('.') ? key.split('.')[1] : key;
+    const provider = key.includes('.') ? (key.split('.')[1] as string) : key;
     setTestingKey(key);
     try {
       const res = await adminApi.testSettingIntegration(provider);
+      const payload = asRecord(res.data);
+      const status = asStr(payload.status);
       setTestResults((prev) => ({
         ...prev,
         [key]: {
-          ok: res.success && (res.data as any)?.status === 'connected',
-          message: res.success ? `Connected (${(res.data as any)?.status || 'OK'})` : (res.message || 'Connection failed'),
+          ok: res.success && status === 'connected',
+          message: res.success
+            ? `Connected (${status || 'OK'})`
+            : res.message || 'Connection failed',
         },
       }));
-    } catch (e) {
+    } catch {
       setTestResults((prev) => ({
         ...prev,
         [key]: { ok: false, message: 'Ping failed' },
@@ -324,7 +330,7 @@ export default function SettingsPage() {
                         {testingKey === s.key
                           ? 'Testing...'
                           : testResults[s.key]
-                            ? testResults[s.key].message
+                            ? testResults[s.key]?.message
                             : 'Test'}
                       </button>
                     )}

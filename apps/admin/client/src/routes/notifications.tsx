@@ -8,9 +8,10 @@ import { Icon } from '@/components/Icons';
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', type: 'email' as string, subject: '', content: '' });
+  const [form, setForm] = useState({ name: '', type: 'email' as string, content: '' });
   // Edit/delete were backend-supported but had no UI; edit reuses the form.
   const [editTarget, setEditTarget] = useState<NotificationTemplate | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   const { data: templates = [], isLoading } = useQuery({
@@ -30,10 +31,17 @@ export default function NotificationsPage() {
     },
   });
 
-  const resetForm = () => setForm({ name: '', type: 'email', subject: '', content: '' });
+  const resetForm = () => setForm({ name: '', type: 'email', content: '' });
 
   const createMutation = useMutation({
-    mutationFn: () => adminApi.createNotificationTemplate(form),
+    // Backend contract is { name, type, body } — body becomes the stored
+    // notification message; there is no separate subject column.
+    mutationFn: () =>
+      adminApi.createNotificationTemplate({
+        name: form.name,
+        type: form.type,
+        body: form.content,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'notifications'] });
       setShowForm(false);
@@ -167,19 +175,6 @@ export default function NotificationsPage() {
               <option value="sms">SMS</option>
               <option value="in-app">In-App</option>
             </select>
-            <input
-              value={form.subject}
-              onChange={(e) => setForm({ ...form, subject: e.target.value })}
-              placeholder="Subject"
-              style={{
-                padding: '10px 16px',
-                borderRadius: 8,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'var(--admin-dark)',
-                color: 'var(--admin-text)',
-                fontSize: 14,
-              }}
-            />
             <textarea
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
@@ -282,7 +277,6 @@ export default function NotificationsPage() {
                     setForm({
                       name: t.name,
                       type: t.type,
-                      subject: t.subject ?? '',
                       content: t.content ?? '',
                     });
                     setShowForm(true);
@@ -300,22 +294,53 @@ export default function NotificationsPage() {
                 >
                   Edit
                 </button>
-                <button
-                  onClick={() => {
-                    if (window.confirm(`Delete template "${t.name}"?`)) deleteMutation.mutate(t.id);
-                  }}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: 6,
-                    border: '1px solid rgba(204,28,28,0.4)',
-                    background: 'transparent',
-                    color: 'var(--admin-red)',
-                    fontSize: 12,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Delete
-                </button>
+                {deleteConfirm === t.id ? (
+                  <>
+                    <button
+                      onClick={() => deleteMutation.mutate(t.id)}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: 6,
+                        border: 'none',
+                        background: 'var(--admin-red)',
+                        color: 'white',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirm(null)}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: 6,
+                        border: '1px solid var(--admin-surface)',
+                        background: 'transparent',
+                        color: 'var(--admin-text-muted)',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setDeleteConfirm(t.id)}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: 6,
+                      border: '1px solid rgba(204,28,28,0.4)',
+                      background: 'transparent',
+                      color: 'var(--admin-red)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ))}

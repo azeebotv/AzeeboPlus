@@ -484,10 +484,18 @@ export const adminApi = {
     }),
   deleteStoryworld: (id: string) =>
     apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${id}`, { method: 'DELETE' }),
+  // Publish state is a field on the storyworld, not a dedicated endpoint —
+  // the backend exposes PATCH /admin/agbala/storyworlds/:id with isPublished.
   publishStoryworld: (id: string) =>
-    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${id}/publish`, { method: 'POST' }),
+    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isPublished: true }),
+    }),
   unpublishStoryworld: (id: string) =>
-    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${id}/unpublish`, { method: 'POST' }),
+    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isPublished: false }),
+    }),
 
   // ─── Agbala / Characters ────────────────────────────────────────────────
   // Characters live under the nested storyworld route upstream — the flat
