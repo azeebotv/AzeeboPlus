@@ -1,5 +1,16 @@
-import { Inject, Controller, Get, Post, UseGuards, Request, Body } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Request,
+  Body,
+  Res,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Response } from 'express';
+import { COOKIE_OPTIONS } from './auth-cookie.controller.js';
 
 import { AuthService } from './auth.service.js';
 import { LoginDto } from './dto/login.dto.js';
@@ -28,6 +39,7 @@ import { User } from '@azeebo/shared-types';
 interface AuthRequest extends Request {
   user: User;
   ip?: string;
+  cookies?: Record<string, string>;
 }
 
 @ApiTags('Auth')
@@ -81,8 +93,31 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
   @ApiResponse({ status: 401, description: 'Invalid refresh token' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponse> {
-    return this.authService.refreshToken(refreshTokenDto);
+  async refreshToken(
+    @Body() refreshTokenDto: RefreshTokenDto,
+    @Request() req: AuthRequest,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<RefreshTokenResponse> {
+    // SPA cookie flows (admin/creator panels) send the refresh_token httpOnly
+    // cookie with an empty body. Fall back to the cookie when the body omits
+    // the token so the browser-only flow can rotate tokens.
+    const bodyToken = refreshTokenDto?.refreshToken;
+    const cookieToken = req.cookies?.['refresh_token'];
+    const dto: RefreshTokenDto = bodyToken ? refreshTokenDto : { refreshToken: cookieToken ?? '' };
+    const result = await this.authService.refreshToken(dto);
+    // When the rotation was driven by the httpOnly cookie (no body token),
+    // write the rotated pair back as cookies — otherwise the browser keeps
+    // retrying with its now-stale access_token and the refresh loop never
+    // converges. Body-token callers (web app stores the token itself) are
+    // unaffected and keep the JSON-only contract.
+    if (!bodyToken && cookieToken && result?.data?.access_token) {
+      res.cookie('access_token', result.data.access_token, COOKIE_OPTIONS);
+      res.cookie('refresh_token', result.data.refresh_token, {
+        ...COOKIE_OPTIONS,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+    }
+    return result;
   }
 
   @Post('logout')

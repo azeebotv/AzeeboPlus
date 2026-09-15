@@ -15,6 +15,7 @@ import * as bcrypt from 'bcrypt';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
 import type { StringValue } from 'ms';
+import { mapAndThrow } from '@azeebo/security';
 
 import { AuthRepository } from './auth.repository.js';
 import { AuditLogService } from '../audit/audit.service.js';
@@ -427,19 +428,33 @@ export class AuthService {
   }
 
   async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponse> {
-    const { refreshToken } = refreshTokenDto;
+    // The DTO field is optional (cookie flows may send an empty body); an
+    // undefined token simply fails verification below with the uniform 401.
+    const { refreshToken = '' } = refreshTokenDto;
 
+    // Token verification is pure client-input handling: malformed, expired,
+    // or wrong-signature tokens all get the SAME 401 — leaking
+    // expired-vs-unknown would enable session enumeration (HIGH-04), and JWT
+    // errors are not in the error mapper's vocabulary. Verification failure is
+    // the only cause in this block; the cause cannot vary → allowed marker.
+    let decoded: { sub: string };
     try {
       const jwtRefreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
-
-      const decoded = this.jwtService.verify(refreshToken, {
+      decoded = this.jwtService.verify(refreshToken, {
         secret: jwtRefreshSecret,
         audience: this.configService.get<string>('JWT_AUDIENCE'),
         issuer: this.configService.get<string>('JWT_ISSUER'),
         algorithms: ['HS256'],
-      });
+      }) as { sub: string };
+    } catch {
+      // allowed-fabricated-4xx: uniform 401 for ALL token-verification
+      // failures — the cause cannot vary, and the constant status is an
+      // anti-enumeration invariant (HIGH-04), not an error-mapping decision.
+      throw new UnauthorizedException('Invalid refresh token');
+    }
 
-      const user = await this.authRepository.findById((decoded as { sub: string }).sub);
+    try {
+      const user = await this.authRepository.findById(decoded.sub);
       if (!user) {
         throw new UnauthorizedException('Invalid refresh token');
       }
@@ -471,7 +486,10 @@ export class AuthService {
         },
       };
     } catch (error: unknown) {
-      throw new UnauthorizedException('Invalid refresh token');
+      // Session lookup, rotation, and token generation failures map honestly:
+      // a session-store outage is a 503, not a client-facing "invalid token".
+      // The uniform-401 throws above rethrow unchanged through the mapper.
+      mapAndThrow(error, 'refreshing session');
     }
   }
 
@@ -999,7 +1017,7 @@ export class AuthService {
         `Failed to send magic link email: ${error instanceof Error ? error.message : String(error)}`
       );
       await this.redisService.del(`${this.magicLinkPrefix}${token}`);
-      throw new BadRequestException('Failed to send sign-in link. Please try again.');
+      mapAndThrow(error, 'sending magic-link email');
     }
 
     this.auditLogService.log({

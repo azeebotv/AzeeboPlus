@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import type { Response } from 'express';
 import { ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
@@ -217,9 +218,11 @@ describe('AuthController', () => {
 
   describe('POST /auth/refresh', () => {
     const refreshTokenDto = { refreshToken: 'valid-refresh-token' };
+    const mockReq = { cookies: {} } as never;
+    const mockRes = { cookie: jest.fn() } as unknown as Response;
 
     it('should refresh the access token', async () => {
-      const result = await controller.refreshToken(refreshTokenDto);
+      const result = await controller.refreshToken(refreshTokenDto, mockReq, mockRes);
 
       expect(authService.refreshToken).toHaveBeenCalledWith(refreshTokenDto);
       expect(result.success).toBe(true);
@@ -233,7 +236,9 @@ describe('AuthController', () => {
         new UnauthorizedException('Invalid refresh token')
       );
 
-      await expect(controller.refreshToken(refreshTokenDto)).rejects.toThrow(UnauthorizedException);
+      await expect(controller.refreshToken(refreshTokenDto, mockReq, mockRes)).rejects.toThrow(
+        UnauthorizedException
+      );
     });
 
     it('should propagate UnauthorizedException for revoked token', async () => {
@@ -241,8 +246,33 @@ describe('AuthController', () => {
         new UnauthorizedException('Invalid refresh token')
       );
 
-      await expect(controller.refreshToken({ refreshToken: 'revoked-token' })).rejects.toThrow(
-        UnauthorizedException
+      await expect(
+        controller.refreshToken({ refreshToken: 'revoked-token' }, mockReq, mockRes)
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should fall back to the refresh_token cookie when the body omits the token', async () => {
+      const cookieReq = {
+        cookies: { refresh_token: 'cookie-refresh-token' },
+      } as never;
+
+      await controller.refreshToken({} as typeof refreshTokenDto, cookieReq, mockRes);
+
+      expect(authService.refreshToken).toHaveBeenCalledWith({
+        refreshToken: 'cookie-refresh-token',
+      });
+
+      // Cookie-driven rotation must write the rotated pair back as cookies
+      // so the browser's next request carries a fresh access_token.
+      expect(mockRes.cookie).toHaveBeenCalledWith(
+        'access_token',
+        expect.any(String),
+        expect.objectContaining({ httpOnly: true, path: '/' })
+      );
+      expect(mockRes.cookie).toHaveBeenCalledWith(
+        'refresh_token',
+        expect.any(String),
+        expect.objectContaining({ httpOnly: true, path: '/' })
       );
     });
   });

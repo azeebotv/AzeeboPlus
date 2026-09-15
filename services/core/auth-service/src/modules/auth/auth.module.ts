@@ -3,6 +3,7 @@ import { PassportModule } from '@nestjs/passport';
 
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
+import { AuthCookieController } from './auth-cookie.controller.js';
 import { AuthRepository } from './auth.repository.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { ConfigModule } from '@nestjs/config';
@@ -31,6 +32,7 @@ import { AuditModule } from '../audit/audit.module.js';
   ],
   controllers: [
     AuthController,
+    AuthCookieController,
     MfaController,
     OtpController,
     SocialAuthController,
