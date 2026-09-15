@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
+import { Icon } from '@/components/Icons';
 
 interface ContentItem {
   id: string;
@@ -26,7 +27,7 @@ export default function ContentPage() {
   const [editForm, setEditForm] = useState({ title: '', description: '' });
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['admin', 'content', page, statusFilter, search],
     queryFn: async () => {
       const res = await adminApi.getContentList({
@@ -113,8 +114,22 @@ export default function ContentPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Content Management</h1>
-      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>{total} items</p>
+      <div style={{ marginBottom: 24 }}>
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 700,
+            marginBottom: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <Icon name="film" size={28} color="var(--admin-orange)" />
+          <span>Content Management</span>
+        </h1>
+        <p style={{ color: 'var(--admin-text-muted)' }}>{total} items</p>
+      </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
         {(['content', 'categories', 'tags'] as const).map((t) => (
@@ -122,9 +137,9 @@ export default function ContentPage() {
             key={t}
             onClick={() => setTab(t)}
             style={{
-              padding: '8px 16px',
+              padding: '8px 18px',
               borderRadius: 999,
-              border: tab === t ? 'none' : '1px solid var(--admin-surface)',
+              border: tab === t ? 'none' : '1px solid var(--admin-border)',
               background:
                 tab === t ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent',
               color: tab === t ? 'white' : 'var(--admin-text-muted)',
@@ -144,57 +159,150 @@ export default function ContentPage() {
         <>
           <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
             <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              type="text"
               placeholder="Search content..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               style={{
                 flex: 1,
                 minWidth: 200,
                 padding: '10px 16px',
                 borderRadius: 12,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'var(--admin-dark)',
+                border: '1px solid var(--admin-border)',
+                backgroundColor: 'var(--admin-card)',
                 color: 'var(--admin-text)',
                 fontSize: 14,
+                outline: 'none',
               }}
             />
-            <div style={{ display: 'flex', gap: 6 }}>
-              {['', 'published', 'draft', 'archived'].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => {
-                    setStatusFilter(s);
-                    setPage(1);
-                  }}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: 999,
-                    border: statusFilter === s ? 'none' : '1px solid var(--admin-surface)',
-                    background:
-                      statusFilter === s
-                        ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
-                        : 'transparent',
-                    color: statusFilter === s ? 'white' : 'var(--admin-text-muted)',
-                    fontWeight: 500,
-                    fontSize: 13,
-                    cursor: 'pointer',
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {s || 'all'}
-                </button>
-              ))}
-            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 12,
+                border: '1px solid var(--admin-border)',
+                backgroundColor: 'var(--admin-card)',
+                color: 'var(--admin-text)',
+                fontSize: 14,
+                outline: 'none',
+              }}
+            >
+              <option value="">All Statuses</option>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+              <option value="archived">Archived</option>
+            </select>
           </div>
 
+          {bulkEnabled && selected.size > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 16px',
+                borderRadius: 12,
+                border: '1px solid var(--admin-orange)',
+                backgroundColor: 'rgba(232,66,10,0.08)',
+                marginBottom: 16,
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-orange)' }}>
+                {selected.size} item{selected.size > 1 ? 's' : ''} selected
+              </span>
+              <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
+                <button
+                  type="button"
+                  disabled={bulkStatusMutation.isPending}
+                  onClick={() =>
+                    bulkStatusMutation.mutate({ ids: Array.from(selected), status: 'published' })
+                  }
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    border: 'none',
+                    backgroundColor: 'var(--admin-emerald)',
+                    color: 'white',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Publish Selected
+                </button>
+                <button
+                  type="button"
+                  disabled={bulkStatusMutation.isPending}
+                  onClick={() =>
+                    bulkStatusMutation.mutate({ ids: Array.from(selected), status: 'draft' })
+                  }
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    border: 'none',
+                    backgroundColor: 'var(--admin-surface)',
+                    color: 'var(--admin-text)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Draft Selected
+                </button>
+                <button
+                  type="button"
+                  disabled={bulkStatusMutation.isPending}
+                  onClick={() =>
+                    bulkStatusMutation.mutate({ ids: Array.from(selected), status: 'archived' })
+                  }
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    border: 'none',
+                    backgroundColor: 'var(--admin-red)',
+                    color: 'white',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Archive Selected
+                </button>
+              </div>
+            </div>
+          )}
+
           {isLoading ? (
-            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+              Loading...
+            </p>
+          ) : isError ? (
+            <div
+              style={{
+                padding: 20,
+                borderRadius: 12,
+                border: '1px solid var(--admin-red)',
+                background: 'rgba(204,28,28,0.1)',
+                color: 'var(--admin-red)',
+              }}
+            >
+              <strong>Failed to load content.</strong>{' '}
+              {(error as Error)?.message || 'Unknown error'} — this is a backend failure, not an
+              empty list.
+            </div>
           ) : (
             <div
               style={{
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
                 overflow: 'hidden',
               }}
             >
@@ -254,10 +362,22 @@ export default function ContentPage() {
                         >
                           {item.title}
                         </td>
-                        <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                        <td
+                          style={{
+                            padding: '12px 16px',
+                            color: 'var(--admin-text-muted)',
+                            fontSize: 13,
+                          }}
+                        >
                           {item.creator?.name || '-'}
                         </td>
-                        <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                        <td
+                          style={{
+                            padding: '12px 16px',
+                            color: 'var(--admin-text-muted)',
+                            fontSize: 13,
+                          }}
+                        >
                           {item.universe?.name || '-'}
                         </td>
                         <td style={{ padding: '12px 16px' }}>
@@ -285,7 +405,13 @@ export default function ContentPage() {
                             {item.status}
                           </span>
                         </td>
-                        <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                        <td
+                          style={{
+                            padding: '12px 16px',
+                            color: 'var(--admin-text-muted)',
+                            fontSize: 13,
+                          }}
+                        >
                           {(item.views || 0).toLocaleString()}
                         </td>
                         <td style={{ padding: '12px 16px' }}>
@@ -363,7 +489,9 @@ export default function ContentPage() {
                     backgroundColor: 'rgba(13,5,5,0.6)',
                   }}
                 >
-                  <span style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>{selected.size} selected</span>
+                  <span style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                    {selected.size} selected
+                  </span>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       onClick={() =>
@@ -444,7 +572,9 @@ export default function ContentPage() {
                 >
                   Prev
                 </button>
-                <span style={{ padding: '8px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                <span
+                  style={{ padding: '8px 16px', color: 'var(--admin-text-muted)', fontSize: 13 }}
+                >
                   Page {page} of {Math.ceil(total / 20) || 1}
                 </span>
                 <button
@@ -455,7 +585,10 @@ export default function ContentPage() {
                     borderRadius: 8,
                     border: '1px solid var(--admin-surface)',
                     background: 'transparent',
-                    color: page >= Math.ceil(total / 20) ? 'var(--admin-text-muted)' : 'var(--admin-orange)',
+                    color:
+                      page >= Math.ceil(total / 20)
+                        ? 'var(--admin-text-muted)'
+                        : 'var(--admin-orange)',
                     cursor: page >= Math.ceil(total / 20) ? 'not-allowed' : 'pointer',
                   }}
                 >
@@ -478,15 +611,17 @@ export default function ContentPage() {
                 alignItems: 'center',
                 padding: '12px 16px',
                 borderRadius: 12,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <span style={{ fontWeight: 500 }}>{c.name}</span>
             </div>
           ))}
           {categories.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No categories</p>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
+              No categories
+            </p>
           )}
         </div>
       )}
@@ -499,8 +634,8 @@ export default function ContentPage() {
               style={{
                 padding: '6px 14px',
                 borderRadius: 999,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
                 color: 'var(--admin-text)',
                 fontSize: 13,
               }}
@@ -509,7 +644,14 @@ export default function ContentPage() {
             </span>
           ))}
           {tags.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)', width: '100%' }}>
+            <p
+              style={{
+                textAlign: 'center',
+                padding: 40,
+                color: 'var(--admin-text-muted)',
+                width: '100%',
+              }}
+            >
               No tags
             </p>
           )}

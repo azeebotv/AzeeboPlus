@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { BundlePassAdmin } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 const TIER_COLORS: Record<string, string> = {
   standard: 'var(--admin-blue)',
@@ -153,12 +154,18 @@ export default function BundlePassesPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Bundle Passes</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Icon name="package" size={28} color="var(--admin-orange)" />
+            <span>Bundle Passes</span>
+          </h1>
           <p style={{ color: 'var(--admin-text-muted)' }}>{bundles.length} bundles</p>
         </div>
         <button
           onClick={openCreate}
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
             padding: '10px 20px',
             borderRadius: 10,
             border: 'none',
@@ -169,7 +176,8 @@ export default function BundlePassesPage() {
             cursor: 'pointer',
           }}
         >
-          + New Bundle
+          <Icon name="plus" size={16} />
+          <span>New Bundle</span>
         </button>
       </div>
 
@@ -185,8 +193,8 @@ export default function BundlePassesPage() {
                 style={{
                   padding: 16,
                   borderRadius: 16,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'var(--admin-surface)',
                 }}
               >
                 <div

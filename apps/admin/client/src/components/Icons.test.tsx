@@ -52,6 +52,8 @@ describe('Icon', () => {
       'search', 'bell', 'megaphone', 'gem', 'bot',
       'clipboardList', 'shield', 'clock', 'activity', 'barChart',
       'flag', 'sliders', 'settings', 'alertTriangle', 'star',
+      'chevronDown', 'chevronRight', 'chevronUp', 'x', 'menu',
+      'filter', 'eye', 'plus', 'userPlus', 'logOut', 'externalLink', 'zap',
     ];
 
     for (const name of iconNames) {

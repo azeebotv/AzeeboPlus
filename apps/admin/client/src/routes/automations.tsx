@@ -26,72 +26,6 @@ export interface TaskRun {
   output?: string;
 }
 
-/* ── Mock Data ─────────────────────────────────────────────────────────────── */
-
-const MOCK_TASKS: ScheduledTask[] = [
-  {
-    id: '1',
-    name: 'Content Moderation Scan',
-    description: 'Scan uploaded content for policy violations',
-    schedule: 'Every 15 minutes',
-    lastRun: new Date(Date.now() - 600000).toISOString(),
-    nextRun: new Date(Date.now() + 300000).toISOString(),
-    status: 'active',
-    type: 'moderation',
-  },
-  {
-    id: '2',
-    name: 'Analytics Aggregation',
-    description: 'Aggregate daily analytics data',
-    schedule: 'Daily at 2:00 AM',
-    lastRun: new Date(Date.now() - 86400000).toISOString(),
-    nextRun: new Date(Date.now() + 43200000).toISOString(),
-    status: 'active',
-    type: 'analytics',
-  },
-  {
-    id: '3',
-    name: 'Stale Content Cleanup',
-    description: 'Archive content older than 2 years with low engagement',
-    schedule: 'Weekly on Sunday',
-    lastRun: new Date(Date.now() - 604800000).toISOString(),
-    nextRun: new Date(Date.now() + 259200000).toISOString(),
-    status: 'active',
-    type: 'content',
-  },
-  {
-    id: '4',
-    name: 'Push Notification Digest',
-    description: 'Send weekly digest notifications to users',
-    schedule: 'Weekly on Monday at 10:00 AM',
-    lastRun: new Date(Date.now() - 518400000).toISOString(),
-    nextRun: new Date(Date.now() + 86400000).toISOString(),
-    status: 'active',
-    type: 'notification',
-  },
-  {
-    id: '5',
-    name: 'Database Backup',
-    description: 'Full database backup to cloud storage',
-    schedule: 'Daily at 3:00 AM',
-    lastRun: new Date(Date.now() - 79200000).toISOString(),
-    nextRun: new Date(Date.now() + 3600000).toISOString(),
-    status: 'active',
-    type: 'maintenance',
-  },
-  {
-    id: '6',
-    name: 'Cache Purge',
-    description: 'Clear expired cache entries',
-    schedule: 'Every hour',
-    lastRun: new Date(Date.now() - 1800000).toISOString(),
-    nextRun: new Date(Date.now() + 1800000).toISOString(),
-    status: 'error',
-    lastError: 'Redis connection timeout',
-    type: 'maintenance',
-  },
-];
-
 const TYPE_COLORS: Record<string, string> = {
   content: 'var(--admin-blue)',
   moderation: 'var(--admin-red)',
@@ -106,12 +40,21 @@ export default function AutomationsPage() {
   const queryClient = useQueryClient();
   const [selectedTask, setSelectedTask] = useState<ScheduledTask | null>(null);
 
-  const { data: tasks = MOCK_TASKS } = useQuery({
+  const {
+    data: tasks,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'automations'],
-    queryFn: async () => {
-      // In production, fetch from API
-      return MOCK_TASKS;
+    queryFn: async (): Promise<ScheduledTask[]> => {
+      // No backend exists for scheduled-task management yet — the DB job
+      // schedulers (launchd on dev, k8s CronJobs in prod) are not exposed
+      // through any API. Show nothing rather than fake tasks.
+      throw new Error(
+        'No automation API exists yet — scheduled jobs run at the infrastructure level (launchd / cron / k8s), not in the database'
+      );
     },
+    retry: false,
   });
 
   const toggleTaskMutation = useMutation({
@@ -141,35 +84,65 @@ export default function AutomationsPage() {
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           marginBottom: 24,
         }}
       >
         <div>
           <h1
-            style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              color: 'var(--admin-text)',
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
           >
-            Automations
+            <Icon name="cpu" size={28} color="var(--admin-orange)" />
+            <span>Automations</span>
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+          <p style={{ color: 'var(--admin-text-muted)', fontSize: 14 }}>
             Manage scheduled tasks and automated workflows
           </p>
         </div>
         <button
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
             padding: '10px 20px',
-            borderRadius: 8,
+            borderRadius: 10,
             border: 'none',
-            backgroundColor: 'var(--brand-orange)',
+            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
             color: 'white',
             fontSize: 14,
-            fontWeight: 500,
+            fontWeight: 600,
             cursor: 'pointer',
           }}
         >
-          Create Task
+          <Icon name="plus" size={16} />
+          <span>Create Task</span>
         </button>
       </div>
+
+      {isError && (
+        <div
+          style={{
+            padding: 20,
+            marginBottom: 20,
+            borderRadius: 12,
+            border: '1px solid rgba(245,158,11,0.3)',
+            background: 'rgba(245,158,11,0.1)',
+            color: 'var(--admin-amber)',
+          }}
+        >
+          <strong>No automation data available.</strong> {(error as Error)?.message}. The scheduled
+          DB jobs (freshness, drill, retention) are documented in the RUNBOOK and monitored on the
+          Ops Health page.
+        </div>
+      )}
 
       {/* Tasks Grid */}
       <div
@@ -179,14 +152,14 @@ export default function AutomationsPage() {
           gap: 16,
         }}
       >
-        {tasks.map((task) => (
+        {(tasks ?? []).map((task) => (
           <div
             key={task.id}
             style={{
               padding: 20,
               borderRadius: 16,
-              border: `1px solid ${task.status === 'error' ? 'var(--admin-red)' : 'var(--border-default)'}`,
-              backgroundColor: 'rgba(26,10,10,0.5)',
+              border: `1px solid ${task.status === 'error' ? 'var(--admin-red)' : 'var(--admin-card)'}`,
+              backgroundColor: 'var(--admin-surface)',
               cursor: 'pointer',
             }}
             onClick={() => setSelectedTask(task)}
@@ -307,7 +280,8 @@ export default function AutomationsPage() {
                     padding: '6px 12px',
                     borderRadius: 6,
                     border: 'none',
-                    backgroundColor: task.status === 'active' ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)',
+                    backgroundColor:
+                      task.status === 'active' ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)',
                     color: task.status === 'active' ? 'var(--admin-amber)' : 'var(--admin-emerald)',
                     fontSize: 12,
                     cursor: 'pointer',
@@ -423,8 +397,12 @@ export default function AutomationsPage() {
                   marginBottom: 20,
                 }}
               >
-                <div style={{ fontSize: 12, color: 'var(--admin-red)', marginBottom: 4 }}>Last Error</div>
-                <div style={{ fontSize: 13, color: 'var(--admin-red)' }}>{selectedTask.lastError}</div>
+                <div style={{ fontSize: 12, color: 'var(--admin-red)', marginBottom: 4 }}>
+                  Last Error
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--admin-red)' }}>
+                  {selectedTask.lastError}
+                </div>
               </div>
             )}
 

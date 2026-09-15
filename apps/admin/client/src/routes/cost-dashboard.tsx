@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
+import { Icon } from '@/components/Icons';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -67,7 +68,19 @@ export default function CostDashboardPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>💰 Model Cost Dashboard</h1>
+      <h1
+        style={{
+          fontSize: 28,
+          fontWeight: 700,
+          marginBottom: 8,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <Icon name="dollarSign" size={32} color="var(--admin-emerald)" />
+        <span>Model Cost Dashboard</span>
+      </h1>
       <p style={{ color: 'var(--admin-text-muted)', marginBottom: 32 }}>
         Per-request AI cost telemetry, model pricing, and budget tracking
       </p>
@@ -76,7 +89,7 @@ export default function CostDashboardPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: 16,
           marginBottom: 32,
         }}
@@ -104,7 +117,12 @@ export default function CostDashboardPage() {
       </div>
 
       <div
-        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24, marginBottom: 32 }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: 24,
+          marginBottom: 32,
+        }}
       >
         {/* Cost by Model */}
         <div
@@ -112,7 +130,7 @@ export default function CostDashboardPage() {
             padding: 24,
             borderRadius: 16,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
           <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--admin-text)' }}>
@@ -165,7 +183,7 @@ export default function CostDashboardPage() {
             padding: 24,
             borderRadius: 16,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
           <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--admin-text)' }}>
@@ -182,7 +200,7 @@ export default function CostDashboardPage() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: '8px 0',
-                  borderBottom: '1px solid var(--admin-surface)',
+                  borderBottom: '1px solid var(--admin-border)',
                 }}
               >
                 <span style={{ fontSize: 13, color: 'var(--admin-text)' }}>{agentId}</span>
@@ -203,7 +221,7 @@ export default function CostDashboardPage() {
             padding: 24,
             borderRadius: 16,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
           <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--admin-text)' }}>
@@ -220,7 +238,7 @@ export default function CostDashboardPage() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: '8px 0',
-                  borderBottom: '1px solid var(--admin-surface)',
+                  borderBottom: '1px solid var(--admin-border)',
                 }}
               >
                 <span style={{ fontSize: 13, color: 'var(--admin-text)' }}>{domain}</span>
@@ -242,7 +260,7 @@ export default function CostDashboardPage() {
           padding: 24,
           borderRadius: 16,
           border: '1px solid var(--admin-surface)',
-          backgroundColor: 'rgba(26,10,10,0.5)',
+          backgroundColor: 'var(--admin-surface)',
         }}
       >
         <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--admin-text)' }}>
@@ -269,7 +287,7 @@ export default function CostDashboardPage() {
               </thead>
               <tbody>
                 {events.map((evt: CostEvent) => (
-                  <tr key={evt.id} style={{ borderBottom: '1px solid var(--admin-surface)' }}>
+                  <tr key={evt.id} style={{ borderBottom: '1px solid var(--admin-border)' }}>
                     <td style={tdStyle}>{new Date(evt.createdAt).toLocaleTimeString()}</td>
                     <td style={tdStyle}>
                       <code style={{ color: 'var(--admin-blue)', fontSize: 12 }}>{evt.model}</code>
@@ -300,7 +318,7 @@ function StatCard({ label, value, color }: { label: string; value: string; color
         padding: 20,
         borderRadius: 16,
         border: '1px solid var(--admin-surface)',
-        backgroundColor: 'rgba(26,10,10,0.5)',
+        backgroundColor: 'var(--admin-surface)',
       }}
     >
       <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>{label}</p>

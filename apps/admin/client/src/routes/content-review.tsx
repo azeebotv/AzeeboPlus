@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { ContentReviewItem } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 export default function ContentReviewPage() {
   const queryClient = useQueryClient();
   const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({});
+  const [activeRejectId, setActiveRejectId] = useState<string | null>(null);
 
   const { data: queue = [], isLoading } = useQuery({
     queryKey: ['admin', 'content-review'],
@@ -27,29 +29,55 @@ export default function ContentReviewPage() {
   const rejectMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) =>
       adminApi.rejectContent(id, reason),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'content-review'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'content-review'] });
+      setActiveRejectId(null);
+    },
   });
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Content Review Queue</h1>
-      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>{queue.length} items pending review</p>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Icon name="checkCircle" size={28} color="var(--admin-orange)" />
+          <span>Content Review Queue</span>
+        </h1>
+        <p style={{ color: 'var(--admin-text-muted)' }}>{queue.length} items pending review</p>
+      </div>
 
       {isLoading ? (
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
       ) : queue.length === 0 ? (
         <div
           style={{
-            padding: 40,
+            padding: 60,
             borderRadius: 20,
             textAlign: 'center',
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            border: '1px solid var(--admin-card)',
+            backgroundColor: 'var(--admin-surface)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 16,
           }}
         >
-          <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-          <h3 style={{ fontSize: 18 }}>All caught up!</h3>
-          <p style={{ color: 'var(--admin-text-muted)', marginTop: 8 }}>No content pending review</p>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: '50%',
+              backgroundColor: 'rgba(16,185,129,0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon name="checkCircle" size={32} color="var(--admin-emerald)" />
+          </div>
+          <div>
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--admin-text)', marginBottom: 4 }}>All caught up!</h3>
+            <p style={{ color: 'var(--admin-text-muted)', fontSize: 14 }}>No content pending review</p>
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -57,28 +85,31 @@ export default function ContentReviewPage() {
             <div
               key={item.id}
               style={{
-                padding: 16,
+                padding: 20,
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{item.title}</h3>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 240 }}>
+                  <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4, color: 'var(--admin-text)' }}>{item.title}</h3>
                   <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
-                    by {item.creatorName || 'Unknown'} ·{' '}
+                    by <span style={{ color: 'var(--admin-text)' }}>{item.creatorName || 'Unknown'}</span> ·{' '}
                     {new Date(item.submittedAt || '').toLocaleDateString()}
                   </p>
                 </div>
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
                   <button
                     onClick={() => approveMutation.mutate(item.id)}
                     disabled={approveMutation.isPending}
                     style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
                       padding: '8px 20px',
-                      borderRadius: 999,
-                      background: 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)',
+                      borderRadius: 10,
+                      background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
                       color: 'white',
                       fontWeight: 600,
                       fontSize: 13,
@@ -86,8 +117,52 @@ export default function ContentReviewPage() {
                       border: 'none',
                     }}
                   >
-                    Approve
+                    <Icon name="check" size={14} color="#fff" />
+                    <span>Approve</span>
                   </button>
+                  <button
+                    onClick={() => {
+                      setActiveRejectId(activeRejectId === item.id ? null : item.id);
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '8px 18px',
+                      borderRadius: 10,
+                      border: '1px solid rgba(239,68,68,0.3)',
+                      background: 'rgba(239,68,68,0.08)',
+                      color: 'var(--admin-red)',
+                      fontWeight: 500,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span>Reject</span>
+                  </button>
+                </div>
+              </div>
+
+              {activeRejectId === item.id && (
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--admin-card)', display: 'flex', gap: 10 }}>
+                  <input
+                    type="text"
+                    placeholder="Enter reason for rejection (required)…"
+                    value={rejectReasons[item.id] || ''}
+                    onChange={(e) =>
+                      setRejectReasons((prev) => ({ ...prev, [item.id]: e.target.value }))
+                    }
+                    style={{
+                      flex: 1,
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      border: '1px solid var(--admin-border)',
+                      backgroundColor: 'var(--admin-card)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      outline: 'none',
+                    }}
+                  />
                   <button
                     onClick={() => {
                       const reason = (rejectReasons[item.id] || '').trim();
@@ -96,39 +171,21 @@ export default function ContentReviewPage() {
                     }}
                     disabled={rejectMutation.isPending || !(rejectReasons[item.id] || '').trim()}
                     style={{
-                      padding: '8px 20px',
-                      borderRadius: 999,
-                      border: '1px solid #CC1C1C',
-                      background: 'transparent',
-                      color: 'var(--admin-red)',
-                      fontWeight: 500,
+                      padding: '10px 18px',
+                      borderRadius: 10,
+                      backgroundColor: 'var(--admin-red)',
+                      color: '#fff',
+                      border: 'none',
+                      fontWeight: 600,
                       fontSize: 13,
                       cursor: 'pointer',
+                      opacity: !(rejectReasons[item.id] || '').trim() ? 0.5 : 1,
                     }}
                   >
-                    Reject
+                    Confirm Rejection
                   </button>
                 </div>
-              </div>
-              <input
-                type="text"
-                placeholder="Rejection reason (required)"
-                value={rejectReasons[item.id] || ''}
-                onChange={(e) =>
-                  setRejectReasons((prev) => ({ ...prev, [item.id]: e.target.value }))
-                }
-                style={{
-                  width: '100%',
-                  marginTop: 8,
-                  padding: '8px 12px',
-                  borderRadius: 12,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                  color: 'var(--admin-text-muted)',
-                  fontSize: 13,
-                  outline: 'none',
-                }}
-              />
+              )}
             </div>
           ))}
         </div>

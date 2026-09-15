@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { EngagementMetrics } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 export default function EngagementPage() {
   const { data: metrics, isLoading } = useQuery({
@@ -21,7 +22,7 @@ export default function EngagementPage() {
         {
           label: 'Monthly Active Users',
           value: metrics.monthlyActiveUsers?.toLocaleString() || '0',
-          color: 'var(--admin-green)',
+          color: 'var(--admin-emerald)',
         },
         {
           label: 'Avg Session Duration',
@@ -38,8 +39,13 @@ export default function EngagementPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Engagement</h1>
-      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 32 }}>User engagement metrics and trends</p>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Icon name="trendingUp" size={28} color="var(--admin-orange)" />
+          <span>Engagement</span>
+        </h1>
+        <p style={{ color: 'var(--admin-text-muted)' }}>User engagement metrics and trends</p>
+      </div>
 
       {isLoading ? (
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
@@ -47,7 +53,7 @@ export default function EngagementPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
             gap: 16,
           }}
         >
@@ -57,12 +63,12 @@ export default function EngagementPage() {
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>{c.label}</p>
-              <p style={{ fontSize: 22, fontWeight: 700, color: c.color }}>{c.value}</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: c.color }}>{c.value}</p>
             </div>
           ))}
         </div>

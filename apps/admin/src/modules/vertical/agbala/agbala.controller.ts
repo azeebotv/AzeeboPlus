@@ -54,6 +54,8 @@ export class AgbalaController {
     @Query('limit') limit?: string,
     @Query('search') search?: string
   ) {
+    // Caller identity reaches upstream via UpstreamAuthMiddleware's
+    // request-scoped context — no per-handler header plumbing needed.
     return this.agbalaService.getStoryworlds({
       page: page ? parseInt(page) : undefined,
       limit: limit ? parseInt(limit) : undefined,

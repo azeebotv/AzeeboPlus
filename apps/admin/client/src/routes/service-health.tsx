@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Icon } from '@/components/Icons';
+import { apiFetch } from '@/lib/api/base';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -109,44 +110,27 @@ function useHealthMonitor() {
   const [history, setHistory] = useState<HealthSnapshot[]>([]);
 
   const fetchHealth = useCallback(async (): Promise<ServiceHealth[]> => {
-    const results = await Promise.all(
-      ALL_SERVICES.map(async (svc) => {
-        const start = Date.now();
-        try {
-          const healthPath = svc.name === 'live-event-service' ? '/health' : '/v1/health';
-          const res = await fetch(`http://localhost:${svc.port}${healthPath}`, {
-            signal: AbortSignal.timeout(5000),
-          });
-          const latency = Date.now() - start;
-          let dbStatus: 'up' | 'down' | 'unknown' = 'unknown';
-          try {
-            const body = await res.json();
-            const dbInfo = body?.data?.info?.db || body?.data?.info?.database || body?.info?.db;
-            if (dbInfo?.status === 'up') dbStatus = 'up';
-            else if (dbInfo?.status === 'down') dbStatus = 'down';
-          } catch {
-            // ignore parse errors
-          }
-          return {
-            name: svc.name,
-            port: svc.port,
-            status: res.ok ? ('healthy' as const) : ('degraded' as const),
-            latency,
-            lastCheck: Date.now(),
-            dbStatus,
-          };
-        } catch {
-          return {
-            name: svc.name,
-            port: svc.port,
-            status: 'down' as const,
-            latency: Date.now() - start,
-            lastCheck: Date.now(),
-            dbStatus: 'unknown' as const,
-          };
-        }
-      })
-    );
+    // Probed server-side via the admin backend — the browser never dials
+    // localhost:30xx (those hostnames only resolve where the services run).
+    const res = await apiFetch<{
+      services: Array<{
+        name: string;
+        port: number;
+        status: ServiceHealth['status'];
+        latencyMs: number;
+        dbStatus: NonNullable<ServiceHealth['dbStatus']>;
+      }>;
+      checkedAt: string;
+    }>('/api/v1/admin/ops/services');
+    if (!res.success || !res.data) return [];
+    const results: ServiceHealth[] = res.data.services.map((s) => ({
+      name: s.name,
+      port: s.port,
+      status: s.status,
+      latency: s.latencyMs,
+      lastCheck: Date.now(),
+      dbStatus: s.dbStatus,
+    }));
 
     const snapshot: HealthSnapshot = {
       timestamp: Date.now(),
@@ -346,7 +330,7 @@ export default function ServiceHealthPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: 16,
           marginBottom: 32,
         }}
@@ -364,7 +348,13 @@ export default function ServiceHealthPage() {
           title="Avg Response Time"
           value={`${avgLatency}ms`}
           icon="clock"
-          color={avgLatency < 200 ? 'var(--admin-emerald)' : avgLatency < 500 ? 'var(--admin-amber)' : 'var(--admin-red)'}
+          color={
+            avgLatency < 200
+              ? 'var(--admin-emerald)'
+              : avgLatency < 500
+                ? 'var(--admin-amber)'
+                : 'var(--admin-red)'
+          }
           subtitle="Across all services"
         />
         <SummaryCard
@@ -395,7 +385,12 @@ export default function ServiceHealthPage() {
           {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
-              style={{ height: 120, borderRadius: 16, backgroundColor: 'var(--admin-surface)', opacity: 0.5 }}
+              style={{
+                height: 120,
+                borderRadius: 16,
+                backgroundColor: 'var(--admin-surface)',
+                opacity: 0.5,
+              }}
             />
           ))}
         </div>
@@ -420,7 +415,10 @@ export default function ServiceHealthPage() {
                   <span
                     style={{
                       fontSize: 12,
-                      color: catHealthy === category.services.length ? 'var(--admin-emerald)' : 'var(--admin-amber)',
+                      color:
+                        catHealthy === category.services.length
+                          ? 'var(--admin-emerald)'
+                          : 'var(--admin-amber)',
                       marginLeft: 8,
                     }}
                   >
@@ -472,15 +470,25 @@ export default function ServiceHealthPage() {
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <StatusDot status={status} />
-                            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--admin-text)' }}>
+                            <span
+                              style={{ fontSize: 14, fontWeight: 600, color: 'var(--admin-text)' }}
+                            >
                               {svcDef.name}
                             </span>
                           </div>
-                          <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>:{svcDef.port}</span>
+                          <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                            :{svcDef.port}
+                          </span>
                         </div>
 
                         {/* Description */}
-                        <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>
+                        <p
+                          style={{
+                            fontSize: 12,
+                            color: 'var(--admin-text-muted)',
+                            marginBottom: 8,
+                          }}
+                        >
                           {svcDef.description}
                         </p>
 
@@ -509,7 +517,11 @@ export default function ServiceHealthPage() {
                               <span
                                 style={{
                                   color:
-                                    uptime >= 99 ? 'var(--admin-emerald)' : uptime >= 95 ? 'var(--admin-amber)' : 'var(--admin-red)',
+                                    uptime >= 99
+                                      ? 'var(--admin-emerald)'
+                                      : uptime >= 95
+                                        ? 'var(--admin-amber)'
+                                        : 'var(--admin-red)',
                                   fontWeight: 600,
                                 }}
                               >
@@ -522,7 +534,10 @@ export default function ServiceHealthPage() {
                               DB:{' '}
                               <span
                                 style={{
-                                  color: svc.dbStatus === 'up' ? 'var(--admin-emerald)' : 'var(--admin-red)',
+                                  color:
+                                    svc.dbStatus === 'up'
+                                      ? 'var(--admin-emerald)'
+                                      : 'var(--admin-red)',
                                   fontWeight: 600,
                                 }}
                               >
@@ -567,7 +582,13 @@ export default function ServiceHealthPage() {
                                 }
                               />
                             </div>
-                            <div style={{ marginTop: 8, fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                            <div
+                              style={{
+                                marginTop: 8,
+                                fontSize: 11,
+                                color: 'var(--admin-text-muted)',
+                              }}
+                            >
                               Health:{' '}
                               <code style={{ color: 'var(--admin-text-muted)' }}>
                                 http://localhost:{svcDef.port}
@@ -600,7 +621,13 @@ export default function ServiceHealthPage() {
                 <Icon name="alertTriangle" size={18} />
                 Recent Status Changes
               </h2>
-              <div style={{ borderRadius: 12, border: '1px solid var(--admin-surface)', overflow: 'hidden' }}>
+              <div
+                style={{
+                  borderRadius: 12,
+                  border: '1px solid var(--admin-card)',
+                  overflow: 'hidden',
+                }}
+              >
                 {transitions.slice(0, 10).map((t, i) => (
                   <div
                     key={`${t.name}-${t.time}`}
@@ -609,27 +636,33 @@ export default function ServiceHealthPage() {
                       alignItems: 'center',
                       gap: 12,
                       padding: '10px 16px',
-                      backgroundColor: i % 2 === 0 ? 'rgba(26,10,10,0.3)' : 'transparent',
-                      borderBottom: i < 9 ? '1px solid var(--admin-surface)' : 'none',
+                      backgroundColor: i % 2 === 0 ? 'var(--admin-card)' : 'transparent',
+                      borderBottom: i < 9 ? '1px solid var(--admin-card)' : 'none',
                     }}
                   >
                     <StatusDot status={t.to as 'healthy' | 'degraded' | 'down'} />
-                    <span style={{ fontSize: 13, color: 'var(--admin-text)', fontWeight: 500, flex: 1 }}>
+                    <span
+                      style={{ fontSize: 13, color: 'var(--admin-text)', fontWeight: 500, flex: 1 }}
+                    >
                       {t.name}
                     </span>
                     <span
                       style={{
                         fontSize: 12,
-                        color: STATUS_COLORS[t.from as keyof typeof STATUS_COLORS] ?? 'var(--admin-text-muted)',
+                        color:
+                          STATUS_COLORS[t.from as keyof typeof STATUS_COLORS] ??
+                          'var(--admin-text-muted)',
                       }}
                     >
                       {t.from}
                     </span>
-                    <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>&rarr;</span>
+                    <Icon name="arrowRight" size={12} color="var(--admin-text-muted)" />
                     <span
                       style={{
                         fontSize: 12,
-                        color: STATUS_COLORS[t.to as keyof typeof STATUS_COLORS] ?? 'var(--admin-text-muted)',
+                        color:
+                          STATUS_COLORS[t.to as keyof typeof STATUS_COLORS] ??
+                          'var(--admin-text-muted)',
                         fontWeight: 600,
                       }}
                     >
@@ -664,8 +697,8 @@ export default function ServiceHealthPage() {
                 style={{
                   padding: 16,
                   borderRadius: 12,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'rgba(26,10,10,0.3)',
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'var(--admin-surface)',
                 }}
               >
                 <LatencyChart history={history} />
@@ -777,7 +810,14 @@ function SummaryCard({
 function DetailItem({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div style={{ padding: '6px 0' }}>
-      <p style={{ fontSize: 10, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+      <p
+        style={{
+          fontSize: 10,
+          color: 'var(--admin-text-muted)',
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+        }}
+      >
         {label}
       </p>
       <p style={{ fontSize: 13, fontWeight: 600, color: color ?? 'var(--admin-text)' }}>{value}</p>
@@ -830,7 +870,7 @@ function LatencyChart({ history }: { history: HealthSnapshot[] }) {
             y1={padding.top + chartHeight * (1 - pct)}
             x2={padding.left + chartWidth}
             y2={padding.top + chartHeight * (1 - pct)}
-            stroke="#2A1A1A"
+            stroke="var(--admin-border)"
             strokeWidth={1}
           />
           <text

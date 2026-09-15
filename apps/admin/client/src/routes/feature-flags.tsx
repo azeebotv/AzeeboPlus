@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { adminApi } from '@/lib/api/admin';
+import { Icon } from '@/components/Icons';
 
 interface UniverseFeatureFlagRow {
   id: string;
@@ -392,7 +393,10 @@ export default function FeatureFlagsPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Feature Flags</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Icon name="flag" size={26} color="var(--admin-orange)" />
+            Feature Flags
+          </h1>
           <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>
             {flags.length} flags ({enabledCount} enabled)
             {staleFlags.length > 0 && (
@@ -425,6 +429,9 @@ export default function FeatureFlagsPage() {
           <button
             onClick={() => setShowCreate(true)}
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
               padding: '10px 20px',
               borderRadius: 12,
               border: 'none',
@@ -435,6 +442,7 @@ export default function FeatureFlagsPage() {
               cursor: 'pointer',
             }}
           >
+            <Icon name="plus" size={16} color="#FFFFFF" />
             Create Flag
           </button>
         </div>
@@ -467,9 +475,14 @@ export default function FeatureFlagsPage() {
                 fontSize: 12,
               }}
             >
-              {restoreUniverseMutation.isPending
-                ? 'Restoring…'
-                : '↩ Undo — restore from audit archive'}
+              {restoreUniverseMutation.isPending ? (
+                'Restoring…'
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <Icon name="undo" size={13} color="white" />
+                  Undo — restore from audit archive
+                </span>
+              )}
             </button>
           ) : null}
         </div>
@@ -478,7 +491,7 @@ export default function FeatureFlagsPage() {
       {recentlyDeleted.length > 0 && (
         <div
           style={{
-            border: '1px solid var(--admin-surface)',
+            border: '1px solid var(--admin-card)',
             borderRadius: 10,
             marginBottom: 16,
             background: 'rgba(31,138,76,0.05)',
@@ -504,7 +517,7 @@ export default function FeatureFlagsPage() {
               Recently removed universe flags ({recentlyDeleted.length}) — restorable from the audit
               archive
             </span>
-            <span>{showDeleted ? '▾' : '▸'}</span>
+            <Icon name={showDeleted ? 'chevronDown' : 'chevronRight'} size={14} color="var(--admin-text-muted)" />
           </button>
           {showDeleted && (
             <div style={{ padding: '0 18px 18px' }}>
@@ -522,7 +535,7 @@ export default function FeatureFlagsPage() {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '8px 0',
-                      borderBottom: '1px solid #2A2A2A',
+                      borderBottom: '1px solid var(--admin-card)',
                       fontSize: 13,
                     }}
                   >
@@ -643,8 +656,8 @@ export default function FeatureFlagsPage() {
           style={{
             padding: 24,
             borderRadius: 16,
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.8)',
+            border: '1px solid var(--admin-card)',
+            backgroundColor: 'var(--admin-surface)',
             marginBottom: 24,
           }}
         >
@@ -772,8 +785,8 @@ export default function FeatureFlagsPage() {
                   borderRadius: 12,
                   border: isFocused
                     ? '2px solid var(--admin-orange)'
-                    : `1px solid ${isStale ? 'var(--admin-orange)' : 'var(--admin-surface)'}`,
-                  backgroundColor: isFocused ? 'rgba(232,66,10,0.12)' : 'rgba(26,10,10,0.5)',
+                    : `1px solid ${isStale ? 'var(--admin-orange)' : 'var(--admin-card)'}`,
+                  backgroundColor: isFocused ? 'rgba(232,66,10,0.12)' : 'var(--admin-surface)',
                   boxShadow: isFocused ? '0 0 0 3px rgba(232,66,10,0.25)' : undefined,
                   animation: isFocused ? 'flagFlash 1.8s ease-out' : undefined,
                 }}

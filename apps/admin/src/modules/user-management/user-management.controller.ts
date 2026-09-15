@@ -2,6 +2,7 @@ import {
   Inject,
   Controller,
   Get,
+  Post,
   Put,
   Delete,
   Param,
@@ -102,6 +103,34 @@ export class UserManagementController {
       targetType: 'user',
       targetId: id,
       details: { reason: body.reason },
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
+  @Post(':id/verify')
+  async verifyCreator(@Param('id') id: string, @Req() req: AuthRequest): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.setCreatorVerified(id, true, actorId, req.ip);
+    await this.auditLogService.log({
+      actorId,
+      action: 'creator.verified',
+      targetType: 'user',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
+  @Post(':id/unverify')
+  async unverifyCreator(@Param('id') id: string, @Req() req: AuthRequest): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.setCreatorVerified(id, false, actorId, req.ip);
+    await this.auditLogService.log({
+      actorId,
+      action: 'creator.unverified',
+      targetType: 'user',
+      targetId: id,
       ipAddress: req.ip,
     });
     return result;

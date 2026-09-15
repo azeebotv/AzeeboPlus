@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { useEffect, useState, useCallback, type ReactNode } from 'react';
 import {
   type User,
   type AuthResponse,
@@ -10,24 +10,13 @@ import {
   clearSession,
   fetchCsrfToken,
 } from '../lib/api/base';
+import { AuthContext, type AuthContextType } from './auth-context';
 
-interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+// Re-exported for import-path compatibility; the canonical home of useAuth is
+// ./auth-context (kept separate so this file exports only the provider
+// component and vite Fast-Refresh stays enabled here).
+export { useAuth } from './auth-context';
+export type { AuthContextType } from './auth-context';
 
 const ALLOWED_ROLES = new Set(['admin', 'superadmin']);
 
@@ -43,10 +32,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (storedUser && storedToken) {
         if (ALLOWED_ROLES.has(storedUser.role)) {
           setUserState(storedUser);
-        } else {
-          clearSession();
+          setIsLoading(false);
+          return;
         }
+        clearSession();
       }
+
+      // httpOnly-cookie session: the tokens are invisible to JS, so a readable
+      // token existing is NOT the test for a live session. Ask the server who
+      // we are — apiFetch carries the cookies and, if the access token has
+      // expired, transparently rotates it via /auth/refresh before retrying.
+      try {
+        const res = await apiFetch<{
+          id: string;
+          email: string;
+          role: string;
+          displayName?: string;
+          avatar?: string;
+        }>(`/api/v1/auth/me?_t=${Date.now()}`);
+
+        const userData = res.data;
+        if (res.success && userData?.id && ALLOWED_ROLES.has(userData.role)) {
+          const restored: User = {
+            id: userData.id,
+            email: userData.email,
+            name: userData.displayName || userData.email,
+            displayName: userData.displayName,
+            avatar: userData.avatar,
+            role: userData.role,
+          };
+          storeUser(restored);
+          setUserState(restored);
+        } else if (res.statusCode === 401 || res.statusCode === 403) {
+          // apiFetch already attempted the refresh flow and cleared the
+          // session on failure — nothing to recover here.
+        }
+      } catch {
+        // Probe failed (offline/gateway down) — treat as logged out.
+      }
+
       setIsLoading(false);
     };
 

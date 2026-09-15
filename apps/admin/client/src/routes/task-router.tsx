@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
+import { Icon } from '@/components/Icons';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -51,17 +52,17 @@ const tierColor = (t: string) => {
 const workClassLabel = (w: string) => {
   switch (w) {
     case 'X':
-      return '🔴 Eliminate';
+      return 'Eliminate (X)';
     case 'S':
-      return '🟢 Deterministic';
+      return 'Deterministic (S)';
     case 'A2':
-      return '🔵 Low-Cost AI';
+      return 'Low-Cost AI (A2)';
     case 'A1':
-      return '🟣 Specialist AI';
+      return 'Specialist AI (A1)';
     case 'H1':
-      return '🟡 Human + Agent';
+      return 'Human + Agent (H1)';
     case 'H0':
-      return '🟠 Human Only';
+      return 'Human Only (H0)';
     default:
       return w;
   }
@@ -111,10 +112,11 @@ export default function TaskRouterPage() {
   const stats = statsQuery.data?.data ?? ({} as TaskStats);
 
   const domains = [...new Set(tasks.map((t: TaskClassification) => t.domain))].sort();
-  const classes = ['X', 'S', 'A2', 'A1', 'H1', 'H0'];
+  const workClasses = ['X', 'S', 'A2', 'A1', 'H1', 'H0'];
 
   return (
     <div>
+      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -124,7 +126,10 @@ export default function TaskRouterPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>📋 Task Router</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Icon name="clipboardList" size={28} color="var(--admin-orange)" />
+            <span>Task Router</span>
+          </h1>
           <p style={{ color: 'var(--admin-text-muted)' }}>
             H0-H1-A1-A2-S-X work classification, cost optimization, and process mining
           </p>
@@ -133,6 +138,9 @@ export default function TaskRouterPage() {
           onClick={() => seedMutation.mutate()}
           disabled={seedMutation.isPending}
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
             padding: '10px 20px',
             borderRadius: 10,
             border: 'none',
@@ -144,7 +152,8 @@ export default function TaskRouterPage() {
             opacity: seedMutation.isPending ? 0.6 : 1,
           }}
         >
-          {seedMutation.isPending ? 'Seeding…' : '🌱 Seed Task Classifications'}
+          <Icon name="sprout" size={16} />
+          <span>{seedMutation.isPending ? 'Seeding…' : 'Seed Task Classifications'}</span>
         </button>
       </div>
 
@@ -152,7 +161,7 @@ export default function TaskRouterPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(6, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
           gap: 12,
           marginBottom: 32,
         }}
@@ -202,7 +211,7 @@ export default function TaskRouterPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: 16,
           marginBottom: 24,
         }}
@@ -211,8 +220,8 @@ export default function TaskRouterPage() {
           style={{
             padding: 16,
             borderRadius: 12,
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            border: '1px solid var(--admin-card)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
           <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Total Classifications</p>
@@ -224,8 +233,8 @@ export default function TaskRouterPage() {
           style={{
             padding: 16,
             borderRadius: 12,
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            border: '1px solid var(--admin-card)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
           <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Automation Candidates</p>
@@ -237,8 +246,8 @@ export default function TaskRouterPage() {
           style={{
             padding: 16,
             borderRadius: 12,
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            border: '1px solid var(--admin-card)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
           <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Elimination Candidates</p>
@@ -250,8 +259,8 @@ export default function TaskRouterPage() {
           style={{
             padding: 16,
             borderRadius: 12,
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            border: '1px solid var(--admin-card)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
           <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Work Classes</p>
@@ -270,15 +279,15 @@ export default function TaskRouterPage() {
             padding: '10px 14px',
             borderRadius: 10,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'var(--admin-bg)',
+            backgroundColor: 'var(--admin-card)',
             color: 'var(--admin-text)',
             fontSize: 14,
           }}
         >
           <option value="">All Domains</option>
-          {domains.map((d) => (
-            <option key={d as string} value={d as string}>
-              {d as string}
+          {domains.map((d: string) => (
+            <option key={d} value={d}>
+              {d}
             </option>
           ))}
         </select>
@@ -289,13 +298,13 @@ export default function TaskRouterPage() {
             padding: '10px 14px',
             borderRadius: 10,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'var(--admin-bg)',
+            backgroundColor: 'var(--admin-card)',
             color: 'var(--admin-text)',
             fontSize: 14,
           }}
         >
-          <option value="">All Classes</option>
-          {classes.map((c) => (
+          <option value="">All Work Classes</option>
+          {workClasses.map((c: string) => (
             <option key={c} value={c}>
               {workClassLabel(c)}
             </option>
@@ -313,10 +322,14 @@ export default function TaskRouterPage() {
             textAlign: 'center',
             border: '1px solid var(--admin-surface)',
             borderRadius: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 16,
           }}
         >
-          <p style={{ fontSize: 48, marginBottom: 16 }}>📋</p>
-          <p style={{ fontSize: 16, color: 'var(--admin-text-muted)' }}>
+          <Icon name="clipboardList" size={48} color="var(--admin-text-muted)" />
+          <p style={{ fontSize: 16, color: 'var(--admin-text-muted)', margin: 0 }}>
             No task classifications yet. Seed the AOS-MA-001 task types to get started.
           </p>
         </div>

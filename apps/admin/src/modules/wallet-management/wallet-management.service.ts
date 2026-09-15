@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
@@ -89,6 +89,68 @@ export class WalletManagementService {
       page,
       limit,
       hasMore: skip + limit < total,
+    };
+  }
+
+  /**
+   * Manual balance adjustment (credit/debit/correction). Writes the wallet
+   * balance and an immutable adjustment transaction in one DB transaction,
+   * so the ledger always explains the balance.
+   */
+  async adjustWalletBalance(
+    walletId: string,
+    amount: number,
+    type: 'credit' | 'debit' | 'correction',
+    description: string,
+    actorId?: string
+  ) {
+    if (!Number.isFinite(amount) || amount === 0) {
+      throw new BadRequestException('Amount must be a non-zero number');
+    }
+    if (type === 'debit' && amount > 0) amount = -amount;
+    if (type === 'credit' && amount < 0) amount = -amount;
+    if (type === 'debit') type = 'correction';
+
+    const signed = type === 'credit' ? Math.abs(amount) : -Math.abs(amount);
+
+    const wallet = await this.prisma.wallet.findUnique({ where: { id: walletId } });
+    if (!wallet) {
+      throw new NotFoundException(`Wallet ${walletId} not found`);
+    }
+
+    const newBalance = wallet.balance.plus(signed);
+    if (newBalance.isNegative()) {
+      throw new BadRequestException(
+        `Adjustment would overdraw the wallet (balance ${wallet.balance}, delta ${signed})`
+      );
+    }
+
+    const [updated, tx] = await this.prisma.$transaction([
+      this.prisma.wallet.update({
+        where: { id: walletId },
+        data: { balance: newBalance },
+      }),
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId,
+          type: 'admin_adjustment',
+          amount: signed,
+          status: 'completed',
+          description: description || `Manual ${type} by admin`,
+          metadata: { actorId: actorId ?? null, adjustmentType: type },
+        },
+      }),
+    ]);
+
+    return {
+      id: updated.id,
+      userId: updated.userId,
+      balance: Number(updated.balance),
+      transaction: {
+        id: tx.id,
+        amount: Number(tx.amount),
+        description: tx.description,
+      },
     };
   }
 

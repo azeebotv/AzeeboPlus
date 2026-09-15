@@ -1,79 +1,36 @@
-import { useState, useEffect } from 'react';
-import { adminApi } from '@/lib/api/admin';
+import { useQuery } from '@tanstack/react-query';
+import { apiFetch } from '@/lib/api/base';
+import { Icon } from '@/components/Icons';
 
 interface CreatorTipInfo {
   creatorId: string;
   creatorName: string;
+  currency: string;
   totalTips: number;
   totalAmount: number;
   topTier: string | null;
 }
 
 export default function TippingPage() {
-  const [creators, setCreators] = useState<CreatorTipInfo[]>([]);
-  const [loadingCreators, setLoadingCreators] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoadingCreators(true);
-      try {
-        const usersRes = await adminApi.getUsers(1, 50, 'creator');
-        const users =
-          usersRes.success && usersRes.data
-            ? Array.isArray(usersRes.data)
-              ? (usersRes.data as Array<{ id: string; name?: string; displayName?: string }>)
-              : (
-                  usersRes.data as unknown as {
-                    items: Array<{ id: string; name?: string; displayName?: string }>;
-                  }
-                ).items || []
-            : [];
-
-        const results = await Promise.allSettled(
-          users.map(async (u) => {
-            const statsRes = await adminApi.getTipStats(u.id);
-            const stats =
-              statsRes.success && statsRes.data
-                ? (statsRes.data as {
-                    totalTips: number;
-                    totalAmount: number;
-                    topTier: string | null;
-                  })
-                : { totalTips: 0, totalAmount: 0, topTier: null };
-            return {
-              creatorId: u.id,
-              creatorName: u.displayName || u.name || u.id.slice(0, 8),
-              totalTips: stats.totalTips,
-              totalAmount: stats.totalAmount,
-              topTier: stats.topTier,
-            };
-          })
-        );
-
-        if (!cancelled) {
-          setCreators(
-            results
-              .filter((r) => r.status === 'fulfilled')
-              .map((r) => (r as PromiseFulfilledResult<CreatorTipInfo>).value)
-              .filter((c) => c.totalTips > 0)
-              .sort((a, b) => b.totalAmount - a.totalAmount)
-          );
-        }
-      } catch {
-        // Silent
-      } finally {
-        if (!cancelled) setLoadingCreators(false);
-      }
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // One aggregated backend call — the old version fanned out to 51 HTTP
+  // requests per page load (list creators + one stats call each).
+  const {
+    data: creators = [],
+    isLoading: loadingCreators,
+    error,
+  } = useQuery({
+    queryKey: ['admin', 'tipping-summary'],
+    queryFn: async (): Promise<CreatorTipInfo[]> => {
+      const res = await apiFetch<CreatorTipInfo[]>('/api/v1/admin/ops/tipping-summary?limit=50');
+      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load tipping data');
+      return res.data;
+    },
+    refetchInterval: 60_000,
+  });
 
   const totalAmount = creators.reduce((s, c) => s + c.totalAmount, 0);
   const totalTips = creators.reduce((s, c) => s + c.totalTips, 0);
+  const displayCurrency = creators[0]?.currency || 'NGN';
   const tierDistribution = creators.reduce<Record<string, number>>((acc, c) => {
     const tier = c.topTier || 'none';
     acc[tier] = (acc[tier] || 0) + 1;
@@ -83,7 +40,19 @@ export default function TippingPage() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Tipping Dashboard</h1>
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 700,
+            marginBottom: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          <Icon name="heart" size={26} color="var(--admin-orange)" />
+          Tipping Dashboard
+        </h1>
         <p style={{ color: 'var(--admin-text-muted)' }}>Creator tipping overview and leaderboard</p>
       </div>
 
@@ -91,21 +60,41 @@ export default function TippingPage() {
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
           Loading tipping data...
         </p>
+      ) : error ? (
+        <div
+          role="alert"
+          style={{
+            padding: '14px 18px',
+            borderRadius: 12,
+            border: '1px solid rgba(204,28,28,0.4)',
+            backgroundColor: 'rgba(204,28,28,0.12)',
+            color: 'var(--admin-red-light)',
+            fontSize: 14,
+            marginBottom: 24,
+          }}
+        >
+          Failed to load tipping data: {(error as Error).message} — check that creator-service is
+          running.
+        </div>
       ) : (
         <>
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
               gap: 12,
               marginBottom: 32,
             }}
           >
             {[
-              { label: 'Total Tips', value: totalTips.toLocaleString(), color: 'var(--admin-orange)' },
+              {
+                label: 'Total Tips',
+                value: totalTips.toLocaleString(),
+                color: 'var(--admin-orange)',
+              },
               {
                 label: 'Total Amount',
-                value: `₦${totalAmount.toLocaleString()}`,
+                value: `${displayCurrency} ${totalAmount.toLocaleString()}`,
                 color: 'var(--admin-green)',
               },
               {
@@ -126,8 +115,8 @@ export default function TippingPage() {
                 style={{
                   padding: 16,
                   borderRadius: 12,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'var(--admin-surface)',
                 }}
               >
                 <p
@@ -147,19 +136,26 @@ export default function TippingPage() {
           </div>
 
           <div
-            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: 24,
+              marginBottom: 32,
+            }}
           >
             <div
               style={{
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
                 padding: 20,
               }}
             >
               <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>Tier Distribution</h3>
               {Object.entries(tierDistribution).length === 0 ? (
-                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>No tier data available</p>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                  No tier data available
+                </p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {Object.entries(tierDistribution)
@@ -191,7 +187,13 @@ export default function TippingPage() {
                           >
                             {tier === 'none' ? 'No Tier' : tier}
                           </span>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--admin-text-muted)' }}>
+                          <span
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 600,
+                              color: 'var(--admin-text-muted)',
+                            }}
+                          >
                             {count}
                           </span>
                         </div>
@@ -204,8 +206,8 @@ export default function TippingPage() {
             <div
               style={{
                 borderRadius: 16,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
                 padding: 20,
               }}
             >
@@ -213,7 +215,9 @@ export default function TippingPage() {
                 Top Creators by Tips
               </h3>
               {creators.length === 0 ? (
-                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>No tipping activity yet</p>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                  No tipping activity yet
+                </p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {creators.slice(0, 10).map((c, i) => (
@@ -221,16 +225,25 @@ export default function TippingPage() {
                       key={c.creatorId}
                       style={{ display: 'flex', alignItems: 'center', gap: 10 }}
                     >
-                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--admin-text-muted)', width: 20 }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: 'var(--admin-text-muted)',
+                          width: 20,
+                        }}
+                      >
                         #{i + 1}
                       </span>
                       <span style={{ flex: 1, fontSize: 13, color: 'var(--admin-text)' }}>
                         {c.creatorName}
                       </span>
                       <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-orange)' }}>
-                        ₦{c.totalAmount.toLocaleString()}
+                        {c.currency} {c.totalAmount.toLocaleString()}
                       </span>
-                      <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>{c.totalTips} tips</span>
+                      <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                        {c.totalTips} tips
+                      </span>
                       {c.topTier && (
                         <span
                           style={{

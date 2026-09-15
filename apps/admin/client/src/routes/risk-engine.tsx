@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
+import { Icon } from '@/components/Icons';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -99,7 +100,12 @@ export default function RiskEnginePage() {
   const [domainFilter, setDomainFilter] = useState('');
   const [riskFilter, setRiskFilter] = useState('');
   const [assessAction, setAssessAction] = useState('');
-  const [assessResult, setAssessResult] = useState<any>(null);
+  const [assessResult, setAssessResult] = useState<{
+    riskLevel: string;
+    autonomyLevel: string;
+    decision: string;
+    reason?: string;
+  } | null>(null);
 
   const classificationsQuery = useQuery({
     queryKey: ['admin', 'risk-classifications', { domainFilter, riskFilter }],
@@ -107,9 +113,7 @@ export default function RiskEnginePage() {
       const params = new URLSearchParams();
       if (domainFilter) params.set('domain', domainFilter);
       if (riskFilter) params.set('riskLevel', riskFilter);
-      return apiFetch<RiskClassification[]>(
-        `/api/v1/analytics/risk/classifications?${params}`
-      );
+      return apiFetch<RiskClassification[]>(`/api/v1/analytics/risk/classifications?${params}`);
     },
     refetchInterval: 30000,
   });
@@ -124,16 +128,23 @@ export default function RiskEnginePage() {
   const approvalsQuery = useQuery({
     queryKey: ['admin', 'risk-approvals'],
     queryFn: async () => {
-      return apiFetch<ApprovalRequest[]>('/api/v1/analytics/risk/approvals?limit=20');
+      return apiFetch<ApprovalRequest[]>('/api/v1/analytics/risk/approvals/pending?limit=20');
     },
   });
 
   const assessMutation = useMutation({
     mutationFn: async (actionType: string) => {
-      const res = await apiFetch<any>(`/api/v1/analytics/risk/assess/${actionType}`);
+      const res = await apiFetch<unknown>(`/api/v1/analytics/risk/assess/${actionType}`);
       return res;
     },
-    onSuccess: (res: any) => setAssessResult(res?.data),
+    onSuccess: (res) =>
+      setAssessResult(
+        (
+          res as {
+            data?: { riskLevel: string; autonomyLevel: string; decision: string; reason?: string };
+          }
+        )?.data ?? null
+      ),
   });
 
   const approveMutation = useMutation({
@@ -176,7 +187,19 @@ export default function RiskEnginePage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>🛡️ Risk Engine</h1>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <Icon name="shield" size={32} color="var(--admin-blue)" />
+            <span>Risk Engine</span>
+          </h1>
           <p style={{ color: 'var(--admin-text-muted)' }}>
             R0-R4 risk levels, A0-A5 autonomy levels, approval gates, and maker-checker separation
           </p>
@@ -194,9 +217,13 @@ export default function RiskEnginePage() {
             fontWeight: 600,
             cursor: 'pointer',
             opacity: seedRiskMutation.isPending ? 0.6 : 1,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
           }}
         >
-          {seedRiskMutation.isPending ? 'Seeding…' : '🌱 Seed Risk Classifications'}
+          <Icon name="sprout" size={16} />
+          <span>{seedRiskMutation.isPending ? 'Seeding…' : 'Seed Risk Classifications'}</span>
         </button>
       </div>
 
@@ -206,7 +233,7 @@ export default function RiskEnginePage() {
           padding: 20,
           borderRadius: 16,
           border: '1px solid var(--admin-surface)',
-          backgroundColor: 'rgba(26,10,10,0.5)',
+          backgroundColor: 'var(--admin-surface)',
           marginBottom: 24,
         }}
       >
@@ -217,8 +244,19 @@ export default function RiskEnginePage() {
           <table style={{ borderCollapse: 'collapse', fontSize: 12, minWidth: 600 }}>
             <thead>
               <tr>
-                <th style={{ padding: '8px 12px', border: '1px solid var(--admin-surface)', color: 'var(--admin-text-muted)' }}>
-                  Risk ↓ \ Autonomy →
+                <th
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid var(--admin-surface)',
+                    color: 'var(--admin-text-muted)',
+                  }}
+                >
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <span>Risk</span>
+                    <Icon name="arrowDown" size={12} color="var(--admin-text-muted)" />
+                    <span>/ Autonomy</span>
+                    <Icon name="arrowRight" size={12} color="var(--admin-text-muted)" />
+                  </div>
                 </th>
                 {['A0', 'A1', 'A2', 'A3', 'A4', 'A5'].map((a) => (
                   <th
@@ -262,7 +300,12 @@ export default function RiskEnginePage() {
                         border: '1px solid var(--admin-surface)',
                         textAlign: 'center',
                         fontWeight: 600,
-                        color: d === 'ALLOW' ? 'var(--admin-emerald)' : d === 'ASK' ? 'var(--admin-amber)' : 'var(--admin-red)',
+                        color:
+                          d === 'ALLOW'
+                            ? 'var(--admin-emerald)'
+                            : d === 'ASK'
+                              ? 'var(--admin-amber)'
+                              : 'var(--admin-red)',
                         backgroundColor:
                           d === 'ALLOW'
                             ? 'rgba(16,185,129,0.08)'
@@ -285,7 +328,7 @@ export default function RiskEnginePage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: 16,
           marginBottom: 24,
         }}
@@ -295,10 +338,12 @@ export default function RiskEnginePage() {
             padding: 16,
             borderRadius: 12,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
-          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Total Classifications</p>
+          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+            Total Classifications
+          </p>
           <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-orange)' }}>
             {stats.total ?? classifications.length}
           </p>
@@ -308,10 +353,12 @@ export default function RiskEnginePage() {
             padding: 16,
             borderRadius: 12,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
-          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Approval Required</p>
+          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+            Approval Required
+          </p>
           <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-amber)' }}>
             {stats.approvalRequiredCount ?? 0}
           </p>
@@ -321,10 +368,12 @@ export default function RiskEnginePage() {
             padding: 16,
             borderRadius: 12,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
-          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Maker-Checker Enforced</p>
+          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+            Maker-Checker Enforced
+          </p>
           <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-purple)' }}>
             {stats.makerCheckerCount ?? 0}
           </p>
@@ -334,10 +383,12 @@ export default function RiskEnginePage() {
             padding: 16,
             borderRadius: 12,
             border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            backgroundColor: 'var(--admin-surface)',
           }}
         >
-          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>Irreversible Actions</p>
+          <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+            Irreversible Actions
+          </p>
           <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-red)' }}>
             {stats.irreversibleCount ?? 0}
           </p>
@@ -345,12 +396,12 @@ export default function RiskEnginePage() {
       </div>
 
       {/* Risk Level Distribution */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         {['R0', 'R1', 'R2', 'R3', 'R4'].map((r) => (
           <div
             key={r}
             style={{
-              flex: 1,
+              flex: '1 1 80px',
               padding: 12,
               borderRadius: 10,
               border: `1px solid ${riskColor(r)}30`,
@@ -372,7 +423,7 @@ export default function RiskEnginePage() {
           padding: 20,
           borderRadius: 16,
           border: '1px solid var(--admin-surface)',
-          backgroundColor: 'rgba(26,10,10,0.5)',
+          backgroundColor: 'var(--admin-surface)',
           marginBottom: 24,
         }}
       >
@@ -436,7 +487,7 @@ export default function RiskEnginePage() {
               >
                 {assessResult.riskLevel}
               </span>
-              <span style={{ fontSize: 14, color: 'var(--admin-text)' }}>→</span>
+              <Icon name="arrowRight" size={14} color="var(--admin-text-muted)" />
               <span
                 style={{
                   padding: '6px 14px',
@@ -449,7 +500,7 @@ export default function RiskEnginePage() {
               >
                 {assessResult.autonomyLevel}
               </span>
-              <span style={{ fontSize: 14, color: 'var(--admin-text)' }}>→</span>
+              <Icon name="arrowRight" size={14} color="var(--admin-text-muted)" />
               <span
                 style={{
                   padding: '6px 14px',
@@ -474,7 +525,9 @@ export default function RiskEnginePage() {
               </span>
             </div>
             {assessResult.reason && (
-              <p style={{ marginTop: 8, fontSize: 12, color: 'var(--admin-text-muted)' }}>{assessResult.reason}</p>
+              <p style={{ marginTop: 8, fontSize: 12, color: 'var(--admin-text-muted)' }}>
+                {assessResult.reason}
+              </p>
             )}
           </div>
         )}
@@ -641,14 +694,16 @@ export default function RiskEnginePage() {
           padding: 24,
           borderRadius: 16,
           border: '1px solid var(--admin-surface)',
-          backgroundColor: 'rgba(26,10,10,0.5)',
+          backgroundColor: 'var(--admin-surface)',
         }}
       >
         <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--admin-text)' }}>
           Pending Approval Requests
         </h2>
         {approvals.length === 0 ? (
-          <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 24 }}>No pending approvals</p>
+          <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 24 }}>
+            No pending approvals
+          </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {approvals.map((a: ApprovalRequest) => (

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { SubscriptionPlan, SubscriptionStats } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 const TIER_COLORS: Record<string, string> = {
   free: 'var(--admin-text-muted)',
@@ -55,7 +56,10 @@ export default function SubscriptionsPage() {
     queryKey: ['admin', 'subscription-stats'],
     queryFn: async () => {
       const res = await adminApi.getSubscriptionStats();
-      return res.success ? (res.data as SubscriptionStats) : null;
+      // Defensive spread: a partial/undefined payload can never crash the
+      // stat cards (this page crashed twice on unguarded field access).
+      const base = res.success && res.data ? (res.data as SubscriptionStats) : {};
+      return { ...base } as SubscriptionStats;
     },
   });
 
@@ -182,22 +186,34 @@ export default function SubscriptionsPage() {
     ? [
         {
           label: 'Active Subscriptions',
-          value: stats.totalActiveSubscriptions.toLocaleString(),
+          value: (stats.totalActiveSubscriptions ?? 0).toLocaleString(),
           color: 'var(--admin-orange)',
         },
         {
           label: 'Monthly Revenue',
-          value: formatCurrency(stats.monthlyRecurringRevenue),
+          value: formatCurrency(stats.monthlyRecurringRevenue ?? 0),
           color: 'var(--admin-green)',
         },
-        { label: 'Total Revenue', value: formatCurrency(stats.totalRevenue), color: 'var(--admin-amber)' },
-        { label: 'Churn Rate', value: `${stats.churnRate.toFixed(1)}%`, color: 'var(--admin-red)' },
+        {
+          label: 'Total Revenue',
+          value: formatCurrency(stats.totalRevenue ?? 0),
+          color: 'var(--admin-amber)',
+        },
+        {
+          label: 'Churn Rate',
+          value: `${(stats.churnRate ?? 0).toFixed(1)}%`,
+          color: 'var(--admin-red)',
+        },
         {
           label: 'Avg Revenue / User',
-          value: formatCurrency(stats.averageRevenuePerUser),
+          value: formatCurrency(stats.averageRevenuePerUser ?? 0),
           color: 'var(--admin-text-muted)',
         },
-        { label: 'Active Plans', value: String(stats.activePlans), color: 'var(--admin-orange)' },
+        {
+          label: 'Active Plans',
+          value: String(stats.activePlans ?? 0),
+          color: 'var(--admin-orange)',
+        },
       ]
     : [];
 
@@ -215,12 +231,29 @@ export default function SubscriptionsPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Subscriptions</h1>
-          <p style={{ color: 'var(--admin-text-muted)' }}>Manage subscription plans, pricing, and tiers</p>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <Icon name="repeat" size={26} color="var(--admin-orange)" />
+            Subscriptions
+          </h1>
+          <p style={{ color: 'var(--admin-text-muted)' }}>
+            Manage subscription plans, pricing, and tiers
+          </p>
         </div>
         <button
           onClick={openCreate}
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
             padding: '10px 20px',
             borderRadius: 10,
             border: 'none',
@@ -231,13 +264,16 @@ export default function SubscriptionsPage() {
             cursor: 'pointer',
           }}
         >
-          + New Plan
+          <Icon name="plus" size={16} color="#FFFFFF" />
+          New Plan
         </button>
       </div>
 
       {/* Stats Cards */}
       {statsLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 20 }}>Loading stats...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 20 }}>
+          Loading stats...
+        </p>
       ) : (
         <div
           style={{
@@ -253,8 +289,8 @@ export default function SubscriptionsPage() {
               style={{
                 padding: 16,
                 borderRadius: 12,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <p
@@ -324,13 +360,15 @@ export default function SubscriptionsPage() {
 
       {/* Plans Table */}
       {isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading plans...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading plans...
+        </p>
       ) : plans.length === 0 ? (
         <div
           style={{
             textAlign: 'center',
             padding: 60,
-            border: '1px dashed #2A1A1A',
+            border: '1px dashed var(--admin-card)',
             borderRadius: 16,
           }}
         >
@@ -357,7 +395,7 @@ export default function SubscriptionsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--admin-surface)' }}>
+                <tr style={{ borderBottom: '1px solid var(--admin-card)' }}>
                   <th
                     style={{
                       textAlign: 'left',
@@ -447,7 +485,7 @@ export default function SubscriptionsPage() {
                     color: string;
                   };
                   return (
-                    <tr key={plan.id} style={{ borderBottom: '1px solid #1A0F0F' }}>
+                    <tr key={plan.id} style={{ borderBottom: '1px solid var(--admin-card)' }}>
                       <td style={{ padding: '12px 16px' }}>
                         <p style={{ fontWeight: 600, marginBottom: 2 }}>{plan.name}</p>
                         {plan.description && (
@@ -465,7 +503,13 @@ export default function SubscriptionsPage() {
                           </p>
                         )}
                       </td>
-                      <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--admin-orange)' }}>
+                      <td
+                        style={{
+                          padding: '12px 16px',
+                          fontWeight: 600,
+                          color: 'var(--admin-orange)',
+                        }}
+                      >
                         {formatCurrency(plan.price, plan.currency)}
                       </td>
                       <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
@@ -501,9 +545,15 @@ export default function SubscriptionsPage() {
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
-                        {plan.subscriberCount.toLocaleString()}
+                        {(plan.subscriberCount ?? 0).toLocaleString()}
                       </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', fontSize: 12 }}>
+                      <td
+                        style={{
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          fontSize: 12,
+                        }}
+                      >
                         {formatDate(plan.createdAt)}
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'right' }}>
@@ -626,7 +676,10 @@ export default function SubscriptionsPage() {
                   borderRadius: 8,
                   border: '1px solid var(--admin-surface)',
                   background: page >= Math.ceil(total / 15) ? 'transparent' : 'rgba(232,66,10,0.1)',
-                  color: page >= Math.ceil(total / 15) ? 'var(--admin-text-muted)' : 'var(--admin-orange)',
+                  color:
+                    page >= Math.ceil(total / 15)
+                      ? 'var(--admin-text-muted)'
+                      : 'var(--admin-orange)',
                   fontSize: 13,
                   cursor: page >= Math.ceil(total / 15) ? 'default' : 'pointer',
                 }}
@@ -676,7 +729,12 @@ export default function SubscriptionsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 4,
+                  }}
                 >
                   Name *
                 </label>
@@ -698,7 +756,12 @@ export default function SubscriptionsPage() {
 
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 4,
+                  }}
                 >
                   Description
                 </label>
@@ -723,7 +786,12 @@ export default function SubscriptionsPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      color: 'var(--admin-text-muted)',
+                      marginBottom: 4,
+                    }}
                   >
                     Price *
                   </label>
@@ -746,7 +814,12 @@ export default function SubscriptionsPage() {
                 </div>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      color: 'var(--admin-text-muted)',
+                      marginBottom: 4,
+                    }}
                   >
                     Currency
                   </label>
@@ -775,7 +848,12 @@ export default function SubscriptionsPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      color: 'var(--admin-text-muted)',
+                      marginBottom: 4,
+                    }}
                   >
                     Duration (days) *
                   </label>
@@ -796,7 +874,12 @@ export default function SubscriptionsPage() {
                 </div>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      color: 'var(--admin-text-muted)',
+                      marginBottom: 4,
+                    }}
                   >
                     Tier
                   </label>
@@ -826,7 +909,12 @@ export default function SubscriptionsPage() {
 
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 4,
+                  }}
                 >
                   Features (comma-separated)
                 </label>
@@ -849,7 +937,12 @@ export default function SubscriptionsPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      color: 'var(--admin-text-muted)',
+                      marginBottom: 4,
+                    }}
                   >
                     Max Content Access
                   </label>
@@ -871,7 +964,12 @@ export default function SubscriptionsPage() {
                 </div>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      color: 'var(--admin-text-muted)',
+                      marginBottom: 4,
+                    }}
                   >
                     Max Users
                   </label>
@@ -895,7 +993,12 @@ export default function SubscriptionsPage() {
 
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 4,
+                  }}
                 >
                   Status
                 </label>

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
+import { apiFetch } from '@/lib/api/base';
 import type { AdminWallet } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
 
 function getStatusStyle(status: string): { bg: string; color: string } {
   switch (status) {
@@ -24,7 +26,12 @@ export default function WalletsPage() {
   const [actionAmount, setActionAmount] = useState('');
   const [actionReason, setActionReason] = useState('');
 
-  const { data: walletsData, isLoading } = useQuery({
+  const {
+    data: walletsData,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'wallets', page],
     queryFn: async () => {
       const res = await adminApi.getWallets(page, 20);
@@ -64,29 +71,36 @@ export default function WalletsPage() {
     setActionReason('');
   }
 
-  function handleAction() {
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+
+  async function handleAction() {
     if (!actionTarget || !actionType || !actionAmount) return;
     const amount = parseFloat(actionAmount);
     if (isNaN(amount) || amount <= 0) return;
 
-    const endpoint =
-      actionType === 'credit'
-        ? `/api/v1/admin/wallets/${actionTarget.id}/credit`
-        : `/api/v1/admin/wallets/${actionTarget.id}/debit`;
-
-    fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ amount, reason: actionReason || `${actionType} by admin` }),
-    })
-      .then(() => {
-        queryClient.invalidateQueries({ queryKey: ['admin', 'wallets'] });
-        closeAction();
-      })
-      .catch(() => {
-        closeAction();
+    setActionError(null);
+    setActionBusy(true);
+    try {
+      const res = await apiFetch<unknown>(`/api/v1/admin/wallets/${actionTarget.id}/adjust`, {
+        method: 'POST',
+        body: JSON.stringify({
+          amount,
+          type: actionType,
+          description: actionReason || `${actionType} by admin`,
+        }),
       });
+      if (!res.success) {
+        setActionError(res.message || 'Adjustment failed');
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin', 'wallets'] });
+      closeAction();
+    } catch (e) {
+      setActionError((e as Error).message || 'Adjustment failed');
+    } finally {
+      setActionBusy(false);
+    }
   }
 
   function nextStatus(current: string): { next: string; label: string; color: string } {
@@ -100,7 +114,19 @@ export default function WalletsPage() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>User Wallets</h1>
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 700,
+            marginBottom: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          <Icon name="wallet" size={26} color="var(--admin-orange)" />
+          User Wallets
+        </h1>
         <p style={{ color: 'var(--admin-text-muted)' }}>{total} wallets</p>
       </div>
 
@@ -108,19 +134,32 @@ export default function WalletsPage() {
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
           Loading...
         </p>
+      ) : isError ? (
+        <div
+          style={{
+            padding: 20,
+            borderRadius: 12,
+            border: '1px solid var(--admin-red)',
+            background: 'rgba(204,28,28,0.1)',
+            color: 'var(--admin-red)',
+          }}
+        >
+          <strong>Failed to load wallets.</strong> {(error as Error)?.message || 'Unknown error'} —
+          this is a backend failure, not an empty list.
+        </div>
       ) : (
         <div
           style={{
             borderRadius: 16,
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            border: '1px solid var(--admin-card)',
+            backgroundColor: 'var(--admin-surface)',
             overflow: 'hidden',
           }}
         >
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--admin-surface)' }}>
+                <tr style={{ borderBottom: '1px solid var(--admin-card)' }}>
                   {['User', 'Balance', 'Currency', 'Status', 'Created', 'Actions'].map((h) => (
                     <th
                       key={h}
@@ -161,7 +200,7 @@ export default function WalletsPage() {
                           color: 'var(--admin-orange)',
                         }}
                       >
-                        ₦{w.balance.toLocaleString()}
+                        {w.balance.toLocaleString()} {w.currency}
                       </td>
                       <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
                         {w.currency}
@@ -324,8 +363,8 @@ export default function WalletsPage() {
               {actionType === 'credit' ? 'Credit Wallet' : 'Debit Wallet'}
             </h2>
             <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 20 }}>
-              User: {actionTarget.userId} &mdash; Current balance: ₦
-              {actionTarget.balance.toLocaleString()}
+              User: {actionTarget.userId} &mdash; Current balance:{' '}
+              {actionTarget.balance.toLocaleString()} {actionTarget.currency}
             </p>
 
             <div style={{ marginBottom: 16 }}>
@@ -386,10 +425,16 @@ export default function WalletsPage() {
               />
             </div>
 
+            {actionError && (
+              <p style={{ color: 'var(--admin-red)', fontSize: 12, marginBottom: 10 }}>
+                {actionError}
+              </p>
+            )}
+
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 onClick={handleAction}
-                disabled={!actionAmount || parseFloat(actionAmount) <= 0}
+                disabled={actionBusy || !actionAmount || parseFloat(actionAmount) <= 0}
                 style={{
                   flex: 1,
                   padding: '12px 20px',
@@ -405,11 +450,18 @@ export default function WalletsPage() {
                     !actionAmount || parseFloat(actionAmount) <= 0 ? 'var(--admin-grey)' : 'white',
                   fontWeight: 600,
                   fontSize: 14,
+                  opacity: actionBusy ? 0.7 : 1,
                   cursor:
-                    !actionAmount || parseFloat(actionAmount) <= 0 ? 'not-allowed' : 'pointer',
+                    actionBusy || !actionAmount || parseFloat(actionAmount) <= 0
+                      ? 'wait'
+                      : 'pointer',
                 }}
               >
-                {actionType === 'credit' ? 'Credit Wallet' : 'Debit Wallet'}
+                {actionBusy
+                  ? 'Processing…'
+                  : actionType === 'credit'
+                    ? 'Credit Wallet'
+                    : 'Debit Wallet'}
               </button>
               <button
                 onClick={closeAction}

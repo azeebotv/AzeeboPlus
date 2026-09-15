@@ -72,8 +72,8 @@ describe('StaleFlagSummary', () => {
     expect(screen.getByText('search_typo_tolerance')).toBeTruthy();
     expect(screen.getByText('Reality.voting_enabled')).toBeTruthy();
     // Footer quick links.
-    expect(screen.getByText('Global candidates →')).toBeTruthy();
-    expect(screen.getByText('Universe backlog →')).toBeTruthy();
+    expect(screen.getByText('Global candidates')).toBeTruthy();
+    expect(screen.getByText('Universe backlog')).toBeTruthy();
   });
 
   it('toggles on chip click and closes on Escape', () => {
@@ -135,11 +135,11 @@ describe('StaleFlagSummary', () => {
   it('footer links navigate to the stale-filtered lists', () => {
     render(<StaleFlagSummary staleGlobal={globalRows} staleUniverse={universeRows} />);
     openMenu();
-    fireEvent.click(screen.getByText('Global candidates →'));
+    fireEvent.click(screen.getByText('Global candidates'));
     expect(navigateMock).toHaveBeenCalledWith('/feature-flags/global?stale=1#stale');
 
     openMenu();
-    fireEvent.click(screen.getByText('Universe backlog →'));
+    fireEvent.click(screen.getByText('Universe backlog'));
     expect(navigateMock).toHaveBeenCalledWith('/feature-flags?stale=1#stale');
   });
 

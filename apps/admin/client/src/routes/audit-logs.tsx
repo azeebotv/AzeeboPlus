@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { adminApi } from '@/lib/api/admin';
 import type { AuditLogEntry } from '@/lib/api/admin';
+import { Icon } from '@/components/Icons';
+import { sourceStyleFor, archivedFromDetails } from '@/lib/audit-log-helpers';
 
 /**
  * Filter chips → query params. Every chip maps to real `targetType`s the
@@ -65,65 +67,6 @@ const actionStyle = (action: string) =>
     color: 'var(--admin-orange)',
   };
 
-/**
- * Source badge: which trail a row came from. 'auth-service' rows are the
- * federated login/token events from azeebo_auth (read-only view, see
- * audit.service.ts fetchAuthTrail); everything else is written by the admin
- * panel itself. Undefined source (older payloads) renders as admin.
- */
-type SourceStyle = { label: string; bg: string; color: string; title: string };
-const ADMIN_SOURCE: SourceStyle = {
-  label: 'Admin panel',
-  bg: 'rgba(154,138,122,0.18)',
-  color: 'var(--admin-text-muted)',
-  title: 'Written by the admin panel itself',
-};
-const SOURCE_STYLES: Record<string, SourceStyle> = {
-  'auth-service': {
-    label: 'Auth service',
-    bg: 'rgba(59,130,246,0.18)',
-    color: 'var(--admin-blue)',
-    title: 'Federated read-only from auth-service (login/token events)',
-  },
-  admin: ADMIN_SOURCE,
-};
-const sourceStyle = (source?: string): SourceStyle =>
-  SOURCE_STYLES[source ?? 'admin'] ?? ADMIN_SOURCE;
-
-export const sourceBadgeFor = (source?: string) => sourceStyle(source).label;
-
-/**
- * Archived flag key(s) + count from a `feature_flag.deleted` entry's details.
- * Each removal archives one snapshot (`archivedSnapshot`); the plural
- * `archivedSnapshots` array is handled defensively in case a batch path ever
- * writes several into one entry. Global snapshots don't carry the key (it
- * lives on `targetId`); universe snapshots carry `featureKey` + `universeName`.
- */
-export const archivedFromDetails = (
-  log: AuditLogEntry
-): {
-  count: number;
-  keys: string[];
-} => {
-  const details = log.details ?? {};
-  const singular = details.archivedSnapshot as Record<string, unknown> | undefined;
-  const plural = Array.isArray(details.archivedSnapshots)
-    ? (details.archivedSnapshots as Record<string, unknown>[])
-    : [];
-  const snapshots = plural.length > 0 ? plural : singular ? [singular] : [];
-  const keys = snapshots.map((s) => {
-    if (log.targetType === 'universe_feature_flag') {
-      const featureKey = (s.featureKey as string | undefined) ?? log.targetId;
-      const universeName =
-        (s.universeName as string | undefined) ?? (s.universeDisplayName as string | undefined);
-      return universeName ? `${universeName}.${featureKey}` : (featureKey ?? 'unknown');
-    }
-    // Global flags store the key on targetId; the snapshot holds the rest.
-    return log.targetId ?? (s.key as string | undefined) ?? 'unknown';
-  });
-  return { count: snapshots.length, keys };
-};
-
 /** Details cell for feature_flag.deleted rows: archived count + per-flag keys. */
 function FlagDeletedDetails({ log }: { log: AuditLogEntry }) {
   const { count, keys } = archivedFromDetails(log);
@@ -138,16 +81,22 @@ function FlagDeletedDetails({ log }: { log: AuditLogEntry }) {
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <span
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
               padding: '2px 8px',
               borderRadius: 999,
               fontSize: 11,
               fontWeight: 600,
-              background: 'rgba(31,138,76,0.2)',
+              background: 'rgba(16,185,129,0.15)',
               color: 'var(--admin-emerald)',
             }}
             title="Flag state archived to this entry before removal — restorable from the audit archive"
           >
-            🗂 {count} archived flag{count === 1 ? '' : 's'}
+            <Icon name="archive" size={12} color="var(--admin-emerald)" />
+            <span>
+              {count} archived flag{count === 1 ? '' : 's'}
+            </span>
           </span>
           {shown.map((k) => (
             <code key={k} style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}>
@@ -221,10 +170,22 @@ export default function AuditLogsPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Audit Logs</h1>
-      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>
-        {data?.total || 0} total entries
-      </p>
+      <div style={{ marginBottom: 24 }}>
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 700,
+            marginBottom: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <Icon name="fileText" size={28} color="var(--admin-orange)" />
+          <span>Audit Logs</span>
+        </h1>
+        <p style={{ color: 'var(--admin-text-muted)' }}>{data?.total || 0} total entries</p>
+      </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
         {Object.entries(FILTERS).map(([id, f]) => (
@@ -234,7 +195,7 @@ export default function AuditLogsPage() {
             style={{
               padding: '8px 16px',
               borderRadius: 999,
-              border: filterId === id ? 'none' : '1px solid var(--admin-surface)',
+              border: filterId === id ? 'none' : '1px solid var(--admin-border)',
               background:
                 filterId === id
                   ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
@@ -270,7 +231,7 @@ export default function AuditLogsPage() {
             style={{
               padding: '6px 14px',
               borderRadius: 999,
-              border: range === id ? 'none' : '1px solid var(--admin-surface)',
+              border: range === id ? 'none' : '1px solid var(--admin-border)',
               background: range === id ? 'var(--admin-orange)' : 'transparent',
               color: range === id ? 'white' : 'var(--admin-text-muted)',
               fontWeight: 500,
@@ -296,8 +257,8 @@ export default function AuditLogsPage() {
         <div
           style={{
             borderRadius: 16,
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
+            border: '1px solid var(--admin-card)',
+            backgroundColor: 'var(--admin-surface)',
             overflow: 'hidden',
           }}
         >
@@ -353,18 +314,18 @@ export default function AuditLogsPage() {
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <span
-                        title={sourceStyle(log.source).title}
+                        title={sourceStyleFor(log.source).title}
                         style={{
                           display: 'inline-block',
                           padding: '3px 10px',
                           borderRadius: 999,
                           fontSize: 11,
                           fontWeight: 600,
-                          backgroundColor: sourceStyle(log.source).bg,
-                          color: sourceStyle(log.source).color,
+                          backgroundColor: sourceStyleFor(log.source).bg,
+                          color: sourceStyleFor(log.source).color,
                         }}
                       >
-                        {sourceStyle(log.source).label}
+                        {sourceStyleFor(log.source).label}
                       </span>
                     </td>
                     <td

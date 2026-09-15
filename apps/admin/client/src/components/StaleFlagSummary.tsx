@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Icon } from '@/components/Icons';
 
 /** A stale global flag row — deep-links to the Global Flags page. */
 export interface StaleGlobalRow {
@@ -99,7 +100,7 @@ export default function StaleFlagSummary({
           cursor: 'pointer',
         }}
       >
-        <span>⚠</span>
+        <Icon name="alertTriangle" size={14} color="var(--admin-orange)" />
         <span>
           {staleTotal} stale flag{staleTotal === 1 ? '' : 's'}
         </span>
@@ -117,7 +118,7 @@ export default function StaleFlagSummary({
             {autoDisabledCount} auto-off
           </span>
         )}
-        <span style={{ fontSize: 9, opacity: 0.7 }}>{open ? '▲' : '▼'}</span>
+        <Icon name={open ? 'chevronUp' : 'chevronDown'} size={12} color="var(--admin-text-muted)" />
       </button>
 
       {open && (
@@ -268,6 +269,9 @@ export default function StaleFlagSummary({
             <button
               onClick={() => go('/feature-flags/global?stale=1#stale')}
               style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
                 background: 'none',
                 border: 'none',
                 color: 'var(--admin-orange)',
@@ -277,11 +281,15 @@ export default function StaleFlagSummary({
                 padding: 0,
               }}
             >
-              Global candidates →
+              <span>Global candidates</span>
+              <Icon name="arrowRight" size={12} color="var(--admin-orange)" />
             </button>
             <button
               onClick={() => go('/feature-flags?stale=1#stale')}
               style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
                 background: 'none',
                 border: 'none',
                 color: 'var(--admin-orange)',
@@ -291,7 +299,8 @@ export default function StaleFlagSummary({
                 padding: 0,
               }}
             >
-              Universe backlog →
+              <span>Universe backlog</span>
+              <Icon name="arrowRight" size={12} color="var(--admin-orange)" />
             </button>
           </div>
         </div>

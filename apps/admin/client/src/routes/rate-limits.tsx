@@ -1,174 +1,79 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { adminApi } from '@/lib/api/admin';
 import { Icon } from '@/components/Icons';
 
-/* ── Types ─────────────────────────────────────────────────────────────────── */
-
-interface RateLimitEntry {
-  endpoint: string;
-  method: string;
-  limit: number;
-  windowMs: number;
-  currentUsage: number;
-  blockedRequests: number;
-  topIPs: Array<{ ip: string; count: number }>;
-  lastTriggered: number | null;
-}
-
-interface RateLimitSnapshot {
-  timestamp: number;
-  entries: RateLimitEntry[];
-  summary: {
-    totalEndpoints: number;
-    totalBlocked: number;
-    activeLimits: number;
-  };
-}
-
-/* ── API ───────────────────────────────────────────────────────────────────── */
-
-async function fetchRateLimits(): Promise<RateLimitSnapshot> {
-  const res = await fetch('/api/v1/analytics/rate-limits');
-  if (!res.ok) {
-    return generateMockData();
-  }
-  return res.json();
-}
-
-function generateMockData(): RateLimitSnapshot {
-  return {
-    timestamp: Date.now(),
-    entries: [
-      {
-        endpoint: '/api/v1/auth/login',
-        method: 'POST',
-        limit: 10,
-        windowMs: 60000,
-        currentUsage: 7,
-        blockedRequests: 23,
-        topIPs: [
-          { ip: '192.168.1.100', count: 15 },
-          { ip: '10.0.0.50', count: 8 },
-          { ip: '172.16.0.25', count: 5 },
-        ],
-        lastTriggered: Date.now() - 300000,
-      },
-      {
-        endpoint: '/api/v1/auth/signup',
-        method: 'POST',
-        limit: 5,
-        windowMs: 300000,
-        currentUsage: 2,
-        blockedRequests: 45,
-        topIPs: [
-          { ip: '203.0.113.50', count: 22 },
-          { ip: '198.51.100.75', count: 12 },
-          { ip: '192.0.2.100', count: 8 },
-        ],
-        lastTriggered: Date.now() - 600000,
-      },
-      {
-        endpoint: '/api/v1/search',
-        method: 'GET',
-        limit: 100,
-        windowMs: 60000,
-        currentUsage: 45,
-        blockedRequests: 8,
-        topIPs: [
-          { ip: '10.0.0.100', count: 340 },
-          { ip: '10.0.0.101', count: 280 },
-          { ip: '10.0.0.102', count: 150 },
-        ],
-        lastTriggered: Date.now() - 120000,
-      },
-      {
-        endpoint: '/api/v1/wallet/transfer',
-        method: 'POST',
-        limit: 5,
-        windowMs: 60000,
-        currentUsage: 1,
-        blockedRequests: 3,
-        topIPs: [
-          { ip: '172.16.0.50', count: 2 },
-          { ip: '172.16.0.51', count: 1 },
-        ],
-        lastTriggered: Date.now() - 3600000,
-      },
-      {
-        endpoint: '/api/v1/content',
-        method: 'GET',
-        limit: 200,
-        windowMs: 60000,
-        currentUsage: 120,
-        blockedRequests: 0,
-        topIPs: [
-          { ip: '10.0.0.1', count: 1200 },
-          { ip: '10.0.0.2', count: 980 },
-          { ip: '10.0.0.3', count: 750 },
-        ],
-        lastTriggered: null,
-      },
-    ],
-    summary: {
-      totalEndpoints: 5,
-      totalBlocked: 79,
-      activeLimits: 5,
-    },
-  };
-}
-
-/* ── Helpers ───────────────────────────────────────────────────────────────── */
-
-function formatWindowMs(ms: number): string {
-  if (ms < 60000) return `${ms / 1000}s`;
-  if (ms < 3600000) return `${ms / 60000}m`;
-  return `${ms / 3600000}h`;
-}
-
-function getTimeSince(timestamp: number | null): string {
-  if (!timestamp) return 'Never';
-  const diff = Date.now() - timestamp;
-  if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`;
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-  return `${Math.floor(diff / 3600000)}h ago`;
-}
-
-/* ── Main Component ────────────────────────────────────────────────────────── */
+/** Usage-bar color: calm until near the ceiling. */
+const usageColor = (pct: number) =>
+  pct < 60 ? 'var(--admin-emerald)' : pct < 90 ? 'var(--admin-amber)' : 'var(--admin-red)';
 
 export default function RateLimitsPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  const {
-    data: rateLimitData,
-    refetch,
-  } = useQuery({
-    queryKey: ['admin', 'rate-limits'],
-    queryFn: fetchRateLimits,
+  const { data, isLoading, isError, error, refetch, dataUpdatedAt } = useQuery({
+    queryKey: ['admin', 'gateway-rate-limits'],
+    queryFn: async () => {
+      const res = await adminApi.getGatewayRateLimits();
+      if (!res.success) throw new Error('gateway rate-limit metrics unavailable');
+      return res.data;
+    },
     refetchInterval: autoRefresh ? 30000 : false,
   });
 
-  const entries = rateLimitData?.entries || [];
-  const summary = rateLimitData?.summary;
+  if (isError) {
+    return (
+      <div style={{ padding: 24 }}>
+        <div
+          style={{
+            padding: 20,
+            borderRadius: 12,
+            border: '1px solid var(--admin-red)',
+            background: 'rgba(204,28,28,0.1)',
+            color: 'var(--admin-red)',
+          }}
+        >
+          <strong>Rate-limit data unavailable.</strong> {(error as Error)?.message} — the gateway
+          scrape failed. No numbers are shown rather than fake ones.
+        </div>
+      </div>
+    );
+  }
+
+  const entries = data?.entries ?? [];
+  const blocked = data?.blockedByEndpoint ?? [];
+  const blockedTotal = data?.blockedTotal ?? 0;
+  const nearLimit = entries.filter((e) => e.usagePercent >= 60).length;
 
   return (
     <div style={{ padding: 24 }}>
-      {/* Header */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: 24,
+          flexWrap: 'wrap',
+          gap: 12,
         }}
       >
         <div>
           <h1
-            style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}
+            style={{
+              fontSize: 24,
+              fontWeight: 700,
+              color: 'var(--admin-text)',
+              marginBottom: 4,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
           >
+            <Icon name="shield" size={26} color="var(--admin-orange)" />
             Rate Limits
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-            Monitor API rate limiting status and blocked requests
+          <p style={{ color: 'var(--admin-text-muted)', fontSize: 14 }}>
+            Auth rate limits as enforced by the gateway (10/60s per IP and per account; 3/60s in
+            strict mode){data?.available === false ? ' — gateway unreachable' : ''}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -177,7 +82,7 @@ export default function RateLimitsPage() {
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              color: 'var(--text-secondary)',
+              color: 'var(--admin-text-muted)',
               fontSize: 14,
             }}
           >
@@ -187,279 +92,275 @@ export default function RateLimitsPage() {
               onChange={(e) => setAutoRefresh(e.target.checked)}
               style={{ width: 16, height: 16 }}
             />
-            Auto-refresh
+            Auto-refresh (30s)
           </label>
           <button
             onClick={() => refetch()}
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              border: '1px solid var(--border-default)',
-              backgroundColor: 'var(--bg-secondary)',
-              color: 'var(--text-primary)',
+              border: '1px solid var(--admin-card)',
+              backgroundColor: 'var(--admin-surface)',
+              color: 'var(--admin-text)',
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
             }}
           >
+            <Icon name="refresh" size={16} color="currentColor" />
             Refresh
           </button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 16,
-          marginBottom: 24,
-        }}
-      >
-        <div
-          style={{
-            padding: 20,
-            borderRadius: 16,
-            border: '1px solid var(--border-default)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
-                backgroundColor: 'rgba(59,130,246,0.12)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon name="shield" size={20} color="#3B82F6" />
-            </div>
-            <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Active Limits</span>
-          </div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>
-            {summary?.activeLimits || 0}
-          </div>
-        </div>
-
-        <div
-          style={{
-            padding: 20,
-            borderRadius: 16,
-            border: '1px solid var(--border-default)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
-                backgroundColor: 'rgba(239,68,68,0.12)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon name="alert" size={20} color="#EF4444" />
-            </div>
-            <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Total Blocked</span>
-          </div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-red)' }}>
-            {summary?.totalBlocked || 0}
-          </div>
-        </div>
-
-        <div
-          style={{
-            padding: 20,
-            borderRadius: 16,
-            border: '1px solid var(--border-default)',
-            backgroundColor: 'rgba(26,10,10,0.5)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
-                backgroundColor: 'rgba(16,185,129,0.12)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon name="activity" size={20} color="#10B981" />
-            </div>
-            <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-              Endpoints Monitored
-            </span>
-          </div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>
-            {summary?.totalEndpoints || 0}
-          </div>
-        </div>
-      </div>
-
-      {/* Rate Limit Entries */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-          gap: 16,
-        }}
-      >
-        {entries.map((entry, i) => {
-          const usagePercent = (entry.currentUsage / entry.limit) * 100;
-          const isNearLimit = usagePercent > 80;
-          const isAtLimit = usagePercent >= 100;
-
-          return (
-            <div
-              key={i}
-              style={{
-                padding: 20,
-                borderRadius: 16,
-                border: `1px solid ${isAtLimit ? 'var(--admin-red)' : isNearLimit ? 'var(--admin-amber)' : 'var(--border-default)'}`,
-                backgroundColor: 'rgba(26,10,10,0.5)',
-              }}
-            >
-              {/* Header */}
+      {isLoading ? (
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 60 }}>
+          Loading gateway rate-limit state...
+        </p>
+      ) : (
+        <>
+          {/* Summary strip */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: 16,
+              marginBottom: 24,
+            }}
+          >
+            {[
+              {
+                label: 'Tracked identifiers',
+                value: entries.length,
+                icon: 'users',
+                color: '#3B82F6',
+              },
+              {
+                label: 'Near limit (≥60%)',
+                value: nearLimit,
+                icon: 'alertTriangle',
+                color: nearLimit > 0 ? '#F59E0B' : '#10B981',
+              },
+              {
+                label: 'Blocked (since restart)',
+                value: blockedTotal.toLocaleString(),
+                icon: 'x',
+                color: blockedTotal > 0 ? '#EF4444' : '#10B981',
+              },
+              {
+                label: 'Enforced endpoints',
+                value: new Set([
+                  ...entries.map((e) => e.endpoint),
+                  ...blocked.map((b) => b.endpoint),
+                ]).size,
+                icon: 'shield',
+                color: '#8B5CF6',
+              },
+            ].map((c) => (
               <div
+                key={c.label}
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: 16,
+                  padding: 20,
+                  borderRadius: 16,
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'var(--admin-surface)',
                 }}
               >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      backgroundColor: `${c.color}20`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon name={c.icon} size={20} color={c.color} />
+                  </div>
+                  <span style={{ color: 'var(--admin-text-muted)', fontSize: 14 }}>{c.label}</span>
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-text)' }}>
+                  {c.value}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Active windows */}
+          <div
+            style={{
+              padding: 20,
+              borderRadius: 16,
+              border: '1px solid var(--admin-card)',
+              backgroundColor: 'var(--admin-surface)',
+              marginBottom: 24,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 16,
+              }}
+            >
+              <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--admin-text)' }}>
+                Active rate-limit windows
+              </h2>
+              {data?.scrapedAt && (
+                <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
+                  scraped {new Date(data.scrapedAt).toLocaleTimeString()}
+                  {dataUpdatedAt
+                    ? ` · fetched ${new Date(dataUpdatedAt).toLocaleTimeString()}`
+                    : ''}
+                </span>
+              )}
+            </div>
+            {entries.length === 0 ? (
+              <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 24 }}>
+                No auth traffic since the gateway restarted — windows appear here the moment auth
+                endpoints are exercised.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {entries.map((e) => (
+                  <div
+                    key={`${e.identifierType}-${e.identifier}-${e.endpoint}`}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,1fr) 180px 70px',
+                      alignItems: 'center',
+                      gap: 14,
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      border: '1px solid var(--admin-card)',
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: 'var(--admin-text)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {e.identifier}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                        {e.identifierType}
+                      </div>
+                    </div>
+                    <div
                       style={{
-                        padding: '2px 8px',
-                        borderRadius: 4,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        backgroundColor: entry.method === 'GET' ? 'rgba(16,185,129,0.12)' : 'rgba(59,130,246,0.12)',
-                        color: entry.method === 'GET' ? 'var(--admin-emerald)' : 'var(--admin-blue)',
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                        color: 'var(--admin-text-muted)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      {entry.method}
-                    </span>
+                      {e.endpoint}
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          height: 6,
+                          borderRadius: 3,
+                          backgroundColor: 'var(--admin-surface)',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${Math.min(100, e.usagePercent)}%`,
+                            height: '100%',
+                            borderRadius: 3,
+                            backgroundColor: usageColor(e.usagePercent),
+                          }}
+                        />
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginTop: 3 }}>
+                        {e.limit - e.remaining}/{e.limit} used in window
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        textAlign: 'right',
+                        fontWeight: 600,
+                        fontSize: 13,
+                        color: usageColor(e.usagePercent),
+                      }}
+                    >
+                      {e.usagePercent}%
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Blocked history */}
+          <div
+            style={{
+              padding: 20,
+              borderRadius: 16,
+              border: '1px solid var(--admin-card)',
+              backgroundColor: 'var(--admin-surface)',
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 18,
+                fontWeight: 600,
+                color: 'var(--admin-text)',
+                marginBottom: 16,
+              }}
+            >
+              Blocked requests by endpoint
+            </h2>
+            {blocked.length === 0 ? (
+              <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 24 }}>
+                No requests have been blocked — throttles have not tripped since the gateway
+                restarted.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {blocked.map((b) => (
+                  <div
+                    key={b.endpoint}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
                     <span
                       style={{
                         fontFamily: 'monospace',
                         fontSize: 13,
-                        color: 'var(--text-primary)',
+                        color: 'var(--admin-text)',
                       }}
                     >
-                      {entry.endpoint}
+                      {b.endpoint}
+                    </span>
+                    <span style={{ color: 'var(--admin-red)', fontWeight: 600, fontSize: 13 }}>
+                      {b.blocked.toLocaleString()} blocked
                     </span>
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                    {entry.limit} requests per {formatWindowMs(entry.windowMs)}
-                  </div>
-                </div>
-                {entry.blockedRequests > 0 && (
-                  <div
-                    style={{
-                      padding: '4px 8px',
-                      borderRadius: 4,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      backgroundColor: 'rgba(239,68,68,0.12)',
-                      color: 'var(--admin-red)',
-                    }}
-                  >
-                    {entry.blockedRequests} blocked
-                  </div>
-                )}
+                ))}
               </div>
-
-              {/* Usage Bar */}
-              <div style={{ marginBottom: 16 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: 4,
-                    fontSize: 12,
-                  }}
-                >
-                  <span style={{ color: 'var(--text-secondary)' }}>Current Usage</span>
-                  <span
-                    style={{
-                      color: isAtLimit
-                        ? 'var(--admin-red)'
-                        : isNearLimit
-                          ? 'var(--admin-amber)'
-                          : 'var(--text-primary)',
-                    }}
-                  >
-                    {entry.currentUsage} / {entry.limit}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    width: '100%',
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: 'var(--border-default)',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${Math.min(usagePercent, 100)}%`,
-                      height: '100%',
-                      backgroundColor: isAtLimit ? 'var(--admin-red)' : isNearLimit ? 'var(--admin-amber)' : 'var(--admin-emerald)',
-                      transition: 'width 0.3s ease',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Top IPs */}
-              {entry.topIPs.length > 0 && (
-                <div>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
-                    Top IPs
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {entry.topIPs.slice(0, 3).map((ip, j) => (
-                      <div
-                        key={j}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          fontSize: 12,
-                          padding: '4px 8px',
-                          borderRadius: 4,
-                          backgroundColor: 'rgba(26,10,10,0.3)',
-                        }}
-                      >
-                        <span style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>
-                          {ip.ip}
-                        </span>
-                        <span style={{ color: 'var(--text-secondary)' }}>{ip.count} requests</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Last Triggered */}
-              <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text-secondary)' }}>
-                Last triggered: {getTimeSince(entry.lastTriggered)}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

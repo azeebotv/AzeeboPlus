@@ -52,6 +52,32 @@ const CSRF_HEADER = 'X-CSRF-Token';
 const CSRF_COOKIE = '_csrf';
 const STATE_CHANGING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
+/**
+ * Single-flight refresh: N parallel 401s must trigger ONE refresh, not N.
+ * Concurrent refreshes race the token rotation on the server — the losers
+ * 401/429 and force a bogus logout (seen as logout-on-reload when the page
+ * fires several queries at boot).
+ */
+let refreshInFlight: Promise<boolean> | null = null;
+
+async function refreshSession(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = fetch('/api/v1/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    })
+      .then((r) => r.ok)
+      .catch(() => false)
+      .finally(() => {
+        setTimeout(() => {
+          refreshInFlight = null;
+        }, 50);
+      });
+  }
+  return refreshInFlight;
+}
+
 export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit & { skipAuthRetry?: boolean } = {}
@@ -83,39 +109,31 @@ export async function apiFetch<T>(
 
     if (!response.ok) {
       if (response.status === 401 && !options.skipAuthRetry) {
-        // Try refresh via httpOnly cookie — browser sends refresh_token cookie automatically
+        // The refresh_token lives in an httpOnly cookie the browser sends
+        // automatically. Single-flight so parallel 401s share one rotation.
         try {
-          const refreshResponse = await fetch('/api/v1/auth/refresh', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-          });
+          const refreshed = await refreshSession();
 
-          if (refreshResponse.ok) {
-            const refreshData = await refreshResponse.json();
-            if (refreshData.data?.access_token) {
-              // Set new access token as httpOnly cookie
-              await setAuthCookies(refreshData.data.access_token, refreshData.data.refresh_token);
-              // Retry original request — browser will send new cookie
-              const retryResponse = await fetch(endpoint, {
-                ...options,
-                headers,
-                credentials: 'include',
-              });
-              const retryData = await retryResponse.json();
-              if (!retryResponse.ok) {
-                return {
-                  success: false,
-                  message: retryData.message || 'Request failed',
-                  statusCode: retryResponse.status,
-                } as ApiError;
-              }
+          if (refreshed) {
+            // Retry original request — browser will send the new cookie
+            const retryResponse = await fetch(endpoint, {
+              ...options,
+              headers,
+              credentials: 'include',
+            });
+            const retryData = await retryResponse.json();
+            if (!retryResponse.ok) {
               return {
-                success: true,
-                data: retryData.data !== undefined ? retryData.data : retryData,
-                message: retryData.message,
-              };
+                success: false,
+                message: retryData.message || 'Request failed',
+                statusCode: retryResponse.status,
+              } as ApiError;
             }
+            return {
+              success: true,
+              data: retryData.data !== undefined ? retryData.data : retryData,
+              message: retryData.message,
+            };
           }
         } catch {
           // Refresh failed
@@ -167,12 +185,13 @@ export function getToken(): string | null {
 
 export async function setAuthCookies(accessToken: string, refreshToken: string): Promise<void> {
   try {
-    await fetch('/api/v1/auth/cookie', {
+    const res = await fetch('/api/v1/auth/cookie', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
       credentials: 'include',
     });
+    if (!res.ok) throw new Error(`cookie set failed: ${res.status}`);
   } catch {
     // Cookie set failed — fallback to localStorage for this session
     localStorage.setItem(USER_KEY + '_token', accessToken);
@@ -226,7 +245,18 @@ export async function clearSession(): Promise<void> {
 
 export async function fetchCsrfToken(): Promise<void> {
   try {
-    await fetch('/api/v1/auth/csrf', { credentials: 'include' });
+    const res = await fetch('/api/v1/auth/csrf', { credentials: 'include' });
+    // The gateway's CSRF middleware sets the _csrf cookie server-side and
+    // exposes the token via the X-CSRF-Token response header (the cookie is
+    // httpOnly, so JS cannot read it). Mirror that header onto the document
+    // cookie jar under a non-httpOnly name that apiFetch's getCookie() can
+    // read for subsequent state-changing requests.
+    const headerToken = res.headers.get('X-CSRF-Token');
+    const cookieToken = getCookie(CSRF_COOKIE);
+    const token = headerToken || cookieToken;
+    if (token && !cookieToken) {
+      document.cookie = `${CSRF_COOKIE}_client=${token}; path=/; SameSite=Lax`;
+    }
   } catch {
     // CSRF token fetch failed - the cookie may already exist from a prior request
   }
