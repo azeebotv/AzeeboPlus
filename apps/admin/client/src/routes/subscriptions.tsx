@@ -61,7 +61,8 @@ export default function SubscriptionsPage() {
   });
 
   const createPromoMutation = useMutation({
-    mutationFn: (data: any) => adminApi.createPromoCode(data),
+    mutationFn: (data: Omit<PromoCode, 'id' | 'usedCount' | 'status' | 'createdAt'>) =>
+      adminApi.createPromoCode(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'promo-codes'] });
       setShowPromoModal(false);
@@ -346,7 +347,15 @@ export default function SubscriptionsPage() {
       </div>
 
       {/* Main Tab Navigation */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '1px solid var(--admin-card)', paddingBottom: 12 }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: 24,
+          borderBottom: '1px solid var(--admin-card)',
+          paddingBottom: 12,
+        }}
+      >
         <button
           onClick={() => setActiveTab('plans')}
           style={{
@@ -424,311 +433,268 @@ export default function SubscriptionsPage() {
         <>
           {/* Filters */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
-          style={{
-            padding: '8px 12px',
-            borderRadius: 8,
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'var(--admin-dark)',
-            color: 'var(--admin-text)',
-            fontSize: 13,
-          }}
-        >
-          <option value="">All Statuses</option>
-          {statuses.map((s) => (
-            <option key={s} value={s}>
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </option>
-          ))}
-        </select>
-        <select
-          value={tierFilter}
-          onChange={(e) => {
-            setTierFilter(e.target.value);
-            setPage(1);
-          }}
-          style={{
-            padding: '8px 12px',
-            borderRadius: 8,
-            border: '1px solid var(--admin-surface)',
-            backgroundColor: 'var(--admin-dark)',
-            color: 'var(--admin-text)',
-            fontSize: 13,
-          }}
-        >
-          <option value="">All Tiers</option>
-          {tiers.map((t) => (
-            <option key={t} value={t}>
-              {t.charAt(0).toUpperCase() + t.slice(1)}
-            </option>
-          ))}
-        </select>
-      </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
+                fontSize: 13,
+              }}
+            >
+              <option value="">All Statuses</option>
+              {statuses.map((s) => (
+                <option key={s} value={s}>
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </option>
+              ))}
+            </select>
+            <select
+              value={tierFilter}
+              onChange={(e) => {
+                setTierFilter(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
+                fontSize: 13,
+              }}
+            >
+              <option value="">All Tiers</option>
+              {tiers.map((t) => (
+                <option key={t} value={t}>
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      {/* Plans Table */}
-      {isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
-          Loading plans...
-        </p>
-      ) : plans.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: 60,
-            border: '1px dashed var(--admin-card)',
-            borderRadius: 16,
-          }}
-        >
-          <p style={{ color: 'var(--admin-text-muted)', fontSize: 14, marginBottom: 12 }}>
-            No subscription plans found
-          </p>
-          <button
-            onClick={openCreate}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 8,
-              border: '1px solid var(--admin-orange)',
-              background: 'transparent',
-              color: 'var(--admin-orange)',
-              fontSize: 13,
-              cursor: 'pointer',
-            }}
-          >
-            Create your first plan
-          </button>
-        </div>
-      ) : (
-        <>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--admin-card)' }}>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: 'var(--admin-text-muted)',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Plan
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: 'var(--admin-text-muted)',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Price
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: 'var(--admin-text-muted)',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Duration
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: 'var(--admin-text-muted)',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Tier
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: 'var(--admin-text-muted)',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Status
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: 'var(--admin-text-muted)',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Subscribers
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: 'var(--admin-text-muted)',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Created
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'right',
-                      padding: '12px 16px',
-                      color: 'var(--admin-text-muted)',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {plans.map((plan) => {
-                  const statusStyle = (STATUS_STYLES[plan.status] ?? STATUS_STYLES['inactive']) as {
-                    bg: string;
-                    color: string;
-                  };
-                  return (
-                    <tr key={plan.id} style={{ borderBottom: '1px solid var(--admin-card)' }}>
-                      <td style={{ padding: '12px 16px' }}>
-                        <p style={{ fontWeight: 600, marginBottom: 2 }}>
-                          {plan.name}
-                          <Link
-                            to={`/subscriptions/plans/${plan.id}`}
-                            style={{ marginLeft: 8, fontSize: 12, textDecoration: 'none' }}
-                          >
-                            View →
-                          </Link>
-                        </p>
-                        {plan.description && (
-                          <p
-                            style={{
-                              color: 'var(--admin-text-muted)',
-                              fontSize: 11,
-                              maxWidth: 200,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {plan.description}
-                          </p>
-                        )}
-                      </td>
-                      <td
+          {/* Plans Table */}
+          {isLoading ? (
+            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+              Loading plans...
+            </p>
+          ) : plans.length === 0 ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: 60,
+                border: '1px dashed var(--admin-card)',
+                borderRadius: 16,
+              }}
+            >
+              <p style={{ color: 'var(--admin-text-muted)', fontSize: 14, marginBottom: 12 }}>
+                No subscription plans found
+              </p>
+              <button
+                onClick={openCreate}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-orange)',
+                  background: 'transparent',
+                  color: 'var(--admin-orange)',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Create your first plan
+              </button>
+            </div>
+          ) : (
+            <>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--admin-card)' }}>
+                      <th
                         style={{
-                          padding: '12px 16px',
-                          fontWeight: 600,
-                          color: 'var(--admin-orange)',
-                        }}
-                      >
-                        {formatCurrency(plan.price, plan.currency)}
-                      </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
-                        {plan.durationDays}d
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span
-                          style={{
-                            padding: '3px 10px',
-                            borderRadius: 6,
-                            fontSize: 11,
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            color: TIER_COLORS[plan.tier] || 'var(--admin-text-muted)',
-                            backgroundColor: `${TIER_COLORS[plan.tier] || 'var(--admin-text-muted)'}20`,
-                          }}
-                        >
-                          {plan.tier}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span
-                          style={{
-                            padding: '3px 10px',
-                            borderRadius: 6,
-                            fontSize: 11,
-                            fontWeight: 500,
-                            color: statusStyle.color,
-                            backgroundColor: statusStyle.bg,
-                          }}
-                        >
-                          {plan.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
-                        {(plan.subscriberCount ?? 0).toLocaleString()}
-                      </td>
-                      <td
-                        style={{
+                          textAlign: 'left',
                           padding: '12px 16px',
                           color: 'var(--admin-text-muted)',
-                          fontSize: 12,
+                          fontWeight: 500,
                         }}
                       >
-                        {formatDate(plan.createdAt)}
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                          <button
-                            onClick={() =>
-                              toggleStatusMutation.mutate({
-                                id: plan.id,
-                                status: plan.status === 'active' ? 'inactive' : 'active',
-                              })
-                            }
-                            style={{
-                              padding: '4px 10px',
-                              borderRadius: 6,
-                              border: '1px solid var(--admin-surface)',
-                              background: 'transparent',
-                              color: 'var(--admin-text-muted)',
-                              fontSize: 11,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {plan.status === 'active' ? 'Deactivate' : 'Activate'}
-                          </button>
-                          <button
-                            onClick={() => openEdit(plan)}
-                            style={{
-                              padding: '4px 10px',
-                              borderRadius: 6,
-                              border: '1px solid var(--admin-surface)',
-                              background: 'transparent',
-                              color: 'var(--admin-orange)',
-                              fontSize: 11,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Edit
-                          </button>
-                          {deleteConfirm === plan.id ? (
-                            <>
-                              <button
-                                onClick={() => deleteMutation.mutate(plan.id)}
+                        Plan
+                      </th>
+                      <th
+                        style={{
+                          textAlign: 'left',
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Price
+                      </th>
+                      <th
+                        style={{
+                          textAlign: 'left',
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Duration
+                      </th>
+                      <th
+                        style={{
+                          textAlign: 'left',
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Tier
+                      </th>
+                      <th
+                        style={{
+                          textAlign: 'left',
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Status
+                      </th>
+                      <th
+                        style={{
+                          textAlign: 'left',
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Subscribers
+                      </th>
+                      <th
+                        style={{
+                          textAlign: 'left',
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Created
+                      </th>
+                      <th
+                        style={{
+                          textAlign: 'right',
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {plans.map((plan) => {
+                      const statusStyle = (STATUS_STYLES[plan.status] ??
+                        STATUS_STYLES['inactive']) as {
+                        bg: string;
+                        color: string;
+                      };
+                      return (
+                        <tr key={plan.id} style={{ borderBottom: '1px solid var(--admin-card)' }}>
+                          <td style={{ padding: '12px 16px' }}>
+                            <p style={{ fontWeight: 600, marginBottom: 2 }}>
+                              {plan.name}
+                              <Link
+                                to={`/subscriptions/plans/${plan.id}`}
+                                style={{ marginLeft: 8, fontSize: 12, textDecoration: 'none' }}
+                              >
+                                View →
+                              </Link>
+                            </p>
+                            {plan.description && (
+                              <p
                                 style={{
-                                  padding: '4px 10px',
-                                  borderRadius: 6,
-                                  border: 'none',
-                                  background: 'var(--admin-red)',
-                                  color: 'white',
+                                  color: 'var(--admin-text-muted)',
                                   fontSize: 11,
-                                  cursor: 'pointer',
+                                  maxWidth: 200,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
-                                Confirm
-                              </button>
+                                {plan.description}
+                              </p>
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: '12px 16px',
+                              fontWeight: 600,
+                              color: 'var(--admin-orange)',
+                            }}
+                          >
+                            {formatCurrency(plan.price, plan.currency)}
+                          </td>
+                          <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                            {plan.durationDays}d
+                          </td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <span
+                              style={{
+                                padding: '3px 10px',
+                                borderRadius: 6,
+                                fontSize: 11,
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                color: TIER_COLORS[plan.tier] || 'var(--admin-text-muted)',
+                                backgroundColor: `${TIER_COLORS[plan.tier] || 'var(--admin-text-muted)'}20`,
+                              }}
+                            >
+                              {plan.tier}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <span
+                              style={{
+                                padding: '3px 10px',
+                                borderRadius: 6,
+                                fontSize: 11,
+                                fontWeight: 500,
+                                color: statusStyle.color,
+                                backgroundColor: statusStyle.bg,
+                              }}
+                            >
+                              {plan.status}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                            {(plan.subscriberCount ?? 0).toLocaleString()}
+                          </td>
+                          <td
+                            style={{
+                              padding: '12px 16px',
+                              color: 'var(--admin-text-muted)',
+                              fontSize: 12,
+                            }}
+                          >
+                            {formatDate(plan.createdAt)}
+                          </td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                               <button
-                                onClick={() => setDeleteConfirm(null)}
+                                onClick={() =>
+                                  toggleStatusMutation.mutate({
+                                    id: plan.id,
+                                    status: plan.status === 'active' ? 'inactive' : 'active',
+                                  })
+                                }
                                 style={{
                                   padding: '4px 10px',
                                   borderRadius: 6,
@@ -739,74 +705,123 @@ export default function SubscriptionsPage() {
                                   cursor: 'pointer',
                                 }}
                               >
-                                Cancel
+                                {plan.status === 'active' ? 'Deactivate' : 'Activate'}
                               </button>
-                            </>
-                          ) : (
-                            <button
-                              onClick={() => setDeleteConfirm(plan.id)}
-                              style={{
-                                padding: '4px 10px',
-                                borderRadius: 6,
-                                border: '1px solid #CC1C1C',
-                                background: 'transparent',
-                                color: 'var(--admin-red)',
-                                fontSize: 11,
-                                cursor: 'pointer',
-                              }}
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                              <button
+                                onClick={() => openEdit(plan)}
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: 6,
+                                  border: '1px solid var(--admin-surface)',
+                                  background: 'transparent',
+                                  color: 'var(--admin-orange)',
+                                  fontSize: 11,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Edit
+                              </button>
+                              {deleteConfirm === plan.id ? (
+                                <>
+                                  <button
+                                    onClick={() => deleteMutation.mutate(plan.id)}
+                                    style={{
+                                      padding: '4px 10px',
+                                      borderRadius: 6,
+                                      border: 'none',
+                                      background: 'var(--admin-red)',
+                                      color: 'white',
+                                      fontSize: 11,
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    Confirm
+                                  </button>
+                                  <button
+                                    onClick={() => setDeleteConfirm(null)}
+                                    style={{
+                                      padding: '4px 10px',
+                                      borderRadius: 6,
+                                      border: '1px solid var(--admin-surface)',
+                                      background: 'transparent',
+                                      color: 'var(--admin-text-muted)',
+                                      fontSize: 11,
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => setDeleteConfirm(plan.id)}
+                                  style={{
+                                    padding: '4px 10px',
+                                    borderRadius: 6,
+                                    border: '1px solid #CC1C1C',
+                                    background: 'transparent',
+                                    color: 'var(--admin-red)',
+                                    fontSize: 11,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
 
-          {/* Pagination */}
-          {total > 15 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 20 }}>
-              <button
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  background: page <= 1 ? 'transparent' : 'rgba(232,66,10,0.1)',
-                  color: page <= 1 ? 'var(--admin-text-muted)' : 'var(--admin-orange)',
-                  fontSize: 13,
-                  cursor: page <= 1 ? 'default' : 'pointer',
-                }}
-              >
-                Prev
-              </button>
-              <span style={{ padding: '6px 14px', color: 'var(--admin-text-muted)', fontSize: 13 }}>
-                Page {page} of {Math.ceil(total / 15)}
-              </span>
-              <button
-                disabled={page >= Math.ceil(total / 15)}
-                onClick={() => setPage(page + 1)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  background: page >= Math.ceil(total / 15) ? 'transparent' : 'rgba(232,66,10,0.1)',
-                  color:
-                    page >= Math.ceil(total / 15)
-                      ? 'var(--admin-text-muted)'
-                      : 'var(--admin-orange)',
-                  fontSize: 13,
-                  cursor: page >= Math.ceil(total / 15) ? 'default' : 'pointer',
-                }}
-              >
-                Next
-              </button>
-            </div>
+              {/* Pagination */}
+              {total > 15 && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 20 }}>
+                  <button
+                    disabled={page <= 1}
+                    onClick={() => setPage(page - 1)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      background: page <= 1 ? 'transparent' : 'rgba(232,66,10,0.1)',
+                      color: page <= 1 ? 'var(--admin-text-muted)' : 'var(--admin-orange)',
+                      fontSize: 13,
+                      cursor: page <= 1 ? 'default' : 'pointer',
+                    }}
+                  >
+                    Prev
+                  </button>
+                  <span
+                    style={{ padding: '6px 14px', color: 'var(--admin-text-muted)', fontSize: 13 }}
+                  >
+                    Page {page} of {Math.ceil(total / 15)}
+                  </span>
+                  <button
+                    disabled={page >= Math.ceil(total / 15)}
+                    onClick={() => setPage(page + 1)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      background:
+                        page >= Math.ceil(total / 15) ? 'transparent' : 'rgba(232,66,10,0.1)',
+                      color:
+                        page >= Math.ceil(total / 15)
+                          ? 'var(--admin-text-muted)'
+                          : 'var(--admin-orange)',
+                      fontSize: 13,
+                      cursor: page >= Math.ceil(total / 15) ? 'default' : 'pointer',
+                    }}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </>
       ) : (
@@ -857,12 +872,30 @@ export default function SubscriptionsPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--admin-card)', textAlign: 'left' }}>
-                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Code</th>
-                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Discount</th>
-                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Redemptions</th>
-                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Status</th>
-                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Expires</th>
-                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', textAlign: 'right' }}>Actions</th>
+                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                        Code
+                      </th>
+                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                        Discount
+                      </th>
+                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                        Redemptions
+                      </th>
+                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                        Status
+                      </th>
+                      <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                        Expires
+                      </th>
+                      <th
+                        style={{
+                          padding: '12px 16px',
+                          color: 'var(--admin-text-muted)',
+                          textAlign: 'right',
+                        }}
+                      >
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -881,8 +914,16 @@ export default function SubscriptionsPage() {
                             {p.code}
                           </span>
                         </td>
-                        <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--admin-emerald)' }}>
-                          {p.discountType === 'percent' ? `${p.discountValue}% OFF` : `$${p.discountValue} OFF`}
+                        <td
+                          style={{
+                            padding: '12px 16px',
+                            fontWeight: 600,
+                            color: 'var(--admin-emerald)',
+                          }}
+                        >
+                          {p.discountType === 'percent'
+                            ? `${p.discountValue}% OFF`
+                            : `$${p.discountValue} OFF`}
                         </td>
                         <td style={{ padding: '12px 16px', color: 'var(--admin-text)' }}>
                           {p.usedCount} / {p.maxUses ? p.maxUses : '∞'}
@@ -900,9 +941,7 @@ export default function SubscriptionsPage() {
                                   ? 'rgba(13,59,46,0.3)'
                                   : 'rgba(204,28,28,0.2)',
                               color:
-                                p.status === 'active'
-                                  ? 'var(--admin-emerald)'
-                                  : 'var(--admin-red)',
+                                p.status === 'active' ? 'var(--admin-emerald)' : 'var(--admin-red)',
                             }}
                           >
                             {p.status}
@@ -981,9 +1020,17 @@ export default function SubscriptionsPage() {
             }}
           >
             <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Create Promo Code</h3>
-            
+
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Promo Code
               </label>
               <input
@@ -1005,14 +1052,29 @@ export default function SubscriptionsPage() {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <div
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}
+            >
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
+                >
                   Discount Type
                 </label>
                 <select
                   value={promoForm.discountType}
-                  onChange={(e) => setPromoForm({ ...promoForm, discountType: e.target.value as any })}
+                  onChange={(e) =>
+                    setPromoForm({
+                      ...promoForm,
+                      discountType: e.target.value as 'percent' | 'flat',
+                    })
+                  }
                   style={{
                     width: '100%',
                     padding: '8px 12px',
@@ -1029,7 +1091,15 @@ export default function SubscriptionsPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
+                >
                   Discount Value
                 </label>
                 <input
@@ -1050,9 +1120,19 @@ export default function SubscriptionsPage() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+            <div
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}
+            >
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
+                >
                   Max Redemptions
                 </label>
                 <input
@@ -1074,7 +1154,15 @@ export default function SubscriptionsPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
+                >
                   Expires At
                 </label>
                 <input
@@ -1117,6 +1205,7 @@ export default function SubscriptionsPage() {
                     discountValue: Number(promoForm.discountValue),
                     maxUses: promoForm.maxUses ? Number(promoForm.maxUses) : null,
                     expiresAt: promoForm.expiresAt || null,
+                    applicablePlanIds: [],
                   })
                 }
                 disabled={!promoForm.code || createPromoMutation.isPending}

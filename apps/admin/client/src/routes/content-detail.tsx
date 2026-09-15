@@ -41,21 +41,22 @@ export default function ContentDetailPage() {
     enabled: Boolean(id),
     queryFn: async () => {
       const res = await adminApi.getContentItem(id as string);
-      return asRecord(res);
+      return asRecord(res.success ? res.data : null);
     },
   });
 
   const content = q.data ?? null;
+  const contentId = str(content?.id);
   const creator = asRecord(content?.creator);
   const universe = asRecord(content?.universe);
   const media = asRecord(content?.mediaAsset);
   const categories = asArray<Record<string, unknown>>(content?.categories);
   const tags = asArray<Record<string, unknown>>(content?.tags);
   const relatedOut = asArray<Record<string, unknown>>(content?.relationshipsAsContent).map((r) =>
-    asRecord(r.relatedContent),
+    asRecord(r.relatedContent)
   );
   const relatedIn = asArray<Record<string, unknown>>(content?.relationshipsAsRelatedContent).map(
-    (r) => asRecord(r.content),
+    (r) => asRecord(r.content)
   );
 
   const invalidate = () => {
@@ -165,7 +166,7 @@ export default function ContentDetailPage() {
           >
             {status !== 'published' && (
               <button
-                onClick={() => run(() => adminApi.publishContent(content.id), 'Content published.')}
+                onClick={() => run(() => adminApi.publishContent(contentId), 'Content published.')}
                 style={actionBtn}
               >
                 Publish
@@ -174,7 +175,7 @@ export default function ContentDetailPage() {
             {status === 'published' && (
               <button
                 onClick={() =>
-                  run(() => adminApi.unpublishContent(content.id), 'Content unpublished.')
+                  run(() => adminApi.unpublishContent(contentId), 'Content unpublished.')
                 }
                 style={actionBtn}
               >
@@ -190,7 +191,7 @@ export default function ContentDetailPage() {
                 <button
                   onClick={() =>
                     run(async () => {
-                      await adminApi.deleteContent(content.id);
+                      await adminApi.deleteContent(contentId);
                       navigate('/content');
                     }, '')
                   }
@@ -216,7 +217,7 @@ export default function ContentDetailPage() {
             <Field label="Creator">
               {creator.id ? (
                 <Link to={`/users/${creator.id}`} style={link}>
-                  {str(creator.displayName) || str(creator.email) || creator.id}
+                  {str(creator.displayName) || str(creator.email) || str(creator.id)}
                 </Link>
               ) : (
                 '-'
