@@ -28,6 +28,9 @@ import { SubscriptionAdminModule } from './modules/subscription-admin/subscripti
 import { AnalyticsProxyModule } from './modules/analytics-proxy/analytics-proxy.module';
 import { LiveEventsProxyModule } from './modules/live-events-proxy/live-events-proxy.module';
 import { SupportAdminModule } from './modules/support-admin/support-admin.module';
+import { AiProvenanceModule } from './modules/ai-provenance/ai-provenance.module';
+import { DualControlModule } from './modules/dual-control/dual-control.module';
+import { RightsClearancesModule } from './modules/rights-clearances/rights-clearances.module';
 import { ServiceAuthGuard, RateLimiterModule, SecurityModule } from '@azeebo/security';
 import { FeatureFlagModule, queueFlags, adminFlags, authFlags } from '@azeebo/feature-flags';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
@@ -85,6 +88,9 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     EngagementAdminModule,
     NotificationAdminModule,
     ReportsAdminModule,
+    AiProvenanceModule,
+    DualControlModule,
+    RightsClearancesModule,
     PlatformOverviewModule,
     AgbalaModule,
     HealthModule,
@@ -109,10 +115,7 @@ export class AppModule implements NestModule {
       .exclude(
         { path: 'api/v1/auth/*path', method: RequestMethod.ALL },
         { path: 'api/auth/*path', method: RequestMethod.ALL },
-        { path: 'api/health', method: RequestMethod.ALL },
-        { path: '*path', method: RequestMethod.GET },
-        { path: '*path', method: RequestMethod.HEAD },
-        { path: '*path', method: RequestMethod.OPTIONS }
+        { path: 'api/health', method: RequestMethod.ALL }
       )
       .forRoutes('api');
   }

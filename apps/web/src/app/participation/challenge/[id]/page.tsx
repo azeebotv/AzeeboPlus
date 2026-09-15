@@ -35,7 +35,9 @@ function ChallengeDetailContent() {
   const query = useQuery({
     queryKey: ['challenge', id],
     queryFn: async () => {
-      const res = await api.request<Challenge>(`/api/v1/participation/challenges/${id}`);
+      // Challenges live in lifestyle-service under the /challenges gateway
+      // prefix — the /participation prefix has no gateway block.
+      const res = await api.request<Challenge>(`/api/v1/challenges/${id}`);
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Challenge not found');
     },
@@ -44,7 +46,7 @@ function ChallengeDetailContent() {
 
   const submitMutation = useMutation({
     mutationFn: async () =>
-      api.request(`/api/v1/participation/challenges/${id}/submit`, { method: 'POST' }),
+      api.request(`/api/v1/challenges/${id}/submit`, { method: 'POST' }),
     onSuccess: () => setSubmitted(true),
   });
 

@@ -280,6 +280,8 @@ model ContentItem {
   mediaAsset  MediaAsset?
   categories  Category[]
   tags        Tag[]
+  aiProvenanceRecords AiProvenanceRecord[]
+  rightsClearances    RightsClearance[]
   relationshipsAsContent ContentRelationship[] @relation("ContentRelationshipContent")
 
   @@index([universeId])
@@ -351,6 +353,86 @@ model PayoutRequest {
   user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("payout_requests")
+}
+
+// AZP-RIGHTS-005 — provenance records for AI-generated content: which tool/model
+// produced an asset, whether attribution is required, and the clearance decision.
+model AiProvenanceRecord {
+  id                          String   @id @default(uuid())
+  contentId                   String
+  aiTool                      String
+  aiModel                     String
+  generationType              String
+  attributionRequired         Boolean  @default(true)
+  talentRestriction           Boolean  @default(false)
+  voiceRestriction            Boolean  @default(false)
+  likenessRestriction         Boolean  @default(false)
+  vendorIndependenceVerified  Boolean  @default(false)
+  clearanceStatus             String   @default("pending")
+  clearanceNotes              String   @default("")
+  clearedBy                   String?
+  clearedAt                   DateTime?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  content                     ContentItem @relation(fields: [contentId], references: [id], onDelete: Restrict)
+
+  @@index([contentId])
+  @@index([clearanceStatus])
+  @@map("ai_provenance_records")
+}
+
+// TAA §55 — two-person-integrity requests for high-risk operations. Two distinct
+// admins must approve before execution; self-approval and re-approval are blocked.
+model DualControlRequest {
+  id                  String    @id @default(uuid())
+  actionType          String
+  description         String
+  requestedBy         String
+  amount              Decimal?  @db.Decimal(18, 2)
+  currency            String?
+  targetUserIds       Json?
+  status              String    @default("pending")
+  firstApprover       String?
+  firstApprovedAt     DateTime?
+  secondApprover      String?
+  secondApprovedAt    DateTime?
+  rejectionReason     String?
+  rejectedBy          String?
+  rejectedAt          DateTime?
+  executedAt          DateTime?
+  executedBy          String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([status])
+  @@map("dual_control_requests")
+}
+
+// AZP-RIGHTS-003/004 — talent, music, likeness, and voice clearances with
+// territorial scope and expiry tracking.
+model RightsClearance {
+  id               String    @id @default(uuid())
+  talentName       String
+  type             String
+  contentId        String
+  universe         String
+  status           String    @default("pending")
+  expiryDate       DateTime?
+  clearanceScope   String    @default("worldwide")
+  regions          Json?
+  notes            String    @default("")
+  decidedBy        String?
+  decidedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  content          ContentItem @relation(fields: [contentId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@index([type])
+  @@index([contentId])
+  @@map("rights_clearances")
 }
 
 model ModerationCase {

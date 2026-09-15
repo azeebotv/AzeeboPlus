@@ -1,3 +1,5 @@
+> **File:** `product-development-deployment-authority.md` · **Document ID:** AZP-PDDMA-001 · **Revision:** R1.0 / P1.0 / PA1.0
+
 **AZEEBO+ MODULAR PLATFORM**
 
 **PRODUCT DEVELOPMENT & DEPLOYMENT\

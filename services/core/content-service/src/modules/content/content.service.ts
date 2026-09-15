@@ -795,6 +795,121 @@ export class ContentService {
     }
   }
 
+  /**
+   * POST /content/:id/media/upload-url — presign a direct-to-storage PUT for
+   * the creator's browser. Returns { signedUrl, mediaAssetId }; the asset row
+   * itself is only created by `completeMediaUpload` after the bytes land.
+   */
+  async createMediaUploadUrl(
+    userId: string,
+    contentId: string,
+    file: { fileName: string; fileSize: number; contentType: string },
+    userRole?: string
+  ): Promise<{
+    success: boolean;
+    data: { signedUrl: string; mediaAssetId: string };
+  }> {
+    try {
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id: contentId },
+      });
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
+      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+        throw new ForbiddenException('Not authorized to upload media for this content');
+      }
+
+      const existingMediaAsset = await this.prisma.mediaAsset.findUnique({
+        where: { contentItemId: contentId },
+      });
+      if (existingMediaAsset) {
+        throw new BadRequestException('Content already has a media asset');
+      }
+
+      const upload = await this.mediaService.createUploadUrl(
+        contentId,
+        file.fileName,
+        file.contentType,
+        file.fileSize
+      );
+
+      return {
+        success: true,
+        data: { signedUrl: upload.signedUrl, mediaAssetId: upload.mediaAssetId },
+      };
+    } catch (error) {
+      this.logger.error(`Failed to create media upload URL: ${error}`);
+      mapAndThrow(error, 'creating media upload URL');
+    }
+  }
+
+  /**
+   * POST /content/:id/media/complete — verify the upload reached storage and
+   * register the MediaAsset. The size is taken from the stored object, not the
+   * client, so the record reflects what was actually uploaded.
+   */
+  async completeMediaUpload(
+    userId: string,
+    contentId: string,
+    mediaAssetId: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: MediaAssetWithContentItem }> {
+    try {
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id: contentId },
+      });
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
+      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+        throw new ForbiddenException('Not authorized to complete this upload');
+      }
+      if (!mediaAssetId) {
+        throw new BadRequestException('mediaAssetId is required');
+      }
+
+      const existingMediaAsset = await this.prisma.mediaAsset.findUnique({
+        where: { contentItemId: contentId },
+      });
+      if (existingMediaAsset) {
+        throw new BadRequestException('Content already has a media asset');
+      }
+
+      // The object key is deterministic from the id we handed the client.
+      const key = `uploads/${contentId}/${mediaAssetId}`;
+      let stat: { size: number; contentType?: string };
+      try {
+        stat = await this.mediaService.statObject(key);
+      } catch {
+        throw new BadRequestException(
+          'Upload not found in storage — the file may not have finished uploading'
+        );
+      }
+      if (!stat.size) {
+        throw new BadRequestException('Uploaded object is empty');
+      }
+
+      const mediaAsset = await this.prisma.mediaAsset.create({
+        data: {
+          contentItemId: contentId,
+          originalUrl: key,
+          format: stat.contentType ?? 'application/octet-stream',
+          size: stat.size,
+        },
+        include: { contentItem: true },
+      });
+
+      return {
+        success: true,
+        data: mediaAsset as MediaAssetWithContentItem,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to complete media upload: ${error}`);
+      mapAndThrow(error, 'completing media upload');
+    }
+  }
+
   async updateMediaAsset(
     userId: string,
     contentId: string,

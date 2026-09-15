@@ -69,29 +69,5 @@ export function createWalletMethods(client: RequestClient) {
         WALLET_READ_RETRY
       );
     },
-
-    getEarnings: async (params: {
-      range: string;
-    }): Promise<
-      ApiResponse<{
-        totalEarnings: number;
-        pendingEarnings: number;
-        withdrawableBalance: number;
-        withdrawableChangePercentage: number;
-        avgEarningPerContent: number;
-        avgEarningChangePercentage: number;
-        earningsTrend: { date: string; amount: number }[];
-      }>
-    > => {
-      return client.request<{
-        totalEarnings: number;
-        pendingEarnings: number;
-        withdrawableBalance: number;
-        withdrawableChangePercentage: number;
-        avgEarningPerContent: number;
-        avgEarningChangePercentage: number;
-        earningsTrend: { date: string; amount: number }[];
-      }>(`/api/v1/wallet/earnings?range=${params.range}`, {}, WALLET_READ_RETRY);
-    },
   };
 }

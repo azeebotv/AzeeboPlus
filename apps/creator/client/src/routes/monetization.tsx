@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
 import type { MonetizationData, MonetizationTier } from '@/lib/creator-types';
+import { formatNgn, errorTextStyle } from '@/lib/ui';
 
 const inputStyle = {
   width: '100%',
@@ -37,13 +38,15 @@ export default function MonetizationPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      creatorApi.updateMonetization({
+    mutationFn: async () => {
+      const res = await creatorApi.updateMonetization({
         tipEnabled,
         tipMin: Number(tipMin),
         tipMax: Number(tipMax),
         payoutMethod,
-      }),
+      });
+      return creatorApi.assertSuccess<MonetizationData>(res);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['creator', 'monetization'] }),
   });
 
@@ -91,7 +94,7 @@ export default function MonetizationPage() {
                       {tier.name}
                     </div>
                     <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
-                      ${tier.price}
+                      {formatNgn(tier.price)}
                       <span style={{ fontSize: 13, color: 'var(--creator-text-muted)', fontWeight: 400 }}>/mo</span>
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--creator-text-muted)', marginBottom: 8 }}>
@@ -174,7 +177,7 @@ export default function MonetizationPage() {
                   <label
                     style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}
                   >
-                    Min Tip ($)
+                    Min Tip (₦)
                   </label>
                   <input
                     type="number"
@@ -188,7 +191,7 @@ export default function MonetizationPage() {
                   <label
                     style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}
                   >
-                    Max Tip ($)
+                    Max Tip (₦)
                   </label>
                   <input
                     type="number"
@@ -319,7 +322,7 @@ export default function MonetizationPage() {
             </p>
           )}
           {saveMutation.isError && (
-            <p style={{ color: 'var(--creator-red)', fontSize: 13, marginTop: 8 }}>Failed to save settings</p>
+            <p style={errorTextStyle()}>{creatorApi.errorMessage(saveMutation.error)}</p>
           )}
         </div>
       )}

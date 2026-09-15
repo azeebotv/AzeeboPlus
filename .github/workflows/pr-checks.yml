@@ -121,6 +121,15 @@ jobs:
       - run: node scripts/check-seed-image-hosts.mjs
       - run: node --test scripts/__tests__/*.test.mjs
       - run: node scripts/check-swagger-consistency.mjs
+      # Client apps call gateway routes via /api/v1/{service}/...; this check
+      # extracts those calls (string + template literals, query strings)
+      # and diffs them against SERVICE_CONFIGS in the gateway. A client call
+      # with no gateway entry 404s at runtime (and only in environments the
+      # developer didn't try), so new mismatches must surface at PR time.
+      # Known debt is frozen in scripts/route-contracts-baseline.json (ratchet,
+      # may only shrink); endpoints no client calls are listed as advisory
+      # dead routes. Run locally: pnpm check:route-contracts
+      - run: node scripts/check-route-contracts.mjs
       - run: node scripts/sweep-flag-usage.mjs
       - run: node scripts/generate-flag-registry-table.mjs --check
 

@@ -10,9 +10,10 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { SubscribersData } from '@/lib/creator-types';
+import { errorTextStyle } from '@/lib/ui';
 
 export default function SubscribersPage() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['creator', 'subscribers'],
     queryFn: async () => {
       const res = await creatorApi.getSubscribers();
@@ -27,6 +28,8 @@ export default function SubscribersPage() {
 
       {isLoading ? (
         <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+      ) : isError ? (
+        <p style={errorTextStyle()}>{creatorApi.errorMessage(error)}</p>
       ) : data ? (
         <>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>

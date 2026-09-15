@@ -18,7 +18,14 @@ import { AuthContext, type AuthContextType } from './auth-context';
 export { useAuth } from './auth-context';
 export type { AuthContextType } from './auth-context';
 
-const ALLOWED_ROLES = new Set(['admin', 'superadmin']);
+const ALLOWED_ROLES = new Set([
+  'admin',
+  'superadmin',
+  'super_admin',
+  'ADMIN',
+  'SUPERADMIN',
+  'SUPER_ADMIN',
+]);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUserState] = useState<User | null>(null);

@@ -95,6 +95,9 @@ describe('Content Controller Contract Tests', () => {
 
   beforeAll(async () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
+    // SharedCacheModule's RedisService requires REDIS_URL at construction;
+    // the test-pr CI job provisions a redis service container on 6379.
+    process.env.REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot(), FeatureFlagModule.register({}), ContentModule],

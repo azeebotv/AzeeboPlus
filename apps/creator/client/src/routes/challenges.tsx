@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
 import type { Challenge, ChallengeSubmission } from '@/lib/creator-types';
+import { formatNgn, errorTextStyle } from '@/lib/ui';
 
 const statusColor: Record<string, string> = {
   active: 'rgba(13,59,46,0.2)',
@@ -45,9 +46,13 @@ export default function ChallengesPage() {
   });
 
   const submitMutation = useMutation({
-    mutationFn: (challengeId: string) => creatorApi.submitChallenge(challengeId, submitTitle),
+    mutationFn: async (challengeId: string) => {
+      const res = await creatorApi.submitChallenge(challengeId, submitTitle);
+      return creatorApi.assertSuccess<{ success: boolean; submissionId?: string }>(res);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['creator', 'challenge-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['creator', 'challenges'] });
       setSelectedChallenge(null);
       setSubmitTitle('');
     },
@@ -145,7 +150,7 @@ export default function ChallengesPage() {
                       }}
                     >
                       <span>
-                        Prize: <strong style={{ color: 'var(--creator-orange)' }}>${challenge.prize}</strong>
+                        Prize: <strong style={{ color: 'var(--creator-orange)' }}>{formatNgn(challenge.prize)}</strong>
                       </span>
                       <span>Submissions: {challenge.submissionsCount}</span>
                       <span>Ends: {new Date(challenge.deadline).toLocaleDateString()}</span>
@@ -221,10 +226,10 @@ export default function ChallengesPage() {
                             borderRadius: 999,
                             fontSize: 11,
                             fontWeight: 600,
-                            backgroundColor: statusColor[s.status],
-                            color: statusText[s.status],
-                            textTransform: 'replace',
-                            letterSpacing: 0.5,
+                          backgroundColor: statusColor[s.status],
+                          color: statusText[s.status],
+                          textTransform: 'capitalize',
+                          letterSpacing: 0.5,
                           }}
                         >
                           {s.status.replace(/_/g, ' ')}
@@ -275,7 +280,7 @@ export default function ChallengesPage() {
               Submit to: {selectedChallenge.title}
             </h3>
             <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 16 }}>
-              Prize: ${selectedChallenge.prize}
+              Prize: {formatNgn(selectedChallenge.prize)}
             </p>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
@@ -330,7 +335,7 @@ export default function ChallengesPage() {
               <p style={{ color: 'var(--creator-green)', fontSize: 13, marginTop: 8 }}>Submission successful!</p>
             )}
             {submitMutation.isError && (
-              <p style={{ color: 'var(--creator-red)', fontSize: 13, marginTop: 8 }}>Submission failed</p>
+              <p style={errorTextStyle()}>{creatorApi.errorMessage(submitMutation.error)}</p>
             )}
           </div>
         </div>

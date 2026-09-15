@@ -1,8 +1,12 @@
 declare module 'react-i18next' {
   export function useTranslation(): {
-    t: (key: string, fallback?: string) => string;
+    t: (key: string, fallbackOrOptions?: string | Record<string, unknown>) => string;
     i18n: { language: string };
   };
+  export const I18nextProvider: (props: {
+    i18n: unknown;
+    children?: React.ReactNode;
+  }) => React.ReactElement;
   export function Trans(props: { i18nKey: string; children?: React.ReactNode }): React.ReactElement;
   export function initReactI18next(): {
     type: string;

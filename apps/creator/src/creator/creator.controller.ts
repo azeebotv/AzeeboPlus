@@ -10,8 +10,11 @@ import {
   Param,
   Query,
   UseGuards,
+  UseInterceptors,
   Request,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CreatorService, ContentItem } from './creator.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -68,7 +71,7 @@ export class CreatorController {
   @Post('content')
   async createContent(
     @Request() req: AuthRequest,
-    @Body() body: { title: string; description: string; type: string }
+    @Body() body: { title: string; description?: string; type: string }
   ): Promise<{ success: boolean; data: unknown }> {
     const content = await this.creatorService.createContent(req.user.id, body);
     return {
@@ -124,11 +127,43 @@ export class CreatorController {
     };
   }
 
-  @Post('payouts/request')
-  async requestPayout(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
+  @Get('earnings/summary')
+  async getEarningsSummary(
+    @Request() req: AuthRequest
+  ): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
-      data: await this.creatorService.requestPayout(req.user.id),
+      data: await this.creatorService.getEarningsSummary(req.user.id),
+    };
+  }
+
+  @Get('earnings/history')
+  async getEarningsHistory(
+    @Request() req: AuthRequest,
+    @Query('limit') limit = 50
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getEarningsHistory(req.user.id, Number(limit)),
+    };
+  }
+
+  @Get('payouts')
+  async getPayouts(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getPayouts(req.user.id),
+    };
+  }
+
+  @Post('payouts/request')
+  async requestPayout(
+    @Request() req: AuthRequest,
+    @Body() body: { amount?: number; method?: string }
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.requestPayout(req.user.id, body?.amount, body?.method),
     };
   }
 
@@ -230,46 +265,91 @@ export class CreatorController {
   // ── Monetization settings ───────────────────────────────────────
   @Get('monetization')
   async getMonetization(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
-    const profile = await this.creatorService.getCreatorProfile(req.user.id);
     return {
       success: true,
-      data: {
-        isMonetizationEnabled: profile?.verified ?? false,
-        isSubscriptionEnabled: false,
-        subscriptionPrice: 0,
-        isTipEnabled: true,
-        minimumTip: 100,
-      },
-    };
-  }
-
-  @Get('challenges')
-  async getChallenges(): Promise<{ success: boolean; data: unknown }> {
-    return {
-      success: true,
-      data: { items: [], total: 0, page: 1, limit: 20, totalPages: 0 },
-    };
-  }
-
-  @Post('challenges/:challengeId/participate')
-  async participateInChallenge(
-    @Param('challengeId') challengeId: string,
-    @Body() body: { contentUrl: string }
-  ): Promise<{ success: boolean; data: unknown }> {
-    return {
-      success: true,
-      data: { id: 'new', challengeId, contentUrl: body.contentUrl, status: 'submitted' },
+      data: await this.creatorService.getMonetization(req.user.id),
     };
   }
 
   @Put('monetization')
   async updateMonetization(
-    @Body() body: Record<string, unknown>
+    @Request() req: AuthRequest,
+    @Body()
+    body: {
+      tipEnabled?: boolean;
+      tipMin?: number;
+      tipMax?: number;
+      payoutMethod?: string;
+      isTipEnabled?: boolean;
+      minimumTip?: number;
+    }
   ): Promise<{ success: boolean; data: unknown }> {
-    return { success: true, data: body };
+    return {
+      success: true,
+      data: await this.creatorService.updateMonetization(req.user.id, body),
+    };
   }
 
-  // ── Creator profile (public) ────────────────────────────────────
+  // The web app reads/writes via PATCH /creator/monetization/settings
+  @Get('monetization/settings')
+  async getWebMonetizationSettings(
+    @Request() req: AuthRequest
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getWebMonetizationSettings(req.user.id),
+    };
+  }
+
+  @Patch('monetization/settings')
+  async patchWebMonetizationSettings(
+    @Request() req: AuthRequest,
+    @Body()
+    body: {
+      tipsEnabled?: boolean;
+      minimumTipAmount?: number;
+      customTipAmounts?: number[];
+      payoutMethod?: string;
+    }
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.updateMonetization(req.user.id, {
+        tipEnabled: body.tipsEnabled,
+        tipMin: body.minimumTipAmount,
+        tipMax: body.customTipAmounts?.length
+          ? Math.max(...body.customTipAmounts)
+          : undefined,
+        payoutMethod: body.payoutMethod,
+      }),
+    };
+  }
+
+  // ── Creator profile ─────────────────────────────────────────────
+  @Get('profile')
+  async getOwnProfile(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
+    const profile = await this.creatorService.getCreatorProfile(req.user.id);
+    return { success: true, data: profile };
+  }
+
+  @Put('profile')
+  async updateOwnProfile(
+    @Request() req: AuthRequest,
+    @Body()
+    body: {
+      bio?: string;
+      banner?: string;
+      displayName?: string;
+      avatar?: string;
+      website?: string;
+      socialLinks?: Record<string, string>;
+    }
+  ): Promise<{ success: boolean; data: unknown }> {
+    const profile = await this.creatorService.updateCreatorProfile(req.user.id, body);
+    return { success: true, data: profile };
+  }
+
+  // ── Public creator profile (by id) ─────────────────────────────
   @Get('profile/:id')
   async getProfile(@Param('id') id: string): Promise<{ success: boolean; data: unknown }> {
     const profile = await this.creatorService.getCreatorProfile(id);
@@ -278,27 +358,90 @@ export class CreatorController {
 
   // ── Subscribers ─────────────────────────────────────────────────
   @Get('subscribers')
-  async getSubscribers(@Request() _req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
+  async getSubscribers(
+    @Request() req: AuthRequest,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
-      data: {
-        stats: { totalSubscribers: 0, newThisWeek: 0, newThisMonth: 0, churnRate: 0 },
-        subscribers: [],
-      },
+      data: await this.creatorService.getSubscribers(req.user.id, Number(page), Number(limit)),
     };
   }
 
   @Get('subscribers/stats')
-  async getSubscriberStats(): Promise<{ success: boolean; data: unknown }> {
+  async getSubscriberStats(
+    @Request() req: AuthRequest
+  ): Promise<{ success: boolean; data: unknown }> {
+    const subs = await this.creatorService.getSubscribers(req.user.id, 1, 20);
     return {
       success: true,
       data: {
-        totalSubscribers: 0,
+        totalSubscribers: subs.total,
         newThisWeek: 0,
         newThisMonth: 0,
         churnRate: 0,
+        growth: subs.growth,
         demographics: { ageGroups: [], topRegions: [] },
       },
+    };
+  }
+
+  // ── Uploads ─────────────────────────────────────────────────────
+  @Get('uploads')
+  async getUploads(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getUploads(req.user.id),
+    };
+  }
+
+  @Post('uploads')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 500 * 1024 * 1024 }, // 500MB cap matching the UI hint
+    })
+  )
+  async createUpload(
+    @Request() req: AuthRequest,
+    @Body()
+    body: { title: string; description?: string; type?: string; universe?: string },
+    @UploadedFile() file?: Express.Multer.File
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.createUpload(req.user.id, body, file),
+    };
+  }
+
+  // ── Challenges (proxied from creator-service) ───────────────────
+  @Get('challenges')
+  async getChallenges(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getChallenges(req.user.id),
+    };
+  }
+
+  @Get('challenges/submissions')
+  async getChallengeSubmissions(
+    @Request() req: AuthRequest
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getChallengeSubmissions(req.user.id),
+    };
+  }
+
+  @Post('challenges/:challengeId/submit')
+  async submitChallenge(
+    @Request() req: AuthRequest,
+    @Param('challengeId') challengeId: string,
+    @Body() body: { title: string }
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.submitChallenge(req.user.id, challengeId, body?.title ?? ''),
     };
   }
 }

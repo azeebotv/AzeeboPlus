@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
-import type { ContentItem, ContentList } from '@/lib/creator-types';
+import {
+  formatDate,
+  inputStyle,
+  labelStyle,
+  primaryButtonStyle,
+  statusBadgeStyle,
+} from '@/lib/ui';
+import type { ContentItem } from '@/lib/creator-types';
+
+const PAGE_SIZE = 20;
 
 export default function ContentPage() {
   const queryClient = useQueryClient();
@@ -10,40 +19,64 @@ export default function ContentPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [editItem, setEditItem] = useState<ContentItem | null>(null);
   const [form, setForm] = useState({ title: '', description: '', type: 'video' });
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['creator', 'content', page, statusFilter],
     queryFn: async () => {
-      const res = await creatorApi.getContent(page, 20, statusFilter || undefined);
-      return res.success ? (res.data as ContentList) : null;
+      const res = await creatorApi.getContent(page, PAGE_SIZE, statusFilter || undefined);
+      return creatorApi.assertSuccess(res);
     },
   });
 
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['creator', 'content'] });
+    queryClient.invalidateQueries({ queryKey: ['creator', 'dashboard'] });
+  };
+
   const createMutation = useMutation({
-    mutationFn: (d: typeof form) => creatorApi.createContent(d),
+    mutationFn: async (d: typeof form) => creatorApi.assertSuccess(await creatorApi.createContent(d)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['creator', 'content'] });
+      invalidate();
       setShowCreate(false);
       setForm({ title: '', description: '', type: 'video' });
+      setActionError(null);
     },
+    onError: (err: unknown) => setActionError(creatorApi.errorMessage(err)),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data: d }: { id: string; data: Partial<ContentItem> }) =>
-      creatorApi.updateContent(id, d),
+    mutationFn: async ({ id, data: d }: { id: string; data: Partial<ContentItem> }) =>
+      creatorApi.assertSuccess(await creatorApi.updateContent(id, d)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['creator', 'content'] });
+      invalidate();
       setEditItem(null);
+      setActionError(null);
     },
+    onError: (err: unknown) => setActionError(creatorApi.errorMessage(err)),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => creatorApi.deleteContent(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['creator', 'content'] }),
+    mutationFn: async (id: string) => creatorApi.assertSuccess(await creatorApi.deleteContent(id)),
+    onSuccess: () => {
+      invalidate();
+      setActionError(null);
+    },
+    onError: (err: unknown) => setActionError(creatorApi.errorMessage(err)),
   });
 
-  const items = data?.items || [];
-  const total = data?.total || 0;
+  const publishMutation = useMutation({
+    mutationFn: async (id: string) => creatorApi.assertSuccess(await creatorApi.publishContent(id)),
+    onSuccess: () => {
+      invalidate();
+      setActionError(null);
+    },
+    onError: (err: unknown) => setActionError(creatorApi.errorMessage(err)),
+  });
+
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
@@ -59,25 +92,13 @@ export default function ContentPage() {
           <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Content</h1>
           <p style={{ color: 'var(--creator-text-muted)', fontSize: 14 }}>{total} items</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          style={{
-            padding: '10px 20px',
-            borderRadius: 8,
-            border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: 'white',
-            fontWeight: 600,
-            cursor: 'pointer',
-            fontSize: 14,
-          }}
-        >
+        <button onClick={() => setShowCreate(true)} style={primaryButtonStyle}>
           + New Content
         </button>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-        {['', 'draft', 'published', 'archived'].map((s) => (
+        {['', 'draft', 'published', 'scheduled', 'archived'].map((s) => (
           <button
             key={s}
             onClick={() => {
@@ -104,10 +125,40 @@ export default function ContentPage() {
         ))}
       </div>
 
+      {actionError && (
+        <div
+          style={{
+            padding: '10px 16px',
+            borderRadius: 8,
+            border: '1px solid var(--creator-red)',
+            backgroundColor: 'rgba(204,28,28,0.1)',
+            color: 'var(--creator-red)',
+            fontSize: 13,
+            marginBottom: 16,
+          }}
+          role="alert"
+        >
+          {actionError}
+        </div>
+      )}
+
       {isLoading ? (
-        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
+      ) : error ? (
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <p style={{ color: 'var(--creator-red)', marginBottom: 12 }}>
+            {creatorApi.errorMessage(error)}
+          </p>
+          <button onClick={() => refetch()} style={primaryButtonStyle}>
+            Retry
+          </button>
+        </div>
       ) : items.length === 0 ? (
-        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>No content found</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>
+          No content found. Click “+ New Content” to create your first item.
+        </p>
       ) : (
         <div
           style={{
@@ -121,7 +172,7 @@ export default function ContentPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--creator-border)' }}>
-                  {['Title', 'Type', 'Status', 'Views', 'Actions'].map((h) => (
+                  {['Title', 'Type', 'Status', 'Views', 'Created', 'Actions'].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -139,7 +190,7 @@ export default function ContentPage() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
+                {items.map((item: ContentItem) => (
                   <tr key={item.id} style={{ borderBottom: '1px solid var(--creator-border-light)' }}>
                     <td style={{ padding: '12px 16px', fontWeight: 600 }}>{item.title}</td>
                     <td
@@ -152,35 +203,33 @@ export default function ContentPage() {
                       {item.type}
                     </td>
                     <td style={{ padding: '12px 16px' }}>
-                      <span
-                        style={{
-                          padding: '3px 10px',
-                          borderRadius: 999,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          backgroundColor:
-                            item.status === 'published'
-                              ? 'rgba(13,59,46,0.2)'
-                              : item.status === 'draft'
-                                ? 'rgba(245,158,11,0.2)'
-                                : 'rgba(154,138,122,0.2)',
-                          color:
-                            item.status === 'published'
-                              ? 'var(--creator-green)'
-                              : item.status === 'draft'
-                                ? 'var(--creator-amber, #f59e0b)'
-                                : 'var(--creator-text-muted)',
-                          textTransform: 'capitalize',
-                        }}
-                      >
-                        {item.status}
-                      </span>
+                      <span style={statusBadgeStyle(item.status)}>{item.status}</span>
                     </td>
                     <td style={{ padding: '12px 16px', color: 'var(--creator-text-muted)' }}>
                       {(item.viewCount || 0).toLocaleString()}
                     </td>
+                    <td style={{ padding: '12px 16px', color: 'var(--creator-text-muted)', fontSize: 13 }}>
+                      {formatDate(item.createdAt)}
+                    </td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
+                        {item.status !== 'published' && item.status !== 'archived' && (
+                          <button
+                            onClick={() => publishMutation.mutate(item.id)}
+                            disabled={publishMutation.isPending}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: 6,
+                              border: '1px solid var(--creator-green)',
+                              background: 'transparent',
+                              color: 'var(--creator-green)',
+                              fontSize: 12,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Publish
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setEditItem(item);
@@ -206,6 +255,7 @@ export default function ContentPage() {
                           onClick={() => {
                             if (confirm('Delete this content?')) deleteMutation.mutate(item.id);
                           }}
+                          disabled={deleteMutation.isPending}
                           style={{
                             padding: '4px 10px',
                             borderRadius: 6,
@@ -241,18 +291,18 @@ export default function ContentPage() {
               Prev
             </button>
             <span style={{ padding: '8px 16px', color: 'var(--creator-text-muted)', fontSize: 13 }}>
-              Page {page} of {Math.ceil(total / 20) || 1}
+              Page {page} of {totalPages}
             </span>
             <button
               onClick={() => setPage(page + 1)}
-              disabled={page >= Math.ceil(total / 20)}
+              disabled={page >= totalPages}
               style={{
                 padding: '8px 16px',
                 borderRadius: 8,
                 border: '1px solid var(--creator-border)',
                 background: 'transparent',
-                color: page >= Math.ceil(total / 20) ? 'var(--creator-text-muted)' : 'var(--creator-orange)',
-                cursor: page >= Math.ceil(total / 20) ? 'not-allowed' : 'pointer',
+                color: page >= totalPages ? 'var(--creator-text-muted)' : 'var(--creator-orange)',
+                cursor: page >= totalPages ? 'not-allowed' : 'pointer',
               }}
             >
               Next
@@ -290,62 +340,45 @@ export default function ContentPage() {
           >
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Create Content</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <input
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Title"
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--creator-border)',
-                  backgroundColor: 'var(--creator-dark)',
-                  color: 'var(--creator-text)',
-                  fontSize: 14,
-                }}
-              />
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Description"
-                rows={4}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--creator-border)',
-                  backgroundColor: 'var(--creator-dark)',
-                  color: 'var(--creator-text)',
-                  fontSize: 14,
-                  resize: 'vertical',
-                }}
-              />
-              <select
-                value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value })}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--creator-border)',
-                  backgroundColor: 'var(--creator-dark)',
-                  color: 'var(--creator-text)',
-                  fontSize: 14,
-                }}
-              >
-                <option value="video">Video</option>
-                <option value="audio">Audio</option>
-                <option value="document">Document</option>
-              </select>
+              <div>
+                <label style={labelStyle}>Title</label>
+                <input
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="Title"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Description"
+                  rows={4}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Type</label>
+                <select
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value })}
+                  style={inputStyle}
+                >
+                  <option value="video">Video</option>
+                  <option value="audio">Audio</option>
+                  <option value="document">Document</option>
+                </select>
+              </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={() => createMutation.mutate(form)}
                   disabled={createMutation.isPending || !form.title}
                   style={{
-                    padding: '10px 20px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                    color: 'white',
-                    fontWeight: 600,
-                    cursor: 'pointer',
+                    ...primaryButtonStyle,
+                    opacity: createMutation.isPending || !form.title ? 0.6 : 1,
+                    cursor: createMutation.isPending || !form.title ? 'not-allowed' : 'pointer',
                   }}
                 >
                   {createMutation.isPending ? 'Creating...' : 'Create'}
@@ -398,51 +431,53 @@ export default function ContentPage() {
           >
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Edit Content</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <input
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Title"
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--creator-border)',
-                  backgroundColor: 'var(--creator-dark)',
-                  color: 'var(--creator-text)',
-                  fontSize: 14,
-                }}
-              />
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Description"
-                rows={4}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--creator-border)',
-                  backgroundColor: 'var(--creator-dark)',
-                  color: 'var(--creator-text)',
-                  fontSize: 14,
-                  resize: 'vertical',
-                }}
-              />
+              <div>
+                <label style={labelStyle}>Title</label>
+                <input
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="Title"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Description"
+                  rows={4}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Type</label>
+                <select
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value })}
+                  style={inputStyle}
+                >
+                  <option value="video">Video</option>
+                  <option value="audio">Audio</option>
+                  <option value="document">Document</option>
+                </select>
+              </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={() =>
                     updateMutation.mutate({
                       id: editItem.id,
-                      data: { title: form.title, description: form.description },
+                      data: {
+                        title: form.title,
+                        description: form.description,
+                        type: form.type as ContentItem['type'],
+                      },
                     })
                   }
-                  disabled={updateMutation.isPending}
+                  disabled={updateMutation.isPending || !form.title}
                   style={{
-                    padding: '10px 20px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                    color: 'white',
-                    fontWeight: 600,
-                    cursor: 'pointer',
+                    ...primaryButtonStyle,
+                    opacity: updateMutation.isPending || !form.title ? 0.6 : 1,
                   }}
                 >
                   {updateMutation.isPending ? 'Saving...' : 'Save'}

@@ -239,7 +239,7 @@ export class WalletSnapshotSyncService implements OnModuleInit {
           } — the nightly sweep will reconcile`
         );
       });
-    }, SYNC_DEBOUNCE_MS);
+    }, SYNC_DEBOUNCE_MS) as unknown as NodeJS.Timeout;
     timer.unref?.();
 
     this.pending.set(userId, timer);

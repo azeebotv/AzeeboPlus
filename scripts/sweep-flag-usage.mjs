@@ -61,6 +61,9 @@ const SKIP_DIRS = new Set([
   '.expo',
   '.turbo',
   'generated',
+  // terraform init drops multi-hundred-MB provider binaries here; they are
+  // gitignored and not code, and reading one blows past Node's string limit
+  '.terraform',
 ]);
 const SKIP_EXT = new Set([
   '.json',

@@ -283,6 +283,17 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/:id/media', description: 'Get media asset' },
       { method: 'POST', path: '/:id/media', description: 'Create media asset' },
       { method: 'GET', path: '/:id/media/signed-url', description: 'Get signed media URL' },
+      // Direct-to-storage upload flow (web creators/upload page)
+      {
+        method: 'POST',
+        path: '/:id/media/upload-url',
+        description: 'Get a presigned upload URL for content media',
+      },
+      {
+        method: 'POST',
+        path: '/:id/media/complete',
+        description: 'Complete a direct upload and register the media asset',
+      },
       { method: 'GET', path: '/:id/related', description: 'Get related content' },
       { method: 'POST', path: '/:id/report', description: 'Report content' },
       { method: 'GET', path: '/:id/access-check', description: 'Check content access' },
@@ -349,7 +360,6 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'POST', path: '/redeem', description: 'Redeem reward points' },
       { method: 'GET', path: '/history', description: 'Get reward history' },
       { method: 'GET', path: '/levels', description: 'Get available reward levels' },
-      { method: 'POST', path: '/claim', description: 'Claim a reward' },
       { method: 'GET', path: '/wallet', description: 'Get rewards wallet summary' },
       { method: 'GET', path: '/redemption-items', description: 'List redemption items' },
       { method: 'GET', path: '/balance', description: 'Get points balance' },
@@ -400,6 +410,26 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         method: 'GET',
         path: '/agents/:agentId/kill-switch-history',
         description: 'Get kill switch history',
+      },
+      {
+        method: 'POST',
+        path: '/agents/:agentId/kill-switch',
+        description: 'Trigger a kill switch for an agent',
+      },
+      {
+        method: 'POST',
+        path: '/risk/approvals/:approvalId/decide',
+        description: 'Approve or reject a risk approval',
+      },
+      {
+        method: 'GET',
+        path: '/agents/stats/overview',
+        description: 'Get agent stats overview',
+      },
+      {
+        method: 'GET',
+        path: '/risk/approvals/pending',
+        description: 'List pending risk approvals',
       },
       // AOS-MA-001 — Model Cost Tracker
       { method: 'POST', path: '/cost/events', description: 'Record model cost event' },
@@ -495,10 +525,44 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/dashboard/growth', description: 'Get growth metrics' },
       { method: 'GET', path: '/dashboard/financial', description: 'Get financial metrics' },
       { method: 'GET', path: '/dashboard/platform-overview', description: 'Get platform overview' },
+      {
+        method: 'GET',
+        path: '/dashboard/governance-summary',
+        description: 'Governance summary: dual-control approvals + clearance health',
+      },
       { method: 'GET', path: '/users', description: 'List users' },
       { method: 'GET', path: '/users/:id', description: 'Get user details' },
       { method: 'PUT', path: '/users/:id/role', description: 'Update user role' },
       { method: 'PATCH', path: '/users/:id/status', description: 'Update user status' },
+      { method: 'PUT', path: '/users/:id/suspend', description: 'Suspend a user' },
+      {
+        method: 'PUT',
+        path: '/users/:id/suspension/revoke',
+        description: 'Revoke a user suspension',
+      },
+      { method: 'POST', path: '/users/:id/verify', description: 'Verify a creator' },
+      { method: 'POST', path: '/users/:id/unverify', description: 'Unverify a creator' },
+      { method: 'POST', path: '/users/bulk/suspend', description: 'Bulk suspend users' },
+      {
+        method: 'GET',
+        path: '/wallets/payouts',
+        description: 'List payout requests',
+      },
+      {
+        method: 'PUT',
+        path: '/wallets/payouts/:id/approve',
+        description: 'Approve payout request',
+      },
+      {
+        method: 'PUT',
+        path: '/wallets/payouts/:id/reject',
+        description: 'Reject payout request',
+      },
+      {
+        method: 'GET',
+        path: '/payment-gateways/:id/webhooks',
+        description: 'List gateway webhook deliveries',
+      },
       { method: 'GET', path: '/content', description: 'List content for moderation' },
       { method: 'GET', path: '/content/:id', description: 'Get content details' },
       { method: 'PATCH', path: '/content/:id/status', description: 'Update content status' },
@@ -614,10 +678,110 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         description: 'Get audit logs by target',
       },
       { method: 'PUT', path: '/wallets/:walletId/status', description: 'Update wallet status' },
+      { method: 'POST', path: '/wallets/:walletId/adjust', description: 'Adjust wallet balance' },
       { method: 'GET', path: '/moderation/queue', description: 'Get moderation queue' },
       { method: 'PATCH', path: '/moderation/:id', description: 'Update moderation status' },
+      { method: 'PUT', path: '/moderation/reports/:id/resolve', description: 'Resolve a report' },
+      { method: 'PUT', path: '/moderation/reports/:id/dismiss', description: 'Dismiss a report' },
+      {
+        method: 'GET',
+        path: '/moderation/reports/stats',
+        description: 'Get moderation report stats',
+      },
+      { method: 'GET', path: '/support/stats', description: 'Get support stats' },
       { method: 'GET', path: '/support/tickets', description: 'Get support tickets' },
       { method: 'PATCH', path: '/support/tickets/:id', description: 'Update ticket' },
+      { method: 'PUT', path: '/support/tickets/:id/status', description: 'Update ticket status' },
+      { method: 'PUT', path: '/support/tickets/:id/assign', description: 'Assign ticket' },
+      { method: 'POST', path: '/support/tickets/:id/reply', description: 'Reply to ticket' },
+      { method: 'GET', path: '/ops/status', description: 'Get ops scheduler status' },
+      { method: 'GET', path: '/ops/services', description: 'Get per-service health' },
+      { method: 'GET', path: '/ops/tipping-summary', description: 'Get tipping summary' },
+      { method: 'GET', path: '/ops/tipping-config', description: 'Get tipping configuration' },
+      { method: 'PUT', path: '/ops/tipping-config', description: 'Update tipping configuration' },
+      { method: 'GET', path: '/ops/gateway-http', description: 'Get gateway HTTP metrics' },
+      {
+        method: 'GET',
+        path: '/ops/gateway-rate-limits',
+        description: 'Get gateway rate-limit metrics',
+      },
+      { method: 'POST', path: '/ops/run/:job', description: 'Run a scheduler job now' },
+      {
+        method: 'GET',
+        path: '/ai-provenance',
+        description: 'List AI provenance records with filters',
+      },
+      {
+        method: 'PATCH',
+        path: '/ai-provenance/:id/clearance',
+        description: 'Set clearance decision for a provenance record',
+      },
+      {
+        method: 'GET',
+        path: '/dual-control',
+        description: 'List dual-control requests with stats (TAA §55)',
+      },
+      {
+        method: 'POST',
+        path: '/dual-control',
+        description: 'Create a dual-control request for a high-risk operation',
+      },
+      {
+        method: 'POST',
+        path: '/dual-control/:id/approve',
+        description: 'Approve a dual-control request (two distinct admins required)',
+      },
+      {
+        method: 'POST',
+        path: '/dual-control/:id/reject',
+        description: 'Reject a dual-control request with a reason',
+      },
+      {
+        method: 'GET',
+        path: '/rights/clearances',
+        description: 'List rights clearances with filters and search',
+      },
+      {
+        method: 'PATCH',
+        path: '/rights/clearances/:id/status',
+        description: 'Update rights clearance status',
+      },
+      // Content publish/unpublish via the admin app
+      { method: 'POST', path: '/content/:id/publish', description: 'Publish content' },
+      { method: 'POST', path: '/content/:id/unpublish', description: 'Unpublish content' },
+      // Nightly flag sweep status (feature-flags controller)
+      { method: 'GET', path: '/feature-flags/nightly/last', description: 'Get last nightly sweep result' },
+      // Report builder execution (reports-admin controller)
+      { method: 'POST', path: '/reports/:id/execute', description: 'Execute a saved report' },
+      // Reality shows management (reality-shows controller)
+      { method: 'GET', path: '/reality-shows/:id', description: 'Get reality show' },
+      { method: 'PATCH', path: '/reality-shows/:id', description: 'Update reality show' },
+      { method: 'DELETE', path: '/reality-shows/:id', description: 'Delete reality show' },
+      // Subscription management (subscription-admin controller)
+      { method: 'PUT', path: '/subscriptions/:id/status', description: 'Update subscription status' },
+      {
+        method: 'PUT',
+        path: '/subscriptions/promo-codes/:id/expire',
+        description: 'Expire a promo code',
+      },
+      { method: 'DELETE', path: '/subscriptions/promo-codes/:id', description: 'Delete a promo code' },
+      // Agbala storyworld management (vertical/agbala controller)
+      { method: 'GET', path: '/agbala/storyworlds/:id', description: 'Get storyworld' },
+      { method: 'PATCH', path: '/agbala/storyworlds/:id', description: 'Update storyworld' },
+      { method: 'DELETE', path: '/agbala/storyworlds/:id', description: 'Delete storyworld' },
+      { method: 'GET', path: '/agbala/characters/:id', description: 'Get character' },
+      { method: 'PATCH', path: '/agbala/characters/:id', description: 'Update character' },
+      { method: 'DELETE', path: '/agbala/characters/:id', description: 'Delete character' },
+      { method: 'GET', path: '/agbala/paths/:id', description: 'Get path' },
+      { method: 'PATCH', path: '/agbala/paths/:id', description: 'Update path' },
+      { method: 'DELETE', path: '/agbala/paths/:id', description: 'Delete path' },
+      { method: 'GET', path: '/agbala/quizzes/:id', description: 'Get quiz' },
+      { method: 'DELETE', path: '/agbala/quizzes/:id', description: 'Delete quiz' },
+      {
+        method: 'GET',
+        path: '/agbala/storyworlds/:id/characters',
+        description: 'List storyworld characters',
+      },
       { method: 'GET', path: '/universes', description: 'List universes' },
       { method: 'GET', path: '/universes/:id', description: 'Get universe by ID' },
       { method: 'GET', path: '/universes/name/:name', description: 'Get universe by name' },
@@ -842,8 +1006,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     fallbackUrl: 'http://localhost:4014',
     supportedVersions: ['1'],
     defaultVersion: '1',
-    pathStrategy: 'no-prefix',
-    pathRewrite: { '^/v1': '' },
+    // apps/creator is a standalone NestJS app with URI versioning
+    // (enableVersioning URI, prefix 'v'), so it serves /v1/creator/* —
+    // same as apps/admin. The 'default' strategy builds
+    // /v{version}/creator{path}, matching it.
+    pathStrategy: 'default',
     endpoints: [
       { method: 'GET', path: '/dashboard', description: 'Get creator dashboard' },
       { method: 'GET', path: '/dashboard/analytics', description: 'Get creator analytics' },
@@ -876,6 +1043,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/analytics', description: 'Get creator analytics' },
       { method: 'GET', path: '/earnings', description: 'Get creator earnings' },
       { method: 'GET', path: '/earnings/summary', description: 'Get creator earnings summary' },
+      {
+        method: 'GET',
+        path: '/earnings/history',
+        description: 'Get creator earnings transaction history',
+      },
       { method: 'GET', path: '/monetization/settings', description: 'Get monetization settings' },
       {
         method: 'PUT',
@@ -1136,6 +1308,15 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'POST', path: '/', description: 'Create game content' },
       { method: 'PATCH', path: '/:id', description: 'Update game content' },
       { method: 'DELETE', path: '/:id', description: 'Delete game content' },
+      { method: 'POST', path: '/sessions/:sessionId/submit', description: 'Submit trivia session answers' },
+      // Games tournaments (games-service @Controller('games/tournaments'))
+      { method: 'GET', path: '/tournaments/:id', description: 'Get tournament details' },
+      { method: 'POST', path: '/tournaments/:id/enter', description: 'Enter a tournament' },
+      {
+        method: 'GET',
+        path: '/tournaments/:id/leaderboard',
+        description: 'Get tournament leaderboard',
+      },
     ],
   },
   {
@@ -1162,6 +1343,14 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/shows/:showId/contestants', description: 'List show contestants' },
       { method: 'GET', path: '/episodes/:episodeId', description: 'Get episode detail' },
       { method: 'GET', path: '/contestants/:contestantId', description: 'Get contestant detail' },
+      // Reality live chat (reality.controller @Controller('reality'))
+      { method: 'GET', path: '/live-chat/messages', description: 'Get live chat messages' },
+      {
+        method: 'GET',
+        path: '/live-chat/participants',
+        description: 'Get live chat participants',
+      },
+      { method: 'POST', path: '/live-chat/send', description: 'Send a live chat message' },
       { method: 'GET', path: '/:id', description: 'Get reality content details' },
       { method: 'POST', path: '/', description: 'Create reality content' },
       { method: 'PATCH', path: '/:id', description: 'Update reality content' },
@@ -1303,6 +1492,17 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/influencers/:id', description: 'Influencer details' },
       { method: 'GET', path: '/celebrities', description: 'Lifestyle celebrities' },
       { method: 'GET', path: '/celebrities/:id', description: 'Celebrity details' },
+      // Music detail routes (music.controller @Controller('lifestyle/music'))
+      { method: 'GET', path: '/music/artists/:id', description: 'Artist details' },
+      { method: 'GET', path: '/music/genres/:slug', description: 'Genre details' },
+      // Event RSVP + attendees (events.controller @Controller('lifestyle/events'))
+      { method: 'POST', path: '/events/:id/rsvp', description: 'RSVP to an event' },
+      {
+        method: 'DELETE',
+        path: '/events/:id/rsvp',
+        description: 'Cancel event RSVP',
+      },
+      { method: 'GET', path: '/events/:id/attendees', description: 'Get event attendees' },
       { method: 'GET', path: '/nightlife', description: 'Lifestyle nightlife' },
       { method: 'GET', path: '/saved', description: 'Saved lifestyle content' },
       { method: 'GET', path: '/:id', description: 'Get lifestyle content details' },
@@ -1335,6 +1535,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/lore/categories', description: 'Lore categories' },
       { method: 'GET', path: '/timeline', description: 'Vertical timeline' },
       { method: 'GET', path: '/series', description: 'Vertical series' },
+      // Vertical titles detail (titles.controller @Controller('vertical/titles'))
+      { method: 'GET', path: '/titles/:slug', description: 'Get title details' },
+      { method: 'GET', path: '/titles/:slug/characters', description: 'Get title characters' },
+      { method: 'GET', path: '/titles/:slug/episodes', description: 'Get title episodes' },
+      { method: 'GET', path: '/titles/:slug/related', description: 'Get related titles' },
       { method: 'GET', path: '/:id', description: 'Get vertical content details' },
       { method: 'POST', path: '/', description: 'Create vertical content' },
       { method: 'PATCH', path: '/:id', description: 'Update vertical content' },
@@ -1362,22 +1567,25 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   },
   {
     path: '/challenges',
-    envKey: 'CREATOR_SERVICE_URL',
-    fallbackUrl: 'http://creator-service:3018',
+    envKey: 'LIFESTYLE_SERVICE_URL',
+    fallbackUrl: 'http://lifestyle-service:3016',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'default',
     endpoints: [
-      { method: 'GET', path: '/', description: 'List challenges' },
+      { method: 'GET', path: '/', description: 'List challenges (supports ?status=active)' },
       { method: 'POST', path: '/', description: 'Create challenge' },
+      { method: 'GET', path: '/:id', description: 'Get challenge details' },
       {
         method: 'POST',
-        path: '/:challengeId/participate',
-        description: 'Participate in challenge',
+        path: '/:id/submit',
+        description: 'Submit an entry to a challenge',
       },
-      { method: 'POST', path: '/submit', description: 'Submit challenge entry' },
-      { method: 'GET', path: '/:id', description: 'Get challenge details' },
-      { method: 'GET', path: '/:id/submissions', description: 'Get challenge submissions' },
+      {
+        method: 'POST',
+        path: '/submissions/:id/vote',
+        description: 'Vote for a challenge submission',
+      },
     ],
   },
   {
@@ -1960,7 +2168,9 @@ export class ProxyController {
     if (service === 'admin') {
       const reqWithUser = req as Request & { user?: { role?: string } };
       const user = reqWithUser.user;
-      if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
+      const role = user?.role ? String(user.role).toLowerCase().replace(/[-_]/g, '') : '';
+      const hasAdminAccess = role === 'admin' || role === 'superadmin';
+      if (!user || !hasAdminAccess) {
         this.logger.warn(`Admin access denied for request [${requestId}]`);
         res.status(HttpStatus.FORBIDDEN).json({ message: 'Admin access required' });
         return null;

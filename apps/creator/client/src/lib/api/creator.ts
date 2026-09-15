@@ -1,24 +1,58 @@
-import { apiFetch } from './base';
+import { apiFetch, type ApiError } from './base';
 import type {
   DashboardStats,
   ContentList,
   AnalyticsData,
   EarningsData,
+  EarningsSummaryData,
+  EarningsHistoryData,
   PayoutRequest,
   PayoutSettings,
+  PayoutsData,
   ContentItem,
   CreatorSettings,
-  PayoutsData,
   SubscribersData,
   UploadProgress,
   MonetizationData,
   Challenge,
   ChallengeSubmission,
+  CreatorProfile,
 } from '../creator-types';
 
 const API = '/api/v1';
 
+/**
+ * Mutations return `{ success: false, message }` with HTTP 200 on business
+ * failures (e.g. "Pending payout already exists"). Throw so react-query
+ * marks the mutation failed and the UI shows the real error.
+ */
+export class RequestFailedError extends Error {
+  readonly statusCode?: number;
+  constructor(message: string, statusCode?: number) {
+    super(message);
+    this.name = 'RequestFailedError';
+    this.statusCode = statusCode;
+  }
+}
+
+export function assertSuccess<T>(res: { success: boolean; message?: string } & { data?: T }): T {
+  if (!res.success) {
+    throw new RequestFailedError(res.message || 'Request failed');
+  }
+  return res.data as T;
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof RequestFailedError) return err.message;
+  const apiErr = err as ApiError;
+  return apiErr?.message || 'Something went wrong. Please try again.';
+}
+
 export const creatorApi = {
+  RequestFailedError,
+  errorMessage,
+  assertSuccess,
+
   getDashboard: () => apiFetch<DashboardStats>(`${API}/creator/dashboard`),
 
   getContent: (page = 1, limit = 20, status?: string) => {
@@ -44,11 +78,21 @@ export const creatorApi = {
       method: 'DELETE',
     }),
 
+  publishContent: (id: string) =>
+    apiFetch<ContentItem>(`${API}/creator/content/${id}/publish`, {
+      method: 'POST',
+    }),
+
   getAnalytics: (period = '30days') =>
     apiFetch<AnalyticsData>(`${API}/creator/analytics?period=${period}`),
 
   getEarnings: (period = 'this-month') =>
     apiFetch<EarningsData>(`${API}/creator/earnings?period=${period}`),
+
+  getEarningsSummary: () => apiFetch<EarningsSummaryData>(`${API}/creator/earnings/summary`),
+
+  getEarningsHistory: (limit = 50) =>
+    apiFetch<EarningsHistoryData>(`${API}/creator/earnings/history?limit=${limit}`),
 
   requestPayout: () =>
     apiFetch<PayoutRequest>(`${API}/creator/payouts/request`, {
@@ -60,6 +104,8 @@ export const creatorApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+
+  getSettings: () => apiFetch<CreatorSettings>(`${API}/creator/settings`),
 
   updateSettings: (data: CreatorSettings) =>
     apiFetch<{ success: boolean }>(`${API}/creator/settings`, {
@@ -83,7 +129,7 @@ export const creatorApi = {
   getStudioFlags: () =>
     apiFetch<Array<{ key: string; enabled: boolean; value?: unknown }>>(`${API}/creator/flags`),
 
-  // Upload
+  // Uploads — tracked as content items in the local DB
   getUploads: () => apiFetch<UploadProgress[]>(`${API}/creator/uploads`),
 
   uploadContent: (data: FormData) =>
@@ -97,7 +143,7 @@ export const creatorApi = {
   getMonetization: () => apiFetch<MonetizationData>(`${API}/creator/monetization`),
 
   updateMonetization: (data: Partial<MonetizationData>) =>
-    apiFetch<{ success: boolean }>(`${API}/creator/monetization`, {
+    apiFetch<MonetizationData>(`${API}/creator/monetization`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
@@ -118,25 +164,17 @@ export const creatorApi = {
     ),
 
   // Profile
-  getProfile: () =>
-    apiFetch<{
-      id: string;
-      displayName: string;
-      email: string;
-      avatar?: string;
-      bio?: string;
-      website?: string;
-      socialLinks?: { twitter?: string; instagram?: string; youtube?: string; tiktok?: string };
-    }>(`${API}/creator/profile`),
+  getProfile: () => apiFetch<CreatorProfile>(`${API}/creator/profile`),
 
   updateProfile: (data: {
-    displayName?: string;
     bio?: string;
+    banner?: string;
+    displayName?: string;
     avatar?: string;
     website?: string;
     socialLinks?: { twitter?: string; instagram?: string; youtube?: string; tiktok?: string };
   }) =>
-    apiFetch<{ success: boolean; message?: string }>(`${API}/creator/profile`, {
+    apiFetch<CreatorProfile>(`${API}/creator/profile`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),

@@ -1,3 +1,5 @@
+> **File:** `technical-architecture-authority.md` · **Document ID:** AZP-TAA-001 · **Revision:** R2.0 / P2.0 / PA2.0
+
 **AZEEBO+**
 
 **TECHNICAL ARCHITECTURE AUTHORITY**

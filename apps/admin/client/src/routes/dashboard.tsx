@@ -4,6 +4,24 @@ import { adminApi } from '@/lib/api/admin';
 import { isRecord, num } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
+/** Zero-safe governance counters: a partial payload renders zeros, never throws. */
+interface GovernanceSummary {
+  pendingDualControl: number;
+  approvedNotExecuted: number;
+  expiringClearances: number;
+  expiredClearances: number;
+}
+
+function toGovernanceSummary(data: unknown): GovernanceSummary {
+  const d: Record<string, unknown> = isRecord(data) ? data : {};
+  return {
+    pendingDualControl: num(d.pendingDualControl),
+    approvedNotExecuted: num(d.approvedNotExecuted),
+    expiringClearances: num(d.expiringClearances),
+    expiredClearances: num(d.expiredClearances),
+  };
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const {
@@ -34,6 +52,17 @@ export default function DashboardPage() {
       const d: Record<string, unknown> = isRecord(res.data) ? res.data : {};
       return { totalWallets: num(d.totalWallets) };
     },
+  });
+
+  // Governance card — dual-control approvals + rights-clearance health (TAA §55).
+  const { data: governance } = useQuery({
+    queryKey: ['admin', 'governance-summary'],
+    queryFn: async () => {
+      const res = await adminApi.getGovernanceSummary();
+      return toGovernanceSummary(res.data);
+    },
+    // A governance-count outage must not blank the whole dashboard.
+    retry: 1,
   });
 
   const statCards = stats
@@ -206,6 +235,96 @@ export default function DashboardPage() {
                 </p>
               </div>
             ))}
+          </div>
+
+          {/* Governance Panel (TAA §55) — dual-control approvals + clearance health */}
+          <div
+            style={{
+              padding: 26,
+              borderRadius: 20,
+              border: '1px solid var(--admin-border)',
+              backgroundColor: 'var(--admin-surface)',
+              marginBottom: 36,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Icon name="shield" size={18} color="var(--admin-amber)" />
+                <h2 style={{ fontSize: 18, fontWeight: 700 }}>Governance</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/dual-control')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--admin-orange)',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                Dual-Control Queue <Icon name="arrowRight" size={14} color="var(--admin-orange)" />
+              </button>
+            </div>
+            <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 18 }}>
+              High-risk operations awaiting two-person approval, and rights clearances nearing expiry.
+            </p>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                gap: 14,
+              }}
+            >
+              {[
+                {
+                  label: 'Awaiting Approval',
+                  value: governance?.pendingDualControl ?? 0,
+                  color: 'var(--admin-amber)',
+                  icon: 'clock',
+                },
+                {
+                  label: 'Approved, Not Executed',
+                  value: governance?.approvedNotExecuted ?? 0,
+                  color: 'var(--admin-orange)',
+                  icon: 'checkCircle',
+                },
+                {
+                  label: 'Expiring ≤ 30 Days',
+                  value: governance?.expiringClearances ?? 0,
+                  color: 'var(--admin-amber)',
+                  icon: 'book',
+                },
+                {
+                  label: 'Expired Unresolved',
+                  value: governance?.expiredClearances ?? 0,
+                  color: governance?.expiredClearances ? 'var(--admin-red)' : 'var(--admin-emerald)',
+                  icon: 'alertTriangle',
+                },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  style={{
+                    padding: '16px 18px',
+                    borderRadius: 14,
+                    border: '1px solid var(--admin-border)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--admin-text-muted)' }}>{item.label}</span>
+                    <Icon name={item.icon} size={16} color={item.color} />
+                  </div>
+                  <p style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: item.color, margin: 0 }}>
+                    {item.value.toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Quick Actions Panel */}

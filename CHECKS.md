@@ -39,7 +39,7 @@ Two conventions hold across all of them:
 | `check:live-drift` | Prisma Live Drift (advisory, `--seed` mode) | nightly-style live sweep |
 | `check:live-schema-lock` | none (report only, never fails a PR) | read-only probe of live DBs |
 | `check:upstreams` | none (startup advisory; `--strict` for CI) | run after `start-all.sh` |
-| route-contracts | none (manual dev tool) | client↔gateway contract audit |
+| route-contracts (`check:route-contracts`) | Flag & Swagger Conventions | client↔gateway contract audit + dead-route advisory; ratchet baseline |
 | federation-drill | Federation Drill (`.github/workflows/federation-drill.yml`) | weekly LaunchAgent on dev machines |
 
 ---
@@ -177,12 +177,21 @@ admin-owned `users` columns not repaired after the drift.
 against a scratch pair to reproduce (see RUNBOOK "Federation Drill"), patch
 `federate-admin-db.sh`, re-push.
 
-### route-contracts (manual)
+### route-contracts (`check:route-contracts`)
 
-**Invariant:** every API call extracted from client code matches a route
-declared in the gateway's `SERVICE_CONFIGS`. Exit 1 on mismatch.
+**Invariant (gating pass):** every API call extracted from client code —
+including template literals and raw query strings — matches a route declared
+in the gateway's `SERVICE_CONFIGS`. Exit 1 on any NEW mismatch: an unmatched
+call 404s at runtime, often only in environments the developer didn't try.
+Known-unmatched calls live in `scripts/route-contracts-baseline.json`, a
+ratchet that may only shrink (regenerate with `--update` after fixing routes);
+a new unmatched call always fails.
 
-**Run:** `node scripts/check-route-contracts.mjs`
+**Advisory pass (dead routes):** gateway endpoints no client code calls are
+listed but never gate — they may serve partners, scripts, or mobile releases.
+
+**Run:** in the Flag & Swagger Conventions job (PRs) and via
+`pnpm check:route-contracts` locally.
 
 ---
 

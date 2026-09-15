@@ -101,3 +101,6 @@ playwright-report/
 .reconcile-prisma-ledger-out/
 
 .drift-live-out/
+
+# Built test artifacts
+*.apk

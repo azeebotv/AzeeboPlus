@@ -220,6 +220,41 @@ describe('ProxyController routing gates', () => {
     expect(res.json).toHaveBeenCalledWith({ restoredCount: 1 });
   });
 
+  it('forwards POST /admin/universes/feature-flags/restore for user with super_admin role', async () => {
+    const res = mockRes();
+    const body = { keys: [{ universeId: 'u-1', featureKey: 'voting_enabled' }] };
+    const circuitBreaker = (
+      controller as unknown as {
+        circuitBreakerProxyService: { proxyRequest: jest.Mock };
+      }
+    ).circuitBreakerProxyService;
+    circuitBreaker.proxyRequest.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      data: { restoredCount: 1 },
+    });
+
+    await (
+      controller as unknown as {
+        proxyVersionedPost: (v: string, s: string, r: Request, res: unknown) => Promise<void>;
+      }
+    ).proxyVersionedPost(
+      'v1',
+      'admin',
+      mockReq({
+        url: '/api/v1/admin/universes/feature-flags/restore',
+        params: { version: 'v1', service: 'admin', path: 'universes/feature-flags/restore' },
+        method: 'POST',
+        body,
+        user: { role: 'super_admin' },
+      }),
+      res
+    );
+
+    expect(circuitBreaker.proxyRequest).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
   it('rejects POST /admin/universes/feature-flags/restore without an admin role (gateway-side fail-closed)', async () => {
     const res = mockRes();
     const circuitBreaker = (

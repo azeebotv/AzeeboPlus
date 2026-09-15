@@ -11,10 +11,11 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { AnalyticsData } from '@/lib/creator-types';
+import { errorTextStyle } from '@/lib/ui';
 
 export default function AnalyticsPage() {
   const [period, setPeriod] = useState('30days');
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['creator', 'analytics', period],
     queryFn: async () => {
       const res = await creatorApi.getAnalytics(period);
@@ -51,6 +52,8 @@ export default function AnalyticsPage() {
 
       {isLoading ? (
         <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+      ) : isError ? (
+        <p style={errorTextStyle()}>{creatorApi.errorMessage(error)}</p>
       ) : data ? (
         <>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>
@@ -93,7 +96,61 @@ export default function AnalyticsPage() {
               <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Avg Watch Time</p>
               <p style={{ fontSize: 24, fontWeight: 700 }}>{data.avgWatchTime}</p>
             </div>
+            <div
+              style={{
+                padding: 20,
+                borderRadius: 12,
+                border: '1px solid var(--creator-border)',
+                backgroundColor: 'rgba(26,10,10,0.5)',
+                flex: 1,
+                minWidth: 150,
+              }}
+            >
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>New Subscribers</p>
+              <p style={{ fontSize: 24, fontWeight: 700 }}>
+                {(data.newSubscribers ?? 0).toLocaleString()}
+              </p>
+            </div>
           </div>
+
+          {data.demographics && data.demographics.length > 0 && (
+            <div
+              style={{
+                padding: 20,
+                borderRadius: 12,
+                border: '1px solid var(--creator-border)',
+                backgroundColor: 'rgba(26,10,10,0.5)',
+                marginBottom: 32,
+              }}
+            >
+              <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Audience by Region</h3>
+              {data.demographics.map((d, i) => (
+                <div key={i} style={{ marginBottom: 10 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: 13,
+                      marginBottom: 4,
+                    }}
+                  >
+                    <span>{d.region}</span>
+                    <span style={{ color: 'var(--creator-text-muted)' }}>{d.percentage}%</span>
+                  </div>
+                  <div style={{ height: 6, borderRadius: 3, backgroundColor: 'var(--creator-border)' }}>
+                    <div
+                      style={{
+                        width: `${Math.min(100, d.percentage)}%`,
+                        height: '100%',
+                        borderRadius: 3,
+                        background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {data.viewsOverTime && data.viewsOverTime.length > 0 && (
             <div
