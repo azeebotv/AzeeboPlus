@@ -136,6 +136,12 @@ fi
 # ---------------------------------------------------------------------------
 # apply the policy
 log "audit retention: admin > ${AUDIT_RETENTION_DAYS}d, auth > ${AUTH_AUDIT_RETENTION_DAYS}d, batch=$BATCH"
+RUN_STARTED=$(date +%s)
+record_run() { # $1 status, $2 detail, $3 rowsPurged
+  local dur=""
+  [ -n "${RUN_STARTED:-}" ] && dur=$(( ($(date +%s) - RUN_STARTED) * 1000 ))
+  bash "${BASH_SOURCE[0]%/*}/record-job-run.sh" audit-retention "$1" "$2" "${3:-}" "$dur"
+}
 
 if [ "$DRY_RUN" = "1" ]; then
   a=$(psql_admin -tAc "SELECT count(*) FROM audit_logs WHERE \"createdAt\" < now() - interval '$AUDIT_RETENTION_DAYS days' AND action <> 'feature_flag.deleted'")
@@ -155,4 +161,5 @@ log "azeebo_admin.audit_logs: deleted $deleted_admin row(s) (feature_flag.delete
 deleted_auth=$(purge psql_auth audit_logs timestamp "now() - interval '$AUTH_AUDIT_RETENTION_DAYS days'" "")
 log "azeebo_auth.audit_logs: deleted $deleted_auth row(s)"
 
+record_run ok "admin: ${deleted_admin}, auth: ${deleted_auth}" "$((deleted_admin + deleted_auth))"
 log "ok: retention applied"
