@@ -36,6 +36,12 @@ export class GatewayAuthGuard implements CanActivate {
     // Auth endpoints (pre-login — user has no token yet)
     /^\/(api\/)?(v\d+\/)?auth\/(login|signup|register|refresh|forgot-password|reset-password|verify-email|resend-verification|social\/(google|apple)(\/authorize)?|social\/callback|otp\/(send|verify))$/,
     /^\/(api\/)?(v\d+\/)?auth\/health$/,
+    // SPA cookie management: the client exchanges its freshly-issued tokens for
+    // httpOnly cookies right after login and bootstraps the CSRF cookie. Both
+    // must be reachable without an existing token (cookie POST carries the
+    // token in its body; DELETE is the logout path).
+    /^\/(api\/)?(v\d+\/)?auth\/cookie$/,
+    /^\/(api\/)?(v\d+\/)?auth\/csrf$/,
     // Gateway health checks
     /^\/(health|ready|live)$/,
     // Client feature-flag bootstrap (public, per-user evaluation)
@@ -108,6 +114,14 @@ export class GatewayAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing or invalid Authorization header');
     }
 
+    // Configuration failures are misconfiguration, not bad credentials — hoisted
+    // above the try so they surface as the 500-class error they are instead of
+    // being flattened into a lying 401.
+    const jwtSecret = this.configService.get<string>('JWT_ACCESS_SECRET');
+    if (!jwtSecret) {
+      throw new Error('JWT_ACCESS_SECRET environment variable is required');
+    }
+
     try {
       const payload = this.verifyToken(token);
 
@@ -121,6 +135,11 @@ export class GatewayAuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
+      // allowed-fabricated-4xx: token verification is pure client input — every
+      // failure shape (malformed, expired, wrong signature) must be
+      // indistinguishable to callers (anti-enumeration), so a uniform 401 is
+      // the correct answer and mapAndThrow would wrongly escalate a plain JWT
+      // error to a 500. Configuration failures are no longer caught here.
       this.logger.warn(`Auth validation failed: ${(error as Error).message}`);
       throw new UnauthorizedException('Invalid or expired token');
     }
@@ -162,11 +181,14 @@ export class GatewayAuthGuard implements CanActivate {
         role: payload.role,
       };
     } catch (error) {
+      // allowed-fabricated-4xx: deliberate cause-inspected classification —
+      // jwt error types distinguish expired vs malformed credentials, which
+      // mapAndThrow cannot see; auth failures are 401, never a 500.
       if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('Token expired');
+        throw new UnauthorizedException('Token expired');
       }
       if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error(`Invalid token: ${(error as Error).message}`);
+        throw new UnauthorizedException(`Invalid token: ${(error as Error).message}`);
       }
       throw error;
     }

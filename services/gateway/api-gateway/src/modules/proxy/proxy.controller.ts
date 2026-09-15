@@ -365,6 +365,17 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'default',
+    // analytics-service mounts most controllers at the root (/v1/agents,
+    // /v1/risk, /v1/tasks, ...) but keeps the core AnalyticsController UNDER
+    // @Controller('analytics') (/v1/analytics/events, /v1/analytics/kpis,
+    // /v1/analytics/search/corrections, ...). Only strip the '/analytics'
+    // segment for the root-mounted families; stripping it unconditionally
+    // rewrites /v1/analytics/search/corrections to /v1/search/corrections,
+    // which no controller serves (404 for cookie-only SPA traffic).
+    pathRewrite: {
+      '^/v1/analytics(?=/(agents|cost|risk|tasks|capacity|reports|intelligence|instrumentation|metrics|admin|health)(/|$))':
+        '/v1',
+    },
     endpoints: [
       { method: 'POST', path: '/events', description: 'Track analytics event' },
       { method: 'POST', path: '/events/batch', description: 'Track batch events' },
@@ -811,6 +822,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/subscriptions/:id', description: 'Get subscription plan' },
       { method: 'POST', path: '/content/bulk/delete', description: 'Bulk delete content' },
       { method: 'POST', path: '/content/bulk/status', description: 'Bulk update content status' },
+      { method: 'GET', path: '/live-events', description: 'List live events (admin)' },
+      { method: 'GET', path: '/live-events/:id', description: 'Get live event (admin)' },
+      { method: 'POST', path: '/live-events', description: 'Create live event (admin)' },
+      { method: 'PUT', path: '/live-events/:id', description: 'Update live event (admin)' },
+      { method: 'DELETE', path: '/live-events/:id/cancel', description: 'Cancel live event (admin)' },
       { method: 'GET', path: '/agbala/storyworlds', description: 'Get storyworlds' },
       { method: 'GET', path: '/agbala/characters', description: 'Get Agbala characters' },
       { method: 'GET', path: '/agbala/paths', description: 'Get Agbala paths' },
@@ -1877,7 +1893,13 @@ export class ProxyController {
 
     const cacheKey = this.buildCacheKey(req, version);
 
-    if (method === 'GET' && responseCacheEnabled) {
+    // Admin-panel data must always be live: the 5-minute GET cache made every
+    // admin mutation appear to revert (the next list kept serving
+    // pre-mutation bytes until TTL expired — toggles, edits, suspensions all
+    // looked like they silently undid themselves). Never cache admin traffic.
+    const isAdminPath = (req.path || req.url || '').includes('/admin/');
+
+    if (method === 'GET' && responseCacheEnabled && !isAdminPath) {
       const cachedResponse = await this.cacheManager.get(cacheKey);
       if (cachedResponse) {
         res.setHeader(API_VERSION_HEADER, version);
@@ -1916,7 +1938,7 @@ export class ProxyController {
         (typeof body.circuitState === 'string' ||
           typeof body.message === 'string' ||
           body.statusCode !== undefined);
-      if (responseCacheEnabled && !isWrapperError && !isBareError) {
+      if (responseCacheEnabled && !isAdminPath && !isWrapperError && !isBareError) {
         await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
       }
       res.json(response);
@@ -1951,7 +1973,6 @@ export class ProxyController {
     const cleanPath = rawPath.split('?')[0];
     const path = cleanPath ? `/${cleanPath}` : '';
     const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
-
     // Normalize version: strip 'v' prefix (e.g., 'v1' -> '1')
     const normalizedVersion = version.startsWith('v') ? version.substring(1) : version;
 
@@ -2002,6 +2023,12 @@ export class ProxyController {
         'authorization',
         'x-request-id',
         'x-correlation-id',
+        // GatewayAuthGuard-verified identity (stamped onto req.headers above).
+        // Without these, downstream ServiceAuthGuards fall back to parsing the
+        // raw JWT themselves and cookie-only SPA requests 401.
+        'x-user-id',
+        'x-user-email',
+        'x-user-role',
       ];
 
       for (const key of ALLOWED_HEADERS) {
@@ -2015,6 +2042,13 @@ export class ProxyController {
       const gatewaySecret = this.configService.get<string>('GATEWAY_SECRET');
       if (gatewaySecret) {
         headers['x-gateway-secret'] = gatewaySecret;
+      }
+
+      // Forward the client's cookie header so cookie-only SPA flows work
+      // (e.g. POST /auth/refresh from the admin/creator panels, which send the
+      // refresh_token httpOnly cookie instead of a JSON body).
+      if (req.headers.cookie) {
+        headers['cookie'] = req.headers.cookie;
       }
 
       const cleanTargetPath = targetPath.split('?')[0];
@@ -2034,6 +2068,15 @@ export class ProxyController {
       const skipHeaders = ['transfer-encoding', 'connection', 'keep-alive', 'content-encoding'];
 
       for (const [key, value] of Object.entries(proxyResponse.headers)) {
+        // set-cookie carries newline-joined values from the proxy service
+        // (multiple cookies per response); Express requires append(), not
+        // set(), or every cookie after the first is lost.
+        if (key.toLowerCase() === 'set-cookie') {
+          for (const cookie of String(value).split('\n')) {
+            if (cookie) res.append('Set-Cookie', cookie);
+          }
+          continue;
+        }
         if (!skipHeaders.includes(key.toLowerCase())) {
           res.setHeader(key, value);
         }

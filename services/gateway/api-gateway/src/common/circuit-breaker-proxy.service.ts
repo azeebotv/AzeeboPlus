@@ -245,7 +245,16 @@ export class CircuitBreakerProxyService {
         }
 
         const responseHeaders: Record<string, string> = {};
+        // set-cookie must preserve EVERY value — auth flows return multiple
+        // Set-Cookie headers (access_token + refresh_token + _csrf), and
+        // headers.entries() collapses duplicates so all but the last cookie
+        // were silently dropped (the admin panel never got its access_token).
+        const setCookies = response.headers.getSetCookie?.() ?? [];
+        if (setCookies.length > 0) {
+          responseHeaders['set-cookie'] = setCookies.join('\n');
+        }
         for (const [key, value] of response.headers.entries()) {
+          if (key === 'set-cookie') continue;
           responseHeaders[key] = value;
         }
 

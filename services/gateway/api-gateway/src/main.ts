@@ -91,6 +91,14 @@ async function bootstrap(): Promise<void> {
 
   configureCors(app, { allowedOrigins, credentials: true });
 
+  // HTTP/rate-limit instrumentation: registered directly on the Express
+  // instance BEFORE Nest's router init, so every request (health checks,
+  // proxied traffic) is counted. The HttpMetricsModule exposes GET
+  // /metrics/http from the same counters.
+  const { HttpMetricsService } = await import('./metrics/http-metrics.service');
+  const httpMetrics = app.get(HttpMetricsService);
+  app.use(httpMetrics.expressMiddleware());
+
   if (process.env.NODE_ENV !== 'production' && process.env.SWAGGER_ENABLED === 'true') {
     const config = new DocumentBuilder()
       .setTitle('API Gateway')
