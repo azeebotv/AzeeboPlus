@@ -48,6 +48,10 @@ log() { printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >>"$LOG_FILE"; }
 # because no pass-level WARN would have been logged in that path.
 ALERT_STATE_FILE="${ALERT_STATE_FILE:-${TMPDIR:-/tmp}/azeebo-admin-freshness.alert-state}"
 ALERT_REPEAT_HOURS="${ALERT_REPEAT_HOURS:-24}"
+# Which job is speaking (payload prefix + death-trap message). The weekly
+# federation-drill pass overrides this and ALERT_STATE_FILE so drill failures
+# are tracked independently of the hourly freshness pass.
+ALERT_SOURCE_LABEL="${ALERT_SOURCE_LABEL:-azeebo admin-freshness}"
 
 alert_state() { [ -f "$ALERT_STATE_FILE" ] && cat "$ALERT_STATE_FILE" 2>/dev/null || echo "OK"; }
 
@@ -58,7 +62,7 @@ notify_alert() { # $1 = message shown to the user
 send_webhook() { # $1 = reason, $2 = status text (DOWN | DOWN(still) | RECOVERED)
   [ -n "${ALERT_WEBHOOK_URL:-}" ] || return 0
   local payload reason="$1" status="$2"
-  payload=$(printf '{"text":"[azeebo admin-freshness] %s\\n%s\\nhost: %s"}' "$status" "$reason" "$(hostname)")
+  payload=$(printf '{"text":"[%s] %s\\n%s\\nhost: %s"}' "$ALERT_SOURCE_LABEL" "$status" "$reason" "$(hostname)")
   curl -sS -m 10 -H 'Content-Type: application/json' -d "$payload" "$ALERT_WEBHOOK_URL" >/dev/null 2>&1 \
     || log "WARN: alert webhook delivery failed"
 }
@@ -100,10 +104,26 @@ PASS_ALERTED=0 # set when a pass-level failure already fired an alert this run
 on_unexpected_death() {
   local rc=$?
   if [ "$PASS_OK" != 1 ] && [ "$PASS_ALERTED" != 1 ]; then
-    fire_failure_alert "freshness script died unexpectedly (exit $rc), no healing ran"
+    fire_failure_alert "$ALERT_SOURCE_LABEL died unexpectedly (exit $rc), no healing ran"
   fi
 }
-trap on_unexpected_death EXIT
+
+# Mutual exclusion between the hourly freshness pass and the weekly drill:
+# the drill repoints the auth FDW server at a throwaway clone for a few
+# seconds — a concurrent probe would see the clone and false-alert. A lock
+# older than 15 min is stale (launchd SIGKILL) and gets stolen.
+LOCK_DIR="${TMPDIR:-/tmp}/azeebo-admin-freshness.lock"
+release_lock() { rm -rf "$LOCK_DIR" 2>/dev/null; }
+acquire_lock() {
+  mkdir "$LOCK_DIR" 2>/dev/null && return 0
+  local mtime
+  mtime=$(stat -f %m "$LOCK_DIR" 2>/dev/null || echo 0)
+  if [ $(( $(date +%s) - mtime )) -gt 900 ]; then
+    rm -rf "$LOCK_DIR"; mkdir "$LOCK_DIR" 2>/dev/null
+  fi
+  return 1  # lock held by another pass (or un-stealable)
+}
+trap 'release_lock; on_unexpected_death' EXIT
 
 
 # Explicit TCP connection — the default socket user is not the DB owner.
@@ -135,32 +155,47 @@ federation_healthy() {
     "SELECT 1 FROM auth_audit_logs LIMIT 1" >/dev/null 2>&1
 }
 
+RUN_STARTED=""
+record_run() { # $1 = job name (freshness|drill), $2 = status, $3 = detail
+  local dur=""
+  if [ -n "${RUN_STARTED:-}" ]; then
+    dur=$(( ($(date +%s) - RUN_STARTED) * 1000 ))
+  fi
+  bash "$REPO_ROOT/scripts/database/record-job-run.sh" "$1" "$2" "$3" "" "$dur"
+}
+
 run_pass() {
   mkdir -p "$(dirname "$LOG_FILE")"
+  RUN_STARTED=$(date +%s)
 
   if ! "${PSQL_BIN}" -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$ADMIN_DB" -tAc 'SELECT 1' >/dev/null 2>&1; then
     log "ERROR: cannot connect to ${PGHOST}:${PGPORT}/${ADMIN_DB} — is Postgres up?"
     fire_failure_alert "cannot connect to ${PGHOST}:${PGPORT}/${ADMIN_DB}"
+    record_run freshness error "cannot connect to ${PGHOST}:${PGPORT}/${ADMIN_DB}"
     return 1
   fi
 
   if is_federated; then
     if federation_healthy; then
       log "ok: federated and healthy (foreign tables answering)"
+      record_run freshness ok "federated and healthy"
       clear_failure "federation healthy again"
       return 0
     fi
     log "WARN: federated but foreign tables failing — re-applying federation"
     if bash "$REPO_ROOT/scripts/database/federate-admin-db.sh" >>"$LOG_FILE" 2>&1; then
       log "ok: federation re-applied"
+      record_run freshness warn "federation was broken and has been re-applied"
       clear_failure "federation was failing and has been re-applied — verify the panel"
     else
       log "ERROR: federation re-apply failed; next pass will retry"
+      record_run freshness error "federation broken and re-apply failed"
       fire_failure_alert "federation broken and re-apply failed — admin panel may show empty data"
       return 1
     fi
   else
     log "WARN: azeebo_admin not federated — refreshing mirror seed (fallback mode)"
+    record_run freshness warn "not federated — mirror seed fallback path"
     if bash "$REPO_ROOT/scripts/database/seed-all.sh" admin >>"$LOG_FILE" 2>&1; then
       log "ok: mirror seed refreshed"
       if bash "$REPO_ROOT/scripts/database/federate-admin-db.sh" >>"$LOG_FILE" 2>&1; then
@@ -174,25 +209,23 @@ run_pass() {
   fi
 }
 
-install_job() {
-  # Child scripts (seed-all.sh, federate-admin-db.sh) call psql from PATH, so
-  # bake this machine's psql dir into the job's PATH at install time.
+write_plist() { # $1=plist id  $2=plist path  $3=calendar dict (xml)  $4=RunAtLoad true/false  $5=subcommand ("" = default run)
+  # Child scripts (seed-all.sh, federate-admin-db.sh, federation-drill.sh) call
+  # psql/pg_dump from PATH, so bake this machine's psql dir into the job's PATH
+  # at install time.
   PSQL_DIR="$(dirname "${PSQL_BIN}")"
   JOB_PATH="/usr/local/bin:/usr/bin:/bin:${PSQL_DIR}"
-  if [ -z "${ALERT_WEBHOOK_URL:-}" ]; then
-    echo "Note: ALERT_WEBHOOK_URL not set — alerts are macOS notifications only." >&2
-    echo "      Add webhook delivery with: ALERT_WEBHOOK_URL='https://hooks.slack.com/services/…' bash $0 install" >&2
-  fi
-  cat >"$PLIST_PATH" <<EOF
+  local progargs=("<string>/bin/bash</string>" "<string>${REPO_ROOT}/scripts/database/admin-data-freshness.sh</string>")
+  [ -n "$5" ] && progargs+=("<string>$5</string>")
+  cat >"$2" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>Label</key><string>${PLIST_ID}</string>
+  <key>Label</key><string>$1</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/bin/bash</string>
-    <string>${REPO_ROOT}/scripts/database/admin-data-freshness.sh</string>
+    ${progargs[@]}
   </array>
   <key>EnvironmentVariables</key>
   <dict>
@@ -200,20 +233,51 @@ install_job() {
     <key>ALERT_WEBHOOK_URL</key><string>${ALERT_WEBHOOK_URL}</string>}
   </dict>
   <key>StartCalendarInterval</key>
-  <dict>
-    <key>Minute</key><integer>7</integer>
-  </dict>
-  <key>RunAtLoad</key><true/>
+  $3
+  <key>RunAtLoad</key><$4/>
   <key>StandardOutPath</key><string>${LOG_FILE}</string>
   <key>StandardErrorPath</key><string>${LOG_FILE}</string>
 </dict>
 </plist>
 EOF
+}
+
+install_job() {
+  if [ -z "${ALERT_WEBHOOK_URL:-}" ]; then
+    echo "Note: ALERT_WEBHOOK_URL not set — alerts are macOS notifications only." >&2
+    echo "      Add webhook delivery with: ALERT_WEBHOOK_URL='https://hooks.slack.com/services/…' bash $0 install" >&2
+  fi
+  write_plist "$PLIST_ID" "$PLIST_PATH" '<dict>
+    <key>Minute</key><integer>7</integer>
+  </dict>' true ''
   launchctl unload "$PLIST_PATH" 2>/dev/null || true
   launchctl load "$PLIST_PATH"
   echo "Installed ${PLIST_ID}: runs hourly (at :07) and at login. Log: ${LOG_FILE}"
   echo "Note: the environment used is this shell's PG* settings baked at install time;"
   echo "      the script re-derives defaults itself, so it also works standalone."
+  echo "Tip: also install the weekly self-heal drill with: bash $0 install-drill"
+}
+
+DRILL_PLIST_ID="com.azeebo.admin-federation-drill"
+DRILL_PLIST_PATH="$HOME/Library/LaunchAgents/${DRILL_PLIST_ID}.plist"
+
+install_drill_job() {
+  # Saturdays 05:23 (launchd Weekday 6 = Saturday) — far from the hourly :07
+  # passes, and the run_drill lock guards the overlap case anyway.
+  write_plist "$DRILL_PLIST_ID" "$DRILL_PLIST_PATH" '<dict>
+    <key>Weekday</key><integer>6</integer>
+    <key>Hour</key><integer>5</integer>
+    <key>Minute</key><integer>23</integer>
+  </dict>' false drill
+  launchctl unload "$DRILL_PLIST_PATH" 2>/dev/null || true
+  launchctl load "$DRILL_PLIST_PATH"
+  echo "Installed ${DRILL_PLIST_ID}: runs Saturdays at 05:23. Log: ${LOG_FILE}"
+}
+
+uninstall_drill_job() {
+  launchctl unload "$DRILL_PLIST_PATH" 2>/dev/null || true
+  rm -f "$DRILL_PLIST_PATH"
+  echo "Removed ${DRILL_PLIST_ID}."
 }
 
 uninstall_job() {
@@ -225,6 +289,8 @@ uninstall_job() {
 status_job() {
   echo "=== LaunchAgent ==="
   launchctl list 2>/dev/null | grep "$PLIST_ID" || echo "(not installed)"
+  echo "=== drill LaunchAgent (weekly) ==="
+  launchctl list 2>/dev/null | grep "$DRILL_PLIST_ID" || echo "(not installed — enable with: bash $0 install-drill)"
   echo "=== alert state ==="
   if [ -n "${ALERT_WEBHOOK_URL:-}" ]; then echo "webhook: configured"; else echo "webhook: not set (macOS notifications only)"; fi
   local st
@@ -234,8 +300,33 @@ status_job() {
     DOWN*) echo "state: ${st%% *} since $(date -r "${st#* }" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo 'unknown epoch')" ;;
     *)     echo "state: $st" ;;
   esac
+  local dst
+  dst=$(cat "${TMPDIR:-/tmp}/azeebo-admin-drill.alert-state" 2>/dev/null || echo OK)
+  case "$dst" in
+    OK)    echo "drill state: OK" ;;
+    DOWN*) echo "drill state: ${dst%% *} since $(date -r "${dst#* }" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo 'unknown epoch')" ;;
+    *)     echo "drill state: $dst" ;;
+  esac
+  echo "=== last drill lines ==="
+  grep "drill:" "$LOG_FILE" 2>/dev/null | tail -5 || echo "(none yet)"
   echo "=== last log lines ==="
   tail -15 "$LOG_FILE" 2>/dev/null || echo "(no log yet at ${LOG_FILE})"
+}
+
+run_drill() {
+  log "drill: weekly federation drill starting (drop + re-federate simulation)"
+  RUN_STARTED=$(date +%s)
+  if bash "$REPO_ROOT/scripts/database/federation-drill.sh" >>"$LOG_FILE" 2>&1; then
+    log "drill: ok — federation contract held across drop + re-federate"
+    record_run drill ok "both scenarios passed"
+    clear_failure "federation drill passed again — self-heal path verified"
+    return 0
+  else
+    log "ERROR: federation drill FAILED — the self-heal path is broken; see the drill output above"
+    record_run drill error "drill assertions failed — self-heal path broken"
+    fire_failure_alert "federation drill failed — federation may not survive a service-DB drop (see ${LOG_FILE})"
+    return 1
+  fi
 }
 
 test_alert() {
@@ -246,9 +337,23 @@ test_alert() {
 }
 
 case "${1:-run}" in
-  install)    install_job ;;
-  uninstall)  uninstall_job ;;
-  status)     status_job ;;
-  test-alert) test_alert ;;
-  run)        PASS_OK=0; PASS_ALERTED=0; run_pass && PASS_OK=1 ;;
+  install)         install_job ;;
+  uninstall)       uninstall_job ;;
+  install-drill)   install_drill_job ;;
+  uninstall-drill) uninstall_drill_job ;;
+  status)          status_job ;;
+  test-alert)      test_alert ;;
+  run)
+    PASS_OK=0; PASS_ALERTED=0
+    if acquire_lock; then run_pass && PASS_OK=1; release_lock
+    else log "skip: drill or another pass already in flight"; PASS_OK=1; fi ;;
+  drill)
+    # Independent alert state + label so a drill failure is never cleared by
+    # the hourly freshness pass (and a drill success never clears a real
+    # freshness DOWN).
+    ALERT_STATE_FILE="${TMPDIR:-/tmp}/azeebo-admin-drill.alert-state"
+    ALERT_SOURCE_LABEL="azeebo admin-federation-drill"
+    PASS_OK=0; PASS_ALERTED=0
+    if acquire_lock; then run_drill && PASS_OK=1; release_lock
+    else log "drill: skipped — freshness pass already in flight"; PASS_OK=1; fi ;;
 esac

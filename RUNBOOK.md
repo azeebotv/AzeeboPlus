@@ -207,11 +207,29 @@ bash scripts/database/admin-data-freshness.sh run
 # reinstall (bakes the machine's psql path into the job) / remove
 bash scripts/database/admin-data-freshness.sh install
 bash scripts/database/admin-data-freshness.sh uninstall
+
+# also schedule the weekly self-heal drill (Saturdays 05:23)
+bash scripts/database/admin-data-freshness.sh install-drill
+bash scripts/database/admin-data-freshness.sh uninstall-drill
+
+# run the drill once by hand
+bash scripts/database/admin-data-freshness.sh drill
 ```
 
 Log: `/tmp/azeebo-admin-freshness.log` (one line per pass). If the panel ever
 shows empty data, run `status` first — a `WARN` line means the job healed the
 federation on its next pass.
+
+**Weekly drill pass:** `install-drill` adds a second LaunchAgent
+(`com.azeebo.admin-federation-drill`) that runs the federation drill
+(see below) every Saturday at 05:23, so the *self-heal path itself* is
+exercised automatically, not just assumed. Drill failures fire the same
+alert pipeline (macOS notification + optional webhook) under the label
+"azeebo admin-federation-drill", tracked in their own alert state so an
+hourly pass can never mask a broken drill (or vice versa). A lock makes the
+drill and the hourly pass mutually exclusive — the drill repoints an FDW
+server for a few seconds, and a concurrent probe would false-alert; stale
+locks older than 15 minutes are stolen (launchd SIGKILL recovery).
 
 **Alerting:** failures fire a macOS notification ("Azeebo Admin Freshness")
 and, if `ALERT_WEBHOOK_URL` is set, a Slack-style `POST {"text": ...}`.
@@ -229,31 +247,121 @@ ALERT_WEBHOOK_URL='https://hooks.slack.com/services/…' \
 
 ### Federation Drill (drop + re-federate test)
 
-Automated test that proves the admin panel's federation stays intact across a
-service-DB drop and re-federate cycle — the exact failure mode the freshness
-job above is meant to heal. Run it after changing `federate-admin-db.sh`, or
-anytime you want proof the self-heal path works:
+Automated test that proves the admin panel's federation survives service-DB
+failures, in two scenarios. Run it after changing `federate-admin-db.sh`, or
+anytime you want proof the self-heal path works (the weekly freshness drill
+does this automatically — see above):
 
 ```bash
-bash scripts/database/federation-drill.sh
+bash scripts/database/federation-drill.sh                 # both scenarios
+DRILL_SCENARIO=1 bash scripts/database/federation-drill.sh # drop only
+DRILL_SCENARIO=2 bash scripts/database/federation-drill.sh # schema drift only
 ```
 
-Safe by construction: it snapshots `azeebo_auth`'s schema into a throwaway
+Safe by construction — live data is never modified beyond two marker users
+that the exit trap deletes.
+
+**Scenario 1 (drop):** snapshots `azeebo_auth`'s schema into a throwaway
 clone (`azeebo_auth__drill`), repoints the FDW server at the clone and
 verifies the panel now reads the clone, drops the clone (from postgres_fdw's
 view, identical to a real service-DB drop), re-runs `federate-admin-db.sh`,
 then asserts the full contract: all seven FDW servers point at their
 canonical DBs, foreign tables answer, the cross-DB join works,
 `auth_audit_logs` matches its source, and rows inserted into the live auth DB
-before *and* after the heal are visible through the panel (no stale
-connections). The only writes to live data are two marker users that the
-exit trap deletes; `DRILL_KEEP=1` preserves the clone for debugging a
-failure. Live data is never modified beyond those markers.
+before *and* after the heal are visible through the panel.
 
-The drill exposed one real convergence gap (now fixed): re-running
-federation did not restore FDW server `dbname` options, so a repointed or
-tampered server never healed — `federate-admin-db.sh` now forces each server
-back to its canonical database on every run.
+**Scenario 2 (schema drift):** simulates the service DB being recreated from
+its Prisma baseline — the six admin-owned additive columns (`isSuspended`,
+`suspendedAt`, `suspendedBy`, `suspendedUntil`, `suspensionReason`,
+`notificationPreferences`) are dropped. A scratch pair (`azeebo_auth__drill2`
++ fresh `azeebo_admin__drill2`, via the `AUTH_DB`/`ADMIN_DB` overrides) is
+then federated from scratch, proving the federate script's `ADD COLUMN IF
+NOT EXISTS` repair converges the drift: all six columns visible through the
+foreign table again, reads and inserts work, and the remote `DEFAULT false`
+survives. `DRILL_KEEP=1` preserves the clones for debugging a failure.
+
+One postgres_fdw behavior the drill documents: foreign tables imported via
+`IMPORT FOREIGN SCHEMA` carry **no column defaults**, so an INSERT through a
+foreign table must supply every NOT NULL value explicitly — NULL is sent
+remotely for omitted columns. The panel's Prisma client already writes that
+way, so this is invisible to the app; raw SQL writers against
+`azeebo_admin` need to know it.
+
+The drill's server-convergence assertion caught one real bug (now fixed):
+re-running federation did not restore FDW server `dbname` options, so a
+repointed or tampered server never healed — `federate-admin-db.sh` now
+forces each server back to its canonical database on every run.
+
+**In CI:** the `Federation Drill` workflow
+(`.github/workflows/federation-drill.yml`) runs both scenarios on an
+ephemeral postgres:16 container for every PR touching `scripts/database/**`.
+It seeds the seven service DBs from the checked-in fixture
+(`scripts/database/ci/drill-fixture.sql`) and bootstraps federation cold —
+which doubles as a first-federation regression test. Locally you can
+reproduce the CI path with a scratch admin DB:
+`createdb azeebo_admin__ci && ADMIN_DB=azeebo_admin__ci bash scripts/database/federate-admin-db.sh`.
+
+### Rollout Notes: Raw SQL Against `azeebo_admin`
+
+For anyone writing one-off SQL, migration scripts, or psql sessions against
+the admin database — two rules that only bite outside Prisma (both verified
+against the live federation):
+
+**1. Foreign tables carry no column defaults.** The shared tables (`users`,
+`wallets`, `content_items`, …) are postgres_fdw foreign tables over the live
+service DBs — relkind `f` in `pg_class`. Local (relkind `r`) tables are only
+the admin-owned ones (`audit_logs`, `job_runs`, `payout_requests`,
+`saved_items`, `safety_actions`, `user_suspensions`, `watch_history`) plus the
+`*__local_backup` copies. `IMPORT FOREIGN SCHEMA` does not import column
+defaults, so defaults that exist remotely are invisible locally. An INSERT
+that omits such a column does not fail locally either — postgres_fdw silently
+sends the **full** column list with explicit NULLs for everything omitted
+(visible in the error's `remote SQL command:` context line), so on the remote:
+
+- a remote-defaulted **NOT NULL** column → `null value in column … violates
+  not-null constraint`, even though the identical INSERT works on the source
+  DB;
+- a remote-defaulted **nullable** column → NULL is stored and the remote
+  default never fires (data goes in, just not the default you expected).
+
+Example with `users`, whose remote defaults (`role 'user'`, `isVerified
+false`, `mfaEnabled false`, `isSuspended false`, `createdAt
+CURRENT_TIMESTAMP`, `password ''`) appear nowhere in the local definition:
+
+```sql
+-- FAILS on the remote: "null value in column \"isVerified\" … violates
+-- not-null constraint" (isSuspended would fail next):
+INSERT INTO users (id, email, password, "displayName", role, "updatedAt")
+VALUES (gen_random_uuid()::text, '…', '…', '…', 'user', now());
+
+-- WORKS: every NOT NULL column supplied explicitly:
+INSERT INTO users (id, email, password, "displayName", role,
+                   "isVerified", "mfaEnabled", "isSuspended",
+                   "createdAt", "updatedAt")
+VALUES (gen_random_uuid()::text, '…', '…', '…', 'user',
+        false, false, false, now(), now());
+```
+
+Rule of thumb: through a foreign table, supply **every NOT NULL column
+explicitly** — treat defaults as if they did not exist. To enumerate what a
+table needs, query the *source* service DB (defaults live there, where they
+belong — the federation drill's scenario 2 asserts they survive a heal):
+
+```sql
+-- run against the source DB, e.g. azeebo_auth:
+SELECT column_name, column_default FROM information_schema.columns
+WHERE table_schema = 'public' AND table_name = 'users'
+  AND column_default IS NOT NULL;
+```
+
+**2. Quote camelCase identifiers.** Unquoted `displayName` folds to
+`displayname` and fails with `column "displayname" of relation "users" does
+not exist`. Every camelCase column (`"displayName"`, `"isVerified"`,
+`"createdAt"`, …) needs double quotes in raw SQL.
+
+**Prisma is unaffected** by both rules — the generated client writes every
+column explicitly and quotes identifiers itself, which is why the admin panel
+never trips on either. These notes apply only to hand-written SQL.
 
 ### Audit Trail Retention (scheduled job)
 
@@ -282,6 +390,80 @@ bash scripts/database/audit-retention.sh uninstall
 Log: `/tmp/azeebo-audit-retention.log`. Deletion-in-place (not native
 partitioning) is deliberate: Prisma models expect plain tables, and the
 indexed ranged deletes are plenty at this scale.
+
+### Analytics/PII Retention (scheduled job)
+
+`scripts/data-retention-enforcement.ts` enforces the platform retention
+policies from `@azeebo/shared-types` (`DEFAULT_RETENTION_POLICIES`) against
+the per-service databases, daily at 04:11 (LaunchAgent
+`com.azeebo.data-retention`):
+
+- **PII (3y):** `azeebo_analytics.product_events` past the cutoff are
+  deleted; `device_info` rows cascade via the schema's `onDelete: Cascade`.
+- **SENSITIVE_PII (2y):** `azeebo_analytics.session_summaries` past the
+  cutoff are deleted.
+- **INTERNAL (1y):** `azeebo_messaging.messages` past the cutoff are
+  **soft-deleted** (`isDeleted = true`) — recoverable until a product
+  decision says otherwise.
+
+The job defaults to a dry run (`npx tsx scripts/data-retention-enforcement.ts`);
+pass `--apply` to delete. It rewrites what the original dead script
+imagined: there is no `AnalyticsEvent`/`PII_ACCESS` model in any Prisma
+schema, no `PII_ACCESS` category in shared-types, and `Message` has no
+`archived` column — the old code could never have run. Messaging uses raw
+SQL here on purpose (the root `@prisma/client` is generated without the
+messaging schema). Admin audit trails are covered separately by the
+audit-retention job above. Log: `/tmp/azeebo-data-retention.log`.
+
+```bash
+npx tsx scripts/data-retention-enforcement.ts           # dry run
+npx tsx scripts/data-retention-enforcement.ts --apply   # enforce
+npx tsx scripts/data-retention-enforcement.ts install   # (re)install schedule
+npx tsx scripts/data-retention-enforcement.ts uninstall
+```
+
+### Job Runs Ledger (`azeebo_admin.job_runs`)
+
+Every scheduled admin job appends one row per pass to the `job_runs` table in
+`azeebo_admin` (created by `federate-admin-db.sh` step 7): `freshness`,
+`drill`, `audit-retention`, `data-retention` — with status, detail,
+rows-purged, and duration. The Ops Health page (Admin panel → Ops Health)
+charts the last 24h per job from this ledger (`GET /admin/ops/runs`). The
+append helper is `scripts/database/record-job-run.sh` and is **best-effort by
+design**: if the table or the DB is unavailable, the run is skipped and the
+job itself still succeeds — the ledger must never break the job it records.
+On a fresh checkout the table appears after the first
+`federate-admin-db.sh` run.
+
+### Weekly Ops Digest (scheduled macOS notification)
+
+`scripts/database/ops-weekly-digest.sh` summarizes the past seven days and
+pushes it as a macOS notification every Monday at 09:07 (LaunchAgent
+`com.azeebo.ops-weekly-digest`), plus webhook delivery when
+`ALERT_WEBHOOK_URL` is set. Three sections, computed standalone (no admin
+backend required except the probe):
+
+- **Job pass rate** — `COUNT(*) FILTER` over `azeebo_admin.job_runs` for the
+  window: total runs, % ok, warn, failed across all four scheduled jobs.
+- **Alert count** — `ALERT:`/`ERROR:`/`WARN:` lines in the freshness and
+  audit-retention logs within the window (same timestamp format the backend
+  parses for the Ops Health page).
+- **Service fleet** — live probe through the admin backend's
+  `GET /admin/ops/services` (login with `AUTH_EMAIL`/`AUTH_PASSWORD`, default
+  the seeded demo admin): `N/28 healthy, X degraded, Y down`.
+
+```bash
+bash scripts/database/ops-weekly-digest.sh            # compute + notify now
+bash scripts/database/ops-weekly-digest.sh install    # Mondays 09:07
+bash scripts/database/ops-weekly-digest.sh status     # agent state + last digests
+bash scripts/database/ops-weekly-digest.sh uninstall
+# webhook delivery (re-install bakes it into the LaunchAgent):
+ALERT_WEBHOOK_URL='https://hooks.slack.com/services/…' bash scripts/database/ops-weekly-digest.sh install
+```
+
+Log: `/tmp/azeebo-ops-weekly-digest.log`. Unlike the alerting jobs, the
+digest always notifies on every run — there is no down-transition state;
+it is a report, not an alarm.
 
 ### Database Migration
 

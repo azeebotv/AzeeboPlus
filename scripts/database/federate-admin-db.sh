@@ -27,6 +27,10 @@ PGPORT="${PGPORT:-5432}"
 PGUSER="${PGUSER:-azeebo}"
 PGPASSWORD="${PGPASSWORD:-azeebo_dev_2024}"
 ADMIN_DB="${ADMIN_DB:-azeebo_admin}"
+# Name of the auth-service database (home of users + its own audit_logs).
+# Overridable so federation-drill.sh scenario 2 can exercise the whole
+# bootstrap (incl. the additive-column repair) against a throwaway pair.
+AUTH_DB="${AUTH_DB:-azeebo_auth}"
 SUPERUSER="${SUPERUSER:-postgres}"
 SUPERUSER_PASSWORD="${SUPERUSER_PASSWORD:-postgres}"
 export PGHOST PGPORT PGUSER PGPASSWORD
@@ -41,7 +45,7 @@ log() { printf '\n== %s\n' "$*"; }
 # table|remote database (swap scope agreed after the column-diff survey; all of
 # these are column-supersets of — or identical to — the admin mirror).
 SWAPS=(
-  "users|azeebo_auth"
+  "users|${AUTH_DB}"
   "wallets|azeebo_wallet"
   "wallet_transactions|azeebo_wallet"
   "universes|azeebo_content"
@@ -64,7 +68,7 @@ SWAPS=(
 
 # ---------------------------------------------------------------------------
 log "0. sanity: databases reachable"
-for db in azeebo_auth azeebo_wallet azeebo_content azeebo_notification azeebo_payment azeebo_moderation azeebo_creator; do
+for db in "$AUTH_DB" azeebo_wallet azeebo_content azeebo_notification azeebo_payment azeebo_moderation azeebo_creator; do
   psql_at "$db" -tAc "SELECT 1" >/dev/null || { echo "FATAL: cannot reach $db"; exit 1; }
 done
 echo "ok"
@@ -85,8 +89,11 @@ PGPASSWORD="$SUPERUSER_PASSWORD" psql -q -h "$PGHOST" -p "$PGPORT" -U "$SUPERUSE
   || { echo "FATAL: could not GRANT USAGE on postgres_fdw (superuser $SUPERUSER)"; exit 1; }
 
 # ---------------------------------------------------------------------------
-log "2. additive columns on azeebo_auth.users (admin-owned suspension fields)"
-psql_at azeebo_auth -v ON_ERROR_STOP=1 <<'SQL'
+log "2. additive columns on ${AUTH_DB}.users (admin-owned suspension fields)"
+# THE additive-column repair: if this service DB was ever recreated from its
+# Prisma baseline, these admin-owned columns vanish and every admin query
+# touching them breaks. ADD COLUMN IF NOT EXISTS converges it back.
+psql_at "$AUTH_DB" -v ON_ERROR_STOP=1 <<'SQL'
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "isSuspended" boolean NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "suspendedAt" timestamp(3);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "suspendedBy" text;
@@ -106,7 +113,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 SQL
 
-servers=(azeebo_auth azeebo_wallet azeebo_content azeebo_notification azeebo_payment azeebo_moderation azeebo_creator)
+servers=("$AUTH_DB" azeebo_wallet azeebo_content azeebo_notification azeebo_payment azeebo_moderation azeebo_creator)
 for db in "${servers[@]}"; do
   # NOTE: unquoted heredoc — psql does not interpolate :"vars" inside dollar-quoted
   # bodies, so the db name is expanded by the shell instead (identifiers are our
@@ -213,7 +220,7 @@ CREATE FOREIGN TABLE public."auth_audit_logs" (
   "timestamp"   timestamp NOT NULL,
   "createdAt"   timestamp NOT NULL,
   "updatedAt"   timestamp NOT NULL
-) SERVER azeebo_fdw_azeebo_auth OPTIONS (schema_name 'public', table_name 'audit_logs');
+) SERVER azeebo_fdw_${AUTH_DB} OPTIONS (schema_name 'public', table_name 'audit_logs');
 GRANT SELECT ON public."auth_audit_logs" TO "${PGUSER}";
 SQL
   echo "auth_audit_logs -> azeebo_auth.audit_logs (read-only)"
@@ -235,6 +242,22 @@ for entry in "${SWAPS[@]}"; do
   fi
 done
 [ "$fail" = 0 ] || { echo "FATAL: rowcount mismatch"; exit 1; }
+
+# ---------------------------------------------------------------------------
+log "7. job_runs ledger (admin-owned, local; both scheduled jobs append here)"
+psql_admin -v ON_ERROR_STOP=1 <<'SQL'
+CREATE TABLE IF NOT EXISTS job_runs (
+  id           text PRIMARY KEY,
+  job          text NOT NULL,
+  status       text NOT NULL,
+  detail       text,
+  "rowsPurged" integer,
+  "durationMs" integer,
+  "ranAt"      timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS job_runs_job_ranat_idx ON job_runs (job, "ranAt" DESC);
+SQL
+echo "ok"
 
 echo
 echo "Federation complete. azeebo_admin now serves LIVE data for the swapped tables."
