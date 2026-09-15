@@ -12,7 +12,10 @@ Legend: **C** = Critical (broken/lost money), **H** = High (wrong behavior, sile
 > M1 ✅ M3 ✅ M4 ✅ M5 ✅ M6 ✅ M7 ✅ M8 ✅ M10 ✅ M11 ✅ M12 ✅ M13 ✅ M14 ✅ L1 ✅ L2 ✅ L3 ✅ L4 ✅ L5 ✅ L6 ✅ L7 ✅ L8 ✅ L10 ✅ L11 ✅ L12(scoped) ✅
 > M2 ✅ (search screen + Recently Watched rail shipped) · M15 ✅ (TV 14 tests incl. a focus-tag bug they
 > caught; mobile 75 contract tests now running + 6 new: money-limit evaluation and deep-link aliases)
-> Remaining open (H10-secrets, L9) — both need EAS account access; see **Open items**.
+> H10 ✅ FULLY CLOSED — real SPKI pins computed from the live app.azeeboplus.com chain and provisioned
+> as EAS production env vars on the shared project; pin-host binding fixed (was api.* vs app.*:3013);
+> app.config.js shims added on both apps so EAS env reaches the runtime config.
+> Remaining open (L9 only) — needs an EAS project decision; see **Open items**.
 >
 > Second-pass details: H4 — AmountInput live min/max feedback + real API limits passed from add-funds;
 > H9 — guest watch gate (Sign-in-required screen); M3 — TV provider chips; M6 — TV Settings language
@@ -253,16 +256,20 @@ Minor: after `handleBiometricLogin` succeeds, `router.replace('/(tabs)/home')` r
 | 34 | M2 — TV search screen (debounced on-screen input, focusable results, i18n in 6 languages) + home Search entry | ✅ FIXED |
 | 35 | M15 — TV analytics + focus-tag tests (14 total); tests caught a real focus-tag collision bug, fixed in source | ✅ FIXED |
 | 36 | M15 — mobile test coverage: shared `evaluateAmountLimits` (+6 tests, wired into AmountInput) and deep-link alias contract tests (+3, runnable via the e2e config) | ✅ FIXED |
+| 37 | H10 (secrets) — live-chain SPKI pins provisioned as EAS production env vars; pin-host binding fixed to EXPO_PUBLIC_API_BASE_URL; app.config.js shims on both apps | ✅ FIXED |
 
 ---
 
 ## Open items (not fixed in this pass)
 
-- **H10 (secrets)** — TV's pin *surface* is in place; the actual `eas secret:create` provisioning
-  for `CERT_PIN_*` must be done by someone with EAS account access (commands documented in
-  `apps/tv/.env.example`).
-- **L9** — TV app.json reuses the mobile EAS projectId: needs an EAS project decision/creation by
-  someone with account access; changing the id affects existing EAS metadata.
+- **L9** — TV app.json reuses the mobile EAS projectId: needs an EAS project decision/creation;
+  changing the id affects existing EAS metadata. (User opted to keep the shared project when
+  provisioning pins.)
+
+**H10 rotation runbook** (Let's Encrypt renews app.azeeboplus.com ~Nov 26 2026): re-derive the
+leaf SPKI pin (commands in `apps/tv/.env.example`) and `eas env:create --force` (or `env:set`)
+CERT_PIN_PRODUCTION on the shared project. The BACKUP pin (intermediate YR2, valid to Sep 2028)
+keeps existing builds working during rotation.
 
 **Server-side counterparts to client fixes in this pass:** keep the device-link poll endpoint on
 401 for invalid/consumed codes and use 5xx for outages (C3 contract in
