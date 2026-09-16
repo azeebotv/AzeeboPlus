@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import type { BundlePassAdmin } from '@/lib/admin-types';
+import type { BundlePassAdmin, AdminUniverse } from '@/lib/admin-types';
 import { unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
@@ -11,26 +11,16 @@ const TIER_COLORS: Record<string, string> = {
   ultimate: 'var(--admin-amber)',
 };
 
-const UNIVERSE_NAMES: Record<string, string> = {
-  reality: 'Reality',
-  comedy: 'Comedy',
-  movies: 'Movies',
-  creator: 'Creator',
-  lifestyle: 'Lifestyle',
-  sports: 'Sports',
-  games: 'Games',
-  vertical: 'Vertical',
-};
-
 export default function BundlePassesPage() {
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<BundlePassAdmin | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [formError, setFormError] = useState('');
   const [form, setForm] = useState({
     name: '',
     description: '',
-    universeIds: '',
+    universeIds: [] as string[],
     price: '',
     originalPrice: '',
     discountPercent: '',
@@ -47,12 +37,28 @@ export default function BundlePassesPage() {
     },
   });
 
+  // Real universe list for the multi-select (replaces the hardcoded map +
+  // free-text comma input that let invalid ids through).
+  const { data: universes = [] } = useQuery({
+    queryKey: ['admin', 'universes-for-bundles'],
+    queryFn: async () => {
+      const res = await adminApi.getAllUniverses(1, 100);
+      // The universes endpoint paginates as { data: [...], meta } — not items.
+      return unwrapList<AdminUniverse>(res.data, 'data').items;
+    },
+  });
+  const universeName = (uid: string) => {
+    const u = universes.find((x: AdminUniverse) => x.id === uid);
+    return u?.displayName || u?.name || uid;
+  };
+
   const createMutation = useMutation({
     mutationFn: (data: Record<string, unknown>) => adminApi.createBundlePass(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'bundle-passes'] });
       closeModal();
     },
+    onError: (e: Error) => setFormError(e.message || 'Failed to create bundle'),
   });
 
   const updateMutation = useMutation({
@@ -62,6 +68,7 @@ export default function BundlePassesPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'bundle-passes'] });
       closeModal();
     },
+    onError: (e: Error) => setFormError(e.message || 'Failed to update bundle'),
   });
 
   const deleteMutation = useMutation({
@@ -70,15 +77,17 @@ export default function BundlePassesPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'bundle-passes'] });
       setDeleteConfirm(null);
     },
+    onError: (e: Error) => setFormError(e.message || 'Failed to delete bundle'),
   });
 
   function closeModal() {
     setShowModal(false);
     setEditing(null);
+    setFormError('');
     setForm({
       name: '',
       description: '',
-      universeIds: '',
+      universeIds: [],
       price: '',
       originalPrice: '',
       discountPercent: '',
@@ -90,10 +99,11 @@ export default function BundlePassesPage() {
 
   function openCreate() {
     setEditing(null);
+    setFormError('');
     setForm({
       name: '',
       description: '',
-      universeIds: '',
+      universeIds: [],
       price: '',
       originalPrice: '',
       discountPercent: '',
@@ -106,10 +116,11 @@ export default function BundlePassesPage() {
 
   function openEdit(b: BundlePassAdmin) {
     setEditing(b);
+    setFormError('');
     setForm({
       name: b.name,
       description: b.description,
-      universeIds: b.universeIds.join(', '),
+      universeIds: [...b.universeIds],
       price: String(b.price),
       originalPrice: String(b.originalPrice),
       discountPercent: String(b.discountPercent),
@@ -121,17 +132,32 @@ export default function BundlePassesPage() {
   }
 
   function handleSubmit() {
+    setFormError('');
+    // DTO parity: name/description/universeIds/price/originalPrice/
+    // discountPercent/duration/tier are all required server-side.
+    if (!form.name.trim()) return void setFormError('Name is required.');
+    if (!form.description.trim()) return void setFormError('Description is required.');
+    if (form.universeIds.length === 0) return void setFormError('Select at least one universe.');
+    const price = Number(form.price);
+    const originalPrice = Number(form.originalPrice);
+    const discountPercent = Number(form.discountPercent);
+    const duration = Number(form.duration);
+    if (!Number.isFinite(price) || price < 0)
+      return void setFormError('Price must be a non-negative number.');
+    if (!Number.isFinite(originalPrice) || originalPrice < 0)
+      return void setFormError('Original price must be a non-negative number.');
+    if (!Number.isFinite(discountPercent) || discountPercent < 0 || discountPercent > 100)
+      return void setFormError('Discount must be between 0 and 100.');
+    if (!Number.isFinite(duration) || duration < 1)
+      return void setFormError('Duration must be at least 1 day.');
     const payload: Record<string, unknown> = {
-      name: form.name,
-      description: form.description,
-      universeIds: form.universeIds
-        .split(',')
-        .map((u) => u.trim())
-        .filter(Boolean),
-      price: parseFloat(form.price) || 0,
-      originalPrice: parseFloat(form.originalPrice) || 0,
-      discountPercent: parseInt(form.discountPercent) || 0,
-      duration: parseInt(form.duration) || 30,
+      name: form.name.trim(),
+      description: form.description.trim(),
+      universeIds: form.universeIds,
+      price,
+      originalPrice,
+      discountPercent,
+      duration,
       tier: form.tier,
       isActive: form.isActive,
     };
@@ -155,7 +181,16 @@ export default function BundlePassesPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
             <Icon name="package" size={28} color="var(--admin-orange)" />
             <span>Bundle Passes</span>
           </h1>
@@ -183,7 +218,9 @@ export default function BundlePassesPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {bundles.map((b) => {
@@ -251,7 +288,7 @@ export default function BundlePassesPage() {
                             color: 'var(--admin-text-muted)',
                           }}
                         >
-                          {UNIVERSE_NAMES[uid] || uid}
+                          {universeName(uid)}
                         </span>
                       ))}
                     </div>
@@ -260,7 +297,11 @@ export default function BundlePassesPage() {
                         ₦{Number(b.price).toLocaleString()}/mo
                       </span>
                       <span
-                        style={{ color: 'var(--admin-text-muted)', fontSize: 12, textDecoration: 'line-through' }}
+                        style={{
+                          color: 'var(--admin-text-muted)',
+                          fontSize: 12,
+                          textDecoration: 'line-through',
+                        }}
                       >
                         ₦{Number(b.originalPrice).toLocaleString()}
                       </span>
@@ -337,7 +378,9 @@ export default function BundlePassesPage() {
             );
           })}
           {bundles.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No bundles found</p>
+            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
+              No bundles found
+            </p>
           )}
         </div>
       )}
@@ -373,8 +416,32 @@ export default function BundlePassesPage() {
               {editing ? 'Edit Bundle' : 'New Bundle'}
             </h2>
 
+            {formError && (
+              <div
+                role="alert"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  border: '1px solid rgba(204,28,28,0.4)',
+                  backgroundColor: 'rgba(204,28,28,0.12)',
+                  color: 'var(--admin-red-light)',
+                  fontSize: 13,
+                  marginBottom: 16,
+                }}
+              >
+                {formError}
+              </div>
+            )}
+
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Name
               </label>
               <input
@@ -394,7 +461,14 @@ export default function BundlePassesPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Description
               </label>
               <textarea
@@ -416,26 +490,61 @@ export default function BundlePassesPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
-                Universes{' '}
-                <span style={{ color: 'var(--admin-text-muted)' }}>
-                  (comma-separated: reality, comedy, movies, ...)
-                </span>
-              </label>
-              <input
-                value={form.universeIds}
-                onChange={(e) => setForm({ ...form, universeIds: e.target.value })}
+              <label
                 style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
-                  color: 'var(--admin-text)',
-                  fontSize: 14,
-                  outline: 'none',
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
                 }}
-              />
+              >
+                Universes <span style={{ color: 'var(--admin-red)' }}>*</span>
+              </label>
+              {universes.length === 0 ? (
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>
+                  Universes could not be loaded — check the Universes service.
+                </p>
+              ) : (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                    gap: 8,
+                    padding: 12,
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                  }}
+                >
+                  {universes.map((u: AdminUniverse) => (
+                    <label
+                      key={u.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontSize: 13,
+                        color: 'var(--admin-text)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.universeIds.includes(u.id)}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            universeIds: e.target.checked
+                              ? [...form.universeIds, u.id]
+                              : form.universeIds.filter((id) => id !== u.id),
+                          })
+                        }
+                      />
+                      {u.displayName || u.name}
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div
@@ -443,7 +552,12 @@ export default function BundlePassesPage() {
             >
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
                 >
                   Bundle Price (NGN)
                 </label>
@@ -466,7 +580,12 @@ export default function BundlePassesPage() {
               </div>
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
                 >
                   Original Price (NGN)
                 </label>
@@ -499,7 +618,12 @@ export default function BundlePassesPage() {
             >
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
                 >
                   Discount %
                 </label>
@@ -523,7 +647,12 @@ export default function BundlePassesPage() {
               </div>
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
                 >
                   Duration (days)
                 </label>
@@ -546,7 +675,12 @@ export default function BundlePassesPage() {
               </div>
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    color: 'var(--admin-text-muted)',
+                    marginBottom: 6,
+                  }}
                 >
                   Tier
                 </label>
