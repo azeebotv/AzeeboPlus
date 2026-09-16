@@ -11,6 +11,7 @@ interface UserItem {
   role: string;
   createdAt: string;
   isActive: boolean;
+  isVerified?: boolean;
 }
 
 export default function UsersPage() {
@@ -63,11 +64,26 @@ export default function UsersPage() {
     },
   });
 
+  /** Row-level verify/unverify (backend: POST :id/verify | :id/unverify). */
+  const verifyMutation = useMutation({
+    mutationFn: ({ id, verified }: { id: string; verified: boolean }) =>
+      verified ? adminApi.verifyCreator(id) : adminApi.unverifyCreator(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  });
+
+  /** Row-level suspend for a single user (same contract as bulk). */
+  const suspendOneMutation = useMutation({
+    mutationFn: (id: string) => adminApi.suspendUser(id, 'Suspended from users directory', 7),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user'] });
+    },
+  });
+
   const exportCSV = () => {
-    const listToExport = selectedIds.length > 0 
-      ? users.filter((u) => selectedIds.includes(u.id))
-      : users;
-    
+    const listToExport =
+      selectedIds.length > 0 ? users.filter((u) => selectedIds.includes(u.id)) : users;
+
     if (listToExport.length === 0) return;
 
     const headers = ['ID', 'Username', 'Email', 'Role', 'Status', 'Joined'];
@@ -85,7 +101,10 @@ export default function UsersPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `azeebo_users_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute(
+      'download',
+      `azeebo_users_export_${new Date().toISOString().slice(0, 10)}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -165,7 +184,9 @@ export default function UsersPage() {
             }}
           >
             <Icon name="download" size={14} />
-            <span>{selectedIds.length > 0 ? `Export (${selectedIds.length}) CSV` : 'Export CSV'}</span>
+            <span>
+              {selectedIds.length > 0 ? `Export (${selectedIds.length}) CSV` : 'Export CSV'}
+            </span>
           </button>
         </div>
       </div>
@@ -337,20 +358,63 @@ export default function UsersPage() {
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
-                      <button
-                        onClick={() => navigate(`/users/${u.id}`)}
-                        style={{
-                          padding: '6px 14px',
-                          borderRadius: 999,
-                          border: '1px solid var(--admin-surface)',
-                          background: 'transparent',
-                          color: 'var(--admin-text-muted)',
-                          fontSize: 12,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        View
-                      </button>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <button
+                          onClick={() => navigate(`/users/${u.id}`)}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: 999,
+                            border: '1px solid var(--admin-surface)',
+                            background: 'transparent',
+                            color: 'var(--admin-text-muted)',
+                            fontSize: 12,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          View
+                        </button>
+                        {u.role === 'creator' && (
+                          <button
+                            onClick={() =>
+                              verifyMutation.mutate({ id: u.id, verified: !u.isVerified })
+                            }
+                            disabled={verifyMutation.isPending}
+                            title="Toggle creator verification (POST :id/verify | :id/unverify)"
+                            style={{
+                              padding: '6px 14px',
+                              borderRadius: 999,
+                              border: '1px solid var(--admin-surface)',
+                              background: 'transparent',
+                              color: 'var(--admin-green)',
+                              fontSize: 12,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {u.isVerified ? 'Unverify' : 'Verify'}
+                          </button>
+                        )}
+                        {u.isActive && (
+                          <button
+                            onClick={() => {
+                              if (suspendOneMutation.isPending) return;
+                              suspendOneMutation.mutate(u.id);
+                            }}
+                            disabled={suspendOneMutation.isPending}
+                            title="Suspend for 7 days (PUT :id/suspend)"
+                            style={{
+                              padding: '6px 14px',
+                              borderRadius: 999,
+                              border: '1px solid var(--admin-surface)',
+                              background: 'transparent',
+                              color: 'var(--admin-red)',
+                              fontSize: 12,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Suspend
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -449,15 +513,26 @@ export default function UsersPage() {
               maxWidth: 440,
             }}
           >
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: 'var(--admin-red)' }}>
+            <h3
+              style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: 'var(--admin-red)' }}
+            >
               Bulk Suspend {selectedIds.length} Users
             </h3>
             <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 16 }}>
-              Suspended users will immediately lose access to their accounts and be logged out of active sessions.
+              Suspended users will immediately lose access to their accounts and be logged out of
+              active sessions.
             </p>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Duration
               </label>
               <select
@@ -483,7 +558,15 @@ export default function UsersPage() {
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Reason
               </label>
               <textarea
