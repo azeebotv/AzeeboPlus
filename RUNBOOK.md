@@ -739,6 +739,42 @@ How it works:
   redis-cli --scan --pattern 'csrf:token:*' | wc -l   # should be >= 1
   ```
 
+### Gateway GET Cache: Deny-By-Default Policy
+
+The gateway's response cache is an **allowlist, not a blacklist**: a GET is
+cacheable only if its route is explicitly marked `publicCacheable: true` in
+`proxy.controller.ts` (`SERVICE_CONFIGS`). Currently exactly two routes are:
+
+- `/public/*` (content-service public settings, enabled universes)
+- `/pricing/*` (anonymous pricing tables)
+
+Three gates stack on top, in order:
+
+1. **Route allowlist** - unmarked routes (`/content`, `/search`, `/universe`,
+   everything else) are never cached, even for anonymous traffic.
+2. **Authenticated requests bypass everything** - any `Authorization` header,
+   session `Cookie`, or gateway-stamped `req.user` skips both cache reads and
+   writes regardless of route marking. A shared cached body must never serve
+   one user another user's data, and authenticated reads must re-issue right
+   after mutations.
+3. **Path exclusions remain as defense in depth** (`/admin/`, `/analytics/`,
+   `/subscription/bundles`, user-specific paths) in case the policy is ever
+   loosened back to caching authenticated traffic.
+
+**Why:** every historical mutation-revert incident (create succeeded, list
+refetch showed stale bytes) traced to a sensitive GET that was missing from
+the old blacklist. A blacklist silently misses new endpoints; an allowlist
+cannot.
+
+**Operational notes:**
+
+- Anonymous traffic on popular unmarked endpoints (e.g. `/content/home`) now
+  always hits the upstream. If upstream latency becomes a problem, mark the
+  route `publicCacheable: true` - do **not** re-add authenticated caching.
+- Behavior is pinned by `proxy-cache-exclusions.spec.ts` (25 tests: never
+  served / never written per gate, plus a positive control proving `/pricing`
+  still caches).
+
 ### SSL Certificate Renewal
 
 1. Check expiration: `openssl x509 -enddate -noout -in cert.pem`
