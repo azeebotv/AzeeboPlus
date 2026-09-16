@@ -309,6 +309,7 @@ model ChallengeSubmission {
   challengeId  String
   title        String
   status       String   @default("submitted") // submitted, under_review, winner, rejected
+  upstreamId   String?  // creator-service challenge_entries.id when synced
   submittedAt  DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -317,4 +318,23 @@ model ChallengeSubmission {
   @@unique([userId, challengeId])
   @@index([userId])
   @@map("challenge_submissions")
+}
+
+/// Creator-owned subscription tiers: pricing + perks, managed from the
+/// portal monetization page. Subscriber counts are derived from the
+/// platform `subscriptions` table (status='active', matching tier name).
+model SubscriptionTier {
+  id          String   @id @default(uuid())
+  creatorId   String
+  name        String
+  price       Decimal  @db.Decimal(18, 2)
+  perks       Json     @default("[]")
+  isActive    Boolean  @default(true)
+  displayOrder Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([creatorId, name])
+  @@index([creatorId, isActive])
+  @@map("subscription_tiers")
 }

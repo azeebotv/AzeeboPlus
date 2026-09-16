@@ -299,9 +299,7 @@ export class CreatorController {
       success: true,
       data: await this.creatorService.getWebMonetizationSettings(req.user.id),
     };
-  }
-
-  @Patch('monetization/settings')
+  }  @Patch('monetization/settings')
   async patchWebMonetizationSettings(
     @Request() req: AuthRequest,
     @Body()
@@ -322,6 +320,65 @@ export class CreatorController {
           : undefined,
         payoutMethod: body.payoutMethod,
       }),
+    };
+  }
+
+  // ── Subscription tiers (creator-owned, CRUD) ───────────────────
+  @Get('monetization/tiers')
+  async listSubscriptionTiers(
+    @Request() req: AuthRequest
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getSubscriptionTiers(req.user.id),
+    };
+  }
+
+  @Post('monetization/tiers')
+  async createSubscriptionTier(
+    @Request() req: AuthRequest,
+    @Body()
+    body: {
+      name?: string;
+      price?: number;
+      perks?: string[];
+      isActive?: boolean;
+      displayOrder?: number;
+    }
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.createSubscriptionTier(req.user.id, body),
+    };
+  }
+
+  @Put('monetization/tiers/:id')
+  async updateSubscriptionTier(
+    @Request() req: AuthRequest,
+    @Param('id') tierId: string,
+    @Body()
+    body: {
+      name?: string;
+      price?: number;
+      perks?: string[];
+      isActive?: boolean;
+      displayOrder?: number;
+    }
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.updateSubscriptionTier(req.user.id, tierId, body),
+    };
+  }
+
+  @Delete('monetization/tiers/:id')
+  async deleteSubscriptionTier(
+    @Request() req: AuthRequest,
+    @Param('id') tierId: string
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.deleteSubscriptionTier(req.user.id, tierId),
     };
   }
 
@@ -373,17 +430,9 @@ export class CreatorController {
   async getSubscriberStats(
     @Request() req: AuthRequest
   ): Promise<{ success: boolean; data: unknown }> {
-    const subs = await this.creatorService.getSubscribers(req.user.id, 1, 20);
     return {
       success: true,
-      data: {
-        totalSubscribers: subs.total,
-        newThisWeek: 0,
-        newThisMonth: 0,
-        churnRate: 0,
-        growth: subs.growth,
-        demographics: { ageGroups: [], topRegions: [] },
-      },
+      data: await this.creatorService.getSubscriberStats(req.user.id),
     };
   }
 
