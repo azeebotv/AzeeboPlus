@@ -866,6 +866,18 @@ const ICON_MAP: Record<string, string> = {
   '🟢': 'checkCircle',
   '🟡': 'alertTriangle',
   '⚪': 'circle',
+  // Keep route icons semantic without leaking unsupported icon names as text.
+  archive: 'clipboardList',
+  bookOpen: 'book',
+  cpu: 'activity',
+  download: 'externalLink',
+  fileText: 'clipboardList',
+  heart: 'star',
+  messageSquare: 'clipboardList',
+  package: 'archive',
+  repeat: 'refresh',
+  trendingUp: 'trending',
+  tv: 'film',
 };
 
 export function Icon({ name, size = 18, color = 'currentColor', className }: IconProps) {
