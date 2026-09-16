@@ -118,12 +118,16 @@ export async function apiFetch<T>(
   // Tokens are sent automatically via httpOnly cookies (credentials: 'include')
   // No need to read from localStorage
 
+  const method = (options.method || 'GET').toUpperCase();
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    // Never set a JSON Content-Type on FormData — the browser must generate
+    // the multipart boundary or multer rejects the request with 400.
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers as Record<string, string>),
   };
 
-  const method = (options.method || 'GET').toUpperCase();
   if (STATE_CHANGING_METHODS.includes(method)) {
     // Bootstrap when no token is cached: the gateway only mints the _csrf
     // cookie on bootstrap, so a cold page would otherwise send cookieless
