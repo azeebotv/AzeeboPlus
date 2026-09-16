@@ -35,18 +35,28 @@ export interface CreatorChallengeEntry {
 @Injectable()
 export class CreatorsClientService {
   private readonly creatorsServiceUrl: string;
+  private readonly internalApiKey: string;
 
   constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
-    const url = this.configService.get<string>('API_GATEWAY_URL');
+    // Service-to-service calls go DIRECTLY to creator-service (like the wallet
+    // client): the gateway exposes /api/v1/* and requires a user Bearer token,
+    // which a backend caller doesn't have. Internal routes trust x-user-*
+    // headers stamped with the shared gateway secret.
+    const url =
+      this.configService.get<string>('CREATOR_SERVICE_URL') ||
+      this.configService.get<string>('API_GATEWAY_URL');
     if (!url && process.env.NODE_ENV === 'production') {
-      throw new Error('API_GATEWAY_URL environment variable must be set in production');
+      throw new Error('CREATOR_SERVICE_URL environment variable must be set in production');
     }
-    this.creatorsServiceUrl = url || 'http://localhost:3013';
+    this.creatorsServiceUrl = url || 'http://localhost:3018';
+    this.internalApiKey =
+      this.configService.get<string>('GATEWAY_SECRET') ??
+      this.configService.getOrThrow<string>('INTERNAL_API_KEY');
   }
 
   private async request<T>(
     endpoint: string,
-    options: { method?: string; body?: unknown } = {}
+    options: { method?: string; body?: unknown; userId?: string } = {}
   ): Promise<CreatorsServiceResponse<T>> {
     const url = `${this.creatorsServiceUrl}${endpoint}`;
     const parsedUrl = new URL(url);
@@ -63,6 +73,11 @@ export class CreatorsClientService {
           method: options.method || 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'x-gateway-secret': this.internalApiKey,
+            // Forward the real end-user identity when known (challenge
+            // attribution), falling back to the service identity.
+            'x-user-id': options.userId || 'service',
+            'x-user-role': options.userId ? 'creator' : 'service',
           },
           signal: controller.signal as AbortSignal,
         },
@@ -112,20 +127,24 @@ export class CreatorsClientService {
     return this.request<{ challenges: CreatorChallenge[] }>('/v1/creators/challenges');
   }
 
-  /** My submissions: entries where I am a participant. */
-  async getMyChallengeEntries(_userId: string): Promise<CreatorsServiceResponse<{ challenges: CreatorChallenge[] }>> {
-    return this.request<{ challenges: CreatorChallenge[] }>('/v1/creators/challenges');
+  /** My submissions: challenge entries where I am a participant (creator-service GET /v1/creators/challenges/my). */
+  async getMyChallengeEntries(
+    userId: string
+  ): Promise<CreatorsServiceResponse<{ challenges: CreatorChallengeEntry[] }>> {
+    return this.request<{ challenges: CreatorChallengeEntry[] }>('/v1/creators/challenges/my', {
+      userId,
+    });
   }
 
   /** Participate in a challenge (creator-service POST /v1/creators/challenges/:id/participate). */
   async participateInChallenge(
-    _userId: string,
+    userId: string,
     challengeId: string,
     contentUrl: string
-  ): Promise<CreatorsServiceResponse<{ success: boolean; data: unknown }>> {
-    return this.request<{ success: boolean; data: unknown }>(
+  ): Promise<CreatorsServiceResponse<{ entryId: string; message?: string }>> {
+    return this.request<{ entryId: string; message?: string }>(
       `/v1/creators/challenges/${challengeId}/participate`,
-      { method: 'POST', body: { contentUrl } }
+      { method: 'POST', body: { contentUrl }, userId }
     );
   }
 }

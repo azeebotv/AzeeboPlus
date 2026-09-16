@@ -49,13 +49,22 @@ export interface PayoutRequest {
 @Injectable()
 export class WalletClientService {
   private readonly walletServiceUrl: string;
+  private readonly internalApiKey: string;
 
   constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
-    const url = this.configService.get<string>('API_GATEWAY_URL');
+    // Service-to-service calls go DIRECTLY to wallet-service internal routes
+    // (/v1/internal/wallets/*). The gateway's user-facing wallet routes require
+    // a user JWT and don't expose by-userId lookups — same pattern creator-service
+    // uses for tipping.
+    const url = this.configService.get<string>('WALLET_SERVICE_URL');
     if (!url && process.env.NODE_ENV === 'production') {
-      throw new Error('API_GATEWAY_URL environment variable must be set in production');
+      throw new Error('WALLET_SERVICE_URL environment variable must be set in production');
     }
-    this.walletServiceUrl = url || 'http://localhost:3013';
+    this.walletServiceUrl = url || 'http://localhost:3002';
+    // Same resolution order InternalSecretGuard uses to validate it.
+    this.internalApiKey =
+      this.configService.get<string>('GATEWAY_SECRET') ??
+      this.configService.getOrThrow<string>('INTERNAL_API_KEY');
   }
 
   private async request<T>(
@@ -77,6 +86,7 @@ export class WalletClientService {
           method: options.method || 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'x-internal-api-key': this.internalApiKey,
             ...options.headers,
           },
           signal: controller.signal as AbortSignal,
@@ -123,7 +133,7 @@ export class WalletClientService {
   }
 
   async getWallet(userId: string): Promise<WalletServiceResponse<Wallet>> {
-    const endpoint = `/v1/wallet/user/${userId}`;
+    const endpoint = `/v1/internal/wallets/user/${userId}`;
     return this.request<Wallet>(endpoint);
   }
 
@@ -196,16 +206,17 @@ export class WalletClientService {
     });
   }
 
+  /** Debit a user's wallet via the internal by-userId route (never fails silently). */
   async debit(
-    walletId: string,
+    userId: string,
     amount: number,
     description: string,
     idempotencyKey: string
   ): Promise<WalletServiceResponse<{ success: boolean }>> {
-    const endpoint = '/v1/wallet/debit';
+    const endpoint = `/v1/internal/wallets/user/${userId}/debit`;
     return this.request<{ success: boolean }>(endpoint, {
       method: 'POST',
-      body: { walletId, amount, description, idempotencyKey },
+      body: { amount, description, idempotencyKey },
     });
   }
 }

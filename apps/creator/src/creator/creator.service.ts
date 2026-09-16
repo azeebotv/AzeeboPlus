@@ -3,6 +3,7 @@ import { Prisma } from '../generated/prisma';
 import { PrismaService } from '../database/prisma.service';
 import { WalletClientService } from '../api/clients/wallet-client.service';
 import { CreatorsClientService } from '../api/clients/creators-client.service';
+import { MediaClientService } from '../api/clients/media-client.service';
 
 export interface ContentItem {
   id: string;
@@ -31,6 +32,17 @@ export interface RecentContentItem {
   status: string;
   viewCount: number;
   createdAt: string;
+}
+
+/** A creator subscription tier as exposed to clients. */
+export interface SubscriptionTierView {
+  id: string;
+  name: string;
+  price: number;
+  perks: string[];
+  isActive: boolean;
+  displayOrder: number;
+  subscriberCount: number;
 }
 
 export interface DashboardStats {
@@ -101,6 +113,10 @@ export interface UploadItem {
   status: 'uploading' | 'processing' | 'completed' | 'failed';
   progress: number;
   createdAt: string;
+  /** Where the file bytes live: blob storage ('stored') or metadata-only ('pending'). Legacy rows have neither. */
+  storage: 'stored' | 'pending' | 'unknown';
+  /** media-service virus scan verdict, when the pipeline stored the file. */
+  scanStatus: string | null;
 }
 
 export interface SubscriberItem {
@@ -138,6 +154,7 @@ export interface WebSubscribersData {
 }
 
 export interface MonetizationData {
+  tiers?: SubscriptionTierView[];
   /** Portal client shape */
   tipEnabled: boolean;
   tipMin: number;
@@ -161,7 +178,8 @@ export class CreatorService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(WalletClientService) private readonly walletClient: WalletClientService,
-    @Inject(CreatorsClientService) private readonly creatorsClient: CreatorsClientService
+    @Inject(CreatorsClientService) private readonly creatorsClient: CreatorsClientService,
+    @Inject(MediaClientService) private readonly mediaClient: MediaClientService
   ) {}
 
   async getDashboardStats(userId: string): Promise<DashboardStats> {
@@ -426,8 +444,7 @@ export class CreatorService {
         status: data.status,
         type: data.type as 'video' | 'audio' | 'document' | undefined,
         // Stamp publishedAt the first time the item goes live
-        publishedAt:
-          data.status === 'published' && !content.publishedAt ? new Date() : undefined,
+        publishedAt: data.status === 'published' && !content.publishedAt ? new Date() : undefined,
       },
     });
 
@@ -466,45 +483,129 @@ export class CreatorService {
       where: { creatorId: userId, status: { in: ['draft', 'pending', 'published'] } },
       orderBy: { createdAt: 'desc' },
       take: 20,
-      select: { id: true, title: true, status: true, createdAt: true },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        createdAt: true,
+        metadata: true,
+        mediaUrl: true,
+      },
     });
 
     return items.map((item) => {
-      const status: UploadItem['status'] =
-        item.status === 'published' ? 'completed' : 'processing';
+      const status: UploadItem['status'] = item.status === 'published' ? 'completed' : 'processing';
       const progress = item.status === 'published' ? 100 : item.status === 'pending' ? 75 : 90;
+      // Pipeline metadata distinguishes real blob storage from a
+      // metadata-only registration (media-service down or file rejected).
+      const meta = (item.metadata ?? {}) as {
+        media?: { key?: string; scanStatus?: string | null };
+        upload?: { storage?: string };
+      };
+      let storage: UploadItem['storage'] = 'unknown';
+      if (meta.media?.key || (meta.upload?.storage && meta.upload.storage !== 'pending')) {
+        storage = 'stored';
+      } else if (meta.upload?.storage === 'pending') {
+        storage = 'pending';
+      }
+      const scanStatus = meta.media?.scanStatus ?? null;
       return {
         id: item.id,
         title: item.title,
         status,
         progress,
         createdAt: item.createdAt.toISOString(),
+        storage,
+        scanStatus,
       };
     });
   }
 
   /**
-   * POST /creator/uploads — register an upload as a draft content item and
-   * record the file metadata. Binary persistence (blob storage) is handled
-   * by the media pipeline; only metadata is kept here.
+   * POST /creator/uploads — forward the file to media-service (blob storage,
+   * scan, CDN) and register the upload as a draft content item with the stored
+   * object's coordinates in metadata.
    */
+  /**
+   * The upload form sends a free-text universe (name like "Reality" or an ID);
+   * resolve either form to a universe ID, falling back to the default universe.
+   */
+  private async resolveUniverseId(universe?: string): Promise<string | undefined> {
+    const value = universe?.trim();
+    if (!value) return undefined;
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
+      return value;
+    }
+    const byName = await this.prisma.universe.findFirst({
+      where: {
+        OR: [
+          { name: { equals: value, mode: 'insensitive' } },
+          { displayName: { equals: value, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true },
+    });
+    return byName?.id ?? undefined;
+  }
+
   async createUpload(
     userId: string,
     data: { title: string; description?: string; type?: string; universe?: string },
-    file?: { originalname: string; size: number; mimetype: string }
+    file?: Express.Multer.File
   ): Promise<UploadItem> {
     if (!data.title || !data.title.trim()) {
       throw new BadRequestException('Title is required');
     }
 
+    // Register the content item first so a local validation/provisioning
+    // failure can never leave an orphaned blob in storage.
     const content = await this.createContent(userId, {
       title: data.title,
       description: data.description,
       type: data.type || 'video',
-      universeId: data.universe,
+      universeId: await this.resolveUniverseId(data.universe),
     });
 
-    if (file) {
+    // Forward the raw file to media-service (the platform's blob pipeline) so
+    // bytes land in S3 with MIME sniffing, virus scan, and CDN registration.
+    let media: Awaited<ReturnType<MediaClientService['forwardUpload']>> = null;
+    if (file?.buffer?.length) {
+      media = await this.mediaClient.forwardUpload({
+        buffer: file.buffer,
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+      });
+    }
+
+    if (media) {
+      // Real pipeline result: persist the stored object's coordinates and set
+      // mediaUrl so the content item serves from blob storage/CDN.
+      await this.prisma.contentItem.update({
+        where: { id: content.id },
+        data: {
+          mediaUrl: media.cdnUrl || media.url,
+          metadata: {
+            upload: {
+              fileName: file!.originalname,
+              size: file!.size,
+              mimetype: file!.mimetype,
+              uploadedVia: 'portal',
+            },
+            media: {
+              key: media.key,
+              url: media.url,
+              cdnUrl: media.cdnUrl,
+              storedMimetype: media.mimetype,
+              storedSize: media.size,
+              scanStatus: media.scanStatus ?? null,
+            },
+          },
+        },
+      });
+    } else if (file) {
+      // Pipeline unavailable/rejected: keep the metadata-only record so the
+      // upload is not silently lost, and surface the degraded state.
       await this.prisma.contentItem.update({
         where: { id: content.id },
         data: {
@@ -514,6 +615,7 @@ export class CreatorService {
               size: file.size,
               mimetype: file.mimetype,
               uploadedVia: 'portal',
+              storage: 'pending',
             },
           },
         },
@@ -526,6 +628,8 @@ export class CreatorService {
       status: 'processing',
       progress: 90,
       createdAt: content.createdAt.toISOString(),
+      storage: 'pending',
+      scanStatus: null,
     };
   }
 
@@ -752,7 +856,10 @@ export class CreatorService {
       throw new BadRequestException('Amount must be greater than 0');
     }
 
-    if (Number(creatorProfile.minimumPayout) && payoutAmount < Number(creatorProfile.minimumPayout)) {
+    if (
+      Number(creatorProfile.minimumPayout) &&
+      payoutAmount < Number(creatorProfile.minimumPayout)
+    ) {
       throw new BadRequestException(
         `Payout amount must be at least ${Number(creatorProfile.minimumPayout)}`
       );
@@ -762,9 +869,9 @@ export class CreatorService {
       throw new BadRequestException('Insufficient balance');
     }
 
-    // Debit wallet through wallet-service API
+    // Debit wallet through wallet-service API (internal by-userId route)
     const debitResult = await this.walletClient.debit(
-      wallet.id,
+      userId,
       payoutAmount,
       'Payout request',
       `payout-${userId}-${Date.now()}`
@@ -849,7 +956,9 @@ export class CreatorService {
         GROUP BY DATE_TRUNC('day', "createdAt")
         ORDER BY date
       `;
-      const byDay = new Map(raw.map((r) => [new Date(r.date).toISOString().slice(0, 10), Number(r.count)]));
+      const byDay = new Map(
+        raw.map((r) => [new Date(r.date).toISOString().slice(0, 10), Number(r.count)])
+      );
       let cumulative = total;
       const days: { date: string; count: number }[] = [];
       for (let i = 29; i >= 0; i--) {
@@ -889,12 +998,9 @@ export class CreatorService {
     return {
       stats: {
         totalSubscribers: portal.total,
-        newThisWeek: portal.recentSubscribers.filter(
-          (s) => new Date(s.joinedAt) >= weekAgo
-        ).length,
-        newThisMonth: portal.recentSubscribers.filter(
-          (s) => new Date(s.joinedAt) >= monthAgo
-        ).length,
+        newThisWeek: portal.recentSubscribers.filter((s) => new Date(s.joinedAt) >= weekAgo).length,
+        newThisMonth: portal.recentSubscribers.filter((s) => new Date(s.joinedAt) >= monthAgo)
+          .length,
         churnRate: 0,
       },
       subscribers: portal.recentSubscribers.map((s) => ({
@@ -930,6 +1036,7 @@ export class CreatorService {
       tipMax,
       payoutMethod,
       payoutDetails: {},
+      tiers: await this.getSubscriptionTiers(userId),
       // Mobile aliases
       isMonetizationEnabled: profile?.verified ?? false,
       isSubscriptionEnabled: false,
@@ -992,6 +1099,184 @@ export class CreatorService {
     return this.getMonetization(profile.userId);
   }
 
+  // ─── Subscription tier CRUD (portal-owned, monetization page) ──────
+
+  /**
+   * GET /creator/monetization/tiers — list the creator's tiers with derived
+   * subscriber counts (platform `subscriptions` rows, status='active',
+   * matched by tier name).
+   */
+  async getSubscriptionTiers(userId: string): Promise<SubscriptionTierView[]> {
+    const tiers = await this.prisma.subscriptionTier.findMany({
+      where: { creatorId: userId },
+      orderBy: [{ displayOrder: 'asc' }, { price: 'asc' }],
+    });
+    if (tiers.length === 0) return [];
+
+    const counts = await this.prisma.$queryRaw<{ tier: string; count: number }[]>`
+      SELECT tier, COUNT(*)::int as count
+      FROM "subscriptions"
+      WHERE "creatorId" = ${userId} AND status = 'active'
+      GROUP BY tier
+    `;
+    const byTier = new Map(counts.map((c) => [c.tier.toLowerCase(), Number(c.count)]));
+
+    return tiers.map((t) => ({
+      id: t.id,
+      name: t.name,
+      price: Number(t.price),
+      perks: Array.isArray(t.perks) ? (t.perks as string[]) : [],
+      isActive: t.isActive,
+      displayOrder: t.displayOrder,
+      subscriberCount: byTier.get(t.name.toLowerCase()) ?? 0,
+    }));
+  }
+
+  /**
+   * POST /creator/monetization/tiers — create a tier (name + price required;
+   * name unique per creator, price non-negative).
+   */
+  async createSubscriptionTier(
+    userId: string,
+    data: {
+      name?: string;
+      price?: number;
+      perks?: string[];
+      isActive?: boolean;
+      displayOrder?: number;
+    }
+  ): Promise<SubscriptionTierView> {
+    const name = data.name?.trim();
+    if (!name) throw new BadRequestException('Tier name is required');
+    if (name.length > 50) throw new BadRequestException('Tier name must be 50 characters or fewer');
+
+    const price = Number(data.price);
+    if (!Number.isFinite(price) || price < 0) {
+      throw new BadRequestException('Price must be a non-negative number');
+    }
+
+    const perks = this.sanitizePerks(data.perks);
+    try {
+      const tier = await this.prisma.subscriptionTier.create({
+        data: {
+          creatorId: userId,
+          name,
+          price,
+          perks: [...perks],
+          isActive: data.isActive ?? true,
+          displayOrder: data.displayOrder ?? 0,
+        },
+      });
+      return {
+        id: tier.id,
+        name: tier.name,
+        price: Number(tier.price),
+        perks: Array.isArray(tier.perks) ? (tier.perks as string[]) : [],
+        isActive: tier.isActive,
+        displayOrder: tier.displayOrder,
+        subscriberCount: 0,
+      };
+    } catch (err: unknown) {
+      throw this.mapTierWriteError(err, 'Tier name already exists');
+    }
+  }
+
+  /**
+   * PUT /creator/monetization/tiers/:id — update name/price/perks/active/
+   * order. Creator-scoped: only the owner can modify a tier.
+   */
+  async updateSubscriptionTier(
+    userId: string,
+    tierId: string,
+    data: {
+      name?: string;
+      price?: number;
+      perks?: string[];
+      isActive?: boolean;
+      displayOrder?: number;
+    }
+  ): Promise<SubscriptionTierView> {
+    const existing = await this.prisma.subscriptionTier.findUnique({ where: { id: tierId } });
+    if (!existing || existing.creatorId !== userId) {
+      throw new NotFoundException('Subscription tier not found');
+    }
+
+    const update: Record<string, unknown> = {};
+    if (data.name !== undefined) {
+      const name = data.name.trim();
+      if (!name) throw new BadRequestException('Tier name cannot be empty');
+      if (name.length > 50)
+        throw new BadRequestException('Tier name must be 50 characters or fewer');
+      update.name = name;
+    }
+    if (data.price !== undefined) {
+      const price = Number(data.price);
+      if (!Number.isFinite(price) || price < 0) {
+        throw new BadRequestException('Price must be a non-negative number');
+      }
+      update.price = price;
+    }
+    if (data.perks !== undefined) update.perks = [...this.sanitizePerks(data.perks)];
+    if (data.isActive !== undefined) update.isActive = data.isActive;
+    if (data.displayOrder !== undefined) update.displayOrder = Math.trunc(data.displayOrder);
+
+    try {
+      await this.prisma.subscriptionTier.update({ where: { id: tierId }, data: update });
+    } catch (err: unknown) {
+      throw this.mapTierWriteError(err, 'Tier name already exists');
+    }
+    return (await this.getSubscriptionTiers(userId)).find((t) => t.id === tierId)!;
+  }
+
+  /**
+   * DELETE /creator/monetization/tiers/:id — delete a tier. Blocked while
+   * active subscribers remain (archive with isActive=false instead).
+   */
+  async deleteSubscriptionTier(userId: string, tierId: string): Promise<{ success: boolean }> {
+    const existing = await this.prisma.subscriptionTier.findUnique({ where: { id: tierId } });
+    if (!existing || existing.creatorId !== userId) {
+      throw new NotFoundException('Subscription tier not found');
+    }
+
+    const counts = await this.prisma.$queryRaw<{ count: number }[]>`
+      SELECT COUNT(*)::int as count
+      FROM "subscriptions"
+      WHERE "creatorId" = ${userId} AND status = 'active' AND tier = ${existing.name}
+    `;
+    if (Number(counts[0]?.count ?? 0) > 0) {
+      throw new BadRequestException(
+        'Tier has active subscribers — deactivate it instead of deleting'
+      );
+    }
+
+    await this.prisma.subscriptionTier.delete({ where: { id: tierId } });
+    return { success: true };
+  }
+
+  /** Trim, dedupe, cap, and stringify perk entries. */
+  private sanitizePerks(perks?: string[]): string[] {
+    if (!Array.isArray(perks)) return [];
+    const cleaned = perks
+      .map((p) =>
+        String(p)
+          .replace(/<[^>]*>/g, '')
+          .trim()
+      )
+      .filter((p) => p.length > 0);
+    return Array.from(new Set(cleaned)).slice(0, 10);
+  }
+
+  /** Map Prisma unique-violations to a friendly 400. */
+  private mapTierWriteError(err: unknown, message: string): Error {
+    const code =
+      typeof err === 'object' && err !== null && 'code' in err
+        ? String((err as { code: unknown }).code)
+        : '';
+    if (code === 'P2002') return new BadRequestException(message);
+    if (err instanceof Error) return err;
+    return new Error(String(err));
+  }
+
   /**
    * GET /creator/monetization/settings — the web app's shape
    * (tipsEnabled/minimumTipAmount/customTipAmounts/...).
@@ -1051,32 +1336,97 @@ export class CreatorService {
   }
 
   /**
-   * GET /creator/challenges/submissions — the creator's own entries,
-   * stored locally (challenges themselves are proxied from creator-service).
+   * GET /creator/challenges/submissions — the creator's own entries.
+   * Two-way sync: hydrates from creator-service entries (source of truth for
+   * challenge participation) and merges any local-only rows, so submissions
+   * made through other clients appear here and vice versa.
    */
   async getChallengeSubmissions(userId: string): Promise<unknown[]> {
-    const rows = await this.prisma.challengeSubmission.findMany({
+    const local = await this.prisma.challengeSubmission.findMany({
       where: { userId },
       orderBy: { submittedAt: 'desc' },
       take: 50,
     });
-    return rows.map((s) => ({
+
+    // Inbound: pull upstream entries and upsert any the portal doesn't have.
+    let upstream: {
+      id: string;
+      challengeId: string;
+      contentUrl?: string;
+      status?: string;
+      createdAt?: string;
+    }[] = [];
+    try {
+      const res = await this.creatorsClient.getMyChallengeEntries(userId);
+      if (res.success && Array.isArray(res.data?.challenges)) {
+        upstream = res.data.challenges;
+      }
+    } catch {
+      // Upstream unavailable — local rows still render.
+    }
+
+    const localIds = new Set(local.map((s) => s.challengeId));
+    const hydrated = upstream.filter((e) => !localIds.has(e.challengeId));
+    if (hydrated.length > 0) {
+      // Preserve upstream entry IDs where possible for traceability.
+      await this.prisma.challengeSubmission.createMany({
+        data: hydrated.map((e) => ({
+          id: e.id,
+          userId,
+          challengeId: e.challengeId,
+          title: this.titleFromContentUrl(e.contentUrl),
+          status: e.status || 'submitted',
+          submittedAt: e.createdAt ? new Date(e.createdAt) : undefined,
+        })),
+        skipDuplicates: true,
+      });
+      const fresh = await this.prisma.challengeSubmission.findMany({
+        where: { userId },
+        orderBy: { submittedAt: 'desc' },
+        take: 50,
+      });
+      return fresh.map((s) => this.mapSubmission(s));
+    }
+
+    return local.map((s) => this.mapSubmission(s));
+  }
+
+  private mapSubmission(s: {
+    id: string;
+    challengeId: string;
+    title: string;
+    status: string;
+    submittedAt: Date;
+  }) {
+    return {
       id: s.id,
       challengeId: s.challengeId,
       title: s.title,
       status: s.status,
       submittedAt: s.submittedAt.toISOString(),
-    }));
+    };
+  }
+
+  private titleFromContentUrl(contentUrl?: string): string {
+    if (!contentUrl) return 'Challenge entry';
+    const fileName = contentUrl.split('/').pop() || contentUrl;
+    return (
+      fileName
+        .replace(/[-_]/g, ' ')
+        .replace(/\.[a-z0-9]+$/i, '')
+        .trim() || 'Challenge entry'
+    );
   }
 
   /**
-   * POST /creator/challenges/:id/submit — record the entry locally.
+   * POST /creator/challenges/:id/submit — register the entry upstream
+   * (creator-service owns challenge participation) and record it locally.
    */
   async submitChallenge(
     userId: string,
     challengeId: string,
     title: string
-  ): Promise<{ success: boolean; submissionId: string }> {
+  ): Promise<{ success: boolean; submissionId: string; entryId?: string; synced: boolean }> {
     const cleanTitle = title.replace(/<[^>]*>/g, '').trim();
     if (!cleanTitle) {
       throw new BadRequestException('Submission title is required');
@@ -1089,11 +1439,29 @@ export class CreatorService {
       throw new BadRequestException('Already submitted to this challenge');
     }
 
+    // Outbound: create the entry in creator-service first (validates the
+    // challenge window + dedupes). Its entryId is stored locally so both
+    // systems can trace the submission.
+    let entryId: string | undefined;
+    let synced = false;
+    const contentUrl = `/submissions/${challengeId}/${cleanTitle
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')}`;
+    try {
+      const res = await this.creatorsClient.participateInChallenge(userId, challengeId, contentUrl);
+      if (res.success && res.data?.entryId) {
+        entryId = res.data.entryId;
+        synced = true;
+      }
+    } catch {
+      // Upstream down/rejected — local row still records the attempt.
+    }
+
     const submission = await this.prisma.challengeSubmission.create({
-      data: { userId, challengeId, title: cleanTitle },
+      data: { userId, challengeId, title: cleanTitle, upstreamId: entryId },
     });
 
-    return { success: true, submissionId: submission.id };
+    return { success: true, submissionId: submission.id, entryId, synced };
   }
 
   async getCreatorProfile(userId: string): Promise<Record<string, unknown> | null> {
@@ -1101,9 +1469,19 @@ export class CreatorService {
       where: { userId },
     });
     if (!profile) return null;
+    // displayName/avatar/email live on the user record — the portal profile
+    // form hydrates from this endpoint, so without the join the fields would
+    // go blank after every reload.
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { displayName: true, avatar: true, email: true },
+    });
     return {
       id: profile.id,
       userId: profile.userId,
+      displayName: user?.displayName,
+      avatar: user?.avatar,
+      email: user?.email,
       bio: profile.bio,
       banner: profile.banner,
       socialLinks: profile.socialLinks,
@@ -1132,12 +1510,12 @@ export class CreatorService {
     }
 
     // Website lives in socialLinks; explicit socialLinks entries win.
+    // An empty-string website is an explicit clear and must persist.
     const socialLinks: Record<string, string> = {
-      ...(data.website ? { website: data.website } : {}),
+      ...(data.website !== undefined ? { website: data.website } : {}),
       ...(data.socialLinks ?? {}),
     };
-    const hasSocialLinks =
-      data.website !== undefined || data.socialLinks !== undefined;
+    const hasSocialLinks = data.website !== undefined || data.socialLinks !== undefined;
 
     const profile = await this.prisma.creatorProfile.upsert({
       where: { userId },
@@ -1183,6 +1561,53 @@ export class CreatorService {
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,
     };
+  }
+
+  /**
+   * GET /creator/subscribers/stats — real follower counts with the same
+   * table-missing guards as getSubscribers (the following table lives in
+   * another service's DB and may not exist locally).
+   */
+  async getSubscriberStats(userId: string): Promise<{
+    totalSubscribers: number;
+    newThisWeek: number;
+    newThisMonth: number;
+    churnRate: number;
+  }> {
+    const empty = { totalSubscribers: 0, newThisWeek: 0, newThisMonth: 0, churnRate: 0 };
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    try {
+      const [totalRows, weekRows, monthRows] = await Promise.all([
+        this.prisma.$queryRaw<{ count: number }[]>`
+          SELECT COUNT(*)::int as count FROM "following" WHERE "followingId" = ${userId}
+        `,
+        this.prisma.$queryRaw<{ count: number }[]>`
+          SELECT COUNT(*)::int as count FROM "following"
+          WHERE "followingId" = ${userId} AND "createdAt" >= ${weekAgo}
+        `,
+        this.prisma.$queryRaw<{ count: number }[]>`
+          SELECT COUNT(*)::int as count FROM "following"
+          WHERE "followingId" = ${userId} AND "createdAt" >= ${monthAgo}
+        `,
+      ]);
+      return {
+        totalSubscribers: Number(totalRows[0]?.count ?? 0),
+        newThisWeek: Number(weekRows[0]?.count ?? 0),
+        newThisMonth: Number(monthRows[0]?.count ?? 0),
+        churnRate: 0,
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (
+        message.includes('does not exist') ||
+        message.includes('relation') ||
+        message.includes('table')
+      ) {
+        return empty;
+      }
+      throw err;
+    }
   }
 
   async getSettings(userId: string): Promise<{
