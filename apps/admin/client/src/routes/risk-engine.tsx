@@ -31,10 +31,10 @@ interface RiskStats {
 interface ApprovalRequest {
   id: string;
   actionType: string;
-  requesterId: string;
-  status: string;
+  requestedBy: string; // Prisma field name (was wrongly 'requesterId')
+  status: string; // pending | approved | rejected | expired | revoked
   riskLevel: string;
-  reason: string;
+  reason?: string | null;
   createdAt: string;
 }
 
@@ -724,7 +724,7 @@ export default function RiskEnginePage() {
                 <div>
                   <p style={{ fontWeight: 600, color: 'var(--admin-text)' }}>{a.actionType}</p>
                   <p style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
-                    Requester: {a.requesterId} · {new Date(a.createdAt).toLocaleString()}
+                    Requester: {a.requestedBy} · {new Date(a.createdAt).toLocaleString()}
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
