@@ -49,6 +49,32 @@ export class SubscriptionAdminController {
     return this.subscriptionService.getSubscriptionPlans({ page, limit, status, tier });
   }
 
+  // Static promo-code routes must be declared before the dynamic :id route.
+  // Otherwise Nest matches /promo-codes as a plan id and returns a misleading 404.
+  @Get('promo-codes')
+  @ApiOperation({ summary: 'Get list of promo codes' })
+  async getPromoCodes() {
+    return this.subscriptionService.getPromoCodes();
+  }
+
+  @Post('promo-codes')
+  @ApiOperation({ summary: 'Create new promo code' })
+  async createPromoCode(@Body() body: Parameters<SubscriptionAdminService['createPromoCode']>[0]) {
+    return this.subscriptionService.createPromoCode(body);
+  }
+
+  @Put('promo-codes/:id/expire')
+  @ApiOperation({ summary: 'Expire promo code' })
+  async expirePromoCode(@Param('id') id: string) {
+    return this.subscriptionService.expirePromoCode(id);
+  }
+
+  @Delete('promo-codes/:id')
+  @ApiOperation({ summary: 'Delete promo code' })
+  async deletePromoCode(@Param('id') id: string) {
+    return this.subscriptionService.deletePromoCode(id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get subscription plan by ID' })
   async getSubscriptionPlanById(@Param('id') id: string) {
@@ -92,31 +118,5 @@ export class SubscriptionAdminController {
     @Req() req: { user?: { sub: string; id?: string } }
   ) {
     return this.subscriptionService.deleteSubscriptionPlan(id, this.getActorId(req));
-  }
-
-  // ─── Promo Codes ─────────────────────────────────────────────────────────────
-
-  @Get('promo-codes')
-  @ApiOperation({ summary: 'Get list of promo codes' })
-  async getPromoCodes() {
-    return this.subscriptionService.getPromoCodes();
-  }
-
-  @Post('promo-codes')
-  @ApiOperation({ summary: 'Create new promo code' })
-  async createPromoCode(@Body() body: any) {
-    return this.subscriptionService.createPromoCode(body);
-  }
-
-  @Put('promo-codes/:id/expire')
-  @ApiOperation({ summary: 'Expire promo code' })
-  async expirePromoCode(@Param('id') id: string) {
-    return this.subscriptionService.expirePromoCode(id);
-  }
-
-  @Delete('promo-codes/:id')
-  @ApiOperation({ summary: 'Delete promo code' })
-  async deletePromoCode(@Param('id') id: string) {
-    return this.subscriptionService.deletePromoCode(id);
   }
 }
