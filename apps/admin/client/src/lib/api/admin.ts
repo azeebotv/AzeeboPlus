@@ -1,6 +1,8 @@
 import { apiFetch } from './base';
 import type {
   PlatformOverview,
+  DualControlRequest,
+  RightsClearance,
   AdminWallet,
   AdminCreator,
   PaymentGateway,
@@ -108,6 +110,32 @@ export const adminApi = {
       expiringClearances: number;
       expiredClearances: number;
     }>('/api/v1/admin/dashboard/governance-summary'),
+  getDualControlRequests: (status?: string) =>
+    apiFetch<{
+      actions: DualControlRequest[];
+      stats: Record<string, number>;
+    }>(`/api/v1/admin/dual-control${status && status !== 'all' ? `?status=${status}` : ''}`),
+  decideDualControl: (id: string, decision: 'approve' | 'reject', reason?: string) =>
+    apiFetch<DualControlRequest>(`/api/v1/admin/dual-control/${id}/${decision}`, {
+      method: 'POST',
+      ...(decision === 'reject' ? { body: JSON.stringify({ reason }) } : {}),
+    }),
+  getRightsClearances: (
+    filters: { status?: string; type?: string; q?: string; expiry?: string } = {}
+  ) => {
+    const params = new URLSearchParams();
+    if (filters.status && filters.status !== 'all') params.set('status', filters.status);
+    if (filters.type && filters.type !== 'all') params.set('type', filters.type);
+    if (filters.q) params.set('q', filters.q);
+    if (filters.expiry && filters.expiry !== 'all') params.set('expiry', filters.expiry);
+    const qs = params.toString();
+    return apiFetch<RightsClearance[]>(`/api/v1/admin/rights/clearances${qs ? `?${qs}` : ''}`);
+  },
+  decideRightsClearance: (id: string, status: 'approved' | 'rejected') =>
+    apiFetch<RightsClearance>(`/api/v1/admin/rights/clearances/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
 
   // ─── Users ──────────────────────────────────────────────────────────────
   getUsers: (page = 1, limit = 20, role?: string, search?: string) => {
@@ -681,6 +709,21 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify({ action, reason }),
     }),
+  takeSafetyAction: (body: {
+    targetId: string;
+    targetType: string;
+    actionType: string;
+    reason: string;
+    duration?: string;
+  }) =>
+    apiFetch<unknown>('/api/v1/admin/moderation/safety-action', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  getSafetyActions: (limit = 20) =>
+    apiFetch<{ items?: unknown[] } | unknown[]>(
+      `/api/v1/admin/moderation/safety-actions?limit=${limit}`
+    ),
   dismissModerationReport: (id: string, reason: string) =>
     apiFetch<unknown>(`/api/v1/admin/moderation/reports/${id}/dismiss`, {
       method: 'PUT',
@@ -745,13 +788,10 @@ export const adminApi = {
 
   // ─── Bulk user actions (G1 — Users) ──────────────────────────────────────────
   bulkSuspendUsers: (ids: string[], reason: string, durationDays?: number) =>
-    apiFetch<{ suspended: number; failed: number }>(
-      '/api/v1/admin/users/bulk/suspend',
-      {
-        method: 'POST',
-        body: JSON.stringify({ ids, reason, durationDays }),
-      }
-    ),
+    apiFetch<{ suspended: number; failed: number }>('/api/v1/admin/users/bulk/suspend', {
+      method: 'POST',
+      body: JSON.stringify({ ids, reason, durationDays }),
+    }),
 
   // ─── Tipping Config (G2 — Tipping) ───────────────────────────────────────────
   getTippingConfig: () => apiFetch<TippingConfig>('/api/v1/admin/ops/tipping-config'),
@@ -784,21 +824,68 @@ export const adminApi = {
 
   // ─── Settings test-integration (G5 — Settings) ───────────────────────────────
   testSettingIntegration: (provider: string) =>
-    apiFetch<{ provider: string; status: string; testedAt: string; details: Record<string, unknown> }>(
-      `/api/v1/admin/settings/integrations/${provider}/test`,
-      { method: 'POST' }
-    ),
+    apiFetch<{
+      provider: string;
+      status: string;
+      testedAt: string;
+      details: Record<string, unknown>;
+    }>(`/api/v1/admin/settings/integrations/${provider}/test`, { method: 'POST' }),
+
+  // ─── Settings access + security surfaces (roles, admins, IP rules) ──────────
+  getAccessRoles: () => apiFetch<unknown>('/api/v1/admin/settings/access/roles'),
+  updateAccessRole: (
+    role: string,
+    data: {
+      role: string;
+      permissions: Record<string, string[]>;
+      description?: string;
+      isActive?: boolean;
+    }
+  ) =>
+    apiFetch<unknown>(`/api/v1/admin/settings/access/roles/${encodeURIComponent(role)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  getAccessAdmins: () => apiFetch<unknown>('/api/v1/admin/settings/access/admins'),
+  createAccessAdmin: (data: {
+    email: string;
+    displayName: string;
+    role: string;
+    password?: string;
+    sendInvite?: boolean;
+  }) =>
+    apiFetch<unknown>('/api/v1/admin/settings/access/admins', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  removeAccessAdmin: (email: string) =>
+    apiFetch<unknown>(`/api/v1/admin/settings/access/admins/${encodeURIComponent(email)}`, {
+      method: 'DELETE',
+    }),
+  getIpRules: () => apiFetch<unknown>('/api/v1/admin/settings/security/ip-rules'),
+  updateIpRules: (data: {
+    whitelist?: string[];
+    blacklist?: string[];
+    mode?: string;
+    rateLimitPerIp?: number;
+  }) =>
+    apiFetch<unknown>('/api/v1/admin/settings/security/ip-rules', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 
   // ─── Support Tickets (G6 — Support) ──────────────────────────────────────────
   getSupportStats: () => apiFetch<SupportStats>('/api/v1/admin/support/stats'),
-  getSupportTickets: (params: {
-    page?: number;
-    limit?: number;
-    status?: string;
-    priority?: string;
-    category?: string;
-    search?: string;
-  } = {}) => {
+  getSupportTickets: (
+    params: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      priority?: string;
+      category?: string;
+      search?: string;
+    } = {}
+  ) => {
     const q = new URLSearchParams();
     if (params.page) q.set('page', String(params.page));
     if (params.limit) q.set('limit', String(params.limit));
@@ -810,8 +897,7 @@ export const adminApi = {
       `/api/v1/admin/support/tickets?${q}`
     );
   },
-  getSupportTicket: (id: string) =>
-    apiFetch<SupportTicket>(`/api/v1/admin/support/tickets/${id}`),
+  getSupportTicket: (id: string) => apiFetch<SupportTicket>(`/api/v1/admin/support/tickets/${id}`),
   updateSupportTicketStatus: (id: string, status: string) =>
     apiFetch<SupportTicket>(`/api/v1/admin/support/tickets/${id}/status`, {
       method: 'PUT',
@@ -828,7 +914,6 @@ export const adminApi = {
       body: JSON.stringify({ body }),
     }),
 };
-
 
 /** Outcome of a manual "Run now" job execution. */
 export interface RunJobOutcome {
