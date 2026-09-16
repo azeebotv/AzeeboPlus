@@ -50,6 +50,7 @@ export class UserManagementService {
         orderBy: { createdAt: 'desc' },
         include: {
           wallet: true,
+          creatorProfile: true,
           _count: { select: { contentItems: true } },
         },
       }),
@@ -65,6 +66,9 @@ export class UserManagementService {
         createdAt: u.createdAt,
         isActive: !u.isSuspended,
         suspensionStatus: u.isSuspended ? 'suspended' : 'active',
+        // Creator verification state (null for non-creators) so the directory
+        // can render a correct Verify/Unverify toggle without a detail fetch.
+        isVerified: u.creatorProfile?.verified ?? null,
         walletBalance: u.wallet?.balance || 0,
         contentCount: u._count.contentItems,
       })),

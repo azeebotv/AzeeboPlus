@@ -14,7 +14,15 @@ export default function ReportBuilderPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => adminApi.createCustomReport(form),
+    // Backend contract (reports-admin.service.ts): { name, type,
+    // config: { dateRange, format } } — the builder form's flat
+    // { name, category, dateRange, format } was a guaranteed 400.
+    mutationFn: () =>
+      adminApi.createCustomReport({
+        name: form.name,
+        type: form.category,
+        config: { dateRange: form.dateRange, format: form.format },
+      }),
     onSuccess: () => navigate('/reports'),
   });
 
@@ -42,11 +50,20 @@ export default function ReportBuilderPage() {
         <span>Back to Reports</span>
       </button>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Report Builder</h1>
-      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 32 }}>Configure and generate a custom report</p>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 32 }}>
+        Configure and generate a custom report
+      </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 13,
+              color: 'var(--admin-text-muted)',
+              marginBottom: 6,
+            }}
+          >
             Report Name
           </label>
           <input
@@ -66,7 +83,14 @@ export default function ReportBuilderPage() {
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 13,
+              color: 'var(--admin-text-muted)',
+              marginBottom: 6,
+            }}
+          >
             Type
           </label>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -95,7 +119,14 @@ export default function ReportBuilderPage() {
           </div>
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 13,
+              color: 'var(--admin-text-muted)',
+              marginBottom: 6,
+            }}
+          >
             Date Range
           </label>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -123,7 +154,14 @@ export default function ReportBuilderPage() {
           </div>
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 13,
+              color: 'var(--admin-text-muted)',
+              marginBottom: 6,
+            }}
+          >
             Format
           </label>
           <div style={{ display: 'flex', gap: 8 }}>

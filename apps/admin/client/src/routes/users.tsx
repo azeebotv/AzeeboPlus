@@ -11,7 +11,9 @@ interface UserItem {
   role: string;
   createdAt: string;
   isActive: boolean;
-  isVerified?: boolean;
+  suspensionStatus?: string;
+  /** Creator verification state (null for non-creators). */
+  isVerified?: boolean | null;
 }
 
 export default function UsersPage() {
@@ -74,6 +76,15 @@ export default function UsersPage() {
   /** Row-level suspend for a single user (same contract as bulk). */
   const suspendOneMutation = useMutation({
     mutationFn: (id: string) => adminApi.suspendUser(id, 'Suspended from users directory', 7),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user'] });
+    },
+  });
+
+  /** Row-level reinstate: lifts an active suspension. */
+  const reinstateMutation = useMutation({
+    mutationFn: (id: string) => adminApi.revokeSuspension(id, 'Reinstated from users directory'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'user'] });
@@ -349,12 +360,15 @@ export default function UsersPage() {
                           height: 8,
                           borderRadius: '50%',
                           display: 'inline-block',
-                          backgroundColor: u.isActive ? 'var(--admin-green)' : 'var(--admin-red)',
+                          backgroundColor:
+                            u.suspensionStatus === 'suspended' || !u.isActive
+                              ? 'var(--admin-red)'
+                              : 'var(--admin-green)',
                           marginRight: 6,
                         }}
                       />
                       <span style={{ fontSize: 13, color: 'var(--admin-text-muted)' }}>
-                        {u.isActive ? 'Active' : 'Inactive'}
+                        {u.suspensionStatus === 'suspended' || !u.isActive ? 'Suspended' : 'Active'}
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
@@ -385,7 +399,7 @@ export default function UsersPage() {
                               borderRadius: 999,
                               border: '1px solid var(--admin-surface)',
                               background: 'transparent',
-                              color: 'var(--admin-green)',
+                              color: u.isVerified ? 'var(--admin-amber)' : 'var(--admin-green)',
                               fontSize: 12,
                               cursor: 'pointer',
                             }}
@@ -393,7 +407,24 @@ export default function UsersPage() {
                             {u.isVerified ? 'Unverify' : 'Verify'}
                           </button>
                         )}
-                        {u.isActive && (
+                        {u.suspensionStatus === 'suspended' || !u.isActive ? (
+                          <button
+                            onClick={() => reinstateMutation.mutate(u.id)}
+                            disabled={reinstateMutation.isPending}
+                            title="Lift suspension (PUT :id/suspension/revoke)"
+                            style={{
+                              padding: '6px 14px',
+                              borderRadius: 999,
+                              border: '1px solid var(--admin-surface)',
+                              background: 'transparent',
+                              color: 'var(--admin-green)',
+                              fontSize: 12,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Reinstate
+                          </button>
+                        ) : (
                           <button
                             onClick={() => {
                               if (suspendOneMutation.isPending) return;

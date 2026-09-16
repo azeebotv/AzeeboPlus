@@ -106,6 +106,8 @@ export default function ModerationPage() {
       const res = await adminApi.getSafetyActions(10);
       if (!res.success) return [];
       const d = res.data;
+      // Backend wraps the list as { actions: [...] } — unwrap with the
+      // matching key so drift renders empty instead of hiding the history.
       return asArray<{
         id: string;
         actionType: string;
@@ -113,7 +115,7 @@ export default function ModerationPage() {
         targetType: string;
         reason?: string;
         createdAt?: string;
-      }>(d);
+      }>(d, 'actions');
     },
     refetchInterval: 30_000,
   });
