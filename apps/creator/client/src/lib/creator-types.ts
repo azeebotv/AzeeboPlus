@@ -149,6 +149,10 @@ export interface UploadProgress {
   status: 'uploading' | 'processing' | 'completed' | 'failed';
   progress: number;
   createdAt: string;
+  /** Where the file bytes live: blob storage ('stored') or metadata-only ('pending'). */
+  storage: 'stored' | 'pending' | 'unknown';
+  /** media-service virus scan verdict, when the pipeline stored the file. */
+  scanStatus: string | null;
 }
 
 // Monetization
@@ -158,6 +162,7 @@ export interface MonetizationTier {
   price: number;
   subscriberCount: number;
   perks: string[];
+  isActive?: boolean;
 }
 
 export interface MonetizationData {

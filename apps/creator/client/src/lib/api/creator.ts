@@ -14,6 +14,7 @@ import type {
   SubscribersData,
   UploadProgress,
   MonetizationData,
+  MonetizationTier,
   Challenge,
   ChallengeSubmission,
   CreatorProfile,
@@ -146,6 +147,29 @@ export const creatorApi = {
     apiFetch<MonetizationData>(`${API}/creator/monetization`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    }),
+
+  // Subscription tiers (creator-owned CRUD)
+  listTiers: () => apiFetch<MonetizationTier[]>(`${API}/creator/monetization/tiers`),
+
+  createTier: (data: { name: string; price: number; perks?: string[]; isActive?: boolean }) =>
+    apiFetch<MonetizationTier>(`${API}/creator/monetization/tiers`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateTier: (
+    id: string,
+    data: { name?: string; price?: number; perks?: string[]; isActive?: boolean }
+  ) =>
+    apiFetch<MonetizationTier>(`${API}/creator/monetization/tiers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteTier: (id: string) =>
+    apiFetch<{ success: boolean }>(`${API}/creator/monetization/tiers/${id}`, {
+      method: 'DELETE',
     }),
 
   // Challenges
