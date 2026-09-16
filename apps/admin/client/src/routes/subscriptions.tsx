@@ -41,6 +41,7 @@ export default function SubscriptionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Promo Code State
   const [showPromoModal, setShowPromoModal] = useState(false);
@@ -51,8 +52,14 @@ export default function SubscriptionsPage() {
     maxUses: '',
     expiresAt: '',
   });
+  const [promoFormError, setPromoFormError] = useState<string | null>(null);
 
-  const { data: promoData, isLoading: loadingPromos } = useQuery({
+  const {
+    data: promoData,
+    isLoading: loadingPromos,
+    isError: promoError,
+    refetch: refetchPromos,
+  } = useQuery({
     queryKey: ['admin', 'promo-codes'],
     queryFn: async () => {
       const res = await adminApi.getPromoCodes();
@@ -73,6 +80,7 @@ export default function SubscriptionsPage() {
         maxUses: '',
         expiresAt: '',
       });
+      setPromoFormError(null);
     },
   });
 
@@ -103,7 +111,12 @@ export default function SubscriptionsPage() {
     maxUsers: '',
   });
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    isError: statsError,
+    refetch: refetchStats,
+  } = useQuery({
     queryKey: ['admin', 'subscription-stats'],
     queryFn: async () => {
       const res = await adminApi.getSubscriptionStats();
@@ -114,7 +127,12 @@ export default function SubscriptionsPage() {
     },
   });
 
-  const { data: plansData, isLoading } = useQuery({
+  const {
+    data: plansData,
+    isLoading,
+    isError: plansError,
+    refetch: refetchPlans,
+  } = useQuery({
     queryKey: ['admin', 'subscriptions', page, statusFilter, tierFilter],
     queryFn: async () => {
       const res = await adminApi.getSubscriptionPlans({
@@ -169,6 +187,7 @@ export default function SubscriptionsPage() {
   });
 
   function resetForm() {
+    setFormError(null);
     setForm({
       name: '',
       description: '',
@@ -207,12 +226,27 @@ export default function SubscriptionsPage() {
   }
 
   function handleSubmit() {
+    const price = Number(form.price);
+    const durationDays = Number(form.durationDays);
+    if (!form.name.trim()) {
+      setFormError('Plan name is required.');
+      return;
+    }
+    if (!Number.isFinite(price) || price < 0) {
+      setFormError('Price must be a non-negative number.');
+      return;
+    }
+    if (!Number.isInteger(durationDays) || durationDays < 1) {
+      setFormError('Duration must be at least 1 day.');
+      return;
+    }
+    setFormError(null);
     const payload: Record<string, unknown> = {
       name: form.name,
       description: form.description || undefined,
-      price: parseFloat(form.price) || 0,
+      price,
       currency: form.currency,
-      durationDays: parseInt(form.durationDays) || 30,
+      durationDays,
       tier: form.tier,
       status: form.status,
       features: form.features
@@ -234,6 +268,50 @@ export default function SubscriptionsPage() {
 
   const plans = plansData?.items || [];
   const total = plansData?.total || 0;
+  const hasSubscriptionData = Boolean(
+    stats &&
+    ((stats.totalActiveSubscriptions ?? 0) > 0 ||
+      (stats.totalRevenue ?? 0) > 0 ||
+      (stats.monthlyRecurringRevenue ?? 0) > 0 ||
+      (stats.activePlans ?? 0) > 0)
+  );
+  const refreshAll = () => {
+    void Promise.all([refetchStats(), refetchPlans(), refetchPromos()]);
+  };
+
+  function handleCreatePromo() {
+    const code = promoForm.code.trim().toUpperCase();
+    const discountValue = Number(promoForm.discountValue);
+    const maxUses = promoForm.maxUses ? Number(promoForm.maxUses) : null;
+    if (!code) return setPromoFormError('Promo code is required.');
+    if (!/^[A-Z0-9_-]{3,32}$/.test(code)) {
+      return setPromoFormError('Use 3–32 letters, numbers, hyphens, or underscores.');
+    }
+    if (!Number.isFinite(discountValue) || discountValue <= 0) {
+      return setPromoFormError('Discount must be greater than zero.');
+    }
+    if (promoForm.discountType === 'percent' && discountValue > 100) {
+      return setPromoFormError('Percentage discount cannot exceed 100%.');
+    }
+    if (maxUses !== null && (!Number.isInteger(maxUses) || maxUses < 1)) {
+      return setPromoFormError('Maximum redemptions must be a positive whole number.');
+    }
+    if (
+      promoForm.expiresAt &&
+      new Date(`${promoForm.expiresAt}T23:59:59`).getTime() <= Date.now()
+    ) {
+      return setPromoFormError('Expiry date must be in the future.');
+    }
+    setPromoFormError(null);
+    createPromoMutation.mutate({
+      code,
+      discountType: promoForm.discountType,
+      discountValue,
+      maxUses,
+      expiresAt: promoForm.expiresAt || null,
+      applicablePlanIds: [],
+    });
+  }
 
   const statCards = stats
     ? [
@@ -254,12 +332,12 @@ export default function SubscriptionsPage() {
         },
         {
           label: 'Churn Rate',
-          value: `${(stats.churnRate ?? 0).toFixed(1)}%`,
+          value: hasSubscriptionData ? `${(stats.churnRate ?? 0).toFixed(1)}%` : '—',
           color: 'var(--admin-red)',
         },
         {
           label: 'Avg Revenue / User',
-          value: formatCurrency(stats.averageRevenuePerUser ?? 0),
+          value: hasSubscriptionData ? formatCurrency(stats.averageRevenuePerUser ?? 0) : '—',
           color: 'var(--admin-text-muted)',
         },
         {
@@ -280,7 +358,9 @@ export default function SubscriptionsPage() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
+          gap: 20,
           marginBottom: 24,
+          flexWrap: 'wrap',
         }}
       >
         <div>
@@ -297,8 +377,9 @@ export default function SubscriptionsPage() {
             <Icon name="repeat" size={26} color="var(--admin-orange)" />
             Subscriptions
           </h1>
-          <p style={{ color: 'var(--admin-text-muted)' }}>
-            Manage subscription plans, pricing, and promotional discount codes
+          <p style={{ color: 'var(--admin-text-muted)', maxWidth: 680, lineHeight: 1.5 }}>
+            Manage subscription plans, pricing, and promotional discount codes. Changes here affect
+            what customers can purchase.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -317,6 +398,7 @@ export default function SubscriptionsPage() {
                 fontWeight: 600,
                 fontSize: 14,
                 cursor: 'pointer',
+                whiteSpace: 'nowrap',
               }}
             >
               <Icon name="plus" size={16} color="#FFFFFF" />
@@ -337,6 +419,7 @@ export default function SubscriptionsPage() {
                 fontWeight: 600,
                 fontSize: 14,
                 cursor: 'pointer',
+                whiteSpace: 'nowrap',
               }}
             >
               <Icon name="plus" size={16} color="#FFFFFF" />
@@ -348,15 +431,22 @@ export default function SubscriptionsPage() {
 
       {/* Main Tab Navigation */}
       <div
+        role="tablist"
+        aria-label="Subscription management"
         style={{
           display: 'flex',
           gap: 8,
           marginBottom: 24,
           borderBottom: '1px solid var(--admin-card)',
           paddingBottom: 12,
+          overflowX: 'auto',
         }}
       >
         <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'plans'}
+          aria-controls="subscription-plans-panel"
           onClick={() => setActiveTab('plans')}
           style={{
             padding: '8px 18px',
@@ -372,6 +462,10 @@ export default function SubscriptionsPage() {
           Subscription Plans ({total})
         </button>
         <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'promos'}
+          aria-controls="promo-codes-panel"
           onClick={() => setActiveTab('promos')}
           style={{
             padding: '8px 18px',
@@ -390,9 +484,56 @@ export default function SubscriptionsPage() {
 
       {/* Stats Cards */}
       {statsLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 20 }}>
-          Loading stats...
-        </p>
+        <div
+          aria-label="Loading subscription metrics"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 12,
+            marginBottom: 32,
+          }}
+        >
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={index}
+              style={{
+                height: 82,
+                borderRadius: 12,
+                background:
+                  'linear-gradient(90deg, var(--admin-surface), var(--admin-card), var(--admin-surface))',
+                opacity: 0.65,
+              }}
+            />
+          ))}
+        </div>
+      ) : statsError ? (
+        <div
+          role="alert"
+          style={{
+            padding: 16,
+            marginBottom: 24,
+            borderRadius: 12,
+            border: '1px solid rgba(204,28,28,0.35)',
+            background: 'rgba(204,28,28,0.08)',
+            color: 'var(--admin-text-muted)',
+          }}
+        >
+          <strong style={{ color: 'var(--admin-red)' }}>Metrics unavailable.</strong> Subscription
+          plans are still usable while the metrics service recovers.{' '}
+          <button
+            type="button"
+            onClick={() => void refetchStats()}
+            style={{
+              border: 0,
+              background: 'transparent',
+              color: 'var(--admin-orange)',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+          >
+            Retry
+          </button>
+        </div>
       ) : (
         <div
           style={{
@@ -430,9 +571,17 @@ export default function SubscriptionsPage() {
       )}
 
       {activeTab === 'plans' ? (
-        <>
+        <div id="subscription-plans-panel" role="tabpanel" aria-label="Subscription plans">
           {/* Filters */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+              marginBottom: 20,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}
+          >
             <select
               value={statusFilter}
               onChange={(e) => {
@@ -477,6 +626,44 @@ export default function SubscriptionsPage() {
                 </option>
               ))}
             </select>
+            {(statusFilter || tierFilter) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter('');
+                  setTierFilter('');
+                  setPage(1);
+                }}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  background: 'transparent',
+                  color: 'var(--admin-text-muted)',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                }}
+              >
+                Clear filters
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={refreshAll}
+              aria-label="Refresh subscriptions"
+              style={{
+                marginLeft: 'auto',
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                background: 'transparent',
+                color: 'var(--admin-orange)',
+                cursor: 'pointer',
+                fontSize: 13,
+              }}
+            >
+              Refresh data
+            </button>
           </div>
 
           {/* Plans Table */}
@@ -484,17 +671,57 @@ export default function SubscriptionsPage() {
             <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
               Loading plans...
             </p>
+          ) : plansError ? (
+            <div
+              role="alert"
+              style={{
+                textAlign: 'center',
+                padding: 48,
+                border: '1px solid rgba(204,28,28,0.35)',
+                borderRadius: 16,
+                background: 'rgba(204,28,28,0.06)',
+              }}
+            >
+              <h2 style={{ fontSize: 18, marginBottom: 8 }}>Plans could not be loaded</h2>
+              <p style={{ color: 'var(--admin-text-muted)', marginBottom: 16 }}>
+                Check the subscription service connection and try again.
+              </p>
+              <button
+                type="button"
+                onClick={() => void refetchPlans()}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-orange)',
+                  background: 'transparent',
+                  color: 'var(--admin-orange)',
+                  cursor: 'pointer',
+                }}
+              >
+                Retry
+              </button>
+            </div>
           ) : plans.length === 0 ? (
             <div
               style={{
                 textAlign: 'center',
-                padding: 60,
+                padding: 56,
                 border: '1px dashed var(--admin-card)',
                 borderRadius: 16,
+                background: 'linear-gradient(180deg, rgba(232,66,10,0.04), transparent)',
               }}
             >
-              <p style={{ color: 'var(--admin-text-muted)', fontSize: 14, marginBottom: 12 }}>
-                No subscription plans found
+              <Icon name="package" size={32} color="var(--admin-orange)" />
+              <h2 style={{ fontSize: 18, margin: '16px 0 8px' }}>No subscription plans yet</h2>
+              <p
+                style={{
+                  color: 'var(--admin-text-muted)',
+                  maxWidth: 440,
+                  margin: '0 auto 18px',
+                  lineHeight: 1.5,
+                }}
+              >
+                Create your first plan to configure pricing, access rules, and subscriber benefits.
               </p>
               <button
                 onClick={openCreate}
@@ -823,14 +1050,44 @@ export default function SubscriptionsPage() {
               )}
             </>
           )}
-        </>
+        </div>
       ) : (
         /* Promo Codes Table Tab */
-        <div>
+        <div id="promo-codes-panel" role="tabpanel" aria-label="Promo codes">
           {loadingPromos ? (
             <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
               Loading promo codes...
             </p>
+          ) : promoError ? (
+            <div
+              role="alert"
+              style={{
+                textAlign: 'center',
+                padding: 48,
+                border: '1px solid rgba(204,28,28,0.35)',
+                borderRadius: 16,
+                background: 'rgba(204,28,28,0.06)',
+              }}
+            >
+              <h2 style={{ fontSize: 18, marginBottom: 8 }}>Promo codes could not be loaded</h2>
+              <p style={{ color: 'var(--admin-text-muted)', marginBottom: 16 }}>
+                Try again or contact the subscription service owner.
+              </p>
+              <button
+                type="button"
+                onClick={() => void refetchPromos()}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-orange)',
+                  background: 'transparent',
+                  color: 'var(--admin-orange)',
+                  cursor: 'pointer',
+                }}
+              >
+                Retry
+              </button>
+            </div>
           ) : (promoData?.length ?? 0) === 0 ? (
             <div
               style={{
@@ -999,6 +1256,9 @@ export default function SubscriptionsPage() {
       {/* Create Promo Code Modal */}
       {showPromoModal && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="promo-dialog-title"
           style={{
             position: 'fixed',
             inset: 0,
@@ -1019,7 +1279,9 @@ export default function SubscriptionsPage() {
               maxWidth: 420,
             }}
           >
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Create Promo Code</h3>
+            <h3 id="promo-dialog-title" style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
+              Create Promo Code
+            </h3>
 
             <div style={{ marginBottom: 14 }}>
               <label
@@ -1182,6 +1444,14 @@ export default function SubscriptionsPage() {
               </div>
             </div>
 
+            {promoFormError && (
+              <p
+                role="alert"
+                style={{ color: 'var(--admin-red)', fontSize: 12, margin: '0 0 12px' }}
+              >
+                {promoFormError}
+              </p>
+            )}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
               <button
                 onClick={() => setShowPromoModal(false)}
@@ -1198,16 +1468,8 @@ export default function SubscriptionsPage() {
                 Cancel
               </button>
               <button
-                onClick={() =>
-                  createPromoMutation.mutate({
-                    code: promoForm.code,
-                    discountType: promoForm.discountType,
-                    discountValue: Number(promoForm.discountValue),
-                    maxUses: promoForm.maxUses ? Number(promoForm.maxUses) : null,
-                    expiresAt: promoForm.expiresAt || null,
-                    applicablePlanIds: [],
-                  })
-                }
+                type="button"
+                onClick={handleCreatePromo}
                 disabled={!promoForm.code || createPromoMutation.isPending}
                 style={{
                   padding: '8px 16px',
@@ -1231,6 +1493,9 @@ export default function SubscriptionsPage() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="plan-dialog-title"
           style={{
             position: 'fixed',
             inset: 0,
@@ -1259,7 +1524,7 @@ export default function SubscriptionsPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>
+            <h2 id="plan-dialog-title" style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>
               {editingPlan ? 'Edit Plan' : 'Create New Plan'}
             </h2>
 
@@ -1563,6 +1828,11 @@ export default function SubscriptionsPage() {
               </div>
             </div>
 
+            {formError && (
+              <p role="alert" style={{ color: 'var(--admin-red)', fontSize: 13, marginTop: 16 }}>
+                {formError}
+              </p>
+            )}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 24 }}>
               <button
                 onClick={() => {
@@ -1583,9 +1853,7 @@ export default function SubscriptionsPage() {
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={
-                  !form.name || !form.price || createMutation.isPending || updateMutation.isPending
-                }
+                disabled={createMutation.isPending || updateMutation.isPending}
                 style={{
                   padding: '10px 20px',
                   borderRadius: 8,
@@ -1594,8 +1862,11 @@ export default function SubscriptionsPage() {
                   color: 'white',
                   fontWeight: 600,
                   fontSize: 13,
-                  cursor: !form.name || !form.price ? 'not-allowed' : 'pointer',
-                  opacity: !form.name || !form.price ? 0.5 : 1,
+                  cursor:
+                    createMutation.isPending || updateMutation.isPending
+                      ? 'not-allowed'
+                      : 'pointer',
+                  opacity: createMutation.isPending || updateMutation.isPending ? 0.6 : 1,
                 }}
               >
                 {createMutation.isPending || updateMutation.isPending

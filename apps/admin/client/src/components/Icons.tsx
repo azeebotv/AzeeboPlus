@@ -874,7 +874,7 @@ const ICON_MAP: Record<string, string> = {
   fileText: 'clipboardList',
   heart: 'star',
   messageSquare: 'clipboardList',
-  package: 'archive',
+  package: 'clipboardList',
   repeat: 'refresh',
   trendingUp: 'trending',
   tv: 'film',
