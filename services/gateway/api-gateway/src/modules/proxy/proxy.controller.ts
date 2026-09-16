@@ -19,6 +19,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from '@azeebo/security';
 import { AuthThrottlerGuard } from '../../guards/auth-throttler.guard';
 import { Request, Response } from 'express';
+import { RawBodyRequest } from '../../common/raw-body-capture.middleware';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
@@ -53,6 +54,15 @@ interface ServiceRouteConfig {
   // returns 404 until ops flips the flag. Removed (set false) once the route
   // is fully rolled out.
   isNew?: boolean;
+  /**
+   * Explicit opt-in to the gateway GET response cache. The cache is
+   * deny-by-default: only routes marked publicCacheable are eligible, and
+   * even those are never cached for authenticated callers (see
+   * isAuthenticatedRequest) — a shared cached body must never be able to
+   * serve one user another user's data, and per-user queries must never
+   * read stale bytes after a mutation.
+   */
+  publicCacheable?: boolean;
 }
 
 interface ServiceRoute {
@@ -64,6 +74,7 @@ interface ServiceRoute {
   pathStrategy?: 'default' | 'includes-prefix' | 'no-prefix' | 'auth-service-strategy';
   pathRewrite?: Record<string, string>;
   isNew?: boolean;
+  publicCacheable?: boolean;
 }
 
 export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
@@ -207,6 +218,8 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'default',
+    // Anonymous pricing tables — the canonical cacheable surface.
+    publicCacheable: true,
     endpoints: [
       { method: 'GET', path: '/vote-packages/:type', description: 'Get vote packages by type' },
       { method: 'GET', path: '/wallet', description: 'Get wallet pricing' },
@@ -239,6 +252,9 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'default',
+    // Anonymous-only public content settings/universes — the canonical
+    // cacheable surface.
+    publicCacheable: true,
     endpoints: [
       { method: 'GET', path: '/settings', description: 'Get public settings' },
       { method: 'GET', path: '/settings/:key', description: 'Get a public setting' },
@@ -485,6 +501,16 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/risk/stats', description: 'Get risk engine statistics' },
       { method: 'POST', path: '/risk/seed', description: 'Seed risk classifications' },
       { method: 'POST', path: '/tasks/seed', description: 'Seed task classifications' },
+      {
+        method: 'DELETE',
+        path: '/tasks/classifications/:taskType',
+        description: 'Delete task classification',
+      },
+      {
+        method: 'POST',
+        path: '/agents/seed',
+        description: 'Seed the agent registry (AOS-MA-001)',
+      },
     ],
   },
   {
@@ -532,6 +558,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       },
       { method: 'GET', path: '/users', description: 'List users' },
       { method: 'GET', path: '/users/:id', description: 'Get user details' },
+      { method: 'DELETE', path: '/users/:id', description: 'Delete a user' },
       { method: 'PUT', path: '/users/:id/role', description: 'Update user role' },
       { method: 'PATCH', path: '/users/:id/status', description: 'Update user status' },
       { method: 'PUT', path: '/users/:id/suspend', description: 'Suspend a user' },
@@ -564,7 +591,15 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         description: 'List gateway webhook deliveries',
       },
       { method: 'GET', path: '/content', description: 'List content for moderation' },
+      { method: 'POST', path: '/content', description: 'Create content (admin)' },
       { method: 'GET', path: '/content/:id', description: 'Get content details' },
+      { method: 'PATCH', path: '/content/:id', description: 'Update content (admin)' },
+      { method: 'DELETE', path: '/content/:id', description: 'Delete content (admin)' },
+      { method: 'POST', path: '/content/categories', description: 'Create content category' },
+      { method: 'PUT', path: '/content/categories/:id', description: 'Update content category' },
+      { method: 'DELETE', path: '/content/categories/:id', description: 'Delete content category' },
+      { method: 'POST', path: '/content/tags', description: 'Create content tag' },
+      { method: 'DELETE', path: '/content/tags/:id', description: 'Delete content tag' },
       { method: 'PATCH', path: '/content/:id/status', description: 'Update content status' },
       { method: 'GET', path: '/analytics/overview', description: 'Get analytics overview' },
       { method: 'GET', path: '/analytics/revenue', description: 'Get revenue analytics' },
@@ -590,6 +625,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         path: '/notification-templates/:id',
         description: 'Update notification template',
       },
+      {
+        method: 'DELETE',
+        path: '/notification-templates/:id',
+        description: 'Delete notification template',
+      },
       { method: 'GET', path: '/payment-gateways', description: 'Get payment gateways' },
       {
         method: 'PUT',
@@ -602,6 +642,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         description: 'Update payment gateway mode',
       },
       { method: 'GET', path: '/reality-shows', description: 'Get reality shows' },
+      { method: 'POST', path: '/reality-shows', description: 'Create reality show' },
       {
         method: 'PUT',
         path: '/reality-shows/:id/status',
@@ -683,6 +724,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'PATCH', path: '/moderation/:id', description: 'Update moderation status' },
       { method: 'PUT', path: '/moderation/reports/:id/resolve', description: 'Resolve a report' },
       { method: 'PUT', path: '/moderation/reports/:id/dismiss', description: 'Dismiss a report' },
+      { method: 'POST', path: '/moderation/safety-action', description: 'Apply a safety action' },
       {
         method: 'GET',
         path: '/moderation/reports/stats',
@@ -750,7 +792,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'POST', path: '/content/:id/publish', description: 'Publish content' },
       { method: 'POST', path: '/content/:id/unpublish', description: 'Unpublish content' },
       // Nightly flag sweep status (feature-flags controller)
-      { method: 'GET', path: '/feature-flags/nightly/last', description: 'Get last nightly sweep result' },
+      {
+        method: 'GET',
+        path: '/feature-flags/nightly/last',
+        description: 'Get last nightly sweep result',
+      },
       // Report builder execution (reports-admin controller)
       { method: 'POST', path: '/reports/:id/execute', description: 'Execute a saved report' },
       // Reality shows management (reality-shows controller)
@@ -758,14 +804,34 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'PATCH', path: '/reality-shows/:id', description: 'Update reality show' },
       { method: 'DELETE', path: '/reality-shows/:id', description: 'Delete reality show' },
       // Subscription management (subscription-admin controller)
-      { method: 'PUT', path: '/subscriptions/:id/status', description: 'Update subscription status' },
+      { method: 'POST', path: '/subscriptions', description: 'Create subscription' },
+      { method: 'PUT', path: '/subscriptions/:id', description: 'Update subscription' },
+      { method: 'DELETE', path: '/subscriptions/:id', description: 'Delete subscription' },
+      { method: 'POST', path: '/subscriptions/promo-codes', description: 'Create promo code' },
+      {
+        method: 'PUT',
+        path: '/subscriptions/:id/status',
+        description: 'Update subscription status',
+      },
       {
         method: 'PUT',
         path: '/subscriptions/promo-codes/:id/expire',
         description: 'Expire a promo code',
       },
-      { method: 'DELETE', path: '/subscriptions/promo-codes/:id', description: 'Delete a promo code' },
+      {
+        method: 'DELETE',
+        path: '/subscriptions/promo-codes/:id',
+        description: 'Delete a promo code',
+      },
       // Agbala storyworld management (vertical/agbala controller)
+      { method: 'POST', path: '/agbala/storyworlds', description: 'Create storyworld' },
+      {
+        method: 'POST',
+        path: '/agbala/storyworlds/:id/characters',
+        description: 'Create character in storyworld',
+      },
+      { method: 'POST', path: '/agbala/paths', description: 'Create story path' },
+      { method: 'POST', path: '/agbala/quizzes', description: 'Create quiz' },
       { method: 'GET', path: '/agbala/storyworlds/:id', description: 'Get storyworld' },
       { method: 'PATCH', path: '/agbala/storyworlds/:id', description: 'Update storyworld' },
       { method: 'DELETE', path: '/agbala/storyworlds/:id', description: 'Delete storyworld' },
@@ -990,7 +1056,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/live-events/:id', description: 'Get live event (admin)' },
       { method: 'POST', path: '/live-events', description: 'Create live event (admin)' },
       { method: 'PUT', path: '/live-events/:id', description: 'Update live event (admin)' },
-      { method: 'DELETE', path: '/live-events/:id/cancel', description: 'Cancel live event (admin)' },
+      {
+        method: 'DELETE',
+        path: '/live-events/:id/cancel',
+        description: 'Cancel live event (admin)',
+      },
       { method: 'GET', path: '/agbala/storyworlds', description: 'Get storyworlds' },
       { method: 'GET', path: '/agbala/characters', description: 'Get Agbala characters' },
       { method: 'GET', path: '/agbala/paths', description: 'Get Agbala paths' },
@@ -1308,7 +1378,12 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'POST', path: '/', description: 'Create game content' },
       { method: 'PATCH', path: '/:id', description: 'Update game content' },
       { method: 'DELETE', path: '/:id', description: 'Delete game content' },
-      { method: 'POST', path: '/sessions/:sessionId/submit', description: 'Submit trivia session answers' },
+      { method: 'POST', path: '/sessions', description: 'Start a trivia game session' },
+      {
+        method: 'POST',
+        path: '/sessions/:sessionId/submit',
+        description: 'Submit trivia session answers',
+      },
       // Games tournaments (games-service @Controller('games/tournaments'))
       { method: 'GET', path: '/tournaments/:id', description: 'Get tournament details' },
       { method: 'POST', path: '/tournaments/:id/enter', description: 'Enter a tournament' },
@@ -1503,6 +1578,72 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         description: 'Cancel event RSVP',
       },
       { method: 'GET', path: '/events/:id/attendees', description: 'Get event attendees' },
+      // Lifestyle guides (guides.controller @Controller('lifestyle'))
+      { method: 'GET', path: '/itineraries', description: 'List published itineraries' },
+      { method: 'GET', path: '/itineraries/:id', description: 'Itinerary details with stops' },
+      { method: 'GET', path: '/neighborhoods', description: 'List published neighborhoods' },
+      {
+        method: 'GET',
+        path: '/neighborhoods/:id',
+        description: 'Neighborhood details with places',
+      },
+      { method: 'GET', path: '/partners', description: 'List published partners' },
+      { method: 'GET', path: '/partners/:id', description: 'Partner details with active offers' },
+      { method: 'GET', path: '/offers', description: 'List active offers' },
+      { method: 'GET', path: '/offers/:id', description: 'Offer details with partner' },
+      // Guides admin CRUD (guides-admin.controller @Controller('lifestyle/admin'))
+      {
+        method: 'GET',
+        path: '/admin/itineraries',
+        description: 'List itineraries, all statuses (admin)',
+      },
+      {
+        method: 'POST',
+        path: '/admin/itineraries',
+        description: 'Create itinerary with stops (admin)',
+      },
+      { method: 'PATCH', path: '/admin/itineraries/:id', description: 'Update itinerary (admin)' },
+      { method: 'DELETE', path: '/admin/itineraries/:id', description: 'Delete itinerary (admin)' },
+      {
+        method: 'GET',
+        path: '/admin/neighborhoods',
+        description: 'List neighborhoods, all statuses (admin)',
+      },
+      {
+        method: 'POST',
+        path: '/admin/neighborhoods',
+        description: 'Create neighborhood with places (admin)',
+      },
+      {
+        method: 'PATCH',
+        path: '/admin/neighborhoods/:id',
+        description: 'Update neighborhood (admin)',
+      },
+      {
+        method: 'DELETE',
+        path: '/admin/neighborhoods/:id',
+        description: 'Delete neighborhood (admin)',
+      },
+      {
+        method: 'GET',
+        path: '/admin/partners',
+        description: 'List partners, all statuses (admin)',
+      },
+      { method: 'POST', path: '/admin/partners', description: 'Create partner (admin)' },
+      { method: 'PATCH', path: '/admin/partners/:id', description: 'Update partner (admin)' },
+      {
+        method: 'DELETE',
+        path: '/admin/partners/:id',
+        description: 'Delete partner, cascades offers (admin)',
+      },
+      { method: 'GET', path: '/admin/offers', description: 'List offers, all statuses (admin)' },
+      {
+        method: 'POST',
+        path: '/admin/partners/:partnerId/offers',
+        description: 'Create offer under partner (admin)',
+      },
+      { method: 'PATCH', path: '/admin/offers/:id', description: 'Update offer (admin)' },
+      { method: 'DELETE', path: '/admin/offers/:id', description: 'Delete offer (admin)' },
       { method: 'GET', path: '/nightlife', description: 'Lifestyle nightlife' },
       { method: 'GET', path: '/saved', description: 'Saved lifestyle content' },
       { method: 'GET', path: '/:id', description: 'Get lifestyle content details' },
@@ -1585,6 +1726,21 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         method: 'POST',
         path: '/submissions/:id/vote',
         description: 'Vote for a challenge submission',
+      },
+    ],
+  },
+  {
+    path: '/participation',
+    envKey: 'LIFESTYLE_SERVICE_URL',
+    fallbackUrl: 'http://lifestyle-service:3016',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'default',
+    endpoints: [
+      {
+        method: 'GET',
+        path: '/:id/result',
+        description: 'Unified poll or quiz attempt result',
       },
     ],
   },
@@ -2037,8 +2193,38 @@ export class ProxyController {
       '/users/',
       '/recommendations/',
       '/recommendation/',
+      // Analytics endpoints are read by the admin panel right after it
+      // mutates the underlying intelligence data (agent registry, task
+      // classifications, capacity ledger, risk approvals, reports) — caching
+      // any of them for 5min made every mutation appear to silently revert
+      // (the next list kept serving pre-mutation bytes until TTL expired).
+      // Exclude the whole /analytics/ subtree: same bug class the /admin/
+      // exclusion already fixed, and per-endpoint lists kept missing the
+      // endpoints added later.
+      '/analytics/',
+      // Bundle passes are CRUD-managed from the admin panel; a cached list
+      // served the pre-delete body after a successful DELETE.
+      '/subscription/bundles',
     ];
     return userSpecificPatterns.some((pattern) => path.includes(pattern));
+  }
+
+  /**
+   * Does this request carry credentials (Bearer token or session cookie)?
+   *
+   * The response cache is deny-by-default and never caches anything for an
+   * authenticated caller: a shared cached body must never be able to serve
+   * one user another user's data (identity comes in many forms — Bearer
+   * header, httpOnly session cookie, or x-user-* headers stamped by the
+   * auth gateway), and authenticated reads are frequently re-issued right
+   * after a mutation, where any TTL would make the write appear to revert.
+   * Only explicitly-marked public routes, called anonymously, are eligible.
+   */
+  private isAuthenticatedRequest(req: Request): boolean {
+    if (req.headers.authorization) return true;
+    if (req.headers.cookie) return true;
+    const authUser = (req as Request & { user?: unknown }).user;
+    return authUser !== undefined && authUser !== null;
   }
 
   private async proxyRequest(
@@ -2105,9 +2291,27 @@ export class ProxyController {
     // admin mutation appear to revert (the next list kept serving
     // pre-mutation bytes until TTL expired — toggles, edits, suspensions all
     // looked like they silently undid themselves). Never cache admin traffic.
+    // Same applies to user-specific endpoints (e.g. /creator/*): a PUT followed
+    // by a GET within the TTL served the pre-mutation body, so saved settings
+    // appeared to revert. Never cache per-user data.
     const isAdminPath = (req.path || req.url || '').includes('/admin/');
+    const isUserSpecificPath = this.isUserSpecificEndpoint(req.path || req.url || '');
 
-    if (method === 'GET' && responseCacheEnabled && !isAdminPath) {
+    // Deny-by-default cache eligibility: the route must explicitly opt in
+    // (publicCacheable), and an authenticated caller is never served a
+    // shared cached body (see isAuthenticatedRequest). The path exclusions
+    // below remain as defense in depth for routes that predate the flag.
+    const routeAllowsCache = route.publicCacheable === true;
+    const requestIsAuthenticated = this.isAuthenticatedRequest(req);
+
+    if (
+      method === 'GET' &&
+      responseCacheEnabled &&
+      routeAllowsCache &&
+      !requestIsAuthenticated &&
+      !isAdminPath &&
+      !isUserSpecificPath
+    ) {
       const cachedResponse = await this.cacheManager.get(cacheKey);
       if (cachedResponse) {
         res.setHeader(API_VERSION_HEADER, version);
@@ -2146,7 +2350,15 @@ export class ProxyController {
         (typeof body.circuitState === 'string' ||
           typeof body.message === 'string' ||
           body.statusCode !== undefined);
-      if (responseCacheEnabled && !isAdminPath && !isWrapperError && !isBareError) {
+      if (
+        responseCacheEnabled &&
+        routeAllowsCache &&
+        !requestIsAuthenticated &&
+        !isAdminPath &&
+        !isUserSpecificPath &&
+        !isWrapperError &&
+        !isBareError
+      ) {
         await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
       }
       res.json(response);
@@ -2263,13 +2475,19 @@ export class ProxyController {
 
       const cleanTargetPath = targetPath.split('?')[0];
 
+      // Multipart bodies are captured raw by RawBodyCaptureMiddleware —
+      // forward those verbatim so the upstream's multer sees the original
+      // multipart stream with its boundary intact.
+      const upstreamBody =
+        (req as RawBodyRequest).rawBody !== undefined ? (req as RawBodyRequest).rawBody : req.body;
+
       const proxyResponse = await this.circuitBreakerProxyService.proxyRequest({
         serviceName: service,
         method: req.method,
         targetUrl,
         path: cleanTargetPath,
         headers,
-        body: req.body,
+        body: upstreamBody,
         queryString: queryString || undefined,
         timeout: this.UPSTREAM_TIMEOUT,
         requestId,
