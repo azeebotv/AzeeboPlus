@@ -92,6 +92,59 @@ export default function ModerationPage() {
     onError: (e) => setActionError((e as Error).message || 'Action failed'),
   });
 
+  // ─── Safety actions (POST /safety-action — direct enforcement surface) ────
+  const [safetyTargetId, setSafetyTargetId] = useState('');
+  const [safetyTargetType, setSafetyTargetType] = useState('user');
+  const [safetyActionType, setSafetyActionType] = useState('suspend_user');
+  const [safetyDuration, setSafetyDuration] = useState('');
+  const [safetyReason, setSafetyReason] = useState('');
+  const [safetyError, setSafetyError] = useState<string | null>(null);
+
+  const safetyActionsQ = useQuery({
+    queryKey: ['admin', 'moderation', 'safety-actions'],
+    queryFn: async () => {
+      const res = await adminApi.getSafetyActions(10);
+      if (!res.success) return [];
+      const d = res.data;
+      return asArray<{
+        id: string;
+        actionType: string;
+        targetId: string;
+        targetType: string;
+        reason?: string;
+        createdAt?: string;
+      }>(d);
+    },
+    refetchInterval: 30_000,
+  });
+
+  const safetyMutation = useMutation({
+    mutationFn: () =>
+      adminApi.takeSafetyAction({
+        targetId: safetyTargetId.trim(),
+        targetType: safetyTargetType,
+        actionType: safetyActionType,
+        reason: safetyReason.trim(),
+        ...(safetyDuration.trim() ? { duration: safetyDuration.trim() } : {}),
+      }),
+    onSuccess: () => {
+      setSafetyError(null);
+      setSafetyTargetId('');
+      setSafetyReason('');
+      setSafetyDuration('');
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'moderation'] });
+    },
+    onError: (e) => setSafetyError((e as Error).message || 'Safety action failed'),
+  });
+
+  const submitSafetyAction = () => {
+    if (!safetyTargetId.trim() || !safetyReason.trim()) {
+      setSafetyError('Target ID and reason are required');
+      return;
+    }
+    safetyMutation.mutate();
+  };
+
   const busy = resolveMutation.isPending || dismissMutation.isPending;
   const reports = reportsQ.data?.reports ?? [];
   const totalPages = reportsQ.data?.totalPages ?? 0;
@@ -184,6 +237,210 @@ export default function ModerationPage() {
             {s.replace('_', ' ')}
           </button>
         ))}
+      </div>
+
+      {/* Safety actions: direct enforcement + audit trail */}
+      <div
+        style={{
+          border: '1px solid var(--admin-card)',
+          borderRadius: 16,
+          backgroundColor: 'var(--admin-surface)',
+          padding: 20,
+          marginBottom: 24,
+        }}
+      >
+        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Take safety action</h2>
+        <p style={{ color: 'var(--admin-text-muted)', fontSize: 12, marginBottom: 14 }}>
+          Direct enforcement (suspend / ban / content takedown) against a user, content item, or
+          comment — audit-logged.
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <label
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              fontSize: 12,
+              color: 'var(--admin-text-muted)',
+            }}
+          >
+            Target type
+            <select
+              value={safetyTargetType}
+              onChange={(e) => setSafetyTargetType(e.target.value)}
+              style={{
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
+                fontSize: 13,
+              }}
+            >
+              {['user', 'content', 'comment', 'creator'].map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              fontSize: 12,
+              color: 'var(--admin-text-muted)',
+            }}
+          >
+            Action
+            <select
+              value={safetyActionType}
+              onChange={(e) => setSafetyActionType(e.target.value)}
+              style={{
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
+                fontSize: 13,
+              }}
+            >
+              {['suspend_user', 'ban_user', 'remove_content', 'shadowban', 'restrict'].map((t) => (
+                <option key={t} value={t}>
+                  {t.replace(/_/g, ' ')}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              fontSize: 12,
+              color: 'var(--admin-text-muted)',
+            }}
+          >
+            Target ID
+            <input
+              value={safetyTargetId}
+              onChange={(e) => setSafetyTargetId(e.target.value)}
+              placeholder="user-uuid / content-uuid"
+              style={{
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
+                fontSize: 13,
+                width: 240,
+              }}
+            />
+          </label>
+          <label
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              fontSize: 12,
+              color: 'var(--admin-text-muted)',
+            }}
+          >
+            Duration (optional)
+            <input
+              value={safetyDuration}
+              onChange={(e) => setSafetyDuration(e.target.value)}
+              placeholder="e.g. 7d / 30d / permanent"
+              style={{
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
+                fontSize: 13,
+                width: 160,
+              }}
+            />
+          </label>
+        </div>
+        <textarea
+          value={safetyReason}
+          onChange={(e) => setSafetyReason(e.target.value)}
+          placeholder="Reason (required, audit-logged)"
+          rows={2}
+          style={{
+            width: '100%',
+            marginTop: 10,
+            padding: '8px 10px',
+            borderRadius: 8,
+            border: '1px solid var(--admin-surface)',
+            backgroundColor: 'var(--admin-dark)',
+            color: 'var(--admin-text)',
+            fontSize: 13,
+            resize: 'vertical',
+          }}
+        />
+        {safetyError && (
+          <p style={{ color: 'var(--admin-red)', fontSize: 12, marginTop: 8 }}>{safetyError}</p>
+        )}
+        <button
+          onClick={submitSafetyAction}
+          disabled={safetyMutation.isPending}
+          style={{
+            marginTop: 12,
+            padding: '8px 18px',
+            borderRadius: 8,
+            border: 'none',
+            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: safetyMutation.isPending ? 'wait' : 'pointer',
+          }}
+        >
+          {safetyMutation.isPending ? 'Executing…' : 'Execute action'}
+        </button>
+
+        {safetyActionsQ.data && safetyActionsQ.data.length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <p
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--admin-text-muted)',
+                marginBottom: 6,
+              }}
+            >
+              Recent actions
+            </p>
+            {safetyActionsQ.data.map((a) => (
+              <div
+                key={a.id}
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'baseline',
+                  fontSize: 12,
+                  padding: '5px 0',
+                  borderBottom: '1px solid var(--admin-bg)',
+                }}
+              >
+                <span style={{ color: 'var(--admin-orange)', fontWeight: 600 }}>
+                  {a.actionType?.replace(/_/g, ' ')}
+                </span>
+                <span style={{ color: 'var(--admin-text-muted)' }}>
+                  {a.targetType}:{a.targetId?.slice(0, 12)}…
+                </span>
+                {a.createdAt && (
+                  <span style={{ color: 'var(--admin-text-muted)', marginLeft: 'auto' }}>
+                    {new Date(a.createdAt).toLocaleString()}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {reportsQ.isError ? (
