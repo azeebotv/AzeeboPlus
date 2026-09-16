@@ -30,7 +30,23 @@ interface CapacitySummary {
   byDomain: Record<string, { baseline: number; released: number; count: number }>;
 }
 
-/* ── Component ─────────────────────────────────────────────────────────────── */
+/* ── Component ─────────────────────────────────────────────────────────── */
+
+/**
+ * Period picker options (current quarter plus two back and four forward).
+ * Entries must use the quarter format — the summary endpoint
+ * (`/summary/:period`) and the seeded data both use `YYYY-QN`, so a
+ * `YYYY-MM` month value would never roll up into any quarter summary.
+ */
+const QUARTER_OPTIONS: string[] = (() => {
+  const now = new Date();
+  const quarters: string[] = [];
+  for (let offset = -1; offset <= 4; offset++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + offset * 3, 1);
+    quarters.push(`${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`);
+  }
+  return quarters;
+})();
 
 export default function CapacityLedgerPage() {
   const queryClient = useQueryClient();
@@ -500,8 +516,7 @@ export default function CapacityLedgerPage() {
               />
               Vendor Avoided
             </label>
-            <input
-              type="month"
+            <select
               value={formData.period}
               onChange={(e) => setFormData({ ...formData, period: e.target.value })}
               style={{
@@ -512,7 +527,13 @@ export default function CapacityLedgerPage() {
                 color: 'var(--admin-text)',
                 fontSize: 14,
               }}
-            />
+            >
+              {QUARTER_OPTIONS.map((q) => (
+                <option key={q} value={q}>
+                  {q}
+                </option>
+              ))}
+            </select>
             <button
               onClick={() => createMutation.mutate(formData)}
               disabled={
@@ -637,8 +658,7 @@ export default function CapacityLedgerPage() {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-        <input
-          type="month"
+        <select
           value={periodFilter}
           onChange={(e) => setPeriodFilter(e.target.value)}
           style={{
@@ -649,7 +669,14 @@ export default function CapacityLedgerPage() {
             color: 'var(--admin-text)',
             fontSize: 14,
           }}
-        />
+        >
+          <option value="">All periods</option>
+          {QUARTER_OPTIONS.map((q) => (
+            <option key={q} value={q}>
+              {q}
+            </option>
+          ))}
+        </select>
         <select
           value={domainFilter}
           onChange={(e) => setDomainFilter(e.target.value)}
