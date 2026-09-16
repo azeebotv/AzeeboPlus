@@ -33,13 +33,26 @@ export default function ReportsPage() {
   };
 
   const runMutation = useMutation({
-    mutationFn: (id: string) => adminApi.executeReport(id),
-    onSuccess: invalidate,
+    mutationFn: async (id: string) => {
+      const res = await adminApi.executeReport(id);
+      if (!res.success) throw new Error(res.message || 'Report execution failed');
+      return res.data;
+    },
+    onSuccess: (result) => {
+      setRunResult(result);
+      invalidate();
+    },
+    onError: (e: Error) => setRunError(e.message || 'Report execution failed'),
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminApi.deleteReport(id),
     onSuccess: invalidate,
   });
+
+  // Run-result modal state: the execute endpoint returns the report payload,
+  // which was previously discarded — the admin clicked Run and saw nothing.
+  const [runResult, setRunResult] = useState<unknown>(null);
+  const [runError, setRunError] = useState<string | null>(null);
 
   const reports: SavedAdminReport[] = Array.isArray(data?.reports) ? data.reports : [];
   const summary = data?.summary;
@@ -265,6 +278,115 @@ export default function ReportsPage() {
               No saved reports yet. Build your first report!
             </p>
           )}
+        </div>
+      )}
+
+      {/* Run-result modal — the execute payload was previously discarded. */}
+      {runResult != null && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setRunResult(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 24,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: 640,
+              maxHeight: '80vh',
+              overflow: 'auto',
+              padding: 24,
+              borderRadius: 16,
+              border: '1px solid var(--admin-card)',
+              backgroundColor: 'var(--admin-surface)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 16,
+              }}
+            >
+              <h2 style={{ fontSize: 18, fontWeight: 700 }}>Report Result</h2>
+              <button
+                onClick={() => setRunResult(null)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-card)',
+                  background: 'transparent',
+                  color: 'var(--admin-text-muted)',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            </div>
+            <pre
+              style={{
+                margin: 0,
+                padding: 16,
+                borderRadius: 10,
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
+                fontSize: 12,
+                overflow: 'auto',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}
+            >
+              {JSON.stringify(runResult, null, 2)}
+            </pre>
+          </div>
+        </div>
+      )}
+
+      {runError && (
+        <div
+          role="alert"
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            zIndex: 1001,
+            padding: '12px 18px',
+            borderRadius: 10,
+            border: '1px solid rgba(204,28,28,0.4)',
+            backgroundColor: 'rgba(204,28,28,0.12)',
+            color: 'var(--admin-red-light)',
+            fontSize: 13,
+            display: 'flex',
+            gap: 12,
+            alignItems: 'center',
+          }}
+        >
+          <span>{runError}</span>
+          <button
+            onClick={() => setRunError(null)}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--admin-text-muted)',
+              cursor: 'pointer',
+              fontSize: 12,
+            }}
+          >
+            Dismiss
+          </button>
         </div>
       )}
     </div>

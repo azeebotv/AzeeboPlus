@@ -39,13 +39,21 @@ export default function CapacityLedgerPage() {
   const [periodFilter, setPeriodFilter] = useState('');
   const [domainFilter, setDomainFilter] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const now = new Date();
+  const currentQuarter = `${now.getFullYear()}-Q${Math.ceil((now.getMonth() + 1) / 3)}`;
   const [formData, setFormData] = useState({
     taskType: '',
     domain: 'FINANCE',
     baselineHours: '',
     postAgentHours: '',
     headcountAvoided: false,
-    period: new Date().toISOString().slice(0, 7),
+    vendorAvoided: false,
+    redeploymentTarget: '',
+    roleDescription: '',
+    notes: '',
+    // Quarter format — matches the summary endpoint (`/summary/:period`) and
+    // the seeded data; a `YYYY-MM` month value would never roll up.
+    period: currentQuarter,
   });
 
   const entriesQuery = useQuery({
@@ -88,6 +96,10 @@ export default function CapacityLedgerPage() {
           baselineHours: baseline,
           postAgentHours: postAgent,
           headcountAvoided: data.headcountAvoided,
+          vendorAvoided: data.vendorAvoided,
+          redeploymentTarget: data.redeploymentTarget.trim() || undefined,
+          roleDescription: data.roleDescription.trim() || undefined,
+          notes: data.notes.trim() || undefined,
           period: data.period,
         }),
       });
@@ -103,7 +115,11 @@ export default function CapacityLedgerPage() {
         baselineHours: '',
         postAgentHours: '',
         headcountAvoided: false,
-        period: new Date().toISOString().slice(0, 7),
+        vendorAvoided: false,
+        redeploymentTarget: '',
+        roleDescription: '',
+        notes: '',
+        period: currentQuarter,
       });
     },
   });
@@ -361,6 +377,94 @@ export default function CapacityLedgerPage() {
               />
             </div>
           </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
+            <div>
+              <label
+                style={{
+                  fontSize: 11,
+                  color: 'var(--admin-text-muted)',
+                  display: 'block',
+                  marginBottom: 4,
+                }}
+              >
+                Redeployment Target (optional)
+              </label>
+              <input
+                type="text"
+                value={formData.redeploymentTarget}
+                onChange={(e) => setFormData({ ...formData, redeploymentTarget: e.target.value })}
+                placeholder="e.g. Revenue Operations"
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-bg)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  fontSize: 11,
+                  color: 'var(--admin-text-muted)',
+                  display: 'block',
+                  marginBottom: 4,
+                }}
+              >
+                Role Description (optional)
+              </label>
+              <input
+                type="text"
+                value={formData.roleDescription}
+                onChange={(e) => setFormData({ ...formData, roleDescription: e.target.value })}
+                placeholder="e.g. Senior reconciler, 2 FTE"
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-bg)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label
+                style={{
+                  fontSize: 11,
+                  color: 'var(--admin-text-muted)',
+                  display: 'block',
+                  marginBottom: 4,
+                }}
+              >
+                Notes (optional)
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={2}
+                placeholder="Context for the CFO/People validation review"
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-bg)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                  boxSizing: 'border-box',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                }}
+              />
+            </div>
+          </div>
           <div style={{ display: 'flex', gap: 12, marginTop: 12, alignItems: 'center' }}>
             <label
               style={{
@@ -378,6 +482,23 @@ export default function CapacityLedgerPage() {
                 onChange={(e) => setFormData({ ...formData, headcountAvoided: e.target.checked })}
               />
               Headcount Avoided
+            </label>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                color: 'var(--admin-text)',
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={formData.vendorAvoided}
+                onChange={(e) => setFormData({ ...formData, vendorAvoided: e.target.checked })}
+              />
+              Vendor Avoided
             </label>
             <input
               type="month"
