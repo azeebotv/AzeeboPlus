@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
-import type { PayoutsData } from '@/lib/creator-types';
+import type { PayoutsData, CreatorSettings } from '@/lib/creator-types';
 import { formatNgn, errorTextStyle } from '@/lib/ui';
 
 const inputStyle = {
@@ -42,6 +42,17 @@ export default function PayoutsPage() {
     },
   });
 
+  // The backend rejects payouts below the creator's configured minimum —
+  // surface the real threshold instead of guessing one.
+  const { data: settings } = useQuery({
+    queryKey: ['creator', 'settings'],
+    queryFn: async () => {
+      const res = await creatorApi.getSettings();
+      return res.success ? (res.data as CreatorSettings) : null;
+    },
+  });
+  const minimumPayout = settings?.minimumPayout ?? 0;
+
   const requestMutation = useMutation({
     mutationFn: async () => {
       const res = await creatorApi.requestPayoutAmount(Number(amount), method);
@@ -54,6 +65,8 @@ export default function PayoutsPage() {
     },
   });
 
+  const belowMinimum = Number(amount) > 0 && Number(amount) < minimumPayout;
+
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Payouts</h1>
@@ -62,7 +75,9 @@ export default function PayoutsPage() {
       </p>
 
       {isLoading ? (
-        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : isError ? (
         <p style={errorTextStyle()}>{creatorApi.errorMessage(error)}</p>
       ) : data ? (
@@ -78,7 +93,9 @@ export default function PayoutsPage() {
                 minWidth: 180,
               }}
             >
-              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Available Balance</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>
+                Available Balance
+              </p>
               <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--creator-green)' }}>
                 {formatNgn(data.availableBalance)}
               </p>
@@ -93,10 +110,10 @@ export default function PayoutsPage() {
                 minWidth: 180,
               }}
             >
-              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Pending Payout</p>
-              <p style={{ fontSize: 28, fontWeight: 700 }}>
-                {formatNgn(data.pendingPayout)}
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>
+                Pending Payout
               </p>
+              <p style={{ fontSize: 28, fontWeight: 700 }}>{formatNgn(data.pendingPayout)}</p>
             </div>
             <div
               style={{
@@ -108,7 +125,9 @@ export default function PayoutsPage() {
                 minWidth: 180,
               }}
             >
-              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Total Paid Out</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>
+                Total Paid Out
+              </p>
               <p style={{ fontSize: 28, fontWeight: 700 }}>{formatNgn(data.totalPaidOut)}</p>
             </div>
           </div>
@@ -125,7 +144,14 @@ export default function PayoutsPage() {
           >
             <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Request Payout</h3>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--creator-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Amount (₦)
               </label>
               <input
@@ -139,7 +165,14 @@ export default function PayoutsPage() {
               />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--creator-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Method
               </label>
               <select value={method} onChange={(e) => setMethod(e.target.value)} style={inputStyle}>
@@ -154,6 +187,7 @@ export default function PayoutsPage() {
                 requestMutation.isPending ||
                 !amount ||
                 Number(amount) <= 0 ||
+                belowMinimum ||
                 Number(amount) > data.availableBalance
               }
               style={{
@@ -169,6 +203,11 @@ export default function PayoutsPage() {
             >
               {requestMutation.isPending ? 'Requesting...' : 'Request Payout'}
             </button>
+            {belowMinimum && (
+              <p style={{ color: 'var(--creator-amber, #f59e0b)', fontSize: 13, marginTop: 8 }}>
+                Minimum payout is {formatNgn(minimumPayout)} (set in Settings).
+              </p>
+            )}
             {requestMutation.isSuccess && (
               <p style={{ color: 'var(--creator-green)', fontSize: 13, marginTop: 8 }}>
                 Payout request submitted
@@ -212,7 +251,10 @@ export default function PayoutsPage() {
                   </thead>
                   <tbody>
                     {data.history.map((p) => (
-                      <tr key={p.id} style={{ borderBottom: '1px solid var(--creator-border-light)' }}>
+                      <tr
+                        key={p.id}
+                        style={{ borderBottom: '1px solid var(--creator-border-light)' }}
+                      >
                         <td style={{ padding: '10px 12px', fontWeight: 600 }}>
                           {formatNgn(p.amount)}
                         </td>
@@ -240,10 +282,22 @@ export default function PayoutsPage() {
                             {p.status}
                           </span>
                         </td>
-                        <td style={{ padding: '10px 12px', color: 'var(--creator-text-muted)', fontSize: 13 }}>
+                        <td
+                          style={{
+                            padding: '10px 12px',
+                            color: 'var(--creator-text-muted)',
+                            fontSize: 13,
+                          }}
+                        >
                           {new Date(p.requestedAt).toLocaleDateString()}
                         </td>
-                        <td style={{ padding: '10px 12px', color: 'var(--creator-text-muted)', fontSize: 13 }}>
+                        <td
+                          style={{
+                            padding: '10px 12px',
+                            color: 'var(--creator-text-muted)',
+                            fontSize: 13,
+                          }}
+                        >
                           {p.processedAt ? new Date(p.processedAt).toLocaleDateString() : '—'}
                         </td>
                       </tr>
