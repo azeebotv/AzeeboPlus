@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token } = body;
+    const { token, refresh_token: refreshToken } = body;
 
     if (!token) {
       return NextResponse.json({ success: false, error: 'Token is required' }, { status: 400 });
@@ -24,6 +24,21 @@ export async function POST(request: NextRequest) {
       path: '/',
       maxAge: 15 * 60,
     });
+
+    // HttpOnly refresh token (7 days) — cookie-first auth in lib/api/base.ts
+    // recovers expired sessions by POSTing /auth/refresh with no body; the
+    // gateway auth-service falls back to this cookie and the gateway forwards
+    // the rotated Set-Cookie pair back. Without it, apiFetch-based pages can
+    // never recover a 401 and every header-only retry fails.
+    if (refreshToken) {
+      response.cookies.set('refresh_token', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60,
+      });
+    }
 
     // Non-HttpOnly cookie for middleware auth check
     try {

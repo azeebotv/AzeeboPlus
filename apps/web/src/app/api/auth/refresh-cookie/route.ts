@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token } = body;
+    const { token, refresh_token: refreshToken } = body;
 
     if (!token) {
       return NextResponse.json({ success: false, error: 'Token is required' }, { status: 400 });
@@ -23,6 +23,18 @@ export async function POST(request: NextRequest) {
       path: '/',
       maxAge: 15 * 60,
     });
+
+    // Keep the httpOnly refresh cookie (7 days) in sync with rotation so the
+    // cookie-first recovery path in lib/api/base.ts keeps working.
+    if (refreshToken) {
+      response.cookies.set('refresh_token', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60,
+      });
+    }
 
     try {
       const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());

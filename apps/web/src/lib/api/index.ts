@@ -32,6 +32,26 @@ const logger = createWebLogger('ApiClient');
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
 
+/**
+ * Plant the httpOnly refresh_token cookie (7 days) through a Next route.
+ * lib/api/base.ts's cookie-first auth recovery POSTs /auth/refresh with no
+ * body and relies on this cookie; without it, apiFetch-based pages 401
+ * forever once the 15-min access cookie expires.
+ */
+export async function plantRefreshCookie(refreshToken: string): Promise<void> {
+  if (typeof window === 'undefined' || !refreshToken) return;
+  try {
+    await fetch('/api/auth/refresh-cookie', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: refreshToken, refresh_token: refreshToken }),
+      credentials: 'include',
+    });
+  } catch {
+    logger.error('Failed to plant refresh cookie via API');
+  }
+}
+
 export async function setAuthCookie(value: string, maxAge: number = 30 * 60): Promise<void> {
   if (typeof window !== 'undefined') {
     try {
@@ -166,8 +186,11 @@ class ApiClient {
           localStorage.setItem(ACCESS_TOKEN_KEY, response.data.access_token);
           localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
 
-          // Update the middleware auth cookie with the new access token
+          // Update the middleware auth cookie with the new access token,
+          // and keep the httpOnly refresh cookie in sync with rotation so
+          // the cookie-first recovery in lib/api/base.ts keeps working.
           setAuthCookie(response.data.access_token);
+          void plantRefreshCookie(response.data.refresh_token);
           return response.data;
         }
         return null;
