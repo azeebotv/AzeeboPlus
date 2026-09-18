@@ -74,6 +74,11 @@ export class TicketQueryDto {
   @IsEnum(SupportTicketStatus)
   status?: SupportTicketStatus;
 
+  @ApiPropertyOptional({ enum: SupportTicketPriority })
+  @IsOptional()
+  @IsEnum(SupportTicketPriority)
+  priority?: SupportTicketPriority;
+
   @ApiPropertyOptional({ enum: SupportTicketCategory })
   @IsOptional()
   @IsEnum(SupportTicketCategory)
