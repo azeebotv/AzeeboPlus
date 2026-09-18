@@ -1,7 +1,6 @@
 'use client';
-import { useEffect } from 'react';
-
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState, useTransition } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api, ContentItem } from '../../lib/api';
@@ -19,9 +18,11 @@ import analytics from '@/lib/analytics';
 interface Contestant {
   id: string;
   name: string;
-  avatar: string;
-  votes: number;
-  status: 'safe' | 'danger' | 'eliminated';
+  avatar?: string;
+  /** API embeds the raw row; votes live under _count.votes. */
+  votes?: number;
+  _count?: { votes?: number; predictions?: number };
+  status?: 'safe' | 'danger' | 'eliminated';
 }
 
 const staggerContainer = {
@@ -51,7 +52,7 @@ function RealityPageContent(): React.JSX.Element {
     queryKey: ['reality-shows', realityUniverse?.id],
     queryFn: async () => {
       if (!realityUniverse?.id) throw new Error('Reality universe not found');
-      const res = await api.content.getContentByUniverse(realityUniverse.id, 12, 50);
+      const res = await api.content.getContentByUniverse(realityUniverse.id, 1, 12);
       if (res.success && res.data) {
         const items = Array.isArray(res.data)
           ? res.data
@@ -72,7 +73,18 @@ function RealityPageContent(): React.JSX.Element {
     queryFn: async () => {
       if (!selectedShow?.id) throw new Error('No show selected');
       const res = await api.reality.getContestants(selectedShow.id);
-      if (res.success && res.data) return res.data;
+      if (res.success && res.data) {
+        // The endpoint wraps the list: { contestants: [...] } — and older
+        // builds returned a bare array. Unwrap either shape; a raw object
+        // falling through used to crash `.map` into the error boundary.
+        const payload = res.data as unknown;
+        const list = Array.isArray(payload)
+          ? payload
+          : Array.isArray((payload as { contestants?: Contestant[] } | null)?.contestants)
+            ? (payload as { contestants: Contestant[] }).contestants
+            : [];
+        return list;
+      }
       throw new Error(res.message || 'Failed to load contestants');
     },
     enabled: !!selectedShow?.id,
@@ -80,10 +92,36 @@ function RealityPageContent(): React.JSX.Element {
   });
 
   const contestants: Contestant[] = contestantsQuery.data ?? [];
-  const safeContestants = contestants || [];
-  const maxVotes = Math.max(0, ...safeContestants.map((c) => c.votes));
+  const safeContestants = Array.isArray(contestants) ? contestants : [];
+  const maxVotes = Math.max(
+    0,
+    ...safeContestants.map((c) => Number(c.votes ?? c._count?.votes) || 0)
+  );
 
   const isLoading = universesQuery.isLoading || showsQuery.isLoading;
+
+  const queryClient = useQueryClient();
+  const [votingId, setVotingId] = useState<string | null>(null);
+  const [isVoting, startVoting] = useTransition();
+  const [voteNotice, setVoteNotice] = useState<string | null>(null);
+
+  const scrollToVoting = () => {
+    document.getElementById('voting')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleVote = (contestantId: string) => {
+    if (!selectedShow?.id || isVoting) return;
+    setVotingId(contestantId);
+    startVoting(async () => {
+      const res = await api.reality.castVote(selectedShow.id, contestantId);
+      setVoteNotice(res.success ? 'Vote submitted!' : (res.message ?? 'Vote failed'));
+      if (res.success) {
+        await queryClient.invalidateQueries({ queryKey: ['reality-contestants', selectedShow.id] });
+      }
+      setTimeout(() => setVoteNotice(null), 4000);
+      setVotingId(null);
+    });
+  };
 
   return (
     <div
@@ -148,6 +186,7 @@ function RealityPageContent(): React.JSX.Element {
                 </Link>
                 <motion.button
                   type="button"
+                  onClick={scrollToVoting}
                   className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
                   style={{
                     border: '1px solid rgba(255,255,255,0.2)',
@@ -165,7 +204,7 @@ function RealityPageContent(): React.JSX.Element {
       </section>
 
       {/* Shows Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section id="voting" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <ScrollReveal>
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
@@ -273,7 +312,7 @@ function RealityPageContent(): React.JSX.Element {
                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-xs sm:text-sm"
                             style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
                           >
-                            {contestant.avatar?.charAt(0) || contestant.name.charAt(0)}
+                            {contestant.avatar?.charAt(0) || contestant.name?.charAt(0) || '?'}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
@@ -282,7 +321,8 @@ function RealityPageContent(): React.JSX.Element {
                               {contestant.name}
                             </span>
                             <span className="text-xs sm:text-sm text-white/50 flex-shrink-0 ml-2">
-                              {contestant.votes.toLocaleString()} votes
+                              {(contestant.votes ?? contestant._count?.votes ?? 0).toLocaleString()}{' '}
+                              votes
                             </span>
                           </div>
                           <div
@@ -293,7 +333,7 @@ function RealityPageContent(): React.JSX.Element {
                               className="h-full rounded-full"
                               initial={{ width: 0 }}
                               whileInView={{
-                                width: `${(contestant.votes / (maxVotes || 1)) * 100}%`,
+                                width: `${((contestant.votes ?? contestant._count?.votes ?? 0) / (maxVotes || 1)) * 100}%`,
                               }}
                               viewport={{ once: true }}
                               transition={{ duration: 0.8, delay: index * 0.1, ease: 'easeOut' }}
@@ -319,6 +359,17 @@ function RealityPageContent(): React.JSX.Element {
                             Danger
                           </span>
                         )}
+                        {contestant.status !== 'eliminated' && selectedShow?.id && (
+                          <button
+                            type="button"
+                            onClick={() => handleVote(contestant.id)}
+                            disabled={isVoting && votingId === contestant.id}
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold text-white flex-shrink-0 transition-all az-btn-primary"
+                            style={{ width: 'auto' }}
+                          >
+                            {isVoting && votingId === contestant.id ? 'Voting…' : 'Vote'}
+                          </button>
+                        )}
                         {contestant.status === 'eliminated' && (
                           <span
                             className="px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[10px] sm:text-xs font-semibold flex-shrink-0"
@@ -333,14 +384,15 @@ function RealityPageContent(): React.JSX.Element {
                       </motion.div>
                     ))}
                   </motion.div>
-                  <motion.button
-                    type="button"
-                    className="az-btn-primary w-full mt-6"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Vote Now
-                  </motion.button>
+                  {voteNotice && (
+                    <p
+                      role="status"
+                      className="text-sm mt-3 text-center"
+                      style={{ color: 'var(--brand-orange)' }}
+                    >
+                      {voteNotice}
+                    </p>
+                  )}
                 </div>
               </ScrollReveal>
 

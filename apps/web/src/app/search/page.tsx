@@ -1,6 +1,6 @@
 'use client';
-'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@azeebo/ui/web';
 import { apiFetch, api } from '../../lib/api';
@@ -113,9 +113,14 @@ interface SuggestionsResponse {
 }
 
 export default function SearchPage(): React.JSX.Element {
-  const [query, setQuery] = useState('');
-  const [activeQuery, setActiveQuery] = useState('');
-  const [hasSearched, setHasSearched] = useState(false);
+  // Deep-link support: AppHeader pushes /search?q=…, so seed both the input
+  // and the executed query from the URL — previously the param was ignored and
+  // users landed on an empty search shell.
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get('q') ?? '';
+  const [query, setQuery] = useState(urlQuery);
+  const [activeQuery, setActiveQuery] = useState(urlQuery);
+  const [hasSearched, setHasSearched] = useState(urlQuery.trim().length > 0);
   const [filters, setFilters] = useState<SearchFilters>({
     type: 'all',
     category: 'all',

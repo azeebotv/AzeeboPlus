@@ -1,13 +1,11 @@
 'use client';
-'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
-import AppHeader from '../../components/layout/AppHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { EmptyState } from '../../components/ui/EmptyState';
-import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
 
@@ -45,13 +43,18 @@ interface Conversation {
 
 interface RawConversation {
   id: string;
-  user: User;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount: number;
+  /** The messaging API actually returns { name, avatar, participants[] }
+   *  without a nested `user` object; normalize to a synthetic user below. */
+  user?: Partial<User>;
+  name?: string | null;
+  avatar?: string | null;
+  participants?: { id: string; displayName?: string | null; avatar?: string | null }[];
+  lastMessage?: string;
+  lastMessageAt?: string;
+  timestamp?: string;
+  unreadCount?: number;
   isMuted?: boolean;
   isArchived?: boolean;
-  name?: string;
 }
 
 interface RawMessage {
@@ -86,13 +89,21 @@ export default function MessagesPage(): React.JSX.Element {
       const response = await apiFetch<RawConversation[]>('/messaging/conversations');
       if (response.success && response.data) {
         const data = Array.isArray(response.data) ? response.data : [];
-        return data.map((conv: RawConversation) => ({
-          id: conv.id,
-          user: conv.user,
-          lastMessage: conv.lastMessage,
-          timestamp: new Date(conv.timestamp),
-          unreadCount: conv.unreadCount,
-        }));
+        return data.map((conv: RawConversation) => {
+          const other = conv.participants?.find(Boolean);
+          const displayName = conv.name || other?.displayName || 'Conversation';
+          return {
+            id: conv.id,
+            user: {
+              id: other?.id ?? conv.id,
+              name: displayName,
+              avatar: conv.avatar ?? other?.avatar ?? undefined,
+            } as User,
+            lastMessage: conv.lastMessage ?? '',
+            timestamp: new Date(conv.lastMessageAt ?? conv.timestamp ?? Date.now()),
+            unreadCount: conv.unreadCount ?? 0,
+          };
+        });
       }
       return [];
     },
@@ -105,7 +116,7 @@ export default function MessagesPage(): React.JSX.Element {
     queryFn: async () => {
       if (!selectedConversation) return [];
       const response = await apiFetch<RawMessage[]>(
-        `/messages/conversations/${selectedConversation.id}/messages`
+        `/messaging/conversations/${selectedConversation.id}/messages`
       );
       if (response.success && response.data) {
         const data = Array.isArray(response.data) ? response.data : [];
@@ -161,7 +172,7 @@ export default function MessagesPage(): React.JSX.Element {
 
     try {
       const response = await apiFetch<RawMessage>(
-        `/messages/conversations/${selectedConversation.id}/messages`,
+        `/messaging/conversations/${selectedConversation.id}/messages`,
         { method: 'POST', body: JSON.stringify({ content: newMessage }) }
       );
       if (response.success && response.data) {
@@ -336,24 +347,28 @@ export default function MessagesPage(): React.JSX.Element {
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <AppHeader />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="az-glass p-8 text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Sign in to access messages</h2>
-            <p className="text-white/50">Connect with creators and other users</p>
+      <PageShell glowColor="rgba(232,66,10,0.15)">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="az-glass p-10 text-center rounded-3xl border border-white/10 max-w-md mx-auto shadow-2xl">
+            <h2 className="text-2xl font-extrabold text-white mb-3 tracking-tight">
+              Sign in to access messages
+            </h2>
+            <p className="text-white/50 text-sm">
+              Connect with African creators and community members
+            </p>
           </div>
         </main>
-        <AppFooter />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <AppHeader />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="az-glass overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
+    <PageShell glowColor="rgba(232,66,10,0.12)">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div
+          className="az-glass rounded-3xl border border-white/10 overflow-hidden shadow-2xl"
+          style={{ height: 'calc(100vh - 180px)' }}
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 h-full">
             {/* Conversations Sidebar */}
             <div
@@ -802,7 +817,6 @@ export default function MessagesPage(): React.JSX.Element {
           </div>
         </div>
       </main>
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
