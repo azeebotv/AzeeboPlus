@@ -6,14 +6,17 @@
 const API_BASE = '';
 
 /**
- * Set auth token in HttpOnly cookie via server API
+ * Set auth tokens in HttpOnly cookies via server API.
+ * The refresh token rides along so the cookie-first recovery path in
+ * lib/api/base.ts (POST /auth/refresh with no body) can rotate sessions —
+ * without it, apiFetch pages 401 forever once the 15-min access cookie dies.
  */
-export async function setAuthCookie(token: string): Promise<boolean> {
+export async function setAuthCookie(token: string, refreshToken?: string): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE}/api/auth/set-cookie`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ token, refresh_token: refreshToken }),
       credentials: 'include',
     });
     return response.ok;
@@ -25,12 +28,12 @@ export async function setAuthCookie(token: string): Promise<boolean> {
 /**
  * Refresh auth cookie with new token
  */
-export async function refreshAuthCookie(token: string): Promise<boolean> {
+export async function refreshAuthCookie(token: string, refreshToken?: string): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE}/api/auth/refresh-cookie`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ token, refresh_token: refreshToken }),
       credentials: 'include',
     });
     return response.ok;

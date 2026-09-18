@@ -98,8 +98,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem(USER_KEY, JSON.stringify(userData));
       }
 
-      // Set access token in HttpOnly cookie via server API
-      await setAuthCookie(accessToken);
+      // Set access + refresh tokens in HttpOnly cookies via server API.
+      // The refresh cookie is what lets lib/api/base.ts's cookie-first auth
+      // recover apiFetch sessions after the 15-min access cookie expires.
+      await setAuthCookie(accessToken, newRefreshToken);
     },
     []
   );
@@ -114,7 +116,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (data) {
         setToken(data.access_token);
         setRefreshToken(data.refresh_token);
-        await refreshAuthCookie(data.access_token);
+        // Re-plant both cookies (access 15m + refresh 7d) after rotation.
+        await refreshAuthCookie(data.access_token, data.refresh_token);
         return true;
       }
       clearSession();
