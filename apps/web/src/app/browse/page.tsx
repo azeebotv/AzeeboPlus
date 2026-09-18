@@ -145,6 +145,15 @@ export default function BrowsePage(): React.JSX.Element {
         let items: ContentItem[] = Array.isArray(data)
           ? data
           : (data as ContentResponse).items || [];
+        // Some feed endpoints store duration only inside the metadata JSON
+        // (ContentItem has no duration column) — lift it so the max-duration
+        // slider filters on real values instead of filtering everything to 0.
+        items = items.map((item) => ({
+          ...item,
+          duration:
+            item.duration ??
+            (item as unknown as { metadata?: { duration?: number } | null }).metadata?.duration,
+        }));
         return items;
       }
       return [];
@@ -164,6 +173,11 @@ export default function BrowsePage(): React.JSX.Element {
 
   const content = (() => {
     let items = [...rawContent];
+    // Language and Year dropdowns filter on metadata seeded by
+    // scripts/enrich-seed-content.mjs (meta.language / meta.releaseYear).
+    const metaOf = (item: ContentItem) =>
+      (item as unknown as { metadata?: { language?: string; releaseYear?: number } | null })
+        .metadata ?? {};
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       items = items.filter(
@@ -173,6 +187,10 @@ export default function BrowsePage(): React.JSX.Element {
           item.creator?.name?.toLowerCase().includes(q)
       );
     }
+    if (selectedLanguage !== 'all')
+      items = items.filter((item) => metaOf(item).language === selectedLanguage);
+    if (selectedYear !== 'all')
+      items = items.filter((item) => String(metaOf(item).releaseYear ?? '') === selectedYear);
     if (minRating > 0) items = items.filter((item) => (item.likes || 0) >= minRating);
     items = items.filter((item) => (item.duration || 0) <= maxDuration * 60);
     if (sortBy === 'Newest')

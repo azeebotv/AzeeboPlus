@@ -7,9 +7,11 @@ import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface CreatorProfile extends User {
-  contentCount: number;
-  subscriberCount: number;
+  contentCount?: number;
+  subscriberCount?: number;
   bio?: string;
+  /** The discover endpoint embeds raw subscription rows instead of a count. */
+  subscriptions?: unknown[];
 }
 
 export default function CreatorsPage(): React.JSX.Element {
@@ -25,8 +27,17 @@ export default function CreatorsPage(): React.JSX.Element {
       try {
         setIsLoading(true);
         const response = await api.creator.getCreators(1, 20);
-        if (response.success && response.data?.items) {
-          setCreators(response.data.items);
+        if (response.success) {
+          // The discover endpoint returns a bare array; older envelopes used
+          // { items }. Unwrap either shape — a bare array must not fall into
+          // the empty state when records exist.
+          const payload = response.data as unknown;
+          const list = Array.isArray(payload)
+            ? (payload as CreatorProfile[])
+            : Array.isArray((payload as { items?: CreatorProfile[] } | null)?.items)
+              ? (payload as { items: CreatorProfile[] }).items
+              : [];
+          setCreators(list);
         } else {
           setCreators([]);
         }
@@ -147,15 +158,19 @@ export default function CreatorsPage(): React.JSX.Element {
                     className="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-white"
                     style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
                   >
-                    {creator.name?.charAt(0) || 'C'}
+                    {creator.displayName?.charAt(0) || creator.name?.charAt(0) || 'C'}
                   </div>
-                  <h3 className="text-lg font-bold text-white">{creator.name}</h3>
+                  <h3 className="text-lg font-bold text-white">
+                    {creator.displayName || creator.name || 'Creator'}
+                  </h3>
                   <p className="text-sm text-white/50 mb-1">
-                    {creator.bio || `${creator.contentCount} videos`}
+                    {creator.bio || `${creator.contentCount ?? 0} videos`}
                   </p>
                   <div className="flex items-center justify-center gap-4 mt-3 text-sm">
-                    <span className="text-white/60">{creator.contentCount} videos</span>
-                    <span className="text-white/60">{creator.subscriberCount} subscribers</span>
+                    <span className="text-white/60">{creator.contentCount ?? 0} videos</span>
+                    <span className="text-white/60">
+                      {creator.subscriberCount ?? creator.subscriptions?.length ?? 0} subscribers
+                    </span>
                   </div>
                   {creator.bio && (
                     <p className="text-sm text-white/40 mt-3 line-clamp-2">{creator.bio}</p>
@@ -185,11 +200,15 @@ export default function CreatorsPage(): React.JSX.Element {
             {selectedCreator && !isContentLoading && creatorContent.length > 0 && (
               <section>
                 <h2 className="text-2xl font-bold text-white mb-6">
-                  {selectedCreator.name}&apos;s Content
+                  {selectedCreator.displayName || selectedCreator.name || 'Creator'}&apos;s Content
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {creatorContent.map((content) => (
-                    <div key={content.id} className="az-glass overflow-hidden">
+                    <a
+                      key={content.id}
+                      href={`/watch/${content.id}`}
+                      className="az-glass overflow-hidden block"
+                    >
                       <OptimizedImage
                         src={content.thumbnail}
                         alt={content.title}
@@ -203,7 +222,7 @@ export default function CreatorsPage(): React.JSX.Element {
                           {content.description}
                         </p>
                       </div>
-                    </div>
+                    </a>
                   ))}
                 </div>
               </section>
