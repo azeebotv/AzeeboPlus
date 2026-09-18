@@ -9,6 +9,7 @@ import { TitlesModule } from './modules/titles/titles.module';
 import { LoreModule } from './modules/lore/lore.module';
 import { CrossoversModule } from './modules/crossovers/crossovers.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { AgbalaAdminModule } from './modules/agbala-admin/agbala-admin.module';
 import { StoryworldsModule } from './modules/storyworlds/storyworlds.module';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ConfigModule } from '@nestjs/config';
@@ -36,6 +37,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     CrossoversModule,
     StoryworldsModule,
     AdminModule,
+    AgbalaAdminModule,
     // Vertical feature gates: timeline ON; crossovers, AI lore + community
     // storyworld creation OFF until launched.
     FlagMetricsModule.register({ service: 'vertical-service' }),

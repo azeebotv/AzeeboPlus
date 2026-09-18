@@ -28,6 +28,8 @@ model UniverseMap {
   loreEntries LoreEntry[]
   realms      Realm[]
   orisaFiles  OrisaFile[]
+  paths       StoryworldPath[]
+  quizzes     AgbalaQuiz[]
   artifacts   Artifact[]
   prophecies  Prophecy[]
   worldMaps   WorldMap[]
@@ -442,4 +444,42 @@ model Theory {
   @@index([status])
   @@index([accessLevel])
   @@map("theories")
+}
+
+// ── Agbala admin-managed entities ────────────────────────────────────────────
+// Backs the admin console's Agbala module (apps/admin agbala controller):
+// learning paths, quizzes, and the user-theory moderation queue.
+
+model StoryworldPath {
+  id          String   @id @default(uuid())
+  storyworldId String
+  name        String
+  description String?
+  icon        String?
+  color       String?
+  totalSteps  Int      @default(5)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  storyworld UniverseMap @relation(fields: [storyworldId], references: [id], onDelete: Cascade)
+
+  @@index([storyworldId])
+  @@index([sortOrder])
+  @@map("storyworld_paths")
+}
+
+model AgbalaQuiz {
+  id          String   @id @default(uuid())
+  storyworldId String?
+  title       String
+  description String?
+  questions   Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  storyworld UniverseMap? @relation(fields: [storyworldId], references: [id], onDelete: SetNull)
+
+  @@index([storyworldId])
+  @@map("agbala_quizzes")
 }
