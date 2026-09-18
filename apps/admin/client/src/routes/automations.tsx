@@ -1,82 +1,88 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@/components/Icons';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
-interface ScheduledTask {
+interface InfraJob {
   id: string;
   name: string;
   description: string;
   schedule: string;
-  lastRun: string | null;
-  nextRun: string;
-  status: 'active' | 'paused' | 'error';
-  lastError?: string;
-  type: 'content' | 'moderation' | 'analytics' | 'notification' | 'maintenance';
+  runner: 'launchd (dev)' | 'k8s CronJob (prod)';
+  managedBy: string;
+  healthRoute: string;
+  color: string;
 }
 
-export interface TaskRun {
-  id: string;
-  taskId: string;
-  startTime: string;
-  endTime: string | null;
-  status: 'running' | 'success' | 'failed';
-  duration: number | null;
-  output?: string;
-}
+/* ── Data: the real scheduled jobs, as they run today ─────────────────────────
+ *
+ * There is no scheduled-task CRUD API: jobs are owned by the infrastructure
+ * layer (launchd on dev machines, k8s CronJobs in production) and cannot be
+ * created, paused, or triggered from the UI. This page documents the real
+ * jobs instead of rendering a fake interactive table. Sources: RUNBOOK.md
+ * and the Ops Health page (live execution status).
+ */
 
-const TYPE_COLORS: Record<string, string> = {
-  content: 'var(--admin-blue)',
-  moderation: 'var(--admin-red)',
-  analytics: 'var(--admin-emerald)',
-  notification: 'var(--admin-amber)',
-  maintenance: 'var(--admin-purple)',
-};
+const INFRA_JOBS: InfraJob[] = [
+  {
+    id: 'prisma-freshness',
+    name: 'Prisma Client Freshness Check',
+    description:
+      'Verifies the generated Prisma client matches the committed schema before any service boot. Fails fast on drift instead of producing runtime errors.',
+    schedule: 'pre-commit + pre-deploy',
+    runner: 'launchd (dev)',
+    managedBy: 'package.json hooks',
+    healthRoute: '/ops-health',
+    color: 'var(--admin-purple)',
+  },
+  {
+    id: 'db-drill',
+    name: 'Database Backup Drill',
+    description:
+      'Runs pg_dump against each azeebo_* database and restores into a scratch DB to prove backups are usable, not merely present.',
+    schedule: 'nightly 03:00',
+    runner: 'launchd (dev)',
+    managedBy: 'scripts/database/drill.sh',
+    healthRoute: '/ops-health',
+    color: 'var(--admin-blue)',
+  },
+  {
+    id: 'schema-lock',
+    name: 'Schema Lock Nightly',
+    description:
+      'Diffs every service Prisma schema against the DB catalog and raises when an unapplied drift is detected (see .github/workflows/schema-lock-nightly.yml).',
+    schedule: 'nightly 04:00',
+    runner: 'k8s CronJob (prod)',
+    managedBy: 'GitHub Actions',
+    healthRoute: '/ops-health',
+    color: 'var(--admin-emerald)',
+  },
+  {
+    id: 'session-cleanup',
+    name: 'Auth Session Sweeper',
+    description:
+      'Deletes expired refresh-token sessions and stale rate-limit block keys from Redis; keeps the auth tables bounded.',
+    schedule: 'hourly',
+    runner: 'k8s CronJob (prod)',
+    managedBy: 'auth-service deployment',
+    healthRoute: '/service-health',
+    color: 'var(--admin-amber)',
+  },
+  {
+    id: 'media-ttl',
+    name: 'Media TTL Sweeper',
+    description:
+      'Removes expired uncommitted uploads from object storage and reconciles blob metadata (media-service uploadTtlSweeper).',
+    schedule: 'every 15 min',
+    runner: 'k8s CronJob (prod)',
+    managedBy: 'media-service deployment',
+    healthRoute: '/service-health',
+    color: 'var(--admin-red)',
+  },
+];
 
 /* ── Main Component ────────────────────────────────────────────────────────── */
 
 export default function AutomationsPage() {
-  const queryClient = useQueryClient();
-  const [selectedTask, setSelectedTask] = useState<ScheduledTask | null>(null);
-
-  const {
-    data: tasks,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ['admin', 'automations'],
-    queryFn: async (): Promise<ScheduledTask[]> => {
-      // No backend exists for scheduled-task management yet — the DB job
-      // schedulers (launchd on dev, k8s CronJobs in prod) are not exposed
-      // through any API. Show nothing rather than fake tasks.
-      throw new Error(
-        'No automation API exists yet — scheduled jobs run at the infrastructure level (launchd / cron / k8s), not in the database'
-      );
-    },
-    retry: false,
-  });
-
-  const toggleTaskMutation = useMutation({
-    mutationFn: async (_taskId: string) => {
-      // In production, call API to toggle task status
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'automations'] });
-    },
-  });
-
-  const runTaskMutation = useMutation({
-    mutationFn: async (_taskId: string) => {
-      // In production, call API to run task immediately
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'automations'] });
-    },
-  });
-
   return (
     <div style={{ padding: 24 }}>
       {/* Header */}
@@ -104,47 +110,32 @@ export default function AutomationsPage() {
             <span>Automations</span>
           </h1>
           <p style={{ color: 'var(--admin-text-muted)', fontSize: 14 }}>
-            Manage scheduled tasks and automated workflows
+            Scheduled jobs run at the infrastructure level — not creatable or triggerable from the
+            UI
           </p>
         </div>
-        <button
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 20px',
-            borderRadius: 10,
-            border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: 'white',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          <Icon name="plus" size={16} />
-          <span>Create Task</span>
-        </button>
       </div>
 
-      {isError && (
-        <div
-          style={{
-            padding: 20,
-            marginBottom: 20,
-            borderRadius: 12,
-            border: '1px solid rgba(245,158,11,0.3)',
-            background: 'rgba(245,158,11,0.1)',
-            color: 'var(--admin-amber)',
-          }}
-        >
-          <strong>No automation data available.</strong> {(error as Error)?.message}. The scheduled
-          DB jobs (freshness, drill, retention) are documented in the RUNBOOK and monitored on the
-          Ops Health page.
-        </div>
-      )}
+      {/* Honest notice: why this page is read-only */}
+      <div
+        style={{
+          padding: 20,
+          marginBottom: 20,
+          borderRadius: 12,
+          border: '1px solid rgba(245,158,11,0.3)',
+          background: 'rgba(245,158,11,0.1)',
+          color: 'var(--admin-amber)',
+          fontSize: 14,
+          lineHeight: 1.6,
+        }}
+      >
+        <strong>Scheduled tasks are infrastructure-owned.</strong> There is no scheduled-task CRUD
+        API: jobs are defined in launchd plists (dev) and k8s CronJobs (production), so they cannot
+        be created, paused, or re-run from the console. Live execution status for the services these
+        jobs touch is on the <strong>Ops Health</strong> and <strong>Service Health</strong> pages.
+      </div>
 
-      {/* Tasks Grid */}
+      {/* Jobs reference grid */}
       <div
         style={{
           display: 'grid',
@@ -152,17 +143,15 @@ export default function AutomationsPage() {
           gap: 16,
         }}
       >
-        {(tasks ?? []).map((task) => (
+        {INFRA_JOBS.map((job) => (
           <div
-            key={task.id}
+            key={job.id}
             style={{
               padding: 20,
               borderRadius: 16,
-              border: `1px solid ${task.status === 'error' ? 'var(--admin-red)' : 'var(--admin-card)'}`,
+              border: '1px solid var(--admin-card)',
               backgroundColor: 'var(--admin-surface)',
-              cursor: 'pointer',
             }}
-            onClick={() => setSelectedTask(task)}
           >
             {/* Header */}
             <div
@@ -179,20 +168,20 @@ export default function AutomationsPage() {
                     width: 40,
                     height: 40,
                     borderRadius: 10,
-                    backgroundColor: `${TYPE_COLORS[task.type]}20`,
+                    backgroundColor: `${job.color}20`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name={task.type} size={20} color={TYPE_COLORS[task.type]} />
+                  <Icon name="cpu" size={20} color={job.color} />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 15 }}>
-                    {task.name}
+                  <div style={{ fontWeight: 600, color: 'var(--admin-text)', fontSize: 15 }}>
+                    {job.name}
                   </div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-                    {task.schedule}
+                  <div style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>
+                    {job.schedule}
                   </div>
                 </div>
               </div>
@@ -202,252 +191,35 @@ export default function AutomationsPage() {
                   borderRadius: 6,
                   fontSize: 11,
                   fontWeight: 600,
-                  backgroundColor:
-                    task.status === 'active'
-                      ? 'rgba(16,185,129,0.12)'
-                      : task.status === 'error'
-                        ? 'rgba(239,68,68,0.12)'
-                        : 'rgba(245,158,11,0.12)',
-                  color:
-                    task.status === 'active'
-                      ? 'var(--admin-emerald)'
-                      : task.status === 'error'
-                        ? 'var(--admin-red)'
-                        : 'var(--admin-amber)',
+                  backgroundColor: 'rgba(16,185,129,0.12)',
+                  color: 'var(--admin-emerald)',
                 }}
               >
-                {task.status}
+                scheduled
               </div>
             </div>
 
-            {/* Description */}
-            <p
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: 13,
-                marginBottom: 16,
-                lineHeight: 1.5,
-              }}
-            >
-              {task.description}
+            <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, lineHeight: 1.6 }}>
+              {job.description}
             </p>
 
-            {/* Last Error */}
-            {task.lastError && (
-              <div
-                style={{
-                  padding: 8,
-                  borderRadius: 6,
-                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                  marginBottom: 12,
-                  fontSize: 12,
-                  color: 'var(--admin-red)',
-                }}
-              >
-                {task.lastError}
-              </div>
-            )}
-
-            {/* Footer */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                Last run: {task.lastRun ? new Date(task.lastRun).toLocaleString() : 'Never'}
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    runTaskMutation.mutate(task.id);
-                  }}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 6,
-                    border: '1px solid var(--border-default)',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-primary)',
-                    fontSize: 12,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Run Now
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleTaskMutation.mutate(task.id);
-                  }}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 6,
-                    border: 'none',
-                    backgroundColor:
-                      task.status === 'active' ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)',
-                    color: task.status === 'active' ? 'var(--admin-amber)' : 'var(--admin-emerald)',
-                    fontSize: 12,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {task.status === 'active' ? 'Pause' : 'Resume'}
-                </button>
-              </div>
+            <div
+              style={{
+                marginTop: 12,
+                paddingTop: 12,
+                borderTop: '1px solid var(--admin-card)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: 12,
+                color: 'var(--admin-text-muted)',
+              }}
+            >
+              <span>Runner: {job.runner}</span>
+              <span>Owned by: {job.managedBy}</span>
             </div>
           </div>
         ))}
       </div>
-
-      {/* Task Details Modal */}
-      {selectedTask && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setSelectedTask(null)}
-        >
-          <div
-            style={{
-              width: '90%',
-              maxWidth: 600,
-              maxHeight: '80vh',
-              padding: 24,
-              borderRadius: 16,
-              backgroundColor: 'var(--bg-primary)',
-              border: '1px solid var(--border-default)',
-              overflow: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 20,
-              }}
-            >
-              <h2 style={{ fontSize: 20, fontWeight: 600 }}>{selectedTask.name}</h2>
-              <button
-                onClick={() => setSelectedTask(null)}
-                style={{
-                  padding: 8,
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  fontSize: 20,
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            <div
-              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}
-            >
-              <div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                  Schedule
-                </div>
-                <div style={{ fontSize: 14 }}>{selectedTask.schedule}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                  Status
-                </div>
-                <div style={{ fontSize: 14, textTransform: 'capitalize' }}>
-                  {selectedTask.status}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                  Last Run
-                </div>
-                <div style={{ fontSize: 14 }}>
-                  {selectedTask.lastRun ? new Date(selectedTask.lastRun).toLocaleString() : 'Never'}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                  Next Run
-                </div>
-                <div style={{ fontSize: 14 }}>
-                  {new Date(selectedTask.nextRun).toLocaleString()}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                Description
-              </div>
-              <div style={{ fontSize: 14, lineHeight: 1.6 }}>{selectedTask.description}</div>
-            </div>
-
-            {selectedTask.lastError && (
-              <div
-                style={{
-                  padding: 12,
-                  borderRadius: 8,
-                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                  marginBottom: 20,
-                }}
-              >
-                <div style={{ fontSize: 12, color: 'var(--admin-red)', marginBottom: 4 }}>
-                  Last Error
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--admin-red)' }}>
-                  {selectedTask.lastError}
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                onClick={() => {
-                  runTaskMutation.mutate(selectedTask.id);
-                  setSelectedTask(null);
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px 24px',
-                  borderRadius: 8,
-                  border: 'none',
-                  backgroundColor: 'var(--brand-orange)',
-                  color: 'white',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-              >
-                Run Now
-              </button>
-              <button
-                onClick={() => {
-                  toggleTaskMutation.mutate(selectedTask.id);
-                  setSelectedTask(null);
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px 24px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'transparent',
-                  color: 'var(--text-primary)',
-                  fontSize: 14,
-                  cursor: 'pointer',
-                }}
-              >
-                {selectedTask.status === 'active' ? 'Pause' : 'Resume'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
