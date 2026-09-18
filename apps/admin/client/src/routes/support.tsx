@@ -12,6 +12,9 @@ export default function SupportPage() {
   const [search, setSearch] = useState('');
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
+  // Assign-to-admin: the backend exposes PUT tickets/:id/assign but the page
+  // never surfaced it — tickets could change status yet never get an owner.
+  const [assignee, setAssignee] = useState('');
 
   const { data: stats } = useQuery<SupportStats>({
     queryKey: ['admin', 'support-stats'],
@@ -66,9 +69,38 @@ export default function SupportPage() {
     },
   });
 
+  const assignMutation = useMutation({
+    mutationFn: ({ id, assignedTo }: { id: string; assignedTo: string }) =>
+      adminApi.assignSupportTicket(id, assignedTo),
+    onSuccess: (_data, variables) => {
+      setAssignee('');
+      queryClient.invalidateQueries({ queryKey: ['admin', 'support-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'support-stats'] });
+      adminApi.getSupportTicket(variables.id).then((res) => {
+        if (res.success && res.data) setSelectedTicket(res.data as SupportTicket);
+      });
+    },
+  });
+
   const tickets = ticketsData?.items || [];
-  const total = ticketsData?.total || 0;
   const totalPages = ticketsData?.totalPages || 1;
+
+  // Admin accounts for the assignee picker (backend filters role=admin).
+  const adminsQ = useQuery({
+    queryKey: ['admin', 'support-assignees'],
+    staleTime: 300_000,
+    queryFn: async () => {
+      const res = await adminApi.getUsers(1, 50, 'admin');
+      if (res.success && res.data) {
+        const payload = res.data as unknown as {
+          users?: Array<{ id: string; email: string; displayName: string }>;
+        };
+        return payload.users ?? [];
+      }
+      return [];
+    },
+  });
+  const admins = adminsQ.data ?? [];
 
   const statCards = [
     { label: 'Open Tickets', value: stats?.open ?? 0, color: 'var(--admin-red)' },
@@ -80,7 +112,9 @@ export default function SupportPage() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <h1
+          style={{ fontSize: 28, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}
+        >
           <Icon name="messageSquare" size={26} color="var(--admin-orange)" />
           Support Helpdesk
         </h1>
@@ -108,10 +142,19 @@ export default function SupportPage() {
               backgroundColor: 'var(--admin-surface)',
             }}
           >
-            <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+            <p
+              style={{
+                fontSize: 11,
+                color: 'var(--admin-text-muted)',
+                textTransform: 'uppercase',
+                marginBottom: 6,
+              }}
+            >
               {c.label}
             </p>
-            <p style={{ fontSize: 24, fontWeight: 700, color: c.color }}>{c.value.toLocaleString()}</p>
+            <p style={{ fontSize: 24, fontWeight: 700, color: c.color }}>
+              {c.value.toLocaleString()}
+            </p>
           </div>
         ))}
       </div>
@@ -220,11 +263,19 @@ export default function SupportPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--admin-card)', textAlign: 'left' }}>
-                    <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Subject</th>
+                    <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                      Subject
+                    </th>
                     <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>User</th>
-                    <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Priority</th>
-                    <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Status</th>
-                    <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>Created</th>
+                    <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                      Priority
+                    </th>
+                    <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                      Status
+                    </th>
+                    <th style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                      Created
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -241,7 +292,9 @@ export default function SupportPage() {
                     >
                       <td style={{ padding: '12px 16px' }}>
                         <p style={{ fontWeight: 600, color: 'var(--admin-text)' }}>{t.subject}</p>
-                        <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>{t.category}</p>
+                        <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
+                          {t.category}
+                        </p>
                       </td>
                       <td style={{ padding: '12px 16px', color: 'var(--admin-text)' }}>
                         {t.userName || t.userEmail || t.userId.slice(0, 8)}
@@ -308,7 +361,15 @@ export default function SupportPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, padding: 16, borderTop: '1px solid var(--admin-card)' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 8,
+                padding: 16,
+                borderTop: '1px solid var(--admin-card)',
+              }}
+            >
               <button
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
@@ -356,13 +417,21 @@ export default function SupportPage() {
               padding: 24,
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: 16,
+              }}
+            >
               <div>
                 <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--admin-text)' }}>
                   {selectedTicket.subject}
                 </h2>
                 <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 2 }}>
-                  From: {selectedTicket.userName} ({selectedTicket.userEmail || selectedTicket.userId})
+                  From: {selectedTicket.userName} (
+                  {selectedTicket.userEmail || selectedTicket.userId})
                 </p>
               </div>
               <button
@@ -401,6 +470,70 @@ export default function SupportPage() {
               ))}
             </div>
 
+            {/* Assignment row — PUT tickets/:id/assign was backend-only until now.
+                Requires an admin pick before submit ("Unassigned" clears it). */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
+                Assigned to:{' '}
+                <strong style={{ color: 'var(--admin-text)' }}>
+                  {selectedTicket.assignedToName || selectedTicket.assignedTo || 'Nobody'}
+                </strong>
+              </span>
+              <select
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value)}
+                style={{
+                  marginLeft: 'auto',
+                  padding: '5px 10px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 12,
+                }}
+              >
+                <option value="">Select admin…</option>
+                {admins.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.displayName || a.email}
+                  </option>
+                ))}
+                <option value="__unassign__">Unassigned</option>
+              </select>
+              <button
+                onClick={() => {
+                  if (assignee && assignee !== selectedTicket.assignedTo) {
+                    assignMutation.mutate({
+                      id: selectedTicket.id,
+                      assignedTo: assignee === '__unassign__' ? '' : assignee,
+                    });
+                  }
+                }}
+                disabled={
+                  !assignee || assignee === selectedTicket.assignedTo || assignMutation.isPending
+                }
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: 8,
+                  border: 'none',
+                  backgroundColor:
+                    !assignee || assignee === selectedTicket.assignedTo
+                      ? 'var(--admin-card)'
+                      : 'var(--admin-orange)',
+                  color:
+                    !assignee || assignee === selectedTicket.assignedTo
+                      ? 'var(--admin-text-muted)'
+                      : 'white',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  cursor:
+                    !assignee || assignee === selectedTicket.assignedTo ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {assignMutation.isPending ? 'Assigning…' : 'Assign'}
+              </button>
+            </div>
+
             <div
               style={{
                 backgroundColor: 'var(--admin-dark)',
@@ -416,11 +549,28 @@ export default function SupportPage() {
             </div>
 
             {/* Conversation Messages Thread */}
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--admin-text-muted)', marginBottom: 10, textTransform: 'uppercase' }}>
+            <h3
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: 'var(--admin-text-muted)',
+                marginBottom: 10,
+                textTransform: 'uppercase',
+              }}
+            >
               Messages ({selectedTicket.messages?.length ?? 0})
             </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 250, overflowY: 'auto', marginBottom: 16 }}>
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+                maxHeight: 250,
+                overflowY: 'auto',
+                marginBottom: 16,
+              }}
+            >
               {(selectedTicket.messages || []).map((m, idx) => (
                 <div
                   key={idx}
@@ -428,18 +578,24 @@ export default function SupportPage() {
                     padding: 10,
                     borderRadius: 8,
                     backgroundColor:
-                      m.authorRole?.toLowerCase() === 'agent' || m.authorRole?.toLowerCase() === 'admin'
+                      m.authorRole?.toLowerCase() === 'agent' ||
+                      m.authorRole?.toLowerCase() === 'admin'
                         ? 'rgba(232,66,10,0.1)'
                         : 'var(--admin-dark)',
                     border: '1px solid rgba(255,255,255,0.05)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <div
+                    style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}
+                  >
                     <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--admin-text)' }}>
                       {m.authorName || 'User'}
                     </span>
                     <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
-                      {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(m.createdAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </span>
                   </div>
                   <p style={{ fontSize: 12, color: 'var(--admin-text)' }}>{m.body}</p>

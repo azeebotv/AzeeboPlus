@@ -98,9 +98,9 @@ export class SupportAdminService {
     const q = new URLSearchParams();
     q.set('page', String(page));
     q.set('limit', String(limit));
-    if (query.status && query.status !== 'all') q.set('status', query.status);
-    if (query.priority && query.priority !== 'all') q.set('priority', query.priority);
-    if (query.category && query.category !== 'all') q.set('category', query.category);
+    if (query.status && query.status !== 'all') q.set('status', query.status.toUpperCase());
+    if (query.priority && query.priority !== 'all') q.set('priority', query.priority.toUpperCase());
+    if (query.category && query.category !== 'all') q.set('category', query.category.toUpperCase());
 
     try {
       const res = await this.upstream<{ items?: any[]; tickets?: any[]; total?: number; meta?: any }>(

@@ -8,6 +8,7 @@ import type {
   PaymentGateway,
   RealityShow,
   ContentReviewItem,
+  ChallengeEntryReviewItem,
   EngagementMetrics,
   EngagementTrend,
   SearchCorrectionsData,
@@ -17,7 +18,6 @@ import type {
   AdminUniverse,
   Storyworld,
   AgbalaCharacter,
-  AgbalaPath,
   AgbalaQuiz,
   FeatureFlag,
   GlobalFeatureFlag,
@@ -36,6 +36,10 @@ import type {
   WebhookEvent,
   SupportTicket,
   SupportStats,
+  Itinerary,
+  Neighborhood,
+  Partner,
+  PartnerOffer,
 } from '../admin-types';
 
 export interface DashboardStats {
@@ -237,6 +241,21 @@ export const adminApi = {
       method: 'POST',
       body: JSON.stringify({ reason }),
     }),
+
+  // ─── Challenge Entry Review ────────────────────────────────────────────
+  getChallengeEntryQueue: (filters: { status?: string; challengeId?: string } = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(filters).filter(([, v]) => v) as [string, string][]
+    ).toString();
+    return apiFetch<{ items: ChallengeEntryReviewItem[] }>(
+      `/api/v1/creator-entries${qs ? `?${qs}` : ''}`
+    );
+  },
+  reviewChallengeEntry: (entryId: string, action: 'under_review' | 'winner' | 'rejected') =>
+    apiFetch<{ entryId: string; status: string; reviewedAt: string }>(
+      `/api/v1/creator-entries/${entryId}/review`,
+      { method: 'PATCH', body: JSON.stringify({ action }) }
+    ),
 
   // ─── Wallets ────────────────────────────────────────────────────────────
   getWallets: (page = 1, limit = 20) =>
@@ -553,12 +572,14 @@ export const adminApi = {
     apiFetch<unknown>(`/api/v1/admin/agbala/characters/${id}`, { method: 'DELETE' }),
 
   // ─── Agbala / Paths ──────────────────────────────────────────────────────
-  getPaths: (page = 1, limit = 20) =>
-    apiFetch<{ items: AgbalaPath[]; total: number }>(
-      `/api/v1/admin/agbala/paths?page=${page}&limit=${limit}`
-    ),
-  createPath: (data: Record<string, unknown>) =>
-    apiFetch<unknown>('/api/v1/admin/agbala/paths', { method: 'POST', body: JSON.stringify(data) }),
+  // No read route exists upstream (vertical-service exposes only create/
+  // update/delete for paths) — pages keep path lists in local state seeded by
+  // the mutation responses instead of querying a nonexistent list endpoint.
+  createPath: (storyworldId: string, data: Record<string, unknown>) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${storyworldId}/paths`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   updatePath: (id: string, data: Record<string, unknown>) =>
     apiFetch<unknown>(`/api/v1/admin/agbala/paths/${id}`, {
       method: 'PATCH',
@@ -912,6 +933,162 @@ export const adminApi = {
     apiFetch<SupportTicket>(`/api/v1/admin/support/tickets/${id}/reply`, {
       method: 'POST',
       body: JSON.stringify({ body }),
+    }),
+
+  // ── Lifestyle guides (9TLIFE catalogs) — served by lifestyle-service ──
+
+  getItineraries: (status?: string) =>
+    apiFetch<Itinerary[]>(
+      `/api/v1/lifestyle/admin/itineraries${status && status !== 'all' ? `?status=${status}` : ''}`
+    ),
+  createItinerary: (data: {
+    title: string;
+    description: string;
+    city: string;
+    duration: string;
+    status?: string;
+    stops: Array<{ name: string; description: string; duration: string; order: number }>;
+  }) =>
+    apiFetch<Itinerary>('/api/v1/lifestyle/admin/itineraries', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateItinerary: (
+    id: string,
+    data: Partial<{
+      title: string;
+      description: string;
+      city: string;
+      duration: string;
+      rating: number;
+      status: string;
+      stops: Array<{ name: string; description: string; duration: string; order: number }>;
+    }>
+  ) =>
+    apiFetch<Itinerary>(`/api/v1/lifestyle/admin/itineraries/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteItinerary: (id: string) =>
+    apiFetch<{ deleted: boolean }>(`/api/v1/lifestyle/admin/itineraries/${id}`, {
+      method: 'DELETE',
+    }),
+
+  getNeighborhoods: (status?: string) =>
+    apiFetch<Neighborhood[]>(
+      `/api/v1/lifestyle/admin/neighborhoods${status && status !== 'all' ? `?status=${status}` : ''}`
+    ),
+  createNeighborhood: (data: {
+    name: string;
+    city: string;
+    description: string;
+    image?: string;
+    status?: string;
+    places?: Array<{ name: string; category: string; rating: number; address?: string }>;
+  }) =>
+    apiFetch<Neighborhood>('/api/v1/lifestyle/admin/neighborhoods', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateNeighborhood: (
+    id: string,
+    data: Partial<{
+      name: string;
+      city: string;
+      description: string;
+      image: string;
+      status: string;
+      places: Array<{ name: string; category: string; rating: number; address?: string }>;
+    }>
+  ) =>
+    apiFetch<Neighborhood>(`/api/v1/lifestyle/admin/neighborhoods/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteNeighborhood: (id: string) =>
+    apiFetch<{ deleted: boolean }>(`/api/v1/lifestyle/admin/neighborhoods/${id}`, {
+      method: 'DELETE',
+    }),
+
+  getPartners: (status?: string) =>
+    apiFetch<Partner[]>(
+      `/api/v1/lifestyle/admin/partners${status && status !== 'all' ? `?status=${status}` : ''}`
+    ),
+  createPartner: (data: {
+    name: string;
+    category: string;
+    city: string;
+    description: string;
+    rating?: number;
+    address?: string;
+    phone?: string;
+    status?: string;
+  }) =>
+    apiFetch<Partner>('/api/v1/lifestyle/admin/partners', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updatePartner: (
+    id: string,
+    data: Partial<{
+      name: string;
+      category: string;
+      city: string;
+      description: string;
+      rating: number;
+      address: string;
+      phone: string;
+      status: string;
+    }>
+  ) =>
+    apiFetch<Partner>(`/api/v1/lifestyle/admin/partners/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deletePartner: (id: string) =>
+    apiFetch<{ deleted: boolean }>(`/api/v1/lifestyle/admin/partners/${id}`, {
+      method: 'DELETE',
+    }),
+
+  getOffers: (status?: string) =>
+    apiFetch<PartnerOffer[]>(
+      `/api/v1/lifestyle/admin/offers${status && status !== 'all' ? `?status=${status}` : ''}`
+    ),
+  createOffer: (
+    partnerId: string,
+    data: {
+      title: string;
+      description: string;
+      discount: string;
+      category: string;
+      terms: string[];
+      validUntil: string;
+      status?: string;
+    }
+  ) =>
+    apiFetch<PartnerOffer>(`/api/v1/lifestyle/admin/partners/${partnerId}/offers`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateOffer: (
+    id: string,
+    data: Partial<{
+      title: string;
+      description: string;
+      discount: string;
+      category: string;
+      terms: string[];
+      validUntil: string;
+      status: string;
+    }>
+  ) =>
+    apiFetch<PartnerOffer>(`/api/v1/lifestyle/admin/offers/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteOffer: (id: string) =>
+    apiFetch<{ deleted: boolean }>(`/api/v1/lifestyle/admin/offers/${id}`, {
+      method: 'DELETE',
     }),
 };
 

@@ -177,6 +177,7 @@ export class TicketService {
 
   async getTickets(options?: {
     status?: SupportTicketStatus;
+    priority?: SupportTicketPriority;
     category?: SupportTicketCategory;
     assignedTo?: string;
     page?: number;
@@ -202,6 +203,7 @@ export class TicketService {
 
       const where = {
         ...(options?.status && { status: options.status }),
+        ...(options?.priority && { priority: options.priority }),
         ...(options?.category && { category: options.category }),
         ...(options?.assignedTo && { assignedTo: options.assignedTo }),
       };

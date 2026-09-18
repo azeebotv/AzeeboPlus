@@ -75,6 +75,22 @@ export function str(value: unknown, fallback = ''): string {
   return fallback;
 }
 
+/**
+ * Mutation counterpart to the guards above: `apiFetch` RESOLVES failed
+ * requests with `{ success: false, message }` instead of rejecting, so a
+ * mutation's `onSuccess` fires even on a 4xx/5xx and pages close their forms
+ * as if the write had succeeded. Call this first in every mutationFn and
+ * throw so `onError` (and the inline error UI) handles the failure.
+ */
+export function assertSuccess<T extends { success: boolean; message?: string }>(res: T): T {
+  if (!res || res.success !== true) {
+    throw new Error(
+      res && typeof res.message === 'string' && res.message ? res.message : 'Request failed'
+    );
+  }
+  return res;
+}
+
 /** Boolean field guard. */
 export function bool(value: unknown, fallback = false): boolean {
   if (typeof value === 'boolean') return value;
