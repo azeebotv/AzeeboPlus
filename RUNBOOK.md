@@ -25,8 +25,9 @@
 
 1. Check PostgreSQL: `pg_isready`
 2. Check connection pool: `SELECT count(*) FROM pg_stat_activity;`
-3. Restart affected service
-4. Monitor for connection leaks
+3. If near `max_connections` (exhaustion), see [Postgres Connection Pool Limits](#postgres-connection-pool-limits) for the emergency procedure
+4. Restart affected service
+5. Monitor for connection leaks
 
 ### Redis Connection Lost
 
@@ -478,6 +479,90 @@ npx prisma generate
 ```bash
 docker compose -f docker-compose.prod.yml up -d
 ```
+
+### Postgres Connection Pool Limits
+
+**Status: applied.** Every service's `DATABASE_URL` carries an explicit
+`connection_limit`, `pool_timeout=10000`, and `connect_timeout=5000`. Prisma
+pool sizing is URL-driven, so the caps are in the env files themselves — no
+code change needed.
+
+**Why:** every service runs its own Prisma client against the same Postgres
+instance. With Prisma's default pool (`num_cpus * 2 + 1`, ~10-11 locally) the
+sum across 27 services exceeds Postgres `max_connections=100`, and idle
+sessions accumulate until the next service to connect gets:
+
+```
+FATAL: remaining connection slots are reserved for roles with the SUPERUSER attribute
+```
+
+This hit dev on 2026-09-18 (106/100 slots used; support-service's dashboard
+queries failed mid-flight).
+
+**Sizing (worst-case budget: 78 of 100):**
+
+| Tier | Limit | Services |
+|------|-------|----------|
+| primary | 6 | auth-service |
+| hot | 6 | admin backend (`apps/admin`) |
+| busy | 5 | user-service |
+| medium | 4 | media, support (7 parallel dashboard counts) |
+| default | 3 | wallet, payment, search, analytics, subscription, moderation, messaging, engagement, notification, gateway |
+| quiet | 2 | all universe services, referral, reward, queue, recommendation, creator |
+
+> This budget leaves ~20% headroom for superuser/psql/admin sessions and
+> short-lived tooling. It is intentionally sized for the dev machine; for
+> production, use pgbouncer (see below) instead of raising these numbers.
+
+**Manage / verify:**
+
+```bash
+# Re-apply after adding a service (idempotent; never overwrites an existing cap)
+node scripts/database/apply-pool-limits.mjs
+
+# Preview + budget check against the live server (exit 2 if over 80% of max)
+node scripts/database/apply-pool-limits.mjs --check
+
+# What is using connections right now?
+PGPASSWORD='change-me-in-production' psql -h localhost -U postgres -d postgres \
+  -c "SELECT count(*), usename, datname FROM pg_stat_activity GROUP BY 2,3 ORDER BY 1 DESC;"
+
+# Live per-service check: a service's pool must never exceed its cap
+PGPASSWORD='change-me-in-production' psql -h localhost -U postgres -d postgres \
+  -c "SELECT count(*) FROM pg_stat_activity WHERE datname='azeebo_auth';"   # auth cap = 6
+```
+
+**Sizing rules:**
+
+- New services default to `connection_limit=2` (the script's `TIER_DEFAULTS.quiet`).
+- The `--check` mode fails (exit 2) when the sum exceeds 80% of
+  `max_connections` — run it after adding services or raising any tier.
+- Never hand-edit a `connection_limit` in one env file without re-running
+  `--check`; the budget is global, not per-service.
+
+**Emergency: the server is already wedged**
+
+```bash
+# Show what would be killed (default: azeebo-user idle > 10 min)
+node scripts/database/kill-idle-connections.mjs
+
+# Actually terminate them
+node scripts/database/kill-idle-connections.mjs --kill
+```
+
+Verified 2026-09-18: reclaimed 52 idle sessions (83 → 31 of 100) without
+disrupting any live service. The tool never touches superuser sessions, your
+own connection, or sessions younger than the idle threshold.
+
+**Production path: pgbouncer.** Pool-per-process does not scale past a dozen
+or so services. When services are containerized/orchestrated, front
+Postgres with pgbouncer in **transaction** pooling mode and point every
+`DATABASE_URL` at `:6432` — then per-service `connection_limit` becomes the
+max client-side waiters, not real server slots. Two caveats with transaction
+mode: Prisma requires `pgbouncer=true` in the URL, and session-level
+features (advisory locks, `LISTEN/NOTIFY`, prepared statements outside
+Prisma's management) must move to a dedicated direct connection. Keep the
+caps even after pgbouncer: they bound client-side queuing per service.
 
 ### Prisma Ledger Reconciliation (failed-deploy tombstones)
 
