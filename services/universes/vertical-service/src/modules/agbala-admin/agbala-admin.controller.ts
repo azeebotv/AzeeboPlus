@@ -12,6 +12,7 @@ import {
  * Upstream admin surface for the Agbala vertical. The admin backend proxies
  * /admin/agbala/* to these routes as /vertical/agbala/*:
  *
+ *   GET    /vertical/agbala/storyworlds/:storyworldId/paths
  *   POST   /vertical/agbala/storyworlds/:storyworldId/paths
  *   PATCH  /vertical/agbala/paths/:id
  *   DELETE /vertical/agbala/paths/:id
@@ -33,6 +34,12 @@ export class AgbalaAdminController {
   @ApiOperation({ summary: 'Create a learning path for a storyworld (admin)' })
   async createPath(@Param('storyworldId') storyworldId: string, @Body() dto: CreatePathDto) {
     return this.admin.createPath(storyworldId, dto);
+  }
+
+  @Get('storyworlds/:storyworldId/paths')
+  @ApiOperation({ summary: 'List learning paths for a storyworld (admin)' })
+  async getPaths(@Param('storyworldId') storyworldId: string) {
+    return this.admin.getPaths(storyworldId);
   }
 
   @Patch('paths/:id')

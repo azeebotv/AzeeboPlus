@@ -176,6 +176,15 @@ export class AgbalaService {
     }
   }
 
+  async getPaths(storyworldId: string) {
+    try {
+      return this.fetch(`/vertical/agbala/storyworlds/${storyworldId}/paths`);
+    } catch (error) {
+      this.logger.error(`Failed to list paths for storyworld ${storyworldId}`, error);
+      throw error;
+    }
+  }
+
   async createPath(storyworldId: string, dto: CreatePathDto) {
     try {
       return this.fetch(`/vertical/agbala/storyworlds/${storyworldId}/paths`, {
