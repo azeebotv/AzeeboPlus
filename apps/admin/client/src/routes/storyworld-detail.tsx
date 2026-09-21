@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { asRecord, asArray, str, num, assertSuccess } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
@@ -116,14 +116,21 @@ export default function StoryworldDetailPage() {
   const titles = titlesQ.data ?? [];
   const characters = charsQ.data ?? [];
 
-  // Paths have no upstream read route (create/update/delete only), so the
-  // panel keeps its list in local state: seeded empty, appended/updated by the
-  // mutation responses. A page reload intentionally resets it until a read
-  // endpoint ships upstream.
-  const [localPaths, setLocalPaths] = useState<Record<string, unknown>[]>([]);
-  const paths = localPaths;
+  // Paths load from the upstream GET storyworlds/:id/paths route and survive
+  // reloads; mutations invalidate the query so the list refetches.
+  const pathsQ = useQuery({
+    queryKey: ['storyworld-paths', id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      const res = await adminApi.getPaths(id as string);
+      return asArray<Record<string, unknown>>(res.success ? res.data : null);
+    },
+  });
+  const paths = pathsQ.data ?? [];
 
-  const invalidatePaths = () => setLocalPaths((prev) => [...prev]);
+  const queryClient = useQueryClient();
+  const invalidatePaths = () =>
+    queryClient.invalidateQueries({ queryKey: ['storyworld-paths', id] });
 
   const savePathMutation = useMutation({
     mutationFn: async () => {
@@ -143,22 +150,12 @@ export default function StoryworldDetailPage() {
       // closing on a failed write.
       return assertSuccess(res);
     },
-    onSuccess: (res) => {
+    onSuccess: () => {
       setPathDraft(EMPTY_PATH);
       setEditingPathId(null);
       setPathError(null);
       setPathPanelOpen(false);
-      if (!editingPathId) {
-        const rec =
-          res && typeof res === 'object' ? (res as unknown as Record<string, unknown>) : null;
-        const created =
-          rec && rec.data && typeof rec.data === 'object'
-            ? (rec.data as Record<string, unknown>)
-            : rec;
-        if (created && created.id != null) {
-          setLocalPaths((prev) => [...prev.filter((p) => p.id !== created.id), created]);
-        }
-      }
+      void queryClient.invalidateQueries({ queryKey: ['storyworld-paths', id] });
     },
     onError: (err) => {
       setPathError(err instanceof Error ? err.message : 'Failed to save path');
@@ -167,7 +164,7 @@ export default function StoryworldDetailPage() {
 
   const deletePathMutation = useMutation({
     mutationFn: (pathId: string) => adminApi.deletePath(pathId),
-    onSuccess: invalidatePaths,
+    onSuccess: () => invalidatePaths(),
   });
 
   const submitPath = () => {

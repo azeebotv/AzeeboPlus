@@ -15,6 +15,7 @@ describe('AgbalaAdminService', () => {
   const prismaMock = {
     universeMap: { findUnique: jest.fn() },
     storyworldPath: {
+      findMany: jest.fn(),
       create: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
@@ -79,6 +80,37 @@ describe('AgbalaAdminService', () => {
       prismaMock.universeMap.findUnique.mockResolvedValue(null);
       await expect(service.createPath('missing', { name: 'X' })).rejects.toThrow(NotFoundException);
       expect(prismaMock.storyworldPath.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getPaths', () => {
+    it("lists a storyworld's paths ordered by sortOrder then newest", async () => {
+      prismaMock.universeMap.findUnique.mockResolvedValue({ id: 'sw-1' });
+      prismaMock.storyworldPath.findMany.mockResolvedValue([
+        { id: 'p-1', storyworldId: 'sw-1', sortOrder: 0 },
+        { id: 'p-2', storyworldId: 'sw-1', sortOrder: 1 },
+      ]);
+
+      const res = await service.getPaths('sw-1');
+
+      expect(prismaMock.universeMap.findUnique).toHaveBeenCalledWith({ where: { id: 'sw-1' } });
+      expect(prismaMock.storyworldPath.findMany).toHaveBeenCalledWith({
+        where: { storyworldId: 'sw-1' },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      });
+      expect(res).toEqual({
+        success: true,
+        data: [
+          { id: 'p-1', storyworldId: 'sw-1', sortOrder: 0 },
+          { id: 'p-2', storyworldId: 'sw-1', sortOrder: 1 },
+        ],
+      });
+    });
+
+    it('throws NotFound when the storyworld does not exist', async () => {
+      prismaMock.universeMap.findUnique.mockResolvedValue(null);
+      await expect(service.getPaths('missing')).rejects.toThrow(NotFoundException);
+      expect(prismaMock.storyworldPath.findMany).not.toHaveBeenCalled();
     });
   });
 

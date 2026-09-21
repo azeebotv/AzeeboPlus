@@ -572,9 +572,8 @@ export const adminApi = {
     apiFetch<unknown>(`/api/v1/admin/agbala/characters/${id}`, { method: 'DELETE' }),
 
   // ─── Agbala / Paths ──────────────────────────────────────────────────────
-  // No read route exists upstream (vertical-service exposes only create/
-  // update/delete for paths) — pages keep path lists in local state seeded by
-  // the mutation responses instead of querying a nonexistent list endpoint.
+  getPaths: (storyworldId: string) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${storyworldId}/paths`),
   createPath: (storyworldId: string, data: Record<string, unknown>) =>
     apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${storyworldId}/paths`, {
       method: 'POST',

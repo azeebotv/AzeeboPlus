@@ -40,6 +40,18 @@ export class AgbalaAdminService {
     return { success: true, data: path };
   }
 
+  async getPaths(storyworldId: string) {
+    const storyworld = await this.prisma.universeMap.findUnique({ where: { id: storyworldId } });
+    if (!storyworld) {
+      throw new NotFoundException(`Storyworld ${storyworldId} not found`);
+    }
+    const paths = await this.prisma.storyworldPath.findMany({
+      where: { storyworldId },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+    });
+    return { success: true, data: paths };
+  }
+
   async updatePath(pathId: string, dto: UpdatePathDto) {
     const existing = await this.prisma.storyworldPath.findUnique({ where: { id: pathId } });
     if (!existing) {
