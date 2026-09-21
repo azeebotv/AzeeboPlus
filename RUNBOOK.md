@@ -554,15 +554,51 @@ Verified 2026-09-18: reclaimed 52 idle sessions (83 → 31 of 100) without
 disrupting any live service. The tool never touches superuser sessions, your
 own connection, or sessions younger than the idle threshold.
 
-**Production path: pgbouncer.** Pool-per-process does not scale past a dozen
-or so services. When services are containerized/orchestrated, front
-Postgres with pgbouncer in **transaction** pooling mode and point every
-`DATABASE_URL` at `:6432` — then per-service `connection_limit` becomes the
-max client-side waiters, not real server slots. Two caveats with transaction
-mode: Prisma requires `pgbouncer=true` in the URL, and session-level
-features (advisory locks, `LISTEN/NOTIFY`, prepared statements outside
-Prisma's management) must move to a dedicated direct connection. Keep the
-caps even after pgbouncer: they bound client-side queuing per service.
+**pgbouncer (active locally, path for prod).** Pool-per-process does not scale
+past a dozen or so services, so the dev stack now runs pgbouncer in
+**transaction** mode on `127.0.0.1:6432` and every service `DATABASE_URL`
+points at it (`pgbouncer=true` param included — required so Prisma skips
+named prepared statements, which don't survive transaction pooling). Each
+`DATABASE_URL` also keeps a `DIRECT_DATABASE_URL` pointing at Postgres
+5432: that is the escape hatch for anything needing session state —
+`prisma migrate`, `db push`, advisory locks, `LISTEN/NOTIFY`.
+
+Dev setup (managed, do not hand-edit `userlist.txt`):
+
+```bash
+# config: scripts/database/pgbouncer.ini (transaction mode, ~20 server conns)
+node scripts/database/start-pgbouncer.mjs           # start (idempotent)
+node scripts/database/start-pgbouncer.mjs status    # running? pid?
+node scripts/database/start-pgbouncer.mjs restart   # after ini edits
+node scripts/database/start-pgbouncer.mjs stop
+
+# point every service .env at the pooler (idempotent, reversible)
+node scripts/database/apply-pgbouncer.mjs --dry-run # preview
+node scripts/database/apply-pgbouncer.mjs           # enable (writes DIRECT_DATABASE_URL)
+node scripts/database/apply-pgbouncer.mjs --status  # who's on the pooler
+node scripts/database/apply-pgbouncer.mjs --revert  # restore direct URLs
+
+# prove Prisma works through it (reads/writes/$transaction/concurrency)
+node scripts/database/verify-pgbouncer-prisma.mjs
+```
+
+Watch the pooler live (login `pgbouncer`/any password locally):
+
+```bash
+psql -h 127.0.0.1 -p 6432 -U pgbouncer -d pgbouncer -c "SHOW POOLS;"
+psql -h 127.0.0.1 -p 6432 -U pgbouncer -d pgbouncer -c "SHOW STATS;"
+```
+
+Restarted services pick the pooler up automatically (auth-service,
+admin-backend verified live: DB-backed 401/200 responses flow through
+`azeebo_auth`/`azeebo_admin` pools). Services still running with old env
+adopt it on next restart — same per-service rollout as the pool caps. Two
+caveats that carried over from the design: keep per-service
+`connection_limit` even behind pgbouncer (it bounds client-side queuing),
+and dev uses `auth_type = trust` because service .env passwords vary and
+the backend Postgres itself is trust-auth on loopback — production must
+use `md5`/`scram-sha-256` plus TLS instead. Keep the caps even after
+pgbouncer: they bound client-side queuing per service.
 
 ### Prisma Ledger Reconciliation (failed-deploy tombstones)
 

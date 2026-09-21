@@ -1,0 +1,3 @@
+"azeebo" "md582c813745f47a224fc7d5f05fb0c96b6"
+"postgres" "md5fccca116c239d9cabcdbc01b366cf8c9"
+"pgbouncer" "md5aa7f5f140e3426989412990e27699169"
