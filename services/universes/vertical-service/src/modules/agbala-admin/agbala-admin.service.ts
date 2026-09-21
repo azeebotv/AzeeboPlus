@@ -40,16 +40,54 @@ export class AgbalaAdminService {
     return { success: true, data: path };
   }
 
-  async getPaths(storyworldId: string) {
-    const storyworld = await this.prisma.universeMap.findUnique({ where: { id: storyworldId } });
+  async getPaths(query: {
+    storyworldId: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) {
+    // Same existence check as createPath: an unknown storyworld is a 404,
+    // not an empty list — callers can distinguish a dead id from a sparse
+    // result set.
+    const storyworld = await this.prisma.universeMap.findUnique({ where: { id: query.storyworldId } });
     if (!storyworld) {
-      throw new NotFoundException(`Storyworld ${storyworldId} not found`);
+      throw new NotFoundException(`Storyworld ${query.storyworldId} not found`);
     }
-    const paths = await this.prisma.storyworldPath.findMany({
-      where: { storyworldId },
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-    });
-    return { success: true, data: paths };
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.min(Math.max(1, query.limit ?? 20), 100);
+    const search = query.search?.trim();
+    const where = {
+      storyworldId: query.storyworldId,
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' as const } },
+              { description: { contains: search, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    };
+
+    const [paths, total] = await Promise.all([
+      this.prisma.storyworldPath.findMany({
+        where,
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.storyworldPath.count({ where }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        items: paths,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    };
   }
 
   async updatePath(pathId: string, dto: UpdatePathDto) {

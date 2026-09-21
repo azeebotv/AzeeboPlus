@@ -38,8 +38,18 @@ export class AgbalaAdminController {
 
   @Get('storyworlds/:storyworldId/paths')
   @ApiOperation({ summary: 'List learning paths for a storyworld (admin)' })
-  async getPaths(@Param('storyworldId') storyworldId: string) {
-    return this.admin.getPaths(storyworldId);
+  async getPaths(
+    @Param('storyworldId') storyworldId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string
+  ) {
+    return this.admin.getPaths({
+      storyworldId,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      search,
+    });
   }
 
   @Patch('paths/:id')

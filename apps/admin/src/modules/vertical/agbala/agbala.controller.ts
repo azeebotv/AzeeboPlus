@@ -174,10 +174,20 @@ export class AgbalaController {
 
   // === Paths ===
   @Get('storyworlds/:storyworldId/paths')
-  async getPaths(@Param('storyworldId') storyworldId: string) {
+  async getPaths(
+    @Param('storyworldId') storyworldId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string
+  ) {
     // Caller identity reaches upstream via UpstreamAuthMiddleware's
     // request-scoped context — no per-handler header plumbing needed.
-    return this.agbalaService.getPaths(storyworldId);
+    return this.agbalaService.getPaths({
+      storyworldId,
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+      search,
+    });
   }
 
   @Post('storyworlds/:storyworldId/paths')
