@@ -30,6 +30,10 @@
 //   node scripts/database/apply-pool-limits.mjs            # apply (idempotent)
 //   node scripts/database/apply-pool-limits.mjs --dry-run  # show, don't write
 //   node scripts/database/apply-pool-limits.mjs --check    # summarize + compare to live max_connections
+//   node scripts/database/apply-pool-limits.mjs --ci       # CI merge gate: budget from committed
+//                                                          # sources (prisma workspaces × tier map);
+//                                                          # reads POOL_CHECK_DATABASE_URL and fails
+//                                                          # closed when Postgres is unreachable
 //
 // Idempotency: an existing `connection_limit=` query param is REUSED as the
 // limit (its other params are left alone); only URLs without a cap get the
@@ -55,18 +59,20 @@ const LIMITS = {
   'services/core/user-service': 5,
   'services/core/wallet-service': 3,
   'services/core/payment-service': 3,
-  'services/core/media-service': 4,
+  'services/core/media-service': 3,
   'services/core/search-service': 3,
   // Analytics runs aggregations; subscription/moderation parallelize counts.
   'services/intelligence/analytics-service': 3,
   'services/engagement/subscription-service': 3,
   'services/operations/moderation-service': 3,
-  // Support runs 7 parallel count queries in its dashboard.
-  'services/operations/support-service': 4,
-  // Messaging and engagement hold listener pools.
-  'services/engagement/messaging-service': 3,
-  'services/engagement/engagement-service': 3,
-  'services/engagement/notification-service': 3,
+  // Support runs 7 parallel count queries in its dashboard — they queue at
+  // pool_timeout rather than widen the pool.
+  'services/operations/support-service': 3,
+  // Messaging/engagement/notification are listener-heavy with low query
+  // concurrency — queries queue instead of widening the pool.
+  'services/engagement/messaging-service': 2,
+  'services/engagement/engagement-service': 2,
+  'services/engagement/notification-service': 2,
   // Everything else (universe services, referral, reward, queue,
   // recommendation, creator, gateway) is low-traffic: default 2.
 };
@@ -78,6 +84,78 @@ const CONNECT_TIMEOUT_MS = 5_000;
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
 const CHECK = args.includes('--check');
+
+// ── CI gate (--ci): budget from committed sources, fail closed ─────────────
+// Local `--check` sums per-.env caps, but .env files are gitignored and
+// absent in CI — and the --check catch block silently PASSES when psql is
+// unreachable, so a CI run without a DB would approve any budget. The gate
+// therefore recomputes the worst case from committed sources (one entry per
+// workspace with a prisma/schema.prisma, sized by the same tier map) and
+// reads max_connections from POOL_CHECK_DATABASE_URL. Exit codes:
+//   0 = within the 80% margin, 2 = over budget, 3 = could not verify.
+if (args.includes('--ci')) {
+  const schemaRel = execSync(
+    `find ${ROOT}/services ${ROOT}/apps -maxdepth 5 -path "*/prisma/schema.prisma" ` +
+      `-not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/generated/*" 2>/dev/null | sort`,
+    { encoding: 'utf8' }
+  )
+    .split('\n')
+    .filter(Boolean)
+    .map((p) => dirname(dirname(p)).slice(ROOT.length + 1));
+
+  if (schemaRel.length === 0) {
+    console.error(
+      'FAIL: no prisma/schema.prisma workspaces found — refusing to pass an unverifiable gate.'
+    );
+    process.exit(3);
+  }
+
+  let budget = 0;
+  console.log('Worst-case pool budget by workspace (tier map × prisma schemas):');
+  for (const rel of schemaRel) {
+    const limit = limitFor(rel);
+    budget += limit;
+    console.log(`  ${String(limit).padStart(2)}  ${rel}`);
+  }
+  console.log(
+    `\nWorst-case pool budget across ${schemaRel.length} prisma workspaces: ${budget} connections`
+  );
+
+  const rawUrl =
+    process.env.POOL_CHECK_DATABASE_URL ||
+    'postgresql://azeebo:change-me-in-production@localhost:5432/postgres';
+  let maxConn;
+  try {
+    maxConn = execSync(`psql ${JSON.stringify(rawUrl)} -tAc "SHOW max_connections;"`, {
+      encoding: 'utf8',
+    }).trim();
+  } catch {
+    console.error(
+      'FAIL: cannot reach Postgres via POOL_CHECK_DATABASE_URL to read max_connections — failing closed.'
+    );
+    process.exit(3);
+  }
+  if (!/^\d+$/.test(maxConn)) {
+    console.error(
+      `FAIL: unexpected max_connections value ${JSON.stringify(maxConn)} — failing closed.`
+    );
+    process.exit(3);
+  }
+  console.log(`Live max_connections=${maxConn} -> budget uses ${budget}/${maxConn}`);
+  if (budget > Number(maxConn) * 0.8) {
+    console.error(
+      `FAIL: budget exceeds the 80% safety margin (${budget} > ${Math.floor(Number(maxConn) * 0.8)}).`
+    );
+    console.error(
+      "Lower the new service's connection_limit in apply-pool-limits.mjs (LIMITS/TIER_DEFAULTS) or raise max_connections."
+    );
+    process.exit(2);
+  }
+  console.log(
+    `Budget is within the 80% safety margin (${budget} <= ${Math.floor(Number(maxConn) * 0.8)}).`
+  );
+  process.exit(0);
+}
 
 function discoverEnvFiles() {
   // Reuse the same discovery shape as the doc: services + apps .env with a

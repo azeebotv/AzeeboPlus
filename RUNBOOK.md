@@ -566,7 +566,7 @@ named prepared statements, which don't survive transaction pooling). Each
 Dev setup (managed, do not hand-edit `userlist.txt`):
 
 ```bash
-# config: scripts/database/pgbouncer.ini (transaction mode, ~20 server conns)
+# config: scripts/database/pgbouncer.ini (transaction mode, ≤12 server conns per database)
 node scripts/database/start-pgbouncer.mjs           # start (idempotent)
 node scripts/database/start-pgbouncer.mjs status    # running? pid?
 node scripts/database/start-pgbouncer.mjs restart   # after ini edits
@@ -599,6 +599,74 @@ and dev uses `auth_type = trust` because service .env passwords vary and
 the backend Postgres itself is trust-auth on loopback — production must
 use `md5`/`scram-sha-256` plus TLS instead. Keep the caps even after
 pgbouncer: they bound client-side queuing per service.
+
+#### Pool sizing model and tuning (why the numbers are what they are)
+
+Pgbouncer pools are **per (user, database) pair** — `default_pool_size` is NOT
+a global server-side total. With ~15 dev databases the real worst case is the
+sum over active databases, and the first configuration (pool 20 + min 5 per
+database, 300s idle timeout) let idle backends pile up to a measured
+**105 backends against Postgres `max_connections=100`** — pgbouncer then
+refused new *client* connections at `max_client_conn`, which every service
+experiences as a total DB outage (63 of 195 connection attempts refused in a
+controlled saturation test).
+
+Current tuning (`scripts/database/pgbouncer.ini`):
+
+| Setting | Value | Why |
+|---|---|---|
+| `default_pool_size` | 10 | per-database pool; queries queue rather than widen it |
+| `max_db_connections` | 12 | hard per-database ceiling (pool + reserve) — the guarantee that one hot database cannot eat Postgres |
+| `min_pool_size` | 0 | idle databases must be able to shrink to nothing |
+| `reserve_pool_size` | 2 | short burst headroom only |
+| `server_idle_timeout` | 60 | was 300s; 300s let ~71 idle backends sit against `max_connections` |
+| `max_client_conn` | 200 | client side; the ops-health check alarms at 80% |
+
+After a config edit: `node scripts/database/start-pgbouncer.mjs restart`
+(or `RELOAD;` from the admin console for the dynamic subset), then confirm
+effective values with `SHOW CONFIG;`. Ops Health pings `SHOW POOLS` every
+30s and grades client saturation (<80% ok, 80–94% degraded, ≥95% critical —
+the top band is the connection-refusal cliff).
+
+#### Restarting services so they actually pick up the pooler
+
+`scripts/database/restart-service.mjs` is the canonical way to (re)start one
+dev service. It always runs the service on its own `.env` via
+`node --env-file` (pooler URL + per-service `connection_limit`), detached so
+it survives the shell, and — the part hand-restarts get wrong — it verifies
+the **new pid actually owns the port** before reporting success:
+
+```bash
+node scripts/database/restart-service.mjs services/core/user-service 3001
+```
+
+Kill policy is TERM → wait → KILL: a bare TERM + short sleep is not enough
+(Nest graceful shutdown hangs on open handles), and the naive version
+produced fake takeovers — the new spawn died on `EADDRINUSE` while the
+health check was fooled by the OLD process still answering the port. If an
+external supervisor keeps re-grabbing the port, the script evicts
+competitors and respawns its child until it wins.
+
+**FlyEnv hazard (local supervisor):** FlyEnv respawns its managed children
+the instant they die, using a **baked env snapshot** that predates the
+pgbouncer cutover (direct-5432 `DATABASE_URL`, no `--env-file`). Because
+Node's `--env-file` does not override already-set variables, any FlyEnv-
+respawned service silently bypasses the pooler no matter what its `.env`
+says. Symptoms: a service holds direct-5432 sockets (`lsof -nP -i :5432`),
+`ps -ww -o command= -p <pid>` shows no `--env-file`, and killed services
+mysteriously come back. Permanent fix: **disable the azeebo services inside
+FlyEnv's UI** so the fleet is owned by the restart script; the script's
+competition phase is only a defense, not an endorsement. Detect bypassers:
+
+```bash
+lsof -nP -i :5432 | grep ESTABLISHED   # node client rows = bypassers
+ps -ww -o command= -p <pid>            # must show --env-file=.../.env
+```
+
+Note: FlyEnv also silently supplies env vars some services' validators
+require (`ALLOWED_ORIGINS`, `INTERNAL_API_KEY`, real AWS dev secrets). When
+restarting a service fails on env validation, the missing keys belong in
+that service's own `.env` — the fleet's `.env` files now carry them.
 
 ### Prisma Ledger Reconciliation (failed-deploy tombstones)
 
