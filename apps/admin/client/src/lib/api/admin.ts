@@ -572,8 +572,19 @@ export const adminApi = {
     apiFetch<unknown>(`/api/v1/admin/agbala/characters/${id}`, { method: 'DELETE' }),
 
   // ─── Agbala / Paths ──────────────────────────────────────────────────────
-  getPaths: (storyworldId: string) =>
-    apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${storyworldId}/paths`),
+  getPaths: (
+    storyworldId: string,
+    params: { page?: number; limit?: number; search?: string } = {}
+  ) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.search) q.set('search', params.search);
+    const qs = q.toString();
+    return apiFetch<unknown>(
+      `/api/v1/admin/agbala/storyworlds/${storyworldId}/paths${qs ? `?${qs}` : ''}`
+    );
+  },
   createPath: (storyworldId: string, data: Record<string, unknown>) =>
     apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${storyworldId}/paths`, {
       method: 'POST',

@@ -176,11 +176,18 @@ export class AgbalaService {
     }
   }
 
-  async getPaths(storyworldId: string) {
+  async getPaths(query: { storyworldId: string; page?: number; limit?: number; search?: string }) {
     try {
-      return this.fetch(`/vertical/agbala/storyworlds/${storyworldId}/paths`);
+      const params = new URLSearchParams();
+      if (query.page) params.set('page', query.page.toString());
+      if (query.limit) params.set('limit', query.limit.toString());
+      if (query.search) params.set('search', query.search);
+      const qs = params.toString();
+      return this.fetch(
+        `/vertical/agbala/storyworlds/${query.storyworldId}/paths${qs ? `?${qs}` : ''}`
+      );
     } catch (error) {
-      this.logger.error(`Failed to list paths for storyworld ${storyworldId}`, error);
+      this.logger.error(`Failed to list paths for storyworld ${query.storyworldId}`, error);
       throw error;
     }
   }
