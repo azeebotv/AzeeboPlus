@@ -48,6 +48,7 @@ const ageLabel = (minutes?: number) => {
 const HISTORY_JOB_BY_LABEL: Record<string, string> = {
   'Freshness job': 'freshness',
   'Audit retention': 'audit-retention',
+  'Pool audit': 'pool-audit',
 };
 
 const RUN_COLORS: Record<JobRunSummary['runs'][number]['status'], string> = {
@@ -804,6 +805,7 @@ export default function OpsPage() {
   const RUN_JOB_BY_LABEL: Record<string, string> = {
     'Freshness job': 'freshness',
     'Audit retention': 'audit-retention',
+    'Pool audit': 'pool-audit',
   };
 
   if (isLoading || !data) {
@@ -849,7 +851,7 @@ export default function OpsPage() {
         </span>
       </div>
       <p style={{ color: 'var(--admin-text-muted)', marginBottom: 24 }}>
-        Live probes: admin database, federation (cross-DB join), and the two scheduled jobs' last
+        Live probes: admin database, federation (cross-DB join), and the scheduled jobs' last
         passes.
       </p>
 
