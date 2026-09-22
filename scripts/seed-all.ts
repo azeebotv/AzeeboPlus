@@ -13,6 +13,7 @@
  *   8. engagement-service (following, saved items)
  *   9. subscription-service (bundle passes)
  *  10. lifestyle-service (published music entries)
+ *  11. lifestyle-service guides (itineraries, neighborhoods, partners, offers)
  *
  * Usage:
  *   pnpm tsx scripts/seed-all.ts                    # seed everything
@@ -30,6 +31,7 @@ import { seedNotificationService } from './seeders/notification-seeder.js';
 import { seedEngagementService } from './seeders/engagement-seeder.js';
 import { seedSubscriptionService } from './seeders/subscription-seeder.js';
 import { seedLifestyleService } from './seeders/lifestyle-seeder.js';
+import { seedLifestyleGuidesService } from './seeders/lifestyle-guides-seeder.js';
 
 const SEED_ORDER = [
   { name: 'user', fn: seedUserService },
@@ -42,6 +44,7 @@ const SEED_ORDER = [
   { name: 'engagement', fn: seedEngagementService },
   { name: 'subscription', fn: seedSubscriptionService },
   { name: 'lifestyle', fn: seedLifestyleService },
+  { name: 'lifestyle-guides', fn: seedLifestyleGuidesService },
 ] as const;
 
 async function main() {

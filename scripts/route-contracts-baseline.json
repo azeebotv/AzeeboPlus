@@ -1,12 +1,6 @@
 {
-  "description": "Client calls with no SERVICE_CONFIGS entry. Ratchet: entries may only be REMOVED (by fixing the route or the client); a new unmatched call fails CI. Regenerate with: node scripts/check-route-contracts.mjs --update",
-  "generatedAt": "2026-09-15T18:49:21.171Z",
-  "total": 5,
-  "unmatchedClientCalls": [
-    "/api/v1/lifestyle/itineraries/:param",
-    "/api/v1/lifestyle/neighborhoods/:param",
-    "/api/v1/lifestyle/offers/:param",
-    "/api/v1/lifestyle/partners/:param",
-    "/api/v1/participation/:param/result"
-  ]
+  "description": "Client calls with no SERVICE_CONFIGS entry matching on path AND HTTP method (\"[ANY]\" = client method not determinable at the call site). Ratchet: entries may only be REMOVED (by fixing the route, the verb, or the client); a new unmatched call fails CI. Regenerate with: node scripts/check-route-contracts.mjs --update",
+  "generatedAt": "2026-09-16T09:08:13.390Z",
+  "total": 0,
+  "unmatchedClientCalls": []
 }

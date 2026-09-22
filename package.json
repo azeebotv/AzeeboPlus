@@ -104,7 +104,8 @@
       "js-yaml@<4.0.0": ">=3.15.0"
     },
     "patchedDependencies": {
-      "@react-native/gradle-plugin@0.85.3": "patches/@react-native__gradle-plugin@0.85.3.patch"
+      "@react-native/gradle-plugin@0.85.3": "patches/@react-native__gradle-plugin@0.85.3.patch",
+      "expo-web-browser@14.0.2": "patches/expo-web-browser@14.0.2.patch"
     }
   }
 }

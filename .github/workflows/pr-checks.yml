@@ -50,7 +50,6 @@ jobs:
           fi
           echo "✅ No secrets found in .env files"
 
-
   lint-pr:
     name: Lint PR
     runs-on: ubuntu-latest
@@ -132,6 +131,81 @@ jobs:
       - run: node scripts/check-route-contracts.mjs
       - run: node scripts/sweep-flag-usage.mjs
       - run: node scripts/generate-flag-registry-table.mjs --check
+
+  pool-budget-pr:
+    name: Postgres Pool Budget
+    runs-on: ubuntu-latest
+    # The gate recomputes the worst-case Prisma pool budget from COMMITTED
+    # sources (one entry per prisma/schema.prisma workspace, sized by the
+    # tier map in scripts/database/apply-pool-limits.mjs) and compares it to
+    # a live Postgres max_connections. It also verifies every workspace has a
+    # sizing DECISION on record: an explicit LIMITS entry or a documented
+    # QUIET_TIER_WORKSPACES opt-in — an unclassified workspace fails with
+    # exit 4 BEFORE any DB access, so a new service can never silently
+    # inherit the quiet default. This blocks a new service from merging with
+    # a default/oversized pool when the sum would push past the 80% safety
+    # margin — the exact path that produced the 2026-09-18
+    # connection-exhaustion incident. .env files are gitignored so the
+    # runtime caps live in apply-pool-limits.mjs itself; --ci fails closed
+    # (exit 3) if Postgres is unreachable, so a broken service container
+    # can never green-light the gate.
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: azeebo
+          POSTGRES_PASSWORD: azeebo_test_2024
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      # psql for the max_connections read (postgres:15 image in the same
+      # job provides nothing to the runner; the runner needs its own client).
+      - name: Install postgres client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+      - name: Check pool budget against 80% safety margin
+        run: node scripts/database/apply-pool-limits.mjs --ci
+        env:
+          POOL_CHECK_DATABASE_URL: postgresql://azeebo:azeebo_test_2024@localhost:5432/postgres
+      # Forecast comment on top of the gate: posts the NIGHTLY ACTUALS
+      # (per-database connection counts recorded by schema-lock-nightly.yml →
+      # pool-actuals) with a trend forecast of when the 80% margin is
+      # crossed. The gate blocks worst-case overruns; this shows reviewers
+      # what the fleet really holds so the tier map can be right-sized with
+      # evidence. Same bot identity as the drift comment (App comments don't
+      # retrigger workflows; upserted by marker so re-runs replace). Always()
+      # so the comment still posts on a RED gate — that's when it matters.
+      - name: Check drift bot configured
+        id: pool-forecast-bot-config
+        if: always()
+        env:
+          DRIFT_BOT_APP_ID_SET: ${{ vars.DRIFT_BOT_APP_ID != '' }}
+          DRIFT_BOT_KEY_SET: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY != '' }}
+        run: echo "configured=${{ env.DRIFT_BOT_APP_ID_SET == 'true' && env.DRIFT_BOT_KEY_SET == 'true' }}" >> "$GITHUB_OUTPUT"
+      - name: Mint azeebo-drift-bot App token
+        id: pool-forecast-app-token
+        if: always() && steps.pool-forecast-bot-config.outputs.configured == 'true'
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.DRIFT_BOT_APP_ID }}
+          private-key: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - name: Post pool-budget forecast comment on the PR
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ steps.pool-forecast-app-token.outputs.token }}
+        run: node scripts/database/connection-forecast.mjs --forecast
 
   prisma-migrations-pr:
     name: Prisma Migrations Drift
@@ -449,7 +523,18 @@ jobs:
     name: Build PR
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [pr-validation, lint-pr, conventions-pr, prisma-migrations-pr, prisma-live-drift-pr, typecheck-pr, tv-bundle-pr, test-pr, integration-test-pr]
+    needs:
+      [
+        pr-validation,
+        lint-pr,
+        conventions-pr,
+        prisma-migrations-pr,
+        prisma-live-drift-pr,
+        typecheck-pr,
+        tv-bundle-pr,
+        test-pr,
+        integration-test-pr,
+      ]
 
     steps:
       - uses: actions/checkout@v4

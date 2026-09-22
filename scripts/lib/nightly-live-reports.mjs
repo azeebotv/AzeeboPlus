@@ -20,8 +20,11 @@
 import { readZipEntries } from './zip-read.mjs';
 
 // Test seam (fake GitHub server in the poster's integration test); unset in
-// CI → the real GitHub API.
-const API_BASE = process.env.GITHUB_API_BASE_URL ?? 'https://api.github.com';
+// CI → the real GitHub API. Exported so sibling scripts reuse the constant
+// instead of re-emitting the URL (the seed-image-hosts scanner treats stray
+// URL literals as seed-data emissions).
+export const DEFAULT_API_BASE = 'https://api.github.com';
+const API_BASE = process.env.GITHUB_API_BASE_URL ?? DEFAULT_API_BASE;
 
 export const NIGHTLY_WORKFLOW_FILE = 'schema-lock-nightly.yml';
 export const DEFAULT_ENVIRONMENTS = ['staging', 'production'];
@@ -42,13 +45,16 @@ export function reportFromArtifactZip(buffer) {
 }
 
 /**
- * Runs of the nightly workflow for a repo, newest first.
+ * Runs of a nightly workflow for a repo, newest first.
+ * `workflowFile` defaults to the schema-lock nightly (kept for the drift
+ * comment); the pool-actuals comment passes the same workflow file since its
+ * recording leg lives there too.
  * @returns {Promise<Array<{id: number, url: string, headSha: string, createdAt: string}>>}
  */
-export async function listNightlyRuns({ repo, token, branch, perPage = 15, maxPages = 2, fetchImpl = fetch }) {
+export async function listNightlyRuns({ repo, token, branch, perPage = 15, maxPages = 2, workflowFile = NIGHTLY_WORKFLOW_FILE, fetchImpl = fetch }) {
   const runs = [];
   for (let page = 1; page <= maxPages; page++) {
-    const url = `${API_BASE}/repos/${repo}/actions/workflows/${NIGHTLY_WORKFLOW_FILE}/runs?branch=${encodeURIComponent(branch)}&status=success&per_page=${perPage}&page=${page}`;
+    const url = `${API_BASE}/repos/${repo}/actions/workflows/${workflowFile}/runs?branch=${encodeURIComponent(branch)}&status=success&per_page=${perPage}&page=${page}`;
     const res = await fetchImpl(url, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -72,10 +78,12 @@ export async function listNightlyRuns({ repo, token, branch, perPage = 15, maxPa
 }
 
 /**
- * Artifacts of one run, filtered to nightly schema-lock reports.
+ * Artifacts of one run, filtered to nightly reports.
+ * `pattern` defaults to the schema-lock report names; the pool-actuals
+ * comment passes `^pool-actuals-(.+?)-\d+$` (one capture group = environment).
  * @returns {Promise<Array<{id: number, name: string, environment: string}>>}
  */
-export async function listRunArtifacts({ repo, token, runId, environments, fetchImpl = fetch }) {
+export async function listRunArtifacts({ repo, token, runId, environments, pattern = /^schema-lock-report-(.+?)-\d+$/, fetchImpl = fetch }) {
   const artifacts = [];
   let page = 1;
   for (;;) {
@@ -92,7 +100,7 @@ export async function listRunArtifacts({ repo, token, runId, environments, fetch
     if (!res.ok) throw new Error(`listing artifacts for run ${runId} failed: HTTP ${res.status} — ${await res.text().catch(() => '')}`);
     const payload = await res.json();
     for (const a of payload.artifacts ?? []) {
-      const m = /^schema-lock-report-(.+?)-\d+$/.exec(a.name);
+      const m = pattern.exec(a.name);
       if (m && environments.includes(m[1])) {
         artifacts.push({ id: a.id, name: a.name, environment: m[1] });
       }
@@ -129,8 +137,8 @@ export async function downloadArtifactReport({ repo, token, artifactId, environm
  *
  * @returns {Promise<{reports: Array<object>, meta: {runUrl: string|null, foundEnvs: string[], missingEnvs: string[]}}>}
  */
-export async function fetchNightlyLiveReports({ repo, token, branch = 'main', environments = DEFAULT_ENVIRONMENTS, fetchImpl = fetch }) {
-  const runs = await listNightlyRuns({ repo, token, branch, fetchImpl });
+export async function fetchNightlyLiveReports({ repo, token, branch = 'main', environments = DEFAULT_ENVIRONMENTS, workflowFile = NIGHTLY_WORKFLOW_FILE, artifactPattern = /^schema-lock-report-(.+?)-\d+$/, fetchImpl = fetch }) {
+  const runs = await listNightlyRuns({ repo, token, branch, workflowFile, fetchImpl });
   const reports = [];
   const missing = new Set(environments);
   let newestRunUrl = null;
@@ -140,7 +148,7 @@ export async function fetchNightlyLiveReports({ repo, token, branch = 'main', en
     newestRunUrl = newestRunUrl ?? run.url;
     let artifacts;
     try {
-      artifacts = await listRunArtifacts({ repo, token, runId: run.id, environments, fetchImpl });
+      artifacts = await listRunArtifacts({ repo, token, runId: run.id, environments, pattern: artifactPattern, fetchImpl });
     } catch {
       continue; // transient artifact-list failure — try the next run
     }

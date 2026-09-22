@@ -163,6 +163,31 @@ jobs:
           # 0 = no real drift · 1 = drift/broken ledger (failed in "Fail" step below)
           exit 0
 
+      # ── Pool-actuals recording ────────────────────────────────────────────
+      # Records ACTUAL per-database connection counts (pg_stat_activity,
+      # probe excluded) into a per-environment JSONL history and uploads it as
+      # `pool-actuals-<env>-<run_id>`. The pool-budget gate's PR comment
+      # (connection-forecast.mjs --forecast) walks these artifacts nightly-
+      # fresh and forecasts when the 80% margin is crossed at the current
+      # trend. Observability only — recording problems never fail this job;
+      # the gate itself (pr-checks.yml → pool-budget-pr) stays the blocking
+      # authority. Reuses this job's env secrets (DB_HOST/…) and the step
+      # summary conventions of the schema-lock report above.
+      - name: Record pool actuals (pg_stat_activity snapshot)
+        if: steps.creds.outputs.have-creds == 'true'
+        env:
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+          POOL_FORECAST_ENV: ${{ matrix.environment }}
+        run: node scripts/database/connection-forecast.mjs --record
+
+      - name: Upload pool-actuals history
+        if: always() && steps.creds.outputs.have-creds == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pool-actuals-${{ matrix.environment }}-${{ github.run_id }}
+          path: .pool-forecast-out/
+          retention-days: 90
+
       - name: Build step summary (per-env table + annotations)
         if: steps.creds.outputs.have-creds == 'true'
         env:

@@ -1,27 +1,41 @@
 #!/usr/bin/env node
 /**
  * Route-contract check: extracts API calls from client code and verifies they
- * match routes defined in the gateway's SERVICE_CONFIGS.
+ * match routes defined in the gateway's SERVICE_CONFIGS — including the HTTP
+ * method, so a client calling POST where the gateway documents PUT fails here
+ * instead of 405ing at runtime.
  *
  * Two passes:
- *   1. Client → gateway: every /api/v1/{service}/... call in client code must
- *      match a gateway endpoint, else it 404s at runtime (exit 1).
+ *   1. Client → gateway (gating): every /api/v1/{service}/... call in client
+ *      code must match a gateway endpoint on service + path + method.
+ *      - path mismatch → "no matching gateway route"
+ *      - path matches but method differs → "verb mismatch" (also gates)
  *   2. Gateway → client (dead routes): gateway endpoints no client code calls
  *      anymore are reported (advisory; exit unaffected).
  *
- * Run: node scripts/check-route-contracts.mjs
+ * Method extraction from client code (best effort, back-compat safe):
+ *   - `apiFetch('/api/v1/x', { method: 'PUT' })` and the equivalent
+ *     `request('/api/v1/x', { method: 'PUT' })` options-object shape → exact.
+ *   - Axios-style `apiClient.patch('/api/v1/x')` → PATCH.
+ *   - `fetch('/api/v1/x')` / `.get('/api/v1/x')` → GET.
+ *   - Anything else (helper indirection, dynamic method) → unknown, which
+ *     matches any documented method for the path (old path-only behaviour).
  *
- * Exit 0 = all client calls match a gateway route.
- * Exit 1 = mismatches found (details printed).
+ * Run: node scripts/check-route-contracts.mjs
+ * Update baseline: node scripts/check-route-contracts.mjs --update
+ *
+ * Exit 0 = all client calls match a gateway route (path AND method).
+ * Exit 1 = path mismatches or verb mismatches found (details printed).
  */
 
 import { readFileSync, readdirSync, statSync, existsSync, writeFileSync } from 'node:fs';
 import { join, relative, extname } from 'node:path';
 
-// Ratchet baseline: client calls known to have no SERVICE_CONFIGS entry (and, in
-// some cases, no backend route at all — real 404s tracked for repair). The list
-// may only shrink; a NEW unmatched call fails CI even though old ones are
-// accepted. Regenerate with --update after fixing entries.
+// Ratchet baseline: client calls (path + method) known to have no matching
+// SERVICE_CONFIGS entry. The list may only shrink; a NEW unmatched call fails
+// CI even though old ones are accepted. Regenerate with --update after fixing
+// entries. Entries look like "/api/v1/service/path [METHOD]" ("[ANY]" when the
+// client method could not be determined at the call site).
 const BASELINE_PATH = join(process.cwd(), 'scripts/route-contracts-baseline.json');
 const UPDATE_MODE = process.argv.includes('--update');
 
@@ -53,9 +67,33 @@ const CLIENT_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx']);
  * - '/api/v1/admin/users?role=x' and `/api/v1/...?genre=${slug}` (query
  *   strings are kept in the capture, then stripped by normalizeCallPath)
  * The call-site wrapper (api.get/fetch/request/...) doesn't matter — the
- * path shape is the contract.
+ * path shape is the contract. The HTTP method is recovered separately by
+ * inspecting the text just before each match.
  */
 const API_CALL_RE = /['"`]\/api\/v1\/([a-z][a-z0-9_-]*)(\/[a-zA-Z0-9/_.${}:=?&()-]*)?['"`]/g;
+
+/** Axios-style verb helpers immediately wrapping a path literal (a generic
+ * type argument like `.post<{ id: string }>(` is allowed between). */
+const VERB_HELPER_RE = /\.(get|post|put|patch|delete|del|fetch)(<[\s\S]{0,80}?>)?\s*\(\s*$/i;
+
+const VERB_TO_METHOD = {
+  get: 'GET',
+  post: 'POST',
+  put: 'PUT',
+  patch: 'PATCH',
+  delete: 'DELETE',
+  del: 'DELETE',
+  // fetch() defaults to GET
+  fetch: 'GET',
+};
+
+/**
+ * Options-object method next to the path: `request('/api/v1/x', {
+ * method: 'PUT' ... })`. Only trusted when `method` is the options object's
+ * FIRST key — later keys may belong to a request body (e.g. a wallet payload
+ * with `method: 'card'`), which would report a bogus verb.
+ */
+const OPTIONS_METHOD_WINDOW = 200;
 
 /**
  * Normalize a raw captured path to the contract form:
@@ -81,25 +119,49 @@ function normalizeCallPath(rawPath) {
   return path || '/';
 }
 
-// `service:path` with ':' inside paths is ambiguous to split; use the last
-// index — service names can't contain ':' so this is safe.
-function callKey(service, path) {
-  return `${service}:${path}`;
+/**
+ * Best-effort HTTP method for a call site. Returns 'GET'/'POST'/... or null
+ * when the method can't be determined (unknown → matches any documented
+ * method, preserving the old path-only behaviour for indirect call shapes).
+ */
+function inferMethod(content, matchStart, matchEnd) {
+  // 1. Axios-style helper right before the path: apiClient.patch('/api/v1/x')
+  //    or fetch('/api/v1/x') — beats the options scan so a body object
+  //    following the path is never mistaken for the options object.
+  const before = content.slice(Math.max(0, matchStart - 160), matchStart);
+  const verb = before.match(VERB_HELPER_RE);
+  if (verb) return VERB_TO_METHOD[verb[1].toLowerCase()] ?? null;
+
+  // 2. Options object right after the path: request('/api/v1/x', { method: 'PUT' })
+  const after = content.slice(matchEnd, matchEnd + OPTIONS_METHOD_WINDOW);
+  const opts = after.match(/^\s*,\s*\{\s*method\s*:\s*['"`]([A-Za-z]+)['"`]/);
+  if (opts) return opts[1].toUpperCase();
+
+  return null;
+}
+
+// `service:path:METHOD` with ':' inside paths is ambiguous to split; use the
+// last two indices — service names and methods can't contain ':'.
+function callKey(service, path, method) {
+  return `${service}:${path}:${method ?? 'ANY'}`;
 }
 
 function splitCallKey(key) {
-  const idx = key.indexOf(':');
-  return [key.slice(0, idx), key.slice(idx + 1)];
+  const first = key.indexOf(':');
+  const last = key.lastIndexOf(':');
+  return [key.slice(0, first), key.slice(first + 1, last), key.slice(last + 1)];
 }
 
 function scanFile(filePath) {
   const content = readFileSync(filePath, 'utf8');
   const calls = new Set();
   let match;
+  API_CALL_RE.lastIndex = 0;
   while ((match = API_CALL_RE.exec(content)) !== null) {
     const service = match[1];
     const path = normalizeCallPath(match[2] || '/');
-    calls.add(callKey(service, path));
+    const method = inferMethod(content, match.index, match.index + match[0].length);
+    calls.add(callKey(service, path, method));
   }
   return calls;
 }
@@ -154,11 +216,17 @@ function parseServiceConfigs() {
     const endpointsMatch = block.match(/endpoints:\s*\[([\s\S]*?)\]/);
     if (!endpointsMatch) continue;
 
+    // Endpoint entries are flat objects: { method: 'GET', path: '/x', ... }.
+    // Entries without a method field match any client verb (opt-out hatch).
     const endpointsContent = endpointsMatch[1];
-    const endpointRe = /path:\s*'([^']+)'/g;
-    let endpointMatch;
-    while ((endpointMatch = endpointRe.exec(endpointsContent)) !== null) {
-      serviceEndpoints.get(servicePath).push(endpointMatch[1]);
+    const entryRe = /\{([^{}]*)\}/g;
+    let entryMatch;
+    while ((entryMatch = entryRe.exec(endpointsContent)) !== null) {
+      const inner = entryMatch[1];
+      const path = inner.match(/path:\s*'([^']+)'/)?.[1];
+      if (!path) continue;
+      const method = inner.match(/method:\s*'([A-Za-z]+)'/)?.[1]?.toUpperCase() ?? null;
+      serviceEndpoints.get(servicePath).push({ method, path });
     }
   }
 
@@ -194,16 +262,45 @@ function pathMatches(pattern, actual) {
   return true;
 }
 
-function matchRoute(service, path, serviceEndpoints) {
-  const endpoints = serviceEndpoints.get(service);
-  if (!endpoints) return false;
-  for (const ep of endpoints) {
-    if (pathMatches(ep, path)) return true;
-  }
-  return false;
+/** Method-compatible: null on either side is a wildcard. */
+function methodMatches(docMethod, callMethod) {
+  if (!docMethod || !callMethod) return true;
+  return docMethod === callMethod;
 }
 
-console.log('Checking route contracts...\n');
+/**
+ * Returns { pathMatched, methodMatched, docMethod } for the best-matching
+ * documented endpoint, or { pathMatched: false } when the service has no
+ * route for the path at all.
+ */
+function matchRoute(service, path, method, serviceEndpoints) {
+  const endpoints = serviceEndpoints.get(service);
+  if (!endpoints) return { pathMatched: false };
+
+  let pathMatched = null;
+  for (const ep of endpoints) {
+    if (pathMatches(ep.path, path)) {
+      pathMatched = ep;
+      if (methodMatches(ep.method, method)) {
+        return { pathMatched: true, methodMatched: true, docMethod: ep.method };
+      }
+    }
+  }
+  if (pathMatched) {
+    return {
+      pathMatched: true,
+      methodMatched: false,
+      docMethod: pathMatched.method ?? 'ANY',
+    };
+  }
+  return { pathMatched: false };
+}
+
+function describeMethod(method) {
+  return method ?? 'ANY';
+}
+
+console.log('Checking route contracts (paths + HTTP methods)...\n');
 
 // Scan client code
 const clientCalls = new Set();
@@ -221,18 +318,26 @@ for (const dir of CLIENT_DIRS) {
 const gatewayRoutes = parseServiceConfigs();
 
 // Pass 1: client → gateway (gating)
-const mismatches = [];
+const mismatches = []; // no route for the path at all
+const verbMismatches = []; // path documented, method differs
 for (const call of clientCalls) {
-  const [service, path] = splitCallKey(call);
-  if (!matchRoute(service, path, gatewayRoutes)) {
-    mismatches.push({ service, path });
+  const [service, path, method] = splitCallKey(call);
+  const callMethod = method === 'ANY' ? null : method;
+  const result = matchRoute(service, path, callMethod, gatewayRoutes);
+  if (!result.pathMatched) {
+    mismatches.push({ service, path, method: callMethod });
+  } else if (!result.methodMatched) {
+    verbMismatches.push({ service, path, method: callMethod, docMethod: result.docMethod });
   }
 }
 
 const baseline = loadBaseline();
-const active = mismatches.filter(({ service, path }) => !baseline.has(`/api/v1/${service}${path}`));
+const mismatchKey = ({ service, path, method }) =>
+  `/api/v1/${service}${path} [${describeMethod(method)}]`;
+const allMismatches = [...mismatches, ...verbMismatches];
+const active = allMismatches.filter((m) => !baseline.has(mismatchKey(m)));
 const staleBaseline = [...baseline].filter(
-  (b) => !mismatches.some(({ service, path }) => `/api/v1/${service}${path}` === b)
+  (b) => !allMismatches.some((m) => mismatchKey(m) === b)
 );
 
 if (UPDATE_MODE) {
@@ -241,35 +346,53 @@ if (UPDATE_MODE) {
     JSON.stringify(
       {
         description:
-          'Client calls with no SERVICE_CONFIGS entry. Ratchet: entries may only be REMOVED (by fixing the route or the client); a new unmatched call fails CI. Regenerate with: node scripts/check-route-contracts.mjs --update',
+          'Client calls with no SERVICE_CONFIGS entry matching on path AND HTTP method ("[ANY]" = client method not determinable at the call site). Ratchet: entries may only be REMOVED (by fixing the route, the verb, or the client); a new unmatched call fails CI. Regenerate with: node scripts/check-route-contracts.mjs --update',
         generatedAt: new Date().toISOString(),
-        total: mismatches.length,
-        unmatchedClientCalls: mismatches
-          .map(({ service, path }) => `/api/v1/${service}${path}`)
-          .sort(),
+        total: allMismatches.length,
+        unmatchedClientCalls: allMismatches.map(mismatchKey).sort(),
       },
       null,
       2
     ) + '\n'
   );
-  console.log(`Baseline written: ${mismatches.length} entries → ${relative(process.cwd(), BASELINE_PATH)}`);
+  console.log(
+    `Baseline written: ${allMismatches.length} entries → ${relative(process.cwd(), BASELINE_PATH)}`
+  );
   process.exit(0);
 }
 
 if (active.length > 0) {
-  console.log(`❌ Found ${active.length} NEW client API calls with no matching gateway route:\n`);
-  for (const { service, path } of active.sort((a, b) => a.service.localeCompare(b.service))) {
-    console.log(`  /api/v1/${service}${path}`);
+  if (mismatches.some((m) => !baseline.has(mismatchKey(m)))) {
+    const newMissing = mismatches.filter((m) => !baseline.has(mismatchKey(m)));
+    console.log(
+      `❌ Found ${newMissing.length} NEW client API calls with no matching gateway route:\n`
+    );
+    for (const m of newMissing.sort((a, b) => a.service.localeCompare(b.service))) {
+      console.log(`  ${mismatchKey(m)}`);
+    }
+  }
+  if (verbMismatches.some((m) => !baseline.has(mismatchKey(m)))) {
+    const newVerb = verbMismatches.filter((m) => !baseline.has(mismatchKey(m)));
+    console.log(`\n❌ Found ${newVerb.length} HTTP-verb mismatches (client vs gateway doc):\n`);
+    for (const m of newVerb.sort((a, b) => a.service.localeCompare(b.service))) {
+      console.log(
+        `  ${mismatchKey(m)} — gateway documents ${m.docMethod}${
+          m.method ? ` for this path; client calls ${m.method}` : ''
+        } (would 405 at runtime)`
+      );
+    }
   }
   console.log(`\nTotal client calls: ${clientCalls.size}`);
-  console.log(`Unmatched: ${mismatches.length} (${baseline.size} accepted via ratchet baseline, ${active.length} new)`);
   console.log(
-    `\nThese calls will 404 at runtime. Add the missing routes to the gateway\nSERVICE_CONFIGS or re-point the client to an existing route.`
+    `Unmatched: ${allMismatches.length} (${baseline.size} accepted via ratchet baseline, ${active.length} new)`
+  );
+  console.log(
+    `\nThese calls will 404/405 at runtime. Add the missing routes to the gateway\nSERVICE_CONFIGS, fix the verb, or re-point the client to an existing route.`
   );
   process.exit(1);
 }
 
-console.log(`✅ All ${clientCalls.size} client API calls match gateway routes.`);
+console.log(`✅ All ${clientCalls.size} client API calls match gateway routes (path + method).`);
 if (baseline.size > 0) {
   console.log(
     `   (${baseline.size} known-unmatched calls accepted via the ratchet baseline —\n    prune it with --update as the underlying routes get fixed${
@@ -282,13 +405,18 @@ if (baseline.size > 0) {
 const deadRoutes = [];
 for (const [service, endpoints] of gatewayRoutes) {
   for (const ep of endpoints) {
-    const epPath = normalizePath(ep);
+    const epPath = normalizePath(ep.path);
     const isCalled = [...clientCalls].some((call) => {
-      const [svc, path] = splitCallKey(call);
-      return svc === service && pathMatches(epPath, path);
+      const [svc, path, methodKey] = splitCallKey(call);
+      const callMethod = methodKey === 'ANY' ? null : methodKey;
+      return (
+        svc === service &&
+        pathMatches(epPath, path) &&
+        methodMatches(ep.method, callMethod)
+      );
     });
     if (!isCalled) {
-      deadRoutes.push({ service, path: epPath });
+      deadRoutes.push({ service, path: epPath, method: ep.method });
     }
   }
 }
@@ -298,30 +426,30 @@ if (deadRoutes.length === 0) {
   process.exit(0);
 }
 
-// Same service+path may appear once per HTTP method; report unique paths.
+// Same service+path may appear once per HTTP method; report unique entries.
 const seen = new Set();
-const uniqueDead = deadRoutes.filter(({ service, path }) => {
-  const k = callKey(service, path);
+const uniqueDead = deadRoutes.filter(({ service, path, method }) => {
+  const k = callKey(service, path, method);
   if (seen.has(k)) return false;
   seen.add(k);
   return true;
 });
 
 console.log(
-  `\n⚠️  ${uniqueDead.length} gateway endpoint paths have no matching client call (dead routes, advisory):\n`
+  `\n⚠️  ${uniqueDead.length} gateway endpoints have no matching client call (dead routes, advisory):\n`
 );
 const byService = new Map();
-for (const { service, path } of uniqueDead) {
+for (const { service, path, method } of uniqueDead) {
   if (!byService.has(service)) byService.set(service, []);
-  byService.get(service).push(path);
+  byService.get(service).push({ method: describeMethod(method), path });
 }
 for (const service of [...byService.keys()].sort()) {
-  for (const path of byService.get(service)) {
-    console.log(`  /api/v1/${service}${path}`);
+  for (const { method, path } of byService.get(service)) {
+    console.log(`  ${method.padEnd(7)} /api/v1/${service}${path}`);
   }
 }
 console.log(
-  `\nTotal gateway endpoints: ${[...gatewayRoutes.values()].reduce((n, eps) => n + eps.length, 0)} (${deadRoutes.length} endpoint entries, ${uniqueDead.length} unique dead paths)`
+  `\nTotal gateway endpoints: ${[...gatewayRoutes.values()].reduce((n, eps) => n + eps.length, 0)} (${deadRoutes.length} endpoint entries, ${uniqueDead.length} unique dead entries)`
 );
 console.log(
   `\nThese endpoints are documented in SERVICE_CONFIGS but no client code calls\nthem. Not necessarily wrong — they may serve partners, scripts, mobile\nreleases, or planned features — but if a route is truly obsolete, remove its\nendpoint entry (and the backend route) so the contract stays truthful.`
