@@ -30,6 +30,8 @@ export interface CreatorChallengeEntry {
   contentUrl?: string;
   status?: string;
   createdAt?: string;
+  /** Prize rides the embedded challenge (getMyChallenges includes it). */
+  challenge?: { prize?: string | number | null } | null;
 }
 
 @Injectable()
@@ -146,5 +148,27 @@ export class CreatorsClientService {
       `/v1/creators/challenges/${challengeId}/participate`,
       { method: 'POST', body: { contentUrl }, userId }
     );
+  }
+
+  /** Ranked entries for a challenge (creator-service GET /v1/creators/challenges/:id/leaderboard). */
+  async getChallengeLeaderboard(
+    challengeId: string
+  ): Promise<
+    CreatorsServiceResponse<{
+      challenge: { id: string; title: string; prize?: number; endDate?: string };
+      totalEntries: number;
+      entries: {
+        position: number;
+        entryId: string;
+        userId: string;
+        displayName: string;
+        status: string;
+        reviewedAt?: string | null;
+        contentUrl?: string;
+        submittedAt: string;
+      }[];
+    }>
+  > {
+    return this.request(`/v1/creators/challenges/${challengeId}/leaderboard`);
   }
 }

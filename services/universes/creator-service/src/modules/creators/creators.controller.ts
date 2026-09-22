@@ -262,6 +262,15 @@ export class CreatorsController {
     return this.creatorsService.getChallenges(creatorId);
   }
 
+  @Get('challenges/my')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: "Get the authenticated creator's own challenge entries" })
+  @ApiResponse({ status: 200, description: 'My challenge entries' })
+  async getMyChallenges(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getMyChallenges(req.user.id);
+  }
+
   @Get('stats')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -425,6 +434,45 @@ export class CreatorsController {
     @Body() body: PublishContentDto
   ): Promise<CreatorResponse> {
     return this.creatorsService.participateInChallenge(req.user.id, challengeId, body.contentUrl);
+  }
+
+  @Get('challenges/:challengeId/leaderboard')
+  @ApiOperation({ summary: 'Get challenge leaderboard (entries ranked winner-first)' })
+  @ApiResponse({ status: 200, description: 'Ranked leaderboard' })
+  async getChallengeLeaderboard(
+    @Param('challengeId') challengeId: string
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.getChallengeLeaderboard(challengeId);
+  }
+
+  @Get('challenges/entries')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
+  @ApiOperation({ summary: 'List challenge entries for review (admin/moderator)' })
+  @ApiResponse({ status: 200, description: 'Challenge entries with participant names' })
+  async listChallengeEntries(
+    @Query('status') status?: string,
+    @Query('challengeId') challengeId?: string,
+    @Query('take') take?: string
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.listChallengeEntriesForReview(
+      status,
+      challengeId,
+      take ? Number(take) : undefined
+    );
+  }
+
+  @Patch('challenges/entries/:entryId/review')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
+  @ApiOperation({ summary: 'Review a challenge entry (admin/moderator)' })
+  @ApiResponse({ status: 200, description: 'Entry status updated' })
+  async reviewChallengeEntry(
+    @Request() req: { user: { id: string; role?: string } },
+    @Param('entryId') entryId: string,
+    @Body() body: { action: 'under_review' | 'winner' | 'rejected'; note?: string }
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.reviewChallengeEntry(req.user.id, entryId, body.action, body.note);
   }
 
   @Put('settings')

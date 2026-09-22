@@ -167,7 +167,13 @@ export default function EarningsPage() {
                         {entry.type.replace(/_/g, ' ')}
                       </td>
                       <td style={{ padding: '10px 0', color: 'var(--creator-text-muted)' }}>
-                        {entry.description ?? '—'}
+                        {entry.description?.includes('Challenge prize') ? (
+                          <span style={{ color: 'var(--creator-text)' }}>
+                            <span aria-hidden>🏆</span> Challenge prize
+                          </span>
+                        ) : (
+                          (entry.description ?? '—')
+                        )}
                       </td>
                       <td
                         style={{

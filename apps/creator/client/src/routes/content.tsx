@@ -12,6 +12,114 @@ import type { ContentItem } from '@/lib/creator-types';
 
 const PAGE_SIZE = 20;
 
+interface PlaybackData {
+  url: string;
+  expiresIn: number;
+  kind: 'signed' | 'premium';
+  expiresAt: string | null;
+}
+
+function PlaybackModal({
+  item,
+  onClose,
+}: {
+  item: ContentItem;
+  onClose: () => void;
+}) {
+  // Signed URLs are short-lived (10 min). Fresh URL per open; a stale one
+  // can be re-fetched by closing and reopening the player.
+  const playbackQuery = useQuery({
+    queryKey: ['creator', 'playback', item.id],
+    queryFn: async () => {
+      const res = await creatorApi.getPlaybackUrl(item.id);
+      return creatorApi.assertSuccess<PlaybackData>(res);
+    },
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
+
+  const playback = playbackQuery.data;
+  const isAudio = item.type === 'audio';
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0,0,0,0.75)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: 24,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: 720,
+          backgroundColor: 'var(--creator-dark)',
+          border: '1px solid var(--creator-border)',
+          borderRadius: 12,
+          padding: 20,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
+          }}
+        >
+          <h3 style={{ fontSize: 16, fontWeight: 600 }}>{item.title}</h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--creator-text-muted)',
+              fontSize: 18,
+              cursor: 'pointer',
+            }}
+            aria-label="Close player"
+          >
+            ×
+          </button>
+        </div>
+        {playbackQuery.isLoading ? (
+          <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 24 }}>
+            Requesting secure playback URL…
+          </p>
+        ) : playbackQuery.isError ? (
+          <p style={{ color: 'var(--creator-red)', fontSize: 13, padding: 12 }}>
+            {creatorApi.errorMessage(playbackQuery.error)}
+          </p>
+        ) : playback ? (
+          isAudio ? (
+            <audio controls src={playback.url} style={{ width: '100%' }} />
+          ) : (
+            <video
+              controls
+              src={playback.url}
+              style={{ width: '100%', borderRadius: 8, maxHeight: 420 }}
+            />
+          )
+        ) : null}
+        {playback && (
+          <p style={{ fontSize: 12, color: 'var(--creator-text-muted)', marginTop: 10 }}>
+            {playback.kind === 'premium' ? 'Premium token URL' : 'Signed URL'} · expires in{' '}
+            {Math.round(playback.expiresIn / 60)} min. Reopen the player to get a fresh URL.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ContentPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -20,6 +128,7 @@ export default function ContentPage() {
   const [editItem, setEditItem] = useState<ContentItem | null>(null);
   const [form, setForm] = useState({ title: '', description: '', type: 'video' });
   const [actionError, setActionError] = useState<string | null>(null);
+  const [playbackItem, setPlaybackItem] = useState<ContentItem | null>(null);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['creator', 'content', page, statusFilter],
@@ -213,6 +322,22 @@ export default function ContentPage() {
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
+                        {item.type !== 'document' && (
+                          <button
+                            onClick={() => setPlaybackItem(item)}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: 6,
+                              border: '1px solid var(--creator-blue, #3b82f6)',
+                              background: 'transparent',
+                              color: 'var(--creator-blue, #3b82f6)',
+                              fontSize: 12,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Play
+                          </button>
+                        )}
                         {item.status !== 'published' && item.status !== 'archived' && (
                           <button
                             onClick={() => publishMutation.mutate(item.id)}
@@ -500,6 +625,7 @@ export default function ContentPage() {
           </div>
         </div>
       )}
+      {playbackItem && <PlaybackModal item={playbackItem} onClose={() => setPlaybackItem(null)} />}
     </div>
   );
 }

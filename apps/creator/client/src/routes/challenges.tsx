@@ -1,32 +1,17 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
+import { statusColor, statusText } from '@/components/ChallengeLeaderboard';
+import SubmissionDetailModal from '@/components/SubmissionDetailModal';
+import ChallengeSubmitDialog from '@/components/ChallengeSubmitDialog';
 import type { Challenge, ChallengeSubmission } from '@/lib/creator-types';
-import { formatNgn, errorTextStyle } from '@/lib/ui';
-
-const statusColor: Record<string, string> = {
-  active: 'rgba(13,59,46,0.2)',
-  upcoming: 'rgba(59,130,246,0.2)',
-  ended: 'rgba(154,138,122,0.2)',
-  submitted: 'rgba(59,130,246,0.2)',
-  under_review: 'rgba(245,158,11,0.2)',
-  winner: 'rgba(13,59,46,0.2)',
-  rejected: 'rgba(204,28,28,0.2)',
-};
-const statusText: Record<string, string> = {
-  active: 'var(--creator-green)',
-  upcoming: 'var(--creator-blue, #3b82f6)',
-  ended: 'var(--creator-text-muted)',
-  submitted: 'var(--creator-blue, #3b82f6)',
-  under_review: 'var(--creator-amber, #f59e0b)',
-  winner: 'var(--creator-green)',
-  rejected: 'var(--creator-red)',
-};
+import { formatNgn } from '@/lib/ui';
 
 export default function ChallengesPage() {
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
-  const [submitTitle, setSubmitTitle] = useState('');
+  const [detailSubmissionId, setDetailSubmissionId] = useState<string | null>(null);
   const [tab, setTab] = useState<'active' | 'submissions'>('active');
 
   const { data: challenges, isLoading: challengesLoading } = useQuery({
@@ -45,18 +30,14 @@ export default function ChallengesPage() {
     },
   });
 
-  const submitMutation = useMutation({
-    mutationFn: async (challengeId: string) => {
-      const res = await creatorApi.submitChallenge(challengeId, submitTitle);
-      return creatorApi.assertSuccess<{ success: boolean; submissionId?: string }>(res);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['creator', 'challenge-submissions'] });
-      queryClient.invalidateQueries({ queryKey: ['creator', 'challenges'] });
-      setSelectedChallenge(null);
-      setSubmitTitle('');
-    },
-  });
+  // Winner banner: celebrate any winning entry with a prize callout. Prize
+  // comes from the challenges list; if the challenge has scrolled out of the
+  // proxy window the line still renders, just without an amount.
+  const winners = (submissions ?? []).filter((s) => s.status === 'winner');
+  const totalPrize = winners.reduce((sum, s) => {
+    const prize = challenges?.find((c) => c.id === s.challengeId)?.prize;
+    return sum + (typeof prize === 'number' ? prize : 0);
+  }, 0);
 
   return (
     <div>
@@ -64,6 +45,79 @@ export default function ChallengesPage() {
       <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>
         Participate in community challenges and win prizes
       </p>
+
+      {winners.length > 0 && (
+        <div
+          role="status"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            flexWrap: 'wrap',
+            padding: '16px 20px',
+            marginBottom: 24,
+            borderRadius: 12,
+            border: '1px solid rgba(232,178,10,0.45)',
+            background:
+              'linear-gradient(135deg, rgba(232,66,10,0.14) 0%, rgba(204,28,28,0.10) 55%, rgba(232,178,10,0.10) 100%)',
+          }}
+        >
+          <span style={{ fontSize: 32, lineHeight: 1 }} aria-hidden>🏆</span>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
+              Congratulations — you won{winners.length > 1 ? ` ${winners.length} challenges` : ''}!
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--creator-text-muted)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {winners.map((w) => {
+                const prize = challenges?.find((c) => c.id === w.challengeId)?.prize;
+                return (
+                  <span key={w.id}>
+                    {w.title}
+                    {typeof prize === 'number' && (
+                      <strong style={{ color: 'var(--creator-orange)', marginLeft: 6 }}>
+                        Prize: {formatNgn(prize)}
+                      </strong>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+          {totalPrize > 0 && (
+            <div
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                background: 'rgba(232,66,10,0.15)',
+                border: '1px solid rgba(232,66,10,0.35)',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--creator-text-muted)' }}>
+                Total prizes
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--creator-orange)' }}>
+                {formatNgn(totalPrize)}
+              </div>
+            </div>
+          )}
+          <button
+            onClick={() => setTab('submissions')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 8,
+              border: '1px solid var(--creator-border)',
+              background: 'transparent',
+              color: 'var(--creator-orange)',
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            View submissions
+          </button>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
         {(['active', 'submissions'] as const).map((t) => (
@@ -155,22 +209,40 @@ export default function ChallengesPage() {
                       <span>Submissions: {challenge.submissionsCount}</span>
                       <span>Ends: {new Date(challenge.deadline).toLocaleDateString()}</span>
                     </div>
-                    <button
-                      onClick={() => setSelectedChallenge(challenge)}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: 8,
-                        border: '1px solid var(--creator-orange)',
-                        background: 'transparent',
-                        color: 'var(--creator-orange)',
-                        fontWeight: 500,
-                        fontSize: 13,
-                        cursor: 'pointer',
-                        width: '100%',
-                      }}
-                    >
-                      Submit Entry
-                    </button>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => setSelectedChallenge(challenge)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 8,
+                          border: '1px solid var(--creator-orange)',
+                          background: 'transparent',
+                          color: 'var(--creator-orange)',
+                          fontWeight: 500,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                          flex: 1,
+                        }}
+                      >
+                        Submit Entry
+                      </button>
+                      <button
+                        onClick={() => navigate(`/challenges/${challenge.id}`)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 8,
+                          border: '1px solid var(--creator-border)',
+                          background: 'transparent',
+                          color: 'var(--creator-text-muted)',
+                          fontWeight: 500,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                          flex: 1,
+                        }}
+                      >
+                        View Board
+                      </button>
+                    </div>
                   </div>
                 ))}
             </div>
@@ -198,7 +270,7 @@ export default function ChallengesPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--creator-border)' }}>
-                    {['Title', 'Status', 'Submitted'].map((h) => (
+                    {['Title', 'Status', 'Submitted', 'Reviewed', ''].map((h) => (
                       <th
                         key={h}
                         style={{
@@ -238,6 +310,55 @@ export default function ChallengesPage() {
                       <td style={{ padding: '12px 16px', color: 'var(--creator-text-muted)', fontSize: 13 }}>
                         {new Date(s.submittedAt).toLocaleDateString()}
                       </td>
+                      <td style={{ padding: '12px 16px', fontSize: 13 }}>
+                        {s.reviewedAt ? (
+                          <span style={{ color: 'var(--creator-text)' }}>
+                            {new Date(s.reviewedAt).toLocaleDateString()}
+                            {s.reviewedByName && (
+                              <span style={{ color: 'var(--creator-text-muted)' }}> by {s.reviewedByName}</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--creator-text-muted)' }}>—</span>
+                        )}
+                        {s.reviewNote && (
+                          <div
+                            style={{
+                              marginTop: 6,
+                              fontSize: 12,
+                              lineHeight: 1.5,
+                              color: s.status === 'rejected' ? 'var(--creator-text)' : 'var(--creator-text-muted)',
+                              background: 'var(--creator-surface, rgba(154,138,122,0.08))',
+                              border: '1px solid var(--creator-border)',
+                              borderRadius: 6,
+                              padding: '6px 10px',
+                              maxWidth: 360,
+                            }}
+                          >
+                            <span style={{ fontWeight: 600, color: 'var(--creator-orange)' }}>
+                              {s.status === 'rejected' ? 'Reason: ' : 'Note: '}
+                            </span>
+                            {s.reviewNote}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => setDetailSubmissionId(s.id)}
+                          style={{
+                            padding: '5px 12px',
+                            borderRadius: 6,
+                            border: '1px solid var(--creator-border)',
+                            background: 'transparent',
+                            color: 'var(--creator-orange)',
+                            fontSize: 12,
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Details
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -249,96 +370,15 @@ export default function ChallengesPage() {
         </>
       )}
 
+      {detailSubmissionId && (
+        <SubmissionDetailModal
+          submissionId={detailSubmissionId}
+          onClose={() => setDetailSubmissionId(null)}
+        />
+      )}
+
       {selectedChallenge && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100,
-          }}
-          onClick={() => setSelectedChallenge(null)}
-        >
-          <div
-            style={{
-              width: 480,
-              maxWidth: '90%',
-              backgroundColor: 'var(--creator-bg)',
-              border: '1px solid var(--creator-border)',
-              borderRadius: 16,
-              padding: 24,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>
-              Submit to: {selectedChallenge.title}
-            </h3>
-            <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 16 }}>
-              Prize: {formatNgn(selectedChallenge.prize)}
-            </p>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
-                Entry Title
-              </label>
-              <input
-                value={submitTitle}
-                onChange={(e) => setSubmitTitle(e.target.value)}
-                placeholder="Name your submission"
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: 8,
-                  border: '1px solid var(--creator-border)',
-                  backgroundColor: 'var(--creator-dark)',
-                  color: 'var(--creator-text)',
-                  fontSize: 14,
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={() => submitTitle && submitMutation.mutate(selectedChallenge.id)}
-                disabled={!submitTitle || submitMutation.isPending}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                  color: 'white',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                {submitMutation.isPending ? 'Submitting...' : 'Submit'}
-              </button>
-              <button
-                onClick={() => setSelectedChallenge(null)}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: 8,
-                  border: '1px solid var(--creator-border)',
-                  background: 'transparent',
-                  color: 'var(--creator-text-muted)',
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-            {submitMutation.isSuccess && (
-              <p style={{ color: 'var(--creator-green)', fontSize: 13, marginTop: 8 }}>Submission successful!</p>
-            )}
-            {submitMutation.isError && (
-              <p style={errorTextStyle()}>{creatorApi.errorMessage(submitMutation.error)}</p>
-            )}
-          </div>
-        </div>
+        <ChallengeSubmitDialog challenge={selectedChallenge} onClose={() => setSelectedChallenge(null)} />
       )}
     </div>
   );
