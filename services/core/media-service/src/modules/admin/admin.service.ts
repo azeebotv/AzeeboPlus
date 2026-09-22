@@ -1,7 +1,10 @@
 import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { UploadService } from '../upload/upload.service';
 import { S3Service } from '../upload/s3.service';
-import { CdnPurgeService } from '../upload/cdn-purge.service';
+import {
+  CdnInvalidationQueueService,
+  CdnInvalidationReason,
+} from '../upload/cdn-invalidation-queue.service';
 import { CdnPurgeDto } from './dto/cdn-purge.dto';
 import { RedisService } from '@azeebo/shared-services';
 
@@ -12,8 +15,9 @@ export class AdminService {
   constructor(
     @Inject(UploadService) private readonly uploadService: UploadService,
     @Inject(S3Service) _s3Service: S3Service,
-    @Inject(CdnPurgeService) private readonly cdnPurgeService: CdnPurgeService,
-    @Inject(RedisService) private readonly redisService: RedisService
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(CdnInvalidationQueueService)
+    private readonly invalidationQueue: CdnInvalidationQueueService
   ) {}
 
   /**
@@ -22,21 +26,50 @@ export class AdminService {
    * media_cdn_edge_cache off, previously cached objects keep serving stale
    * Cache-Control headers until purged.
    */
+  /** On-demand run of the nightly compensating reconcile pass (ops). */
+  async runInvalidationReconcile(): Promise<unknown> {
+    return this.invalidationQueue.reconcile();
+  }
+
+  /** On-demand run of the nightly compensating drain pass (ops). */
+  async runInvalidationDrain(): Promise<unknown> {
+    return this.invalidationQueue.drain();
+  }
+
+  /**
+   * Purges cached media objects from the CDN edge. Everything routes through
+   * the durable invalidation queue (the single CloudFront front-door): exact
+   * keys coalesce into one batched invalidation at drain time, a prefix
+   * becomes one wildcard invalidation. Response reports queue acceptance,
+   * not invalidation completion — check the queue/drain endpoints for the
+   * actual edge state.
+   */
   async purgeCdn(dto: CdnPurgeDto): Promise<unknown> {
     const keys = (dto.keys ?? []).filter((k) => k && k.trim());
-    if (keys.length === 0 && !dto.prefix) {
+    const prefix = dto.prefix?.trim();
+    if (keys.length === 0 && !prefix) {
       throw new BadRequestException('Provide at least one key or a prefix to purge');
     }
 
-    const byKeys = keys.length > 0 ? await this.cdnPurgeService.purgeKeys(keys) : null;
-    const byPrefix =
-      dto.prefix && dto.prefix.trim() ? await this.cdnPurgeService.purgePrefix(dto.prefix) : null;
-
+    let queued = 0;
+    if (keys.length > 0) {
+      const results = await Promise.all(
+        keys.map((k) => this.invalidationQueue.enqueue(k, 'bulk' as CdnInvalidationReason))
+      );
+      queued += results.filter((r) => r.queued).length;
+    }
+    if (prefix) {
+      const result = await this.invalidationQueue.enqueue(
+        `${prefix.replace(/\/+$/, '')}/*`,
+        'bulk' as CdnInvalidationReason
+      );
+      if (result.queued) queued += 1;
+    }
     return {
       keys: keys.length > 0 ? keys : undefined,
-      prefix: dto.prefix?.trim() || undefined,
-      invalidationId: byPrefix?.invalidationId ?? byKeys?.invalidationId,
-      purged: (byKeys?.purged ?? 0) + (byPrefix?.purged ?? 0),
+      prefix: prefix || undefined,
+      queued,
+      message: 'Purge accepted into the invalidation queue',
     };
   }
 

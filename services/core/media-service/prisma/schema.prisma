@@ -38,6 +38,23 @@ model MediaUpload {
   @@index([createdAt])
 }
 
+/// Compensating queue for CDN invalidations that failed or were skipped at
+/// delete time. Rows are retried by the nightly reconcile/drain job and
+/// dead-lettered after CDN_INVALIDATION_MAX_ATTEMPTS.
+model CdnInvalidationQueue {
+  id          String   @id @default(uuid())
+  key         String
+  reason      String   @default("failed") // failed, skipped
+  attempts    Int      @default(0)
+  lastError   String?
+  status      String   @default("pending") // pending, done, dead
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("cdn_invalidation_queue")
+  @@index([status])
+}
+
 model TranscodingJob {
   id            String   @id @default(uuid())
   uploadId      String?

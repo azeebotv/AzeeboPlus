@@ -22,7 +22,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
 
-interface FileMetadata {
+export interface FileMetadata {
   contentType: string | undefined;
   contentLength: number | undefined;
   lastModified: Date | undefined;
@@ -75,6 +75,14 @@ export class S3Service {
     this.s3Client = new S3Client({
       region: this.region,
       ...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
+      // S3_ENDPOINT targets S3-compatible blob stores (MinIO, R2, LocalStack);
+      // forcePathStyle is required for bucket-in-path addressing outside AWS.
+      ...(this.configService.get<string>('S3_ENDPOINT')
+        ? {
+            endpoint: this.configService.get<string>('S3_ENDPOINT'),
+            forcePathStyle: true,
+          }
+        : {}),
     });
 
     this.circuitBreaker = new CircuitBreaker({
@@ -422,6 +430,34 @@ export class S3Service {
       );
       throw error;
     }
+  }
+
+  /**
+   * List every object in the bucket (paginated). Used by the reconcile pass
+   * to inventory the bucket before matching against media_uploads rows.
+   * Objects carry Key, Size and LastModified — everything reconcile needs to
+   * backfill rows without a second HEAD per object.
+   */
+  async listAllObjects(prefix?: string): Promise<{ Key?: string; Size?: number; LastModified?: Date }[]> {
+    const objects: { Key?: string; Size?: number; LastModified?: Date }[] = [];
+    let continuationToken: string | undefined;
+
+    do {
+      const response = await this.circuitBreaker.execute(async () => {
+        return this.s3Client.send(
+          new ListObjectsV2Command({
+            Bucket: this.bucketName,
+            ...(prefix ? { Prefix: prefix } : {}),
+            ContinuationToken: continuationToken,
+          })
+        );
+      });
+
+      objects.push(...(response.Contents ?? []));
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
+
+    return objects;
   }
 
   async cleanupOrphanedFiles(prefix: string, olderThanDays: number): Promise<number> {

@@ -1,5 +1,4 @@
-import {
-  Inject,
+import { Inject,
   Injectable,
   Logger,
   BadRequestException,
@@ -12,8 +11,23 @@ import { ConfigService } from '@nestjs/config';
 import { RedisService } from '@azeebo/shared-services';
 import { FeatureFlagService, mediaFlags } from '@azeebo/feature-flags';
 import { FileValidationService } from '../../common/services/file-validation.service';
-import { CdnPurgeService } from './cdn-purge.service';
+import {
+  CdnInvalidationQueueService,
+  CdnInvalidationReason,
+} from './cdn-invalidation-queue.service';
+import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '../../prisma/client';
 import axios from 'axios';
+
+/** Flat metadata keys written to the media_uploads row for a key's CDN purge state. */
+export interface CdnPurgeOutcomeMetadata {
+  /** 'queued' = row is in the invalidation queue awaiting drain; 'invalidated' = CloudFront accepted the paths; 'skipped' = no distribution configured (dev); 'failed' = enqueue or invalidation failed. */
+  cdnPurgeStatus?: 'queued' | 'invalidated' | 'skipped' | 'failed';
+  /** CloudFront invalidation ID when status === 'invalidated'. */
+  cdnPurgeInvalidationId?: string;
+  /** Error message when status === 'failed'. */
+  cdnPurgeError?: string;
+}
 
 /** Per-content-type CDN cache TTL keys (MEDIA_CACHE_TTL_* env vars). */
 type CacheTtlType = 'image' | 'video' | 'audio' | 'document' | 'default';
@@ -80,9 +94,9 @@ export class UploadService {
     @Inject(S3Service) private readonly s3Service: S3Service,
     @Inject(ConfigService) private readonly configService: ConfigService,
     @Inject(RedisService) private readonly redisService: RedisService,
-    @Inject(FileValidationService) private readonly fileValidationService: FileValidationService,
-    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
-    @Inject(CdnPurgeService) private readonly cdnPurgeService: CdnPurgeService
+    @Inject(FileValidationService) private readonly fileValidationService: FileValidationService,    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
+    private readonly invalidationQueue: CdnInvalidationQueueService,
+    private readonly prisma: PrismaService
   ) {
     this.cdnUrl = this.configService.get<string>('CDN_URL') || '';
     this.transcodingEnabled = this.configService.get<boolean>('TRANSCODING_ENABLED', true);
@@ -404,6 +418,47 @@ export class UploadService {
 
   async deleteFile(key: string): Promise<void> {
     await this.s3Service.deleteFile(key);
+    // Blob gone ≠ edge gone: CDN nodes may hold the object for up to a year
+    // (media_cdn_edge_cache), so every delete must also invalidate the edge
+    // path. Best-effort — an invalidation failure must not fail the delete
+    // (the caller may be handling an outage already; the purge-queue and
+    // orphan tooling can catch stragglers). The purge outcome is recorded on
+    // the media_uploads row (track=true) so ops can audit which deletes
+    // actually invalidated the edge vs. were skipped or failed.
+    await this.purgeKeyFromCdn(key, true);
+  }
+
+  /**
+   * Marks every media_uploads row referencing `key` with the CDN purge
+   * outcome (flat metadata keys, matching the reconciled/scanStatus
+   * convention). Best-effort by design: an unparseable/stale row or a DB
+   * blip must never fail a delete that already succeeded at the blob store.
+   * Multiple rows can reference one key (reconcile backfills), so all match.
+   */
+  private async recordPurgeOutcome(key: string, outcome: CdnPurgeOutcomeMetadata): Promise<void> {
+    try {
+      const rows = await this.prisma.mediaUpload.findMany({
+        where: { key },
+        select: { id: true, metadata: true },
+      });
+      if (rows.length === 0) return;
+      await this.prisma.$transaction(
+        rows.map((row) => {
+          const existing: Record<string, unknown> =
+            row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+              ? (row.metadata as Record<string, unknown>)
+              : {};
+          return this.prisma.mediaUpload.update({
+            where: { id: row.id },
+            data: { metadata: { ...existing, ...outcome } as Prisma.InputJsonValue },
+          });
+        })
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to record CDN purge outcome for ${key}: ${(error as Error).message}`
+      );
+    }
   }
 
   async getFileMetadata(key: string): Promise<{
@@ -687,16 +742,27 @@ export class UploadService {
   }
 
   /**
-   * Best-effort CDN invalidation of a single object key (used when caching is
-   * disabled, so a re-upload evicts any stale edge copy of that key). Never
-   * throws — a failed purge must not fail the upload.
+   * Queue-only CDN invalidation of a single object key: the key is durably
+   * recorded in the invalidation queue and batched by the drain (≤1000 paths
+   * per CloudFront call, debounced so bursts coalesce). Never throws — a
+   * failed enqueue must not fail the upload/delete; the delete-time caller
+   * stamps 'failed' on the row so the nightly reconcile re-enqueues it, and
+   * on success stamps 'queued' until the drain flips it to 'invalidated'.
    */
-  private async purgeKeyFromCdn(key: string): Promise<void> {
+  private async purgeKeyFromCdn(key: string, track = false): Promise<void> {
     if (!key) return;
+    const reason: CdnInvalidationReason = track ? 'delete' : 'reupload';
     try {
-      await this.cdnPurgeService.purgeKeys([key]);
+      await this.invalidationQueue.enqueue(key, reason);
+      if (track) await this.recordPurgeOutcome(key, { cdnPurgeStatus: 'queued' });
     } catch (error) {
-      this.logger.warn(`Failed to purge CDN key ${key}: ${(error as Error).message}`);
+      this.logger.warn(`Failed to enqueue CDN invalidation for ${key}: ${(error as Error).message}`);
+      if (track) {
+        await this.recordPurgeOutcome(key, {
+          cdnPurgeStatus: 'failed',
+          cdnPurgeError: (error as Error).message,
+        });
+      }
     }
   }
 
