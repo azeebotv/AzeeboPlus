@@ -40,7 +40,9 @@ describe('parseDirectPgClients', () => {
       'n127.0.0.1:50001->127.0.0.1:5432',
       'n127.0.0.1:50002->127.0.0.1:5432',
     ].join('\n');
-    expect(parseDirectPgClients(out)).toEqual([{ pid: 42, command: 'node', connections: 3 }]);
+    expect(parseDirectPgClients(out)).toEqual([
+      { pid: 42, command: 'node', connections: 3, remoteHost: '127.0.0.1' },
+    ]);
   });
 
   it('returns empty for no established :5432 client sockets', () => {
@@ -58,7 +60,34 @@ describe('parseDirectPgClients', () => {
       'n[::1]:5432->[::1]:51694', // server side, local end is :5432
     ].join('\n');
     const parsed = parseDirectPgClients(out);
-    expect(parsed).toEqual([{ pid: 50, command: 'node', connections: 1 }]);
+    expect(parsed).toEqual([{ pid: 50, command: 'node', connections: 1, remoteHost: '::1' }]);
+  });
+
+  it('keeps the remote host for IPv4 dials, brackets stripped for IPv6', () => {
+    const out = [
+      'p60',
+      'cnode',
+      'n127.0.0.1:52000->127.0.0.1:5432',
+      'p61',
+      'cnode',
+      'n[fe80::1]:52001->[fe80::1]:5432', // link-local v6 with multiple colons
+    ].join('\n');
+    const parsed = parseDirectPgClients(out);
+    expect(parsed.find((p) => p.pid === 60)?.remoteHost).toBe('127.0.0.1');
+    expect(parsed.find((p) => p.pid === 61)?.remoteHost).toBe('fe80::1');
+  });
+
+  it('aggregates mixed-stack dials per pid, remoteHost reflects the last socket', () => {
+    const out = [
+      'p70',
+      'cnode',
+      'n127.0.0.1:53000->127.0.0.1:5432',
+      'n[::1]:53001->[::1]:5432',
+    ].join('\n');
+    const parsed = parseDirectPgClients(out);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0].connections).toBe(2);
+    expect(parsed[0].remoteHost).toBe('::1');
   });
 
   it('ignores malformed pids and unterminated records', () => {
@@ -124,5 +153,63 @@ describe('classifyDirectPgClients', () => {
     ];
     const { foreign } = classifyDirectPgClients(clients, ROOT);
     expect(foreign.map((f) => f.workspace)).toEqual(['other/beta', 'other/alpha']);
+  });
+
+  it('tracks per-workspace IPv6 loopback dials as context (foreign fleets bind ::1)', () => {
+    // The 2026-09-22 morning fleet: another project's node processes held
+    // ESTABLISHED sockets to [::1]:5432 exclusively.
+    const clients: Array<DirectPgClient & { cwd?: string | null }> = [
+      {
+        pid: 70,
+        command: 'node',
+        connections: 4,
+        remoteHost: '::1',
+        cwd: '/Users/deprof/www/YCN/services/feed',
+      },
+      {
+        pid: 71,
+        command: 'node',
+        connections: 1,
+        remoteHost: '127.0.0.1',
+        cwd: '/Users/deprof/www/YCN/services/feed',
+      },
+    ];
+    const { bypasses, foreign } = classifyDirectPgClients(clients, ROOT);
+    expect(bypasses).toEqual([]);
+    expect(foreign).toEqual([{ workspace: 'YCN/services/feed', connections: 5, ipv6: 4 }]);
+  });
+
+  it('omits the ipv6 field when a workspace dials only over IPv4', () => {
+    const clients: Array<DirectPgClient & { cwd?: string | null }> = [
+      { pid: 80, command: 'node', connections: 2, remoteHost: '127.0.0.1', cwd: '/other/alpha' },
+    ];
+    const { foreign } = classifyDirectPgClients(clients, ROOT);
+    expect(foreign).toEqual([{ workspace: 'other/alpha', connections: 2 }]);
+    expect('ipv6' in foreign[0]).toBe(false);
+  });
+
+  it('aggregates ipv6 across pids of the same workspace', () => {
+    const clients: Array<DirectPgClient & { cwd?: string | null }> = [
+      { pid: 90, command: 'node', connections: 2, remoteHost: '::1', cwd: '/other/alpha' },
+      { pid: 91, command: 'node', connections: 3, remoteHost: '::1', cwd: '/other/alpha' },
+    ];
+    const { foreign } = classifyDirectPgClients(clients, ROOT);
+    expect(foreign).toEqual([{ workspace: 'other/alpha', connections: 5, ipv6: 5 }]);
+  });
+
+  it('a repo-owned bypass over ::1 is still a bypass (transport never downgrades the violation)', () => {
+    const clients: Array<DirectPgClient & { cwd?: string | null }> = [
+      {
+        pid: 95,
+        command: 'node',
+        connections: 1,
+        remoteHost: '::1',
+        cwd: `${ROOT}/services/core/auth-service`,
+      },
+    ];
+    const { bypasses } = classifyDirectPgClients(clients, ROOT);
+    expect(bypasses).toEqual([
+      { workspace: 'services/core/auth-service', command: 'node', pid: 95, connections: 1 },
+    ]);
   });
 });

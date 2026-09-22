@@ -349,7 +349,11 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
                 <span style={{ color: 'var(--admin-text-muted)' }}>
                   {' '}
                   ({(health.foreignDirectClients ?? []).reduce((n, f) => n + f.connections, 0)}{' '}
-                  direct connections from other projects on this host.)
+                  direct connections from other projects on this host
+                  {(health.foreignDirectClients ?? []).some((f) => f.ipv6)
+                    ? ', including IPv6 loopback (::1) dials'
+                    : ''}
+                  .)
                 </span>
               )}
             </p>
@@ -401,9 +405,64 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
                       (n, f) => n + f.connections,
                       0
                     )}{' '}
-                    other direct connections on this host belong to different projects.)
+                    other direct connections on this host belong to different projects
+                    {(health.foreignDirectClients ?? []).some((f) => f.ipv6)
+                      ? ', some over IPv6 loopback (::1)'
+                      : ''}
+                    .)
                   </>
                 )}
+              </p>
+            </>
+          )}
+          {(health.foreignDirectClients ?? []).length > 0 && (
+            <>
+              <table
+                style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 10 }}
+              >
+                <thead>
+                  <tr style={{ color: 'var(--admin-text-muted)', textAlign: 'left' }}>
+                    {['Foreign project', 'Direct conns', 'over IPv6'].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          padding: '4px 8px 4px 0',
+                          fontSize: 10,
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(health.foreignDirectClients ?? []).map((f) => (
+                    <tr key={f.workspace}>
+                      <td style={{ padding: '5px 8px 5px 0' }}>{f.workspace}</td>
+                      <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
+                        {f.connections}
+                      </td>
+                      <td
+                        style={{
+                          padding: '5px 8px 5px 0',
+                          fontVariantNumeric: 'tabular-nums',
+                          color: f.ipv6 ? 'var(--admin-amber)' : 'var(--admin-text-muted)',
+                        }}
+                      >
+                        {f.ipv6 ?? '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '4px 0 0' }}>
+                Context only: these belong to other projects on this host dialing Postgres :5432
+                directly — not azeebo processes, and never counted as bypasses. Shown because
+                foreign fleets often bind IPv6 loopback (::1) exclusively, which changes where you
+                look when chasing connections.
               </p>
             </>
           )}

@@ -1221,7 +1221,10 @@ export interface PgbouncerHealth {
   /** Repo-owned direct-to-Postgres clients — violations of the pooler rule. */
   bypasses?: PgbouncerBypass[];
   /** Foreign (non-repo) direct clients — another project's noise. */
-  foreignDirectClients?: Array<{ workspace: string; connections: number }>;
+  /** Foreign (non-repo) direct clients — context, never counted as bypasses.
+   * `ipv6` (when present) counts that workspace's dials over IPv6 loopback (::1).
+   */
+  foreignDirectClients?: Array<{ workspace: string; connections: number; ipv6?: number }>;
   /** Present when the bypass scan itself failed (e.g. lsof unavailable). */
   bypassesDetail?: string;
   checkedAt: string;
