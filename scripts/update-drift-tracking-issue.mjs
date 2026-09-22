@@ -37,21 +37,12 @@ import {
   ISSUE_LABEL,
 } from './lib/drift-issue.mjs';
 import { fetchNightlyLiveReports } from './lib/nightly-live-reports.mjs';
+import { searchIssuesByMarker, createIssue as ghCreateIssue, updateIssue as ghUpdateIssue } from './lib/gh-issue-api.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Test seams; unset in CI → production defaults.
 const API_BASE = process.env.GITHUB_API_BASE_URL ?? 'https://api.github.com';
 const REPORTS_BASE = process.env.DRIFT_REPORTS_BASE ?? ROOT;
-
-function ghHeaders(token, extra = {}) {
-  return {
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28',
-    'User-Agent': 'azeebo-drift-bot',
-    ...extra,
-  };
-}
 
 /** Load the production live report: nightly artifact in CI, local file otherwise. */
 async function loadProductionReport({ repo, token }) {
@@ -106,43 +97,6 @@ async function loadProductionReport({ repo, token }) {
   return { report: fetched.reports[0] ?? null, runUrl: fetched.meta.runUrl };
 }
 
-async function searchTrackingIssues({ repo, token }) {
-  const q = `"${ISSUE_MARKER}" in:body type:issue repo:${repo}`;
-  const res = await fetch(`${API_BASE}/search/issues?q=${encodeURIComponent(q)}&per_page=30`, {
-    headers: ghHeaders(token),
-  });
-  if (!res.ok) throw new Error(`issue search failed: HTTP ${res.status} — ${await res.text().catch(() => '')}`);
-  const payload = await res.json();
-  return (payload.items ?? []).map((i) => ({
-    number: i.number,
-    state: i.state,
-    title: i.title,
-    body: i.body ?? '',
-  }));
-}
-
-async function createIssue({ repo, token, body }) {
-  const res = await fetch(`${API_BASE}/repos/${repo}/issues`, {
-    method: 'POST',
-    headers: ghHeaders(token, { 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ title: ISSUE_TITLE, body, labels: [ISSUE_LABEL] }),
-  });
-  if (!res.ok) throw new Error(`issue create failed: HTTP ${res.status} — ${await res.text().catch(() => '')}`);
-  return res.json();
-}
-
-async function updateIssue({ repo, token, number, body, state }) {
-  const payload = { body };
-  if (state) payload.state = state;
-  const res = await fetch(`${API_BASE}/repos/${repo}/issues/${number}`, {
-    method: 'PATCH',
-    headers: ghHeaders(token, { 'Content-Type': 'application/json' }),
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`issue update failed: HTTP ${res.status} — ${await res.text().catch(() => '')}`);
-  return res.json();
-}
-
 async function main() {
   const argv = process.argv.slice(2);
   const dryRun = argv.includes('--dry-run');
@@ -182,7 +136,7 @@ async function main() {
 
   // Local preview / dry-run: show the decision without touching the API.
   if (!repo || dryRun) {
-    const found = repo && token && dryRun ? await searchTrackingIssues({ repo, token }) : [];
+    const found = repo && token && dryRun ? await searchIssuesByMarker({ apiBase: API_BASE, repo, token, marker: ISSUE_MARKER }) : [];
     const decision = decideAction(found, affected);
     console.log(`update-drift-tracking-issue: decision = ${decision.action.toUpperCase()} (${decision.reason})`);
     console.log('──────────── issue body ────────────');
@@ -191,7 +145,7 @@ async function main() {
     process.exit(0);
   }
 
-  const found = await searchTrackingIssues({ repo, token });
+  const found = await searchIssuesByMarker({ apiBase: API_BASE, repo, token, marker: ISSUE_MARKER });
   const decision = decideAction(found, affected);
   console.log(`update-drift-tracking-issue: ${decision.action} (${decision.reason})`);
 
@@ -200,21 +154,21 @@ async function main() {
   }
 
   if (decision.action === 'create') {
-    const created = await createIssue({ repo, token, body });
+    const created = await ghCreateIssue({ apiBase: API_BASE, repo, token, title: ISSUE_TITLE, body, labels: [ISSUE_LABEL] });
     console.log(`update-drift-tracking-issue: created tracking issue #${created.number} — ${created.html_url}`);
     process.exit(0);
   }
 
   if (decision.action === 'update') {
     const reopen = decision.issue.state === 'closed';
-    const updated = await updateIssue({ repo, token, number: decision.issue.number, body, state: reopen ? 'open' : undefined });
+    const updated = await ghUpdateIssue({ apiBase: API_BASE, repo, token, number: decision.issue.number, body, state: reopen ? 'open' : undefined });
     console.log(`update-drift-tracking-issue: ${reopen ? 'reopened' : 'updated'} tracking issue #${updated.number}`);
     process.exit(0);
   }
 
   if (decision.action === 'close') {
     const resolvedBody = renderIssueBody([], { generatedAt: report.generatedAt ?? null, runUrl });
-    const closed = await updateIssue({ repo, token, number: decision.issue.number, body: resolvedBody, state: 'closed' });
+    const closed = await ghUpdateIssue({ apiBase: API_BASE, repo, token, number: decision.issue.number, body: resolvedBody, state: 'closed' });
     console.log(`update-drift-tracking-issue: closed tracking issue #${closed.number} — production is clean`);
     process.exit(0);
   }

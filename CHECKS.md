@@ -11,6 +11,46 @@ Two conventions hold across all of them:
   exits. Every core module has fixture-based unit tests in
   `scripts/__tests__/` (run by CI's conventions job via
   `node --test scripts/__tests__/*.test.mjs`).
+- **Pool saturation gate** (nightly, schema-lock-nightly.yml →
+  "Fail on sustained pooler saturation"): reads the `pool-audit` job_runs
+  ledger for the last 24h and fails when the longest run of consecutive
+  `error` passes spans ≥2h with ≥3 passes — sustained critical saturation
+  the repeat-suppressed watchdog can't escalate further. Locally:
+  `LIVE_DB_URL_BASE=postgresql://…@127.0.0.1:6432 node scripts/database/pool-saturation-gate.mjs`.
+- **Pool bypass gate** (nightly, schema-lock-nightly.yml → "Fail on
+  sustained pooler bypasses"): matching gate over the same ledger for the
+  bypass detector. Parses the bypass segment out of pass detail regardless
+  of status (repeat suppression logs persisting bypasses as `ok` rows with
+  full detail) and fails when one workspace is flagged in consecutive
+  passes spanning ≥24h (`POOL_BYPASS_MIN_SPAN_H`), with runs broken by a
+  >3h ledger gap (`POOL_BYPASS_MAX_GAP_H`) so isolated blips can't fake
+  persistence. The 30h window (`POOL_BYPASS_GATE_HOURS`) exceeds the span
+  threshold on purpose: hourly passes filling a 24h window span at most
+  23h. Locally:
+  `LIVE_DB_URL_BASE=postgresql://…@127.0.0.1:6432 node scripts/database/pool-bypass-gate.mjs`.
+- **Pool tracking issue** (nightly, schema-lock-nightly.yml → "Update
+  pool-health tracking issue", production leg): a persistent home for the
+  two pool gates' verdicts, mirroring the production-drift tracker — ONE
+  marker-scoped GitHub issue under the azeebo-drift-bot App, created when a
+  sustained violation first appears, updated only when the (kind, identity)
+  violation set changes (detail churn never triggers edits), closed when
+  both gates pass, reopened on return. The bot RE-EVALUATES both gate cores
+  against the ledger (one source of truth) rather than parsing CI step
+  exits; lists only *sustained* bypass workspaces; degrades silently when
+  the ledger is unreachable (the gates own the blocking signal). Runs under
+  `always()` so a gate trip still updates the issue. Locally:
+  `LIVE_DB_URL_BASE=postgresql://…@127.0.0.1:6432 node scripts/pool-issue-tracker.mjs --dry-run`.
+- **Scheduled-job health gate** (nightly, schema-lock-nightly.yml → "Fail
+  on error-heavy scheduled jobs"): extends the pool-gate idea to every
+  known ledger job — freshness, drill, audit-retention, data-retention,
+  pool-audit — each with a per-cadence fail profile: hourly jobs need a
+  sustained streak (≥3 consecutive error passes spanning ≥2h, mirroring the
+  saturation gate), nightly and weekly jobs fail on 2 consecutive error
+  passes. Runs are broken by ledger gaps > cadence × 1.5 so a job that
+  stopped recording isn't read as a health streak (the Ops Health cadence
+  watchdog covers silence). warn rows never fail but do break error runs.
+  Locally: `LIVE_DB_URL_BASE=postgresql://…@127.0.0.1:6432
+  JOB_HEALTH_HOURS=56 node scripts/database/job-health-gate.mjs`.
 - **Exit codes** — `0` = invariant holds (or advisory-only findings), `1` =
   violation. Checks that need a database (migrations/deployed-schema/drift)
   create and drop throwaway shadow databases; they never touch real data.
