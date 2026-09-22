@@ -99,6 +99,7 @@ playwright-report/
 .check-prisma-deploy-diff-out/
 .check-live-schema-lock-out/
 .reconcile-prisma-ledger-out/
+.pool-forecast-out/
 
 .drift-live-out/
 

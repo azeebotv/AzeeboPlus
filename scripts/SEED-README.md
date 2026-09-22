@@ -22,6 +22,7 @@ pnpm tsx scripts/seed-all.ts --service=payment
 pnpm tsx scripts/seed-all.ts --service=messaging
 pnpm tsx scripts/seed-all.ts --service=notification
 pnpm tsx scripts/seed-all.ts --service=engagement
+pnpm tsx scripts/seed-all.ts --service=lifestyle-guides
 ```
 
 ## Environment Variables

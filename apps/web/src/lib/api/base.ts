@@ -548,6 +548,10 @@ export async function apiFetch<T>(
   }
 
   let lastError: Error | null = null;
+  // The 401-recovery retry must not consume the transport-retry budget: with
+  // the default maxRetries=0 the recovery would otherwise exit the loop and
+  // surface as "Network error" instead of the silently-refreshed request.
+  let authRecoveryUsed = false;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
@@ -573,7 +577,8 @@ export async function apiFetch<T>(
         // Single-flight so parallel 401s share one rotation; retry only on
         // the first attempt so a persistent 401 still returns the error.
         if (response.status === 401 && !options.skipAuthRetry) {
-          if (attempt === 0) {
+          if (!authRecoveryUsed) {
+            authRecoveryUsed = true;
             const refreshed = await refreshSession();
             if (refreshed) {
               // Mirror the retry header from the (now fresh) cookie token
@@ -586,6 +591,7 @@ export async function apiFetch<T>(
                 delete headers['Authorization'];
                 delete headers['authorization'];
               }
+              attempt -= 1; // recovery retry is free; keep the retry budget
               continue; // Retry with the fresh cookie/header
             }
           }
