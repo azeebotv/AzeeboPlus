@@ -9,6 +9,7 @@ import UserDetailPage from './routes/user-detail';
 import ContentPage from './routes/content';
 import ContentDetailPage from './routes/content-detail';
 import ContentReviewPage from './routes/content-review';
+import ChallengeEntriesPage from './routes/challenge-entries';
 import ModerationPage from './routes/moderation';
 import CreatorsPage from './routes/creators';
 import RealityPage from './routes/reality';
@@ -45,6 +46,9 @@ import PerformanceMonitorPage from './routes/performance-monitor';
 import RateLimitsPage from './routes/rate-limits';
 import AutomationsPage from './routes/automations';
 import SupportPage from './routes/support';
+import DualControlPage from './routes/dual-control';
+import TalentClearancePage from './routes/talent-clearance';
+import LifestyleGuidesPage from './routes/lifestyle-guides';
 import LoginPage from './routes/login';
 import { FlagGate } from './components/FlagGate';
 import { useAdminFlags, ADMIN_FLAG_KEYS } from './hooks/useAdminFlags';
@@ -92,6 +96,7 @@ export default function App() {
               <Route path="content" element={<ContentPage />} />
               <Route path="content/:id" element={<ContentDetailPage />} />
               <Route path="content-review" element={<ContentReviewPage />} />
+              <Route path="challenge-entries" element={<ChallengeEntriesPage />} />
               <Route path="moderation" element={<ModerationPage />} />
               <Route path="creators" element={<CreatorsPage />} />
               <Route path="reality" element={<RealityPage />} />
@@ -135,6 +140,9 @@ export default function App() {
               <Route path="rate-limits" element={<RateLimitsPage />} />
               <Route path="automations" element={<AutomationsPage />} />
               <Route path="support" element={<SupportPage />} />
+              <Route path="dual-control" element={<DualControlPage />} />
+              <Route path="talent-clearance" element={<TalentClearancePage />} />
+              <Route path="lifestyle-guides" element={<LifestyleGuidesPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

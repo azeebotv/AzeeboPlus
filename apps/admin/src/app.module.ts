@@ -26,6 +26,7 @@ import { PaymentGatewaysModule } from './modules/payment-gateways/payment-gatewa
 import { RealityShowsModule } from './modules/reality-shows/reality-shows.module';
 import { SubscriptionAdminModule } from './modules/subscription-admin/subscription-admin.module';
 import { AnalyticsProxyModule } from './modules/analytics-proxy/analytics-proxy.module';
+import { CreatorsProxyModule } from './modules/creators-proxy/creators-proxy.module';
 import { LiveEventsProxyModule } from './modules/live-events-proxy/live-events-proxy.module';
 import { SupportAdminModule } from './modules/support-admin/support-admin.module';
 import { AiProvenanceModule } from './modules/ai-provenance/ai-provenance.module';
@@ -72,6 +73,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     RealityShowsModule,
     SubscriptionAdminModule,
     AnalyticsProxyModule,
+    CreatorsProxyModule,
     LiveEventsProxyModule,
     SupportAdminModule,
     AuthModule,

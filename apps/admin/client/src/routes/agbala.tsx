@@ -3,18 +3,17 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { Storyworld } from '@/lib/admin-types';
-import { asArray } from '@/lib/payload';
+import { asArray, unwrapList, assertSuccess } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 /**
  * Agbala — the interactive narrative engine. Full CRUD:
  * storyworlds (create / edit / delete / publish), characters (create /
- * edit / delete), and quizzes (create / delete). Paths are read-only:
- * the upstream vertical-service exposes no path-list route, so the
- * previous tab never rendered and has been removed.
+ * edit / delete), quizzes (create with dynamic questions / delete), and
+ * the theory moderation review queue (approve / reject-with-reason).
  */
 
-type Tab = 'storyworlds' | 'characters' | 'quizzes';
+type Tab = 'storyworlds' | 'characters' | 'quizzes' | 'moderation';
 
 const CHARACTER_PATHS = ['warrior', 'sage', 'trickster', 'healer'] as const;
 
@@ -33,6 +32,27 @@ interface QuizRow {
   description?: string;
   questionCount?: number;
   storyworldId?: string;
+}
+
+/** One pending theory in the upstream moderation review queue. */
+interface ReviewQueueItem {
+  id: string;
+  type: string;
+  title: string;
+  content?: string;
+  authorId?: string;
+  authorName?: string;
+  storyworldSlug?: string | null;
+  submittedAt?: string;
+  status: string;
+}
+
+/** One editable question inside the quiz-creation modal. */
+interface QuizQuestionDraft {
+  question: string;
+  options: string; // comma-separated while editing
+  correctAnswerIndex: number;
+  explanation: string;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -99,11 +119,15 @@ export default function AgbalaPage() {
     title: '',
     description: '',
     storyworldId: '',
-    question: '',
-    options: '',
-    correctAnswerIndex: 0,
-    explanation: '',
+    questions: [
+      { question: '', options: '', correctAnswerIndex: 0, explanation: '' },
+    ] as QuizQuestionDraft[],
   });
+
+  // Moderation review queue
+  const [queuePage, setQueuePage] = useState(1);
+  const [rejecting, setRejecting] = useState<ReviewQueueItem | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   const storyworldsQ = useQuery({
     queryKey: ['admin', 'agbala', 'storyworlds'],
@@ -145,6 +169,24 @@ export default function AgbalaPage() {
     },
     enabled: tab === 'quizzes',
   });
+
+  const reviewQueueQ = useQuery({
+    queryKey: ['admin', 'agbala', 'review-queue', queuePage],
+    queryFn: async () => {
+      const res = await adminApi.getReviewQueue(queuePage);
+      // Upstream returns the paginated envelope under data; unwrapList
+      // handles both that shape and a bare array fallback.
+      const { items, total } = res.success
+        ? unwrapList<ReviewQueueItem>(res.data)
+        : { items: [] as ReviewQueueItem[], total: null };
+      return { items, total: total ?? items.length };
+    },
+    enabled: tab === 'moderation',
+  });
+  const queueItems = reviewQueueQ.data?.items ?? [];
+  const queueTotal = reviewQueueQ.data?.total ?? 0;
+  const queueLimit = 20;
+  const queueTotalPages = Math.max(1, Math.ceil(queueTotal / queueLimit));
 
   const storyworlds = storyworldsQ.data || [];
 
@@ -222,9 +264,12 @@ export default function AgbalaPage() {
     onError,
   });
 
-  // ── Quiz mutations ─────────────────────────────────────────────────────────
+  // ── Quiz mutations ───────────────────────────────────────────────────────
   const createQuizMutation = useMutation({
-    mutationFn: (data: Record<string, unknown>) => adminApi.createQuiz(data),
+    // assertSuccess so a failed write keeps the modal open and the inline
+    // error shows instead of the modal silently closing on a 4xx/5xx.
+    mutationFn: async (data: Record<string, unknown>) =>
+      assertSuccess(await adminApi.createQuiz(data)),
     onSuccess: () => {
       setQuizModal(false);
       setFormError(null);
@@ -233,8 +278,30 @@ export default function AgbalaPage() {
     onError,
   });
   const deleteQuizMutation = useMutation({
-    mutationFn: (id: string) => adminApi.deleteQuiz(id),
+    mutationFn: async (id: string) => assertSuccess(await adminApi.deleteQuiz(id)),
     onSuccess: () => {
+      setFormError(null);
+      invalidateAll();
+    },
+    onError,
+  });
+
+  // ── Moderation mutations ──────────────────────────────────────────────────
+  const approveMutation = useMutation({
+    mutationFn: async (contentId: string) =>
+      assertSuccess(await adminApi.approveAgbalaContent(contentId)),
+    onSuccess: () => {
+      setFormError(null);
+      invalidateAll();
+    },
+    onError,
+  });
+  const rejectMutation = useMutation({
+    mutationFn: async (input: { contentId: string; reason: string }) =>
+      assertSuccess(await adminApi.rejectAgbalaContent(input.contentId, input.reason)),
+    onSuccess: () => {
+      setRejecting(null);
+      setRejectReason('');
       setFormError(null);
       invalidateAll();
     },
@@ -245,6 +312,11 @@ export default function AgbalaPage() {
     { key: 'storyworlds', label: 'Storyworlds', count: storyworlds.length },
     { key: 'characters', label: 'Characters' },
     { key: 'quizzes', label: 'Quizzes' },
+    {
+      key: 'moderation',
+      label: 'Moderation',
+      count: tab === 'moderation' ? queueTotal : undefined,
+    },
   ];
 
   const baseCard: React.CSSProperties = {
@@ -279,6 +351,57 @@ export default function AgbalaPage() {
       backstory: c.backstory || '',
     });
     setCharModal(c);
+  };
+
+  const emptyQuizQuestions = (): QuizQuestionDraft[] => [
+    { question: '', options: '', correctAnswerIndex: 0, explanation: '' },
+  ];
+  const openCreateQuiz = () => {
+    setQuizForm({ title: '', description: '', storyworldId: '', questions: emptyQuizQuestions() });
+    setQuizModal(true);
+  };
+  const updateQuestion = (idx: number, patch: Partial<QuizQuestionDraft>) => {
+    setQuizForm((f) => ({
+      ...f,
+      questions: f.questions.map((q, i) => (i === idx ? { ...q, ...patch } : q)),
+    }));
+  };
+  const addQuestion = () =>
+    setQuizForm((f) => ({
+      ...f,
+      questions: [
+        ...f.questions,
+        { question: '', options: '', correctAnswerIndex: 0, explanation: '' },
+      ],
+    }));
+  const removeQuestion = (idx: number) =>
+    setQuizForm((f) => ({
+      ...f,
+      // Never leave the form with zero questions — reset to one blank row.
+      questions:
+        f.questions.length > 1 ? f.questions.filter((_, i) => i !== idx) : emptyQuizQuestions(),
+    }));
+
+  /**
+   * Client-side mirror of the upstream CreateQuizDto so the Submit button
+   * can block early with a specific message instead of a generic 400.
+   */
+  const validateQuizForm = (): string | null => {
+    if (!quizForm.title.trim()) return 'Quiz title is required';
+    if (quizForm.questions.length === 0) return 'Add at least one question';
+    for (const [i, q] of quizForm.questions.entries()) {
+      const label = quizForm.questions.length > 1 ? `Question ${i + 1}: ` : '';
+      if (!q.question.trim()) return `${label}question text is required`;
+      const options = q.options
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (options.length < 2) return `${label}needs at least 2 options (comma-separated)`;
+      if (q.correctAnswerIndex < 0 || q.correctAnswerIndex >= options.length) {
+        return `${label}correct answer index must be between 0 and ${options.length - 1}`;
+      }
+    }
+    return null;
   };
 
   return (
@@ -328,7 +451,7 @@ export default function AgbalaPage() {
             </button>
           )}
           {tab === 'quizzes' && (
-            <button onClick={() => setQuizModal(true)} style={btnPrimary}>
+            <button onClick={openCreateQuiz} style={btnPrimary}>
               + New Quiz
             </button>
           )}
@@ -590,6 +713,162 @@ export default function AgbalaPage() {
         </div>
       )}
 
+      {/* ── Moderation review queue ─────────────────────────────────────── */}
+      {tab === 'moderation' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {reviewQueueQ.isLoading ? (
+            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+              Loading...
+            </p>
+          ) : queueItems.length === 0 ? (
+            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+              Review queue is clear — no pending theory submissions.
+            </p>
+          ) : (
+            queueItems.map((item) => (
+              <div key={item.id} style={baseCard}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{item.title}</h3>
+                    <p style={{ color: 'var(--admin-text-muted)', fontSize: 12, marginTop: 4 }}>
+                      {item.type || 'theory'}
+                      {item.authorName ? ` · by ${item.authorName}` : ''}
+                      {item.submittedAt
+                        ? ` · submitted ${new Date(item.submittedAt).toLocaleString()}`
+                        : ''}
+                    </p>
+                    {item.content && (
+                      <p
+                        style={{
+                          color: 'var(--admin-text)',
+                          fontSize: 13,
+                          marginTop: 8,
+                          whiteSpace: 'pre-wrap',
+                          maxHeight: 120,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {item.content}
+                      </p>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                    <button
+                      onClick={() => approveMutation.mutate(item.id)}
+                      disabled={approveMutation.isPending}
+                      style={{
+                        ...btn,
+                        color: 'var(--admin-emerald)',
+                        borderColor: 'rgba(16,185,129,0.4)',
+                      }}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => {
+                        setRejectReason('');
+                        setRejecting(item);
+                      }}
+                      disabled={rejectMutation.isPending}
+                      style={btnDanger}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+          {queueTotalPages > 1 && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                padding: '8px 0',
+                color: 'var(--admin-text-muted)',
+                fontSize: 13,
+              }}
+            >
+              <button
+                onClick={() => setQueuePage((p) => Math.max(1, p - 1))}
+                disabled={queuePage <= 1 || reviewQueueQ.isFetching}
+                style={btn}
+              >
+                ← Prev
+              </button>
+              <span>
+                {queueTotal} pending · page {queuePage} of {queueTotalPages}
+              </span>
+              <button
+                onClick={() => setQueuePage((p) => Math.min(queueTotalPages, p + 1))}
+                disabled={queuePage >= queueTotalPages || reviewQueueQ.isFetching}
+                style={btn}
+              >
+                Next →
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Reject-reason modal ─────────────────────────────────────────── */}
+      {rejecting && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 50,
+          }}
+          onClick={() => setRejecting(null)}
+        >
+          <div
+            style={{
+              width: 'min(440px, 92vw)',
+              padding: 24,
+              borderRadius: 16,
+              border: '1px solid var(--admin-card)',
+              backgroundColor: 'var(--admin-surface)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Reject submission</h3>
+            <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 16 }}>
+              {rejecting.title}
+            </p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Reason (required — shown to the author)"
+              rows={3}
+              style={{ ...inputStyle, resize: 'vertical', marginBottom: 12 }}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setRejecting(null)} style={btn}>
+                Cancel
+              </button>
+              <button
+                disabled={!rejectReason.trim() || rejectMutation.isPending}
+                onClick={() =>
+                  rejectMutation.mutate({ contentId: rejecting.id, reason: rejectReason.trim() })
+                }
+                style={{
+                  ...btnPrimary,
+                  background: 'linear-gradient(135deg, #CC1C1C 0%, #CC1C1C 100%)',
+                }}
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Storyworld modal (create + edit) ────────────────────────────── */}
       {swModal && (
         <div
@@ -753,7 +1032,7 @@ export default function AgbalaPage() {
         </div>
       )}
 
-      {/* ── Quiz modal ──────────────────────────────────────────────────── */}
+      {/* ── Quiz modal (dynamic questions) ──────────────────────────────── */}
       {quizModal && (
         <div
           style={{
@@ -769,7 +1048,9 @@ export default function AgbalaPage() {
         >
           <div
             style={{
-              width: 'min(560px, 92vw)',
+              width: 'min(640px, 94vw)',
+              maxHeight: '88vh',
+              overflowY: 'auto',
               padding: 24,
               borderRadius: 16,
               border: '1px solid var(--admin-card)',
@@ -803,69 +1084,132 @@ export default function AgbalaPage() {
                   </option>
                 ))}
               </select>
-              <input
-                value={quizForm.question}
-                onChange={(e) => setQuizForm({ ...quizForm, question: e.target.value })}
-                placeholder="Question *"
-                style={inputStyle}
-              />
-              <input
-                value={quizForm.options}
-                onChange={(e) => setQuizForm({ ...quizForm, options: e.target.value })}
-                placeholder="Options (comma-separated) *"
-                style={inputStyle}
-              />
-              <input
-                type="number"
-                min={0}
-                value={quizForm.correctAnswerIndex}
-                onChange={(e) =>
-                  setQuizForm({ ...quizForm, correctAnswerIndex: Number(e.target.value) })
-                }
-                placeholder="Correct option index (0-based)"
-                style={inputStyle}
-              />
-              <input
-                value={quizForm.explanation}
-                onChange={(e) => setQuizForm({ ...quizForm, explanation: e.target.value })}
-                placeholder="Explanation (optional)"
-                style={inputStyle}
-              />
+
+              {quizForm.questions.map((q, i) => {
+                const optionCount = q.options
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean).length;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      padding: 14,
+                      borderRadius: 12,
+                      border: '1px solid var(--admin-card)',
+                      background: 'var(--admin-dark)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: 'var(--admin-text-muted)',
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        Question {i + 1}
+                      </span>
+                      <button
+                        onClick={() => removeQuestion(i)}
+                        disabled={quizForm.questions.length === 1}
+                        style={{ ...btnDanger, padding: '4px 10px', fontSize: 11 }}
+                        title={
+                          quizForm.questions.length === 1
+                            ? 'A quiz needs at least one question'
+                            : 'Remove this question'
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <input
+                      value={q.question}
+                      onChange={(e) => updateQuestion(i, { question: e.target.value })}
+                      placeholder="Question text *"
+                      style={inputStyle}
+                    />
+                    <input
+                      value={q.options}
+                      onChange={(e) => updateQuestion(i, { options: e.target.value })}
+                      placeholder="Options (comma-separated) *"
+                      style={inputStyle}
+                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        type="number"
+                        min={0}
+                        max={Math.max(0, optionCount - 1)}
+                        value={q.correctAnswerIndex}
+                        onChange={(e) =>
+                          updateQuestion(i, { correctAnswerIndex: Number(e.target.value) })
+                        }
+                        placeholder="Correct option (0-based)"
+                        style={{ ...inputStyle, flex: 1 }}
+                      />
+                      <input
+                        value={q.explanation}
+                        onChange={(e) => updateQuestion(i, { explanation: e.target.value })}
+                        placeholder="Explanation (optional)"
+                        style={{ ...inputStyle, flex: 2 }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+
+              <button onClick={addQuestion} style={{ ...btn, alignSelf: 'flex-start' }}>
+                + Add question
+              </button>
+
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <button onClick={() => setQuizModal(false)} style={btn}>
                   Cancel
                 </button>
                 <button
-                  disabled={
-                    !quizForm.title.trim() ||
-                    !quizForm.question.trim() ||
-                    createQuizMutation.isPending
-                  }
+                  disabled={createQuizMutation.isPending || !!validateQuizForm()}
+                  title={validateQuizForm() ?? undefined}
                   onClick={() => {
-                    const options = quizForm.options
-                      .split(',')
-                      .map((s) => s.trim())
-                      .filter(Boolean);
+                    const problem = validateQuizForm();
+                    if (problem) {
+                      setFormError(problem);
+                      return;
+                    }
                     createQuizMutation.mutate({
                       title: quizForm.title.trim(),
                       description: quizForm.description || undefined,
                       storyworldId: quizForm.storyworldId || undefined,
-                      questions: [
-                        {
-                          question: quizForm.question.trim(),
+                      questions: quizForm.questions.map((q) => {
+                        const options = q.options
+                          .split(',')
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        return {
+                          question: q.question.trim(),
                           options,
                           correctAnswerIndex: Math.min(
-                            Math.max(0, quizForm.correctAnswerIndex),
+                            Math.max(0, q.correctAnswerIndex),
                             Math.max(0, options.length - 1)
                           ),
-                          explanation: quizForm.explanation || undefined,
-                        },
-                      ],
+                          explanation: q.explanation || undefined,
+                        };
+                      }),
                     });
                   }}
                   style={btnPrimary}
                 >
-                  Create
+                  {createQuizMutation.isPending ? 'Creating...' : 'Create Quiz'}
                 </button>
               </div>
             </div>

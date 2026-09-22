@@ -86,6 +86,7 @@ describe('admin proxies — cookie-only auth integration', () => {
       LIVE_EVENT_SERVICE_URL: upstreamUrl,
       VERTICAL_SERVICE_URL: upstreamUrl,
       SUBSCRIPTION_SERVICE_URL: upstreamUrl,
+      CREATOR_SERVICE_URL: upstreamUrl,
       GATEWAY_SECRET: GATEWAY_SECRET,
     })) {
       envBackup[key] = process.env[key];
@@ -95,9 +96,11 @@ describe('admin proxies — cookie-only auth integration', () => {
     const [
       { AnalyticsProxyController },
       { AdminLiveEventsProxyController },
+      { CreatorsProxyController },
     ] = await Promise.all([
         import('./analytics-proxy/analytics-proxy.controller'),
         import('./live-events-proxy/live-events-proxy.controller'),
+        import('./creators-proxy/creators-proxy.controller'),
       ]);
 
     const moduleRef = await Test.createTestingModule({
@@ -110,6 +113,7 @@ describe('admin proxies — cookie-only auth integration', () => {
       controllers: [
         AnalyticsProxyController,
         AdminLiveEventsProxyController,
+        CreatorsProxyController,
         // Env read at call time (getters) — static import is fine here.
         (await import('./vertical/agbala/agbala.controller')).AgbalaController,
         (await import('./subscription-admin/subscription-admin.controller'))
@@ -197,6 +201,12 @@ describe('admin proxies — cookie-only auth integration', () => {
       label: 'live-events (root proxy)',
       adminPath: '/v1/admin/live-events',
       expectedUpstreamPath: '/v1/live-events',
+      transport: 'stamp',
+    },
+    {
+      label: 'creator-entries (challenge review proxy)',
+      adminPath: '/v1/creator-entries?status=pending',
+      expectedUpstreamPath: '/v1/creators/challenges/entries',
       transport: 'stamp',
     },
     {

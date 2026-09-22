@@ -251,10 +251,14 @@ export const adminApi = {
       `/api/v1/creator-entries${qs ? `?${qs}` : ''}`
     );
   },
-  reviewChallengeEntry: (entryId: string, action: 'under_review' | 'winner' | 'rejected') =>
-    apiFetch<{ entryId: string; status: string; reviewedAt: string }>(
+  reviewChallengeEntry: (
+    entryId: string,
+    action: 'under_review' | 'winner' | 'rejected',
+    note?: string
+  ) =>
+    apiFetch<{ entryId: string; status: string; reviewedAt: string; reviewNote: string | null }>(
       `/api/v1/creator-entries/${entryId}/review`,
-      { method: 'PATCH', body: JSON.stringify({ action }) }
+      { method: 'PATCH', body: JSON.stringify({ action, ...(note ? { note } : {}) }) }
     ),
 
   // ─── Wallets ────────────────────────────────────────────────────────────
@@ -554,10 +558,23 @@ export const adminApi = {
   // ─── Agbala / Characters ────────────────────────────────────────────────
   // Characters live under the nested storyworld route upstream — the flat
   // /admin/agbala/characters path has no backend route (404).
-  getCharacters: (storyworldId: string) =>
-    apiFetch<{ items: AgbalaCharacter[]; total: number }>(
-      `/api/v1/admin/agbala/storyworlds/${storyworldId}/characters`
-    ),
+  getCharacters: (
+    storyworldId: string,
+    params: { page?: number; limit?: number; search?: string } = {}
+  ) => {
+    const qs = new URLSearchParams();
+    if (params.page != null) qs.set('page', String(params.page));
+    if (params.limit != null) qs.set('limit', String(params.limit));
+    if (params.search) qs.set('search', params.search);
+    const query = qs.toString();
+    return apiFetch<{
+      items: AgbalaCharacter[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>(`/api/v1/admin/agbala/storyworlds/${storyworldId}/characters${query ? `?${query}` : ''}`);
+  },
   createCharacter: (storyworldId: string, data: Record<string, unknown>) =>
     apiFetch<unknown>(`/api/v1/admin/agbala/storyworlds/${storyworldId}/characters`, {
       method: 'POST',
@@ -611,6 +628,22 @@ export const adminApi = {
     }),
   deleteQuiz: (id: string) =>
     apiFetch<unknown>(`/api/v1/admin/agbala/quizzes/${id}`, { method: 'DELETE' }),
+
+  // ─── Agbala / Theory moderation ─────────────────────────────────────────
+  // Proxied to vertical-service's agbala moderation surface; items are
+  // pending theory submissions ({ id, type, title, content, authorName,
+  // submittedAt, status }).
+  getReviewQueue: (page = 1, limit = 20) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/moderation/review-queue?page=${page}&limit=${limit}`),
+  approveAgbalaContent: (contentId: string) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/moderation/${contentId}/approve`, {
+      method: 'POST',
+    }),
+  rejectAgbalaContent: (contentId: string, reason: string) =>
+    apiFetch<unknown>(`/api/v1/admin/agbala/moderation/${contentId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
 
   // ─── System Settings ────────────────────────────────────────────────────
   getAllSettings: () => apiFetch<SystemSetting[]>('/api/v1/admin/settings'),
@@ -793,6 +826,7 @@ export const adminApi = {
   getOpsStatus: () => apiFetch<OpsStatus>('/api/v1/admin/ops/status'),
   getOpsRunHistory: (hours?: number) =>
     apiFetch<OpsRunHistory>(`/api/v1/admin/ops/runs${hours ? `?hours=${hours}` : ''}`),
+  getOpsPgbouncer: () => apiFetch<PgbouncerHealth>('/api/v1/admin/ops/pgbouncer'),
   getGatewayHttp: () => apiFetch<GatewayHttpSummary>('/api/v1/admin/ops/gateway-http'),
   getGatewayRateLimits: () =>
     apiFetch<GatewayRateLimitSnapshot>('/api/v1/admin/ops/gateway-rate-limits'),
@@ -1136,6 +1170,62 @@ export interface OpsStatus {
   jobs: OpsCheck[];
   alerts: OpsAlert[];
   checkedAt: string;
+}
+
+/** One database's client/server pool snapshot from pgbouncer SHOW POOLS. */
+export interface PgbouncerPoolRow {
+  database: string;
+  user: string;
+  clActive: number;
+  clWaiting: number;
+  svActive: number;
+  svIdle: number;
+}
+
+/** Result of the pgbouncer saturation probe (GET /admin/ops/pgbouncer). */
+/** One prisma workspace's client-side pool cap (mirrors backend shape). */
+export interface PgbouncerServiceBudget {
+  workspace: string;
+  database: string | null;
+  connectionLimit: number | null;
+}
+
+/** Per-database rollup of service budgets (mirrors backend shape). */
+export interface PgbouncerDatabaseBudget {
+  database: string;
+  services: PgbouncerServiceBudget[];
+  worstCaseTotal: number;
+  uncapped: string[];
+}
+
+/** One repo-owned process holding a direct (non-pgbouncer) Postgres socket. */
+export interface PgbouncerBypass {
+  workspace: string;
+  command: string;
+  pid: number;
+  connections: number;
+}
+
+export interface PgbouncerHealth {
+  available: boolean;
+  detail?: string;
+  maxClientConn?: number;
+  totalClients?: number;
+  usagePercent?: number;
+  level?: 'ok' | 'degraded' | 'critical';
+  pools?: PgbouncerPoolRow[];
+  /** Per-database client-side pool budgets from workspace .env files. */
+  serviceBudgets?: PgbouncerDatabaseBudget[];
+  /** Present when serviceBudgets is empty: why discovery produced nothing. */
+  budgetsDetail?: string;
+  /** Repo-owned direct-to-Postgres clients — violations of the pooler rule. */
+  bypasses?: PgbouncerBypass[];
+  /** Foreign (non-repo) direct clients — another project's noise. */
+  foreignDirectClients?: Array<{ workspace: string; connections: number }>;
+  /** Present when the bypass scan itself failed (e.g. lsof unavailable). */
+  bypassesDetail?: string;
+  checkedAt: string;
+  latencyMs: number;
 }
 
 /** One appended pass from the job_runs ledger. */

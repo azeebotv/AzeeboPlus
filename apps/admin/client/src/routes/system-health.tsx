@@ -14,30 +14,27 @@ interface ServiceHealth {
 
 interface AgentStats {
   total: number;
-  active: number;
-  suspended: number;
-  retired: number;
+  byStatus: Record<string, number>;
   killSwitchActive: number;
 }
 
 interface CostSummary {
-  totalEvents: number;
+  totalRequests: number;
   totalCostUsd: number;
   byModel: Record<string, { events: number; costUsd: number }>;
 }
 
 interface TaskStats {
   total: number;
-  byWorkClass: Record<string, number>;
+  byClass: Record<string, number>;
   automationCandidates: number;
   eliminationCandidates: number;
 }
 
 interface RiskStats {
-  total: number;
-  byRiskLevel: Record<string, number>;
-  approvalRequiredCount: number;
-  irreversibleCount: number;
+  classifications: { total: number; approvalRequired: number; makerChecker: number };
+  assessments: { total: number; byDecision: Record<string, number>; overridden: number };
+  approvals: { total: number; byStatus: Record<string, number>; pending: number };
 }
 
 interface CapacitySummary {
@@ -145,7 +142,9 @@ export default function SystemHealthPage() {
   const agentsQuery = useQuery({
     queryKey: ['admin', 'health-agents'],
     queryFn: async () => {
-      return apiFetch<AgentStats>('/api/v1/analytics/agents/stats');
+      // The registry controller exposes GET /agents/stats/overview (a bare
+      // /agents/stats 404s — the ':agentId' route shadows it).
+      return apiFetch<AgentStats>('/api/v1/analytics/agents/stats/overview');
     },
     refetchInterval: 30_000,
   });
@@ -169,6 +168,8 @@ export default function SystemHealthPage() {
   const riskQuery = useQuery({
     queryKey: ['admin', 'health-risk'],
     queryFn: async () => {
+      // The risk controller exposes GET /risk/stats — /risk/stats does not
+      // exist as a separate resource and 500s as 'Failed to reach upstream'.
       return apiFetch<RiskStats>('/api/v1/analytics/risk/stats');
     },
     refetchInterval: 30_000,
@@ -182,30 +183,42 @@ export default function SystemHealthPage() {
     refetchInterval: 30_000,
   });
 
-  const agents = agentsQuery.data?.data ?? {
-    total: 0,
-    active: 0,
-    suspended: 0,
-    retired: 0,
-    killSwitchActive: 0,
+  // Defaults are field-level, not object-level: a 200 payload missing one
+  // field used to crash .toLocaleString() into the error boundary because
+  // `??` only fires when the WHOLE object is undefined.
+  const agentsRaw = agentsQuery.data?.data;
+  const agents = {
+    total: agentsRaw?.total ?? 0,
+    active: agentsRaw?.byStatus?.['active'] ?? 0,
+    suspended: agentsRaw?.byStatus?.['suspended'] ?? 0,
+    retired: agentsRaw?.byStatus?.['retired'] ?? 0,
+    killSwitchActive: agentsRaw?.killSwitchActive ?? 0,
   };
-  const cost = costQuery.data?.data ?? { totalEvents: 0, totalCostUsd: 0, byModel: {} };
-  const tasks = tasksQuery.data?.data ?? {
-    total: 0,
-    byWorkClass: {},
-    automationCandidates: 0,
-    eliminationCandidates: 0,
+  const costRaw = costQuery.data?.data;
+  const cost = {
+    totalRequests: costRaw?.totalRequests ?? 0,
+    totalCostUsd: costRaw?.totalCostUsd ?? 0,
+    byModel: costRaw?.byModel ?? {},
   };
-  const risk = riskQuery.data?.data ?? {
-    total: 0,
-    byRiskLevel: {},
-    approvalRequiredCount: 0,
-    irreversibleCount: 0,
+  const tasksRaw = tasksQuery.data?.data;
+  const tasks = {
+    total: tasksRaw?.total ?? 0,
+    byClass: tasksRaw?.byClass ?? {},
+    automationCandidates: tasksRaw?.automationCandidates ?? 0,
+    eliminationCandidates: tasksRaw?.eliminationCandidates ?? 0,
   };
-  const capacity = capacityQuery.data?.data ?? {
-    totalEntries: 0,
-    totalHoursReleased: 0,
-    headcountAvoided: 0,
+  const riskRaw = riskQuery.data?.data;
+  const risk = {
+    total: riskRaw?.classifications?.total ?? 0,
+    byRiskLevel: riskRaw?.approvals?.byStatus ?? {},
+    approvalRequiredCount: riskRaw?.classifications?.approvalRequired ?? 0,
+    irreversibleCount: riskRaw?.assessments?.overridden ?? 0,
+  };
+  const capacityRaw = capacityQuery.data?.data;
+  const capacity = {
+    totalEntries: capacityRaw?.totalEntries ?? 0,
+    totalHoursReleased: capacityRaw?.totalHoursReleased ?? 0,
+    headcountAvoided: capacityRaw?.headcountAvoided ?? 0,
   };
 
   const isLoading =
@@ -439,7 +452,7 @@ export default function SystemHealthPage() {
             <SummaryCard
               title="AI Cost Tracker"
               value={`$${cost.totalCostUsd.toFixed(2)}`}
-              subtitle={`${cost.totalEvents.toLocaleString()} requests`}
+              subtitle={`${cost.totalRequests.toLocaleString()} requests`}
               color="#10B981"
               status="healthy"
               onClick={() => navigate('/cost-dashboard')}
@@ -574,7 +587,7 @@ export default function SystemHealthPage() {
                   { key: 'S', label: 'Deterministic', color: 'var(--admin-emerald)' },
                   { key: 'X', label: 'Eliminate', color: 'var(--admin-red)' },
                 ].map(({ key, label, color }) => {
-                  const count = tasks.byWorkClass?.[key] ?? 0;
+                  const count = tasks.byClass?.[key] ?? 0;
                   const pct = tasks.total > 0 ? (count / tasks.total) * 100 : 0;
                   return (
                     <div key={key}>
@@ -641,7 +654,7 @@ export default function SystemHealthPage() {
                 }}
               >
                 <Icon name="shield" size={18} color="var(--admin-red)" />
-                <span>Risk Level Distribution</span>
+                <span>Approval Pipeline</span>
                 <span
                   onClick={() => navigate('/risk-engine')}
                   style={{
@@ -660,19 +673,16 @@ export default function SystemHealthPage() {
                 </span>
               </h2>
               <div style={{ display: 'flex', gap: 8 }}>
-                {['R0', 'R1', 'R2', 'R3', 'R4'].map((r) => {
-                  const count = risk.byRiskLevel?.[r] ?? 0;
-                  const color =
-                    r === 'R0' || r === 'R1'
-                      ? 'var(--admin-emerald)'
-                      : r === 'R2'
-                        ? 'var(--admin-amber)'
-                        : r === 'R3'
-                          ? 'var(--admin-orange)'
-                          : 'var(--admin-red)';
+                {[
+                  { key: 'pending', label: 'Pending', color: 'var(--admin-amber)' },
+                  { key: 'approved', label: 'Approved', color: 'var(--admin-emerald)' },
+                  { key: 'rejected', label: 'Rejected', color: 'var(--admin-red)' },
+                  { key: 'revoked', label: 'Revoked', color: 'var(--admin-grey)' },
+                ].map(({ key, label, color }) => {
+                  const count = risk.byRiskLevel?.[key] ?? 0;
                   return (
                     <div
-                      key={r}
+                      key={key}
                       style={{
                         flex: 1,
                         padding: 12,
@@ -683,7 +693,7 @@ export default function SystemHealthPage() {
                       }}
                     >
                       <p style={{ fontSize: 20, fontWeight: 700, color }}>{count}</p>
-                      <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>{r}</p>
+                      <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>{label}</p>
                     </div>
                   );
                 })}

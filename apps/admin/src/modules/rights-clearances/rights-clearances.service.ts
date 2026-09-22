@@ -4,6 +4,12 @@ import { AuditLogService } from '../audit/audit.service';
 
 const ALLOWED_STATUSES = ['pending', 'approved', 'rejected', 'expired'] as const;
 const ALLOWED_TYPES = ['talent', 'music', 'likeness', 'voice'] as const;
+
+/** Virtual expiry filters for the governance drill-down, matching the
+ * dashboard's counters: "expiring" = pending/approved with expiry within 30
+ * days; "expired" = pending/approved whose expiry has passed. */
+const EXPIRY_FILTERS = ['expiring', 'expired'] as const;
+const EXPIRY_WINDOW_DAYS = 30;
 // updateStatus is a decision endpoint: only the two terminal outcomes may be
 // set through it (pending is a workflow state; expired is system-driven).
 const DECISION_STATUSES = ['approved', 'rejected'] as const;
@@ -31,8 +37,13 @@ export class RightsClearancesService {
     private readonly auditService: AuditLogService
   ) {}
 
-  async list(filters: { status?: string; type?: string; q?: string }): Promise<RightsClearanceDto[]> {
-    const { status, type, q } = filters;
+  async list(filters: {
+    status?: string;
+    type?: string;
+    q?: string;
+    expiry?: string;
+  }): Promise<RightsClearanceDto[]> {
+    const { status, type, q, expiry } = filters;
 
     if (status && status !== 'all' && !ALLOWED_STATUSES.includes(status as never)) {
       throw new BadRequestException(`Invalid status: ${status}`);
@@ -40,10 +51,32 @@ export class RightsClearancesService {
     if (type && type !== 'all' && !ALLOWED_TYPES.includes(type as never)) {
       throw new BadRequestException(`Invalid clearance type: ${type}`);
     }
+    if (expiry && expiry !== 'all' && !EXPIRY_FILTERS.includes(expiry as never)) {
+      throw new BadRequestException(`Invalid expiry filter: ${expiry}`);
+    }
+
+    // Expiry windows mirror the governance-summary counters exactly so a
+    // drill-down shows the same rows the tile counts.
+    const now = new Date();
+    const in30Days = new Date(now);
+    in30Days.setDate(in30Days.getDate() + EXPIRY_WINDOW_DAYS);
+    const ACTIVE_STATUSES = ['pending', 'approved'] as unknown as string[];
+    const expiryWhere =
+      expiry === 'expiring'
+        ? {
+            status: { in: ACTIVE_STATUSES },
+            expiryDate: { gt: now, lte: in30Days },
+          }
+        : expiry === 'expired'
+          ? { status: { in: ACTIVE_STATUSES }, expiryDate: { lte: now } }
+          : {};
 
     const rows = await this.prisma.rightsClearance.findMany({
       where: {
-        ...(status && status !== 'all' ? { status } : {}),
+        ...expiryWhere,
+        // Status and expiry filters compose; an explicit status narrows the
+        // expiry window's status set rather than fighting it.
+        ...(status && status !== 'all' && !expiry ? { status } : {}),
         ...(type && type !== 'all' ? { type } : {}),
         ...(q
           ? {
@@ -54,7 +87,7 @@ export class RightsClearancesService {
             }
           : {}),
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: expiry && expiry !== 'all' ? { expiryDate: 'asc' as const } : { createdAt: 'desc' },
       take: 200,
       include: { content: { select: { title: true } } },
     });

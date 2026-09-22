@@ -155,7 +155,12 @@ export const moderationApi = {
     contentUrl: string;
     description: string;
   }): Promise<ApiResponse<ChallengeSubmission>> => {
-    const response = await apiClient.post<ChallengeSubmission>('/v1/challenges/submit', data);
+    // Backend contract: POST /challenges/:id/submit with { content, mediaUrl? }
+    // (lifestyle-service ChallengeController), not a bare /challenges/submit.
+    const response = await apiClient.post<ChallengeSubmission>(
+      `/v1/challenges/${data.challengeId}/submit`,
+      { content: data.description, mediaUrl: data.contentUrl }
+    );
     return { success: true, data: response };
   },
 

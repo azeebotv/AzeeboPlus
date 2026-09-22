@@ -22,6 +22,11 @@ const ALLOWED_STATUSES = [
   'executed',
 ] as const;
 
+/** Virtual status for the governance drill-down: anything awaiting a human
+ * decision (first or second round), matching the dashboard's
+ * "Awaiting Approval" counter (status in [pending, first_approved]). */
+const AWAITING_STATUSES = ['pending', 'first_approved'] as const;
+
 export interface DualControlRequestDto {
   id: string;
   actionType: string;
@@ -54,12 +59,22 @@ export class DualControlService {
     status?: string;
   }): Promise<{ actions: DualControlRequestDto[]; stats: Record<string, number> }> {
     const { status } = filters;
-    if (status && status !== 'all' && !ALLOWED_STATUSES.includes(status as never)) {
+    if (
+      status &&
+      status !== 'all' &&
+      status !== 'awaiting' &&
+      !ALLOWED_STATUSES.includes(status as never)
+    ) {
       throw new BadRequestException(`Invalid status: ${status}`);
     }
 
     const rows = await this.prisma.dualControlRequest.findMany({
-      where: status && status !== 'all' ? { status } : {},
+      where:
+        status && status !== 'all'
+          ? status === 'awaiting'
+            ? { status: { in: [...AWAITING_STATUSES] } }
+            : { status }
+          : {},
       orderBy: { createdAt: 'desc' },
       take: 200,
     });
