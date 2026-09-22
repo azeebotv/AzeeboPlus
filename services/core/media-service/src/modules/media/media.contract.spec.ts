@@ -5,6 +5,7 @@ import { UploadModule } from '../upload/upload.module';
 import { UploadService } from '../upload/upload.service';
 import { S3Service } from '../upload/s3.service';
 import { PremiumContentService } from '../upload/premium-content.service';
+import { CdnInvalidationQueueService } from '../upload/cdn-invalidation-queue.service';
 import { AdminModule } from '../admin/admin.module';
 import { RedisService, CacheService } from '@azeebo/shared-services';
 import { PrismaService } from '../database/prisma.service';
@@ -103,6 +104,9 @@ describe('Media Controller Contract Tests', () => {
       })
       .overrideProvider(FeatureFlagService)
       .useValue({ isEnabled: jest.fn().mockResolvedValue(true) })
+      // The real queue would hit the mocked PrismaService — stub its surface.
+      .overrideProvider(CdnInvalidationQueueService)
+      .useValue({ enqueue: jest.fn().mockResolvedValue({ queued: true }) })
       .overrideGuard(RateLimitGuard)
       .useClass(MockRateLimitGuard)
       .overrideGuard(AdminGuard)
@@ -151,7 +155,10 @@ describe('Media Controller Contract Tests', () => {
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(response.body.data.prefix).toBe('uploads');
-      expect(response.body.data).toHaveProperty('purged');
+      // Purges are accepted into the invalidation queue (batched drain), not
+      // executed inline — the response reports queue acceptance.
+      expect(response.body.data).toHaveProperty('queued');
+      expect(response.body.data.queued).toBe(1);
     });
 
     it('should reject a purge with no target', async () => {

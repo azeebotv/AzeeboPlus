@@ -6,7 +6,8 @@ import { S3Service } from './s3.service';
 import { RedisService } from '@azeebo/shared-services';
 import { FeatureFlagService, mediaFlags } from '@azeebo/feature-flags';
 import { FileValidationService } from '../../common/services/file-validation.service';
-import { CdnPurgeService } from './cdn-purge.service';
+import { CdnInvalidationQueueService } from './cdn-invalidation-queue.service';
+import { PrismaService } from '../database/prisma.service';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -49,14 +50,20 @@ describe('UploadService', () => {
       ),
   };
 
-  const mockCdnPurgeService = {
-    purgeKeys: jest.fn(),
-    purgePrefix: jest.fn(),
+  const mockPrismaService = {
+    mediaUpload: {
+      findMany: jest.fn().mockResolvedValue([]),
+      update: jest.fn().mockResolvedValue({}),
+    },
+    $transaction: jest.fn().mockImplementation((ops: unknown[]) => Promise.all(ops)),
+  };
+
+  const mockInvalidationQueue = {
+    enqueue: jest.fn().mockResolvedValue({ queued: true }),
   };
 
   beforeEach(async () => {
     mockedAxios.post.mockResolvedValue({ data: { success: true } });
-    mockCdnPurgeService.purgeKeys.mockResolvedValue({ purged: 1 });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -66,7 +73,8 @@ describe('UploadService', () => {
         { provide: RedisService, useValue: mockRedisService },
         { provide: FileValidationService, useValue: mockFileValidationService },
         { provide: FeatureFlagService, useValue: mockFeatureFlagService },
-        { provide: CdnPurgeService, useValue: mockCdnPurgeService },
+        { provide: CdnInvalidationQueueService, useValue: mockInvalidationQueue },
+        { provide: PrismaService, useValue: mockPrismaService },
       ],
     }).compile();
 
@@ -235,11 +243,11 @@ describe('UploadService', () => {
     // This suite has no global afterEach clearAllMocks, so call history can
     // bleed across tests — start each test with a clean slate.
     beforeEach(() => {
-      mockCdnPurgeService.purgeKeys.mockClear();
-      mockCdnPurgeService.purgeKeys.mockResolvedValue({ purged: 1 });
+      mockInvalidationQueue.enqueue.mockClear();
+      mockInvalidationQueue.enqueue.mockResolvedValue({ queued: true });
     });
 
-    it('invalidates exactly the uploaded key when media_cdn_edge_cache is off', async () => {
+    it('enqueues exactly the uploaded key when media_cdn_edge_cache is off', async () => {
       mockFeatureFlagService.isEnabled.mockResolvedValue(false);
       mockS3Service.uploadFile.mockResolvedValue({
         url: 'https://example.com/v.mp4',
@@ -255,11 +263,12 @@ describe('UploadService', () => {
       await service.uploadVideo(file);
 
       // The no-store response must not be shadowed by a stale edge copy of
-      // the same key (e.g. from when caching was on).
-      expect(mockCdnPurgeService.purgeKeys).toHaveBeenCalledWith(['videos/v.mp4']);
+      // the same key (e.g. from when caching was on). The eviction is
+      // queue-only: batched drain later coalesces it into one call.
+      expect(mockInvalidationQueue.enqueue).toHaveBeenCalledWith('videos/v.mp4', 'reupload');
     });
 
-    it('does not purge when caching is enabled (the new object is the cache)', async () => {
+    it('does not enqueue when caching is enabled (the new object is the cache)', async () => {
       mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
         Promise.resolve(key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked)
       );
@@ -276,12 +285,12 @@ describe('UploadService', () => {
 
       await service.uploadImage(file);
 
-      expect(mockCdnPurgeService.purgeKeys).not.toHaveBeenCalled();
+      expect(mockInvalidationQueue.enqueue).not.toHaveBeenCalled();
     });
 
-    it('never fails the upload when the CDN purge errors', async () => {
+    it('never fails the upload when the queue enqueue errors', async () => {
       mockFeatureFlagService.isEnabled.mockResolvedValue(false);
-      mockCdnPurgeService.purgeKeys.mockRejectedValueOnce(new Error('cloudfront down'));
+      mockInvalidationQueue.enqueue.mockRejectedValueOnce(new Error('db down'));
       mockS3Service.uploadFile.mockResolvedValue({
         url: 'https://example.com/c.jpg',
         key: 'images/c.jpg',
@@ -294,6 +303,125 @@ describe('UploadService', () => {
       } as Express.Multer.File;
 
       await expect(service.uploadImage(file)).resolves.toBeDefined();
+    });
+  });
+
+  describe('deleteFile (blob + queued CDN invalidation)', () => {
+    beforeEach(() => {
+      mockInvalidationQueue.enqueue.mockClear();
+      mockInvalidationQueue.enqueue.mockResolvedValue({ queued: true });
+      mockPrismaService.mediaUpload.findMany.mockClear();
+      mockPrismaService.mediaUpload.update.mockClear();
+      mockPrismaService.$transaction.mockClear();
+    });
+
+    it('deletes the blob and enqueues the edge invalidation for the key', async () => {
+      mockS3Service.deleteFile.mockResolvedValue(undefined);
+
+      await service.deleteFile('videos/gone.mp4');
+
+      expect(mockS3Service.deleteFile).toHaveBeenCalledWith('videos/gone.mp4');
+      // Edge invalidation is queue-only: the batched drain later coalesces
+      // this with any other pending deletes into ONE CloudFront call.
+      expect(mockInvalidationQueue.enqueue).toHaveBeenCalledWith('videos/gone.mp4', 'delete');
+    });
+
+    it('propagates an S3 failure and never enqueues for a failed delete', async () => {
+      mockS3Service.deleteFile.mockRejectedValueOnce(new Error('S3 unreachable'));
+
+      await expect(service.deleteFile('videos/gone.mp4')).rejects.toThrow('S3 unreachable');
+      // Invalidation must NOT fire for a failed delete — nothing changed.
+      expect(mockInvalidationQueue.enqueue).not.toHaveBeenCalled();
+    });
+
+    it('stamps cdnPurgeStatus=queued on the media_uploads row (delete-time track)', async () => {
+      mockS3Service.deleteFile.mockResolvedValue(undefined);
+      mockPrismaService.mediaUpload.findMany.mockResolvedValueOnce([
+        { id: 'row-1', metadata: { scanStatus: 'clean' } },
+        { id: 'row-2', metadata: null },
+      ]);
+
+      await service.deleteFile('videos/gone.mp4');
+
+      expect(mockPrismaService.mediaUpload.findMany).toHaveBeenCalledWith({
+        where: { key: 'videos/gone.mp4' },
+        select: { id: true, metadata: true },
+      });
+      expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.mediaUpload.update).toHaveBeenCalledWith({
+        where: { id: 'row-1' },
+        data: {
+          metadata: { scanStatus: 'clean', cdnPurgeStatus: 'queued' },
+        },
+      });
+      expect(mockPrismaService.mediaUpload.update).toHaveBeenCalledWith({
+        where: { id: 'row-2' },
+        data: {
+          metadata: { cdnPurgeStatus: 'queued' },
+        },
+      });
+    });
+
+    it('marks the row failed when the enqueue itself errors (nightly reconcile picks it up)', async () => {
+      mockS3Service.deleteFile.mockResolvedValue(undefined);
+      mockInvalidationQueue.enqueue.mockRejectedValueOnce(new Error('db down'));
+      mockPrismaService.mediaUpload.findMany.mockResolvedValueOnce([
+        { id: 'row-1', metadata: null },
+      ]);
+
+      await service.deleteFile('videos/gone.mp4');
+
+      expect(mockPrismaService.mediaUpload.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            metadata: expect.objectContaining({
+              cdnPurgeStatus: 'failed',
+              cdnPurgeError: 'db down',
+            }),
+          }),
+        })
+      );
+    });
+
+    it('never fails the delete when the outcome write errors', async () => {
+      mockS3Service.deleteFile.mockResolvedValue(undefined);
+      mockPrismaService.mediaUpload.findMany.mockRejectedValueOnce(new Error('db down'));
+
+      await expect(service.deleteFile('videos/gone.mp4')).resolves.toBeUndefined();
+    });
+
+    it('skips the DB write entirely when no row references the key', async () => {
+      mockS3Service.deleteFile.mockResolvedValue(undefined);
+      mockPrismaService.mediaUpload.findMany.mockResolvedValueOnce([]);
+
+      await service.deleteFile('videos/never-tracked.mp4');
+
+      expect(mockPrismaService.mediaUpload.update).not.toHaveBeenCalled();
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('never fails the delete when enqueueing errors and no rows exist', async () => {
+      mockS3Service.deleteFile.mockResolvedValue(undefined);
+      mockInvalidationQueue.enqueue.mockRejectedValueOnce(new Error('queue db down'));
+      mockPrismaService.mediaUpload.findMany.mockResolvedValueOnce([]);
+
+      await expect(service.deleteFile('videos/gone.mp4')).resolves.toBeUndefined();
+    });
+
+    it('does not touch the row when upload-time eviction purges (track=false)', async () => {
+      mockFeatureFlagService.isEnabled.mockResolvedValue(false);
+      mockS3Service.uploadFile.mockResolvedValue({ url: 'https://example.com/r.jpg', key: 'images/r.jpg' });
+      const file = {
+        originalname: 'r.jpg',
+        mimetype: 'image/jpeg',
+        buffer: Buffer.from('test'),
+        size: 512,
+      } as Express.Multer.File;
+
+      await service.uploadImage(file);
+
+      expect(mockInvalidationQueue.enqueue).toHaveBeenCalledWith('images/r.jpg', 'reupload');
+      expect(mockPrismaService.mediaUpload.findMany).not.toHaveBeenCalled();
     });
   });
 
@@ -326,7 +454,8 @@ describe('UploadService', () => {
         mockRedisService as unknown as RedisService,
         mockFileValidationService as unknown as FileValidationService,
         mockFeatureFlagService as unknown as FeatureFlagService,
-        mockCdnPurgeService as unknown as CdnPurgeService
+        mockInvalidationQueue as unknown as CdnInvalidationQueueService,
+        mockPrismaService as unknown as PrismaService
       );
     });
 
@@ -365,7 +494,8 @@ describe('UploadService', () => {
         mockRedisService as unknown as RedisService,
         mockFileValidationService as unknown as FileValidationService,
         mockFeatureFlagService as unknown as FeatureFlagService,
-        mockCdnPurgeService as unknown as CdnPurgeService
+        mockInvalidationQueue as unknown as CdnInvalidationQueueService,
+        mockPrismaService as unknown as PrismaService
       );
       const video = await upload('video/mp4');
       expect(video.cacheControl).toBe('public, max-age=1209600');
@@ -386,7 +516,8 @@ describe('UploadService', () => {
         mockRedisService as unknown as RedisService,
         mockFileValidationService as unknown as FileValidationService,
         mockFeatureFlagService as unknown as FeatureFlagService,
-        mockCdnPurgeService as unknown as CdnPurgeService
+        mockInvalidationQueue as unknown as CdnInvalidationQueueService,
+        mockPrismaService as unknown as PrismaService
       );
       expect((await upload('video/mp4')).cacheControl).toBe('public, max-age=86400');
     });

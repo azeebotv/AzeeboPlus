@@ -50,6 +50,24 @@ export class AdminController {
     return ApiResponseWrapper.success(result);
   }
 
+  @Post('cdn/invalidation/reconcile')
+  @ApiOperation({
+    summary: 'Reconcile failed/skipped CDN purge outcomes into the invalidation queue (admin)',
+  })
+  @ApiResponse({ status: 200, description: 'Reconcile pass completed' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async runInvalidationReconcile() {
+    return ApiResponseWrapper.success(await this.adminService.runInvalidationReconcile());
+  }
+
+  @Post('cdn/invalidation/drain')
+  @ApiOperation({ summary: 'Retry pending CDN invalidations from the queue (admin)' })
+  @ApiResponse({ status: 200, description: 'Drain pass completed' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async runInvalidationDrain() {
+    return ApiResponseWrapper.success(await this.adminService.runInvalidationDrain());
+  }
+
   @Post('cdn/purge')
   @ApiOperation({ summary: 'Purge cached media from the CDN (admin)' })
   @ApiResponse({ status: 200, description: 'CDN purge request accepted' })

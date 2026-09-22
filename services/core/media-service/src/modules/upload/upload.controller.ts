@@ -11,7 +11,6 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  ForbiddenException,
   UseGuards,
   Request,
   Res,
@@ -21,9 +20,15 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UploadService } from './upload.service';
+import { FileAccessPolicyService } from './file-access-policy.service';
 import { PremiumContentService } from './premium-content.service';
-import { CdnPurgeService } from './cdn-purge.service';
+import {
+  CdnInvalidationQueueService,
+  CdnInvalidationReason,
+} from './cdn-invalidation-queue.service';
 import { MediaLifecycleService } from '../media/media-lifecycle.service';
+import { BlobReconcileService } from '../media/blob-reconcile.service';
+import { UploadTtlSweeperService } from '../media/upload-ttl-sweeper.service';
 import { InitChunkedUploadDto } from './dto/chunked-upload.dto.js';
 import {
   GeneratePremiumUrlDto,
@@ -40,9 +45,12 @@ import { FeatureFlag, FeatureFlagGuard, mediaFlags } from '@azeebo/feature-flags
 export class UploadController {
   constructor(
     @Inject(UploadService) private readonly uploadService: UploadService,
+    @Inject(FileAccessPolicyService) private readonly fileAccessPolicy: FileAccessPolicyService,
     @Inject(PremiumContentService) private readonly premiumContentService: PremiumContentService,
-    @Inject(CdnPurgeService) private readonly cdnPurgeService: CdnPurgeService,
-    @Inject(MediaLifecycleService) private readonly mediaLifecycle: MediaLifecycleService
+    private readonly invalidationQueue: CdnInvalidationQueueService,
+    @Inject(MediaLifecycleService) private readonly mediaLifecycle: MediaLifecycleService,
+    private readonly blobReconcileService: BlobReconcileService,
+    private readonly ttlSweeperService: UploadTtlSweeperService
   ) {}
 
   @Post('upload/image')
@@ -316,14 +324,22 @@ export class UploadController {
   @ApiResponse({ status: 200, description: 'File metadata retrieved' })
   @ApiResponse({ status: 400, description: 'Missing required parameter: key' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getFileMetadata(@Query('key') key: string): Promise<unknown> {
+  @ApiResponse({ status: 403, description: 'Not the file owner' })
+  async getFileMetadata(
+    @Request() req: { user: { id: string; role?: string } },
+    @Query('key') key: string
+  ): Promise<unknown> {
     if (!key) {
       throw new BadRequestException('Missing required parameter: key');
     }
     if (key.includes('..') || key.startsWith('/')) {
       throw new BadRequestException('Invalid key format');
     }
-    return this.uploadService.getFileMetadata(key);
+    const metadata = await this.uploadService.getFileMetadata(key);
+    // Same ownership rules as delete — reading another user's object
+    // metadata leaks uploader identity and storage layout otherwise.
+    this.fileAccessPolicy.assertCanAccess(req.user, metadata, 'read metadata');
+    return metadata;
   }
 
   @Delete(':key')
@@ -339,11 +355,20 @@ export class UploadController {
     if (decodedKey.includes('..') || decodedKey.startsWith('/')) {
       throw new BadRequestException('Invalid key format');
     }
-    const metadata = await this.uploadService.getFileMetadata(decodedKey);
-    const ownerId = metadata?.metadata?.userId;
-    if (ownerId && ownerId !== req.user.id && req.user.role !== 'admin') {
-      throw new ForbiddenException('You can only delete your own files');
+    // HeadObject on a missing key throws. Deleting something already gone is
+    // still a success (idempotent, same semantics as S3 DELETE) — but only
+    // NotFound is absorbed; outages must keep surfacing as 503s so callers
+    // never mistake an unreachable store for a completed delete.
+    let metadata: Awaited<ReturnType<typeof this.uploadService.getFileMetadata>>;
+    try {
+      metadata = await this.uploadService.getFileMetadata(decodedKey);
+    } catch (err) {
+      if ((err as { name?: string })?.name === 'NotFound') {
+        return ApiResponseWrapper.success({ message: 'File deleted successfully', alreadyGone: true });
+      }
+      throw err;
     }
+    this.fileAccessPolicy.assertCanAccess(req.user, metadata, 'delete');
     await this.uploadService.deleteFile(decodedKey);
     return ApiResponseWrapper.success({ message: 'File deleted successfully' });
   }
@@ -517,15 +542,46 @@ export class UploadController {
   @ApiResponse({ status: 200, description: 'CDN purge initiated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async purgeCdn(@Body() dto: CdnPurgeDto): Promise<unknown> {
-    if (dto.keys?.length) {
-      const result = await this.cdnPurgeService.purgeKeys(dto.keys);
-      return ApiResponseWrapper.success(result);
+    const keys = (dto.keys ?? []).filter((k) => k && k.trim());
+    const prefix = dto.prefix?.trim();
+    if (keys.length === 0 && !prefix) {
+      return ApiResponseWrapper.success({
+        queued: 0,
+        message: 'Provide keys or prefix to purge',
+      });
     }
-    if (dto.prefix) {
-      const result = await this.cdnPurgeService.purgePrefix(dto.prefix);
-      return ApiResponseWrapper.success(result);
+
+    // Everything routes through the durable invalidation queue: exact keys
+    // coalesce into one batched CloudFront call at drain time, and a prefix
+    // becomes one wildcard invalidation — burst-safe against the quota.
+    let queued = 0;
+    try {
+      if (keys.length > 0) {
+        const results = await Promise.all(
+          keys.map((k) => this.invalidationQueue.enqueue(k, 'admin' as CdnInvalidationReason))
+        );
+        queued += results.filter((r) => r.queued).length;
+      }
+      if (prefix) {
+        const result = await this.invalidationQueue.enqueue(
+          `${prefix.replace(/\/+$/, '')}/*`,
+          'admin' as CdnInvalidationReason
+        );
+        if (result.queued) queued += 1;
+      }
+    } catch (error) {
+      // Enqueue is durable but can still fail (DB down) — surface it rather
+      // than pretending the purge was accepted.
+      return ApiResponseWrapper.success({
+        queued,
+        error: (error as Error).message,
+        message: 'Purge partially accepted — check the invalidation queue',
+      });
     }
-    return ApiResponseWrapper.success({ purged: 0, message: 'Provide keys or prefix to purge' });
+    return ApiResponseWrapper.success({
+      queued,
+      message: 'Purge accepted into the invalidation queue',
+    });
   }
 
   // ========================
@@ -572,6 +628,32 @@ export class UploadController {
     @Query('expiresIn') expiresIn?: number
   ) {
     const result = await this.mediaLifecycle.generatePremiumUrl(mediaUploadId, { expiresIn });
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Post('lifecycle/reconcile')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @RateLimit(5, 60000)
+  @ApiOperation({
+    summary: 'Reconcile bucket-only objects into media_uploads (report-adjacent backfill)',
+  })
+  @ApiResponse({ status: 200, description: 'Reconcile pass completed' })
+  async reconcileOrphans(@Query('prefix') prefix?: string) {
+    const result = await this.blobReconcileService.reconcile(prefix);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Post('lifecycle/sweep-expired')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @RateLimit(5, 60000)
+  @ApiOperation({
+    summary: 'Delete unreferenced, uuid-keyed uploads older than the TTL (default 24h)',
+  })
+  @ApiResponse({ status: 200, description: 'Sweep pass completed' })
+  async sweepExpiredUploads() {
+    const result = await this.ttlSweeperService.sweep();
     return ApiResponseWrapper.success(result);
   }
 }

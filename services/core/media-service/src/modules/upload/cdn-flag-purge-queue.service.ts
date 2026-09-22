@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FeatureFlagService, mediaFlags } from '@azeebo/feature-flags';
-import { CdnPurgeService } from './cdn-purge.service';
+import { CdnInvalidationQueueService } from './cdn-invalidation-queue.service';
 
 /**
  * Automates the media_cdn_edge_cache flip: when the flag transitions
@@ -32,7 +32,8 @@ export class CdnFlagPurgeQueueService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
-    @Inject(CdnPurgeService) private readonly cdnPurgeService: CdnPurgeService,
+    @Inject(CdnInvalidationQueueService)
+    private readonly invalidationQueue: CdnInvalidationQueueService,
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {}
 
@@ -105,14 +106,19 @@ export class CdnFlagPurgeQueueService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /** Runs a single purge job: full invalidation of the uploads prefix. */
+  /** Runs a single purge job: enqueue the uploads prefix for batched invalidation. */
   private async execute(jobKey: string): Promise<void> {
     try {
       this.logger.warn(
-        `CDN purge job ${jobKey} — invalidating /${CdnFlagPurgeQueueService.PURGE_PREFIX}/*`
+        `CDN purge job ${jobKey} — enqueueing /${CdnFlagPurgeQueueService.PURGE_PREFIX}/* for batched invalidation`
       );
-      const result = await this.cdnPurgeService.purgePrefix(CdnFlagPurgeQueueService.PURGE_PREFIX);
-      this.logger.warn(`CDN purge job ${jobKey} complete (${result.purged} path(s) submitted)`);
+      const result = await this.invalidationQueue.enqueue(
+        `${CdnFlagPurgeQueueService.PURGE_PREFIX}/*`,
+        'flag-flip'
+      );
+      this.logger.warn(
+        `CDN purge job ${jobKey} ${result.queued ? 'queued' : 'already queued'} for invalidation`
+      );
     } catch (error) {
       this.logger.error(`CDN purge job ${jobKey} failed: ${(error as Error).message}`);
     }
