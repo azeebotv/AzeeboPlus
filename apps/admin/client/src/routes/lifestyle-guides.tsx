@@ -53,7 +53,10 @@ const primaryBtn: React.CSSProperties = {
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const st = CATALOG_STATUS_STYLE[status] ?? CATALOG_STATUS_STYLE.draft;
+  const st = CATALOG_STATUS_STYLE[status] ?? {
+    bg: 'rgba(154,138,122,0.2)',
+    color: 'var(--admin-text-muted)',
+  };
   return (
     <span
       style={{
@@ -70,16 +73,17 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label style={{ display: 'block', flex: 1, minWidth: 160 }}>
-      <span style={{ display: 'block', fontSize: 11, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+      <span
+        style={{
+          display: 'block',
+          fontSize: 11,
+          color: 'var(--admin-text-muted)',
+          marginBottom: 4,
+        }}
+      >
         {label}
       </span>
       {children}
@@ -94,7 +98,13 @@ function ConfirmDeleteButton({ onConfirm, label }: { onConfirm: () => void; labe
       <button
         onClick={() => setArmed(true)}
         title={`Delete ${label}`}
-        style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-red)', color: 'var(--admin-red)', padding: '6px 10px' }}
+        style={{
+          ...primaryBtn,
+          background: 'transparent',
+          border: '1px solid var(--admin-red)',
+          color: 'var(--admin-red)',
+          padding: '6px 10px',
+        }}
       >
         <Icon name="trash" size={14} />
       </button>
@@ -102,12 +112,21 @@ function ConfirmDeleteButton({ onConfirm, label }: { onConfirm: () => void; labe
   }
   return (
     <span style={{ display: 'inline-flex', gap: 6 }}>
-      <button onClick={onConfirm} style={{ ...primaryBtn, background: 'var(--admin-red)', padding: '6px 10px' }}>
+      <button
+        onClick={onConfirm}
+        style={{ ...primaryBtn, background: 'var(--admin-red)', padding: '6px 10px' }}
+      >
         Confirm
       </button>
       <button
         onClick={() => setArmed(false)}
-        style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-grey)', color: 'var(--admin-text-muted)', padding: '6px 10px' }}
+        style={{
+          ...primaryBtn,
+          background: 'transparent',
+          border: '1px solid var(--admin-grey)',
+          color: 'var(--admin-text-muted)',
+          padding: '6px 10px',
+        }}
       >
         Cancel
       </button>
@@ -143,7 +162,12 @@ function ItinerariesTab() {
   const [form, setForm] = useState<ItineraryFormState>(EMPTY_ITINERARY);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { data: rows = [], isLoading, isError, error } = useQuery({
+  const {
+    data: rows = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'lifestyle-itineraries', statusFilter],
     queryFn: async () => {
       const res = await adminApi.getItineraries(statusFilter);
@@ -152,7 +176,8 @@ function ItinerariesTab() {
     },
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'lifestyle-itineraries'] });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ['admin', 'lifestyle-itineraries'] });
 
   const createMutation = useMutation({
     mutationFn: adminApi.createItinerary,
@@ -166,7 +191,10 @@ function ItinerariesTab() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: { id: string } & Parameters<typeof adminApi.updateItinerary>[1]) =>
+    mutationFn: ({
+      id,
+      ...data
+    }: { id: string } & Parameters<typeof adminApi.updateItinerary>[1]) =>
       adminApi.updateItinerary(id, data),
     onSuccess: () => {
       setEditTarget(null);
@@ -195,17 +223,30 @@ function ItinerariesTab() {
       city: row.city,
       duration: row.duration,
       status: row.status,
-      stops: (row.stops ?? []).map((s) => ({ name: s.name, description: s.description, duration: s.duration, order: s.order })),
+      stops: (row.stops ?? []).map((s) => ({
+        name: s.name,
+        description: s.description,
+        duration: s.duration,
+        order: s.order,
+      })),
     });
   };
 
   const submit = () => {
     setFormError(null);
-    if (!form.title.trim() || !form.description.trim() || !form.city.trim() || !form.duration.trim()) {
+    if (
+      !form.title.trim() ||
+      !form.description.trim() ||
+      !form.city.trim() ||
+      !form.duration.trim()
+    ) {
       setFormError('Title, description, city, and duration are required');
       return;
     }
-    if (form.stops.length === 0 || form.stops.some((s) => !s.name.trim() || !s.description.trim())) {
+    if (
+      form.stops.length === 0 ||
+      form.stops.some((s) => !s.name.trim() || !s.description.trim())
+    ) {
       setFormError('Every stop needs a name and description');
       return;
     }
@@ -219,10 +260,23 @@ function ItinerariesTab() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ ...inputStyle, width: 180 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 16,
+        }}
+      >
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{ ...inputStyle, width: 180 }}
+        >
           {['all', 'draft', 'published', 'archived'].map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>
+              {s}
+            </option>
           ))}
         </select>
         <button
@@ -238,7 +292,9 @@ function ItinerariesTab() {
         </button>
       </div>
 
-      {formError && <p style={{ color: 'var(--admin-red)', fontSize: 13, marginBottom: 12 }}>{formError}</p>}
+      {formError && (
+        <p style={{ color: 'var(--admin-red)', fontSize: 13, marginBottom: 12 }}>{formError}</p>
+      )}
 
       {showForm && (
         <div style={{ ...cardStyle, marginBottom: 20 }}>
@@ -247,47 +303,100 @@ function ItinerariesTab() {
           </h3>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
             <Field label="Title *">
-              <input style={inputStyle} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <input
+                style={inputStyle}
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
             </Field>
             <Field label="City *">
-              <input style={inputStyle} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+              <input
+                style={inputStyle}
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+              />
             </Field>
             <Field label="Duration *">
-              <input style={inputStyle} value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} placeholder="e.g. 1 day" />
+              <input
+                style={inputStyle}
+                value={form.duration}
+                onChange={(e) => setForm({ ...form, duration: e.target.value })}
+                placeholder="e.g. 1 day"
+              />
             </Field>
             <Field label="Status">
-              <select style={inputStyle} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              <select
+                style={inputStyle}
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+              >
                 {['draft', 'published', 'archived'].map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </Field>
           </div>
           <Field label="Description *">
-            <textarea rows={2} style={{ ...inputStyle, marginBottom: 12, resize: 'vertical' }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <textarea
+              rows={2}
+              style={{ ...inputStyle, marginBottom: 12, resize: 'vertical' }}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
           </Field>
-          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>Stops (in order):</p>
+          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>
+            Stops (in order):
+          </p>
           {form.stops.map((stop, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
-              <input style={{ ...inputStyle, width: 200 }} placeholder="Stop name" value={stop.name} onChange={(e) => {
-                const stops = [...form.stops];
-                stops[i] = { ...stops[i], name: e.target.value };
-                setForm({ ...form, stops });
-              }} />
-              <input style={{ ...inputStyle, flex: 1 }} placeholder="What happens here" value={stop.description} onChange={(e) => {
-                const stops = [...form.stops];
-                stops[i] = { ...stops[i], description: e.target.value };
-                setForm({ ...form, stops });
-              }} />
-              <input style={{ ...inputStyle, width: 110 }} placeholder="Duration" value={stop.duration} onChange={(e) => {
-                const stops = [...form.stops];
-                stops[i] = { ...stops[i], duration: e.target.value };
-                setForm({ ...form, stops });
-              }} />
+            <div
+              key={i}
+              style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}
+            >
+              <input
+                style={{ ...inputStyle, width: 200 }}
+                placeholder="Stop name"
+                value={stop.name}
+                onChange={(e) => {
+                  const stops = form.stops.map((s, si) =>
+                    si === i ? { ...s, name: e.target.value } : s
+                  );
+                  setForm({ ...form, stops });
+                }}
+              />
+              <input
+                style={{ ...inputStyle, flex: 1 }}
+                placeholder="What happens here"
+                value={stop.description}
+                onChange={(e) => {
+                  const stops = form.stops.map((s, si) =>
+                    si === i ? { ...s, description: e.target.value } : s
+                  );
+                  setForm({ ...form, stops });
+                }}
+              />
+              <input
+                style={{ ...inputStyle, width: 110 }}
+                placeholder="Duration"
+                value={stop.duration}
+                onChange={(e) => {
+                  const stops = form.stops.map((s, si) =>
+                    si === i ? { ...s, duration: e.target.value } : s
+                  );
+                  setForm({ ...form, stops });
+                }}
+              />
               <button
                 onClick={() => setForm({ ...form, stops: form.stops.filter((_, j) => j !== i) })}
                 disabled={form.stops.length === 1}
-                style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-red)', color: 'var(--admin-red)', padding: '6px 10px' }}
+                style={{
+                  ...primaryBtn,
+                  background: 'transparent',
+                  border: '1px solid var(--admin-red)',
+                  color: 'var(--admin-red)',
+                  padding: '6px 10px',
+                }}
                 title="Remove stop"
               >
                 <Icon name="trash" size={14} />
@@ -296,8 +405,21 @@ function ItinerariesTab() {
           ))}
           <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
             <button
-              onClick={() => setForm({ ...form, stops: [...form.stops, { name: '', description: '', duration: '', order: form.stops.length + 1 }] })}
-              style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-card)', color: 'var(--admin-text)' }}
+              onClick={() =>
+                setForm({
+                  ...form,
+                  stops: [
+                    ...form.stops,
+                    { name: '', description: '', duration: '', order: form.stops.length + 1 },
+                  ],
+                })
+              }
+              style={{
+                ...primaryBtn,
+                background: 'transparent',
+                border: '1px solid var(--admin-card)',
+                color: 'var(--admin-text)',
+              }}
             >
               <Icon name="plus" size={14} /> Add stop
             </button>
@@ -309,33 +431,66 @@ function ItinerariesTab() {
       )}
 
       {isError ? (
-        <div style={{ padding: 20, borderRadius: 12, border: '1px solid var(--admin-red)', background: 'rgba(204,28,28,0.1)', color: 'var(--admin-red)' }}>
+        <div
+          style={{
+            padding: 20,
+            borderRadius: 12,
+            border: '1px solid var(--admin-red)',
+            background: 'rgba(204,28,28,0.1)',
+            color: 'var(--admin-red)',
+          }}
+        >
           <strong>Failed to load itineraries.</strong> {(error as Error)?.message}
         </div>
       ) : isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : rows.length === 0 ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>No itineraries yet.</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          No itineraries yet.
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {rows.map((row) => (
-            <div key={row.id} style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+            <div
+              key={row.id}
+              style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', gap: 16 }}
+            >
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                   <strong style={{ fontSize: 15 }}>{row.title}</strong>
                   <StatusBadge status={row.status} />
-                  <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>{row.city} · {row.duration} · ★ {row.rating.toFixed(1)}</span>
+                  <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
+                    {row.city} · {row.duration} · ★ {row.rating.toFixed(1)}
+                  </span>
                 </div>
-                <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>{row.description}</p>
+                <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>
+                  {row.description}
+                </p>
                 <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', margin: 0 }}>
-                  {row.stops?.length ?? 0} stop(s): {(row.stops ?? []).map((s) => s.name).join(' → ') || '—'}
+                  {row.stops?.length ?? 0} stop(s):{' '}
+                  {(row.stops ?? []).map((s) => s.name).join(' → ') || '—'}
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <button onClick={() => openEdit(row)} style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-card)', color: 'var(--admin-text)', padding: '6px 10px' }} title="Edit">
+                <button
+                  onClick={() => openEdit(row)}
+                  style={{
+                    ...primaryBtn,
+                    background: 'transparent',
+                    border: '1px solid var(--admin-card)',
+                    color: 'var(--admin-text)',
+                    padding: '6px 10px',
+                  }}
+                  title="Edit"
+                >
                   <Icon name="edit" size={14} />
                 </button>
-                <ConfirmDeleteButton onConfirm={() => deleteMutation.mutate(row.id)} label={`"${row.title}"`} />
+                <ConfirmDeleteButton
+                  onConfirm={() => deleteMutation.mutate(row.id)}
+                  label={`"${row.title}"`}
+                />
               </div>
             </div>
           ))}
@@ -371,7 +526,12 @@ function NeighborhoodsTab() {
   const [form, setForm] = useState<NeighborhoodFormState>(EMPTY_NEIGHBORHOOD);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { data: rows = [], isLoading, isError, error } = useQuery({
+  const {
+    data: rows = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'lifestyle-neighborhoods', statusFilter],
     queryFn: async () => {
       const res = await adminApi.getNeighborhoods(statusFilter);
@@ -380,7 +540,8 @@ function NeighborhoodsTab() {
     },
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'lifestyle-neighborhoods'] });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ['admin', 'lifestyle-neighborhoods'] });
 
   const createMutation = useMutation({
     mutationFn: (data: {
@@ -400,7 +561,10 @@ function NeighborhoodsTab() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: { id: string } & Parameters<typeof adminApi.updateNeighborhood>[1]) =>
+    mutationFn: ({
+      id,
+      ...data
+    }: { id: string } & Parameters<typeof adminApi.updateNeighborhood>[1]) =>
       adminApi.updateNeighborhood(id, data),
     onSuccess: () => {
       setEditTarget(null);
@@ -451,17 +615,36 @@ function NeighborhoodsTab() {
         rating: Number(p.rating) || 0,
         address: p.address.trim() || undefined,
       }));
-    const payload = { name: form.name.trim(), city: form.city.trim(), description: form.description.trim(), status: form.status, places };
+    const payload = {
+      name: form.name.trim(),
+      city: form.city.trim(),
+      description: form.description.trim(),
+      status: form.status,
+      places,
+    };
     if (editTarget) updateMutation.mutate({ id: editTarget.id, ...payload });
     else createMutation.mutate(payload);
   };
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ ...inputStyle, width: 180 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 16,
+        }}
+      >
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{ ...inputStyle, width: 180 }}
+        >
           {['all', 'draft', 'published', 'archived'].map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>
+              {s}
+            </option>
           ))}
         </select>
         <button
@@ -473,11 +656,14 @@ function NeighborhoodsTab() {
           }}
           style={primaryBtn}
         >
-          <Icon name={showForm ? 'x' : 'plus'} size={14} /> {showForm ? 'Cancel' : 'New neighborhood'}
+          <Icon name={showForm ? 'x' : 'plus'} size={14} />{' '}
+          {showForm ? 'Cancel' : 'New neighborhood'}
         </button>
       </div>
 
-      {formError && <p style={{ color: 'var(--admin-red)', fontSize: 13, marginBottom: 12 }}>{formError}</p>}
+      {formError && (
+        <p style={{ color: 'var(--admin-red)', fontSize: 13, marginBottom: 12 }}>{formError}</p>
+      )}
 
       {showForm && (
         <div style={{ ...cardStyle, marginBottom: 20 }}>
@@ -486,54 +672,119 @@ function NeighborhoodsTab() {
           </h3>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
             <Field label="Name *">
-              <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <input
+                style={inputStyle}
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
             </Field>
             <Field label="City *">
-              <input style={inputStyle} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+              <input
+                style={inputStyle}
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+              />
             </Field>
             <Field label="Status">
-              <select style={inputStyle} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              <select
+                style={inputStyle}
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+              >
                 {['draft', 'published', 'archived'].map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </Field>
           </div>
           <Field label="Description *">
-            <textarea rows={2} style={{ ...inputStyle, marginBottom: 12, resize: 'vertical' }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <textarea
+              rows={2}
+              style={{ ...inputStyle, marginBottom: 12, resize: 'vertical' }}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
           </Field>
-          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>Places (optional):</p>
+          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>
+            Places (optional):
+          </p>
           {form.places.map((place, i) => (
             <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              <input style={{ ...inputStyle, width: 200 }} placeholder="Place name" value={place.name} onChange={(e) => {
-                const places = [...form.places];
-                places[i] = { ...places[i], name: e.target.value };
-                setForm({ ...form, places });
-              }} />
-              <input style={{ ...inputStyle, width: 140 }} placeholder="Category" value={place.category} onChange={(e) => {
-                const places = [...form.places];
-                places[i] = { ...places[i], category: e.target.value };
-                setForm({ ...form, places });
-              }} />
-              <input style={{ ...inputStyle, width: 80 }} placeholder="Rating" value={place.rating} onChange={(e) => {
-                const places = [...form.places];
-                places[i] = { ...places[i], rating: e.target.value };
-                setForm({ ...form, places });
-              }} />
-              <input style={{ ...inputStyle, flex: 1 }} placeholder="Address" value={place.address} onChange={(e) => {
-                const places = [...form.places];
-                places[i] = { ...places[i], address: e.target.value };
-                setForm({ ...form, places });
-              }} />
-              <button onClick={() => setForm({ ...form, places: form.places.filter((_, j) => j !== i) })} style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-red)', color: 'var(--admin-red)', padding: '6px 10px' }} title="Remove place">
+              <input
+                style={{ ...inputStyle, width: 200 }}
+                placeholder="Place name"
+                value={place.name}
+                onChange={(e) => {
+                  const places = form.places.map((p, pi) =>
+                    pi === i ? { ...p, name: e.target.value } : p
+                  );
+                  setForm({ ...form, places });
+                }}
+              />
+              <input
+                style={{ ...inputStyle, width: 140 }}
+                placeholder="Category"
+                value={place.category}
+                onChange={(e) => {
+                  const places = form.places.map((p, pi) =>
+                    pi === i ? { ...p, category: e.target.value } : p
+                  );
+                  setForm({ ...form, places });
+                }}
+              />
+              <input
+                style={{ ...inputStyle, width: 80 }}
+                placeholder="Rating"
+                value={place.rating}
+                onChange={(e) => {
+                  const places = form.places.map((p, pi) =>
+                    pi === i ? { ...p, rating: e.target.value } : p
+                  );
+                  setForm({ ...form, places });
+                }}
+              />
+              <input
+                style={{ ...inputStyle, flex: 1 }}
+                placeholder="Address"
+                value={place.address}
+                onChange={(e) => {
+                  const places = form.places.map((p, pi) =>
+                    pi === i ? { ...p, address: e.target.value } : p
+                  );
+                  setForm({ ...form, places });
+                }}
+              />
+              <button
+                onClick={() => setForm({ ...form, places: form.places.filter((_, j) => j !== i) })}
+                style={{
+                  ...primaryBtn,
+                  background: 'transparent',
+                  border: '1px solid var(--admin-red)',
+                  color: 'var(--admin-red)',
+                  padding: '6px 10px',
+                }}
+                title="Remove place"
+              >
                 <Icon name="trash" size={14} />
               </button>
             </div>
           ))}
           <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
             <button
-              onClick={() => setForm({ ...form, places: [...form.places, { name: '', category: '', rating: '', address: '' }] })}
-              style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-card)', color: 'var(--admin-text)' }}
+              onClick={() =>
+                setForm({
+                  ...form,
+                  places: [...form.places, { name: '', category: '', rating: '', address: '' }],
+                })
+              }
+              style={{
+                ...primaryBtn,
+                background: 'transparent',
+                border: '1px solid var(--admin-card)',
+                color: 'var(--admin-text)',
+              }}
             >
               <Icon name="plus" size={14} /> Add place
             </button>
@@ -545,33 +796,64 @@ function NeighborhoodsTab() {
       )}
 
       {isError ? (
-        <div style={{ padding: 20, borderRadius: 12, border: '1px solid var(--admin-red)', background: 'rgba(204,28,28,0.1)', color: 'var(--admin-red)' }}>
+        <div
+          style={{
+            padding: 20,
+            borderRadius: 12,
+            border: '1px solid var(--admin-red)',
+            background: 'rgba(204,28,28,0.1)',
+            color: 'var(--admin-red)',
+          }}
+        >
           <strong>Failed to load neighborhoods.</strong> {(error as Error)?.message}
         </div>
       ) : isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : rows.length === 0 ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>No neighborhoods yet.</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          No neighborhoods yet.
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {rows.map((row) => (
-            <div key={row.id} style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+            <div
+              key={row.id}
+              style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', gap: 16 }}
+            >
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                   <strong style={{ fontSize: 15 }}>{row.name}</strong>
                   <StatusBadge status={row.status} />
                   <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>{row.city}</span>
                 </div>
-                <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>{row.description}</p>
+                <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>
+                  {row.description}
+                </p>
                 <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', margin: 0 }}>
-                  {row.places?.length ?? 0} place(s): {(row.places ?? []).map((p) => p.name).join(', ') || '—'}
+                  {row.places?.length ?? 0} place(s):{' '}
+                  {(row.places ?? []).map((p) => p.name).join(', ') || '—'}
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <button onClick={() => openEdit(row)} style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-card)', color: 'var(--admin-text)', padding: '6px 10px' }} title="Edit">
+                <button
+                  onClick={() => openEdit(row)}
+                  style={{
+                    ...primaryBtn,
+                    background: 'transparent',
+                    border: '1px solid var(--admin-card)',
+                    color: 'var(--admin-text)',
+                    padding: '6px 10px',
+                  }}
+                  title="Edit"
+                >
                   <Icon name="edit" size={14} />
                 </button>
-                <ConfirmDeleteButton onConfirm={() => deleteMutation.mutate(row.id)} label={`"${row.name}"`} />
+                <ConfirmDeleteButton
+                  onConfirm={() => deleteMutation.mutate(row.id)}
+                  label={`"${row.name}"`}
+                />
               </div>
             </div>
           ))}
@@ -613,7 +895,12 @@ function PartnersTab({ onManageOffers }: { onManageOffers: (partner: Partner) =>
   const [form, setForm] = useState<PartnerFormState>(EMPTY_PARTNER);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { data: rows = [], isLoading, isError, error } = useQuery({
+  const {
+    data: rows = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'lifestyle-partners', statusFilter],
     queryFn: async () => {
       const res = await adminApi.getPartners(statusFilter);
@@ -622,7 +909,8 @@ function PartnersTab({ onManageOffers }: { onManageOffers: (partner: Partner) =>
     },
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'lifestyle-partners'] });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ['admin', 'lifestyle-partners'] });
 
   const createMutation = useMutation({
     mutationFn: adminApi.createPartner,
@@ -673,7 +961,12 @@ function PartnersTab({ onManageOffers }: { onManageOffers: (partner: Partner) =>
 
   const submit = () => {
     setFormError(null);
-    if (!form.name.trim() || !form.category.trim() || !form.city.trim() || !form.description.trim()) {
+    if (
+      !form.name.trim() ||
+      !form.category.trim() ||
+      !form.city.trim() ||
+      !form.description.trim()
+    ) {
       setFormError('Name, category, city, and description are required');
       return;
     }
@@ -693,10 +986,23 @@ function PartnersTab({ onManageOffers }: { onManageOffers: (partner: Partner) =>
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ ...inputStyle, width: 180 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 16,
+        }}
+      >
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{ ...inputStyle, width: 180 }}
+        >
           {['all', 'draft', 'published', 'archived'].map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>
+              {s}
+            </option>
           ))}
         </select>
         <button
@@ -712,7 +1018,9 @@ function PartnersTab({ onManageOffers }: { onManageOffers: (partner: Partner) =>
         </button>
       </div>
 
-      {formError && <p style={{ color: 'var(--admin-red)', fontSize: 13, marginBottom: 12 }}>{formError}</p>}
+      {formError && (
+        <p style={{ color: 'var(--admin-red)', fontSize: 13, marginBottom: 12 }}>{formError}</p>
+      )}
 
       {showForm && (
         <div style={{ ...cardStyle, marginBottom: 20 }}>
@@ -721,34 +1029,70 @@ function PartnersTab({ onManageOffers }: { onManageOffers: (partner: Partner) =>
           </h3>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
             <Field label="Name *">
-              <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <input
+                style={inputStyle}
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
             </Field>
             <Field label="Category *">
-              <input style={inputStyle} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Dining, Wellness, Transport…" />
+              <input
+                style={inputStyle}
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                placeholder="Dining, Wellness, Transport…"
+              />
             </Field>
             <Field label="City *">
-              <input style={inputStyle} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+              <input
+                style={inputStyle}
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+              />
             </Field>
             <Field label="Rating (0–5)">
-              <input style={inputStyle} value={form.rating} onChange={(e) => setForm({ ...form, rating: e.target.value })} />
+              <input
+                style={inputStyle}
+                value={form.rating}
+                onChange={(e) => setForm({ ...form, rating: e.target.value })}
+              />
             </Field>
             <Field label="Status">
-              <select style={inputStyle} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              <select
+                style={inputStyle}
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+              >
                 {['draft', 'published', 'archived'].map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </Field>
           </div>
           <Field label="Description *">
-            <textarea rows={2} style={{ ...inputStyle, marginBottom: 10, resize: 'vertical' }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <textarea
+              rows={2}
+              style={{ ...inputStyle, marginBottom: 10, resize: 'vertical' }}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
           </Field>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
             <Field label="Address">
-              <input style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+              <input
+                style={inputStyle}
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+              />
             </Field>
             <Field label="Phone">
-              <input style={inputStyle} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              <input
+                style={inputStyle}
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
             </Field>
           </div>
           <button onClick={submit} disabled={busy} style={primaryBtn}>
@@ -758,34 +1102,78 @@ function PartnersTab({ onManageOffers }: { onManageOffers: (partner: Partner) =>
       )}
 
       {isError ? (
-        <div style={{ padding: 20, borderRadius: 12, border: '1px solid var(--admin-red)', background: 'rgba(204,28,28,0.1)', color: 'var(--admin-red)' }}>
+        <div
+          style={{
+            padding: 20,
+            borderRadius: 12,
+            border: '1px solid var(--admin-red)',
+            background: 'rgba(204,28,28,0.1)',
+            color: 'var(--admin-red)',
+          }}
+        >
           <strong>Failed to load partners.</strong> {(error as Error)?.message}
         </div>
       ) : isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : rows.length === 0 ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>No partners yet.</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          No partners yet.
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {rows.map((row) => (
-            <div key={row.id} style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+            <div
+              key={row.id}
+              style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', gap: 16 }}
+            >
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                   <strong style={{ fontSize: 15 }}>{row.name}</strong>
                   <StatusBadge status={row.status} />
-                  <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>{row.category} · {row.city} · ★ {row.rating.toFixed(1)}</span>
+                  <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
+                    {row.category} · {row.city} · ★ {row.rating.toFixed(1)}
+                  </span>
                 </div>
-                <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>{row.description}</p>
-                <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', margin: 0 }}>{row.offers?.length ?? 0} offer(s)</p>
+                <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>
+                  {row.description}
+                </p>
+                <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', margin: 0 }}>
+                  {row.offers?.length ?? 0} offer(s)
+                </p>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <button onClick={() => onManageOffers(row)} style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-card)', color: 'var(--admin-text)', padding: '6px 10px' }} title="Manage offers">
+                <button
+                  onClick={() => onManageOffers(row)}
+                  style={{
+                    ...primaryBtn,
+                    background: 'transparent',
+                    border: '1px solid var(--admin-card)',
+                    color: 'var(--admin-text)',
+                    padding: '6px 10px',
+                  }}
+                  title="Manage offers"
+                >
                   <Icon name="gift" size={14} />
                 </button>
-                <button onClick={() => openEdit(row)} style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-card)', color: 'var(--admin-text)', padding: '6px 10px' }} title="Edit">
+                <button
+                  onClick={() => openEdit(row)}
+                  style={{
+                    ...primaryBtn,
+                    background: 'transparent',
+                    border: '1px solid var(--admin-card)',
+                    color: 'var(--admin-text)',
+                    padding: '6px 10px',
+                  }}
+                  title="Edit"
+                >
                   <Icon name="edit" size={14} />
                 </button>
-                <ConfirmDeleteButton onConfirm={() => deleteMutation.mutate(row.id)} label={`"${row.name}" (and all its offers)`} />
+                <ConfirmDeleteButton
+                  onConfirm={() => deleteMutation.mutate(row.id)}
+                  label={`"${row.name}" (and all its offers)`}
+                />
               </div>
             </div>
           ))}
@@ -836,7 +1224,12 @@ function OffersTab({
   });
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { data: rows = [], isLoading, isError, error } = useQuery({
+  const {
+    data: rows = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'lifestyle-offers', statusFilter],
     queryFn: async () => {
       const res = await adminApi.getOffers(statusFilter);
@@ -845,8 +1238,10 @@ function OffersTab({
     },
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'lifestyle-offers'] });
-  const invalidatePartners = () => queryClient.invalidateQueries({ queryKey: ['admin', 'lifestyle-partners'] });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ['admin', 'lifestyle-offers'] });
+  const invalidatePartners = () =>
+    queryClient.invalidateQueries({ queryKey: ['admin', 'lifestyle-partners'] });
 
   const createMutation = useMutation({
     mutationFn: (input: {
@@ -922,7 +1317,12 @@ function OffersTab({
 
   const submit = () => {
     setFormError(null);
-    if (!form.title.trim() || !form.description.trim() || !form.discount.trim() || !form.category.trim()) {
+    if (
+      !form.title.trim() ||
+      !form.description.trim() ||
+      !form.discount.trim() ||
+      !form.category.trim()
+    ) {
       setFormError('Title, description, discount, and category are required');
       return;
     }
@@ -939,7 +1339,10 @@ function OffersTab({
       description: form.description.trim(),
       discount: form.discount.trim(),
       category: form.category.trim(),
-      terms: form.terms.split('\n').map((t) => t.trim()).filter(Boolean),
+      terms: form.terms
+        .split('\n')
+        .map((t) => t.trim())
+        .filter(Boolean),
       validUntil: new Date(`${form.validUntil}T23:59:59`).toISOString(),
       status: form.status,
     };
@@ -949,11 +1352,24 @@ function OffersTab({
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 16,
+        }}
+      >
         <div style={{ display: 'flex', gap: 12 }}>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ ...inputStyle, width: 180 }}>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{ ...inputStyle, width: 180 }}
+          >
             {['all', 'active', 'expired', 'archived'].map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
           <select
@@ -964,13 +1380,17 @@ function OffersTab({
           >
             <option value="">+ New offer for partner…</option>
             {partners.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
             ))}
           </select>
         </div>
       </div>
 
-      {formError && <p style={{ color: 'var(--admin-red)', fontSize: 13, marginBottom: 12 }}>{formError}</p>}
+      {formError && (
+        <p style={{ color: 'var(--admin-red)', fontSize: 13, marginBottom: 12 }}>{formError}</p>
+      )}
 
       {showForm && (
         <div style={{ ...cardStyle, marginBottom: 20 }}>
@@ -980,39 +1400,79 @@ function OffersTab({
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
             {!editTarget && (
               <Field label="Partner *">
-                <select style={inputStyle} value={form.partnerId} onChange={(e) => setForm({ ...form, partnerId: e.target.value })}>
+                <select
+                  style={inputStyle}
+                  value={form.partnerId}
+                  onChange={(e) => setForm({ ...form, partnerId: e.target.value })}
+                >
                   <option value="">Select partner…</option>
                   {partners.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
                   ))}
                 </select>
               </Field>
             )}
             <Field label="Title *">
-              <input style={inputStyle} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <input
+                style={inputStyle}
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
             </Field>
             <Field label="Discount *">
-              <input style={inputStyle} value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} placeholder="20% OFF" />
+              <input
+                style={inputStyle}
+                value={form.discount}
+                onChange={(e) => setForm({ ...form, discount: e.target.value })}
+                placeholder="20% OFF"
+              />
             </Field>
             <Field label="Category *">
-              <input style={inputStyle} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+              <input
+                style={inputStyle}
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+              />
             </Field>
             <Field label="Valid until *">
-              <input type="date" style={inputStyle} value={form.validUntil} onChange={(e) => setForm({ ...form, validUntil: e.target.value })} />
+              <input
+                type="date"
+                style={inputStyle}
+                value={form.validUntil}
+                onChange={(e) => setForm({ ...form, validUntil: e.target.value })}
+              />
             </Field>
             <Field label="Status">
-              <select style={inputStyle} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              <select
+                style={inputStyle}
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+              >
                 {['active', 'expired', 'archived'].map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </Field>
           </div>
           <Field label="Description *">
-            <textarea rows={2} style={{ ...inputStyle, marginBottom: 10, resize: 'vertical' }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <textarea
+              rows={2}
+              style={{ ...inputStyle, marginBottom: 10, resize: 'vertical' }}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
           </Field>
           <Field label="Terms (one per line)">
-            <textarea rows={3} style={{ ...inputStyle, marginBottom: 12, resize: 'vertical' }} value={form.terms} onChange={(e) => setForm({ ...form, terms: e.target.value })} />
+            <textarea
+              rows={3}
+              style={{ ...inputStyle, marginBottom: 12, resize: 'vertical' }}
+              value={form.terms}
+              onChange={(e) => setForm({ ...form, terms: e.target.value })}
+            />
           </Field>
           <button onClick={submit} disabled={busy} style={primaryBtn}>
             {editTarget ? 'Save changes' : 'Create offer'}
@@ -1021,33 +1481,66 @@ function OffersTab({
       )}
 
       {isError ? (
-        <div style={{ padding: 20, borderRadius: 12, border: '1px solid var(--admin-red)', background: 'rgba(204,28,28,0.1)', color: 'var(--admin-red)' }}>
+        <div
+          style={{
+            padding: 20,
+            borderRadius: 12,
+            border: '1px solid var(--admin-red)',
+            background: 'rgba(204,28,28,0.1)',
+            color: 'var(--admin-red)',
+          }}
+        >
           <strong>Failed to load offers.</strong> {(error as Error)?.message}
         </div>
       ) : isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : rows.length === 0 ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>No offers yet.</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          No offers yet.
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {rows.map((row) => (
-            <div key={row.id} style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+            <div
+              key={row.id}
+              style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', gap: 16 }}
+            >
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                   <strong style={{ fontSize: 15 }}>{row.title}</strong>
                   <StatusBadge status={row.status} />
-                  <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>{row.discount} · {row.partner?.name ?? '—'}</span>
+                  <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
+                    {row.discount} · {row.partner?.name ?? '—'}
+                  </span>
                 </div>
-                <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>{row.description}</p>
+                <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '0 0 6px' }}>
+                  {row.description}
+                </p>
                 <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', margin: 0 }}>
-                  Valid until {new Date(row.validUntil).toLocaleDateString()} · {row.terms.length} term(s)
+                  Valid until {new Date(row.validUntil).toLocaleDateString()} · {row.terms.length}{' '}
+                  term(s)
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <button onClick={() => openEdit(row)} style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-card)', color: 'var(--admin-text)', padding: '6px 10px' }} title="Edit">
+                <button
+                  onClick={() => openEdit(row)}
+                  style={{
+                    ...primaryBtn,
+                    background: 'transparent',
+                    border: '1px solid var(--admin-card)',
+                    color: 'var(--admin-text)',
+                    padding: '6px 10px',
+                  }}
+                  title="Edit"
+                >
                   <Icon name="edit" size={14} />
                 </button>
-                <ConfirmDeleteButton onConfirm={() => deleteMutation.mutate(row.id)} label={`"${row.title}"`} />
+                <ConfirmDeleteButton
+                  onConfirm={() => deleteMutation.mutate(row.id)}
+                  label={`"${row.title}"`}
+                />
               </div>
             </div>
           ))}
@@ -1075,7 +1568,16 @@ export default function LifestyleGuidesPage() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 700,
+            marginBottom: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
           <Icon name="sprout" size={28} color="var(--admin-emerald)" />
           <span>Lifestyle Guides</span>
         </h1>
@@ -1085,7 +1587,15 @@ export default function LifestyleGuidesPage() {
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, borderBottom: '1px solid var(--admin-card)', paddingBottom: 0 }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: 20,
+          borderBottom: '1px solid var(--admin-card)',
+          paddingBottom: 0,
+        }}
+      >
         {TABS.map((t) => (
           <button
             key={t}
@@ -1126,7 +1636,8 @@ export default function LifestyleGuidesPage() {
       )}
       {offersPartner && tab === 'offers' && (
         <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 8 }}>
-          Jumped here from partner "{offersPartner.name}" — use the partner selector above to add an offer for it.
+          Jumped here from partner "{offersPartner.name}" — use the partner selector above to add an
+          offer for it.
         </p>
       )}
     </div>

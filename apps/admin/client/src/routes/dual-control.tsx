@@ -53,7 +53,10 @@ function ActionCard({ action }: { action: DualControlRequest }) {
     },
   });
 
-  const style = STATUS_STYLES[action.status] ?? STATUS_STYLES.executed;
+  const style = STATUS_STYLES[action.status] ?? {
+    bg: 'rgba(154,138,122,0.15)',
+    color: 'var(--admin-text-muted)',
+  };
 
   return (
     <div
@@ -157,7 +160,7 @@ function ActionCard({ action }: { action: DualControlRequest }) {
                 disabled={decide.isPending}
                 style={{
                   backgroundColor: 'var(--admin-emerald)',
-                  color: '#04140d',
+                  color: 'var(--admin-dark)',
                   border: 'none',
                   borderRadius: 10,
                   padding: '8px 16px',
@@ -203,7 +206,9 @@ function ActionCard({ action }: { action: DualControlRequest }) {
               />
               <button
                 type="button"
-                onClick={() => reason.trim() && decide.mutate({ decision: 'reject', reason: reason.trim() })}
+                onClick={() =>
+                  reason.trim() && decide.mutate({ decision: 'reject', reason: reason.trim() })
+                }
                 disabled={decide.isPending || !reason.trim()}
                 style={{
                   backgroundColor: 'var(--admin-red)',
@@ -259,7 +264,14 @@ export default function DualControlPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 6,
+        }}
+      >
         <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-text)', margin: 0 }}>
           Dual-Control Queue
         </h1>
