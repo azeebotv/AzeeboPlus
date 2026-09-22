@@ -39,3 +39,12 @@ subprojects {
 
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
+
+// Allow generated ExpoModulesPackageList files to reference modules annotated
+// with RN 0.85's @UnstableReactNativeAPI (e.g. expo-video's VideoModule).
+// Applied here so it covers every Kotlin compile without patching packages.
+allprojects {
+  tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    compilerOptions.freeCompilerArgs.add("-opt-in=com.facebook.react.common.annotations.UnstableReactNativeAPI")
+  }
+}
