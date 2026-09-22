@@ -9,6 +9,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Film, Music, Trophy, Scroll, FlaskConical, Globe, Brain, type LucideIcon } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface TriviaCategory {
@@ -41,15 +42,15 @@ interface TriviaSession {
   totalAnswered: number;
 }
 
-const categoryIcons: Record<string, string> = {
-  movies: 'Film',
-  music: 'Music',
-  sports: 'Circle',
-  history: 'Scroll',
-  science: 'FlaskConical',
-  geography: 'Globe',
-  general: 'Brain',
-  nollywood: 'Film',
+const categoryIcons: Record<string, LucideIcon> = {
+  movies: Film,
+  music: Music,
+  sports: Trophy,
+  history: Scroll,
+  science: FlaskConical,
+  geography: Globe,
+  general: Brain,
+  nollywood: Film,
 };
 
 function TriviaPageContent(): React.JSX.Element {
@@ -388,16 +389,21 @@ function TriviaPageContent(): React.JSX.Element {
                     transition={{ delay: index * 0.1 }}
                   >
                     <GlowCard universe="games" className="overflow-hidden">
-                      <div
-                        className="h-44 flex items-center justify-center"
-                        style={{
-                          background: `linear-gradient(135deg, rgba(139,92,246,0.3), var(--bg-primary))`,
-                        }}
-                      >
-                        <span className="text-6xl">
-                          {categoryIcons[category.name?.toLowerCase()] || 'Brain'}
-                        </span>
-                      </div>
+                      {(() => {
+                        const CategoryIcon = categoryIcons[category.name?.toLowerCase()] || Brain;
+                        return (
+                          <div
+                            className="h-44 flex items-center justify-center relative overflow-hidden group"
+                            style={{
+                              background: `linear-gradient(135deg, rgba(139,92,246,0.25), rgba(11,9,14,0.85))`,
+                            }}
+                          >
+                            <div className="w-20 h-20 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-300 shadow-xl shadow-purple-500/10 group-hover:scale-110 group-hover:border-purple-400/50 transition-all duration-300">
+                              <CategoryIcon size={38} strokeWidth={1.75} />
+                            </div>
+                          </div>
+                        );
+                      })()}
                       <div className="p-5">
                         <h3 className="font-bold text-white text-lg mb-1">{category.name}</h3>
                         <p className="text-sm text-white/50 mb-4 line-clamp-2">

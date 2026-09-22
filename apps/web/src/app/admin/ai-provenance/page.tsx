@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ImageIcon, Film, Volume2, FileText, Music, type LucideIcon } from 'lucide-react';
 
 /**
  * AI Provenance Reference Management (AZP-RIGHTS-005)
@@ -82,12 +83,13 @@ export default function AiProvenancePage() {
     needs_review: 'bg-orange-100 text-orange-800',
   };
 
-  const typeIcons: Record<string, string> = {
-    image: 'Image',
-    video: 'Film',
-    audio: 'Volume2',
-    text: 'FileText',
-    music: 'Music',
+
+  const typeIcons: Record<string, LucideIcon> = {
+    image: ImageIcon,
+    video: Film,
+    audio: Volume2,
+    text: FileText,
+    music: Music,
   };
 
   return (
@@ -143,7 +145,14 @@ export default function AiProvenancePage() {
               <div key={record.id} className="bg-card rounded-xl border p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{typeIcons[record.generationType]}</span>
+                    {(() => {
+                      const IconComp = typeIcons[record.generationType] || FileText;
+                      return (
+                        <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 flex-shrink-0">
+                          <IconComp size={20} strokeWidth={1.75} />
+                        </div>
+                      );
+                    })()}
                     <div>
                       <h3 className="font-semibold text-foreground">{record.contentTitle}</h3>
                       <p className="text-sm text-muted-foreground">

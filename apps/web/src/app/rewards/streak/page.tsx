@@ -1,12 +1,21 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
 
+import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
-import Link from 'next/link';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ArrowLeft, Flame, CheckCircle2, Lock, Calendar, Trophy, Sparkles } from 'lucide-react';
+
+interface StreakMilestone {
+  days: number;
+  reward: number;
+  label: string;
+  unlocked?: boolean;
+}
 
 interface StreakData {
   currentStreak?: number;
@@ -18,13 +27,6 @@ interface StreakData {
   calendar?: boolean[];
   streakDays?: boolean[];
   milestones?: StreakMilestone[];
-}
-
-interface StreakMilestone {
-  days: number;
-  reward: number;
-  label: string;
-  unlocked?: boolean;
 }
 
 export default function StreakPage(): React.JSX.Element {
@@ -45,15 +47,16 @@ export default function StreakPage(): React.JSX.Element {
   const calendar = Array.isArray(streakData.calendar) ? streakData.calendar : [];
   const streakDays = Array.isArray(streakData.streakDays) ? streakData.streakDays : calendar;
   const todayActive = Boolean(streakData.todayActive);
+
   const milestones: StreakMilestone[] = Array.isArray(streakData.milestones)
     ? streakData.milestones
     : [
-        { days: 3, reward: 50, label: '3-Day Streak' },
-        { days: 7, reward: 200, label: '7-Day Streak' },
-        { days: 14, reward: 500, label: '14-Day Streak' },
-        { days: 30, reward: 1500, label: '30-Day Streak' },
-        { days: 60, reward: 3000, label: '60-Day Streak' },
-        { days: 90, reward: 10000, label: '90-Day Streak' },
+        { days: 3, reward: 50, label: '3-Day Momentum' },
+        { days: 7, reward: 200, label: '7-Day Champion' },
+        { days: 14, reward: 500, label: '14-Day Vanguard' },
+        { days: 30, reward: 1500, label: '30-Day Legend' },
+        { days: 60, reward: 3000, label: '60-Day Master' },
+        { days: 90, reward: 10000, label: '90-Day Immortal' },
       ].map((m) => ({
         ...m,
         unlocked: currentStreak >= m.days,
@@ -62,7 +65,7 @@ export default function StreakPage(): React.JSX.Element {
   const isLoading = authLoading || streakQuery.isLoading;
   const error = streakQuery.error?.message || null;
 
-  // Generate last 30 days for calendar
+  // Last 30 days calculation
   const today = new Date();
   const last30Days: { date: Date; active: boolean; isToday: boolean }[] = [];
   for (let i = 29; i >= 0; i--) {
@@ -80,173 +83,123 @@ export default function StreakPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          maxWidth: 700,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ marginBottom: 24 }}>
-          <Link
-            href="/rewards"
-            style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}
-          >
-            &larr; Back to Rewards
-          </Link>
-        </div>
+    <PageShell activeNav="Rewards" glowColor="rgba(232, 66, 10, 0.25)">
+      <div className="mb-6">
+        <Link
+          href="/rewards"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Rewards Center
+        </Link>
+      </div>
 
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Streak</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-            Keep your daily streak alive
-          </p>
-        </div>
+      <div className="max-w-3xl mx-auto">
+        <PageHero
+          eyebrow="DAILY ENGAGEMENT"
+          eyebrowColor="var(--brand-orange)"
+          badge={`${currentStreak} DAYS RUNNING`}
+          title="Daily Activity Streak"
+          subtitle="Check in daily, stream entertainment, and keep your flame alive to unlock exclusive multiplier bonuses."
+          glowColor="rgba(232, 66, 10, 0.3)"
+        />
 
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <Spinner size="lg" color="#E8420A" />
+          <div className="flex justify-center py-20">
+            <Spinner size="lg" color="var(--brand-orange)" />
           </div>
         ) : error ? (
           <ErrorState
-            title="Failed to load streak data"
+            title="Failed to load streak status"
             description={error}
             buttonText="Retry"
             onButtonPress={() => streakQuery.refetch()}
           />
         ) : (
-          <>
-            {/* Current streak card */}
-            <div
+          <div className="space-y-8">
+            {/* Primary Streak Flame Hero Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="az-glass p-8 sm:p-12 rounded-3xl text-center relative overflow-hidden border border-[var(--brand-orange)]/30"
               style={{
                 background:
-                  'linear-gradient(135deg, rgba(232,66,10,0.2) 0%, rgba(204,28,28,0.1) 100%)',
-                borderRadius: 20,
-                padding: 32,
-                textAlign: 'center',
-                marginBottom: 24,
+                  'linear-gradient(135deg, rgba(232, 66, 10, 0.15) 0%, rgba(204, 28, 28, 0.08) 50%, rgba(18, 15, 25, 0.9) 100%)',
               }}
             >
-              <div style={{ fontSize: 48, marginBottom: 8 }}></div>
-              <p style={{ fontSize: 48, fontWeight: 700, color: 'var(--brand-orange)' }}>
-                {currentStreak}
-              </p>
-              <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 8 }}>
-                Day Streak
-              </p>
-              {todayActive && (
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    padding: '4px 12px',
-                    borderRadius: 999,
-                    backgroundColor: 'rgba(34,197,94,0.15)',
-                    color: 'var(--color-success-500)',
-                  }}
-                >
-                  CheckToday&apos;s check-in done
-                </span>
-              )}
-              {!todayActive && (
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    padding: '4px 12px',
-                    borderRadius: 999,
-                    backgroundColor: 'rgba(245,158,11,0.15)',
-                    color: 'var(--color-warning-500)',
-                  }}
-                >
-                  Check in today to keep your streak
-                </span>
-              )}
-            </div>
+              <div className="w-24 h-24 rounded-full bg-[var(--brand-orange)]/20 border border-[var(--brand-orange)]/40 flex items-center justify-center mx-auto mb-4 text-[var(--brand-orange)] shadow-[0_0_50px_rgba(232,66,10,0.4)]">
+                <Flame className="w-12 h-12 fill-[var(--brand-orange)] animate-pulse" />
+              </div>
 
-            {/* Stats */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: 16,
-                marginBottom: 32,
-              }}
-            >
-              <div
-                className="az-glass"
-                style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
-              >
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>
-                  Current Streak
+              <div className="flex items-baseline justify-center gap-2 mb-1">
+                <span className="text-6xl sm:text-7xl font-extrabold text-white tracking-tight">
+                  {currentStreak}
+                </span>
+                <span className="text-xl sm:text-2xl font-bold text-[var(--brand-orange)]">Days</span>
+              </div>
+              <p className="text-white/60 text-sm sm:text-base mb-6">Consecutive Platform Check-ins</p>
+
+              {todayActive ? (
+                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                  <CheckCircle2 className="w-4 h-4" /> Today&apos;s check-in recorded!
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                  <Flame className="w-4 h-4" /> Stream now to preserve your flame!
+                </span>
+              )}
+            </motion.div>
+
+            {/* Current vs Longest Stats */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="az-glass p-5 rounded-2xl text-center border border-white/10">
+                <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mb-1">
+                  Active Streak
                 </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--brand-orange)' }}>
-                  {currentStreak} days
+                <p className="text-2xl sm:text-3xl font-extrabold text-[var(--brand-orange)]">
+                  {currentStreak} Days
                 </p>
               </div>
-              <div
-                className="az-glass"
-                style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
-              >
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>
-                  Longest Streak
+
+              <div className="az-glass p-5 rounded-2xl text-center border border-white/10">
+                <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mb-1">
+                  All-Time Best
                 </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-warning-500)' }}>
-                  {longestStreak} days
+                <p className="text-2xl sm:text-3xl font-extrabold text-amber-400">
+                  {longestStreak} Days
                 </p>
               </div>
             </div>
 
-            {/* Streak calendar */}
-            <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 32 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Last 30 Days</h2>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(7, 1fr)',
-                  gap: 6,
-                }}
-              >
+            {/* 30-Day Activity Heatmap */}
+            <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-[var(--brand-orange)]" />
+                  <h2 className="az-headline text-lg sm:text-xl font-bold text-white">
+                    Past 30 Days Activity
+                  </h2>
+                </div>
+                <span className="text-xs text-white/40 font-medium">Daily Heatmap</span>
+              </div>
+
+              <div className="grid grid-cols-7 gap-2.5 sm:gap-3">
                 {last30Days.map((day, i) => {
                   const dayLabel = day.date.toLocaleDateString('en', { weekday: 'narrow' });
                   return (
-                    <div key={i} style={{ textAlign: 'center' }}>
+                    <div key={i} className="text-center">
                       {i < 7 && (
-                        <p style={{ fontSize: 10, color: 'var(--text-tertiary)', marginBottom: 4 }}>
+                        <p className="text-[10px] text-white/40 uppercase font-bold mb-2">
                           {dayLabel}
                         </p>
                       )}
                       <div
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 11,
-                          fontWeight: 600,
-                          margin: '0 auto',
-                          backgroundColor: day.active
-                            ? 'rgba(232,66,10,0.25)'
+                        className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-xs font-bold mx-auto transition-all ${
+                          day.active
+                            ? 'bg-[var(--brand-orange)] text-white shadow-[0_0_15px_rgba(232,66,10,0.4)]'
                             : day.isToday
-                              ? 'rgba(232,66,10,0.1)'
-                              : 'rgba(255,255,255,0.04)',
-                          color: day.active
-                            ? 'var(--brand-orange)'
-                            : day.isToday
-                              ? 'var(--brand-orange)'
-                              : 'var(--text-tertiary)',
-                          border: day.isToday ? '1px solid #E8420A' : 'none',
-                        }}
+                              ? 'border-2 border-[var(--brand-orange)] bg-[var(--brand-orange)]/15 text-white'
+                              : 'bg-white/5 text-white/40 border border-white/5'
+                        }`}
                       >
                         {day.date.getDate()}
                       </div>
@@ -256,65 +209,62 @@ export default function StreakPage(): React.JSX.Element {
               </div>
             </div>
 
-            {/* Milestones */}
-            <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Streak Milestones</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {milestones.map((milestone) => (
+            {/* Milestones Roadmap */}
+            <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+              <div className="flex items-center gap-2 mb-6">
+                <Trophy className="w-5 h-5 text-amber-400" />
+                <h2 className="az-headline text-lg sm:text-xl font-bold text-white">
+                  Streak Milestones & Bounties
+                </h2>
+              </div>
+
+              <div className="space-y-3">
+                {milestones.map((m) => (
                   <div
-                    key={milestone.days}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '14px 16px',
-                      borderRadius: 12,
-                      backgroundColor: milestone.unlocked
-                        ? 'rgba(34,197,94,0.08)'
-                        : 'rgba(255,255,255,0.02)',
-                      border: `1px solid ${milestone.unlocked ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.04)'}`,
-                    }}
+                    key={m.days}
+                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 ${
+                      m.unlocked
+                        ? 'bg-emerald-500/10 border-emerald-500/25'
+                        : 'bg-white/5 border-white/10'
+                    }`}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div className="flex items-center gap-3.5">
                       <div
-                        style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 18,
-                          backgroundColor: milestone.unlocked
-                            ? 'rgba(34,197,94,0.15)'
-                            : 'rgba(255,255,255,0.05)',
-                        }}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                          m.unlocked
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : 'bg-white/10 text-white/40'
+                        }`}
                       >
-                        {milestone.unlocked ? 'Check' : 'Lock'}
+                        {m.unlocked ? (
+                          <CheckCircle2 className="w-5 h-5" />
+                        ) : (
+                          <Lock className="w-5 h-5" />
+                        )}
                       </div>
                       <div>
-                        <p style={{ fontWeight: 600, fontSize: 14 }}>{milestone.label}</p>
-                        <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                          {milestone.days} consecutive days
-                        </p>
+                        <p className="font-bold text-white text-sm sm:text-base">{m.label}</p>
+                        <p className="text-xs text-white/50">{m.days} consecutive check-ins</p>
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--brand-orange)' }}>
-                        +₦{milestone.reward.toLocaleString()}
-                      </p>
-                      {milestone.unlocked && (
-                        <p style={{ fontSize: 11, color: 'var(--color-success-500)' }}>Unlocked</p>
+
+                    <div className="text-right shrink-0">
+                      <span className="inline-flex items-center gap-1 text-sm sm:text-base font-extrabold text-[var(--brand-orange)]">
+                        <Sparkles className="w-3.5 h-3.5" />+₦{m.reward.toLocaleString()}
+                      </span>
+                      {m.unlocked && (
+                        <span className="block text-[10px] uppercase font-bold text-emerald-400 mt-0.5">
+                          Claimed
+                        </span>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          </>
+          </div>
         )}
-      </main>
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }

@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
-import AppHeader from '../../components/layout/AppHeader';
-import AppFooter from '../../components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import { OptimizedImage } from '../../components/OptimizedImage';
 import { EmptyState } from '../../components/ui/EmptyState';
 
@@ -154,59 +154,37 @@ export default function LibraryPage(): React.JSX.Element {
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <div
-        className="min-h-screen relative overflow-x-hidden"
-        style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
-      >
-        <AppHeader logoVariant="light" />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <PageShell glowColor="rgba(232,66,10,0.15)">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <motion.div
-            className="az-glass p-8 sm:p-10 text-center"
+            className="az-glass p-10 text-center rounded-3xl border border-white/10 max-w-md mx-auto shadow-2xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4">
+            <h2 className="text-2xl font-extrabold text-white mb-3 tracking-tight">
               Sign in to access your library
             </h2>
-            <p className="text-white/50 text-sm sm:text-base">
-              Save content to watch later, track your progress, and more
+            <p className="text-white/50 text-sm">
+              Save Nollywood blockbusters, resume streaming history, and manage your favorites.
             </p>
           </motion.div>
         </main>
-        <AppFooter />
-      </div>
+      </PageShell>
     );
   }
 
   const currentSection = sections.find((s) => s.id === activeSection);
 
   return (
-    <div
-      className="min-h-screen relative overflow-x-hidden"
-      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Library" logoVariant="light" />
-
-      {/* Top Ambient glow */}
-      <div
-        className="pointer-events-none absolute -top-32 left-1/4 -translate-x-1/2 w-[600px] h-[400px] rounded-full blur-[140px] -z-0"
-        style={{
-          background:
-            'radial-gradient(circle, rgba(232,66,10,0.16) 0%, rgba(204,28,28,0.05) 50%, transparent 80%)',
-        }}
-        aria-hidden="true"
+    <PageShell glowColor="rgba(232,66,10,0.12)">
+      <PageHero
+        badge="Media Hub"
+        title="My Library"
+        description="Your personal cinema vault: curated watchlists, streaming playback history, and favorited Nollywood titles."
       />
 
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        <motion.h1
-          className="az-headline font-extrabold text-white text-3xl sm:text-4xl mb-6 sm:mb-8 tracking-tight"
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          My Library
-        </motion.h1>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 -mt-4">
 
         {/* Section Tabs */}
         <motion.div
@@ -451,7 +429,6 @@ export default function LibraryPage(): React.JSX.Element {
           )}
         </AnimatePresence>
       </main>
-      <AppFooter logoVariant="light" />
-    </div>
+    </PageShell>
   );
 }

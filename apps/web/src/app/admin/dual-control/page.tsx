@@ -43,12 +43,40 @@ interface DualControlStats {
   executedThisMonth: number;
 }
 
+const ACTION_TYPES = [
+  { value: 'large_refund', label: 'Large Refund' },
+  { value: 'manual_entitlement', label: 'Manual Entitlement' },
+  { value: 'bulk_operation', label: 'Bulk Operation' },
+  { value: 'data_export', label: 'Data Export' },
+  { value: 'account_modification', label: 'Account Modification' },
+] as const;
+
+interface CreateRequestForm {
+  actionType: string;
+  description: string;
+  amount: string;
+  currency: string;
+  targetUserIds: string;
+}
+
+const EMPTY_FORM: CreateRequestForm = {
+  actionType: 'large_refund',
+  description: '',
+  amount: '',
+  currency: '',
+  targetUserIds: '',
+};
+
 export default function DualControlPage() {
   const [actions, setActions] = useState<DualControlAction[]>([]);
   const [stats, setStats] = useState<DualControlStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState<CreateRequestForm>(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const fetchActions = useCallback(async () => {
     setLoading(true);
@@ -102,6 +130,71 @@ export default function DualControlPage() {
     }
   };
 
+  /** Client-side mirror of the backend's create validation (action types,
+   * description length, amount/currency pairing) so obvious mistakes fail
+   * fast; the server remains the authority. */
+  const validateForm = (): string | null => {
+    if (!form.description.trim()) return 'A description of the requested action is required';
+    if (form.description.trim().length > 2000)
+      return 'Description must be 2000 characters or fewer';
+    if (form.amount.trim()) {
+      const amount = Number(form.amount);
+      if (!Number.isFinite(amount) || amount <= 0) return 'Amount must be a positive number';
+      if (!form.currency.trim()) return 'Currency is required when an amount is provided';
+    }
+    return null;
+  };
+
+  const handleCreate = async () => {
+    const validationError = validateForm();
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
+
+    setSubmitting(true);
+    setFormError(null);
+
+    try {
+      const response = await apiFetch(`/api/v1/admin/dual-control`, {
+        method: 'POST',
+        body: JSON.stringify({
+          actionType: form.actionType,
+          description: form.description.trim(),
+          ...(form.amount.trim()
+            ? {
+                amount: Number(form.amount),
+                currency: form.currency.trim().toUpperCase(),
+              }
+            : {}),
+          ...(form.targetUserIds.trim()
+            ? {
+                targetUserIds: form.targetUserIds
+                  .split(',')
+                  .map((id) => id.trim())
+                  .filter(Boolean),
+              }
+            : {}),
+        }),
+      });
+
+      if (!response.success) {
+        setFormError(response.message || 'Failed to create request');
+        return;
+      }
+
+      // New requests are pending — surface the pending view and refresh.
+      setForm(EMPTY_FORM);
+      setShowForm(false);
+      setStatusFilter((prev) => (prev === 'all' || prev === 'pending' ? prev : 'pending'));
+      fetchActions();
+    } catch {
+      setFormError('Network error creating request');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const actionTypeLabels = {
     large_refund: 'DollarSign Large Refund',
     manual_entitlement: 'Gift Manual Entitlement',
@@ -121,12 +214,122 @@ export default function DualControlPage() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Dual-Control Actions</h1>
-          <p className="text-muted-foreground mt-2">
-            High-risk operations requiring two-person approval before execution
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Dual-Control Actions</h1>
+            <p className="text-muted-foreground mt-2">
+              High-risk operations requiring two-person approval before execution
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setShowForm((prev) => !prev);
+              setFormError(null);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg"
+          >
+            {showForm ? 'Cancel' : '+ New Request'}
+          </button>
         </div>
+
+        {/* Create-request form */}
+        {showForm && (
+          <div className="bg-card rounded-xl border p-6 mb-8">
+            <h2 className="font-semibold text-foreground mb-4">New Dual-Control Request</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Action type *
+                </label>
+                <select
+                  value={form.actionType}
+                  onChange={(e) => setForm((prev) => ({ ...prev, actionType: e.target.value }))}
+                  className="w-full px-4 py-2 bg-background border rounded-lg text-foreground"
+                >
+                  {ACTION_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Target user IDs (comma-separated, optional)
+                </label>
+                <input
+                  type="text"
+                  value={form.targetUserIds}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, targetUserIds: e.target.value }))
+                  }
+                  className="w-full px-4 py-2 bg-background border rounded-lg text-foreground"
+                  placeholder="user-id-1, user-id-2"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Description *
+                </label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                  maxLength={2000}
+                  className="w-full px-4 py-2 bg-background border rounded-lg text-foreground h-24 resize-none"
+                  placeholder="What high-risk operation needs approval, and why?"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {form.description.length}/2000
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Amount (optional)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.amount}
+                  onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
+                  className="w-full px-4 py-2 bg-background border rounded-lg text-foreground"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Currency {form.amount.trim() ? '*' : '(optional)'}
+                </label>
+                <input
+                  type="text"
+                  value={form.currency}
+                  onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value }))}
+                  maxLength={3}
+                  className="w-full px-4 py-2 bg-background border rounded-lg text-foreground"
+                  placeholder="NGN"
+                />
+              </div>
+            </div>
+
+            {formError && (
+              <p className="text-sm text-destructive mt-4">{formError}</p>
+            )}
+
+            <div className="flex items-center gap-4 mt-6">
+              <button
+                onClick={handleCreate}
+                disabled={submitting}
+                className="bg-green-600 hover:bg-green-700 disabled:bg-muted disabled:text-muted-foreground text-white text-sm px-6 py-2 rounded-lg"
+              >
+                {submitting ? 'Submitting...' : 'Submit Request'}
+              </button>
+              <p className="text-xs text-muted-foreground">
+                The requesting admin cannot approve their own request — a second admin must
+                approve.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         {stats && (

@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
@@ -6,19 +7,20 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ArrowLeft, Check, Sparkles, Wallet, CreditCard, ShieldCheck } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 const UNIVERSE_NAMES: Record<string, string> = {
-  reality: 'Reality',
+  reality: 'Reality TV',
   comedy: 'Comedy',
-  movies: 'Movies',
-  creator: 'Creator',
-  lifestyle: 'Lifestyle',
-  sports: 'Sports',
-  games: 'Games',
-  vertical: 'Vertical',
+  movies: 'Cinema & Movies',
+  creator: 'Creator Studio',
+  lifestyle: 'Lifestyle & Culture',
+  sports: 'Sports Arena',
+  games: 'Gaming & Trivia',
+  vertical: 'Vertical & Lore',
 };
 
 function BundleDetailContent(): React.JSX.Element {
@@ -61,128 +63,191 @@ function BundleDetailContent(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
-        <AppHeader />
-        <main className="max-w-4xl mx-auto px-4 py-8">
-          <Skeleton className="h-8 w-48 mb-6" />
-          <Skeleton className="h-6 w-96 mb-4" />
-          <Skeleton className="h-64 rounded-xl" />
-        </main>
-        <AppFooter />
-      </div>
+      <PageShell activeNav="Bundles">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <Skeleton height="36px" width="160px" />
+          <Skeleton height="400px" borderRadius="24px" />
+        </div>
+      </PageShell>
     );
   }
 
   if (error || !bundle) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
-        <AppHeader />
-        <main className="max-w-4xl mx-auto px-4 py-8">
-          <ErrorState
-            title="Bundle not found"
-            description={error || 'This bundle does not exist or has been removed.'}
-            buttonText="Browse Bundles"
-            onButtonPress={() => router.push('/bundles')}
-          />
-        </main>
-        <AppFooter />
-      </div>
+      <PageShell activeNav="Bundles">
+        <ErrorState
+          title="Bundle Not Found"
+          description={error || 'This entertainment bundle does not exist or has been retired.'}
+          buttonText="Browse All Bundles"
+          onButtonPress={() => router.push('/bundles')}
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <AppHeader />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+    <PageShell activeNav="Bundles" glowColor="rgba(232, 66, 10, 0.2)">
+      <div className="mb-6">
         <Link
           href="/bundles"
-          className="text-cyan-400 hover:text-cyan-300 text-sm mb-6 inline-block"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
         >
-          &larr; Back to Bundles
+          <ArrowLeft className="w-4 h-4" /> Back to All Bundles
         </Link>
+      </div>
+
+      <div className="max-w-3xl mx-auto">
+        <PageHero
+          eyebrow="MULTI-UNIVERSE PASS"
+          eyebrowColor="var(--brand-orange)"
+          badge={`${bundle.discountPercent}% SAVINGS`}
+          title={bundle.name}
+          subtitle={bundle.description}
+          glowColor="rgba(232, 66, 10, 0.25)"
+        />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-900 border border-gray-800 rounded-xl p-8"
+          className="az-glass p-6 sm:p-10 rounded-3xl relative overflow-hidden"
+          style={{
+            background:
+              'linear-gradient(135deg, rgba(24, 21, 30, 0.9) 0%, rgba(35, 18, 14, 0.5) 100%)',
+            borderColor: 'rgba(232, 66, 10, 0.25)',
+          }}
         >
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-xs font-semibold px-2 py-1 rounded-full text-white bg-cyan-600">
-              {(bundle.tier ?? 'standard').toUpperCase()}
-            </span>
-          </div>
-
-          <h1 className="text-3xl font-bold mb-2">{bundle.name}</h1>
-          <p className="text-gray-400 mb-6">{bundle.description}</p>
-
-          <div className="flex items-baseline gap-3 mb-6">
-            <span className="text-5xl font-bold text-cyan-400">
-              ₦{Number(bundle.price).toLocaleString()}
-            </span>
-            <span className="text-lg text-gray-500">/mo</span>
-            <span className="text-lg text-gray-500 line-through">
-              ₦{Number(bundle.originalPrice).toLocaleString()}/mo
-            </span>
-            <span className="text-lg font-bold text-green-400">{bundle.discountPercent}% off</span>
-          </div>
-
-          <div className="mb-8">
-            <h3 className="font-semibold mb-3">Included Universes:</h3>
-            <div className="flex flex-wrap gap-2">
-              {bundle.universeIds.map((uid) => (
-                <span
-                  key={uid}
-                  className="bg-gray-800 text-gray-200 px-3 py-1.5 rounded-lg text-sm"
-                >
-                  {UNIVERSE_NAMES[uid] || uid}
+          {/* Pricing Header */}
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-6 border-b border-white/10 mb-6">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-white/50 font-semibold mb-1">
+                Monthly Pass Subscription
+              </p>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl sm:text-5xl font-extrabold text-white">
+                  ₦{Number(bundle.price).toLocaleString()}
                 </span>
+                <span className="text-white/50 text-base font-medium">/ month</span>
+              </div>
+            </div>
+
+            <div className="text-left sm:text-right">
+              <span className="text-sm line-through text-white/40 block">
+                ₦{Number(bundle.originalPrice).toLocaleString()}/mo
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                Save ₦{(Number(bundle.originalPrice) - Number(bundle.price)).toLocaleString()}/month
+              </span>
+            </div>
+          </div>
+
+          {/* Included Universes */}
+          <div className="mb-8">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white/70 mb-3 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[var(--brand-orange)]" />
+              Included Entertainment Universes
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {bundle.universeIds.map((uid) => (
+                <div
+                  key={uid}
+                  className="flex items-center gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10"
+                >
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                  </div>
+                  <span className="text-sm font-semibold text-white/90">
+                    {UNIVERSE_NAMES[uid] || uid}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
 
+          {/* Payment Method Selector */}
           <div className="mb-8">
-            <h3 className="font-semibold mb-3">Payment Method:</h3>
-            <div className="flex gap-3">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white/70 mb-3">
+              Select Payment Method
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
+                type="button"
                 onClick={() => setPaymentMethod('wallet')}
-                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                className={`p-4 rounded-2xl border text-left transition-all flex items-center gap-3 ${
                   paymentMethod === 'wallet'
-                    ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400'
-                    : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                    ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)]/15 text-white shadow-lg'
+                    : 'border-white/10 bg-white/5 text-white/60 hover:text-white hover:border-white/20'
                 }`}
               >
-                Wallet
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    paymentMethod === 'wallet' ? 'bg-[var(--brand-orange)] text-white' : 'bg-white/10'
+                  }`}
+                >
+                  <Wallet className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Azeebo Wallet</p>
+                  <p className="text-xs text-white/50">Instant 1-click deduction</p>
+                </div>
               </button>
+
               <button
+                type="button"
                 onClick={() => setPaymentMethod('external')}
-                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                className={`p-4 rounded-2xl border text-left transition-all flex items-center gap-3 ${
                   paymentMethod === 'external'
-                    ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400'
-                    : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                    ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)]/15 text-white shadow-lg'
+                    : 'border-white/10 bg-white/5 text-white/60 hover:text-white hover:border-white/20'
                 }`}
               >
-                Pay with Card
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    paymentMethod === 'external'
+                      ? 'bg-[var(--brand-orange)] text-white'
+                      : 'bg-white/10'
+                  }`}
+                >
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Debit / Credit Card</p>
+                  <p className="text-xs text-white/50">Paystack / Flutterwave</p>
+                </div>
               </button>
             </div>
           </div>
 
+          {/* Submit CTA */}
           <button
             onClick={() => subscribeMutation.mutate()}
             disabled={subscribeMutation.isPending}
-            className="w-full bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-700 text-black font-bold py-3 rounded-lg transition-colors text-lg"
+            className="az-btn-primary flex items-center justify-center gap-2 text-base font-bold shadow-xl"
           >
-            {subscribeMutation.isPending ? 'Processing...' : 'Subscribe Now'}
+            {subscribeMutation.isPending ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Processing Activation...
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="w-5 h-5" />
+                Subscribe to {bundle.name} Now
+              </>
+            )}
           </button>
 
           {subscribeMutation.isError && (
-            <p className="text-red-400 text-sm mt-3">
+            <p className="text-red-400 text-xs font-semibold text-center mt-3">
               {(subscribeMutation.error as Error).message}
             </p>
           )}
+
+          <p className="text-[11px] text-white/40 text-center mt-4">
+            Secured 256-bit encryption. Cancel anytime directly in your subscription settings.
+          </p>
         </motion.div>
-      </main>
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }
 

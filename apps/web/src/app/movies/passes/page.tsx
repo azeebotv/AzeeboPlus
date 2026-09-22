@@ -10,6 +10,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Ticket, Check } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface CinemaPass {
@@ -132,9 +133,11 @@ function PassesPageContent(): React.JSX.Element {
               style={{ border: '2px solid rgba(234,179,8,0.5)' }}
             >
               <div className="flex items-center gap-4 mb-4">
-                <span className="text-4xl"></span>
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0 shadow-lg shadow-amber-500/10">
+                  <Ticket size={28} strokeWidth={1.75} />
+                </div>
                 <div>
-                  <h2 className="text-xl font-bold" style={{ color: 'var(--color-warning-400)' }}>
+                  <h2 className="text-xl font-bold text-amber-400">
                     {userPass.passName}
                   </h2>
                   <p className="text-white/50 text-sm">Active Cinema Pass</p>
@@ -252,7 +255,7 @@ function PassesPageContent(): React.JSX.Element {
                   <ul className="space-y-3 mb-6 flex-1">
                     {pass.features.map((feature, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <span style={{ color: 'var(--color-success-500)' }}></span>
+                        <Check size={16} className="text-emerald-400 flex-shrink-0" />
                         <span className="text-white text-sm">{feature}</span>
                       </li>
                     ))}

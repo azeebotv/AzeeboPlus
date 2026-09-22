@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { AUTH_COOKIE, LEGACY_AUTH_CLEAR_HEADER } from '@/lib/cookie-names';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,10 +41,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Non-HttpOnly cookie for middleware auth check
+    // Non-HttpOnly namespaced marker for the middleware auth check. The
+    // bare `auth` name is deliberately avoided: it is host-scoped, so other
+    // localhost apps / tooling could clobber it (email-valued `auth` cookies
+    // have been observed planting themselves into the shared dev jar).
     try {
       const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-      response.cookies.set('auth', payload.sub || payload.userId || '', {
+      response.cookies.set(AUTH_COOKIE, payload.sub || payload.userId || '', {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
@@ -51,7 +55,7 @@ export async function POST(request: NextRequest) {
         maxAge: 15 * 60,
       });
     } catch {
-      response.cookies.set('auth', 'authenticated', {
+      response.cookies.set(AUTH_COOKIE, 'authenticated', {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
@@ -59,6 +63,10 @@ export async function POST(request: NextRequest) {
         maxAge: 15 * 60,
       });
     }
+
+    // Self-heal: expire any legacy/foreign bare `auth` cookie riding along
+    // in the shared localhost jar so it can't masquerade as a session.
+    response.headers.append('Set-Cookie', LEGACY_AUTH_CLEAR_HEADER);
 
     return response;
   } catch {

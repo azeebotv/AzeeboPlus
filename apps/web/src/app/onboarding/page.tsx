@@ -7,53 +7,64 @@ import { useUniverses } from '@/hooks/useUniverses';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import BrandLogo from '@/components/auth/BrandLogo';
+import { Mic, Film, Trophy, Compass, Laugh, Radio, Tv, Sparkles, type LucideIcon } from 'lucide-react';
 
 type CategoryCard = {
   category: string;
   sub: string;
   descriptor: string;
-  emoji: string;
+  icon: LucideIcon;
   side: 'left' | 'right';
 };
 
 const CATEGORY_CARDS: CategoryCard[] = [
-  { category: 'Music', sub: 'Afrobeats', descriptor: 'Wande Coal', emoji: 'Mic', side: 'left' },
+  { category: 'Music', sub: 'Afrobeats', descriptor: 'Wande Coal', icon: Mic, side: 'left' },
   {
     category: 'Movies',
     sub: 'Nollywood',
-    descriptor: 'Jenevive Nnaji',
-    emoji: 'Film',
+    descriptor: 'Genevieve Nnaji',
+    icon: Film,
     side: 'left',
   },
   {
     category: 'Sports',
     sub: 'Super Eagles',
     descriptor: 'Live Matches',
-    emoji: 'Circle',
+    icon: Trophy,
     side: 'left',
   },
   {
     category: 'Culture',
     sub: 'Heritage',
     descriptor: 'Osun Osogbo',
-    emoji: 'Music',
+    icon: Compass,
     side: 'right',
   },
   {
     category: 'Comedy',
-    sub: 'Taooma',
+    sub: 'Taaooma',
     descriptor: 'Laugh Out Loud',
-    emoji: 'Laugh',
+    icon: Laugh,
     side: 'right',
   },
   {
     category: 'Creators',
     sub: 'Vloggers',
     descriptor: 'Live Stream',
-    emoji: 'Signal',
+    icon: Radio,
     side: 'right',
   },
 ];
+
+const universeIcons: Record<string, LucideIcon> = {
+  movies: Film,
+  music: Mic,
+  sports: Trophy,
+  lifestyle: Compass,
+  comedy: Laugh,
+  reality: Tv,
+  games: Sparkles,
+};
 
 export default function OnboardingPage(): React.JSX.Element {
   const router = useRouter();
@@ -101,15 +112,14 @@ export default function OnboardingPage(): React.JSX.Element {
         }}
       >
         <div
-          className="flex-shrink-0 flex items-center justify-center rounded-lg"
+          className="flex-shrink-0 flex items-center justify-center rounded-xl text-white shadow-md shadow-orange-500/20"
           style={{
             width: 44,
             height: 44,
             background: 'linear-gradient(135deg, #E8420A, #CC1C1C)',
-            fontSize: 22,
           }}
         >
-          {c.emoji}
+          <c.icon size={22} strokeWidth={2} />
         </div>
         <div className="min-w-0">
           <p className="font-bold text-white text-sm leading-tight">
@@ -262,19 +272,28 @@ export default function OnboardingPage(): React.JSX.Element {
           ) : (
             universes.map((universe) => {
               const active = selectedInterests.includes(universe.name);
+              const UniverseIcon = universeIcons[universe.name?.toLowerCase() || ''] || Film;
               return (
                 <button
                   key={universe.id}
                   onClick={() => toggleInterest(universe.name)}
-                  className="flex items-center gap-3 p-4 rounded-xl border transition-all"
+                  className="flex items-center gap-3.5 p-4 rounded-2xl border transition-all text-left"
                   style={{
-                    background: active ? 'rgba(204,28,28,0.25)' : 'rgba(255,255,255,0.05)',
-                    borderColor: active ? 'var(--brand-red)' : 'rgba(255,255,255,0.12)',
-                    boxShadow: active ? '0 0 20px rgba(204,28,28,0.4)' : 'none',
+                    background: active ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.04)',
+                    borderColor: active ? 'var(--brand-orange)' : 'rgba(255,255,255,0.1)',
+                    boxShadow: active ? '0 0 20px rgba(232,66,10,0.3)' : 'none',
                   }}
                 >
-                  <span className="text-3xl">{universe.icon || 'Film'}</span>
-                  <span className="font-semibold text-white text-sm">{universe.displayName}</span>
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                      active
+                        ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30'
+                        : 'bg-white/10 text-white/70'
+                    }`}
+                  >
+                    <UniverseIcon size={20} strokeWidth={1.75} />
+                  </div>
+                  <span className="font-bold text-white text-sm">{universe.displayName}</span>
                 </button>
               );
             })

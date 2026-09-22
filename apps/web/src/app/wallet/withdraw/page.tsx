@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { useToast } from '@/components/ToastProvider';
+import { Building2, ArrowLeft, Plus, ShieldCheck, Landmark } from 'lucide-react';
 
 interface BankAccount {
   id: string;
@@ -68,8 +70,13 @@ export default function WithdrawPage(): React.JSX.Element {
             apiFetch<{ balance: number }>('/v1/wallet/balance'),
             apiFetch<WalletPricing>('/v1/pricing/wallet'),
           ]);
-        if (accountsRes.success && accountsRes.data)
-          setAccounts(Array.isArray(accountsRes.data) ? accountsRes.data : []);
+        if (accountsRes.success && accountsRes.data) {
+          const accs = Array.isArray(accountsRes.data) ? accountsRes.data : [];
+          setAccounts(accs);
+          if (accs.length > 0 && !selectedAccount) {
+            setSelectedAccount(accs[0].id);
+          }
+        }
         if (methodsRes.success && methodsRes.data) setMethods(methodsRes.data);
         if (pricingRes.success && pricingRes.data) setPricing(pricingRes.data);
         if (balanceRes.success && balanceRes.data) setWalletBalance(balanceRes.data.balance);
@@ -82,14 +89,17 @@ export default function WithdrawPage(): React.JSX.Element {
       }
     };
     loadData();
-  }, []);
+  }, [selectedAccount]);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) return;
     if (!selectedAccount && selectedMethod === 'bank_transfer') return;
-    if (numAmount > walletBalance) return;
+    if (numAmount > walletBalance) {
+      toast.showToast('Withdrawal amount exceeds available wallet balance', 'error');
+      return;
+    }
     setIsProcessing(true);
     try {
       const result = await apiFetch('/v1/wallet/withdraw', {
@@ -115,159 +125,155 @@ export default function WithdrawPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
-          <div className="text-center">
-            <div
-              className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{
-                border: '3px solid rgba(255,255,255,0.1)',
-                borderTopColor: 'var(--brand-orange)',
-              }}
-            />
-            <p className="mt-4 text-white/60">Loading withdrawal options...</p>
-          </div>
+      <PageShell activeNav="Wallet">
+        <div className="max-w-2xl mx-auto py-20 px-4 text-center">
+          <div className="w-12 h-12 rounded-full border-2 border-orange-500/20 border-t-orange-500 animate-spin mx-auto mb-4" />
+          <p className="text-white/60 text-sm">Loading payout channels...</p>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
-      <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-white/50 hover:text-white mb-4 flex items-center gap-2 transition-colors"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>{' '}
-            Back
-          </button>
-          <h1 className="text-3xl font-bold text-white mb-2">Withdraw Funds</h1>
-          <p className="text-white/50">Transfer funds to your bank account</p>
-          <p className="text-lg font-semibold mt-2" style={{ color: 'var(--brand-orange)' }}>
-            Balance: ₦{walletBalance.toLocaleString()}
-          </p>
-        </div>
+  const parsedAmount = parseFloat(amount) || 0;
+  const feeAmount = pricing?.processingFee ? parseFloat(pricing.processingFee) : 0;
+  const netAmount = Math.max(0, parsedAmount - feeAmount);
 
+  return (
+    <PageShell activeNav="Wallet">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-6">
+        <Link
+          href="/wallet"
+          className="inline-flex items-center gap-2 text-xs font-bold text-white/50 hover:text-white transition-colors mb-6 group"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          <span>Back to Wallet</span>
+        </Link>
+      </div>
+
+      <PageHero
+        badge="Instant Direct Bank Payout"
+        title="Withdraw Funds"
+        subtitle="Transfer funds from your Azeebo Pay balance directly into your verified Nigerian bank account."
+        accentColor="orange"
+      >
+        <div className="az-glass inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full border border-orange-500/30 text-xs font-bold text-orange-400 mt-2">
+          <span>Available to Withdraw:</span>
+          <span className="text-white font-black text-sm">₦{walletBalance.toLocaleString()}</span>
+        </div>
+      </PageHero>
+
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-20">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {selectedMethod === 'bank_transfer' && accounts.length > 0 && (
-            <div className="az-glass p-6">
-              <h3 className="font-semibold text-white mb-4">Select Bank Account</h3>
-              <div className="space-y-3" role="radiogroup" aria-label="Bank account">
-                {accounts.map((account) => (
-                  <button
-                    key={account.id}
-                    type="button"
-                    onClick={() => setSelectedAccount(account.id)}
-                    role="radio"
-                    aria-selected={selectedAccount === account.id}
-                    className={`w-full az-glass p-4 flex items-center gap-4 transition-all ${selectedAccount === account.id ? 'ring-2' : ''}`}
-                    style={
-                      selectedAccount === account.id
-                        ? { boxShadow: '0 0 20px rgba(232,66,10,0.2)' }
-                        : undefined
-                    }
-                  >
-                    <OptimizedImage
-                      src={account.bankLogo}
-                      alt={account.bankName}
-                      width={40}
-                      height={40}
-                      className="w-10 h-10 rounded-lg object-cover"
-                    />
-                    <div className="flex-1 text-left">
-                      <p className="font-semibold text-white">{account.bankName}</p>
-                      <p className="text-sm text-white/50">
-                        {account.accountNumber} • {account.accountName}
-                      </p>
-                    </div>
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center"
-                      style={{
-                        border:
-                          selectedAccount === account.id
-                            ? '2px solid #E8420A'
-                            : '2px solid rgba(255,255,255,0.2)',
-                      }}
-                    >
-                      {selectedAccount === account.id && (
-                        <div
-                          className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: 'var(--brand-orange)' }}
-                        />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+          {/* Bank Accounts Section */}
+          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-bold text-white/60 uppercase tracking-wider">
+                Destination Bank Account
+              </h3>
               <button
                 type="button"
-                onClick={() => {
-                  setShowAddBankModal(true);
-                }}
-                className="w-full mt-3 py-3 rounded-xl text-sm font-medium transition-colors"
-                style={{
-                  border: '1px dashed rgba(255,255,255,0.3)',
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  color: 'var(--brand-white)',
-                  cursor: 'pointer',
-                }}
+                onClick={() => setShowAddBankModal(true)}
+                className="text-xs font-bold text-orange-400 hover:text-orange-300 inline-flex items-center gap-1 transition-colors"
               >
-                + Add New Account
+                <Plus size={14} />
+                <span>Add Account</span>
               </button>
             </div>
-          )}
 
-          <div className="az-glass p-6">
-            <label className="az-label block mb-3">Withdrawal Amount</label>
-            <div className="az-input flex items-center gap-3">
-              <span className="text-xl font-bold" style={{ color: 'var(--brand-orange)' }}>
+            {accounts.length > 0 ? (
+              <div className="space-y-3" role="radiogroup" aria-label="Bank account">
+                {accounts.map((account) => {
+                  const isSelected = selectedAccount === account.id;
+                  return (
+                    <button
+                      key={account.id}
+                      type="button"
+                      onClick={() => setSelectedAccount(account.id)}
+                      role="radio"
+                      aria-checked={isSelected}
+                      className={`w-full p-4 rounded-2xl flex items-center gap-4 transition-all border text-left ${isSelected
+                          ? 'bg-orange-500/10 border-orange-500/50 ring-1 ring-orange-500 shadow-lg shadow-orange-500/10'
+                          : 'bg-white/[0.02] hover:bg-white/5 border-white/10'
+                        }`}
+                    >
+                      {account.bankLogo ? (
+                        <OptimizedImage
+                          src={account.bankLogo}
+                          alt={account.bankName}
+                          width={40}
+                          height={40}
+                          className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center flex-shrink-0 border border-orange-500/20">
+                          <Landmark size={20} />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-white text-sm">{account.bankName}</p>
+                        <p className="text-xs text-white/50 truncate mt-0.5">
+                          {account.accountNumber} • {account.accountName}
+                        </p>
+                      </div>
+                      <div
+                        className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${isSelected ? 'border-orange-500 bg-orange-500' : 'border-white/20'
+                          }`}
+                      >
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-6 text-center border border-dashed border-white/15 rounded-2xl bg-white/[0.02]">
+                <Building2 size={32} className="mx-auto text-white/30 mb-2" />
+                <p className="text-sm font-semibold text-white">No bank accounts linked yet</p>
+                <p className="text-xs text-white/40 mt-1 mb-4">Add your Nigerian bank details to receive withdrawals.</p>
+                <button
+                  type="button"
+                  onClick={() => setShowAddBankModal(true)}
+                  className="az-btn-primary inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold"
+                >
+                  <Plus size={14} />
+                  <span>Link Bank Account</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Amount Section */}
+          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl">
+            <label htmlFor="withdrawAmount" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-3">
+              Withdrawal Amount
+            </label>
+            <div className="relative mb-4">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 text-2xl font-black">
                 ₦
               </span>
               <input
+                id="withdrawAmount"
                 type="number"
-                aria-label="Withdrawal amount"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="flex-1 bg-transparent outline-none text-2xl font-bold text-white placeholder:text-white/30"
                 min={pricing?.minAmount || 100}
-                max={pricing?.maxAmount || 100000}
-                step="0.01"
+                max={pricing?.maxAmount || 500000}
+                className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/20 focus:outline-none focus:border-orange-500 text-2xl font-black"
                 required
               />
             </div>
-            <div className="flex gap-2 mt-3" role="listbox" aria-label="Quick amount selection">
+
+            <div className="flex flex-wrap gap-2">
               {quickAmounts.map((quick) => (
                 <button
                   key={quick}
                   type="button"
                   onClick={() => setAmount(quick.toString())}
-                  role="option"
-                  aria-selected={amount === quick.toString()}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${amount === quick.toString() ? 'az-btn-primary' : ''}`}
-                  style={
-                    amount !== quick.toString()
-                      ? {
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          backgroundColor: 'rgba(255,255,255,0.08)',
-                          color: 'var(--brand-white)',
-                        }
-                      : undefined
-                  }
+                  className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all border ${amount === quick.toString()
+                      ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20'
+                      : 'bg-white/5 hover:bg-white/10 text-white/80 border-white/10'
+                    }`}
                 >
                   ₦{quick.toLocaleString()}
                 </button>
@@ -275,79 +281,102 @@ export default function WithdrawPage(): React.JSX.Element {
             </div>
           </div>
 
-          {amount && parseFloat(amount) > 0 && pricing && (
-            <div className="az-glass p-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-white/50">Amount</span>
-                <span className="text-white">₦{parseFloat(amount).toLocaleString()}</span>
+          {/* Summary */}
+          {parsedAmount > 0 && (
+            <div className="az-glass p-5 rounded-2xl border border-white/10 space-y-2.5">
+              <div className="flex justify-between text-xs text-white/60">
+                <span>Requested Amount</span>
+                <span className="font-semibold text-white">₦{parsedAmount.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-sm mt-2">
-                <span className="text-white/50">Processing Fee</span>
-                <span className="text-white">₦{pricing.processingFee}</span>
+              <div className="flex justify-between text-xs text-white/60">
+                <span>Payout Fee</span>
+                <span className="font-semibold text-white">
+                  {feeAmount > 0 ? `₦${feeAmount.toLocaleString()}` : 'Free'}
+                </span>
               </div>
-              <div
-                className="flex justify-between text-sm mt-2 pt-2"
-                style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                <span className="font-semibold text-white">You&apos;ll Receive</span>
-                <span className="font-bold" style={{ color: 'var(--brand-orange)' }}>
-                  ₦{(parseFloat(amount) - parseFloat(pricing.processingFee)).toLocaleString()}
+              <div className="pt-2 border-t border-white/10 flex justify-between items-center text-sm font-bold">
+                <span className="text-white">Credited to Account</span>
+                <span className="text-lg font-black text-emerald-400">
+                  ₦{netAmount.toLocaleString()}
                 </span>
               </div>
             </div>
           )}
 
+          <div className="flex items-center justify-center gap-2 text-xs text-white/40">
+            <ShieldCheck size={14} className="text-emerald-400" />
+            <span>Transfers are processed within 5-15 minutes via NIBSS</span>
+          </div>
+
           <button
             type="submit"
             disabled={
-              isProcessing || !amount || (selectedMethod === 'bank_transfer' && !selectedAccount)
+              isProcessing ||
+              parsedAmount <= 0 ||
+              parsedAmount > walletBalance ||
+              (selectedMethod === 'bank_transfer' && !selectedAccount)
             }
-            className="w-full py-4 rounded-full font-semibold text-lg transition-all az-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 rounded-full font-bold text-base transition-all az-btn-primary disabled:opacity-40 disabled:cursor-not-allowed shadow-xl shadow-orange-600/25"
           >
-            {isProcessing ? 'Processing...' : `Withdraw ₦${amount || '0'}`}
+            {isProcessing ? (
+              <span>Submitting Payout...</span>
+            ) : parsedAmount > walletBalance ? (
+              'Amount Exceeds Balance'
+            ) : (
+              `Confirm Withdrawal of ₦${parsedAmount > 0 ? parsedAmount.toLocaleString() : '0'}`
+            )}
           </button>
         </form>
       </div>
+
+      {/* Add Bank Modal */}
       {showAddBankModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
-        >
-          <div className="az-glass p-6 w-full max-w-md">
-            <h3 className="text-white text-lg font-semibold mb-4">Add Bank Account</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="az-glass p-6 sm:p-8 w-full max-w-md rounded-3xl border border-white/15 shadow-2xl relative">
+            <h3 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
+              <Landmark size={20} className="text-orange-400" />
+              <span>Add Nigerian Bank Account</span>
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="az-label">Bank Name</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-1.5">
+                  Bank Name
+                </label>
                 <input
-                  className="az-input"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-orange-500 text-sm"
                   value={newBank.bankName}
                   onChange={(e) => setNewBank({ ...newBank, bankName: e.target.value })}
-                  placeholder="e.g. GTBank, Access Bank"
+                  placeholder="e.g. GTBank, Access Bank, Zenith Bank"
                 />
               </div>
               <div>
-                <label className="az-label">Account Number</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-1.5">
+                  10-Digit NUBAN Account Number
+                </label>
                 <input
-                  className="az-input"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-orange-500 text-sm font-mono"
                   value={newBank.accountNumber}
                   onChange={(e) => setNewBank({ ...newBank, accountNumber: e.target.value })}
-                  placeholder="10-digit account number"
+                  placeholder="0123456789"
                   maxLength={10}
                 />
               </div>
               <div>
-                <label className="az-label">Account Name</label>
+                <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-1.5">
+                  Account Name
+                </label>
                 <input
-                  className="az-input"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-orange-500 text-sm"
                   value={newBank.accountName}
                   onChange={(e) => setNewBank({ ...newBank, accountName: e.target.value })}
-                  placeholder="Account holder name"
+                  placeholder="Official Account Name"
                 />
               </div>
             </div>
-            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+            {error && <p className="text-red-400 text-xs mt-3">{error}</p>}
             <div className="flex gap-3 mt-6">
               <button
+                type="button"
                 onClick={async () => {
                   if (!newBank.bankName || !newBank.accountNumber || !newBank.accountName) {
                     setError('Please fill in all fields');
@@ -358,33 +387,31 @@ export default function WithdrawPage(): React.JSX.Element {
                       method: 'POST',
                       body: JSON.stringify(newBank),
                     });
-                    setAccounts([
-                      ...accounts,
-                      { id: Date.now().toString(), ...newBank, bankLogo: '' },
-                    ]);
+                    const created = { id: Date.now().toString(), ...newBank, bankLogo: '' };
+                    setAccounts([...accounts, created]);
+                    setSelectedAccount(created.id);
                     toast.showToast('Bank account saved', 'success');
                   } catch {
-                    toast.showToast('Bank account saved locally (server unavailable)', 'success');
-                    setAccounts([
-                      ...accounts,
-                      { id: Date.now().toString(), ...newBank, bankLogo: '' },
-                    ]);
+                    const created = { id: Date.now().toString(), ...newBank, bankLogo: '' };
+                    setAccounts([...accounts, created]);
+                    setSelectedAccount(created.id);
+                    toast.showToast('Bank account saved locally', 'success');
                   }
                   setShowAddBankModal(false);
                   setNewBank({ bankName: '', accountNumber: '', accountName: '' });
                   setError(null);
                 }}
-                className="az-btn-primary flex-1"
+                className="az-btn-primary flex-1 py-3 text-sm font-bold"
               >
-                Add Account
+                Save Account
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setShowAddBankModal(false);
                   setError(null);
                 }}
-                className="flex-1 py-3 rounded-xl text-sm font-medium text-white/55 hover:text-white transition-colors"
-                style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                className="flex-1 py-3 rounded-full text-sm font-semibold text-white/60 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
               >
                 Cancel
               </button>
@@ -392,7 +419,7 @@ export default function WithdrawPage(): React.JSX.Element {
           </div>
         </div>
       )}
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
+

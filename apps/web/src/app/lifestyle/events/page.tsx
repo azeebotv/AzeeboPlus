@@ -1,15 +1,16 @@
 'use client';
-import { Suspense, lazy, useEffect, useState } from 'react';
 
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Calendar, MapPin, Check, ArrowLeft, Sparkles, Clock, Globe } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface Event {
@@ -29,6 +30,7 @@ interface Event {
 
 function EventsPageContent(): React.JSX.Element {
   const [rsvped, setRsvped] = useState<Set<string>>(new Set());
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   useEffect(() => {
     analytics.pageView('lifestyle-events');
@@ -48,6 +50,13 @@ function EventsPageContent(): React.JSX.Element {
   const isLoading = eventsQuery.isLoading;
   const error = eventsQuery.error?.message;
 
+  const categories = ['All', ...Array.from(new Set(events.map((e) => e.category).filter(Boolean)))];
+
+  const filteredEvents = events.filter((e) => {
+    if (selectedCategory === 'All') return true;
+    return e.category === selectedCategory;
+  });
+
   const handleRsvp = (eventId: string) => {
     setRsvped((prev) => {
       const next = new Set(prev);
@@ -61,190 +70,178 @@ function EventsPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Lifestyle" />
+    <PageShell glowColor="rgba(232,66,10,0.15)">
+      <PageHero
+        badge="Live Experiences"
+        title="Lifestyle Events & Galas"
+        description="Exclusive red-carpet premieres, cultural festivals, tech-fashion summits, and intimate concerts across Africa."
+      />
 
-      {/* Hero */}
-      <section
-        className="relative py-16 sm:py-20"
-        style={{
-          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+      <div className="max-w-7xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <Link
+            href="/lifestyle"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white transition-colors"
           >
-            Lifestyle Events
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Discover exciting events, experiences, and happenings across Africa
-          </motion.p>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Lifestyle Hub
+          </Link>
+
+          {categories.length > 1 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat as string)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-[var(--brand-orange)] text-white shadow-lg shadow-[var(--brand-orange)]/25 font-bold'
+                      : 'az-glass text-white/60 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </section>
-
-      {/* Events Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-            Upcoming Events
-          </h2>
-        </ScrollReveal>
 
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass overflow-hidden">
-                <Skeleton height="200px" borderRadius="0" />
-                <div className="p-4 space-y-3">
-                  <Skeleton height="20px" width="70%" />
-                  <Skeleton height="16px" width="50%" />
-                  <Skeleton height="36px" borderRadius="0" />
-                </div>
+              <div key={i} className="az-glass rounded-2xl overflow-hidden p-4 space-y-3">
+                <Skeleton className="aspect-video w-full rounded-xl" />
+                <Skeleton className="h-5 w-3/4 rounded-md" />
+                <Skeleton className="h-4 w-1/2 rounded-md" />
               </div>
             ))}
           </div>
         ) : error ? (
-          <ErrorState
-            title="Failed to load events"
-            description={error}
-            onButtonPress={() => eventsQuery.refetch()}
-          />
-        ) : events.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event, index) => (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <GlowCard universe="lifestyle" className="overflow-hidden">
-                  <div className="relative">
-                    <OptimizedImage
-                      src={event.thumbnail}
-                      alt={event.title}
-                      width={400}
-                      height={160}
-                      className="w-full h-40 object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
-                    <div className="absolute top-2 right-2 flex gap-2">
-                      {event.isVirtual && (
-                        <span
-                          className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                          style={{
-                            backgroundColor: 'rgba(59,130,246,0.9)',
-                            color: 'var(--brand-white)',
-                          }}
-                        >
-                          Virtual
-                        </span>
-                      )}
-                      {event.category && (
-                        <span
-                          className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                          style={{
-                            backgroundColor: 'rgba(232,66,10,0.9)',
-                            color: 'var(--brand-white)',
-                          }}
-                        >
-                          {event.category}
-                        </span>
-                      )}
-                    </div>
-                    <div className="absolute bottom-3 left-3">
-                      <h3 className="text-lg font-bold text-white">{event.title}</h3>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 text-xs text-white/50 mb-2">
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                      {new Date(event.date).toLocaleDateString('en-NG', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                      {' at '}
-                      {new Date(event.date).toLocaleTimeString('en-NG', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-white/50 mb-3">
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                      {event.venue}
-                      {event.city && `, ${event.city}`}
-                    </div>
-                    <p className="text-sm text-white/50 mb-4 line-clamp-2">{event.description}</p>
-                    <div className="flex items-center justify-between">
-                      {event.price != null ? (
-                        <span className="text-sm font-bold text-white">
-                          {event.price === 0 ? 'Free' : `₦${event.price.toLocaleString()}`}
-                        </span>
-                      ) : (
-                        <span />
-                      )}
-                      <motion.button
-                        type="button"
-                        onClick={() => handleRsvp(event.id)}
-                        className="px-4 py-2 rounded-full text-xs font-semibold transition-all"
-                        style={{
-                          backgroundColor: rsvped.has(event.id)
-                            ? 'var(--color-success-400)'
-                            : 'var(--brand-orange)',
-                          color: rsvped.has(event.id) ? 'var(--brand-forest)' : 'white',
-                        }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        {rsvped.has(event.id) ? 'Going Check' : 'RSVP'}
-                      </motion.button>
-                    </div>
-                  </div>
-                </GlowCard>
-              </motion.div>
-            ))}
+          <div className="max-w-md mx-auto py-12">
+            <ErrorState
+              title="Failed to load events"
+              description={error}
+              onButtonPress={() => eventsQuery.refetch()}
+            />
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div className="az-glass p-16 text-center rounded-3xl border border-white/10 max-w-md mx-auto">
+            <Sparkles className="w-12 h-12 text-white/20 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-2">No Upcoming Events</h3>
+            <p className="text-xs text-white/50">
+              Check back soon for announcements on new galas, concerts, and premier experiences.
+            </p>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">No events available</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEvents.map((event, index) => {
+              const isGoing = rsvped.has(event.id);
+              return (
+                <motion.div
+                  key={event.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <GlowCard universe="lifestyle" className="overflow-hidden rounded-2xl border border-white/10 flex flex-col h-full">
+                    <div className="relative aspect-video bg-white/5">
+                      <OptimizedImage
+                        src={event.thumbnail}
+                        alt={event.title}
+                        fill
+                        className="object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute top-2.5 right-2.5 flex gap-1.5">
+                        {event.isVirtual && (
+                          <span className="px-2 py-0.5 rounded-full bg-blue-500/80 backdrop-blur-sm text-white text-[10px] font-semibold flex items-center gap-1">
+                            <Globe className="w-2.5 h-2.5" />
+                            Virtual
+                          </span>
+                        )}
+                        {event.category && (
+                          <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[var(--brand-orange)] border border-[var(--brand-orange)]/30 text-[10px] font-mono font-bold uppercase">
+                            {event.category}
+                          </span>
+                        )}
+                      </div>
+                      <div className="absolute bottom-3 left-3 right-3">
+                        <h3 className="text-base font-bold text-white line-clamp-1">{event.title}</h3>
+                      </div>
+                    </div>
+
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-white/60">
+                          <Calendar className="w-3.5 h-3.5 text-[var(--brand-orange)]" />
+                          <span>
+                            {new Date(event.date).toLocaleDateString('en-NG', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                          <span className="text-white/30">•</span>
+                          <Clock className="w-3.5 h-3.5 text-white/40" />
+                          <span>
+                            {new Date(event.date).toLocaleTimeString('en-NG', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-white/60">
+                          <MapPin className="w-3.5 h-3.5 text-white/40" />
+                          <span className="truncate">
+                            {event.venue}
+                            {event.city && `, ${event.city}`}
+                          </span>
+                        </div>
+                        <p className="text-xs text-white/50 line-clamp-2 pt-1">{event.description}</p>
+                      </div>
+
+                      <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+                        <div>
+                          {event.price != null ? (
+                            <span className="text-sm font-bold text-white">
+                              {event.price === 0 ? 'Free' : `₦${event.price.toLocaleString()}`}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-white/40 font-mono">Invite Only</span>
+                          )}
+                        </div>
+                        <motion.button
+                          type="button"
+                          onClick={() => handleRsvp(event.id)}
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            isGoing
+                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-[var(--brand-orange)] text-white hover:bg-[var(--brand-orange)]/90 shadow-md shadow-[var(--brand-orange)]/25'
+                          }`}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          {isGoing ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              Going
+                            </>
+                          ) : (
+                            'RSVP'
+                          )}
+                        </motion.button>
+                      </div>
+                    </div>
+                  </GlowCard>
+                </motion.div>
+              );
+            })}
           </div>
         )}
-      </section>
-
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }
 

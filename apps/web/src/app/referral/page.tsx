@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
@@ -41,6 +42,7 @@ interface ReferralsList {
 
 export default function ReferralPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -49,6 +51,11 @@ export default function ReferralPage(): React.JSX.Element {
       if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
     };
   }, []);
+
+  // Logged-out visitors get sent to login instead of a blank page.
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) router.replace('/auth/login?next=/referral');
+  }, [authLoading, isAuthenticated, router]);
 
   const codeQuery = useQuery({
     queryKey: ['referral', 'code'],
@@ -113,7 +120,7 @@ export default function ReferralPage(): React.JSX.Element {
   };
 
   if (authLoading) return <></>;
-  if (!isAuthenticated || !user) return <></>;
+  if (!isAuthenticated || !user) return <></>; // redirect fires via effect
 
   return (
     <div

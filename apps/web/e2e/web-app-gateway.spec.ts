@@ -36,7 +36,9 @@ async function login(page: import('@playwright/test').Page) {
         role: 'user',
       }),
     );
-    document.cookie = 'auth=e2e-user-1; path=/; max-age=604800; SameSite=Lax';
+    // Namespaced marker — the bare `auth` cookie name is shared across all
+    // localhost apps and must not be used (see src/lib/cookie-names.ts).
+    document.cookie = 'azeebo_web_auth=e2e-user-1; path=/; max-age=604800; SameSite=Lax';
   });
 }
 

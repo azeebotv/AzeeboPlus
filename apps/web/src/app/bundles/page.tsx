@@ -110,13 +110,18 @@ function BundlesPageContent(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-950">
-        <AppHeader />
-        <main className="max-w-7xl mx-auto px-4 py-8">
+      <div
+        className="min-h-screen relative overflow-x-hidden"
+        style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+      >
+        <AppHeader active="Bundles" logoVariant="light" />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <Skeleton className="h-10 w-64 mb-8" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-80 rounded-xl" />
+              <div key={i} className="az-glass h-80 rounded-2xl p-4">
+                <Skeleton className="h-full w-full rounded-xl" />
+              </div>
             ))}
           </div>
         </main>
@@ -127,9 +132,12 @@ function BundlesPageContent(): React.JSX.Element {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-950">
-        <AppHeader />
-        <main className="max-w-7xl mx-auto px-4 py-8">
+      <div
+        className="min-h-screen relative overflow-x-hidden"
+        style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+      >
+        <AppHeader active="Bundles" logoVariant="light" />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <ErrorState
             title="Failed to load bundles"
             description={error}

@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react';
-import { webLogger } from '@/lib/logger';
 
 /**
  * RBAC with Least-Privilege Per Role (TAA §50)
@@ -225,49 +224,6 @@ export function SuperadminGuard({ children }: { children: ReactNode }) {
   return <RoleGuard role="superadmin">{children}</RoleGuard>;
 }
 
-// ---------------------------------------------------------------------------
-// Audit Trail
-// ---------------------------------------------------------------------------
-
-export interface AuditEntry {
-  id: string;
-  userId: string;
-  userName: string;
-  action: string;
-  resource: string;
-  resourceId: string;
-  details: Record<string, unknown>;
-  timestamp: string;
-}
-
-/**
- * Log an admin action to the audit trail
- */
-export async function logAdminAction(
-  action: string,
-  resource: string,
-  resourceId: string,
-  details: Record<string, unknown> = {}
-): Promise<void> {
-  const entry: Omit<AuditEntry, 'id'> = {
-    userId: '', // Will be filled by the API
-    userName: '', // Will be filled by the API
-    action,
-    resource,
-    resourceId,
-    details,
-    timestamp: new Date().toISOString(),
-  };
-
-  try {
-    await fetch('/api/v1/admin/audit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entry),
-      credentials: 'include',
-    });
-  } catch {
-    // Audit logging should never block the operation
-    webLogger.error('[RbacGuard] Failed to log audit entry');
-  }
-}
+// NOTE: there is deliberately no client-side audit POST here — the admin
+// backend has no POST /admin/audit route (the audit trail is written
+// server-side by the services themselves, see AuditLogService).

@@ -1,18 +1,21 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { apiFetch } from '@/lib/api';
 import { useUniversesQuery } from '@/hooks/useUniverses';
 import { createWebLogger } from '@/lib/logger';
-
-const logger = createWebLogger('CreatorUpload');
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { UploadCloud, FileText, Tag, Globe } from 'lucide-react';
+import { UploadCloud, FileText, Tag, Globe, CheckCircle2 } from 'lucide-react';
+
+const logger = createWebLogger('CreatorUpload');
 
 interface ContentItem {
   id: string;
@@ -81,7 +84,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['creator', 'content'] });
-      router.push(data?.id ? '/creators/dashboard' : '/creators');
+      router.push(data?.id ? '/creator' : '/creator');
     },
   });
 
@@ -96,7 +99,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['creator', 'content'] });
-      router.push(data?.id ? '/creators/dashboard' : '/creators');
+      router.push(data?.id ? '/creator' : '/creator');
     },
   });
 
@@ -154,335 +157,182 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
   if (editQuery.isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <AppHeader active="Creator" logoVariant="light" />
-        <main style={{ padding: '100px 24px 60px', maxWidth: 640, margin: '0 auto' }}>
-          <Skeleton className="h-12 w-full mb-6" />
-          <Skeleton className="h-40 w-full mb-6" />
-          <Skeleton className="h-12 w-32" />
-        </main>
-        <AppFooter logoVariant="light" />
-      </div>
+      <PageShell glowColor="rgba(232,66,10,0.15)">
+        <div className="max-w-2xl mx-auto py-16 px-4 space-y-6">
+          <Skeleton className="h-12 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-12 w-36 rounded-full" />
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        backgroundColor: 'var(--bg-primary)',
-        color: 'var(--text-primary, #F5F0EB)',
-      }}
-    >
-      <AppHeader active="Creator" logoVariant="light" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 640, margin: '0 auto' }}>
-        <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: '#FFFFFF' }}>
-            {editContent ? 'Edit Content' : 'Upload New Content'}
-          </h1>
-          <p style={{ color: 'var(--text-muted, #9A8A7A)', margin: 0 }}>
-            {editContent
-              ? 'Update your existing content'
-              : 'Share your work with the global Azeebo+ audience'}
-          </p>
-        </div>
+    <PageShell glowColor="rgba(232,66,10,0.14)">
+      <PageHero
+        badge="Studio Ingestion"
+        title={editContent ? 'Edit Master Asset' : 'Direct Studio Upload'}
+        description={
+          editContent
+            ? 'Update metadata, synopsis, and universe tagging for your existing title.'
+            : 'Publish 4K footage and multi-track audio to the global Azeebo+ audience.'
+        }
+      />
 
-        <div
-          style={{
-            backgroundColor: 'var(--bg-tertiary)',
-            borderRadius: 20,
-            border: '1px solid rgba(255,255,255,0.08)',
-            padding: 28,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 20,
-          }}
-        >
-          <div>
-            <label
-              htmlFor="content-title"
-              style={{
-                color: '#FFFFFF',
-                fontSize: 13,
-                fontWeight: 600,
-                marginBottom: 8,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <FileText size={15} color="#E8420A" />
-              Title
-            </label>
-            <input
-              id="content-title"
-              aria-label="Content title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter content title"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 10,
-                border: '1px solid rgba(255,255,255,0.08)',
-                background: 'var(--bg-secondary)',
-                color: '#FFFFFF',
-                fontSize: 14,
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="content-description"
-              style={{
-                color: '#FFFFFF',
-                fontSize: 13,
-                fontWeight: 600,
-                marginBottom: 8,
-                display: 'block',
-              }}
-            >
-              Description
-            </label>
-            <textarea
-              id="content-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your content"
-              rows={4}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 10,
-                border: '1px solid rgba(255,255,255,0.08)',
-                background: 'var(--bg-secondary)',
-                color: '#FFFFFF',
-                fontSize: 14,
-                resize: 'vertical',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="content-universe"
-              style={{
-                color: '#FFFFFF',
-                fontSize: 13,
-                fontWeight: 600,
-                marginBottom: 8,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <Globe size={15} color="#3B82F6" />
-              Universe
-            </label>
-            {universesLoading ? (
-              <Skeleton className="h-12 w-full" />
-            ) : (
-              <select
-                id="content-universe"
-                value={universeId}
-                onChange={(e) => setUniverseId(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: 10,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  background: 'var(--bg-secondary)',
-                  color: '#FFFFFF',
-                  fontSize: 14,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
+      <div className="max-w-2xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8">
+        <ScrollReveal>
+          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-6">
+            <div>
+              <label
+                htmlFor="content-title"
+                className="text-white text-xs font-semibold mb-2 flex items-center gap-2"
               >
-                <option value="">Select universe</option>
-                {universes.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
+                <FileText className="w-4 h-4 text-[var(--brand-orange)]" />
+                Asset Title
+              </label>
+              <input
+                id="content-title"
+                aria-label="Content title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Lagos Nights: Episode 1"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[var(--brand-orange)] transition-colors"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="content-description"
+                className="text-white text-xs font-semibold mb-2 block"
+              >
+                Synopsis & Description
+              </label>
+              <textarea
+                id="content-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Detail the narrative, creator credits, and episode summary..."
+                rows={4}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[var(--brand-orange)] transition-colors resize-y"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="content-universe"
+                className="text-white text-xs font-semibold mb-2 flex items-center gap-2"
+              >
+                <Globe className="w-4 h-4 text-blue-400" />
+                Target Universe
+              </label>
+              {universesLoading ? (
+                <Skeleton className="h-11 w-full rounded-xl" />
+              ) : (
+                <select
+                  id="content-universe"
+                  value={universeId}
+                  onChange={(e) => setUniverseId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--hp-surface)] border border-white/10 text-white text-sm focus:outline-none focus:border-[var(--brand-orange)] transition-colors"
+                >
+                  <option value="">Select Target Universe</option>
+                  {universes.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="content-tags"
+                className="text-white text-xs font-semibold mb-2 flex items-center gap-2"
+              >
+                <Tag className="w-4 h-4 text-emerald-400" />
+                Tags (comma separated)
+              </label>
+              <input
+                id="content-tags"
+                aria-label="Content tags"
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="e.g., nollywood, thriller, lagos, original"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[var(--brand-orange)] transition-colors"
+              />
+            </div>
+
+            {!editContent && (
+              <div>
+                <label
+                  htmlFor="content-file"
+                  className="text-white text-xs font-semibold mb-2 flex items-center gap-2"
+                >
+                  <UploadCloud className="w-4 h-4 text-[var(--brand-orange)]" />
+                  Media Master File
+                </label>
+                <div className="border-2 border-dashed border-white/15 hover:border-[var(--brand-orange)]/40 rounded-2xl p-8 text-center bg-white/[0.02] transition-colors">
+                  <input
+                    id="content-file"
+                    type="file"
+                    accept="video/*,image/*,audio/*"
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    className="w-full text-white/50 text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--brand-orange)] file:text-white hover:file:opacity-90 cursor-pointer"
+                  />
+                  {file && (
+                    <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
-          </div>
 
-          <div>
-            <label
-              htmlFor="content-tags"
-              style={{
-                color: '#FFFFFF',
-                fontSize: 13,
-                fontWeight: 600,
-                marginBottom: 8,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <Tag size={15} color="#10B981" />
-              Tags (comma separated)
-            </label>
-            <input
-              id="content-tags"
-              aria-label="Content tags"
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="e.g., comedy, standup, special"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 10,
-                border: '1px solid rgba(255,255,255,0.08)',
-                background: 'var(--bg-secondary)',
-                color: '#FFFFFF',
-                fontSize: 14,
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          {!editContent && (
-            <div>
-              <label
-                htmlFor="content-file"
-                style={{
-                  color: '#FFFFFF',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  marginBottom: 8,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <UploadCloud size={15} color="#E8420A" />
-                Media File
-              </label>
-              <div
-                style={{
-                  border: '2px dashed rgba(255,255,255,0.15)',
-                  borderRadius: 12,
-                  padding: '24px 16px',
-                  textAlign: 'center',
-                  backgroundColor: 'var(--bg-secondary)',
-                }}
-              >
-                <input
-                  id="content-file"
-                  type="file"
-                  accept="video/*,image/*,audio/*"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  style={{
-                    width: '100%',
-                    color: 'var(--text-muted, #9A8A7A)',
-                    fontSize: 14,
-                  }}
-                />
-                {file && (
-                  <p
-                    style={{
-                      margin: '10px 0 0 0',
-                      color: '#10B981',
-                      fontSize: 13,
-                      fontWeight: 500,
-                    }}
-                  >
-                    Selected: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
-                  </p>
-                )}
+            {editContent?.thumbnail && (
+              <div>
+                <span className="text-white text-xs font-semibold mb-2 block">
+                  Current Master Poster
+                </span>
+                <div className="relative aspect-video bg-white/5 rounded-2xl overflow-hidden border border-white/10">
+                  <OptimizedImage src={editContent.thumbnail} alt="" fill className="object-cover" />
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {editContent?.thumbnail && (
-            <div>
-              <label
-                style={{
-                  color: '#FFFFFF',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  marginBottom: 8,
-                  display: 'block',
-                }}
+            <div className="flex items-center gap-3 pt-4 border-t border-white/10">
+              <button
+                type="button"
+                aria-label="Cancel upload"
+                onClick={() => router.push('/creator')}
+                className="px-6 py-3 rounded-full border border-white/10 text-white/60 hover:text-white hover:bg-white/5 text-xs font-bold transition-all"
               >
-                Thumbnail
-              </label>
-              <div
-                style={{
-                  position: 'relative',
-                  aspectRatio: '16/9',
-                  backgroundColor: 'var(--bg-secondary)',
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                }}
+                Cancel
+              </button>
+              <motion.button
+                type="button"
+                aria-label={editContent ? 'Save changes' : 'Upload content'}
+                onClick={handleSubmit}
+                disabled={isSubmitting || (!file && !editContent)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="az-btn-primary px-8 py-3 rounded-full text-xs font-bold flex items-center gap-2 disabled:opacity-50"
               >
-                <OptimizedImage src={editContent.thumbnail} alt="" fill className="object-cover" />
-              </div>
+                <UploadCloud className="w-4 h-4" />
+                {isSubmitting
+                  ? editContent
+                    ? 'Saving changes...'
+                    : 'Transcoding & Ingesting...'
+                  : editContent
+                    ? 'Save Changes'
+                    : 'Publish Master Asset'}
+              </motion.button>
             </div>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-          <button
-            aria-label="Cancel upload"
-            onClick={() => router.push('/creators')}
-            style={{
-              padding: '12px 24px',
-              borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.08)',
-              background: 'transparent',
-              color: 'var(--text-muted, #9A8A7A)',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            aria-label={editContent ? 'Save changes' : 'Upload content'}
-            onClick={handleSubmit}
-            disabled={isSubmitting || (!file && !editContent)}
-            style={{
-              padding: '12px 28px',
-              borderRadius: 10,
-              background:
-                'linear-gradient(135deg, var(--brand-orange, #E8420A) 0%, var(--brand-red, #CC1C1C) 100%)',
-              border: 'none',
-              color: '#FFFFFF',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: isSubmitting || (!file && !editContent) ? 'not-allowed' : 'pointer',
-              opacity: isSubmitting || (!file && !editContent) ? 0.5 : 1,
-              transition: 'opacity 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <UploadCloud size={16} />
-            {isSubmitting
-              ? editContent
-                ? 'Saving...'
-                : 'Uploading...'
-              : editContent
-                ? 'Save Changes'
-                : 'Upload Content'}
-          </button>
-        </div>
-      </main>
-      <AppFooter logoVariant="light" />
+          </div>
+        </ScrollReveal>
+      </div>
 
       <ConfirmDialog
         open={confirmDialog.open}
@@ -491,6 +341,6 @@ export default function CreatorUploadPage(): React.JSX.Element {
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
       />
-    </div>
+    </PageShell>
   );
 }
