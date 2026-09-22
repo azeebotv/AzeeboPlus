@@ -127,14 +127,16 @@ export interface PgbouncerHealth {
   serviceBudgets?: PgbouncerDatabaseBudget[];
   /** Present when serviceBudgets is empty: why discovery produced nothing. */
   budgetsDetail?: string;
-  /**
-   * Repo-owned processes holding ESTABLISHED sockets DIRECTLY to Postgres
+  /** Repo-owned processes holding ESTABLISHED sockets DIRECTLY to Postgres
    * (:5432) instead of through pgbouncer — the bypass detector. Empty when
    * every repo client went through the pooler.
    */
   bypasses?: PgbouncerBypass[];
-  /** Foreign (non-repo) direct clients, attributed for context — noise, not ours. */
-  foreignDirectClients?: Array<{ workspace: string; connections: number }>;
+  /** Foreign (non-repo) direct clients, attributed for context — noise, not ours.
+   * `ipv6` (when present) counts that workspace's dials over IPv6 loopback
+   * (::1), the transport many foreign dev fleets bind exclusively.
+   */
+  foreignDirectClients?: Array<{ workspace: string; connections: number; ipv6?: number }>;
   /** Present when the bypass scan itself failed (e.g. lsof missing). */
   bypassesDetail?: string;
   checkedAt: string;
@@ -337,6 +339,8 @@ export interface DirectPgClient {
   cwd?: string | null;
   /** Established connections this process holds to :5432. */
   connections: number;
+  /** Remote host of the dial, brackets stripped: '127.0.0.1' or '::1'. */
+  remoteHost?: string;
 }
 
 /** One classified bypass: a repo-owned process dialed Postgres directly. */
@@ -355,10 +359,15 @@ const PG_DIRECT_PORT = 5432;
  * n=socket address. A bypass is a CLIENT dialing Postgres, so only sockets
  * whose REMOTE end is `<host>:5432` count — rows where :5432 is the local
  * end are the Postgres server (and pgbouncer's server-side backend sockets),
- * never offenders.
+ * never offenders. The remote host is kept (brackets stripped: '127.0.0.1',
+ * '::1') so classification can attribute IPv6-loopback dials — foreign
+ * projects routinely listen on ::1 only, and the card shows that context.
  */
 export function parseDirectPgClients(lsofOutput: string): DirectPgClient[] {
-  const byPid = new Map<number, { command: string; connections: number }>();
+  const byPid = new Map<
+    number,
+    { command: string; connections: number; remoteHost: string | null }
+  >();
   let pid = 0;
   let command = '';
   for (const line of lsofOutput.split('\n')) {
@@ -373,15 +382,24 @@ export function parseDirectPgClients(lsofOutput: string): DirectPgClient[] {
       const remote = value.split('->')[1] ?? '';
       // IPv6 remotes look like `[::1]:5432` — take the segment after the
       // LAST colon, not [1] of a naive split (which returns '' there).
-      const remotePort = Number(remote.slice(remote.lastIndexOf(':') + 1));
+      const lastColon = remote.lastIndexOf(':');
+      const remotePort = Number(remote.slice(lastColon + 1));
       if (remotePort !== PG_DIRECT_PORT) continue;
-      const entry = byPid.get(pid) ?? { command, connections: 0 };
+      // Host = everything before that colon, lsof's [::1] brackets stripped.
+      const remoteHost = remote.slice(0, lastColon).replace(/^\[|\]$/g, '');
+      const entry = byPid.get(pid) ?? { command, connections: 0, remoteHost: null };
       entry.connections += 1;
+      entry.remoteHost = remoteHost || entry.remoteHost;
       byPid.set(pid, entry);
     }
   }
   return [...byPid.entries()]
-    .map(([p, e]) => ({ pid: p, command: e.command, connections: e.connections }))
+    .map(([p, e]) => ({
+      pid: p,
+      command: e.command,
+      connections: e.connections,
+      ...(e.remoteHost ? { remoteHost: e.remoteHost } : {}),
+    }))
     .sort((a, b) => a.pid - b.pid);
 }
 
@@ -396,9 +414,12 @@ export function parseDirectPgClients(lsofOutput: string): DirectPgClient[] {
 export function classifyDirectPgClients(
   clients: Array<DirectPgClient & { cwd?: string | null }>,
   repoRoot: string
-): { bypasses: PgbouncerBypass[]; foreign: Array<{ workspace: string; connections: number }> } {
+): {
+  bypasses: PgbouncerBypass[];
+  foreign: Array<{ workspace: string; connections: number; ipv6?: number }>;
+} {
   const bypasses: PgbouncerBypass[] = [];
-  const foreign = new Map<string, number>();
+  const foreign = new Map<string, { connections: number; ipv6: number }>();
   for (const c of clients) {
     if (c.command === 'pgbouncer') continue; // the one legitimate direct client
     const cwd = c.cwd ?? '';
@@ -421,13 +442,24 @@ export function classifyDirectPgClients(
           ? cwd.slice(wwwIdx + 5).replace(/\/+$/, '')
           : cwd.split('/').filter(Boolean).slice(-2).join('/')
         : c.command || '(unknown)';
-      foreign.set(key, (foreign.get(key) ?? 0) + c.connections);
+      // IPv6 dials (::1, or any host containing ':') are tracked per
+      // workspace: foreign dev fleets frequently bind ::1 only, and the
+      // Ops Health card surfaces that as context (transport, not offense).
+      const isV6 = (c.remoteHost ?? '').includes(':');
+      const prev = foreign.get(key) ?? { connections: 0, ipv6: 0 };
+      prev.connections += c.connections;
+      if (isV6) prev.ipv6 += c.connections;
+      foreign.set(key, prev);
     }
   }
   return {
     bypasses,
     foreign: [...foreign.entries()]
-      .map(([workspace, connections]) => ({ workspace, connections }))
+      .map(([workspace, f]) => ({
+        workspace,
+        connections: f.connections,
+        ...(f.ipv6 > 0 ? { ipv6: f.ipv6 } : {}),
+      }))
       .sort((a, b) => b.connections - a.connections),
   };
 }
