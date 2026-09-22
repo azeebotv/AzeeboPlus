@@ -1068,6 +1068,29 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     ],
   },
   {
+    path: '/creator-entries',
+    // Admin-backend's challenge-entry review proxy (:4016) → creator-service.
+    // Kept separate from /admin so the SPA's /api/v1/creator-entries calls
+    // resolve here; admin-backend adds auth + identity stamping upstream.
+    envKey: 'ADMIN_SERVICE_URL',
+    fallbackUrl: 'http://localhost:4016',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'default',
+    endpoints: [
+      {
+        method: 'GET',
+        path: '',
+        description: 'Challenge entry review queue (admin/moderator)',
+      },
+      {
+        method: 'PATCH',
+        path: '/:entryId/review',
+        description: 'Review a challenge entry: under_review | winner | rejected',
+      },
+    ],
+  },
+  {
     path: '/creator',
     // The standalone creator dashboard app (:4014), NOT the creator
     // microservice (:3018) — a dedicated env key so /creator and /creators
@@ -1125,6 +1148,17 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         description: 'Update monetization settings',
       },
       { method: 'GET', path: '/profile/:id', description: 'Get creator public profile' },
+      { method: 'GET', path: '/archived/sweep', description: 'Trigger archived-content hard-delete sweep (admin)' },
+      {
+        method: 'POST',
+        path: '/archived/sweep',
+        description: 'Trigger archived-content hard-delete sweep (admin)',
+      },
+      {
+        method: 'GET',
+        path: '/creator-entries',
+        description: 'Challenge entry review queue — proxied by admin-backend to creator-service',
+      },
     ],
   },
   {
@@ -1144,6 +1178,21 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'POST', path: '/uploads', description: 'Create upload' },
       { method: 'GET', path: '/uploads', description: 'List own uploads' },
       { method: 'GET', path: '/discover', description: 'Creator discovery' },
+      {
+        method: 'PATCH',
+        path: '/challenges/entries/:entryId/review',
+        description: 'Review a challenge entry (admin/moderator)',
+      },
+      {
+        method: 'GET',
+        path: '/challenges/:challengeId/leaderboard',
+        description: 'Get challenge leaderboard (winner-first)',
+      },
+      {
+        method: 'GET',
+        path: '/boards/:challengeId',
+        description: 'Public read-only challenge board (logged-out viewers)',
+      },
       { method: 'GET', path: '/stats', description: 'Get creator stats' },
       { method: 'GET', path: '/settings', description: 'Get creator settings' },
       { method: 'PUT', path: '/settings', description: 'Update creator settings' },

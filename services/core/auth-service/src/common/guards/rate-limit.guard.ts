@@ -12,6 +12,7 @@ import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { RedisService } from '@azeebo/shared-services';
+import { isDevLoopbackRequest } from '@azeebo/security';
 
 export const RateLimit = (limit: number, windowMs: number): ReturnType<typeof SetMetadata> =>
   SetMetadata('rateLimit', { limit, windowMs });
@@ -43,6 +44,13 @@ export class RateLimitGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
+
+    // Dev/loopback bypass: local testing shares one loopback IP, so the
+    // shared violation threshold would lock the whole stack out of auth.
+    // NODE_ENV=test keeps enforcement so specs verifying limiting work.
+    if (isDevLoopbackRequest(request)) {
+      return true;
+    }
 
     const clientIp = this.getClientIp(request);
 

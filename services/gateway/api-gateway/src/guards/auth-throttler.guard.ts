@@ -8,6 +8,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { FeatureFlagService, gatewayFlags } from '@azeebo/feature-flags';
+import { isDevLoopbackRequest } from '@azeebo/security';
 import { HttpMetricsService } from '../metrics/http-metrics.service';
 import type Redis from 'ioredis';
 
@@ -113,6 +114,13 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
 
     if (!this.isAuthRoute(path)) {
       return super.canActivate(context);
+    }
+
+    // Dev/loopback bypass: local testing shares one loopback IP, so a
+    // runaway test suite would lock the whole gateway out of auth. Only
+    // bypasses the IP bucket — per-account limits still apply.
+    if (isDevLoopbackRequest(request)) {
+      return true;
     }
 
     // Fail-closed: reject auth requests when Redis is unavailable

@@ -34,6 +34,7 @@ export class NotificationsService {
   // internal POST /v1/notifications/email endpoint — anything else is a 400.
   // The HTML bodies live in EmailService.registerTemplates (shared-services).
   private static readonly EMAIL_SUBJECTS: Record<string, string> = {
+    'challenge-review': 'Your Challenge Entry Has Been Reviewed',
     'email-verification': 'Verify Your Email Address',
     'password-reset': 'Password Reset Request',
     'magic-link': 'Your Azeebo+ Sign-In Link',

@@ -43,6 +43,7 @@ export class EmailService implements OnModuleInit {
       'payment-confirmation': this.configService.get('EMAIL_TEMPLATE_PAYMENT_CONFIRMATION_HTML'),
       'content-published': this.configService.get('EMAIL_TEMPLATE_CONTENT_PUBLISHED_HTML'),
       'content-featured': this.configService.get('EMAIL_TEMPLATE_CONTENT_FEATURED_HTML'),
+      'challenge-review': this.configService.get('EMAIL_TEMPLATE_CHALLENGE_REVIEW_HTML'),
       'flag-stale': this.configService.get('EMAIL_TEMPLATE_FLAG_STALE_HTML'),
     };
 
@@ -158,6 +159,27 @@ export class EmailService implements OnModuleInit {
         <p>This means more users will discover your content and you'll gain more visibility.</p>
         <p><a href="{{contentLink}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View Featured Content</a></p>
         <p>Keep creating amazing content!</p>
+        <p>Best regards,<br>The Azeebo+ Team</p>
+      </div>
+    `
+    );
+
+    // Challenge entry review outcome: sent to the participant when a
+    // moderator moves their entry to under_review, winner, or rejected.
+    // Data: displayName, challengeTitle, statusLabel, prize, reviewUrl.
+    // statusLabel is the human phrase chosen by the caller (winner / rejected
+    // / under review) — avoids needing a custom equality helper here.
+    this.templates['challenge-review'] = Handlebars.compile(
+      templateOverrides['challenge-review'] ||
+        `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">Challenge Entry Update</h1>
+        <p>Hello {{displayName}},</p>
+        <p>Your entry for <strong>"{{challengeTitle}}"</strong> {{statusPhrase}}.</p>
+        {{#if prize}}<p>Prize: <strong>{{prize}}</strong></p>{{/if}}
+        {{#if reviewUrl}}
+        <p><a href="{{reviewUrl}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View Challenge</a></p>
+        {{/if}}
         <p>Best regards,<br>The Azeebo+ Team</p>
       </div>
     `

@@ -5,7 +5,7 @@ export { configureCors, CorsOptions } from './cors.config';
 export { RateLimiterModule, RateLimiterModuleConfig } from './rate-limiter/rate-limiter.module';
 
 /** Guard and decorator for applying per-route rate limits. */
-export { RateLimitGuard, RateLimit } from './rate-limiter/rate-limit.guard';
+export { RateLimitGuard, RateLimit, isDevLoopbackRequest } from './rate-limiter/rate-limit.guard';
 
 /** Rate limit evaluation service, config, and result types. */
 export {

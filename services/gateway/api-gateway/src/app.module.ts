@@ -15,6 +15,7 @@ import { CsrfTokenRegistry } from './common/csrf-token-registry.service';
 import { CommonModule } from './common/common.module';
 import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
 import { ContentTypeValidationMiddleware } from './common/content-type-validation.middleware';
+import { RawBodyCaptureMiddleware } from './common/raw-body-capture.middleware';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { SecurityModule } from '@azeebo/security';
 import {
@@ -137,6 +138,7 @@ const universeSentinelDefaults = Object.fromEntries(
     CsrfMiddleware,
     CsrfTokenRegistry,
     LegacyRedirectMiddleware,
+    RawBodyCaptureMiddleware,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,
@@ -158,6 +160,11 @@ export class AppModule implements NestModule {
 
     // Content-Type validation for body requests (SEC-006)
     consumer.apply(ContentTypeValidationMiddleware).forRoutes('api');
+
+    // Capture raw multipart bodies (file uploads) before the proxy forwards
+    // them upstream — no body parser owns multipart, so without this the
+    // upstream receives an empty/mangled body and multer 400s.
+    consumer.apply(RawBodyCaptureMiddleware).forRoutes('api');
 
     // CSRF protection for state-changing requests (SEC-005)
     consumer

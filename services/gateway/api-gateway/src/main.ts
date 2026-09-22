@@ -81,6 +81,8 @@ async function bootstrap(): Promise<void> {
       'http://localhost:4000',
       'http://localhost:4014',
       'http://localhost:4016',
+      // Public web app dev server (apps/web, `next dev -p 4111`)
+      'http://localhost:4111',
     ];
     for (const origin of devOrigins) {
       if (!allowedOrigins.includes(origin)) {

@@ -17,6 +17,27 @@ export const RateLimit = (limit: number, windowMs: number): ReturnType<typeof Se
 
 export type RateLimitStrictResolver = () => Promise<boolean>;
 
+/**
+ * Loopback/dev bypass: in local development every request arrives from
+ * ::1 or 127.0.0.1, so a single shared-IP block (or the per-IP violation
+ * threshold) locks out the entire stack — gateway, browsers, and test
+ * scripts all share one key. Outside production/test, loopback traffic
+ * skips rate limiting entirely; production always enforces, and jest
+ * (NODE_ENV=test) enforces so specs verifying limiting keep their teeth.
+ */
+export function isDevLoopbackRequest(request: Request): boolean {
+  const env = process.env.NODE_ENV;
+  if (env === 'production' || env === 'test') return false;
+  if (process.env.DISABLE_RATE_LIMITING === 'true') return true;
+  const raw = request.ip || request.socket?.remoteAddress || '';
+  return (
+    raw === '::1' ||
+    raw === '::ffff:127.0.0.1' ||
+    raw.startsWith('127.0.0.1.') || // Node >= 17 normalises IPv4-mapped IPv6
+    raw === '127.0.0.1'
+  );
+}
+
 @Injectable()
 export class RateLimitGuard implements CanActivate {
   constructor(
@@ -44,6 +65,10 @@ export class RateLimitGuard implements CanActivate {
     const response = context.switchToHttp().getResponse<Response>();
 
     const clientIp = this.getClientIp(request);
+
+    if (isDevLoopbackRequest(request)) {
+      return true;
+    }
 
     // Check if IP is blocked
     const isBlocked = await this.rateLimitService.isBlocked(clientIp);

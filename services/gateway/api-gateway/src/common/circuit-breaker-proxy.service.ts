@@ -235,7 +235,18 @@ export class CircuitBreakerProxyService {
         };
 
         if (body && method !== 'GET' && method !== 'HEAD') {
-          fetchOptions.body = JSON.stringify(body);
+          // JSON-encode only structured (object/array) bodies. String bodies
+          // are passed through verbatim (they carry their own encoding, e.g.
+          // multipart/form-data captured raw), and Buffer/Uint8Array are raw
+          // binary. The old unconditional JSON.stringify mangled multipart
+          // bodies into "[object Object]"-style garbage — upstream multer
+          // failed with "Unexpected end of form" on every file upload.
+          fetchOptions.body =
+            typeof body === 'string' ||
+            body instanceof Buffer ||
+            body instanceof Uint8Array
+              ? (body as unknown as BodyInit)
+              : JSON.stringify(body);
         }
 
         const response = await fetch(target, fetchOptions);

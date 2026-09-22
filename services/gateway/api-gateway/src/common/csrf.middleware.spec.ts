@@ -94,7 +94,7 @@ describe('CsrfMiddleware × CsrfTokenRegistry', () => {
       expect.any(Object)
     );
     expect((ctx.res as unknown as { setHeader: jest.Mock }).setHeader).toHaveBeenCalledWith(
-      'X-CSRF-Token',
+      'x-csrf-token',
       'a'.repeat(64)
     );
   });
@@ -149,18 +149,42 @@ describe('CsrfMiddleware × CsrfTokenRegistry', () => {
     expect(ctx.next).toHaveBeenCalled();
   });
 
-  it('does not re-mint when a valid CSRF cookie is already present', async () => {
+  it('echoes the still-registered token in the response header without re-minting when a valid CSRF cookie is present', async () => {
     const registry = makeRegistry();
+    await (registry as unknown as { register: (t: string) => Promise<void> }).register('a'.repeat(64));
+    (registry.register as jest.Mock).mockClear(); // the seeding call above shouldn't count
     const mw = makeMiddleware(registry);
     const ctx = makeCtx('GET', { cookie: 'a'.repeat(64) });
 
     await mw.use(ctx.req as Request, ctx.res as Response, ctx.next);
     expect(ctx.next).toHaveBeenCalled();
-    // Existing cookie: no new mint, no registration, no Set-Cookie churn.
-    // (The client already holds the token; the X-CSRF-Token response header
-    // is only sent on the mint/bootstrap path — pre-existing behavior.)
+    // Existing registered cookie: no new mint, no registration, no Set-Cookie
+    // churn — but the token IS echoed in the response header so clients whose
+    // cached header drifted from the httpOnly cookie can always re-sync
+    // instead of deadlocking on 403s forever.
     expect(registry.mint).not.toHaveBeenCalled();
     expect(registry.register).not.toHaveBeenCalled();
-    expect((ctx.res as unknown as { setHeader: jest.Mock }).setHeader).not.toHaveBeenCalled();
+    expect((ctx.res as unknown as { setHeader: jest.Mock }).setHeader).toHaveBeenCalledWith(
+      'x-csrf-token',
+      'a'.repeat(64)
+    );
+  });
+
+  it('re-mints (self-heals) when the cookie holds an expired/unregistered token', async () => {
+    const registry = makeRegistry();
+    const mw = makeMiddleware(registry);
+    // Cookie present but its token never registered (TTL expiry, previous
+    // deployment) — the middleware must recover instead of deadlocking.
+    const ctx = makeCtx('GET', { cookie: 'b'.repeat(64) });
+
+    await mw.use(ctx.req as Request, ctx.res as Response, ctx.next);
+    expect(ctx.next).toHaveBeenCalled();
+    expect(registry.mint).toHaveBeenCalled();
+    expect(registry.register).toHaveBeenCalledWith('a'.repeat(64));
+    expect((ctx.res as unknown as { cookie: jest.Mock }).cookie).toHaveBeenCalledWith(
+      '_csrf',
+      'a'.repeat(64),
+      expect.any(Object)
+    );
   });
 });
