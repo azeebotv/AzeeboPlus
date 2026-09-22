@@ -222,7 +222,7 @@ test.beforeEach(async ({ page, baseURL }) => {
       status: 200,
       contentType: 'application/json',
       headers: {
-        'Set-Cookie': 'auth=test-user-1; Path=/; SameSite=Strict',
+        'Set-Cookie': 'azeebo_web_auth=test-user-1; Path=/; SameSite=Strict',
       },
       body: JSON.stringify({ success: true }),
     });
@@ -276,7 +276,8 @@ async function simulateAuth(page: import('@playwright/test').Page): Promise<void
       const cookies = document.cookie ? document.cookie.split(';') : [];
       const hasAuth = cookies.some((c) => {
         const [k, v] = c.trim().split('=');
-        return k === 'auth' && Boolean(v);
+        // Namespaced marker only — bare `auth` is foreign jar noise
+        return k === 'azeebo_web_auth' && Boolean(v);
       });
       if (hasAuth) {
         localStorage.setItem('azeebo_access_token', token);
@@ -296,7 +297,7 @@ async function clearAuth(page: import('@playwright/test').Page): Promise<void> {
       localStorage.removeItem('azeebo_access_token');
       localStorage.removeItem('azeebo_refresh_token');
       localStorage.removeItem('azeebo_user');
-      document.cookie = 'auth=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+      document.cookie = 'azeebo_web_auth=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
       document.cookie = 'access_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
     } catch {}
   }).catch(() => {});
@@ -387,7 +388,9 @@ test.describe('Client-Side Guard — /home login prompt', () => {
   test('should show login prompt on /home for guest users', async ({ page }) => {
     await page
       .context()
-      .addCookies([{ name: 'auth', value: 'temp', domain: 'localhost', path: '/' }]);
+      .addCookies([
+        { name: 'azeebo_web_auth', value: 'temp', domain: 'localhost', path: '/' },
+      ]);
 
     await page.goto('/home');
     await page.waitForLoadState('domcontentloaded');

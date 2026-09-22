@@ -1,12 +1,13 @@
 'use client';
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import { EmptyState } from '@/components/ui/EmptyState';
 import {
   Eye,
   Heart,
@@ -16,6 +17,8 @@ import {
   CheckCircle2,
   Share2,
   MessageSquare,
+  Sparkles,
+  BarChart2,
 } from 'lucide-react';
 
 interface AnalyticsData {
@@ -47,6 +50,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
     data: analytics,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['creator', 'analytics', timeRange],
     queryFn: async () => {
@@ -58,489 +62,235 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div
-        style={{
-          backgroundColor: 'var(--bg-primary)',
-          minHeight: '100vh',
-          color: 'var(--text-primary, #F5F0EB)',
-        }}
-      >
-        <AppHeader active="Creator" logoVariant="light" />
-        <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-          <ErrorState title="Failed to load analytics" />
-        </main>
-        <AppFooter logoVariant="light" />
-      </div>
+      <PageShell glowColor="rgba(232,66,10,0.12)">
+        <div className="max-w-xl mx-auto py-20 px-4">
+          <ErrorState
+            title="Failed to load analytics"
+            description="Unable to sync streaming telemetry for your studio."
+            onButtonPress={() => refetch()}
+          />
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-primary)',
-        minHeight: '100vh',
-        color: 'var(--text-primary, #F5F0EB)',
-      }}
-    >
-      <AppHeader active="Creator" logoVariant="light" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: '#FFFFFF' }}>
-          Analytics
-        </h1>
-        <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 24 }}>
-          Track your content performance and growth
-        </p>
+    <PageShell glowColor="rgba(232,66,10,0.14)">
+      <PageHero
+        badge="Audience Telemetry"
+        title="Studio Analytics"
+        description="Granular performance insights, audience demographics, and playback retention metrics."
+      />
 
-        <div style={{ marginBottom: 24 }}>
-          <label
-            style={{
-              color: 'var(--text-muted, #9A8A7A)',
-              fontSize: 13,
-              marginBottom: 8,
-              display: 'block',
-            }}
-          >
-            Time Range
-          </label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {(['7d', '30d', '90d', 'all'] as const).map((range) => (
-              <button
-                key={range}
-                onClick={() => setTimeRange(range)}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 8,
-                  border:
-                    timeRange === range
-                      ? '1px solid rgba(232,66,10,0.5)'
-                      : '1px solid rgba(255,255,255,0.08)',
-                  background: timeRange === range ? 'rgba(232,66,10,0.15)' : '#18151e',
-                  color:
-                    timeRange === range
-                      ? 'var(--brand-orange, #E8420A)'
-                      : 'var(--text-muted, #9A8A7A)',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  fontWeight: timeRange === range ? 600 : 400,
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                {range.toUpperCase()}
-              </button>
-            ))}
+      <div className="max-w-5xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Time Horizon Selector */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-mono uppercase tracking-wider text-white/50">
+            Observation Interval
+          </span>
+          <div className="flex items-center gap-1.5 p-1 rounded-full az-glass border border-white/10">
+            {(['7d', '30d', '90d', 'all'] as const).map((range) => {
+              const isActive = timeRange === range;
+              return (
+                <button
+                  key={range}
+                  type="button"
+                  onClick={() => setTimeRange(range)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-[var(--brand-orange)] text-white shadow-lg'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  {range.toUpperCase()}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {isLoading ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
-            ))}
-          </div>
-        ) : analytics ? (
-          <>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-                gap: 16,
-                marginBottom: 32,
-              }}
-            >
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: 'var(--bg-tertiary)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
+        {/* Primary Metrics Grid */}
+        <ScrollReveal>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              {
+                label: 'Total Views',
+                value: analytics?.totalViews.toLocaleString() || '0',
+                icon: Eye,
+                color: 'text-[var(--brand-orange)]',
+              },
+              {
+                label: 'Reactions / Likes',
+                value: analytics?.totalLikes.toLocaleString() || '0',
+                icon: Heart,
+                color: 'text-pink-400',
+              },
+              {
+                label: 'Audience Reach',
+                value: analytics?.totalFollowers.toLocaleString() || '0',
+                icon: Users,
+                color: 'text-purple-400',
+              },
+              {
+                label: 'Revenue Accrued',
+                value: `₦${analytics?.totalEarnings.toLocaleString() || '0'}`,
+                icon: DollarSign,
+                color: 'text-emerald-400',
+              },
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
                 <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 8,
-                  }}
+                  key={stat.label}
+                  className="az-glass p-5 sm:p-6 rounded-2xl border border-white/10 hover:border-white/20 transition-all"
                 >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                    Total Views
-                  </p>
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 8,
-                      backgroundColor: 'rgba(232,66,10,0.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Eye size={15} color="#E8420A" />
-                  </div>
-                </div>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-                  {analytics.totalViews.toLocaleString()}
-                </p>
-              </div>
-
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: 'var(--bg-tertiary)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 8,
-                  }}
-                >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                    Likes
-                  </p>
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 8,
-                      backgroundColor: 'rgba(232,66,10,0.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Heart size={15} color="#E8420A" />
-                  </div>
-                </div>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-                  {analytics.totalLikes.toLocaleString()}
-                </p>
-              </div>
-
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: 'var(--bg-tertiary)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 8,
-                  }}
-                >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                    Followers
-                  </p>
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 8,
-                      backgroundColor: 'rgba(232,66,10,0.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Users size={15} color="#E8420A" />
-                  </div>
-                </div>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-                  {analytics.totalFollowers.toLocaleString()}
-                </p>
-              </div>
-
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: 'var(--bg-tertiary)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 8,
-                  }}
-                >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                    Earnings
-                  </p>
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 8,
-                      backgroundColor: 'rgba(16,185,129,0.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <DollarSign size={15} color="#10B981" />
-                  </div>
-                </div>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#10B981', margin: 0 }}>
-                  ₦{analytics.totalEarnings.toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#FFFFFF' }}>
-                Top Content
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {analytics.topContent.map((item) => (
-                  <div
-                    key={item.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: 16,
-                      borderRadius: 16,
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      backgroundColor: 'var(--bg-tertiary)',
-                    }}
-                  >
-                    {item.thumbnail && (
-                      <OptimizedImage
-                        src={item.thumbnail}
-                        alt={item.title}
-                        width={48}
-                        height={48}
-                        className="rounded-lg object-cover"
-                      />
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 style={{ fontWeight: 600, fontSize: 14, margin: 0, color: '#FFFFFF' }}>
-                        {item.title}
-                      </h3>
-                      <p
-                        style={{
-                          color: 'var(--text-muted, #9A8A7A)',
-                          fontSize: 12,
-                          margin: '4px 0 0 0',
-                        }}
-                      >
-                        {item.views.toLocaleString()} views
-                      </p>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-white/40">
+                      {stat.label}
+                    </span>
+                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                      <Icon className={`w-4 h-4 ${stat.color}`} />
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#FFFFFF' }}>
-                Engagement Metrics
-              </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-                <div
-                  style={{
-                    padding: 20,
-                    borderRadius: 16,
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: 'var(--bg-tertiary)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 6,
-                    }}
-                  >
-                    <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                      Avg Watch Time
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <p className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                      {stat.value}
                     </p>
-                    <Clock size={15} color="#9A8A7A" />
-                  </div>
-                  <p style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-                    {analytics.engagementMetrics.avgWatchTime.toFixed(1)}s
-                  </p>
+                  )}
                 </div>
+              );
+            })}
+          </div>
+        </ScrollReveal>
 
-                <div
-                  style={{
-                    padding: 20,
-                    borderRadius: 16,
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: 'var(--bg-tertiary)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 6,
-                    }}
-                  >
-                    <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                      Completion Rate
-                    </p>
-                    <CheckCircle2 size={15} color="#10B981" />
-                  </div>
-                  <p style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-                    {analytics.engagementMetrics.completionRate.toFixed(1)}%
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    padding: 20,
-                    borderRadius: 16,
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: 'var(--bg-tertiary)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 6,
-                    }}
-                  >
-                    <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                      Share Rate
-                    </p>
-                    <Share2 size={15} color="#3B82F6" />
-                  </div>
-                  <p style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-                    {analytics.engagementMetrics.shareRate.toFixed(1)}%
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    padding: 20,
-                    borderRadius: 16,
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: 'var(--bg-tertiary)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 6,
-                    }}
-                  >
-                    <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                      Comment Rate
-                    </p>
-                    <MessageSquare size={15} color="#A855F7" />
-                  </div>
-                  <p style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-                    {analytics.engagementMetrics.commentRate.toFixed(1)}%
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#FFFFFF' }}>
-                Audience Demographics
-              </h2>
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: 'var(--bg-tertiary)',
-                }}
-              >
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 14, marginBottom: 12 }}>
-                  Age Groups
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {analytics.demographics.ageGroups.map((group) => (
+        {analytics ? (
+          <>
+            {/* Top Performing Releases */}
+            <ScrollReveal delay={0.1}>
+              <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[var(--brand-orange)]" />
+                  Top Performing Releases
+                </h2>
+                <div className="space-y-3">
+                  {analytics.topContent.map((item) => (
                     <div
-                      key={group.range}
-                      style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+                      key={item.id}
+                      className="p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 flex items-center gap-4 transition-all"
                     >
-                      <span
-                        style={{ width: 80, color: 'var(--text-muted, #9A8A7A)', fontSize: 12 }}
-                      >
-                        {group.range}
-                      </span>
-                      <div
-                        style={{
-                          flex: 1,
-                          height: 8,
-                          backgroundColor: 'var(--bg-secondary)',
-                          borderRadius: 4,
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: `${group.percentage}%`,
-                            height: '100%',
-                            backgroundColor: 'var(--brand-orange, #E8420A)',
-                          }}
-                        />
+                      {item.thumbnail && (
+                        <div className="w-14 h-14 rounded-lg overflow-hidden relative flex-shrink-0 bg-white/5 border border-white/10">
+                          <OptimizedImage
+                            src={item.thumbnail}
+                            alt={item.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-white truncate">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-white/50 mt-0.5">
+                          {item.views.toLocaleString()} verified streams
+                        </p>
                       </div>
-                      <span
-                        style={{
-                          width: 50,
-                          textAlign: 'right',
-                          color: '#FFFFFF',
-                          fontSize: 12,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {group.percentage}%
-                      </span>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
+            </ScrollReveal>
+
+            {/* Engagement Metrics & Demographics */}
+            <ScrollReveal delay={0.2}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Engagement Breakdown */}
+                <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+                  <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                    <BarChart2 className="w-5 h-5 text-blue-400" />
+                    Playback Dynamics
+                  </h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-white/40">Watch Time</span>
+                        <Clock className="w-3.5 h-3.5 text-white/40" />
+                      </div>
+                      <p className="text-xl font-bold text-white">
+                        {analytics.engagementMetrics.avgWatchTime.toFixed(1)}s
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-white/40">Completion</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      </div>
+                      <p className="text-xl font-bold text-white">
+                        {analytics.engagementMetrics.completionRate.toFixed(1)}%
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-white/40">Virality / Share</span>
+                        <Share2 className="w-3.5 h-3.5 text-blue-400" />
+                      </div>
+                      <p className="text-xl font-bold text-white">
+                        {analytics.engagementMetrics.shareRate.toFixed(1)}%
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-white/40">Comments</span>
+                        <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+                      </div>
+                      <p className="text-xl font-bold text-white">
+                        {analytics.engagementMetrics.commentRate.toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Audience Age Groups */}
+                <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+                  <h2 className="text-lg font-bold text-white mb-6">
+                    Audience Demographics
+                  </h2>
+                  <div className="space-y-4">
+                    {analytics.demographics.ageGroups.map((group) => (
+                      <div key={group.range} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-white/60 font-medium">{group.range} years</span>
+                          <span className="text-white font-mono font-bold">{group.percentage}%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[var(--brand-orange)] to-amber-500 rounded-full"
+                            style={{ width: `${group.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
           </>
         ) : (
-          <EmptyState
-            icon="barChart"
-            title="No analytics data available yet"
-            description="Analytics will appear once your content gets views"
-            dark
-          />
+          <div className="az-glass p-12 text-center rounded-3xl border border-white/10">
+            <BarChart2 className="w-12 h-12 text-white/30 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-2">No Analytics Collected</h3>
+            <p className="text-xs text-white/50 max-w-sm mx-auto">
+              Audience streams and playback engagement data will populate once your content premieres.
+            </p>
+          </div>
         )}
-      </main>
-      <AppFooter logoVariant="light" />
-    </div>
+      </div>
+    </PageShell>
   );
 }

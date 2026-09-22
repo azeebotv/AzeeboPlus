@@ -1,13 +1,16 @@
 'use client';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ArrowLeft, CheckCircle2, Vote, Clock, Users } from 'lucide-react';
 
 interface PollOption {
   id: string;
@@ -38,11 +41,12 @@ export default function PollDetailPage(): React.JSX.Element {
     data: poll,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['poll', pollId],
     queryFn: async () => {
       const res = await apiFetch<Poll>(`/v1/engagement/polls/${pollId}`);
-      return res.success ? res.data : null;
+      return res.success && res.data ? res.data : null;
     },
   });
 
@@ -57,39 +61,76 @@ export default function PollDetailPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <>
-        <AppHeader />
-        <main className="min-h-screen bg-gray-950 text-white">
-          <ErrorState description="Failed to load poll. Please try again." />
-        </main>
-        <AppFooter />
-      </>
+      <PageShell activeNav="Reality">
+        <ErrorState
+          title="Failed to load poll"
+          description="Could not load the requested fan poll. Please try again."
+          buttonText="Retry"
+          onButtonPress={() => refetch()}
+        />
+      </PageShell>
     );
   }
 
-  const hasVoted = !!poll?.userVote;
+  const hasVoted = Boolean(poll?.userVote);
   const isExpired = poll ? new Date(poll.endsAt) < new Date() : false;
 
   return (
-    <>
-      <AppHeader />
-      <main className="min-h-screen bg-gray-950 text-white">
-        <div className="max-w-2xl mx-auto px-4 py-12">
-          {isLoading ? (
-            <div className="space-y-6">
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-40 w-full" />
-            </div>
-          ) : poll ? (
-            <>
-              <h1 className="text-2xl font-bold mb-2">{poll.question}</h1>
-              {poll.description && <p className="text-gray-400 mb-6">{poll.description}</p>}
-              <p className="text-sm text-gray-500 mb-8">
-                {poll.totalVotes} votes ·{' '}
-                {isExpired ? 'Ended' : `Ends ${new Date(poll.endsAt).toLocaleDateString()}`}
-              </p>
+    <PageShell activeNav="Reality" glowColor="rgba(232, 66, 10, 0.2)">
+      <div className="mb-6">
+        <Link
+          href="/vote"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Voting & Fan Polls
+        </Link>
+      </div>
 
-              <div className="space-y-3">
+      <div className="max-w-3xl mx-auto">
+        {isLoading ? (
+          <div className="space-y-6">
+            <Skeleton height="36px" width="200px" />
+            <Skeleton height="280px" borderRadius="24px" />
+          </div>
+        ) : poll ? (
+          <>
+            <PageHero
+              eyebrow="COMMUNITY INTERACTION"
+              eyebrowColor="var(--brand-orange)"
+              badge={hasVoted ? 'VOTE RECORDED' : isExpired ? 'ENDED' : 'LIVE POLL'}
+              title={poll.question}
+              subtitle={poll.description || 'Cast your vote and see real-time audience opinions.'}
+              glowColor="rgba(232, 66, 10, 0.25)"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 relative overflow-hidden"
+              style={{
+                background:
+                  'linear-gradient(135deg, rgba(24, 21, 30, 0.9) 0%, rgba(35, 18, 14, 0.4) 100%)',
+              }}
+            >
+              {/* Poll stats metadata */}
+              <div className="flex items-center justify-between gap-4 pb-5 border-b border-white/10 mb-6 text-xs sm:text-sm text-white/60">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-[var(--brand-orange)]" />
+                  <span className="font-semibold text-white">{poll.totalVotes.toLocaleString()}</span>{' '}
+                  verified votes
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-white/40" />
+                  <span>
+                    {isExpired
+                      ? 'Voting concluded'
+                      : `Closes ${new Date(poll.endsAt).toLocaleDateString()}`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Options List */}
+              <div className="space-y-3.5">
                 {poll.options.map((option) => {
                   const isSelected = selectedOption === option.id || poll.userVote === option.id;
                   return (
@@ -97,22 +138,47 @@ export default function PollDetailPage(): React.JSX.Element {
                       key={option.id}
                       disabled={hasVoted || isExpired || !user}
                       onClick={() => setSelectedOption(option.id)}
-                      className={`w-full text-left rounded-xl p-4 border transition ${
+                      className={`w-full text-left rounded-2xl p-4 sm:p-5 border transition-all relative overflow-hidden group ${
                         isSelected
-                          ? 'border-amber-500 bg-amber-500/10'
-                          : 'border-gray-800 bg-gray-900 hover:border-gray-700'
+                          ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)]/10 shadow-lg'
+                          : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/[0.07]'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{option.text}</span>
+                      {/* Live Fill bar behind option */}
+                      {hasVoted && (
+                        <div
+                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-[var(--brand-orange)]/20 to-transparent transition-all duration-700 pointer-events-none"
+                          style={{ width: `${option.percentage}%` }}
+                        />
+                      )}
+
+                      <div className="flex items-center justify-between gap-3 relative z-10">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                              isSelected
+                                ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)]'
+                                : 'border-white/30 group-hover:border-white/60'
+                            }`}
+                          >
+                            {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                          </div>
+                          <span className="font-semibold text-white text-sm sm:text-base">
+                            {option.text}
+                          </span>
+                        </div>
+
                         {hasVoted && (
-                          <span className="text-sm text-gray-400">{option.percentage}%</span>
+                          <span className="text-sm font-bold text-white/90 shrink-0">
+                            {option.percentage}%
+                          </span>
                         )}
                       </div>
+
                       {hasVoted && (
-                        <div className="mt-2 w-full bg-gray-800 rounded-full h-2">
+                        <div className="mt-3 w-full bg-white/10 rounded-full h-1.5 overflow-hidden relative z-10">
                           <div
-                            className="bg-amber-500 h-2 rounded-full"
+                            className="bg-gradient-to-r from-[var(--brand-orange)] to-[#cc1c1c] h-full rounded-full transition-all duration-700"
                             style={{ width: `${option.percentage}%` }}
                           />
                         </div>
@@ -122,29 +188,51 @@ export default function PollDetailPage(): React.JSX.Element {
                 })}
               </div>
 
-              {user && !hasVoted && !isExpired && selectedOption && (
+              {/* Action State */}
+              {user && !hasVoted && !isExpired && (
                 <button
-                  onClick={() => voteMutation.mutate(selectedOption)}
-                  disabled={voteMutation.isPending}
-                  className="w-full mt-6 bg-amber-600 hover:bg-amber-700 px-6 py-3 rounded-lg font-semibold transition disabled:opacity-50"
+                  onClick={() => selectedOption && voteMutation.mutate(selectedOption)}
+                  disabled={voteMutation.isPending || !selectedOption}
+                  className="w-full mt-6 az-btn-primary flex items-center justify-center gap-2 shadow-xl"
                 >
-                  {voteMutation.isPending ? 'Submitting...' : 'Submit Vote'}
+                  {voteMutation.isPending ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Submitting Vote...
+                    </>
+                  ) : (
+                    <>
+                      <Vote className="w-4 h-4" />
+                      Confirm & Submit Vote
+                    </>
+                  )}
                 </button>
               )}
 
-              {!user && (
-                <p className="text-center text-gray-400 mt-6">
-                  <Link href="/auth/login" className="text-amber-400 hover:underline">
-                    Sign in
-                  </Link>{' '}
-                  to vote.
-                </p>
+              {hasVoted && (
+                <div className="mt-6 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center gap-2 text-emerald-400 text-xs sm:text-sm font-semibold">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Your vote has been recorded on the live blockchain ledger.
+                </div>
               )}
-            </>
-          ) : null}
-        </div>
-      </main>
-      <AppFooter />
-    </>
+
+              {!user && (
+                <div className="az-glass p-4 rounded-xl text-center mt-6 border border-white/10">
+                  <p className="text-white/60 text-sm">
+                    <Link
+                      href="/auth/login"
+                      className="text-[var(--brand-orange)] font-bold hover:underline"
+                    >
+                      Sign in to your account
+                    </Link>{' '}
+                    to participate in this community poll.
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </>
+        ) : null}
+      </div>
+    </PageShell>
   );
 }

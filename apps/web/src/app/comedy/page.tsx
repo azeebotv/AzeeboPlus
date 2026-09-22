@@ -8,7 +8,17 @@ import { useUniversesQuery } from '@/hooks/useUniverses';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { Laugh, Theater, Mic, Smile, Flame, type LucideIcon } from 'lucide-react';
 import analytics from '@/lib/analytics';
+
+const comedyIcons: Record<string, LucideIcon> = {
+  standup: Mic,
+  'stand-up': Mic,
+  skits: Laugh,
+  parody: Theater,
+  improv: Smile,
+  trending: Flame,
+};
 
 function ComedyPageContent(): React.JSX.Element {
   useEffect(() => {
@@ -187,12 +197,20 @@ function ComedyPageContent(): React.JSX.Element {
               key={category.id}
               type="button"
               aria-label={category.name}
-              className="az-glass text-center cursor-pointer transition-all hover:scale-[1.02]"
+              className="az-glass p-4 rounded-2xl text-center cursor-pointer transition-all hover:scale-[1.02] group flex flex-col items-center justify-center border border-white/10 hover:border-amber-500/30"
             >
-              <div className="p-4">
-                <span className="text-3xl mb-2 block">{category.icon || 'Drama'}</span>
-                <h4 className="font-medium text-sm text-white">{category.name}</h4>
-              </div>
+              {(() => {
+                const Icon =
+                  comedyIcons[category.slug?.toLowerCase() || ''] ||
+                  comedyIcons[category.name?.toLowerCase() || ''] ||
+                  Laugh;
+                return (
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-3 group-hover:scale-110 group-hover:bg-amber-500/20 transition-all">
+                    <Icon size={22} strokeWidth={1.75} />
+                  </div>
+                );
+              })()}
+              <h4 className="font-medium text-xs sm:text-sm text-white">{category.name}</h4>
             </button>
           ))}
         </div>

@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Smartphone, Tablet, Tv, Laptop, ArrowLeft, Trash2, ShieldCheck } from 'lucide-react';
 
 interface Device {
   id: string;
@@ -64,8 +66,8 @@ export default function DevicesPage(): React.JSX.Element {
   const handleRemove = (deviceId: string) => {
     setConfirmDialog({
       open: true,
-      title: 'Remove Device',
-      message: 'Are you sure you want to remove this device?',
+      title: 'Remove Device Session',
+      message: 'Are you sure you want to sign out and disconnect this device? It will require re-authentication to stream again.',
       destructive: true,
       onConfirm: async () => {
         setConfirmDialog((prev) => ({ ...prev, open: false }));
@@ -83,196 +85,120 @@ export default function DevicesPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   const getDeviceIcon = (type: string) => {
-    const cls = 'w-6 h-6 text-white/70';
     switch (type?.toLowerCase()) {
       case 'mobile':
+        return <Smartphone size={22} />;
       case 'tablet':
-        return (
-          <svg
-            className={cls}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.8}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"
-            />
-          </svg>
-        );
+        return <Tablet size={22} />;
       case 'tv':
-        return (
-          <svg
-            className={cls}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.8}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 20.25h12m-7.5-3v3m3-3v3m-10.125-3h17.25c.621 0 1.125-.504 1.125-1.125V4.875c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125z"
-            />
-          </svg>
-        );
+        return <Tv size={22} />;
       default:
-        return (
-          <svg
-            className={cls}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.8}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3"
-            />
-          </svg>
-        );
+        return <Laptop size={22} />;
     }
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 700,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ marginBottom: 32 }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: 14,
-              marginBottom: 16,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span>←</span> Back
-          </button>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Manage Devices</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-            View and manage devices connected to your account
-          </p>
+    <PageShell activeNav="Profile">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
+        <Link
+          href="/settings"
+          className="inline-flex items-center gap-2 text-xs font-bold text-white/50 hover:text-white transition-colors mb-6 group"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          <span>Back to Settings</span>
+        </Link>
+      </div>
+
+      <PageHero
+        badge="Session Security"
+        title="Registered Devices"
+        subtitle="Manage authorized streaming devices and revoke active sessions on lost or shared hardware."
+        accentColor="orange"
+      />
+
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-20">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs font-bold text-white/60 uppercase tracking-wider">
+            Connected Screens ({devices.length})
+          </span>
+          <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+            <ShieldCheck size={14} />
+            <span>End-to-End Encrypted Session Tokens</span>
+          </div>
         </div>
 
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                border: '3px solid #18151e',
-                borderTopColor: 'var(--brand-orange)',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }}
-            />
+          <div className="az-glass rounded-3xl p-12 text-center border border-white/10">
+            <div className="w-10 h-10 rounded-full border-2 border-orange-500/20 border-t-orange-500 animate-spin mx-auto mb-3" />
+            <p className="text-white/60 text-sm">Querying active sessions...</p>
           </div>
         ) : devices.length === 0 ? (
-          <EmptyState
-            icon="Smartphone"
-            title="No devices found"
-            description="No devices are linked to your account"
-          />
+          <div className="az-glass rounded-3xl p-10 border border-white/10 text-center">
+            <EmptyState
+              icon="Smartphone"
+              title="No devices found"
+              description="No authorized devices are currently connected to your Azeebo account."
+              dark
+            />
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="space-y-3">
             {devices.map((device) => (
               <div
                 key={device.id}
-                className="az-glass"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: 16,
-                  borderRadius: 16,
-                  border: device.isCurrent ? '1px solid rgba(232, 66, 10, 0.4)' : undefined,
-                }}
+                className={`az-glass p-5 rounded-2xl flex items-center justify-between gap-4 transition-all border ${
+                  device.isCurrent
+                    ? 'border-orange-500/40 bg-orange-500/[0.04] shadow-lg shadow-orange-500/5'
+                    : 'border-white/10 hover:border-white/20'
+                }`}
               >
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 12,
-                    backgroundColor: 'var(--bg-secondary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  {getDeviceIcon(device.type)}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <p style={{ fontWeight: 600, fontSize: 15 }}>{device.name}</p>
-                    {device.isCurrent && (
-                      <span
-                        style={{
-                          padding: '2px 8px',
-                          borderRadius: 999,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          backgroundColor: 'rgba(232,66,10,0.15)',
-                          color: 'var(--brand-orange)',
-                          border: '1px solid rgba(232,66,10,0.3)',
-                        }}
-                      >
-                        Current
-                      </span>
-                    )}
+                <div className="flex items-center gap-4 min-w-0">
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 border ${
+                      device.isCurrent
+                        ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
+                        : 'bg-white/5 text-white/60 border-white/10'
+                    }`}
+                  >
+                    {getDeviceIcon(device.type)}
                   </div>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                    {device.location ? `${device.location} · ` : ''}Last active{' '}
-                    {new Date(device.lastActive).toLocaleDateString()}
-                  </p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-white text-sm truncate">{device.name}</p>
+                      {device.isCurrent && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                          Current Device
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-white/40 mt-0.5 truncate">
+                      {device.location ? `${device.location} • ` : ''}Last active{' '}
+                      {new Date(device.lastActive).toLocaleDateString('en-NG', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
                 </div>
+
                 {!device.isCurrent && (
                   <button
+                    type="button"
                     onClick={() => handleRemove(device.id)}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: 999,
-                      border: '1px solid var(--brand-red)',
-                      background: 'transparent',
-                      color: 'var(--brand-red)',
-                      fontWeight: 500,
-                      fontSize: 13,
-                      cursor: 'pointer',
-                    }}
+                    className="p-2.5 rounded-xl text-white/40 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all flex items-center gap-1.5 text-xs font-semibold"
+                    title="Sign out device"
                   >
-                    Remove
+                    <Trash2 size={15} />
+                    <span className="hidden sm:inline">Revoke</span>
                   </button>
                 )}
               </div>
             ))}
           </div>
         )}
-      </main>
-      <AppFooter />
+      </div>
+
       <ConfirmDialog
         open={confirmDialog.open}
         title={confirmDialog.title}
@@ -281,6 +207,7 @@ export default function DevicesPage(): React.JSX.Element {
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
       />
-    </div>
+    </PageShell>
   );
 }
+

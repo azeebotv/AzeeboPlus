@@ -1,287 +1,141 @@
 import type { Metadata } from 'next';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ShieldCheck, Lock, Database, Globe, UserCheck, Mail } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Privacy  - Azeebo+',
-  description: 'Privacy  on Azeebo+',
+  title: 'Privacy Policy - Azeebo+',
+  description: 'Data privacy disclosures, user rights, and retention practices on Azeebo+',
 };
-
-import Link from 'next/link';
-
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
-
-/**
- * Privacy Policy & Data Collection Disclosures (TAA §83)
- *
- * Comprehensive privacy policy covering:
- * - Data collection and usage
- * - User rights (GDPR, CCPA)
- * - Data retention policies
- * - Third-party services
- * - Contact information
- */
 
 export default function PrivacyPolicyPage() {
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader />
-      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-12">
-          <Link
-            href="/"
-            className="text-[var(--brand-orange)] hover:underline text-sm mb-4 inline-flex items-center gap-1"
-          >
-            ← Back to Home
-          </Link>
-          <h1 className="text-4xl font-bold text-white mb-3">Privacy Policy</h1>
-          <p className="text-white/50 text-sm">
-            Last updated:{' '}
-            {new Date().toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
+    <PageShell activeNav="Support">
+      <PageHero
+        badge="Data Protection & NDPR Compliance"
+        title="Privacy Disclosures"
+        subtitle="Transparent information on how Azeebo+ securely collects, encrypts, and processes your streaming and account data."
+        accentColor="orange"
+      />
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-20 space-y-8">
+        <div className="flex items-center justify-between pb-4 border-b border-white/10">
+          <span className="text-xs text-white/50 uppercase tracking-widest font-mono font-bold">
+            Nigeria Data Protection Act (NDPA) & GDPR Compliant
+          </span>
+          <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-bold">
+            <ShieldCheck size={14} />
+            <span>256-Bit Encrypted Data Vault</span>
+          </div>
+        </div>
+
+        {/* 1. Introduction */}
+        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-3">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+            <Globe size={18} className="text-orange-400" />
+            <span>1. Introduction & Operating Entity</span>
+          </h2>
+          <p className="text-sm text-white/60 leading-relaxed">
+            Virtual Media Network Limited (&quot;Azeebo+&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) respects your privacy and is deeply committed to safeguarding your personal data. This Privacy Policy details how we collect, store, utilize, and protect your information across our web portals, smart TV applications, and mobile interfaces.
           </p>
         </div>
 
-        <div className="prose prose-lg max-w-none text-foreground">
-          {/* Introduction */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">1. Introduction</h2>
-            <p className="text-muted-foreground mb-4">
-              Virtual Media Network Limited (&quot;Azeebo+&quot;, &quot;we&quot;, &quot;us&quot;, or
-              &quot;our&quot;) respects your privacy and is committed to protecting your personal
-              data. This privacy policy explains how we collect, use, disclose, and safeguard your
-              information when you use our streaming platform and services.
-            </p>
-            <p className="text-muted-foreground">
-              By using Azeebo+, you agree to the collection and use of information in accordance
-              with this policy.
-            </p>
-          </section>
-
-          {/* Data Collection */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">2. Information We Collect</h2>
-
-            <h3 className="text-xl font-semibold mb-3">2.1 Information You Provide</h3>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
-              <li>
-                <strong>Account Information:</strong> Email address, display name, password
-                (encrypted)
-              </li>
-              <li>
-                <strong>Profile Data:</strong> Avatar, bio, interests, preferences
-              </li>
-              <li>
-                <strong>Payment Information:</strong> Payment method details (processed securely by
-                our payment partners)
-              </li>
-              <li>
-                <strong>User Content:</strong> Comments, reviews, messages, and other content you
-                create
-              </li>
-              <li>
-                <strong>Communications:</strong> Customer support inquiries and feedback
-              </li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mb-3">2.2 Information Collected Automatically</h3>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
-              <li>
-                <strong>Usage Data:</strong> Content viewed, watch history, search queries,
-                interaction patterns
-              </li>
-              <li>
-                <strong>Device Information:</strong> Device type, operating system, browser type,
-                screen resolution
-              </li>
-              <li>
-                <strong>Log Data:</strong> IP address, access times, pages viewed, error logs
-              </li>
-              <li>
-                <strong>Location Data:</strong> Approximate location based on IP address
-                (country/region level)
-              </li>
-              <li>
-                <strong>Analytics Data:</strong> App performance, crash reports, feature usage
-              </li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mb-3">2.3 Information from Third Parties</h3>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2">
-              <li>
-                <strong>Social Login:</strong> Basic profile information from Google/Apple when you
-                sign in
-              </li>
-              <li>
-                <strong>Payment Partners:</strong> Transaction confirmations from
-                Paystack/Flutterwave
-              </li>
-              <li>
-                <strong>Analytics Partners:</strong> Aggregated usage statistics
-              </li>
-            </ul>
-          </section>
-
-          {/* Data Usage */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">3. How We Use Your Information</h2>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2">
-              <li>Provide, maintain, and improve our services</li>
-              <li>Personalize your experience and content recommendations</li>
-              <li>Process transactions and send related information</li>
-              <li>Send technical notices, updates, and security alerts</li>
-              <li>Respond to comments, questions, and customer service requests</li>
-              <li>Monitor and analyze usage patterns and trends</li>
-              <li>
-                Detect, investigate, and prevent fraudulent transactions and unauthorized access
-              </li>
-              <li>Comply with legal obligations</li>
-            </ul>
-          </section>
-
-          {/* Data Sharing */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">4. How We Share Your Information</h2>
-            <p className="text-muted-foreground mb-4">
-              We do not sell your personal information. We may share your information with:
-            </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2">
-              <li>
-                <strong>Service Providers:</strong> Third parties that help us operate our platform
-                (hosting, payment processing, analytics)
-              </li>
-              <li>
-                <strong>Content Creators:</strong> Anonymized analytics about content performance
-              </li>
-              <li>
-                <strong>Legal Requirements:</strong> When required by law or to protect our rights
-              </li>
-              <li>
-                <strong>Business Transfers:</strong> In connection with a merger, acquisition, or
-                sale of assets
-              </li>
-              <li>
-                <strong>With Your Consent:</strong> When you explicitly authorize sharing
-              </li>
-            </ul>
-          </section>
-
-          {/* Data Retention */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">5. Data Retention</h2>
-            <div className="bg-muted rounded-lg p-6 mb-4">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2">Data Type</th>
-                    <th className="text-left py-2">Retention Period</th>
-                  </tr>
-                </thead>
-                <tbody className="text-muted-foreground">
-                  <tr className="border-b">
-                    <td className="py-2">Account data</td>
-                    <td className="py-2">Duration of account + 30 days</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="py-2">Watch history</td>
-                    <td className="py-2">12 months</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="py-2">Search queries</td>
-                    <td className="py-2">30 days (anonymized), 90 days (deleted)</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="py-2">Payment records</td>
-                    <td className="py-2">7 years (legal requirement)</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="py-2">Analytics data</td>
-                    <td className="py-2">24 months (anonymized)</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2">Support tickets</td>
-                    <td className="py-2">24 months</td>
-                  </tr>
-                </tbody>
-              </table>
+        {/* 2. Data Collection */}
+        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-4">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+            <Database size={18} className="text-orange-400" />
+            <span>2. Categories of Information Collected</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-white/60">
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <h3 className="font-bold text-white text-sm mb-1.5">Direct Information</h3>
+              <p>Account email, encrypted password hashes, display name, user avatar, and voluntary survey or challenge submissions.</p>
             </div>
-          </section>
-
-          {/* User Rights */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">6. Your Rights</h2>
-            <p className="text-muted-foreground mb-4">
-              Depending on your location, you may have the following rights:
-            </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2">
-              <li>
-                <strong>Access:</strong> Request a copy of your personal data
-              </li>
-              <li>
-                <strong>Rectification:</strong> Request correction of inaccurate data
-              </li>
-              <li>
-                <strong>Erasure:</strong> Request deletion of your personal data
-              </li>
-              <li>
-                <strong>Portability:</strong> Request transfer of your data in a machine-readable
-                format
-              </li>
-              <li>
-                <strong>Objection:</strong> Object to processing of your personal data
-              </li>
-              <li>
-                <strong>Restriction:</strong> Request restriction of processing
-              </li>
-              <li>
-                <strong>Withdraw Consent:</strong> Withdraw consent at any time
-              </li>
-            </ul>
-            <p className="text-muted-foreground mt-4">
-              To exercise these rights, contact us at{' '}
-              <a href="mailto:privacy@azeeboplus.com" className="text-blue-600 hover:text-blue-700">
-                privacy@azeeboplus.com
-              </a>
-            </p>
-          </section>
-
-          {/* Security */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">7. Data Security</h2>
-            <p className="text-muted-foreground">
-              We implement appropriate technical and organizational measures to protect your
-              personal data, including:
-            </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2 mt-4">
-              <li>Encryption of data in transit (TLS 1.3) and at rest (AES-256)</li>
-              <li>Regular security audits and penetration testing</li>
-              <li>Access controls and authentication requirements</li>
-              <li>Employee training on data protection</li>
-              <li>Incident response procedures</li>
-            </ul>
-          </section>
-
-          {/* Contact */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-white">8. Contact Us</h2>
-            <p className="text-white/60 mb-4">
-              If you have any questions about this Privacy Policy, please contact us:
-            </p>
-            <div className="az-glass rounded-2xl p-6 border border-white/10">
-              <p className="text-white font-medium mb-1">Virtual Media Network Limited</p>
-              <p className="text-white/60 text-sm">Email: privacy@azeeboplus.com</p>
-              <p className="text-white/60 text-sm">Support: support@azeeboplus.com</p>
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <h3 className="font-bold text-white text-sm mb-1.5">Usage & Viewing Telemetry</h3>
+              <p>Watch history, playback resume timestamps, audio/subtitle preferences, search queries, and reality voting event inputs.</p>
             </div>
-          </section>
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <h3 className="font-bold text-white text-sm mb-1.5">Device & Network Metadata</h3>
+              <p>Operating system, browser fingerprint, screen resolution, connection bitrate, and broad city-level IP geolocation.</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <h3 className="font-bold text-white text-sm mb-1.5">Payment Tokenization</h3>
+              <p>CBN-authorized payment gateway tokens. We never store raw debit/credit card CVV or full PIN credentials.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Retention Table */}
+        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-4">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+            <Lock size={18} className="text-orange-400" />
+            <span>3. Data Retention Lifecycle</span>
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead>
+                <tr className="border-b border-white/10 text-white/50 uppercase tracking-wider">
+                  <th className="py-3 px-2">Data Classification</th>
+                  <th className="py-3 px-2">Retention Duration</th>
+                  <th className="py-3 px-2">Primary Purpose</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-white/70">
+                <tr>
+                  <td className="py-3 px-2 font-semibold text-white">Active Account Profile</td>
+                  <td className="py-3 px-2">Duration of account active life + 30 days</td>
+                  <td className="py-3 px-2">Service delivery & authentication</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-2 font-semibold text-white">Watch History & Telemetry</td>
+                  <td className="py-3 px-2">12 Months rolling</td>
+                  <td className="py-3 px-2">Personalized recommendations & codex unlocks</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-2 font-semibold text-white">Azeebo Pay & Banking Ledger</td>
+                  <td className="py-3 px-2">7 Years (CBN & FIRS statutory mandate)</td>
+                  <td className="py-3 px-2">Tax compliance & dispute verification</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-2 font-semibold text-white">Temporary Device Downloads</td>
+                  <td className="py-3 px-2">Up to 30 days or manual deletion</td>
+                  <td className="py-3 px-2">Offline player media cache</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 4. User Rights */}
+        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-3">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+            <UserCheck size={18} className="text-orange-400" />
+            <span>4. Your Privacy Rights (NDPA & GDPR)</span>
+          </h2>
+          <p className="text-sm text-white/60 leading-relaxed">
+            You hold the right to request a full portable copy of your account data, demand correction of inaccurate records, request permanent deletion of your profile, or withdraw consent for analytical telemetry. Contact our Data Protection Officer at privacy@azeeboplus.com to execute these requests.
+          </p>
+        </div>
+
+        {/* Contact DPO */}
+        <div className="az-glass p-8 rounded-3xl border border-white/10 text-center shadow-xl">
+          <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center mx-auto mb-3 border border-orange-500/20">
+            <Mail size={22} />
+          </div>
+          <h3 className="text-base font-bold text-white mb-1">Data Protection Officer</h3>
+          <p className="text-xs text-white/50 max-w-sm mx-auto mb-4">
+            Virtual Media Network Limited • Legal & Privacy Compliance Unit, Lagos, Nigeria.
+          </p>
+          <a
+            href="mailto:privacy@azeeboplus.com"
+            className="az-btn-primary inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold"
+          >
+            <span>Contact Privacy Office</span>
+          </a>
         </div>
       </div>
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
+

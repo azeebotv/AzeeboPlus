@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import {
+  AUTH_COOKIE,
+  LEGACY_AUTH_COOKIE,
+  isAuthMarkerValid,
+} from './lib/cookie-names';
 
 /**
  * Middleware: Homepage Routing + Role-Based Access Control + Auth Guard.
@@ -30,6 +35,9 @@ const protectedRoutes = [
   '/wallet',
   '/content',
   '/payment',
+  '/referral',
+  '/library',
+  '/downloads',
 ];
 const adminRoutes = ['/admin'];
 
@@ -74,10 +82,30 @@ export function middleware(request: NextRequest) {
 
   securityHeaders['Content-Security-Policy'] = cspDirectives;
 
+  // Check if the user is authenticated using the namespaced auth marker
+  // cookie (host-scoped cookie safety — see lib/cookie-names.ts). The bare
+  // `auth` name is shared by every localhost app and foreign tooling has
+  // planted email-valued `auth` cookies that clobbered real sessions.
+  const authCookie = request.cookies.get(AUTH_COOKIE);
+  const isAuthenticated = isAuthMarkerValid(authCookie?.value);
+
+  // A legacy/foreign bare `auth` cookie must never count as a session. When
+  // present alongside an unauthenticated request, sweep it out of the jar on
+  // every response so it stops surviving page loads. Applied inside
+  // addSecurityHeaders because every return path flows through it.
+  const sweepLegacyAuthCookie =
+    request.cookies.has(LEGACY_AUTH_COOKIE) && !isAuthenticated;
+
   // Helper to add security headers to response
   const addSecurityHeaders = (response: NextResponse): NextResponse => {
     for (const [key, value] of Object.entries(securityHeaders)) {
       response.headers.set(key, value);
+    }
+    if (sweepLegacyAuthCookie) {
+      response.cookies.set(LEGACY_AUTH_COOKIE, '', {
+        maxAge: 0,
+        path: '/',
+      });
     }
     return response;
   };
@@ -96,11 +124,6 @@ export function middleware(request: NextRequest) {
   ) {
     return addSecurityHeaders(NextResponse.next());
   }
-  // Check if the user is authenticated using the 'auth' cookie.
-  // The cookie contains the user ID set by AuthContext on login.
-  // Validate the cookie has a non-empty value to prevent bypass via empty cookies.
-  const authCookie = request.cookies.get('auth');
-  const isAuthenticated = Boolean(authCookie?.value && authCookie.value.length > 0);
 
   // --- Homepage routing guards ---
   if (pathname === '/') {

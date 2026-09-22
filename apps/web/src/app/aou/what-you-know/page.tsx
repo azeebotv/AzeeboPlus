@@ -1,10 +1,13 @@
 'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { CheckCircle2, Lock, ArrowLeft, BookOpen, Sparkles } from 'lucide-react';
 
 interface KnowledgeUnit {
   id: string;
@@ -20,6 +23,7 @@ export default function AOUWhatYouKnowPage(): React.JSX.Element {
     data: knowledge,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['aou', 'what-you-know'],
     queryFn: async () => {
@@ -28,19 +32,20 @@ export default function AOUWhatYouKnowPage(): React.JSX.Element {
         totalUnlocked: number;
         totalUnits: number;
       }>('/v1/knowledge/what-you-know');
-      return res.success ? res.data : null;
+      return res.success && res.data ? res.data : null;
     },
   });
 
   if (error) {
     return (
-      <>
-        <AppHeader />
-        <main className="min-h-screen bg-gray-950 text-white">
-          <ErrorState description="Failed to load knowledge state. Please try again." />
-        </main>
-        <AppFooter />
-      </>
+      <PageShell activeNav="Vertical">
+        <ErrorState
+          title="Codex Unavailable"
+          description="Failed to load your unlocked knowledge codex. Please try again."
+          buttonText="Retry"
+          onButtonPress={() => refetch()}
+        />
+      </PageShell>
     );
   }
 
@@ -55,75 +60,139 @@ export default function AOUWhatYouKnowPage(): React.JSX.Element {
     ) ?? {};
 
   return (
-    <>
-      <AppHeader />
-      <main className="min-h-screen bg-gray-950 text-white">
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <Link href="/aou" className="text-amber-400 hover:underline text-sm mb-6 inline-block">
-            ← AOU Hub
+    <PageShell activeNav="Vertical" glowColor="rgba(245, 158, 11, 0.2)">
+      <div className="mb-6">
+        <Link
+          href="/aou"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-amber-400 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Agbalá Olódùmarè Hub
+        </Link>
+      </div>
+
+      <PageHero
+        eyebrow="CODEX & WISDOM"
+        eyebrowColor="var(--brand-gold)"
+        title="What You Know"
+        subtitle="Your personalized compendium of unlocked revelations, mystical origins, and cosmic lore."
+        glowColor="rgba(245, 158, 11, 0.25)"
+        actions={
+          <Link
+            href="/aou/knowledge-locked"
+            className="px-5 py-2 rounded-full text-xs sm:text-sm font-semibold text-white/80 hover:text-white border border-white/15 bg-white/5 hover:bg-white/10 transition-all flex items-center gap-2"
+          >
+            <Lock className="w-3.5 h-3.5 text-amber-400" />
+            View Locked Knowledge
           </Link>
-          <h1 className="text-3xl font-bold mb-2">What You Know</h1>
-          <p className="text-gray-400 mb-8">Your knowledge of the Agbalá Olódùmarè storyworld.</p>
+        }
+      />
 
-          {isLoading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-32 w-full" />
-              ))}
-            </div>
-          ) : knowledge ? (
-            <>
-              <div className="bg-gray-900 rounded-xl p-6 mb-8">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-gray-400">Knowledge Progress</span>
-                  <span className="text-amber-400 font-bold">
-                    {knowledge.totalUnlocked}/{knowledge.totalUnits}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-800 rounded-full h-3">
-                  <div
-                    className="bg-amber-500 h-3 rounded-full transition-all"
-                    style={{ width: `${(knowledge.totalUnlocked / knowledge.totalUnits) * 100}%` }}
-                  />
-                </div>
+      {/* Progress Summary Header */}
+      {knowledge && (
+        <div className="az-glass p-6 sm:p-8 rounded-2xl mb-10 border border-amber-500/20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <BookOpen className="w-5 h-5" />
               </div>
-
-              {Object.entries(categories).map(([category, units]) => (
-                <section key={category} className="mb-8">
-                  <h2 className="text-xl font-bold mb-4">{category}</h2>
-                  <div className="space-y-2">
-                    {units.map((unit) => (
-                      <div
-                        key={unit.id}
-                        className={`rounded-lg p-4 flex items-center justify-between ${unit.unlocked ? 'bg-gray-900' : 'bg-gray-900/50 border border-gray-800'}`}
-                      >
-                        <div>
-                          <h3
-                            className={`font-bold ${unit.unlocked ? 'text-white' : 'text-gray-500'}`}
-                          >
-                            {unit.title}
-                          </h3>
-                          {unit.description && (
-                            <p className="text-sm text-gray-400 mt-1">{unit.description}</p>
-                          )}
-                        </div>
-                        <div>
-                          {unit.unlocked ? (
-                            <span className="text-amber-400 text-sm">CheckUnlocked</span>
-                          ) : (
-                            <span className="text-gray-600 text-sm">LockLocked</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </>
-          ) : null}
+              <div>
+                <h2 className="text-lg font-bold text-white">Unlocked Knowledge Codex</h2>
+                <p className="text-xs sm:text-sm text-white/60">
+                  {knowledge.totalUnlocked} of {knowledge.totalUnits} items unlocked
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-2xl sm:text-3xl font-extrabold text-amber-400">
+                {Math.round((knowledge.totalUnlocked / (knowledge.totalUnits || 1)) * 100)}%
+              </span>
+              <p className="text-xs text-white/40 uppercase tracking-wider font-semibold">
+                COMPLETION
+              </p>
+            </div>
+          </div>
         </div>
-      </main>
-      <AppFooter />
-    </>
+      )}
+
+      {isLoading ? (
+        <div className="space-y-8">
+          {[1, 2].map((i) => (
+            <div key={i} className="space-y-4">
+              <Skeleton height="32px" width="200px" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Skeleton height="140px" borderRadius="16px" />
+                <Skeleton height="140px" borderRadius="16px" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : Object.keys(categories).length > 0 ? (
+        <div className="space-y-12">
+          {Object.entries(categories).map(([category, units], catIndex) => (
+            <section key={category}>
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <h2 className="az-headline text-xl sm:text-2xl font-bold text-white uppercase tracking-wide">
+                  {category}
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {units.map((unit, unitIndex) => (
+                  <motion.div
+                    key={unit.id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: (catIndex * 2 + unitIndex) * 0.05 }}
+                    className="az-glass p-5 sm:p-6 rounded-2xl border border-white/10 hover:border-amber-500/30 transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <h3 className="font-bold text-white text-base sm:text-lg">{unit.title}</h3>
+                        {unit.unlocked ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <CheckCircle2 className="w-3 h-3" /> Unlocked
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/5 text-white/40 border border-white/10">
+                            <Lock className="w-3 h-3" /> Locked
+                          </span>
+                        )}
+                      </div>
+                      {unit.description && (
+                        <p className="text-sm text-white/65 leading-relaxed mb-4">
+                          {unit.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {unit.unlockedAt && (
+                      <p className="text-[11px] text-white/40 pt-2 border-t border-white/5">
+                        Unlocked on {new Date(unit.unlockedAt).toLocaleDateString()}
+                      </p>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className="az-glass p-12 text-center rounded-2xl">
+          <BookOpen className="w-10 h-10 text-amber-400 mx-auto mb-4 opacity-80" />
+          <h3 className="text-lg font-bold text-white mb-2">No Lore Recorded Yet</h3>
+          <p className="text-sm text-white/50 max-w-md mx-auto mb-6">
+            Watch episodes, take part in quizzes, and complete challenges to unlock units in your
+            codex.
+          </p>
+          <Link
+            href="/aou"
+            className="az-btn-primary inline-block text-center"
+            style={{ width: 'auto', paddingInline: '2rem' }}
+          >
+            Explore the Storyworld
+          </Link>
+        </div>
+      )}
+    </PageShell>
   );
 }

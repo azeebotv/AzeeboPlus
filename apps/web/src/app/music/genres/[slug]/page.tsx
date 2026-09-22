@@ -10,6 +10,7 @@ import AppFooter from '@/components/layout/AppFooter';
 import MusicTrackList from '@/components/music/MusicTrackList';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { extractTracks } from '@/lib/music';
+import { Music, ArrowLeft } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface GenreInfo {
@@ -65,17 +66,20 @@ export default function GenreDetailPage(): React.JSX.Element {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link
             href="/music/genres"
-            className="text-sm text-white/40 hover:text-white/60 transition-colors mb-4 inline-block"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-white/60 hover:text-white transition-colors mb-6 group"
           >
-            ← Back to Genres
+            <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back to Genres</span>
           </Link>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center gap-4 mb-4">
-              <span className="text-5xl">{genre?.icon || 'Music'}</span>
+            <div className="flex items-center gap-5 mb-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-2xl flex-shrink-0">
+                <Music size={32} strokeWidth={1.75} />
+              </div>
               <div>
-                <h1 className="text-4xl sm:text-5xl font-bold text-white">{genre?.name || slug}</h1>
+                <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">{genre?.name || slug}</h1>
                 {genre?.description && (
-                  <p className="text-xl text-white/70 mt-2">{genre.description}</p>
+                  <p className="text-base sm:text-lg text-white/80 mt-1 max-w-2xl">{genre.description}</p>
                 )}
               </div>
             </div>

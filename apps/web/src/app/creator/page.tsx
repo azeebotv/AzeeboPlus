@@ -2,24 +2,25 @@
 
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import {
-  BarChart3,
   Film,
   DollarSign,
   Zap,
-  PenTool,
   TrendingUp,
-  ClipboardList,
   FileText,
   Calendar,
   CheckCircle,
   Users,
   Trophy,
   ArrowRight,
+  Eye,
+  Sparkles,
 } from 'lucide-react';
 
 interface CreatorStats {
@@ -39,76 +40,64 @@ interface CreatorStats {
 
 const creatorLinks = [
   {
-    href: '/creators/dashboard',
-    label: 'Dashboard',
-    desc: 'View your creator overview',
-    icon: BarChart3,
-  },
-  {
-    href: '/creators/upload',
-    label: 'Upload',
-    desc: 'Upload new content',
+    href: '/creator/content-manager',
+    label: 'Content Manager',
+    desc: 'Upload, manage, and catalog releases',
     icon: Film,
   },
   {
-    href: '/creators/earnings',
-    label: 'Earnings',
-    desc: 'Revenue, payouts, and transaction history',
+    href: '/creator/upload',
+    label: 'Direct Studio Upload',
+    desc: 'Ingest raw 4K footage and multi-track audio',
+    icon: Film,
+  },
+  {
+    href: '/creator/earnings',
+    label: 'Earnings & Payouts',
+    desc: 'Revenue share, streaming royalty settlement',
     icon: DollarSign,
   },
   {
-    href: '/creators/monetization',
-    label: 'Monetization',
-    desc: 'Configure tips, subscriptions, and ads',
+    href: '/creator/monetization',
+    label: 'Monetization Settings',
+    desc: 'Configure tips, pay-per-view, and passes',
     icon: Zap,
   },
   {
-    href: '/creators/signup',
-    label: 'Creator Signup',
-    desc: 'Apply to become a creator',
-    icon: PenTool,
-  },
-  {
     href: '/creator/analytics',
-    label: 'Analytics (Legacy)',
-    desc: 'Engagement, views, and growth metrics',
+    label: 'Audience Analytics',
+    desc: 'Engagement metrics, retention and watch time',
     icon: TrendingUp,
   },
   {
-    href: '/creator/content-manager',
-    label: 'Content Manager (Legacy)',
-    desc: 'Upload, edit, and organize your content',
-    icon: ClipboardList,
-  },
-  {
-    href: '/creator/drafts',
-    label: 'Drafts',
-    desc: 'Continue working on unpublished content',
-    icon: FileText,
-  },
-  {
-    href: '/creator/scheduled',
-    label: 'Scheduled',
-    desc: 'Manage content release schedule',
-    icon: Calendar,
-  },
-  {
-    href: '/creator/published',
-    label: 'Published',
-    desc: 'View your live content and performance',
-    icon: CheckCircle,
-  },
-  {
     href: '/creator/subscribers',
-    label: 'Subscribers',
-    desc: 'Manage your subscriber list',
+    label: 'Subscriber Circle',
+    desc: 'Manage VIP supporters and tier subscribers',
     icon: Users,
   },
   {
     href: '/creator/challenges',
-    label: 'Challenges',
-    desc: 'View and participate in creator challenges',
+    label: 'Creator Challenges',
+    desc: 'Compete in community bounty programs',
     icon: Trophy,
+  },
+  {
+    href: '/creator/drafts',
+    label: 'Unfinished Drafts',
+    desc: 'Resume editing unpublished drafts',
+    icon: FileText,
+  },
+  {
+    href: '/creator/scheduled',
+    label: 'Release Schedule',
+    desc: 'Automated premiere calendars and timings',
+    icon: Calendar,
+  },
+  {
+    href: '/creator/published',
+    label: 'Live Catalog',
+    desc: 'Audit performance of live published titles',
+    icon: CheckCircle,
   },
 ];
 
@@ -118,6 +107,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
     data: stats,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['creator', 'dashboard', 'legacy'],
     queryFn: async () => {
@@ -136,178 +126,155 @@ export default function CreatorDashboardPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div
-        style={{
-          backgroundColor: 'var(--bg-primary)',
-          minHeight: '100vh',
-          color: 'var(--text-primary)',
-        }}
-      >
-        <AppHeader logoVariant="light" />
-        <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
-          <ErrorState title="Failed to load dashboard data" />
-        </main>
-        <AppFooter logoVariant="light" />
-      </div>
+      <PageShell glowColor="rgba(232,66,10,0.12)">
+        <div className="max-w-xl mx-auto py-20 px-4">
+          <ErrorState
+            title="Failed to load dashboard data"
+            description="Unable to connect to the creator analytics service."
+            onButtonPress={() => refetch()}
+          />
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-primary)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader logoVariant="light" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: 'white' }}>
-          Creator Hub
-        </h1>
-        <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 32 }}>
-          {isLoading
-            ? 'Loading stats...'
-            : `Welcome back! ${stats?.totalContent || 0} pieces of content, ${stats?.totalFollowers || 0} followers`}
-        </p>
+    <PageShell glowColor="rgba(232,66,10,0.14)">
+      <PageHero
+        badge="Studio Portal"
+        title="Creator Control Hub"
+        description="Monitor real-time audience engagement, publish original narratives, and track streaming earnings across the Azeebo+ universe."
+      />
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: 16,
-            marginBottom: 32,
-          }}
-        >
-          {[
-            { label: 'Views', value: stats?.totalViews?.toLocaleString() || '0' },
-            { label: 'Content', value: String(stats?.totalContent || 0) },
-            { label: 'Earnings', value: `₦${stats?.totalEarnings?.toLocaleString() || '0'}` },
-            { label: 'Followers', value: (stats?.totalFollowers || 0).toLocaleString() },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              style={{
-                padding: 20,
-                borderRadius: 16,
-                border: '1px solid rgba(255,255,255,0.08)',
-                backgroundColor: 'var(--bg-tertiary)',
-              }}
-            >
-              <p
-                style={{
-                  color: 'rgba(255,255,255,0.5)',
-                  fontSize: 12,
-                  marginBottom: 6,
-                  textTransform: 'uppercase',
-                  letterSpacing: 1,
-                  fontWeight: 600,
-                }}
-              >
-                {stat.label}
-              </p>
-              {isLoading ? (
-                <Skeleton height="28px" width="80px" />
-              ) : (
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'white', margin: 0 }}>
-                  {stat.value}
-                </p>
-              )}
+      <div className="max-w-6xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-10">
+        {/* KPI Stats Grid */}
+        <ScrollReveal>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              {
+                label: 'Total Views',
+                value: stats?.totalViews?.toLocaleString() || '0',
+                icon: Eye,
+                color: 'text-orange-400',
+              },
+              {
+                label: 'Published Titles',
+                value: String(stats?.totalContent || 0),
+                icon: Film,
+                color: 'text-blue-400',
+              },
+              {
+                label: 'Gross Royalties',
+                value: `₦${stats?.totalEarnings?.toLocaleString() || '0'}`,
+                icon: DollarSign,
+                color: 'text-emerald-400',
+              },
+              {
+                label: 'Followers',
+                value: (stats?.totalFollowers || 0).toLocaleString(),
+                icon: Users,
+                color: 'text-purple-400',
+              },
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className="az-glass p-5 sm:p-6 rounded-2xl border border-white/10 relative overflow-hidden group hover:border-white/20 transition-all"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-white/40">
+                      {stat.label}
+                    </span>
+                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                      <Icon className={`w-4 h-4 ${stat.color}`} />
+                    </div>
+                  </div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <p className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                      {stat.value}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </ScrollReveal>
+
+        {/* Tools & Modules Grid */}
+        <ScrollReveal delay={0.1}>
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-white tracking-tight">Studio Tools & Portals</h2>
+                <p className="text-xs text-white/50">Manage distribution, audiences, and payout configurations</p>
+              </div>
             </div>
-          ))}
-        </div>
 
-        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: 'white' }}>
-          Creator Tools & Portals
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {creatorLinks.map((link) => {
-            const Icon = link.icon;
-            return (
-              <button
-                key={link.href}
-                onClick={() => router.push(link.href)}
-                aria-label={`Navigate to ${link.label}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: 20,
-                  borderRadius: 16,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: 'var(--bg-tertiary)',
-                  color: 'white',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(232,66,10,0.5)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 12,
-                    backgroundColor: 'rgba(232,66,10,0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--brand-orange, #E8420A)',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon size={22} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2, color: 'white' }}>
-                    {link.label}
-                  </h3>
-                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, margin: 0 }}>
-                    {link.desc}
-                  </p>
-                </div>
-                <ArrowRight size={18} style={{ color: 'var(--brand-orange, #E8420A)' }} />
-              </button>
-            );
-          })}
-        </div>
-
-        {stats?.recentActivity && stats.recentActivity.length > 0 && (
-          <div style={{ marginTop: 40 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: 'white' }}>
-              Recent Activity
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {stats.recentActivity.map((activity) => (
-                <div
-                  key={activity.id}
-                  style={{
-                    padding: 16,
-                    borderRadius: 12,
-                    backgroundColor: 'var(--bg-tertiary)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                  }}
-                >
-                  <p style={{ fontWeight: 600, fontSize: 14, color: 'white', marginBottom: 2 }}>
-                    {activity.title}
-                  </p>
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: 0 }}>
-                    {activity.date}
-                  </p>
-                </div>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {creatorLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <motion.button
+                    key={link.href}
+                    onClick={() => router.push(link.href)}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="az-glass p-5 rounded-2xl border border-white/10 hover:border-[var(--brand-orange)]/40 text-left flex items-center gap-4 group transition-all"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-[var(--brand-orange)]/10 border border-[var(--brand-orange)]/20 flex items-center justify-center flex-shrink-0 text-[var(--brand-orange)] group-hover:scale-110 transition-transform">
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-bold text-white group-hover:text-[var(--brand-orange)] transition-colors">
+                        {link.label}
+                      </h3>
+                      <p className="text-xs text-white/50 truncate mt-0.5">
+                        {link.desc}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-white/30 group-hover:text-[var(--brand-orange)] group-hover:translate-x-1 transition-all flex-shrink-0" />
+                  </motion.button>
+                );
+              })}
             </div>
           </div>
+        </ScrollReveal>
+
+        {/* Recent Activity */}
+        {stats?.recentActivity && stats.recentActivity.length > 0 && (
+          <ScrollReveal delay={0.2}>
+            <div className="az-glass p-6 rounded-2xl border border-white/10">
+              <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[var(--brand-orange)]" />
+                Recent Studio Activity
+              </h3>
+              <div className="divide-y divide-white/5">
+                {stats.recentActivity.map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="py-3.5 flex items-center justify-between gap-4"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        {activity.title}
+                      </p>
+                      <p className="text-xs text-white/40">{activity.date}</p>
+                    </div>
+                    {activity.amount && (
+                      <span className="text-xs font-mono font-bold text-emerald-400">
+                        +₦{activity.amount.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollReveal>
         )}
-      </main>
-      <AppFooter logoVariant="light" />
-    </div>
+      </div>
+    </PageShell>
   );
 }

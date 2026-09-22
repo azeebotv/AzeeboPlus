@@ -1,12 +1,14 @@
 'use client';
-import { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 
-import { motion } from 'framer-motion';
+import { Suspense, lazy, useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import analytics from '@/lib/analytics';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { Bookmark, Share2, Trash2, ArrowLeft, Compass, Check } from 'lucide-react';
 
 interface SavedItem {
   id: string;
@@ -19,11 +21,18 @@ interface SavedItem {
 
 function SocialPageContent(): React.JSX.Element {
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     analytics.pageView('lifestyle-social');
     const saved = localStorage.getItem('azeebo_social_saves');
-    if (saved) setSavedItems(JSON.parse(saved));
+    if (saved) {
+      try {
+        setSavedItems(JSON.parse(saved));
+      } catch {
+        // invalid json
+      }
+    }
   }, []);
 
   const removeSaved = useCallback((id: string) => {
@@ -43,108 +52,110 @@ function SocialPageContent(): React.JSX.Element {
       }
     } else {
       await navigator.clipboard.writeText(item.url);
+      setCopiedId(item.id);
+      setTimeout(() => setCopiedId(null), 2000);
     }
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Lifestyle" />
+    <PageShell glowColor="rgba(232,66,10,0.15)">
+      <PageHero
+        badge="Personal Collection"
+        title="Saved Moments & Circles"
+        description="Your private curation of African luxury dining, premier events, and nightlife destinations saved for easy sharing."
+      />
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <div className="mb-8">
+      <div className="max-w-4xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex items-center justify-between">
           <Link
             href="/lifestyle"
-            className="text-sm text-white/40 hover:text-white/60 transition-colors mb-4 inline-block"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white transition-colors"
           >
-            ← Back to Lifestyle
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Lifestyle Hub
           </Link>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white">Social</h1>
-          <p className="text-white/50 mt-2">Save and share your favorite lifestyle moments</p>
+
+          {savedItems.length > 0 && (
+            <span className="text-xs font-mono text-white/40">
+              {savedItems.length} {savedItems.length === 1 ? 'item' : 'items'} saved
+            </span>
+          )}
         </div>
 
         {savedItems.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-4"></p>
-            <h2 className="text-xl font-bold text-white mb-2">No saved items yet</h2>
-            <p className="text-white/50 mb-6">Save lifestyle content to share with friends</p>
-            <Link href="/lifestyle">
-              <motion.button
-                type="button"
-                className="az-btn-primary"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Explore Lifestyle
-              </motion.button>
+          <div className="az-glass p-16 text-center rounded-3xl border border-white/10 max-w-md mx-auto">
+            <Bookmark className="w-12 h-12 text-white/20 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-2">No Saved Items Yet</h3>
+            <p className="text-xs text-white/50 mb-6">
+              Bookmark luxury venues, celebrity spotlights, and events while exploring Lifestyle to build your personal circle.
+            </p>
+            <Link
+              href="/lifestyle"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white bg-[var(--brand-orange)] hover:bg-[var(--brand-orange)]/90 transition-all shadow-lg shadow-[var(--brand-orange)]/25"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              Explore Lifestyle Hub
             </Link>
           </div>
         ) : (
           <div className="space-y-4">
-            {savedItems.map((item) => (
-              <motion.div
-                key={item.id}
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="az-glass p-4 flex items-center gap-4"
-                style={{ boxShadow: '0 0 15px rgba(255,255,255,0.03)' }}
-              >
-                <OptimizedImage
-                  src={item.thumbnail}
-                  alt={item.title}
-                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-semibold truncate">{item.title}</h3>
-                  <p className="text-white/40 text-sm truncate">{item.description}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => shareItem(item)}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                    style={{ backgroundColor: 'rgba(232,66,10,0.2)' }}
-                    title="Share"
+            <AnimatePresence>
+              {savedItems.map((item) => (
+                <ScrollReveal key={item.id}>
+                  <motion.div
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="az-glass p-4 rounded-2xl border border-white/10 flex items-center gap-4 hover:border-white/20 transition-all"
                   >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#E8400A"
-                      strokeWidth="2"
-                    >
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeSaved(item.id)}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                    style={{ backgroundColor: 'rgba(239,68,68,0.2)' }}
-                    title="Remove"
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#EF4444"
-                      strokeWidth="2"
-                    >
-                      <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-white/5 flex-shrink-0">
+                      <OptimizedImage
+                        src={item.thumbnail}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-bold text-white truncate">{item.title}</h3>
+                      <p className="text-xs text-white/50 truncate mt-0.5">{item.description}</p>
+                      {item.savedAt && (
+                        <span className="text-[10px] font-mono text-white/30 mt-1 block">
+                          Saved {new Date(item.savedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => shareItem(item)}
+                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-white/5 hover:bg-[var(--brand-orange)]/20 text-white/70 hover:text-[var(--brand-orange)]"
+                        title={copiedId === item.id ? 'Link copied!' : 'Share'}
+                      >
+                        {copiedId === item.id ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : (
+                          <Share2 className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeSaved(item.id)}
+                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-white/5 hover:bg-rose-500/20 text-white/70 hover:text-rose-400"
+                        title="Remove bookmark"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                </ScrollReveal>
+              ))}
+            </AnimatePresence>
           </div>
         )}
-      </section>
-
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }
 

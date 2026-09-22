@@ -1,12 +1,13 @@
 'use client';
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { DollarSign, Wallet, Clock, TrendingUp } from 'lucide-react';
+import { DollarSign, Wallet, Clock, TrendingUp, Sparkles, ArrowUpRight } from 'lucide-react';
 
 interface EarningsData {
   totalEarnings: number;
@@ -29,6 +30,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
     data: earnings,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['creator', 'earnings', period],
     queryFn: async () => {
@@ -47,321 +49,185 @@ export default function CreatorEarningsPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div
-        style={{
-          backgroundColor: 'var(--bg-primary)',
-          minHeight: '100vh',
-          color: 'var(--text-primary)',
-        }}
-      >
-        <AppHeader active="Creator" logoVariant="light" />
-        <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-          <ErrorState title="Failed to load earnings" />
-        </main>
-        <AppFooter logoVariant="light" />
-      </div>
+      <PageShell glowColor="rgba(232,66,10,0.12)">
+        <div className="max-w-xl mx-auto py-20 px-4">
+          <ErrorState
+            title="Failed to load earnings"
+            description="Unable to sync royalty ledgers from the treasury."
+            onButtonPress={() => refetch()}
+          />
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-primary)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader active="Creator" logoVariant="light" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: '#FFFFFF' }}>
-          Earnings
-        </h1>
-        <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 24 }}>
-          Track your revenue and payouts
-        </p>
+    <PageShell glowColor="rgba(232,66,10,0.14)">
+      <PageHero
+        badge="Treasury & Settlement"
+        title="Royalties & Earnings"
+        description="Comprehensive accounting of streaming payouts, tip micro-transactions, and ad revenues across the universe."
+      />
 
-        <div style={{ marginBottom: 24 }}>
-          <label
-            style={{
-              color: 'var(--text-muted, #9A8A7A)',
-              fontSize: 13,
-              marginBottom: 8,
-              display: 'block',
-            }}
-          >
-            Period
-          </label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {(['7d', '30d', '90d'] as const).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 8,
-                  border:
-                    period === p
-                      ? '1px solid rgba(232,66,10,0.5)'
-                      : '1px solid rgba(255,255,255,0.08)',
-                  background: period === p ? 'rgba(232,66,10,0.15)' : '#18151e',
-                  color:
-                    period === p ? 'var(--brand-orange, #E8420A)' : 'var(--text-muted, #9A8A7A)',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  fontWeight: period === p ? 600 : 400,
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                {p.toUpperCase()}
-              </button>
-            ))}
+      <div className="max-w-5xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Period Selector */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-mono uppercase tracking-wider text-white/50">
+            Accounting Horizon
+          </span>
+          <div className="flex items-center gap-1.5 p-1 rounded-full az-glass border border-white/10">
+            {(['7d', '30d', '90d'] as const).map((p) => {
+              const isActive = period === p;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPeriod(p)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-[var(--brand-orange)] text-white shadow-lg'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  {p.toUpperCase()}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {isLoading ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
-            ))}
+        {/* Primary Metric Cards */}
+        <ScrollReveal>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              {
+                label: 'Total Earnings',
+                value: `₦${earnings?.totalEarnings.toLocaleString() || '0'}`,
+                icon: DollarSign,
+                color: 'text-[var(--brand-orange)]',
+                border: 'hover:border-[var(--brand-orange)]/40',
+              },
+              {
+                label: 'Available Balance',
+                value: `₦${earnings?.availableBalance.toLocaleString() || '0'}`,
+                icon: Wallet,
+                color: 'text-emerald-400',
+                border: 'hover:border-emerald-500/40',
+              },
+              {
+                label: 'Pending In Transit',
+                value: `₦${earnings?.pendingEarnings.toLocaleString() || '0'}`,
+                icon: Clock,
+                color: 'text-amber-400',
+                border: 'hover:border-amber-500/40',
+              },
+              {
+                label: 'Lifetime Accrual',
+                value: `₦${earnings?.lifetimeEarnings.toLocaleString() || '0'}`,
+                icon: TrendingUp,
+                color: 'text-purple-400',
+                border: 'hover:border-purple-500/40',
+              },
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className={`az-glass p-5 sm:p-6 rounded-2xl border border-white/10 ${stat.border} transition-all`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-white/40">
+                      {stat.label}
+                    </span>
+                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                      <Icon className={`w-4 h-4 ${stat.color}`} />
+                    </div>
+                  </div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <p className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                      {stat.value}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        ) : earnings ? (
-          <>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                gap: 16,
-                marginBottom: 32,
-              }}
-            >
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: 'var(--bg-tertiary)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 8,
-                  }}
-                >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                    Total Earnings
-                  </p>
-                  <DollarSign size={15} color="#E8420A" />
-                </div>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-                  ₦{earnings.totalEarnings.toLocaleString()}
-                </p>
-              </div>
+        </ScrollReveal>
 
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: 'var(--bg-tertiary)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 8,
-                  }}
-                >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                    Available Balance
-                  </p>
-                  <Wallet size={15} color="#10B981" />
-                </div>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#10B981', margin: 0 }}>
-                  ₦{earnings.availableBalance.toLocaleString()}
-                </p>
-              </div>
-
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: 'var(--bg-tertiary)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 8,
-                  }}
-                >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                    Pending
-                  </p>
-                  <Clock size={15} color="#F59E0B" />
-                </div>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#F59E0B', margin: 0 }}>
-                  ₦{earnings.pendingEarnings.toLocaleString()}
-                </p>
-              </div>
-
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: 'var(--bg-tertiary)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 8,
-                  }}
-                >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, margin: 0 }}>
-                    Lifetime
-                  </p>
-                  <TrendingUp size={15} color="#A855F7" />
-                </div>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-                  ₦{earnings.lifetimeEarnings.toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#FFFFFF' }}>
-                Revenue Breakdown
+        {/* Revenue Breakdown */}
+        {earnings && (
+          <ScrollReveal delay={0.1}>
+            <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+              <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[var(--brand-orange)]" />
+                Revenue Stream Decomposition
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {Object.entries(earnings.revenueBreakdown).map(([key, value]) => (
                   <div
                     key={key}
-                    style={{
-                      padding: 16,
-                      borderRadius: 16,
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      backgroundColor: 'var(--bg-tertiary)',
-                    }}
+                    className="p-4 rounded-xl bg-white/[0.03] border border-white/5"
                   >
-                    <p
-                      style={{
-                        color: 'var(--text-muted, #9A8A7A)',
-                        fontSize: 12,
-                        textTransform: 'capitalize',
-                        margin: '0 0 6px 0',
-                      }}
-                    >
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-white/40 block mb-1">
                       {key.replace(/([A-Z])/g, ' $1')}
-                    </p>
-                    <p style={{ fontSize: 20, fontWeight: 600, color: '#FFFFFF', margin: 0 }}>
+                    </span>
+                    <p className="text-xl font-bold text-white tracking-tight">
                       ₦{value.toLocaleString()}
                     </p>
                   </div>
                 ))}
               </div>
             </div>
+          </ScrollReveal>
+        )}
 
-            <div>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#FFFFFF' }}>
-                Recent Earnings
-              </h2>
-              {earnings.earningsHistory.length === 0 ? (
-                <p
-                  style={{ color: 'var(--text-muted, #9A8A7A)', textAlign: 'center', padding: 40 }}
-                >
-                  No recent earnings
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {earnings.earningsHistory.map((item, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: 16,
-                        borderRadius: 16,
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        backgroundColor: 'var(--bg-tertiary)',
-                      }}
-                    >
-                      <div>
-                        <p
-                          style={{
-                            fontWeight: 600,
-                            fontSize: 14,
-                            color: '#FFFFFF',
-                            margin: 0,
-                          }}
-                        >
-                          {item.source}
-                        </p>
-                        <p
-                          style={{
-                            color: 'var(--text-muted, #9A8A7A)',
-                            fontSize: 12,
-                            margin: '4px 0 0 0',
-                          }}
-                        >
-                          {item.date}
-                        </p>
+        {/* Recent Payout History */}
+        <ScrollReveal delay={0.2}>
+          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+            <h2 className="text-lg font-bold text-white mb-6">Recent Settlement Ledger</h2>
+            {!earnings || earnings.earningsHistory.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-sm text-white/40">No earnings recorded for this timeframe.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {earnings.earningsHistory.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 flex items-center justify-between transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                        <ArrowUpRight className="w-4 h-4 text-emerald-400" />
                       </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <p
-                          style={{
-                            fontWeight: 600,
-                            fontSize: 14,
-                            color: item.status === 'pending' ? '#F59E0B' : '#10B981',
-                            margin: 0,
-                          }}
-                        >
-                          ₦{item.amount.toLocaleString()}
-                        </p>
-                        <p
-                          style={{
-                            fontSize: 11,
-                            color: 'var(--text-muted, #9A8A7A)',
-                            textTransform: 'uppercase',
-                            margin: '4px 0 0 0',
-                          }}
-                        >
-                          {item.status}
-                        </p>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{item.source}</p>
+                        <p className="text-xs text-white/40">{item.date}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <EmptyState
-            icon="dollar"
-            title="No earnings data available yet"
-            description="Start creating content to earn money"
-            dark
-          />
-        )}
-      </main>
-      <AppFooter logoVariant="light" />
-    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-emerald-400">
+                        +₦{item.amount.toLocaleString()}
+                      </p>
+                      <span
+                        className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full ${
+                          item.status === 'completed'
+                            ? 'bg-emerald-500/10 text-emerald-400'
+                            : 'bg-amber-500/10 text-amber-400'
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollReveal>
+      </div>
+    </PageShell>
   );
 }

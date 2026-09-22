@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { AUTH_COOKIE, LEGACY_AUTH_CLEAR_HEADER } from '@/lib/cookie-names';
 
 function isValidJwt(token: string): boolean {
   if (!token || typeof token !== 'string') return false;
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
 
   const isProduction = process.env.NODE_ENV === 'production';
   const cookieOptions = [
-    `auth=${encodeURIComponent(token)}`,
+    `${AUTH_COOKIE}=${encodeURIComponent(token)}`,
     'path=/',
     `max-age=${maxAge || 1800}`,
     'SameSite=Lax',
@@ -46,12 +47,15 @@ export async function POST(request: NextRequest) {
     .join('; ');
 
   response.headers.append('Set-Cookie', cookieOptions);
+  // Self-heal: expire any legacy/foreign bare `auth` cookie in the jar.
+  response.headers.append('Set-Cookie', LEGACY_AUTH_CLEAR_HEADER);
 
   return response;
 }
 
 export async function DELETE() {
   const response = NextResponse.json({ success: true });
-  response.headers.append('Set-Cookie', 'auth=; path=/; max-age=0; SameSite=Lax');
+  response.headers.append('Set-Cookie', `${AUTH_COOKIE}=; path=/; max-age=0; SameSite=Lax`);
+  response.headers.append('Set-Cookie', LEGACY_AUTH_CLEAR_HEADER);
   return response;
 }

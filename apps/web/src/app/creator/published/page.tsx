@@ -1,12 +1,16 @@
 'use client';
+
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { CheckCircle2, Eye, Heart, Film, Plus } from 'lucide-react';
 
 interface PublishedContent {
   id: string;
@@ -34,6 +38,7 @@ export default function PublishedPage(): React.JSX.Element {
     data: content = [],
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['creator', 'published'],
     queryFn: async () => {
@@ -67,131 +72,107 @@ export default function PublishedPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 1000,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ marginBottom: 32 }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: 14,
-              marginBottom: 16,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
+    <PageShell glowColor="rgba(232,66,10,0.14)">
+      <PageHero
+        badge="Live Broadcasts"
+        title="Published Catalog"
+        description="Publicly available titles streaming live to audience members globally across all Azeebo+ platforms."
+        actions={
+          <motion.button
+            type="button"
+            onClick={() => router.push('/creator/upload')}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="az-btn-primary px-6 py-3 rounded-full text-xs font-bold flex items-center gap-2"
           >
-            <span>←</span> Back
-          </button>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Published Content</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>Manage your live content</p>
-        </div>
+            <Plus className="w-4 h-4" />
+            Upload Premiere
+          </motion.button>
+        }
+      />
 
+      <div className="max-w-6xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
         {isLoading ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: 16,
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
-                <Skeleton width="100%" height="160px" />
-                <div style={{ padding: 16 }}>
-                  <Skeleton width="80%" height="16px" className="mb-2" />
-                  <Skeleton width="60%" height="12px" />
-                </div>
+              <div key={i} className="az-glass rounded-2xl overflow-hidden space-y-3 p-4">
+                <Skeleton className="aspect-video w-full rounded-xl" />
+                <Skeleton className="h-5 w-3/4 rounded-md" />
+                <Skeleton className="h-4 w-1/2 rounded-md" />
               </div>
             ))}
           </div>
         ) : error ? (
-          <ErrorState
-            title="Failed to load published content"
-            description="Please try again later"
-            onButtonPress={() => router.refresh()}
-          />
+          <div className="max-w-md mx-auto py-12">
+            <ErrorState
+              title="Failed to load published catalog"
+              description="Unable to sync public streaming assets."
+              onButtonPress={() => refetch()}
+            />
+          </div>
         ) : content.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}></div>
-            <h3 style={{ fontSize: 18, marginBottom: 8 }}>No published content</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>Your published videos will appear here</p>
+          <div className="az-glass p-16 text-center rounded-3xl border border-white/10">
+            <CheckCircle2 className="w-12 h-12 text-white/30 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-2">No Live Premieres</h3>
+            <p className="text-xs text-white/50 max-w-sm mx-auto mb-6">
+              You do not have any published media in the public streaming catalog yet.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push('/creator/upload')}
+              className="az-btn-primary px-6 py-2.5 rounded-full text-xs font-bold"
+            >
+              Publish First Title
+            </button>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: 16,
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {content.map((item: PublishedContent) => (
-              <div
-                key={item.id}
-                className="az-glass"
-                style={{ borderRadius: 16, overflow: 'hidden' }}
-              >
-                {item.thumbnail && (
-                  <OptimizedImage
-                    src={item.thumbnail}
-                    alt={item.title}
-                    width={400}
-                    height={160}
-                    className="object-cover"
-                  />
-                )}
-                <div style={{ padding: 16 }}>
-                  <h3
-                    style={{
-                      fontWeight: 600,
-                      fontSize: 15,
-                      marginBottom: 8,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {item.title}
-                  </h3>
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: 16,
-                      fontSize: 13,
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    <span>{(item.views || 0).toLocaleString()} views</span>
-                    <span>{(item.likes || 0).toLocaleString()} likes</span>
+              <ScrollReveal key={item.id}>
+                <div className="az-glass rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all flex flex-col group">
+                  <div className="relative aspect-video bg-white/5">
+                    {item.thumbnail ? (
+                      <OptimizedImage
+                        src={item.thumbnail}
+                        alt={item.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white/30">
+                        <Film className="w-8 h-8" />
+                      </div>
+                    )}
+                    <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold uppercase backdrop-blur-sm">
+                      Live
+                    </div>
                   </div>
-                  <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8 }}>
-                    Published {new Date(item.publishedAt).toLocaleDateString()}
-                  </p>
+
+                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-white truncate">{item.title}</h3>
+                      <p className="text-xs text-white/40 mt-1">
+                        Aired {new Date(item.publishedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-white/5 text-xs text-white/50">
+                      <span className="flex items-center gap-1.5">
+                        <Eye className="w-3.5 h-3.5 text-white/40" />
+                        {(item.views || 0).toLocaleString()} streams
+                      </span>
+                      <span className="flex items-center gap-1.5 text-pink-400">
+                        <Heart className="w-3.5 h-3.5 fill-current" />
+                        {(item.likes || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         )}
-      </main>
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }

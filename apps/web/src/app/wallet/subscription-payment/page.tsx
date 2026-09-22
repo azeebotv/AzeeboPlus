@@ -7,10 +7,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Check, CreditCard, Wallet, ShieldCheck, AlertTriangle } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface Plan {
@@ -142,33 +143,26 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
 
   if (authLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
+      <PageShell glowColor="rgba(232,66,10,0.15)">
+        <div className="flex items-center justify-center py-20 min-h-[60vh]">
           <Spinner size="lg" color="#E8420A" />
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Wallet" />
+    <PageShell glowColor="rgba(232,66,10,0.12)">
+      <PageHero
+        badge="Checkout & Activation"
+        title="Complete Subscription"
+        description="Choose your billing rail and finalize your streaming activation."
+      />
 
-      <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <ScrollReveal>
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Subscribe</h1>
-            <p className="text-white/50">Complete your subscription setup</p>
-          </div>
-        </ScrollReveal>
-
+      <div className="max-w-3xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8">
         {/* Progress Steps */}
         <div className="flex items-center justify-center gap-4 mb-10">
-          {['Select Plan', 'Payment', 'Confirm'].map((label, index) => {
+          {['Select Plan', 'Payment Method', 'Confirm Activation'].map((label, index) => {
             const stepNumber = index + 1;
             const currentStep =
               step === 'select' ? 1 : step === 'payment' ? 2 : step === 'processing' ? 3 : 3;
@@ -178,22 +172,27 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
             return (
               <div key={label} className="flex items-center gap-2">
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                   style={{
                     backgroundColor: isCompleted
-                      ? 'var(--color-success-500)'
+                      ? 'rgba(34,197,94,0.2)'
                       : isActive
                         ? 'var(--brand-orange)'
-                        : 'rgba(255,255,255,0.1)',
-                    color: isCompleted || isActive ? 'white' : 'rgba(255,255,255,0.4)',
+                        : 'rgba(255,255,255,0.06)',
+                    color: isCompleted ? '#4ade80' : isActive ? 'white' : 'rgba(255,255,255,0.4)',
+                    border: isCompleted
+                      ? '1px solid rgba(34,197,94,0.3)'
+                      : isActive
+                        ? '1px solid var(--brand-orange)'
+                        : '1px solid rgba(255,255,255,0.1)',
                   }}
                 >
-                  {isCompleted ? 'Check' : stepNumber}
+                  {isCompleted ? <Check className="w-4 h-4" /> : stepNumber}
                 </div>
                 <span
-                  className="text-sm hidden sm:block"
+                  className="text-xs font-semibold hidden sm:block"
                   style={{
-                    color: isActive ? 'white' : 'rgba(255,255,255,0.4)',
+                    color: isActive ? 'white' : 'rgba(255,255,255,0.5)',
                   }}
                 >
                   {label}
@@ -203,7 +202,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     className="w-8 h-0.5 mx-2"
                     style={{
                       backgroundColor: isCompleted
-                        ? 'var(--color-success-500)'
+                        ? 'rgba(34,197,94,0.5)'
                         : 'rgba(255,255,255,0.1)',
                     }}
                   />
@@ -278,8 +277,8 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     <ul className="space-y-2">
                       {plan.features.slice(0, 3).map((feature, i) => (
                         <li key={i} className="flex items-center gap-2 text-xs text-white/60">
-                          <span style={{ color: 'var(--color-success-500)' }}></span>
-                          {feature}
+                          <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                          <span>{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -349,7 +348,9 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl"></span>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                      <Wallet className="w-5 h-5 text-emerald-400" />
+                    </div>
                     <div>
                       <p className="text-white font-semibold">Pay from Wallet</p>
                       <p className="text-xs text-white/40">
@@ -385,7 +386,9 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 whileTap={{ scale: 0.99 }}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl"></span>
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                    <CreditCard className="w-5 h-5 text-[var(--brand-orange)]" />
+                  </div>
                   <div>
                     <p className="text-white font-semibold">Card / Bank Transfer</p>
                     <p className="text-xs text-white/40">Pay with card or bank transfer</p>
@@ -440,9 +443,9 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                className="text-6xl mb-6"
+                className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto mb-6"
               >
-                PartyPopper
+                <ShieldCheck className="w-8 h-8 text-emerald-400" />
               </motion.div>
               <h2 className="text-2xl font-bold text-white mb-2">Subscription Active!</h2>
               <p className="text-white/50 mb-8">
@@ -483,7 +486,9 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
         {step === 'error' && (
           <ScrollReveal>
             <div className="text-center py-20">
-              <p className="text-6xl mb-6">Frown</p>
+              <div className="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center mx-auto mb-6">
+                <AlertTriangle className="w-8 h-8 text-red-400" />
+              </div>
               <h2 className="text-2xl font-bold text-white mb-2">Payment Failed</h2>
               <p className="text-white/50 mb-8">Something went wrong. Please try again.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -517,8 +522,6 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
         )}
       </div>
 
-      <AppFooter />
-
       {toast && (
         <div
           className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
@@ -532,7 +535,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
           {toast.message}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 

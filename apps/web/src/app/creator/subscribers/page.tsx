@@ -1,12 +1,13 @@
 'use client';
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { Users, UserPlus, TrendingUp, UserMinus, Globe } from 'lucide-react';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { Users, UserPlus, TrendingUp, UserMinus, Globe, Sparkles } from 'lucide-react';
 
 type Tab = 'list' | 'demographics';
 
@@ -33,415 +34,215 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
     staleTime: 30000,
   });
 
-  const { data: subData, isLoading, error: queryError } = subscribersQuery;
+  const { data: subData, isLoading, error: queryError, refetch } = subscribersQuery;
   const { data: stats, isLoading: statsLoading } = statsQuery;
   const subscribers = subData?.subscribers ?? [];
   const subscriberStats = stats ?? subData?.stats ?? null;
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-primary)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader active="Creator" logoVariant="light" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: '#FFFFFF' }}>
-          Subscribers
-        </h1>
-        <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 24 }}>
-          Manage your subscribers and view demographics
-        </p>
+    <PageShell glowColor="rgba(232,66,10,0.14)">
+      <PageHero
+        badge="Audience Circle"
+        title="Subscriber Community"
+        description="Monitor tier memberships, direct supporter retention, and geographical distribution of your audience."
+      />
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-          {(['list', 'demographics'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              style={{
-                padding: '8px 20px',
-                borderRadius: 8,
-                border:
-                  tab === t ? '1px solid rgba(232,66,10,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                background: tab === t ? 'var(--brand-orange, #E8420A)' : '#18151e',
-                color: tab === t ? '#FFFFFF' : 'var(--text-muted, #9A8A7A)',
-                cursor: 'pointer',
-                fontSize: 13,
-                fontWeight: tab === t ? 600 : 400,
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {t === 'list' ? 'Subscriber List' : 'Demographics'}
-            </button>
-          ))}
-        </div>
-
-        {/* Stats cards */}
+      <div className="max-w-4xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Stats Row */}
         {!statsLoading && subscriberStats && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: 16,
-              marginBottom: 24,
-            }}
-          >
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 16,
-                backgroundColor: 'var(--bg-tertiary)',
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 6,
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: 11,
-                    color: 'var(--text-muted, #9A8A7A)',
-                    textTransform: 'uppercase',
-                    margin: 0,
-                    fontWeight: 500,
-                  }}
-                >
-                  Total
-                </p>
-                <Users size={14} color="#10B981" />
-              </div>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#10B981', margin: 0 }}>
-                {subscriberStats.totalSubscribers.toLocaleString()}
-              </p>
+          <ScrollReveal>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                {
+                  label: 'Total Active',
+                  value: subscriberStats.totalSubscribers.toLocaleString(),
+                  icon: Users,
+                  color: 'text-emerald-400',
+                },
+                {
+                  label: 'New (7 Days)',
+                  value: `+${subscriberStats.newThisWeek.toLocaleString()}`,
+                  icon: UserPlus,
+                  color: 'text-blue-400',
+                },
+                {
+                  label: 'New (30 Days)',
+                  value: `+${subscriberStats.newThisMonth.toLocaleString()}`,
+                  icon: TrendingUp,
+                  color: 'text-[var(--brand-orange)]',
+                },
+                {
+                  label: 'Churn Rate',
+                  value: `${subscriberStats.churnRate}%`,
+                  icon: UserMinus,
+                  color: 'text-red-400',
+                },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.label}
+                    className="az-glass p-5 rounded-2xl border border-white/10 hover:border-white/20 transition-all"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-white/40">
+                        {item.label}
+                      </span>
+                      <Icon className={`w-3.5 h-3.5 ${item.color}`} />
+                    </div>
+                    <p className="text-2xl font-extrabold text-white tracking-tight">
+                      {item.value}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
-
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 16,
-                backgroundColor: 'var(--bg-tertiary)',
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 6,
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: 11,
-                    color: 'var(--text-muted, #9A8A7A)',
-                    textTransform: 'uppercase',
-                    margin: 0,
-                    fontWeight: 500,
-                  }}
-                >
-                  New This Week
-                </p>
-                <UserPlus size={14} color="#3B82F6" />
-              </div>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#3B82F6', margin: 0 }}>
-                {subscriberStats.newThisWeek.toLocaleString()}
-              </p>
-            </div>
-
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 16,
-                backgroundColor: 'var(--bg-tertiary)',
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 6,
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: 11,
-                    color: 'var(--text-muted, #9A8A7A)',
-                    textTransform: 'uppercase',
-                    margin: 0,
-                    fontWeight: 500,
-                  }}
-                >
-                  New This Month
-                </p>
-                <TrendingUp size={14} color="#F59E0B" />
-              </div>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#F59E0B', margin: 0 }}>
-                {subscriberStats.newThisMonth.toLocaleString()}
-              </p>
-            </div>
-
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 16,
-                backgroundColor: 'var(--bg-tertiary)',
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 6,
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: 11,
-                    color: 'var(--text-muted, #9A8A7A)',
-                    textTransform: 'uppercase',
-                    margin: 0,
-                    fontWeight: 500,
-                  }}
-                >
-                  Churn Rate
-                </p>
-                <UserMinus size={14} color="#EF4444" />
-              </div>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#EF4444', margin: 0 }}>
-                {subscriberStats.churnRate}%
-              </p>
-            </div>
-          </div>
+          </ScrollReveal>
         )}
+
+        {/* Tab Switcher */}
+        <div className="flex items-center gap-1.5 p-1 rounded-full az-glass border border-white/10 self-start w-fit">
+          {(['list', 'demographics'] as Tab[]).map((t) => {
+            const isActive = tab === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${
+                  isActive
+                    ? 'bg-[var(--brand-orange)] text-white shadow-lg'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                {t === 'list' ? 'Subscribers Ledger' : 'Audience Demographics'}
+              </button>
+            );
+          })}
+        </div>
 
         {tab === 'list' ? (
           isLoading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    padding: 16,
-                    borderRadius: 12,
-                    backgroundColor: 'var(--bg-tertiary)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                  }}
-                >
-                  <Skeleton height="20px" width="150px" />
-                  <div style={{ marginTop: 8 }}>
-                    <Skeleton height="12px" width="100px" />
-                  </div>
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="az-glass p-5 rounded-2xl border border-white/10 space-y-2">
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-3 w-28" />
                 </div>
               ))}
             </div>
           ) : queryError ? (
-            <ErrorState
-              title="Failed to load subscribers"
-              description={queryError?.message || 'An error occurred'}
-              onButtonPress={() => subscribersQuery.refetch()}
-            />
+            <div className="max-w-md mx-auto py-12">
+              <ErrorState
+                title="Failed to load subscribers"
+                description={queryError.message}
+                onButtonPress={() => refetch()}
+              />
+            </div>
           ) : subscribers.length === 0 ? (
-            <EmptyState
-              icon="users"
-              title="No subscribers yet"
-              description="Share your content to attract subscribers"
-              dark
-            />
+            <div className="az-glass p-12 text-center rounded-3xl border border-white/10">
+              <Users className="w-12 h-12 text-white/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">No Active Subscribers Yet</h3>
+              <p className="text-xs text-white/50 max-w-sm mx-auto">
+                Promote your exclusive universe releases to convert viewers into paid subscribers.
+              </p>
+            </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="space-y-3">
               {subscribers.map((sub) => (
-                <div
-                  key={sub.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: 16,
-                    borderRadius: 16,
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: 'var(--bg-tertiary)',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 22,
-                      backgroundColor: 'var(--bg-secondary)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <span style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 600 }}>
-                      {sub.displayName[0]}
-                    </span>
+                <ScrollReveal key={sub.id}>
+                  <div className="az-glass p-4 sm:p-5 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-full bg-[var(--brand-orange)]/15 border border-[var(--brand-orange)]/30 flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
+                        {sub.displayName ? sub.displayName[0].toUpperCase() : 'U'}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white">{sub.displayName}</p>
+                        <p className="text-xs text-white/40 mt-0.5">
+                          Subscribed {new Date(sub.subscribedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {sub.plan && (
+                        <span className="text-[10px] font-mono font-bold uppercase px-3 py-1 rounded-full bg-[var(--brand-orange)]/15 border border-[var(--brand-orange)]/30 text-[var(--brand-orange)]">
+                          {sub.plan}
+                        </span>
+                      )}
+                      {sub.isGifted && (
+                        <span className="text-[10px] font-mono font-bold uppercase px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                          Gift Pass
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, margin: 0, color: '#FFFFFF' }}>
-                      {sub.displayName}
-                    </p>
-                    <p style={{ fontSize: 12, color: 'var(--text-muted, #9A8A7A)', marginTop: 2 }}>
-                      Subscribed {new Date(sub.subscribedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  {sub.plan && (
-                    <span
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: 20,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        backgroundColor: 'rgba(232,66,10,0.15)',
-                        color: 'var(--brand-orange, #E8420A)',
-                        border: '1px solid rgba(232,66,10,0.3)',
-                      }}
-                    >
-                      {sub.plan}
-                    </span>
-                  )}
-                  {sub.isGifted && (
-                    <span
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: 20,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        backgroundColor: 'rgba(245,158,11,0.15)',
-                        color: '#F59E0B',
-                        border: '1px solid rgba(245,158,11,0.3)',
-                      }}
-                    >
-                      Gift
-                    </span>
-                  )}
-                </div>
+                </ScrollReveal>
               ))}
             </div>
           )
         ) : statsLoading || !subscriberStats?.demographics ? (
-          <p style={{ color: 'var(--text-muted, #9A8A7A)', textAlign: 'center', padding: 40 }}>
-            Loading demographics...
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/* Age Groups */}
-            <div
-              style={{
-                backgroundColor: 'var(--bg-tertiary)',
-                borderRadius: 16,
-                padding: 20,
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
-            >
-              <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: '#FFFFFF' }}>
-                Age Groups
-              </h3>
-              {subscriberStats.demographics.ageGroups.map((group) => (
-                <div key={group.range} style={{ marginBottom: 12 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: 13,
-                      marginBottom: 6,
-                    }}
-                  >
-                    <span style={{ color: 'var(--text-muted, #9A8A7A)' }}>{group.range}</span>
-                    <span style={{ color: '#FFFFFF', fontWeight: 500 }}>
-                      {group.count.toLocaleString()} ({group.percentage}%)
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: 'var(--bg-secondary)',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: '100%',
-                        borderRadius: 3,
-                        backgroundColor: 'var(--brand-orange, #E8420A)',
-                        width: `${group.percentage}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Top Regions */}
-            <div
-              style={{
-                backgroundColor: 'var(--bg-tertiary)',
-                borderRadius: 16,
-                padding: 20,
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <Globe size={18} color="#3B82F6" />
-                <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: '#FFFFFF' }}>
-                  Top Regions
-                </h3>
-              </div>
-              {subscriberStats.demographics.topRegions.map((region) => (
-                <div key={region.region} style={{ marginBottom: 12 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: 13,
-                      marginBottom: 6,
-                    }}
-                  >
-                    <span style={{ color: 'var(--text-muted, #9A8A7A)' }}>{region.region}</span>
-                    <span style={{ color: '#FFFFFF', fontWeight: 500 }}>
-                      {region.count.toLocaleString()} ({region.percentage}%)
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: 'var(--bg-secondary)',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: '100%',
-                        borderRadius: 3,
-                        backgroundColor: '#3B82F6',
-                        width: `${region.percentage}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="az-glass p-12 text-center rounded-3xl border border-white/10">
+            <p className="text-xs text-white/50">Aggregating subscriber telemetry...</p>
           </div>
+        ) : (
+          <ScrollReveal>
+            <div className="space-y-6">
+              {/* Age Groups */}
+              <div className="az-glass p-6 sm:p-7 rounded-3xl border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[var(--brand-orange)]" />
+                  Age Demographics
+                </h3>
+                <div className="space-y-4">
+                  {subscriberStats.demographics.ageGroups.map((group) => (
+                    <div key={group.range} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-white/60">{group.range} years</span>
+                        <span className="text-white font-mono font-bold">
+                          {group.count.toLocaleString()} ({group.percentage}%)
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-[var(--brand-orange)] to-amber-500 rounded-full"
+                          style={{ width: `${group.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Top Regions */}
+              <div className="az-glass p-6 sm:p-7 rounded-3xl border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-blue-400" />
+                  Regional Density
+                </h3>
+                <div className="space-y-4">
+                  {subscriberStats.demographics.topRegions.map((region) => (
+                    <div key={region.region} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-white/60">{region.region}</span>
+                        <span className="text-white font-mono font-bold">
+                          {region.count.toLocaleString()} ({region.percentage}%)
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
+                          style={{ width: `${region.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </ScrollReveal>
         )}
-      </main>
-      <AppFooter logoVariant="light" />
-    </div>
+      </div>
+    </PageShell>
   );
 }

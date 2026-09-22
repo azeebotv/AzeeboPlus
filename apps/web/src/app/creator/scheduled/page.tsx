@@ -1,14 +1,18 @@
 'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { Calendar, Clock, Film, Plus } from 'lucide-react';
 
 interface ScheduledContent {
   id: string;
@@ -37,6 +41,7 @@ export default function ScheduledPage(): React.JSX.Element {
     data: scheduled = [],
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['creator', 'scheduled'],
     queryFn: async () => {
@@ -74,144 +79,114 @@ export default function ScheduledPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 1000,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ marginBottom: 32 }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: 14,
-              marginBottom: 16,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
+    <PageShell glowColor="rgba(232,66,10,0.14)">
+      <PageHero
+        badge="Premiere Queue"
+        title="Scheduled Content"
+        description="Titles queued for automated publication and platform-wide broadcast release."
+        actions={
+          <motion.button
+            type="button"
+            onClick={() => router.push('/creator/upload')}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="az-btn-primary px-6 py-3 rounded-full text-xs font-bold flex items-center gap-2"
           >
-            <span>←</span> Back
-          </button>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Scheduled Content</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-            Content queued for automatic publishing
-          </p>
-        </div>
+            <Plus className="w-4 h-4" />
+            Schedule New Release
+          </motion.button>
+        }
+      />
 
+      <div className="max-w-4xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
         {isLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="az-glass"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: 16,
-                  borderRadius: 16,
-                }}
-              >
-                <Skeleton width="120px" height="68px" borderRadius="8px" />
-                <div style={{ flex: 1 }}>
-                  <Skeleton width="60%" height="16px" className="mb-2" />
-                  <Skeleton width="40%" height="12px" />
-                </div>
-                <Skeleton width="80px" height="32px" borderRadius="999px" />
+              <div key={i} className="az-glass p-5 rounded-2xl border border-white/10 space-y-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-32" />
               </div>
             ))}
           </div>
         ) : error ? (
-          <ErrorState
-            title="Failed to load scheduled content"
-            description="Please try again later"
-            onButtonPress={() => router.refresh()}
-          />
+          <div className="max-w-md mx-auto py-12">
+            <ErrorState
+              title="Failed to load scheduled releases"
+              description="Unable to sync the broadcast calendar."
+              onButtonPress={() => refetch()}
+            />
+          </div>
         ) : scheduled.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}></div>
-            <h3 style={{ fontSize: 18, marginBottom: 8 }}>No scheduled content</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Schedule content to have it go live automatically
+          <div className="az-glass p-16 text-center rounded-3xl border border-white/10">
+            <Calendar className="w-12 h-12 text-white/30 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-2">No Scheduled Premieres</h3>
+            <p className="text-xs text-white/50 max-w-sm mx-auto mb-6">
+              Schedule content to air automatically at designated dates and times.
             </p>
+            <button
+              type="button"
+              onClick={() => router.push('/creator/upload')}
+              className="az-btn-primary px-6 py-2.5 rounded-full text-xs font-bold"
+            >
+              Queue an Asset
+            </button>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="space-y-3">
             {scheduled.map((item: ScheduledContent) => (
-              <div
-                key={item.id}
-                className="az-glass"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: 16,
-                  borderRadius: 16,
-                }}
-              >
-                {item.thumbnail && (
-                  <OptimizedImage
-                    src={item.thumbnail}
-                    alt={item.title}
-                    width={120}
-                    height={68}
-                    className="object-cover rounded-lg flex-shrink-0"
-                  />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{item.title}</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                    Scheduled for {new Date(item.scheduledAt).toLocaleString()}
-                  </p>
+              <ScrollReveal key={item.id}>
+                <div className="az-glass p-4 sm:p-5 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <div className="w-20 sm:w-24 aspect-video rounded-xl bg-white/5 relative overflow-hidden flex-shrink-0 border border-white/10">
+                      {item.thumbnail ? (
+                        <OptimizedImage
+                          src={item.thumbnail}
+                          alt={item.title}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white/30">
+                          <Film className="w-5 h-5" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-bold text-white truncate">{item.title}</h3>
+                      <p className="text-xs text-amber-400 font-medium flex items-center gap-1.5 mt-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        Air date: {new Date(item.scheduledAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfirmDialog({
+                          open: true,
+                          title: 'Revert to Draft',
+                          message: 'Cancel this scheduled premiere and move the asset back to draft state?',
+                          destructive: true,
+                          onConfirm: () => {
+                            setConfirmDialog((prev) => ({ ...prev, open: false }));
+                            cancelMutation.mutate(item.id);
+                          },
+                        });
+                      }}
+                      className="px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-bold transition-colors"
+                    >
+                      Cancel Schedule
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setConfirmDialog({
-                      open: true,
-                      title: 'Cancel Scheduled Content',
-                      message: 'Are you sure you want to cancel this scheduled content?',
-                      destructive: true,
-                      onConfirm: () => {
-                        setConfirmDialog((prev) => ({ ...prev, open: false }));
-                        cancelMutation.mutate(item.id);
-                      },
-                    });
-                  }}
-                  style={{
-                    padding: '8px 20px',
-                    borderRadius: 999,
-                    border: '1px solid var(--brand-red)',
-                    background: 'transparent',
-                    color: 'var(--brand-red)',
-                    fontWeight: 500,
-                    fontSize: 14,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         )}
-      </main>
-      <AppFooter />
+      </div>
+
       <ConfirmDialog
         open={confirmDialog.open}
         title={confirmDialog.title}
@@ -220,6 +195,6 @@ export default function ScheduledPage(): React.JSX.Element {
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
       />
-    </div>
+    </PageShell>
   );
 }

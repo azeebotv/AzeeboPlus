@@ -7,6 +7,7 @@ import { webLogger } from '../../../lib/logger';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Lock, Play } from 'lucide-react';
 
 interface Episode {
   id: string;
@@ -152,7 +153,7 @@ export default function EpisodesPage(): React.JSX.Element {
             <div
               key={episode.id}
               onClick={() => handleEpisodeClick(episode)}
-              className={`az-glass flex gap-4 overflow-hidden transition-all ${
+              className={`az-glass flex gap-4 overflow-hidden transition-all group ${
                 episode.isLocked
                   ? 'opacity-60 cursor-not-allowed'
                   : 'cursor-pointer hover:scale-[1.01]'
@@ -165,9 +166,17 @@ export default function EpisodesPage(): React.JSX.Element {
                   fill
                   className="w-full h-full object-cover"
                 />
-                {episode.isLocked && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="text-3xl"></span>
+                {episode.isLocked ? (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-black/70 border border-white/20 flex items-center justify-center text-white/70 shadow-lg">
+                      <Lock size={18} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-orange-500/90 text-white flex items-center justify-center shadow-lg shadow-orange-500/30">
+                      <Play size={18} className="fill-white ml-0.5" />
+                    </div>
                   </div>
                 )}
               </div>

@@ -23,7 +23,7 @@ function MoviesPageContent(): React.JSX.Element {
 
   const universesQuery = useUniversesQuery();
 
-  const moviesUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'movie');
+  const moviesUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'movies');
 
   const moviesQuery = useQuery({
     queryKey: ['movies', moviesUniverse?.id],

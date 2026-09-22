@@ -7,10 +7,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Crown, Sparkles } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface CurrentSubscription {
@@ -119,29 +120,23 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
 
   if (authLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
+      <PageShell glowColor="rgba(232,66,10,0.15)">
+        <div className="flex items-center justify-center py-20 min-h-[60vh]">
           <Spinner size="lg" color="#E8420A" />
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Wallet" />
+    <PageShell glowColor="rgba(232,66,10,0.12)">
+      <PageHero
+        badge="Billing & Access"
+        title="Active Subscription"
+        description="Review your active universe streaming tier, renewal schedule, and payment settings."
+      />
 
-      <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <ScrollReveal>
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Current Subscription</h1>
-            <p className="text-white/50">Manage your subscription plan</p>
-          </div>
-        </ScrollReveal>
+      <div className="max-w-3xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8">
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -157,16 +152,17 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
             onButtonPress={() => subscriptionQuery.refetch()}
           />
         ) : subscription ? (
-          <GlowCard universe="movies" className="p-8">
-            {/* Status Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">Crown</span>
-                <div>
-                  <h2 className="text-xl font-bold text-white">{subscription.planName}</h2>
-                  <p className="text-white/50 text-sm">{subscription.planDuration} plan</p>
+          <ScrollReveal>
+            <GlowCard universe="movies" className="p-8">
+              {/* Status Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Crown className="w-8 h-8 text-[var(--brand-orange)]" />
+                  <div>
+                    <h2 className="text-xl font-bold text-white">{subscription.planName}</h2>
+                    <p className="text-white/50 text-sm">{subscription.planDuration} plan</p>
+                  </div>
                 </div>
-              </div>
               {(() => {
                 const statusStyle = getStatusStyle(subscription.status);
                 return (
@@ -313,15 +309,17 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
               </Link>
             </div>
           </GlowCard>
-        ) : (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-4"></p>
+        </ScrollReveal>
+      ) : (
+        <ScrollReveal>
+          <div className="text-center py-20 az-glass rounded-2xl border border-white/10 p-8">
+            <Sparkles className="w-12 h-12 text-[var(--brand-orange)] mx-auto mb-4 opacity-80" />
             <h2 className="text-xl font-bold text-white mb-2">No Active Subscription</h2>
-            <p className="text-white/50 mb-6">Subscribe to unlock premium content</p>
+            <p className="text-white/50 mb-6">Subscribe to unlock premium content across all universes</p>
             <Link href="/wallet/subscription-plans">
               <motion.button
                 type="button"
-                className="az-btn-primary px-8"
+                className="az-btn-primary px-8 py-3"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -329,10 +327,9 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
               </motion.button>
             </Link>
           </div>
-        )}
+        </ScrollReveal>
+      )}
       </div>
-
-      <AppFooter />
 
       {toast && (
         <div
@@ -347,7 +344,7 @@ function SubscriptionCurrentPageContent(): React.JSX.Element {
           {toast.message}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 

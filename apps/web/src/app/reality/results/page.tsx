@@ -6,6 +6,7 @@ import { webLogger } from '../../../lib/logger';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Trophy, DoorOpen, Crown, UserX } from 'lucide-react';
 
 interface ContestantResult {
   id: string;
@@ -155,12 +156,10 @@ export default function ResultsPage(): React.JSX.Element {
                 className="az-glass p-6 mb-6"
                 style={{ border: '2px solid rgba(234,179,8,0.5)' }}
               >
-                <h3
-                  className="text-lg font-bold mb-4"
-                  style={{ color: 'var(--color-warning-400)' }}
-                >
-                  TrophyWinner
-                </h3>
+                <div className="flex items-center gap-2 mb-4 text-amber-400 font-bold text-lg">
+                  <Trophy size={20} />
+                  <span>Episode Winner</span>
+                </div>
                 <div className="flex items-center gap-4">
                   <OptimizedImage
                     src={selectedResult.winner.avatar}
@@ -187,7 +186,10 @@ export default function ResultsPage(): React.JSX.Element {
                 className="az-glass p-6 mb-6"
                 style={{ border: '2px solid rgba(239,68,68,0.5)' }}
               >
-                <h3 className="text-lg font-bold text-red-500 mb-4">DoorOpenEvicted</h3>
+                <div className="flex items-center gap-2 mb-4 text-rose-400 font-bold text-lg">
+                  <DoorOpen size={20} />
+                  <span>Evicted Contestant</span>
+                </div>
                 <div className="flex items-center gap-4 opacity-70">
                   <OptimizedImage
                     src={selectedResult.evicted.avatar}
@@ -244,8 +246,18 @@ export default function ResultsPage(): React.JSX.Element {
                           {contestant.votes.toLocaleString()} votes ({contestant.percentage}%)
                         </p>
                       </div>
-                      {contestant.isWinner && <span className="text-3xl"></span>}
-                      {contestant.isEvicted && <span className="text-3xl"></span>}
+                      {contestant.isWinner && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold shadow-lg shadow-amber-500/10">
+                          <Crown size={15} className="text-amber-400" />
+                          <span>Winner</span>
+                        </div>
+                      )}
+                      {contestant.isEvicted && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold">
+                          <UserX size={15} className="text-rose-400" />
+                          <span>Evicted</span>
+                        </div>
+                      )}
                     </div>
                   ))}
               </div>

@@ -1,12 +1,15 @@
 'use client';
+
 import { Suspense, lazy, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ArrowLeft, Trophy, Calendar, Users, Rocket, CheckCircle2, Award, ListChecks } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface Challenge {
@@ -24,10 +27,11 @@ interface Challenge {
   prizes: { place: number; reward: number; label: string }[];
 }
 
-function ChallengeDetailContent() {
+function ChallengeDetailContent(): React.JSX.Element {
   const params = useParams();
   const id = params?.id as string;
   const [submitted, setSubmitted] = useState(false);
+
   useEffect(() => {
     analytics.pageView('challenge-detail');
   }, []);
@@ -35,13 +39,11 @@ function ChallengeDetailContent() {
   const query = useQuery({
     queryKey: ['challenge', id],
     queryFn: async () => {
-      // Challenges live in lifestyle-service under the /challenges gateway
-      // prefix — the /participation prefix has no gateway block.
       const res = await api.request<Challenge>(`/api/v1/challenges/${id}`);
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Challenge not found');
     },
-    enabled: !!id,
+    enabled: Boolean(id),
   });
 
   const submitMutation = useMutation({
@@ -51,156 +53,193 @@ function ChallengeDetailContent() {
   });
 
   const challenge = query.data;
-  if (query.isLoading)
-    return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <Skeleton height="400px" borderRadius="16" />
-        </div>
-      </div>
-    );
-  if (query.error || !challenge)
-    return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <ErrorState
-            title="Challenge not found"
-            description={query.error?.message || 'This challenge may have been removed.'}
-          />
-        </div>
-      </div>
-    );
 
-  const statusColor =
-    challenge.status === 'active'
-      ? 'var(--brand-green)'
-      : challenge.status === 'upcoming'
-        ? 'var(--brand-amber)'
-        : 'var(--brand-grey)';
+  if (query.isLoading) {
+    return (
+      <PageShell activeNav="Reality">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Skeleton height="36px" width="200px" />
+          <Skeleton height="400px" borderRadius="24px" />
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (query.error || !challenge) {
+    return (
+      <PageShell activeNav="Reality">
+        <ErrorState
+          title="Challenge Not Found"
+          description={query.error?.message || 'This community challenge may have concluded or been removed.'}
+          buttonText="Browse Challenges"
+          onButtonPress={() => query.refetch()}
+        />
+      </PageShell>
+    );
+  }
+
   const daysLeft = Math.max(
     0,
     Math.ceil((new Date(challenge.deadline).getTime() - Date.now()) / 86400000)
   );
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center gap-2 mb-4">
-            <span
-              className="px-3 py-1 rounded-full text-xs font-semibold"
-              style={{ backgroundColor: `${statusColor}20`, color: statusColor }}
-            >
-              {(challenge.status ?? 'unknown').toUpperCase()}
-            </span>
-            <span
-              className="px-3 py-1 rounded-full text-xs font-semibold"
-              style={{ backgroundColor: 'rgba(232,66,10,0.15)', color: 'var(--brand-orange)' }}
-            >
-              {challenge.universe}
-            </span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">{challenge.title}</h1>
-          <p className="text-white/60 text-lg mb-6">{challenge.description}</p>
+    <PageShell activeNav="Reality" glowColor="rgba(232, 66, 10, 0.2)">
+      <div className="mb-6">
+        <Link
+          href="/creator/challenges"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Creator & Community Challenges
+        </Link>
+      </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            <div className="az-glass p-4 text-center">
-              <p className="text-2xl font-bold text-white">₦{challenge.reward.toLocaleString()}</p>
-              <p className="text-xs text-white/40 mt-1">Reward</p>
+      <div className="max-w-4xl mx-auto">
+        <PageHero
+          eyebrow={`${challenge.universe.toUpperCase()} CHALLENGE`}
+          eyebrowColor="var(--brand-orange)"
+          badge={`₦${challenge.reward.toLocaleString()} POOL`}
+          title={challenge.title}
+          subtitle={challenge.description}
+          glowColor="rgba(232, 66, 10, 0.25)"
+        />
+
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-8"
+        >
+          {/* Key Metrics Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="az-glass p-5 rounded-2xl text-center border border-white/10">
+              <Trophy className="w-5 h-5 text-amber-400 mx-auto mb-1.5" />
+              <p className="text-xl sm:text-2xl font-extrabold text-white">
+                ₦{challenge.reward.toLocaleString()}
+              </p>
+              <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mt-1">
+                Grand Prize
+              </p>
             </div>
-            <div className="az-glass p-4 text-center">
-              <p className="text-2xl font-bold text-white">{challenge.participants}</p>
-              <p className="text-xs text-white/40 mt-1">Participants</p>
+
+            <div className="az-glass p-5 rounded-2xl text-center border border-white/10">
+              <Users className="w-5 h-5 text-[var(--brand-orange)] mx-auto mb-1.5" />
+              <p className="text-xl sm:text-2xl font-extrabold text-white">
+                {challenge.participants.toLocaleString()}
+              </p>
+              <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mt-1">
+                Participants
+              </p>
             </div>
-            <div className="az-glass p-4 text-center">
-              <p className="text-2xl font-bold text-white">{daysLeft}d</p>
-              <p className="text-xs text-white/40 mt-1">Days Left</p>
+
+            <div className="az-glass p-5 rounded-2xl text-center border border-white/10">
+              <Calendar className="w-5 h-5 text-purple-400 mx-auto mb-1.5" />
+              <p className="text-xl sm:text-2xl font-extrabold text-white">{daysLeft} Days</p>
+              <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mt-1">
+                Time Remaining
+              </p>
             </div>
-            <div className="az-glass p-4 text-center">
-              <p className="text-2xl font-bold text-white capitalize">{challenge.type}</p>
-              <p className="text-xs text-white/40 mt-1">Type</p>
+
+            <div className="az-glass p-5 rounded-2xl text-center border border-white/10">
+              <Award className="w-5 h-5 text-emerald-400 mx-auto mb-1.5" />
+              <p className="text-xl sm:text-2xl font-extrabold text-white capitalize">
+                {challenge.type}
+              </p>
+              <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mt-1">
+                Format
+              </p>
             </div>
           </div>
 
+          {/* Requirements */}
           {challenge.requirements.length > 0 && (
-            <div className="az-glass p-6 mb-6">
-              <h2 className="text-lg font-bold text-white mb-3">Requirements</h2>
-              <ul className="space-y-2">
-                {challenge.requirements.map((r, i) => (
-                  <li key={i} className="text-sm text-white/60 flex items-start gap-2">
-                    <span className="text-white/30">•</span>
-                    {r}
+            <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+              <div className="flex items-center gap-2 mb-4">
+                <ListChecks className="w-5 h-5 text-[var(--brand-orange)]" />
+                <h2 className="az-headline text-lg sm:text-xl font-bold text-white">
+                  Entry Criteria & Rules
+                </h2>
+              </div>
+              <ul className="space-y-3">
+                {challenge.requirements.map((req, i) => (
+                  <li key={i} className="text-sm text-white/70 flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-white/10 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                      {i + 1}
+                    </div>
+                    <span>{req}</span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
+          {/* Prize Breakdown */}
           {challenge.prizes.length > 0 && (
-            <div className="az-glass p-6 mb-6">
-              <h2 className="text-lg font-bold text-white mb-3">Prizes</h2>
-              <div className="space-y-2">
+            <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy className="w-5 h-5 text-amber-400" />
+                <h2 className="az-headline text-lg sm:text-xl font-bold text-white">
+                  Prize Distribution
+                </h2>
+              </div>
+              <div className="divide-y divide-white/5">
                 {challenge.prizes.map((p) => (
-                  <div
-                    key={p.place}
-                    className="flex justify-between items-center py-2 border-b border-white/5"
-                  >
-                    <span className="text-white/60">{p.label}</span>
-                    <span className="text-white font-semibold">₦{p.reward.toLocaleString()}</span>
+                  <div key={p.place} className="flex justify-between items-center py-3.5">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold flex items-center justify-center">
+                        #{p.place}
+                      </span>
+                      <span className="text-sm font-semibold text-white/80">{p.label}</span>
+                    </div>
+                    <span className="text-base font-extrabold text-amber-400">
+                      ₦{p.reward.toLocaleString()}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
+          {/* Submission Action */}
           {challenge.status === 'active' && !submitted ? (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            <button
               onClick={() => submitMutation.mutate()}
               disabled={submitMutation.isPending}
-              className="w-full az-btn-primary text-lg py-4"
+              className="w-full az-btn-primary py-4 text-base sm:text-lg flex items-center justify-center gap-2.5 shadow-2xl"
             >
-              {submitMutation.isPending ? 'Submitting...' : 'Rocket Submit Entry'}
-            </motion.button>
+              {submitMutation.isPending ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Registering Entry...
+                </>
+              ) : (
+                <>
+                  <Rocket className="w-5 h-5" /> Submit Your Official Entry
+                </>
+              )}
+            </button>
           ) : submitted ? (
-            <div
-              className="w-full text-center py-4 rounded-xl"
-              style={{
-                backgroundColor: 'rgba(16,185,129,0.1)',
-                border: '1px solid rgba(16,185,129,0.3)',
-              }}
-            >
-              <p className="text-green-400 font-semibold">CheckCircleEntry submitted! Good luck!</p>
+            <div className="p-5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center gap-3 text-emerald-400 font-bold text-center">
+              <CheckCircle2 className="w-6 h-6 shrink-0" />
+              <span>Official entry confirmed! Track your status in your Creator Dashboard.</span>
             </div>
           ) : (
-            <div
-              className="w-full text-center py-4 rounded-xl"
-              style={{
-                backgroundColor: 'rgba(107,114,128,0.1)',
-                border: '1px solid rgba(107,114,128,0.3)',
-              }}
-            >
-              <p className="text-white/50 font-semibold">Challenge {challenge.status}</p>
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center text-white/50 text-sm font-medium">
+              This challenge is currently {challenge.status}.
             </div>
           )}
         </motion.div>
-      </section>
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }
 
 const Lazy = lazy(() => Promise.resolve({ default: ChallengeDetailContent }));
-export default function ChallengeDetailPage() {
+export default function ChallengeDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--hp-bg)]">
+          <div className="w-10 h-10 border-2 border-white/20 border-t-[var(--brand-orange)] rounded-full animate-spin" />
         </div>
       }
     >

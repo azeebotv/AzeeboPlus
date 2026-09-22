@@ -497,12 +497,13 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
+      <div className="min-h-screen relative flex flex-col justify-between" style={{ backgroundColor: 'var(--hp-bg, #0b090e)' }}>
         <AppHeader />
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-white/10 border-t-[var(--brand-orange)] rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white/60">Loading content...</p>
+          <div className="az-glass p-8 rounded-3xl border border-white/10 text-center max-w-sm mx-auto shadow-2xl">
+            <div className="w-12 h-12 border-4 border-white/10 border-t-[var(--brand-orange)] rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-white font-bold text-sm tracking-tight mb-1">Preparing Theater Stream</p>
+            <p className="text-xs text-white/40">Buffering high-bitrate media feed...</p>
           </div>
         </div>
         <AppFooter />
@@ -512,10 +513,10 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
 
   if (error || !content) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
+      <div className="min-h-screen relative flex flex-col justify-between" style={{ backgroundColor: 'var(--hp-bg, #0b090e)' }}>
         <AppHeader />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="az-glass p-8 text-center max-w-md rounded-2xl">
+        <div className="flex items-center justify-center min-h-[60vh] px-4">
+          <div className="az-glass p-8 sm:p-10 text-center max-w-md w-full rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
             <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
               <svg
                 className="w-7 h-7"
@@ -531,14 +532,13 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                 />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">Error Loading Content</h2>
-            <p className="text-white/50">{error || 'Content not found'}</p>
+            <h2 className="text-xl font-extrabold text-white mb-2 tracking-tight">Stream Error</h2>
+            <p className="text-white/60 text-xs mb-6 leading-relaxed">{error || 'Content not found'}</p>
             <button
               onClick={handleRetry}
-              className="az-btn-primary mt-6"
-              style={{ width: 'auto', paddingInline: '2rem' }}
+              className="az-btn-primary w-full py-3 rounded-full text-xs font-bold tracking-wide shadow-lg"
             >
-              Try Again
+              Retry Connection
             </button>
           </div>
         </div>
@@ -548,13 +548,21 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: 'var(--hp-bg, #0b090e)' }}>
+      {/* Theater Ambient Glow */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-96 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse at 50% 15%, rgba(232, 66, 10, 0.16) 0%, rgba(204, 28, 28, 0.05) 50%, transparent 75%)',
+        }}
+      />
       <AppHeader />
       <div
         ref={focusTrapRef}
         role="main"
         aria-label={`Watch ${content.title}`}
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10"
       >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Video Player Section */}
@@ -562,7 +570,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             {/* Video Container */}
             <div
               ref={videoContainerRef}
-              className="relative w-full bg-black rounded-xl overflow-hidden"
+              className="relative w-full bg-black rounded-2xl overflow-hidden border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.85)]"
               style={{ aspectRatio: '16/9' }}
               onMouseMove={handleMouseMove}
               onMouseLeave={() => playerState.isPlaying && null}
@@ -1003,9 +1011,11 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               ref={commentsRef}
               role="region"
               aria-label="Comments section"
-              className="az-glass p-4"
+              className="az-glass p-5 sm:p-6 rounded-3xl border border-white/10 shadow-xl"
             >
-              <h2 className="text-lg font-bold text-white mb-4">Comments ({comments.length})</h2>
+              <h2 className="text-lg font-extrabold text-white tracking-tight mb-4">
+                Community Reactions ({comments.length})
+              </h2>
 
               {/* Add Comment */}
               {user && (
@@ -1104,14 +1114,14 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       {/* Share Modal */}
       {showShareModal && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in"
           role="dialog"
           aria-modal="true"
           aria-label="Share content"
         >
-          <div className="az-glass p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="az-glass p-8 w-full max-w-md rounded-3xl border border-white/15 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">Share</h3>
+              <h3 className="text-xl font-extrabold text-white tracking-tight">Share Title</h3>
               <button
                 onClick={() => setShowShareModal(false)}
                 className="text-white/40 hover:text-white transition-colors"
@@ -1130,7 +1140,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleShare('twitter')}
-                className="az-glass flex items-center justify-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors text-white font-medium text-sm"
+                className="az-glass flex items-center justify-center gap-2 p-3.5 rounded-2xl hover:bg-white/10 border border-white/10 transition-all text-white font-medium text-sm"
                 aria-label="Share on Twitter"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -1140,7 +1150,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               </button>
               <button
                 onClick={() => handleShare('facebook')}
-                className="az-glass flex items-center justify-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors text-white font-medium text-sm"
+                className="az-glass flex items-center justify-center gap-2 p-3.5 rounded-2xl hover:bg-white/10 border border-white/10 transition-all text-white font-medium text-sm"
                 aria-label="Share on Facebook"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -1150,7 +1160,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               </button>
               <button
                 onClick={() => handleShare('copy')}
-                className="az-glass flex items-center justify-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors text-white font-medium text-sm col-span-2"
+                className="az-glass flex items-center justify-center gap-2 p-3.5 rounded-2xl hover:bg-white/10 border border-white/10 transition-all text-white font-medium text-sm col-span-2"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
@@ -1170,14 +1180,14 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       {/* Report Modal */}
       {showReportModal && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in"
           role="dialog"
           aria-modal="true"
           aria-label="Report content"
         >
-          <div className="az-glass p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="az-glass p-8 w-full max-w-md rounded-3xl border border-white/15 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">Report Content</h3>
+              <h3 className="text-xl font-extrabold text-white tracking-tight">Report Content</h3>
               <button
                 onClick={() => setShowReportModal(false)}
                 className="text-white/40 hover:text-white transition-colors"
