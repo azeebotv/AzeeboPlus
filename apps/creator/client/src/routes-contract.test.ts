@@ -20,6 +20,8 @@ const ROUTES = [
   ['/subscribers', () => import('./routes/subscribers.tsx')],
   ['/monetization', () => import('./routes/monetization.tsx')],
   ['/challenges', () => import('./routes/challenges.tsx')],
+  ['/challenges/:challengeId', () => import('./routes/challenge-detail.tsx')],
+  ['/boards/:challengeId', () => import('./routes/public-board.tsx')],
   ['/profile', () => import('./routes/profile.tsx')],
   ['/settings', () => import('./routes/settings.tsx')],
 ] as const;

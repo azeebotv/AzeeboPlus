@@ -27,6 +27,20 @@ const statusText: Record<string, string> = {
   failed: 'var(--creator-red)',
 };
 
+// Storage pipeline state: did the bytes reach blob storage, and did the
+// virus scan pass? 'pending' means the file is only registered (media-service
+// was unavailable or rejected it) — the creator must re-upload.
+const storageLabel: Record<string, string> = {
+  stored: 'Stored in blob storage',
+  pending: 'Registered only — not stored, re-upload needed',
+  unknown: 'Storage status unknown (legacy upload)',
+};
+const storageColor: Record<string, string> = {
+  stored: 'var(--creator-green)',
+  pending: 'var(--creator-red)',
+  unknown: 'var(--creator-text-muted)',
+};
+
 export default function UploadPage() {
   const queryClient = useQueryClient();
   const { isEnabled: isFlagEnabled } = useCreatorFlags();
@@ -38,6 +52,9 @@ export default function UploadPage() {
   const [universe, setUniverse] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  // Real upload progress, driven by XHR upload.onprogress events.
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
+  const [activeUpload, setActiveUpload] = useState<{ name: string; size: number } | null>(null);
 
   const { data: uploads, isLoading } = useQuery({
     queryKey: ['creator', 'uploads'],
@@ -55,7 +72,9 @@ export default function UploadPage() {
       formData.append('description', description);
       formData.append('type', type);
       formData.append('universe', universe);
-      const res = await creatorApi.uploadContent(formData);
+      setActiveUpload({ name: file.name, size: file.size });
+      setUploadPct(0);
+      const res = await creatorApi.uploadContentWithProgress(formData, setUploadPct);
       return creatorApi.assertSuccess<UploadProgress>(res);
     },
     onSuccess: () => {
@@ -65,6 +84,10 @@ export default function UploadPage() {
       setDescription('');
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    },
+    onSettled: () => {
+      setUploadPct(null);
+      setActiveUpload(null);
     },
   });
 
@@ -221,6 +244,47 @@ export default function UploadPage() {
             >
               {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
             </button>
+            {uploadMutation.isPending && activeUpload && uploadPct !== null && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: 12,
+                  borderRadius: 8,
+                  border: '1px solid var(--creator-border)',
+                  backgroundColor: 'rgba(13,5,5,0.4)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: 12,
+                    marginBottom: 6,
+                  }}
+                >
+                  <span style={{ fontWeight: 500 }}>{activeUpload.name}</span>
+                  <span style={{ color: 'var(--creator-text-muted)' }}>{uploadPct}%</span>
+                </div>
+                <div
+                  style={{
+                    width: '100%',
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor: 'var(--creator-surface)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${uploadPct}%`,
+                      height: '100%',
+                      borderRadius: 3,
+                      background: 'linear-gradient(90deg, #E8420A, #CC1C1C)',
+                      transition: 'width 0.2s',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
             {uploadMutation.isSuccess && (
               <p style={{ color: 'var(--creator-green)', fontSize: 13, marginTop: 8 }}>
                 Upload started successfully
@@ -274,26 +338,10 @@ export default function UploadPage() {
                       {u.status}
                     </span>
                   </div>
-                  <div
-                    style={{
-                      width: '100%',
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: 'var(--creator-surface)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: `${u.progress}%`,
-                        height: '100%',
-                        borderRadius: 3,
-                        background: 'linear-gradient(90deg, #E8420A, #CC1C1C)',
-                        transition: 'width 0.3s',
-                      }}
-                    />
-                  </div>
-                  <p style={{ fontSize: 12, color: 'var(--creator-text-muted)', marginTop: 4 }}>
-                    {u.progress}% complete
+                  <p style={{ fontSize: 12, marginTop: 2, color: storageColor[u.storage] }}>
+                    {storageLabel[u.storage] ?? storageLabel.unknown}
+                    {u.storage === 'stored' &&
+                      (u.scanStatus ? ` · scan: ${u.scanStatus}` : ' · scan: pending')}
                   </p>
                 </div>
               ))

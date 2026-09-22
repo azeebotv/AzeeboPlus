@@ -13,8 +13,10 @@ import SubscribersPage from './routes/subscribers';
 import UploadPage from './routes/upload';
 import MonetizationPage from './routes/monetization';
 import ChallengesPage from './routes/challenges';
+import ChallengeDetailPage from './routes/challenge-detail';
 import ProfilePage from './routes/profile';
 import LoginPage from './routes/login';
+import PublicBoardPage from './routes/public-board';
 import { FlagGate } from './components/FlagGate';
 import { CREATOR_FLAG_KEYS } from './hooks/useCreatorFlags';
 
@@ -39,6 +41,8 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            {/* Public shareable board — outside the authed layout on purpose. */}
+            <Route path="/boards/:challengeId" element={<PublicBoardPage />} />
             <Route element={<CreatorLayoutWrapper />}>
               <Route index element={<DashboardPage />} />
               <Route path="overview" element={<OverviewPage />} />
@@ -64,6 +68,7 @@ export default function App() {
               <Route path="subscribers" element={<SubscribersPage />} />
               <Route path="monetization" element={<MonetizationPage />} />
               <Route path="challenges" element={<ChallengesPage />} />
+              <Route path="challenges/:challengeId" element={<ChallengeDetailPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>

@@ -1,4 +1,12 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  ServiceUnavailableException,
+  Logger,
+} from '@nestjs/common';
 import { Prisma } from '../generated/prisma';
 import { PrismaService } from '../database/prisma.service';
 import { WalletClientService } from '../api/clients/wallet-client.service';
@@ -182,6 +190,8 @@ export class CreatorService {
     @Inject(MediaClientService) private readonly mediaClient: MediaClientService
   ) {}
 
+  private readonly logger = new Logger(CreatorService.name);
+
   async getDashboardStats(userId: string): Promise<DashboardStats> {
     const contentCount = await this.prisma.contentItem.count({
       where: { creatorId: userId, status: { not: 'archived' } },
@@ -318,6 +328,64 @@ export class CreatorService {
         viewCount: item.viewCount,
         createdAt: item.createdAt.toISOString(),
       })),
+    };
+  }
+
+  /**
+   * GET /creator/content/:id/playback — a short-lived signed playback URL for
+   * the content's stored media object, sourced from media-service:
+   *   - key-based SigV4 URL (presigned/download) for the creator's own upload
+   *   - token-gated premium URL for exclusive content (attributable, revocable)
+   * The raw object key never leaves the backend; the browser only receives
+   * the time-limited signed URL.
+   */
+  async getPlaybackUrl(
+    userId: string,
+    contentId: string
+  ): Promise<{ url: string; expiresIn: number; kind: 'signed' | 'premium'; expiresAt: string | null }> {
+    const item = await this.prisma.contentItem.findUnique({
+      where: { id: contentId },
+      select: { id: true, creatorId: true, isExclusive: true, mediaUrl: true, metadata: true },
+    });
+    if (!item) throw new NotFoundException('Content not found');
+    if (item.creatorId !== userId) throw new ForbiddenException('Not your content');
+
+    const meta = (item.metadata ?? {}) as {
+      media?: { key?: string; url?: string };
+    };
+    const objectKey = meta.media?.key;
+
+    if (item.isExclusive) {
+      // Exclusive: token-gated premium URL, attributable to this user and
+      // revocable platform-wide via media-service invalidation endpoints.
+      const premium = await this.mediaClient.getPremiumUrl(item.id, userId, 600);
+      if (premium) {
+        return {
+          url: premium.url,
+          expiresIn: 600,
+          kind: 'premium',
+          expiresAt: premium.expiresAt ?? null,
+        };
+      }
+      // Premium needs Redis + key resolution; fall through to key-based
+      // signing so the creator can still review their own upload.
+    }
+
+    if (!objectKey) {
+      throw new NotFoundException(
+        'No stored media for this content — the upload is metadata-only or predates the media pipeline'
+      );
+    }
+
+    const signed = await this.mediaClient.getSignedPlaybackUrl(objectKey, 600);
+    if (!signed) {
+      throw new ServiceUnavailableException('Playback signing is temporarily unavailable');
+    }
+    return {
+      url: signed.url,
+      expiresIn: signed.expiresIn ?? 600,
+      kind: 'signed',
+      expiresAt: null,
     };
   }
 
@@ -466,10 +534,48 @@ export class CreatorService {
 
     await this.prisma.contentItem.update({
       where: { id },
-      data: { status: 'archived' },
+      data: {
+        status: 'archived',
+        // The hard-delete sweeper counts the grace window from this stamp.
+        archivedAt: new Date(),
+      },
     });
 
+    // Archive = delete in the studio UX. Best-effort: ask media-service to
+    // remove the stored object(s) so archived uploads stop consuming blob
+    // storage — but a storage outage must never fail or roll back the
+    // archive itself; the orphan-blob audit script catches leftovers.
+    await this.deleteStoredObjects(content);
+
     return true;
+  }
+
+  /**
+   * Best-effort blob cleanup for archived content. Deletes the original
+   * upload object (metadata.media.key) and any derived/preview object
+   * (metadata.media.derivedKey) media-service knows about. Unconfirmed
+   * deletes are logged, never propagated — the archive already succeeded.
+   */
+  private async deleteStoredObjects(content: {
+    id: string;
+    metadata: Prisma.JsonValue | null;
+  }): Promise<void> {
+    const meta = (content.metadata ?? {}) as {
+      media?: { key?: string; derivedKey?: string };
+    };
+    const keys = [meta.media?.key, meta.media?.derivedKey].filter(
+      (k): k is string => typeof k === 'string' && k.length > 0
+    );
+    if (keys.length === 0) return; // metadata-only item — nothing stored
+
+    const results = await Promise.allSettled(keys.map((key) => this.mediaClient.deleteObject(key)));
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled' && r.value === null) {
+        this.logger.warn(
+          `content ${content.id}: media-service did not confirm delete of "${keys[i]}" (unreachable/refused) — blob may remain; orphan audit will flag it`
+        );
+      }
+    });
   }
 
   /**
@@ -1348,13 +1454,21 @@ export class CreatorService {
       take: 50,
     });
 
-    // Inbound: pull upstream entries and upsert any the portal doesn't have.
+    // Inbound: pull upstream entries. Two sync jobs:
+    //   1. Hydrate entries the portal doesn't have yet (submitted elsewhere).
+    //   2. Pull-sync status transitions (pending → under_review → winner /
+    //      rejected) so the page shows the real review state, not a stale
+    //      static "submitted".
     let upstream: {
       id: string;
       challengeId: string;
       contentUrl?: string;
       status?: string;
       createdAt?: string;
+      reviewedAt?: string | null;
+      reviewedByName?: string | null;
+      reviewNote?: string | null;
+      challenge?: { prize?: string | number | null } | null;
     }[] = [];
     try {
       const res = await this.creatorsClient.getMyChallengeEntries(userId);
@@ -1365,8 +1479,72 @@ export class CreatorService {
       // Upstream unavailable — local rows still render.
     }
 
-    const localIds = new Set(local.map((s) => s.challengeId));
-    const hydrated = upstream.filter((e) => !localIds.has(e.challengeId));
+    const localById = new Map(local.map((s) => [s.id, s]));
+    const localByChallengeId = new Set(local.map((s) => s.challengeId));
+
+    // 2. Status pull-sync: upstream is the source of truth for review state.
+    // Local rows are matched by primary id (hydrated rows carry the upstream
+    // id) OR by upstreamId (rows created through the portal's own submit,
+    // which keep their local uuid and link via upstreamId).
+    const staleStatus = upstream.filter((e) => {
+      const row =
+        localById.get(e.id) ?? local.find((s) => (s as { upstreamId?: string }).upstreamId === e.id);
+      // 'pending' upstream means "submitted, not yet reviewed" — render as
+      // the portal's 'submitted'; only real transitions overwrite.
+      const upstreamStatus = e.status === 'pending' ? 'submitted' : e.status;
+      return row && upstreamStatus && row.status !== upstreamStatus;
+    });
+    await Promise.all(
+      staleStatus.map((e) => {
+        const upstreamStatus = e.status === 'pending' ? 'submitted' : e.status!;
+        const row =
+          localById.get(e.id) ?? local.find((s) => (s as { upstreamId?: string }).upstreamId === e.id);
+        return this.prisma.challengeSubmission
+          .update({
+            where: { id: row!.id },
+            data: {
+              status: upstreamStatus,
+              // Judgement metadata rides the transition: pending→null keeps
+              // un-reviewed rows clean; a real judgement stamps when + who.
+              reviewedAt: e.reviewedAt ? new Date(e.reviewedAt) : null,
+              reviewedByName: e.reviewedByName ?? null,
+              // The moderator's note rides the same transition (and is
+              // cleared when a re-review carries no note).
+              reviewNote: e.reviewNote ?? null,
+            },
+          })
+          .then(() =>
+            // Append the transition to the history log so the detail view can
+            // replay the review lifecycle (upstream keeps no history).
+            this.recordReviewEvent(
+              row!.id,
+              row!.status,
+              upstreamStatus,
+              e.reviewedAt,
+              e.reviewedByName,
+              e.reviewNote ?? null
+            )
+          )
+          .then(() => {
+            // First time we see this entry as a winner: credit the prize to
+            // the creator's wallet (idempotent) and mirror an earning line so
+            // the earnings page shows it. Upstream prize is a display string
+            // ("₦250,000") nested on the embedded challenge; parse defensively
+            // — unparseable prizes skip the credit but the win still renders.
+            if (upstreamStatus === 'winner' && row!.status !== 'winner') {
+              return this.creditChallengePrize(
+                userId,
+                row!.id,
+                e.challenge?.prize ?? null
+              );
+            }
+            return undefined;
+          });
+      })
+    );
+
+    // 1. Hydration: entries made elsewhere that the portal lacks.
+    const hydrated = upstream.filter((e) => !localByChallengeId.has(e.challengeId));
     if (hydrated.length > 0) {
       // Preserve upstream entry IDs where possible for traceability.
       await this.prisma.challengeSubmission.createMany({
@@ -1375,11 +1553,46 @@ export class CreatorService {
           userId,
           challengeId: e.challengeId,
           title: this.titleFromContentUrl(e.contentUrl),
-          status: e.status || 'submitted',
+          status: e.status === 'pending' ? 'submitted' : e.status || 'submitted',
+          reviewedAt: e.reviewedAt ? new Date(e.reviewedAt) : null,
+          reviewedByName: e.reviewedByName ?? null,
+          reviewNote: e.reviewNote ?? null,
           submittedAt: e.createdAt ? new Date(e.createdAt) : undefined,
         })),
         skipDuplicates: true,
       });
+      // Hydrated winners (submitted elsewhere, e.g. mobile) get their prize
+      // credit on first sight too — same idempotent path as transitions.
+      await Promise.all(
+        hydrated
+          .filter((e) => e.status === 'winner')
+          .map((e) => this.creditChallengePrize(userId, e.id, e.challenge?.prize ?? null))
+      );
+      // Baseline history rows for hydrated entries (the row was just created,
+      // so no earlier events can exist) — the timeline starts at "registered".
+      await this.prisma.challengeSubmissionReviewEvent
+        .createMany({
+          data: hydrated.map((e) => ({
+            submissionId: e.id,
+            fromStatus: null,
+            toStatus: e.status === 'pending' ? 'submitted' : e.status || 'submitted',
+            reviewedAt: e.reviewedAt ? new Date(e.reviewedAt) : null,
+            reviewedByName: e.reviewedByName ?? null,
+            note: e.reviewNote ?? 'Synced from platform',
+          })),
+          skipDuplicates: true,
+        })
+        .catch(() => undefined);
+      const fresh = await this.prisma.challengeSubmission.findMany({
+        where: { userId },
+        orderBy: { submittedAt: 'desc' },
+        take: 50,
+      });
+      return fresh.map((s) => this.mapSubmission(s));
+    }
+
+    if (staleStatus.length > 0) {
+      // Refetch so the response reflects the synced statuses.
       const fresh = await this.prisma.challengeSubmission.findMany({
         where: { userId },
         orderBy: { submittedAt: 'desc' },
@@ -1391,12 +1604,136 @@ export class CreatorService {
     return local.map((s) => this.mapSubmission(s));
   }
 
+  /**
+   * Append one review transition to the submission's history log. Best-effort:
+   * a history write must never break the status sync itself.
+   */
+  private async recordReviewEvent(
+    submissionId: string,
+    fromStatus: string,
+    toStatus: string,
+    reviewedAt?: string | null,
+    reviewedByName?: string | null,
+    note?: string | null
+  ): Promise<void> {
+    try {
+      await this.prisma.challengeSubmissionReviewEvent.create({
+        data: {
+          submissionId,
+          fromStatus,
+          toStatus,
+          reviewedAt: reviewedAt ? new Date(reviewedAt) : null,
+          reviewedByName: reviewedByName ?? null,
+          note: note ?? null,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to record review event for submission ${submissionId}: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /**
+   * Credit a challenge prize to the creator's real wallet (wallet-service,
+   * idempotent by `challenge-prize:<entryId>`) and mirror it as a local
+   * `type: 'earning'` wallet_transaction row so the earnings page shows a
+   * "Challenge prize" line item without waiting for the snapshot sync.
+   *
+   * Double-pay safety is two-layered: the wallet dedupes on the idempotency
+   * key, and the local mirror is keyed by the same unique reference.
+   *
+   * Best-effort by design: a wallet outage must never break the submissions
+   * page — the next pull-sync retries (self-healing) until the credit lands.
+   */
+  private async creditChallengePrize(
+    userId: string,
+    entryId: string,
+    prize: string | number | null
+  ): Promise<void> {
+    const amount = this.parsePrizeAmount(prize);
+    if (!amount || amount <= 0) return; // unparseable/no prize — win still renders, no money invented
+
+    const reference = `challenge-prize:${entryId}`;
+
+    // Mirror-first: an existing local row means the credit already landed in
+    // a previous pass (or is redundant), so skip the network call entirely.
+    try {
+      const existing = await this.prisma.walletTransaction.findFirst({
+        where: { reference },
+        select: { id: true },
+      });
+      if (existing) return;
+    } catch {
+      // Mirror check failing is non-fatal — the wallet-side key still guards.
+    }
+
+    try {
+      const res = await this.walletClient.credit(
+        userId,
+        amount,
+        `Challenge prize won`,
+        reference
+      );
+      if (!res.success) {
+        this.logger.warn(
+          `Prize credit rejected for entry ${entryId}: ${res.message ?? res.error ?? 'unknown error'}`
+        );
+        return; // e.g. no wallet yet — retried on next sync
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Prize credit failed for entry ${entryId} (will retry on next sync): ${(error as Error).message}`
+      );
+      return;
+    }
+
+    // Local earning line so the earnings page renders it immediately. Unique
+    // reference = idempotent even if two syncs race.
+    try {
+      const wallet = await this.prisma.wallet.upsert({
+        where: { userId },
+        create: { userId },
+        update: {},
+        select: { id: true },
+      });
+      await this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'earning',
+          amount,
+          status: 'completed',
+          description: 'Challenge prize won',
+          reference,
+        },
+      });
+    } catch (error) {
+      // A racing sync may have inserted the same reference first — fine.
+      this.logger.warn(
+        `Prize earning mirror failed for entry ${entryId}: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /** Parse upstream display prizes ("₦250,000", "1,000", 500) into a number. */
+  private parsePrizeAmount(prize: string | number | null | undefined): number | null {
+    if (prize === null || prize === undefined) return null;
+    if (typeof prize === 'number') return Number.isFinite(prize) ? prize : null;
+    const cleaned = prize.replace(/[^0-9.]/g, '');
+    if (!cleaned) return null;
+    const value = Number(cleaned);
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+
   private mapSubmission(s: {
     id: string;
     challengeId: string;
     title: string;
     status: string;
     submittedAt: Date;
+    reviewedAt?: Date | null;
+    reviewedByName?: string | null;
+    reviewNote?: string | null;
   }) {
     return {
       id: s.id,
@@ -1404,6 +1741,9 @@ export class CreatorService {
       title: s.title,
       status: s.status,
       submittedAt: s.submittedAt.toISOString(),
+      reviewedAt: s.reviewedAt ? s.reviewedAt.toISOString() : null,
+      reviewedByName: s.reviewedByName ?? null,
+      reviewNote: s.reviewNote ?? null,
     };
   }
 
@@ -1425,9 +1765,32 @@ export class CreatorService {
   async submitChallenge(
     userId: string,
     challengeId: string,
-    title: string
+    title: string,
+    contentId?: string
   ): Promise<{ success: boolean; submissionId: string; entryId?: string; synced: boolean }> {
-    const cleanTitle = title.replace(/<[^>]*>/g, '').trim();
+    // Optional attached content: the entry points at a real stored upload.
+    let attached: { id: string; title: string; mediaKey: string } | null = null;
+    if (contentId) {
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id: contentId },
+        select: { id: true, creatorId: true, title: true, status: true, metadata: true },
+      });
+      if (!content || content.creatorId !== userId) {
+        throw new ForbiddenException('Content not found');
+      }
+      if (content.status === 'archived') {
+        throw new BadRequestException('Archived content cannot be submitted');
+      }
+      const meta = (content.metadata ?? {}) as { media?: { key?: string } };
+      if (!meta.media?.key) {
+        throw new BadRequestException(
+          'Content has no stored media (metadata-only registration) — upload the file first'
+        );
+      }
+      attached = { id: content.id, title: content.title, mediaKey: meta.media.key };
+    }
+
+    const cleanTitle = (attached?.title ?? title).replace(/<[^>]*>/g, '').trim();
     if (!cleanTitle) {
       throw new BadRequestException('Submission title is required');
     }
@@ -1441,12 +1804,14 @@ export class CreatorService {
 
     // Outbound: create the entry in creator-service first (validates the
     // challenge window + dedupes). Its entryId is stored locally so both
-    // systems can trace the submission.
+    // systems can trace the submission. contentUrl is the storage key of the
+    // attached upload when one is picked (durable, resolvable via the media
+    // pipeline) or a descriptive slug for title-only entries.
     let entryId: string | undefined;
     let synced = false;
-    const contentUrl = `/submissions/${challengeId}/${cleanTitle
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')}`;
+    const contentUrl =
+      attached?.mediaKey ??
+      `/submissions/${challengeId}/${cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
     try {
       const res = await this.creatorsClient.participateInChallenge(userId, challengeId, contentUrl);
       if (res.success && res.data?.entryId) {
@@ -1458,10 +1823,297 @@ export class CreatorService {
     }
 
     const submission = await this.prisma.challengeSubmission.create({
-      data: { userId, challengeId, title: cleanTitle, upstreamId: entryId },
+      data: {
+        userId,
+        challengeId,
+        title: cleanTitle,
+        upstreamId: entryId,
+        contentId: attached?.id,
+      },
     });
 
     return { success: true, submissionId: submission.id, entryId, synced };
+  }
+
+  /**
+   * GET /creator/challenges/submissions/:id — full detail for the submission
+   * detail view: the submission itself, its review history (recorded by the
+   * pull-sync; baseline-filled from current state for rows created before
+   * the log existed), the attached content preview (signed playback URL via
+   * the media pipeline), the challenge's prize, and the prize payout state
+   * derived from the creator's payout history.
+   */
+  async getChallengeSubmissionDetail(
+    userId: string,
+    submissionId: string
+  ): Promise<{
+    submission: {
+      id: string;
+      challengeId: string;
+      title: string;
+      status: string;
+      submittedAt: string;
+      reviewedAt: string | null;
+      reviewedByName: string | null;
+      reviewNote: string | null;
+      hasAttachedContent: boolean;
+    };
+    challenge: { id: string; title: string; prize: number | null; ended: boolean } | null;
+    history: {
+      id: string;
+      fromStatus: string | null;
+      toStatus: string;
+      reviewedAt: string | null;
+      reviewedByName: string | null;
+      note: string | null;
+      createdAt: string;
+    }[];
+    content: {
+      id: string;
+      title: string;
+      type: string;
+      status: string;
+      playbackUrl: string | null;
+      playbackKind: 'signed' | 'premium' | null;
+      expiresIn: number | null;
+      playbackError: string | null;
+    } | null;
+    prizePayout: {
+      prize: number | null;
+      status: 'awaiting_payout' | 'partially_paid' | 'paid' | 'none';
+      label: string;
+      totalPaid: number;
+      payoutIds: string[];
+    } | null;
+  }> {
+    const submission = await this.prisma.challengeSubmission.findFirst({
+      where: { id: submissionId, userId },
+    });
+    if (!submission) throw new NotFoundException('Submission not found');
+
+    // Challenge context is proxied; if upstream is down, the rest of the
+    // detail still renders (challenge card degrades to unknown).
+    let challenge: { id: string; title: string; prize: number | null; ended: boolean } | null =
+      null;
+    try {
+      const challenges = (await this.getChallenges(userId)) as {
+        id: string;
+        title: string;
+        prize: number;
+        status: string;
+      }[];
+      const match = challenges.find((c) => c.id === submission.challengeId);
+      if (match) {
+        challenge = {
+          id: match.id,
+          title: match.title,
+          prize: Number(match.prize ?? 0) || null,
+          ended: match.status === 'ended',
+        };
+      }
+    } catch {
+      // Degrade gracefully — the challenge block just stays empty.
+    }
+
+    // History: recorded events first; if none exist (rows created before the
+    // log, or upstream never transitioned past submission), synthesize a
+    // baseline so the timeline is never empty.
+    const events = await this.prisma.challengeSubmissionReviewEvent.findMany({
+      where: { submissionId: submission.id },
+      orderBy: { createdAt: 'asc' },
+    });
+    const history =
+      events.length > 0
+        ? events.map((e) => ({
+            id: e.id,
+            fromStatus: e.fromStatus,
+            toStatus: e.toStatus,
+            reviewedAt: e.reviewedAt?.toISOString() ?? null,
+            reviewedByName: e.reviewedByName,
+            note: e.note,
+            createdAt: e.createdAt.toISOString(),
+          }))
+        : [
+            {
+              id: 'baseline',
+              fromStatus: null,
+              toStatus: submission.status,
+              reviewedAt: submission.reviewedAt?.toISOString() ?? null,
+              reviewedByName: submission.reviewedByName,
+              note: null,
+              createdAt: submission.submittedAt.toISOString(),
+            },
+          ];
+
+    // Attached content preview: reuse the playback flow (signed/premium URL
+    // through the media pipeline). Playback failures degrade to a message
+    // rather than failing the whole detail view.
+    let content: {
+      id: string;
+      title: string;
+      type: string;
+      status: string;
+      playbackUrl: string | null;
+      playbackKind: 'signed' | 'premium' | null;
+      expiresIn: number | null;
+      playbackError: string | null;
+    } | null = null;
+    if (submission.contentId) {
+      const item = await this.prisma.contentItem.findUnique({
+        where: { id: submission.contentId },
+        select: { id: true, creatorId: true, title: true, type: true, status: true },
+      });
+      if (item && item.creatorId === userId) {
+        let playbackUrl: string | null = null;
+        let playbackKind: 'signed' | 'premium' | null = null;
+        let expiresIn: number | null = null;
+        let playbackError: string | null = null;
+        try {
+          const playback = await this.getPlaybackUrl(userId, item.id);
+          playbackUrl = playback.url;
+          playbackKind = playback.kind;
+          expiresIn = playback.expiresIn;
+        } catch (error) {
+          playbackError = error instanceof Error ? error.message : 'Playback is temporarily unavailable';
+        }
+        content = {
+          id: item.id,
+          title: item.title,
+          type: item.type,
+          status: item.status,
+          playbackUrl,
+          playbackKind,
+          expiresIn,
+          playbackError,
+        };
+      }
+    }
+
+    // Prize payout state: the platform pays challenge prizes into the
+    // creator's wallet, from which payouts are requested. Prize payouts are
+    // tagged in payout metadata (challengePrize: challengeId), so scan the
+    // creator's payout history for tags matching this challenge.
+    const prizePayout = await this.resolvePrizePayout(userId, submission.challengeId, challenge);
+
+    return {
+      submission: {
+        id: submission.id,
+        challengeId: submission.challengeId,
+        title: submission.title,
+        status: submission.status,
+        submittedAt: submission.submittedAt.toISOString(),
+        reviewedAt: submission.reviewedAt?.toISOString() ?? null,
+        reviewedByName: submission.reviewedByName,
+        reviewNote: submission.reviewNote ?? null,
+        hasAttachedContent: Boolean(submission.contentId),
+      },
+      challenge,
+      history,
+      content,
+      prizePayout,
+    };
+  }
+
+  /**
+   * Derive the prize payout state for a challenge from the creator's payout
+   * history. Prize payouts are tagged in payout metadata (challengePrize),
+   * so state is derived, not invented: completed payout(s) covering the prize
+   * → 'paid', partial → 'partially_paid', none yet → 'awaiting_payout' when
+   * the entry actually won (or has no payout yet), 'none' otherwise.
+   */
+  private async resolvePrizePayout(
+    userId: string,
+    challengeId: string,
+    challenge: { prize: number | null } | null
+  ): Promise<{
+    prize: number | null;
+    status: 'awaiting_payout' | 'partially_paid' | 'paid' | 'none';
+    label: string;
+    totalPaid: number;
+    payoutIds: string[];
+  } | null> {
+    try {
+      const res = await this.walletClient.getPayoutRequests(userId, 1, 50);
+      const items = (res.success && res.data?.items) || [];
+      const prizePayouts = items.filter(
+        (p) =>
+          typeof p.metadata === 'object' &&
+          p.metadata !== null &&
+          (p.metadata as { challengePrize?: unknown }).challengePrize === challengeId
+      );
+      const totalPaid = prizePayouts
+        .filter((p) => p.status === 'completed')
+        .reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
+      const prize = challenge?.prize ?? null;
+
+      if (prizePayouts.length === 0) {
+        // No tagged payouts: only meaningful when there IS a prize at stake.
+        if (!prize) return null;
+        return {
+          prize,
+          status: 'awaiting_payout',
+          label: 'Prize payout pending',
+          totalPaid: 0,
+          payoutIds: [],
+        };
+      }
+      const allDone = prizePayouts.every((p) => p.status === 'completed');
+      if (totalPaid > 0 && allDone && (!prize || totalPaid >= prize)) {
+        // All tagged payouts completed. With a known prize we also verify the
+        // amount covers it; without one (challenge unknown), a completed
+        // tagged payout is still the platform's record of the prize being paid.
+        return {
+          prize,
+          status: 'paid',
+          label: 'Prize paid',
+          totalPaid,
+          payoutIds: prizePayouts.map((p) => p.id),
+        };
+      }
+      if (totalPaid > 0) {
+        return {
+          prize,
+          status: 'partially_paid',
+          label: 'Prize partially paid',
+          totalPaid,
+          payoutIds: prizePayouts.map((p) => p.id),
+        };
+      }
+      return {
+        prize,
+        status: 'awaiting_payout',
+        label: 'Prize payout processing',
+        totalPaid: 0,
+        payoutIds: prizePayouts.map((p) => p.id),
+      };
+    } catch {
+      // Wallet service unreachable — payout state is non-critical.
+      return null;
+    }
+  }
+
+  /**
+   * Ranked leaderboard for a challenge, proxied from creator-service. Best-effort:
+   * an unreachable upstream yields an empty board (the page renders its own empty
+   * state) instead of failing the whole tab.
+   */
+  async getChallengeLeaderboard(challengeId: string): Promise<{
+    challenge: { id: string; title: string; prize?: number; endDate?: string };
+    totalEntries: number;
+    entries: {
+      position: number;
+      entryId: string;
+      userId: string;
+      displayName: string;
+      status: string;
+      submittedAt: string;
+    }[];
+  }> {
+    const res = await this.creatorsClient.getChallengeLeaderboard(challengeId);
+    if (!res.success || !res.data) {
+      return { challenge: { id: challengeId, title: 'Challenge' }, totalEntries: 0, entries: [] };
+    }
+    return res.data;
   }
 
   async getCreatorProfile(userId: string): Promise<Record<string, unknown> | null> {

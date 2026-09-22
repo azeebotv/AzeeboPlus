@@ -79,8 +79,95 @@ function refreshSession(): Promise<boolean> {
   return refreshInFlight;
 }
 
-function resolveCsrfToken(): string | null {
+export function resolveCsrfToken(): string | null {
   return cachedCsrfToken || getCookie(CSRF_COOKIE);
+}
+
+/**
+ * XHR upload with real progress events. fetch() has no upload progress, so
+ * multipart uploads use XMLHttpRequest.upload.onprogress to drive the UI's
+ * percentage bar. Mirrors apiFetch's auth (httpOnly cookies via
+ * credentials) and CSRF handling for state-changing methods.
+ */
+export function xhrUpload<T>(
+  url: string,
+  body: FormData,
+  onProgress?: (percent: number) => void
+): Promise<ApiResponse<T>> {
+  return new Promise((resolve, reject) => {
+    const method = 'POST';
+    const headers: Record<string, string> = {};
+    // Never set a JSON Content-Type — the browser must generate the multipart
+    // boundary or multer rejects the request with 400.
+    let csrfToken = resolveCsrfToken();
+    if (csrfToken) {
+      headers[CSRF_HEADER] = csrfToken;
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, url, true);
+    xhr.withCredentials = true;
+    Object.entries(headers).forEach(([k, v]) => xhr.setRequestHeader(k, v));
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        // Cap at 99: the tail is server-side (pipeline forward + DB write),
+        // which only completes when the response arrives.
+        onProgress(Math.min(99, Math.round((e.loaded / e.total) * 100)));
+      }
+    };
+
+    xhr.onload = async () => {
+      // XHR fires onprogress=100 just before onload; the response has now
+      // arrived so the whole flow (bytes + server work) is done.
+      if (onProgress) onProgress(100);
+      let json: ApiResponse<T>;
+      try {
+        json = JSON.parse(xhr.responseText);
+      } catch {
+        reject(new Error(`Upload failed: invalid response (${xhr.status})`));
+        return;
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        // Capture a rotated CSRF token if the response carries one.
+        const responseCsrf = xhr.getResponseHeader(CSRF_HEADER);
+        if (responseCsrf) cachedCsrfToken = responseCsrf;
+        resolve(json);
+      } else if (xhr.status === 403 && /csrf/i.test(json.message || json.error || '')) {
+        // CSRF recovery, mirroring apiFetch: re-bootstrap once and retry.
+        try {
+          const fresh = await fetchCsrfToken();
+          if (!fresh) {
+            reject(new Error(json.message || 'Upload rejected (CSRF)'));
+            return;
+          }
+          const retry = new XMLHttpRequest();
+          retry.open(method, url, true);
+          retry.withCredentials = true;
+          retry.setRequestHeader(CSRF_HEADER, fresh);
+          retry.onload = () => {
+            try {
+              const retryJson = JSON.parse(retry.responseText) as ApiResponse<T>;
+              if (retry.status >= 200 && retry.status < 300) resolve(retryJson);
+              else reject(new Error(retryJson.message || `Upload failed (${retry.status})`));
+            } catch {
+              reject(new Error(`Upload failed: invalid response (${retry.status})`));
+            }
+          };
+          retry.onerror = () => reject(new Error('Network error during upload'));
+          retry.send(body);
+        } catch {
+          reject(new Error(json.message || 'Upload rejected (CSRF)'));
+        }
+      } else {
+        reject(new Error(json.message || json.error || `Upload failed (${xhr.status})`));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.ontimeout = () => reject(new Error('Upload timed out'));
+
+    xhr.send(body);
+  });
 }
 
 /**

@@ -201,6 +201,55 @@ export interface ChallengeSubmission {
   title: string;
   status: 'submitted' | 'under_review' | 'winner' | 'rejected';
   submittedAt: string;
+  reviewedAt: string | null;
+  reviewedByName: string | null;
+  /** Moderator's note to the creator (e.g. rejection reason), synced from upstream. */
+  reviewNote: string | null;
+}
+
+/** One transition in a submission's review history (append-only log). */
+export interface SubmissionReviewEvent {
+  id: string;
+  fromStatus: string | null;
+  toStatus: string;
+  reviewedAt: string | null;
+  reviewedByName: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+/** Full payload behind the submission detail view. */
+export interface SubmissionDetail {
+  submission: {
+    id: string;
+    challengeId: string;
+    title: string;
+    status: string;
+    submittedAt: string;
+    reviewedAt: string | null;
+    reviewedByName: string | null;
+    reviewNote: string | null;
+    hasAttachedContent: boolean;
+  };
+  challenge: { id: string; title: string; prize: number | null; ended: boolean } | null;
+  history: SubmissionReviewEvent[];
+  content: {
+    id: string;
+    title: string;
+    type: string;
+    status: string;
+    playbackUrl: string | null;
+    playbackKind: 'signed' | 'premium' | null;
+    expiresIn: number | null;
+    playbackError: string | null;
+  } | null;
+  prizePayout: {
+    prize: number | null;
+    status: 'awaiting_payout' | 'partially_paid' | 'paid' | 'none';
+    label: string;
+    totalPaid: number;
+    payoutIds: string[];
+  } | null;
 }
 
 // Profile

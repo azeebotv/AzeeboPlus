@@ -1,4 +1,4 @@
-import { apiFetch, type ApiError } from './base';
+import { apiFetch, xhrUpload as uploadWithProgress, type ApiError } from './base';
 import type {
   DashboardStats,
   ContentList,
@@ -17,6 +17,7 @@ import type {
   MonetizationTier,
   Challenge,
   ChallengeSubmission,
+  SubmissionDetail,
   CreatorProfile,
 } from '../creator-types';
 
@@ -133,12 +134,12 @@ export const creatorApi = {
   // Uploads — tracked as content items in the local DB
   getUploads: () => apiFetch<UploadProgress[]>(`${API}/creator/uploads`),
 
-  uploadContent: (data: FormData) =>
-    apiFetch<UploadProgress>(`${API}/creator/uploads`, {
-      method: 'POST',
-      body: data,
-      headers: {},
-    }),
+  uploadContent: (data: FormData) => uploadWithProgress<UploadProgress>(`${API}/creator/uploads`, data),
+
+  uploadContentWithProgress: (
+    data: FormData,
+    onProgress: (percent: number) => void
+  ) => uploadWithProgress<UploadProgress>(`${API}/creator/uploads`, data, onProgress),
 
   // Monetization
   getMonetization: () => apiFetch<MonetizationData>(`${API}/creator/monetization`),
@@ -178,14 +179,52 @@ export const creatorApi = {
   getChallengeSubmissions: () =>
     apiFetch<ChallengeSubmission[]>(`${API}/creator/challenges/submissions`),
 
-  submitChallenge: (challengeId: string, title: string) =>
+  getChallengeSubmissionDetail: (submissionId: string) =>
+    apiFetch<SubmissionDetail>(`${API}/creator/challenges/submissions/${submissionId}`),
+
+  getPlaybackUrl: (contentId: string) =>
+    apiFetch<{
+      url: string;
+      expiresIn: number;
+      kind: 'signed' | 'premium';
+      expiresAt: string | null;
+    }>(`${API}/creator/content/${contentId}/playback`),
+
+  submitChallenge: (challengeId: string, title: string, contentId?: string) =>
     apiFetch<{ success: boolean; submissionId?: string }>(
       `${API}/creator/challenges/${challengeId}/submit`,
       {
         method: 'POST',
-        body: JSON.stringify({ title }),
+        body: JSON.stringify(contentId ? { title, contentId } : { title }),
       }
     ),
+
+  getChallengeLeaderboard: (challengeId: string) =>
+    apiFetch<{
+      challenge: { id: string; title: string; prize?: number; endDate?: string };
+      totalEntries: number;
+      entries: {
+        position: number;
+        entryId: string;
+        userId: string;
+        displayName: string;
+        status: string;
+        submittedAt: string;
+      }[];
+    }>(`${API}/creator/challenges/${challengeId}/leaderboard`),
+
+  /** Public board data — no auth (shared /boards/:challengeId pages). */
+  getPublicBoard: (challengeId: string) =>
+    apiFetch<{
+      challenge: { id: string; title: string; prize?: number; endDate?: string };
+      totalEntries: number;
+      entries: {
+        position: number;
+        displayName: string;
+        status: string;
+        submittedAt: string;
+      }[];
+    }>(`${API}/creator/boards/${challengeId}`, { skipAuthRetry: true }),
 
   // Profile
   getProfile: () => apiFetch<CreatorProfile>(`${API}/creator/profile`),

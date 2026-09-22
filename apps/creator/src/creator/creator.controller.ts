@@ -19,6 +19,7 @@ import { CreatorService, ContentItem } from './creator.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { ArchivedContentSweeperService } from './archived-content-sweeper.service';
 import { FeatureFlagService, creatorFlags } from '@azeebo/feature-flags';
 
 interface AuthRequest extends Request {
@@ -31,7 +32,9 @@ interface AuthRequest extends Request {
 export class CreatorController {
   constructor(
     @Inject(CreatorService) private readonly creatorService: CreatorService,
-    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
+    @Inject(ArchivedContentSweeperService)
+    private readonly archivedContentSweeper: ArchivedContentSweeperService
   ) {}
 
   /** Studio UI flags: the client gates v2 surfaces (analytics, upload, payouts, onboarding) on these. */
@@ -65,6 +68,17 @@ export class CreatorController {
     return {
       success: true,
       data: await this.creatorService.getContent(req.user.id, Number(page), Number(limit), status),
+    };
+  }
+
+  @Get('content/:id/playback')
+  async getPlaybackUrl(
+    @Request() req: AuthRequest,
+    @Param('id') id: string
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getPlaybackUrl(req.user.id, id),
     };
   }
 
@@ -482,15 +496,55 @@ export class CreatorController {
     };
   }
 
+  @Get('challenges/submissions/:submissionId')
+  async getChallengeSubmissionDetail(
+    @Request() req: AuthRequest,
+    @Param('submissionId') submissionId: string
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getChallengeSubmissionDetail(req.user.id, submissionId),
+    };
+  }
+
+  @Get('challenges/:challengeId/leaderboard')
+  async getChallengeLeaderboard(
+    @Param('challengeId') challengeId: string
+  ): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.creatorService.getChallengeLeaderboard(challengeId),
+    };
+  }
+
   @Post('challenges/:challengeId/submit')
   async submitChallenge(
     @Request() req: AuthRequest,
     @Param('challengeId') challengeId: string,
-    @Body() body: { title: string }
+    @Body() body: { title: string; contentId?: string }
   ): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
-      data: await this.creatorService.submitChallenge(req.user.id, challengeId, body?.title ?? ''),
+      data: await this.creatorService.submitChallenge(
+        req.user.id,
+        challengeId,
+        body?.title ?? '',
+        body?.contentId
+      ),
+    };
+  }
+
+  /**
+   * On-demand hard-delete sweep for archived content. Admin-only: it
+   * permanently deletes blob storage, so it must never be reachable by
+   * ordinary creators (the class-level @Roles list admits them).
+   */
+  @Post('archived/sweep')
+  @Roles('admin', 'superadmin')
+  async sweepArchivedContent(): Promise<{ success: boolean; data: unknown }> {
+    return {
+      success: true,
+      data: await this.archivedContentSweeper.sweep(),
     };
   }
 }

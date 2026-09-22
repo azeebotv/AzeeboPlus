@@ -91,6 +91,14 @@ model ChallengeEntry {
   userId      String
   challengeId String
   contentUrl  String
+  // Review lifecycle: pending → under_review → winner | rejected.
+  // 'rejected' is terminal; 'winner' may still be overturned by re-review.
+  status      String   @default("pending")
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  // Moderator's note to the participant (why it was rejected, what to
+  // improve, …). Surfaced to the creator in the portal submissions view.
+  reviewNote  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -99,6 +107,7 @@ model ChallengeEntry {
   @@unique([userId, challengeId])
   @@map("challenge_entries")
   @@index([userId])
+  @@index([status])
 }
 
 model PayoutRequest {

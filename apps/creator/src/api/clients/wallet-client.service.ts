@@ -219,4 +219,24 @@ export class WalletClientService {
       body: { amount, description, idempotencyKey },
     });
   }
+
+  /**
+   * Credit a user's wallet via the internal by-userId route. Idempotent by
+   * key: wallet-service dedupes on wallet_transactions.idempotencyKey, so
+   * retries never double-pay (used for challenge prize winnings). Metadata
+   * is not accepted by the internal credit DTO (whitelisted pipe), so prize
+   * context rides the description + the caller's local mirror row.
+   */
+  async credit(
+    userId: string,
+    amount: number,
+    description: string,
+    idempotencyKey: string
+  ): Promise<WalletServiceResponse<{ success: boolean; balance?: number }>> {
+    const endpoint = `/v1/internal/wallets/user/${userId}/credit`;
+    return this.request<{ success: boolean; balance?: number }>(endpoint, {
+      method: 'POST',
+      body: { amount, description, idempotencyKey },
+    });
+  }
 }

@@ -69,6 +69,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         setAuthCookies(access_token, refresh_token);
+        // Mirror the access token into localStorage: the httpOnly cookie is
+        // invisible to document.cookie, so getToken() (which reads the JS-
+        // visible cookie first) would return null on the next hard reload and
+        // bounce the user back to /login even with a valid server session.
+        localStorage.setItem('azeebo_creator_user_token', access_token);
         storeUser(userData);
         setUserState(userData);
         await fetchCsrfToken();

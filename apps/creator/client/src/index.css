@@ -68,3 +68,16 @@ textarea:disabled {
     scroll-behavior: auto !important;
   }
 }
+
+/* Pulsing dot for the leaderboard's LIVE badge (respects reduced-motion above) */
+@keyframes creatorLivePulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+}

@@ -204,6 +204,13 @@ model ContentItem {
   universeId    String
   creatorId     String
   status        String   // draft, pending, published, archived
+  // When the item entered 'archived'. Stamped by deleteContent; backfilled
+  // from updatedAt for pre-existing archives. The hard-delete sweeper purges
+  // stored blobs ARCHIVED_TTL_DAYS (default 30) after this timestamp.
+  archivedAt    DateTime?
+  // When the sweeper successfully purged this item's stored objects. Null =
+  // still pending (or nothing to purge). Makes the sweeper idempotent.
+  mediaPurgedAt DateTime?
   viewCount     Int      @default(0)
   metadata      Json?
   publishedAt   DateTime?
@@ -304,20 +311,44 @@ model PayoutRequest {
 // are proxied from creator-service; submissions are stored locally so the
 // studio keeps CRUD over its own entries.
 model ChallengeSubmission {
-  id           String   @id @default(uuid())
-  userId       String
-  challengeId  String
-  title        String
-  status       String   @default("submitted") // submitted, under_review, winner, rejected
-  upstreamId   String?  // creator-service challenge_entries.id when synced
-  submittedAt  DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String    @id @default(uuid())
+  userId          String
+  challengeId     String
+  title           String
+  status          String    @default("submitted") // submitted, under_review, winner, rejected
+  upstreamId      String?   // creator-service challenge_entries.id when synced
+  contentId       String?   // portal content_items.id when an upload was attached
+  reviewedAt      DateTime? // when the entry was judged upstream
+  reviewedByName  String?   // resolved moderator display name ("who judged it")
+  reviewNote      String?   // moderator's note to the creator (synced from upstream)
+  submittedAt     DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, challengeId])
   @@index([userId])
   @@map("challenge_submissions")
+}
+
+// Append-only audit trail of a submission's review lifecycle. Rows are
+// written by the pull-sync when an upstream transition is observed (pending
+// → under_review → winner | rejected) so the portal can show the full
+// history, not just the current state (creator-service keeps no history).
+// Deliberately NOT a foreign key: hydrated submissions can be re-created
+// after upstream deletes, and the history should survive that.
+model ChallengeSubmissionReviewEvent {
+  id             String    @id @default(uuid())
+  submissionId   String
+  fromStatus     String?
+  toStatus       String
+  reviewedAt     DateTime?
+  reviewedByName String?
+  note           String? // reviewer note riding this transition (upstream reviewNote)
+  createdAt      DateTime  @default(now())
+
+  @@index([submissionId])
+  @@map("challenge_submission_review_events")
 }
 
 /// Creator-owned subscription tiers: pricing + perks, managed from the
