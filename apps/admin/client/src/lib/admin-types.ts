@@ -1,3 +1,38 @@
+/** Dual-control request row (TAA §55). Mirrors the backend DTO. */
+export interface DualControlRequest {
+  id: string;
+  actionType: string;
+  description: string;
+  requestedBy: string;
+  requestedByName?: string | null;
+  amount?: string | null;
+  currency?: string | null;
+  targetUserIds?: string[];
+  status: 'pending' | 'first_approved' | 'approved' | 'rejected' | 'executed' | string;
+  firstApprover?: string | null;
+  firstApproverName?: string | null;
+  secondApprover?: string | null;
+  secondApproverName?: string | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+}
+
+/** Rights clearance row. Mirrors the backend DTO. */
+export interface RightsClearance {
+  id: string;
+  talentName: string;
+  type: string;
+  contentId: string;
+  contentTitle: string;
+  universe: string;
+  status: 'pending' | 'approved' | 'rejected' | 'expired' | string;
+  expiryDate: string | null;
+  clearanceScope: string;
+  regions: string[];
+  notes: string;
+  createdAt: string;
+}
+
 export interface PlatformOverview {
   totalUsers: number;
   totalContent: number;
@@ -75,6 +110,24 @@ export interface ContentReviewItem {
   submittedAt: string;
   flaggedReasons: string[];
   creatorName?: string;
+}
+
+/** Challenge entry in the admin review queue (from creator-service). */
+export interface ChallengeEntryReviewItem {
+  id: string;
+  challengeId: string;
+  challengeTitle: string;
+  prize: string | null;
+  participantId: string;
+  participantName: string;
+  participantEmail: string | null;
+  contentUrl: string;
+  status: 'pending' | 'under_review' | 'winner' | 'rejected';
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  /** Moderator's note to the participant (rejection reason, feedback, …). */
+  reviewNote: string | null;
+  createdAt: string;
 }
 
 /**
@@ -490,4 +543,89 @@ export interface SupportStats {
   resolved: number;
   closed: number;
   avgResponseTimeMs?: number;
+}
+
+// ─── Lifestyle guides (9TLIFE catalogs, admin CRUD) ─────────────────────────
+
+export interface ItineraryStop {
+  id: string;
+  itineraryId: string;
+  name: string;
+  description: string;
+  duration: string;
+  order: number;
+}
+
+export interface Itinerary {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  city: string;
+  duration: string;
+  rating: number;
+  /** draft | published | archived */
+  status: string;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  stops?: ItineraryStop[];
+}
+
+export interface NeighborhoodPlace {
+  id: string;
+  neighborhoodId: string;
+  name: string;
+  category: string;
+  rating: number;
+  address?: string | null;
+}
+
+export interface Neighborhood {
+  id: string;
+  name: string;
+  slug: string;
+  city: string;
+  description: string;
+  image?: string | null;
+  /** draft | published | archived */
+  status: string;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  places?: NeighborhoodPlace[];
+}
+
+export interface PartnerOffer {
+  id: string;
+  partnerId: string;
+  title: string;
+  description: string;
+  discount: string;
+  category: string;
+  terms: string[];
+  validUntil: string;
+  /** active | expired | archived */
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  partner?: { id: string; name: string; slug: string; category: string };
+}
+
+export interface Partner {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  city: string;
+  description: string;
+  rating: number;
+  address?: string | null;
+  phone?: string | null;
+  /** draft | published | archived */
+  status: string;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  offers?: PartnerOffer[];
 }

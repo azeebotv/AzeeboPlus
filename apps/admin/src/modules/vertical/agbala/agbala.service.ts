@@ -83,8 +83,8 @@ export class AgbalaService {
       if (query.page) params.set('page', query.page.toString());
       if (query.limit) params.set('limit', query.limit.toString());
       if (query.search) params.set('search', query.search);
-      // vertical-service's real route (no /agbala segment)
-      return this.fetch(`/vertical/storyworlds?${params.toString()}`);
+      // Mirror on the AdminGuard surface — see getStoryworld/getCharacters.
+      return await this.fetch(`/vertical/agbala/storyworlds?${params.toString()}`);
     } catch (error) {
       this.logger.error('Failed to fetch storyworlds', error);
       throw error;
@@ -93,7 +93,10 @@ export class AgbalaService {
 
   async getStoryworld(id: string) {
     try {
-      return this.fetch(`/vertical/storyworlds/${id}`);
+      // Console reads go through the agbala-admin controller mirror — the
+      // public /vertical/storyworlds routes are ServiceAuthGuard-surfaced and
+      // 403 the proxy on cookie-only flows (same fix as getCharacters).
+      return await this.fetch(`/vertical/agbala/storyworlds/${id}`);
     } catch (error) {
       this.logger.error(`Failed to fetch storyworld ${id}`, error);
       mapAndThrow(error, `fetching storyworld ${id} from content-service`);
@@ -102,7 +105,7 @@ export class AgbalaService {
 
   async createStoryworld(dto: CreateStoryworldDto) {
     try {
-      return this.fetch('/vertical/agbala/storyworlds', {
+      return await this.fetch('/vertical/agbala/storyworlds', {
         method: 'POST',
         body: JSON.stringify(dto),
       });
@@ -114,7 +117,7 @@ export class AgbalaService {
 
   async updateStoryworld(id: string, dto: UpdateStoryworldDto) {
     try {
-      return this.fetch(`/vertical/agbala/storyworlds/${id}`, {
+      return await this.fetch(`/vertical/agbala/storyworlds/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(dto),
       });
@@ -126,7 +129,7 @@ export class AgbalaService {
 
   async deleteStoryworld(id: string) {
     try {
-      return this.fetch(`/vertical/agbala/storyworlds/${id}`, { method: 'DELETE' });
+      return await this.fetch(`/vertical/agbala/storyworlds/${id}`, { method: 'DELETE' });
     } catch (error) {
       this.logger.error(`Failed to delete storyworld ${id}`, error);
       throw error;
@@ -135,7 +138,7 @@ export class AgbalaService {
 
   async createCharacter(storyworldId: string, dto: CreateCharacterDto) {
     try {
-      return this.fetch('/vertical/characters', {
+      return await this.fetch('/vertical/characters', {
         method: 'POST',
         body: JSON.stringify({ ...dto, universe: storyworldId }),
       });
@@ -147,7 +150,7 @@ export class AgbalaService {
 
   async updateCharacter(characterId: string, dto: UpdateCharacterDto) {
     try {
-      return this.fetch(`/vertical/characters/${characterId}`, {
+      return await this.fetch(`/vertical/characters/${characterId}`, {
         method: 'PATCH',
         body: JSON.stringify(dto),
       });
@@ -159,20 +162,36 @@ export class AgbalaService {
 
   async deleteCharacter(characterId: string) {
     try {
-      return this.fetch(`/vertical/agbala/characters/${characterId}`, { method: 'DELETE' });
+      return await this.fetch(`/vertical/agbala/characters/${characterId}`, { method: 'DELETE' });
     } catch (error) {
       this.logger.error(`Failed to delete character ${characterId}`, error);
       throw error;
     }
   }
 
-  async getCharacters(storyworldId: string) {
+  async getCharacters(
+    storyworldId: string,
+    params: { page?: number; limit?: number; search?: string } = {}
+  ) {
     try {
-      // characters live at /vertical/characters, filterable by universe slug
-      return this.fetch(`/vertical/characters?universe=${encodeURIComponent(storyworldId)}`);
+      // Reads go through the agbala-admin controller (vertical/agbala/*),
+      // guarded by AdminGuard like every other call here. The public nested
+      // route (/vertical/storyworlds/:slug/characters) 403s the proxy
+      // (ServiceAuthGuard surface) and the flat /vertical/characters route
+      // ignores its universe param (lists ALL characters) — never use either.
+      const qs = new URLSearchParams();
+      if (params.page != null) qs.set('page', String(params.page));
+      if (params.limit != null) qs.set('limit', String(params.limit));
+      if (params.search) qs.set('search', params.search);
+      const query = qs.toString();
+      return await this.fetch(
+        `/vertical/agbala/storyworlds/${encodeURIComponent(storyworldId)}/characters${query ? `?${query}` : ''}`
+      );
     } catch (error) {
       this.logger.error(`Failed to fetch characters for storyworld ${storyworldId}`, error);
-      throw error;
+      // Map upstream statuses truthfully (404 unknown storyworld → NotFound,
+      // etc.) instead of letting the filter collapse it into a 502.
+      mapAndThrow(error, `fetching characters for storyworld ${storyworldId}`);
     }
   }
 
@@ -183,7 +202,7 @@ export class AgbalaService {
       if (query.limit) params.set('limit', query.limit.toString());
       if (query.search) params.set('search', query.search);
       const qs = params.toString();
-      return this.fetch(
+      return await this.fetch(
         `/vertical/agbala/storyworlds/${query.storyworldId}/paths${qs ? `?${qs}` : ''}`
       );
     } catch (error) {
@@ -194,7 +213,7 @@ export class AgbalaService {
 
   async createPath(storyworldId: string, dto: CreatePathDto) {
     try {
-      return this.fetch(`/vertical/agbala/storyworlds/${storyworldId}/paths`, {
+      return await this.fetch(`/vertical/agbala/storyworlds/${storyworldId}/paths`, {
         method: 'POST',
         body: JSON.stringify(dto),
       });
@@ -206,7 +225,7 @@ export class AgbalaService {
 
   async updatePath(pathId: string, dto: Partial<CreatePathDto>) {
     try {
-      return this.fetch(`/vertical/agbala/paths/${pathId}`, {
+      return await this.fetch(`/vertical/agbala/paths/${pathId}`, {
         method: 'PATCH',
         body: JSON.stringify(dto),
       });
@@ -218,7 +237,7 @@ export class AgbalaService {
 
   async deletePath(pathId: string) {
     try {
-      return this.fetch(`/vertical/agbala/paths/${pathId}`, { method: 'DELETE' });
+      return await this.fetch(`/vertical/agbala/paths/${pathId}`, { method: 'DELETE' });
     } catch (error) {
       this.logger.error(`Failed to delete path ${pathId}`, error);
       throw error;
@@ -231,7 +250,7 @@ export class AgbalaService {
       if (query.storyworldId) params.set('storyworldId', query.storyworldId);
       if (query.page) params.set('page', query.page.toString());
       if (query.limit) params.set('limit', query.limit.toString());
-      return this.fetch(`/vertical/agbala/quizzes?${params.toString()}`);
+      return await this.fetch(`/vertical/agbala/quizzes?${params.toString()}`);
     } catch (error) {
       this.logger.error('Failed to fetch quizzes', error);
       throw error;
@@ -240,7 +259,7 @@ export class AgbalaService {
 
   async createQuiz(dto: CreateQuizDto) {
     try {
-      return this.fetch('/vertical/agbala/quizzes', {
+      return await this.fetch('/vertical/agbala/quizzes', {
         method: 'POST',
         body: JSON.stringify(dto),
       });
@@ -252,7 +271,7 @@ export class AgbalaService {
 
   async deleteQuiz(quizId: string) {
     try {
-      return this.fetch(`/vertical/agbala/quizzes/${quizId}`, { method: 'DELETE' });
+      return await this.fetch(`/vertical/agbala/quizzes/${quizId}`, { method: 'DELETE' });
     } catch (error) {
       this.logger.error(`Failed to delete quiz ${quizId}`, error);
       throw error;
@@ -264,7 +283,7 @@ export class AgbalaService {
       const params = new URLSearchParams();
       if (query.page) params.set('page', query.page.toString());
       if (query.limit) params.set('limit', query.limit.toString());
-      return this.fetch(`/vertical/agbala/moderation/review-queue?${params.toString()}`);
+      return await this.fetch(`/vertical/agbala/moderation/review-queue?${params.toString()}`);
     } catch (error) {
       this.logger.error('Failed to fetch pending reviews', error);
       throw error;
@@ -273,7 +292,9 @@ export class AgbalaService {
 
   async approveContent(contentId: string) {
     try {
-      return this.fetch(`/vertical/agbala/moderation/${contentId}/approve`, { method: 'POST' });
+      return await this.fetch(`/vertical/agbala/moderation/${contentId}/approve`, {
+        method: 'POST',
+      });
     } catch (error) {
       this.logger.error(`Failed to approve content ${contentId}`, error);
       throw error;
@@ -282,7 +303,7 @@ export class AgbalaService {
 
   async rejectContent(contentId: string, reason: string) {
     try {
-      return this.fetch(`/vertical/agbala/moderation/${contentId}/reject`, {
+      return await this.fetch(`/vertical/agbala/moderation/${contentId}/reject`, {
         method: 'POST',
         body: JSON.stringify({ reason }),
       });

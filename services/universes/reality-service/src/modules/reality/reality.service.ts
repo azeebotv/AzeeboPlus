@@ -219,7 +219,24 @@ export class RealityService {
       orderBy: { name: 'asc' },
     });
 
-    const result = { contestants: contestants as unknown };
+    // Vote rows are quantity-weighted (multi-vote packs): surface the summed
+    // quantity as `votes` instead of the raw row count, which undercounts
+    // heavily for contestants with bulk votes.
+    const voteTotals = await this.prisma.vote.groupBy({
+      by: ['contestantId'],
+      where: { showId },
+      _sum: { quantity: true },
+    });
+    const totalByContestant = new Map(
+      voteTotals.map((row) => [row.contestantId, row._sum.quantity ?? 0])
+    );
+
+    const enriched = contestants.map((c) => ({
+      ...c,
+      votes: totalByContestant.get(c.id) ?? 0,
+    }));
+
+    const result = { contestants: enriched as unknown };
     await this.cache.set(cacheK, result, 30);
 
     return {

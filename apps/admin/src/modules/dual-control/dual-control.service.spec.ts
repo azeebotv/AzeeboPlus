@@ -151,6 +151,20 @@ describe('DualControlService — two-person integrity', () => {
       expect.objectContaining({ action: 'dual_control.first_approval', targetId: 'dc-1' })
     );
   });
+
+  it('maps the awaiting virtual status to pending + first_approved', async () => {
+    await service.list({ status: 'awaiting' });
+
+    expect(prisma.dualControlRequest.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { status: { in: ['pending', 'first_approved'] } },
+      })
+    );
+  });
+
+  it('rejects statuses outside the allowed set (awaiting aside)', async () => {
+    await expect(service.list({ status: 'disputed' })).rejects.toThrow(BadRequestException);
+  });
 });
 
 describe('DualControlService — request creation', () => {

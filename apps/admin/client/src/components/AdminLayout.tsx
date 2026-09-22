@@ -92,6 +92,12 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         description: 'Moderation and compliance approval',
       },
       {
+        href: '/challenge-entries',
+        label: 'Challenge Entries',
+        icon: 'checkCircle',
+        description: 'Challenge entry review — winner / rejected',
+      },
+      {
         href: '/moderation',
         label: 'Moderation',
         icon: 'shield',
@@ -114,6 +120,12 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: 'Reality Shows',
         icon: 'theater',
         description: 'Interactive reality voting & games',
+      },
+      {
+        href: '/lifestyle-guides',
+        label: 'Lifestyle Guides',
+        icon: 'sprout',
+        description: '9TLIFE itineraries, neighborhoods, partners & offers',
       },
       {
         href: '/live-events',

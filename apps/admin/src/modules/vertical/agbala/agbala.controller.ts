@@ -117,8 +117,17 @@ export class AgbalaController {
 
   // === Characters ===
   @Get('storyworlds/:storyworldId/characters')
-  async getCharacters(@Param('storyworldId') storyworldId: string) {
-    return this.agbalaService.getCharacters(storyworldId);
+  async getCharacters(
+    @Param('storyworldId') storyworldId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string
+  ) {
+    return this.agbalaService.getCharacters(storyworldId, {
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      search: search || undefined,
+    });
   }
 
   @Post('storyworlds/:storyworldId/characters')

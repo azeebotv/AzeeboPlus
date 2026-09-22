@@ -61,22 +61,41 @@ export class AgbalaCharactersService {
   async getCharacters(
     page = 1,
     limit = 20,
-    universeSlug?: string
+    universeSlug?: string,
+    search?: string
   ): Promise<PaginatedResponse<Character>> {
     try {
-      const cacheKey = `characters:list:${universeSlug || 'all'}:${page}:${limit}`;
+      const trimmed = search?.trim();
+      const cacheKey = `characters:list:${universeSlug || 'all'}:${page}:${limit}:${trimmed || 'none'}`;
       const cached = await this.cache.get<PaginatedResponse<Character>>(cacheKey);
       if (cached) return cached;
 
-      const where: { universeId?: string } = {};
+      const where: {
+        universeId?: string;
+        OR?: Array<
+          | { name: { contains: string; mode: 'insensitive' } }
+          | { description: { contains: string; mode: 'insensitive' } }
+        >;
+      } = {};
 
       if (universeSlug) {
-        const universe = await this.prisma.universeMap.findUnique({
-          where: { slug: universeSlug },
-        });
-        if (universe) {
-          where.universeId = universe.id;
+        // The admin panel passes the storyworld ID; the public route passes a
+        // slug. Accept either — and if NEITHER matches a universe, return an
+        // honest empty page instead of silently listing every character.
+        const universe =
+          (await this.prisma.universeMap.findUnique({ where: { id: universeSlug } })) ??
+          (await this.prisma.universeMap.findUnique({ where: { slug: universeSlug } }));
+        if (!universe) {
+          return this.emptyPage(page, limit);
         }
+        where.universeId = universe.id;
+      }
+
+      if (trimmed) {
+        where.OR = [
+          { name: { contains: trimmed, mode: 'insensitive' } },
+          { description: { contains: trimmed, mode: 'insensitive' } },
+        ];
       }
 
       const pagination = buildOffsetPagination(page, limit);
@@ -122,6 +141,14 @@ export class AgbalaCharactersService {
       this.logger.error(`Failed to fetch characters: ${error}`);
       throw error;
     }
+  }
+
+  /** Honest empty page for a filter value that matches no universe. */
+  private emptyPage(page: number, limit: number): PaginatedResponse<Character> {
+    return {
+      success: true,
+      data: { items: [], total: 0, page, limit, totalPages: 0 },
+    };
   }
 
   async getCharacterBySlug(

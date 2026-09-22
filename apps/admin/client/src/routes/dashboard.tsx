@@ -286,33 +286,41 @@ export default function DashboardPage() {
                   value: governance?.pendingDualControl ?? 0,
                   color: 'var(--admin-amber)',
                   icon: 'clock',
+                  href: '/dual-control?status=awaiting',
                 },
                 {
                   label: 'Approved, Not Executed',
                   value: governance?.approvedNotExecuted ?? 0,
                   color: 'var(--admin-orange)',
                   icon: 'checkCircle',
+                  href: '/dual-control?status=approved',
                 },
                 {
                   label: 'Expiring ≤ 30 Days',
                   value: governance?.expiringClearances ?? 0,
                   color: 'var(--admin-amber)',
                   icon: 'book',
+                  href: '/talent-clearance?expiry=expiring',
                 },
                 {
                   label: 'Expired Unresolved',
                   value: governance?.expiredClearances ?? 0,
                   color: governance?.expiredClearances ? 'var(--admin-red)' : 'var(--admin-emerald)',
                   icon: 'alertTriangle',
+                  href: '/talent-clearance?expiry=expired',
                 },
               ].map((item) => (
-                <div
+                <button
                   key={item.label}
+                  type="button"
+                  onClick={() => navigate(item.href)}
                   style={{
                     padding: '16px 18px',
                     borderRadius: 14,
                     border: '1px solid var(--admin-border)',
                     backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                    textAlign: 'left',
+                    cursor: 'pointer',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -322,7 +330,7 @@ export default function DashboardPage() {
                   <p style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: item.color, margin: 0 }}>
                     {item.value.toLocaleString()}
                   </p>
-                </div>
+                </button>
               ))}
             </div>
           </div>

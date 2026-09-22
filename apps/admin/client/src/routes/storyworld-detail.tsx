@@ -75,6 +75,11 @@ const btnPrimary: React.CSSProperties = {
   color: 'white',
   cursor: 'pointer',
 };
+const btnDanger: React.CSSProperties = {
+  ...btn,
+  color: 'var(--admin-red)',
+  borderColor: 'rgba(204,28,28,0.4)',
+};
 
 interface PathDraft {
   name: string;
@@ -83,6 +88,15 @@ interface PathDraft {
   color: string;
   totalSteps: string;
   sortOrder: string;
+}
+
+/** One editable question inside the quiz-creation modal. Mirrors the Agbala
+ * list page's draft shape — options stay comma-separated while editing. */
+interface QuizQuestionDraft {
+  question: string;
+  options: string;
+  correctAnswerIndex: number;
+  explanation: string;
 }
 
 const DEFAULT_PATH_COLOR = 'var(--admin-grey)';
@@ -130,19 +144,37 @@ export default function StoryworldDetailPage() {
     },
   });
 
-  // Characters are filterable by world/universe id on the nested route.
+  // Characters load from the nested route (upstream GET :slug/characters,
+  // paginated + searchable — same envelope as paths/quizzes). page/search
+  // are part of the query key so each combination refetches independently.
+  const [charPage, setCharPage] = useState(1);
+  const [charSearch, setCharSearch] = useState('');
+  const [charSearchInput, setCharSearchInput] = useState('');
+  const CHAR_PAGE_SIZE = 10;
+
   const charsQ = useQuery({
-    queryKey: ['storyworld-characters', id],
+    queryKey: ['storyworld-characters', id, charPage, charSearch],
     enabled: Boolean(id),
     queryFn: async () => {
-      const res = await adminApi.getCharacters(id as string);
-      return asArray<Record<string, unknown>>(res.success ? res.data : null).map(asRecord);
+      const res = await adminApi.getCharacters(id as string, {
+        page: charPage,
+        limit: CHAR_PAGE_SIZE,
+        search: charSearch || undefined,
+      });
+      const env = res.success && res.data ? (res.data as Record<string, unknown>) : null;
+      return {
+        items: asArray<Record<string, unknown>>(env).map(asRecord),
+        total: num(env?.total, 0),
+        totalPages: num(env?.totalPages, 1),
+      };
     },
   });
 
   const world = worldQ.data ?? null;
   const titles = titlesQ.data ?? [];
-  const characters = charsQ.data ?? [];
+  const characters = charsQ.data?.items ?? [];
+  const charactersTotal = charsQ.data?.total ?? 0;
+  const charactersTotalPages = charsQ.data?.totalPages ?? 1;
 
   // Paths load from the upstream GET storyworlds/:id/paths route (paginated,
   // searchable — same envelope as the quizzes list) and survive reloads;
@@ -248,17 +280,23 @@ export default function StoryworldDetailPage() {
 
   // ── Quizzes for this storyworld ────────────────────────────────────────────
   // Mirrors the quizzes tab on the Agbala list page, but permanently scoped
-  // to this world via the upstream storyworldId filter.
+  // to this world via the upstream storyworldId filter. Supports N questions
+  // — same dynamic blocks as the Agbala list modal (add/remove, per-question
+  // validation) so neither form is a one-question special case.
   const [quizModalOpen, setQuizModalOpen] = useState(false);
-  const [quizForm, setQuizForm] = useState({
-    title: '',
-    description: '',
-    question: '',
-    options: '',
-    correctAnswerIndex: 0,
-    explanation: '',
-  });
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestionDraft[]>([
+    { question: '', options: '', correctAnswerIndex: 0, explanation: '' },
+  ]);
+  const [quizMeta, setQuizMeta] = useState({ title: '', description: '' });
   const [quizError, setQuizError] = useState<string | null>(null);
+
+  const emptyQuizQuestions = (): QuizQuestionDraft[] => [
+    { question: '', options: '', correctAnswerIndex: 0, explanation: '' },
+  ];
+  const resetQuizForm = () => {
+    setQuizMeta({ title: '', description: '' });
+    setQuizQuestions(emptyQuizQuestions());
+  };
 
   const quizzesQ = useQuery({
     queryKey: ['storyworld-quizzes', id],
@@ -278,14 +316,7 @@ export default function StoryworldDetailPage() {
       return assertSuccess(await adminApi.createQuiz(data));
     },
     onSuccess: () => {
-      setQuizForm({
-        title: '',
-        description: '',
-        question: '',
-        options: '',
-        correctAnswerIndex: 0,
-        explanation: '',
-      });
+      resetQuizForm();
       setQuizError(null);
       setQuizModalOpen(false);
       void queryClient.invalidateQueries({ queryKey: ['storyworld-quizzes', id] });
@@ -302,55 +333,73 @@ export default function StoryworldDetailPage() {
   });
 
   const submitQuiz = () => {
-    if (!quizForm.title.trim()) {
+    if (!quizMeta.title.trim()) {
       setQuizError('Title is required.');
       return;
     }
-    if (!quizForm.question.trim()) {
-      setQuizError('The question text is required.');
+    if (quizQuestions.length === 0) {
+      setQuizError('Add at least one question.');
       return;
     }
-    const options = quizForm.options
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (options.length < 2) {
-      setQuizError('Provide at least two options, separated by commas.');
-      return;
-    }
-    const idx = Number(quizForm.correctAnswerIndex);
-    if (!Number.isInteger(idx) || idx < 0 || idx >= options.length) {
-      setQuizError(`Correct answer index must be between 0 and ${options.length - 1}.`);
-      return;
+    const questions: Array<{
+      question: string;
+      options: string[];
+      correctAnswerIndex: number;
+      explanation?: string;
+    }> = [];
+    for (const [i, q] of quizQuestions.entries()) {
+      const label = quizQuestions.length > 1 ? `Question ${i + 1}: ` : '';
+      if (!q.question.trim()) {
+        setQuizError(`${label}question text is required.`);
+        return;
+      }
+      const options = q.options
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (options.length < 2) {
+        setQuizError(`${label}provide at least two options, separated by commas.`);
+        return;
+      }
+      const idx = Number(q.correctAnswerIndex);
+      if (!Number.isInteger(idx) || idx < 0 || idx >= options.length) {
+        setQuizError(`${label}correct answer index must be between 0 and ${options.length - 1}.`);
+        return;
+      }
+      questions.push({
+        question: q.question.trim(),
+        options,
+        correctAnswerIndex: idx,
+        explanation: q.explanation.trim() || undefined,
+      });
     }
     setQuizError(null);
     createQuizMutation.mutate({
-      title: quizForm.title.trim(),
-      description: quizForm.description.trim() || undefined,
+      title: quizMeta.title.trim(),
+      description: quizMeta.description.trim() || undefined,
       storyworldId: id,
-      questions: [
-        {
-          question: quizForm.question.trim(),
-          options,
-          correctAnswerIndex: idx,
-          explanation: quizForm.explanation.trim() || undefined,
-        },
-      ],
+      questions,
     });
   };
 
   const openQuizModal = () => {
-    setQuizForm({
-      title: '',
-      description: '',
-      question: '',
-      options: '',
-      correctAnswerIndex: 0,
-      explanation: '',
-    });
+    resetQuizForm();
     setQuizError(null);
     setQuizModalOpen(true);
   };
+
+  const updateQuizQuestion = (idx: number, patch: Partial<QuizQuestionDraft>) =>
+    setQuizQuestions((qs) => qs.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
+  const addQuizQuestion = () =>
+    setQuizQuestions((qs) => [
+      ...qs,
+      { question: '', options: '', correctAnswerIndex: 0, explanation: '' },
+    ]);
+  const removeQuizQuestion = (idx: number) =>
+    setQuizQuestions((qs) =>
+      // Never leave the form with zero questions — reset to one blank row.
+      qs.length > 1 ? qs.filter((_, i) => i !== idx) : emptyQuizQuestions()
+    );
 
   return (
     <div>
@@ -989,11 +1038,45 @@ export default function StoryworldDetailPage() {
 
           <div>
             <p style={labelStyle}>Characters</p>
+            {/* Search box — mirrors the paths panel: commit on Enter or
+                button, Clear while active; no request per keystroke. */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <input
+                value={charSearchInput}
+                onChange={(e) => setCharSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') setCharSearch(charSearchInput.trim());
+                }}
+                placeholder="Search characters by name or description…"
+                style={inputStyle}
+              />
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setCharSearch(charSearchInput.trim())}
+              >
+                Search
+              </button>
+              {charSearch && (
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setCharSearchInput('');
+                    setCharSearch('');
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
             {charsQ.isLoading ? (
               <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>Loading…</p>
             ) : characters.length === 0 ? (
               <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
-                No characters recorded for this world.
+                {charSearch
+                  ? `No characters match “${charSearch}”.`
+                  : 'No characters recorded for this world.'}
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1033,6 +1116,34 @@ export default function StoryworldDetailPage() {
                 ))}
               </div>
             )}
+            {charactersTotal > 0 && (
+              <p style={{ color: 'var(--admin-text-muted)', fontSize: 12, marginTop: 8 }}>
+                {charactersTotal} character{charactersTotal === 1 ? '' : 's'}
+                {charSearch ? ` matching “${charSearch}”` : ''} · page {charPage} of{' '}
+                {charactersTotalPages}
+                {charactersTotalPages > 1 && (
+                  <>
+                    {' '}
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => setCharPage((p) => Math.max(1, p - 1))}
+                      disabled={charPage <= 1}
+                    >
+                      Prev
+                    </button>{' '}
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => setCharPage((p) => Math.min(charactersTotalPages, p + 1))}
+                      disabled={charPage >= charactersTotalPages}
+                    >
+                      Next
+                    </button>
+                  </>
+                )}
+              </p>
+            )}
           </div>
         </>
       )}
@@ -1064,45 +1175,105 @@ export default function StoryworldDetailPage() {
             <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>New Quiz</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <input
-                value={quizForm.title}
-                onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })}
+                value={quizMeta.title}
+                onChange={(e) => setQuizMeta({ ...quizMeta, title: e.target.value })}
                 placeholder="Quiz title *"
                 style={inputStyle}
               />
               <input
-                value={quizForm.description}
-                onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value })}
+                value={quizMeta.description}
+                onChange={(e) => setQuizMeta({ ...quizMeta, description: e.target.value })}
                 placeholder="Description"
                 style={inputStyle}
               />
-              <input
-                value={quizForm.question}
-                onChange={(e) => setQuizForm({ ...quizForm, question: e.target.value })}
-                placeholder="Question *"
-                style={inputStyle}
-              />
-              <input
-                value={quizForm.options}
-                onChange={(e) => setQuizForm({ ...quizForm, options: e.target.value })}
-                placeholder="Options (comma-separated) *"
-                style={inputStyle}
-              />
-              <input
-                type="number"
-                min={0}
-                value={quizForm.correctAnswerIndex}
-                onChange={(e) =>
-                  setQuizForm({ ...quizForm, correctAnswerIndex: Number(e.target.value) })
-                }
-                placeholder="Correct option index (0-based)"
-                style={inputStyle}
-              />
-              <input
-                value={quizForm.explanation}
-                onChange={(e) => setQuizForm({ ...quizForm, explanation: e.target.value })}
-                placeholder="Explanation (optional)"
-                style={inputStyle}
-              />
+
+              {quizQuestions.map((q, i) => {
+                const optionCount = q.options
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean).length;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      padding: 14,
+                      borderRadius: 12,
+                      border: '1px solid var(--admin-card)',
+                      background: 'var(--admin-dark)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: 'var(--admin-text-muted)',
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        Question {i + 1}
+                      </span>
+                      <button
+                        onClick={() => removeQuizQuestion(i)}
+                        disabled={quizQuestions.length === 1}
+                        style={{ ...btnDanger, padding: '4px 10px', fontSize: 11 }}
+                        title={
+                          quizQuestions.length === 1
+                            ? 'A quiz needs at least one question'
+                            : 'Remove this question'
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <input
+                      value={q.question}
+                      onChange={(e) => updateQuizQuestion(i, { question: e.target.value })}
+                      placeholder="Question text *"
+                      style={inputStyle}
+                    />
+                    <input
+                      value={q.options}
+                      onChange={(e) => updateQuizQuestion(i, { options: e.target.value })}
+                      placeholder="Options (comma-separated) *"
+                      style={inputStyle}
+                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        type="number"
+                        min={0}
+                        max={Math.max(0, optionCount - 1)}
+                        value={q.correctAnswerIndex}
+                        onChange={(e) =>
+                          updateQuizQuestion(i, { correctAnswerIndex: Number(e.target.value) })
+                        }
+                        placeholder="Correct option (0-based)"
+                        style={{ ...inputStyle, flex: 1 }}
+                      />
+                      <input
+                        value={q.explanation}
+                        onChange={(e) => updateQuizQuestion(i, { explanation: e.target.value })}
+                        placeholder="Explanation (optional)"
+                        style={{ ...inputStyle, flex: 2 }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+
+              <button onClick={addQuizQuestion} style={{ ...btn, alignSelf: 'flex-start' }}>
+                + Add question
+              </button>
               {quizError && (
                 <p style={{ color: 'var(--admin-red)', fontSize: 12, margin: 0 }}>{quizError}</p>
               )}
@@ -1112,8 +1283,8 @@ export default function StoryworldDetailPage() {
                 </button>
                 <button
                   disabled={
-                    !quizForm.title.trim() ||
-                    !quizForm.question.trim() ||
+                    !quizMeta.title.trim() ||
+                    quizQuestions.every((q) => !q.question.trim()) ||
                     createQuizMutation.isPending
                   }
                   onClick={submitQuiz}

@@ -24,9 +24,10 @@ export class RightsClearancesController {
   async list(
     @Query('status') status?: string,
     @Query('type') type?: string,
-    @Query('q') q?: string
+    @Query('q') q?: string,
+    @Query('expiry') expiry?: string
   ) {
-    return this.service.list({ status, type, q });
+    return this.service.list({ status, type, q, expiry });
   }
 
   @Patch(':id/status')

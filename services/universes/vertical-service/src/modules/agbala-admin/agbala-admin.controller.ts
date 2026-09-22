@@ -52,6 +52,42 @@ export class AgbalaAdminController {
     });
   }
 
+  @Get('storyworlds')
+  @ApiOperation({ summary: 'List storyworlds (admin)' })
+  async getStoryworlds(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string
+  ) {
+    return this.admin.getStoryworlds({
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      search,
+    });
+  }
+
+  @Get('storyworlds/:storyworldId')
+  @ApiOperation({ summary: 'Get a storyworld (admin)' })
+  async getStoryworld(@Param('storyworldId') storyworldId: string) {
+    return this.admin.getStoryworld(storyworldId);
+  }
+
+  @Get('storyworlds/:storyworldId/characters')
+  @ApiOperation({ summary: 'List characters for a storyworld (admin)' })
+  async getCharacters(
+    @Param('storyworldId') storyworldId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string
+  ) {
+    return this.admin.getCharacters({
+      storyworldId,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      search,
+    });
+  }
+
   @Patch('paths/:id')
   @ApiOperation({ summary: 'Update a learning path (admin)' })
   async updatePath(@Param('id') id: string, @Body() dto: UpdatePathDto) {

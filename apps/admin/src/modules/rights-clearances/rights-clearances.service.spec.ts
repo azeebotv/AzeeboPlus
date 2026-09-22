@@ -137,6 +137,45 @@ describe('RightsClearancesService', () => {
       await expect(service.list({ status: 'disputed' })).rejects.toThrow(BadRequestException);
     });
 
+    it('maps expiry=expiring to the governance-summary window (pending/approved, ≤30 days out)', async () => {
+      await service.list({ expiry: 'expiring' });
+
+      const call = (prisma.rightsClearance.findMany as jest.Mock).mock.calls.at(-1)[0];
+      expect(call.where.status).toEqual({ in: ['pending', 'approved'] });
+      expect(call.where.expiryDate.gt).toBeInstanceOf(Date);
+      expect(call.where.expiryDate.lte).toBeInstanceOf(Date);
+      // ~30-day window: lte must be roughly 30 days ahead of gt (now).
+      const days = (call.where.expiryDate.lte.getTime() - call.where.expiryDate.gt.getTime()) / 86400000;
+      expect(days).toBeGreaterThan(29.9);
+      expect(days).toBeLessThan(30.1);
+      // Expiry-driven lists sort by soonest expiry, not recency.
+      expect(call.orderBy).toEqual({ expiryDate: 'asc' });
+    });
+
+    it('maps expiry=expired to pending/approved past their expiry date', async () => {
+      await service.list({ expiry: 'expired' });
+
+      const call = (prisma.rightsClearance.findMany as jest.Mock).mock.calls.at(-1)[0];
+      expect(call.where.status).toEqual({ in: ['pending', 'approved'] });
+      expect(call.where.expiryDate.lte).toBeInstanceOf(Date);
+      expect(call.where.expiryDate.gt).toBeUndefined();
+      expect(call.orderBy).toEqual({ expiryDate: 'asc' });
+    });
+
+    it('rejects unknown expiry filters', async () => {
+      await expect(service.list({ expiry: 'soon' })).rejects.toThrow(BadRequestException);
+    });
+
+    it('lets an explicit status compose with the expiry filter', async () => {
+      await service.list({ expiry: 'expiring', status: 'approved' });
+
+      const call = (prisma.rightsClearance.findMany as jest.Mock).mock.calls.at(-1)[0];
+      // The expiry window's status set stays intact and the explicit status
+      // does not overwrite it (composition, not clobbering).
+      expect(call.where.status).toEqual({ in: ['pending', 'approved'] });
+      expect(call.where.expiryDate).toBeDefined();
+    });
+
     it('rejects unknown clearance types', async () => {
       await expect(service.list({ type: 'merch' })).rejects.toThrow(BadRequestException);
     });

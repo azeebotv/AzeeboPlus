@@ -83,15 +83,18 @@ export class StoryworldsController {
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
+  @ApiQuery({ name: 'search', required: false, description: 'Case-insensitive name/description filter' })
   async getCharacters(
     @Param('slug') slug: string,
     @Query('page') page?: string,
-    @Query('limit') limit?: string
+    @Query('limit') limit?: string,
+    @Query('search') search?: string
   ) {
     return this.charactersService.getCharacters(
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 20,
-      slug
+      slug,
+      search
     );
   }
 

@@ -181,11 +181,18 @@ against a scratch pair to reproduce (see RUNBOOK "Federation Drill"), patch
 
 **Invariant (gating pass):** every API call extracted from client code —
 including template literals and raw query strings — matches a route declared
-in the gateway's `SERVICE_CONFIGS`. Exit 1 on any NEW mismatch: an unmatched
-call 404s at runtime, often only in environments the developer didn't try.
+in the gateway's `SERVICE_CONFIGS` on **path AND HTTP method**. Exit 1 on any
+NEW mismatch: an unmatched path 404s at runtime, a wrong verb (POST vs PUT)
+405s — both often only in environments the developer didn't try.
 Known-unmatched calls live in `scripts/route-contracts-baseline.json`, a
 ratchet that may only shrink (regenerate with `--update` after fixing routes);
-a new unmatched call always fails.
+a new unmatched call always fails. Baseline entries carry the client verb
+(`[POST]`) or `[ANY]` when the method couldn't be inferred at the call site.
+Method extraction is best-effort: it recognizes the options-object shape
+(`request('/x', { method: 'PUT' })`, only when `method` is the object's first
+key) and axios-style helpers (`.patch('/x')`); anything indirect matches any
+documented method for the path. Gateway entries may omit `method:` to opt a
+path out of verb checking (matches any client verb).
 
 **Advisory pass (dead routes):** gateway endpoints no client code calls are
 listed but never gate — they may serve partners, scripts, or mobile releases.
