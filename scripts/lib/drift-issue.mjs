@@ -22,6 +22,100 @@ export const ISSUE_MARKER = '<!-- azeebo:prod-drift-tracking -->';
 export const ISSUE_TITLE = 'Schema lock violated in production — nightly report';
 export const ISSUE_LABEL = 'schema-drift';
 
+// ── Pool tracking-issue identity + rendering ────────────────────────────────
+// Used by scripts/pool-issue-tracker.mjs — a second tracker (pooler bypasses
+// and saturation from the pool-audit ledger) sharing the drift bot's
+// machinery: same App identity, same marker-search lifecycle, its own marker
+// so the two trackers never find each other.
+
+export const POOL_ISSUE_MARKER = '<!-- azeebo:pool-saturation-tracking -->';
+export const POOL_ISSUE_TITLE = 'Pooler saturation or bypasses sustained — nightly report';
+export const POOL_ISSUE_LABEL = 'pool-health';
+
+/**
+ * The body the pool tracking issue should carry.
+ *
+ * open:   [{ kind: 'saturation'|'bypass', workspace?, reason, detail }]
+ *         sorted saturation-first (the more urgent class), then by identity.
+ * closed: rendered as the resolved state (empty list).
+ */
+export function renderPoolIssueBody(open, { generatedAt = null, runUrl = null } = {}) {
+  const lines = [];
+  lines.push(POOL_ISSUE_MARKER);
+  lines.push('');
+  if (!open || open.length === 0) {
+    lines.push('### ✅ Pooler is healthy — no sustained saturation or bypasses');
+    lines.push('');
+    lines.push('_No condition currently violates the pool-budget gates. This issue closes automatically when a nightly run finds no violations; it reopens if the condition returns._');
+  } else {
+    const sat = open.filter((o) => o.kind === 'saturation');
+    const bp = open.filter((o) => o.kind === 'bypass');
+    lines.push(`### 🚨 ${open.length} pool-health violation(s) sustained`);
+    lines.push('');
+    lines.push('_Detected nightly by `schema-lock-nightly.yml` from the `pool-audit` job_runs ledger (read-only). Fix: scale pgbouncer `max_client_conn`, shed connections, or move the flagged process onto the pooler DATABASE_URL (port 6432, `pgbouncer=true`)._');
+    lines.push('');
+    lines.push('| Kind | Identity | Detail |');
+    lines.push('|---|---|---|');
+    // Render saturation rows first regardless of caller order — saturation
+    // is the more urgent class and the table order must be deterministic.
+    for (const o of [...sat, ...bp]) {
+      lines.push(`| ${o.kind} | ${o.workspace ?? 'pgbouncer'} | ${String(o.reason).replaceAll('|', '\\|').replaceAll('\n', ' ')} |`);
+    }
+    const ctx = [];
+    if (generatedAt) ctx.push(`Evaluated: ${generatedAt}`);
+    if (runUrl) ctx.push(`[Nightly run](${runUrl})`);
+    if (ctx.length) {
+      lines.push('');
+      lines.push(ctx.join(' · '));
+    }
+  }
+  lines.push('');
+  lines.push(`_Updated in place by the ${'`'}azeebo-drift-bot${'`'} App; thresholds live in ` + '`' + 'scripts/database/pool-saturation-gate.mjs' + '`' + ' and ' + '`' + 'scripts/database/pool-bypass-gate.mjs' + '`' + '._');
+  return lines.join('\n');
+}
+
+/**
+ * Parse the pool tracker body's violation table into [{kind, workspace, reason}].
+ * Empty array when the body has no table (resolved body or foreign shape).
+ */
+export function parsePoolIssueTable(body) {
+  const tableMatch = /\| Kind \| Identity \| Detail \|\n\|---\|---\|---\|\n((?:\|.*\n?)*)/.exec(body ?? '');
+  if (!tableMatch) return [];
+  return (tableMatch[1] ?? '')
+    .split('\n')
+    .filter((l) => l.startsWith('|') && !l.startsWith('| Kind'))
+    .map((l) => {
+      const cols = l.split('|');
+      return { kind: cols[1]?.trim() ?? '', workspace: cols[2]?.trim() ?? '', reason: cols[3]?.trim() ?? '' };
+    })
+    .filter((r) => r.kind !== '');
+}
+
+/**
+ * Whether the issue body's (kind, identity) set differs from the target set.
+ * Detail text is deliberately ignored (thresholds/wall-clock counts change
+ * every night); only an added/removed violation or a kind change on the
+ * same identity triggers an update — identical consecutive reports must not
+ * spam edit history.
+ */
+export function poolBodyDiffers(body, open) {
+  // Canonical identity: the saturation row's workspace renders as 'pgbouncer',
+  // but callers pass workspace: null — normalize both sides or every nightly
+  // run would read as a set change and spam edit history.
+  const key = (v) => `${v.kind}\u0000${v.kind === 'saturation' ? 'pgbouncer' : (v.workspace ?? '')}`;
+  const listed = parsePoolIssueTable(body).map(key).sort();
+  const target = (open ?? []).map(key).sort();
+  if ((open ?? []).length > 0 && listed.length === 0) return true;
+  if ((open ?? []).length === 0) {
+    return !/### ✅ Pooler is healthy/.test(body ?? '');
+  }
+  if (listed.length !== target.length) return true;
+  for (let i = 0; i < target.length; i++) {
+    if (listed[i] !== target[i]) return true;
+  }
+  return false;
+}
+
 /** Statuses that mean production genuinely violates the schema lock. */
 export const BLOCKING_STATUSES = ['DRIFT-DESTRUCTIVE', 'DRIFT-REVIEW', 'LEDGER-MISMATCH', 'BLOCKED-LEDGER', 'ERROR'];
 

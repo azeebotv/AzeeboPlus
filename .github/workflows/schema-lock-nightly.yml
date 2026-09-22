@@ -253,3 +253,63 @@ jobs:
           # Actions API would still be yesterday's run at this point.
           DRIFT_LOCAL_REPORT: .check-live-schema-lock-out/production/report-production.json
         run: node scripts/update-drift-tracking-issue.mjs
+
+      # ── Pool saturation gate ──────────────────────────────────────────────
+      # Fails the nightly run when the pool-audit job_runs ledger shows
+      # SUSTAINED critical saturation: ≥3 consecutive error passes spanning
+      # ≥2h (single blips and recovered excursions pass; sustained distress
+      # and an unreachable pgbouncer console fail). WARN/degraded history is
+      # summarized but never blocks — degraded is capacity planning, critical
+      # is an incident. Read-only over the ledger; thresholds tunable via
+      # POOL_GATE_HOURS / POOL_GATE_MIN_ERROR / POOL_GATE_MIN_SPAN_H. Runs
+      # last so its failure can never starve the report, artifact uploads, or
+      # the drift tracker above. Locally: POOL_GATE_HOURS=24 node
+      # scripts/database/pool-saturation-gate.mjs
+      - name: Fail on sustained pooler saturation
+        if: steps.creds.outputs.have-creds == 'true'
+        env:
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+        run: node scripts/database/pool-saturation-gate.mjs
+      # Matching gate for the bypass detector: a repo process holding direct
+      # :5432 connections across the whole window fails the nightly. Parses
+      # the bypass segment from pass detail (repeat suppression logs
+      # persisting bypasses as ok rows with full detail). Runs last for the
+      # same reason as the saturation gate above. Locally:
+      # POOL_BYPASS_GATE_HOURS=30 node scripts/database/pool-bypass-gate.mjs
+      - name: Fail on sustained pooler bypasses
+        if: steps.creds.outputs.have-creds == 'true'
+        env:
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+        run: node scripts/database/pool-bypass-gate.mjs
+
+      # ── Scheduled-job health gate ─────────────────────────────────────────
+      # Fails the nightly when ANY known scheduled job (freshness, drill,
+      # audit-retention, data-retention, pool-audit) goes error-heavy in its
+      # own ledger: hourly jobs need a sustained streak (≥3 consecutive error
+      # passes spanning ≥2h, mirroring the saturation gate), nightly/weekly
+      # jobs fail on 2 consecutive error passes. Runs are broken by ledger
+      # gaps > cadence × 1.5 so a job that stopped recording isn't read as a
+      # health streak (the cadence watchdog covers silence). Read-only over
+      # the ledger; thresholds tunable via JOB_HEALTH_* env. Locally:
+      # JOB_HEALTH_HOURS=56 node scripts/database/job-health-gate.mjs
+      - name: Fail on error-heavy scheduled jobs
+        if: steps.creds.outputs.have-creds == 'true'
+        env:
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+        run: node scripts/database/job-health-gate.mjs
+
+      # Persistent home for pool-health violations: creates/updates/closes ONE
+      # tracking issue (found by marker) under the azeebo-drift-bot App —
+      # the same lifecycle as the production-drift tracker below. The bot
+      # RE-EVALUATES both pool gates against the ledger rather than reading
+      # gate step exits (gate exits are CI plumbing; the ledger is the one
+      # source of truth). always() so a gate failure still updates the
+      # tracker — a trip is exactly when it must act. Production leg only,
+      # like the drift tracker; the gates above still block per-environment.
+      # Locally: LIVE_DB_URL_BASE=… node scripts/pool-issue-tracker.mjs --dry-run
+      - name: Update pool-health tracking issue
+        if: ${{ always() && matrix.environment == 'production' && steps.creds.outputs.have-creds == 'true' && steps.app-token.outputs.token != '' }}
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+        run: node scripts/pool-issue-tracker.mjs
