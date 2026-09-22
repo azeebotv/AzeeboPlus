@@ -496,6 +496,15 @@ const PGBOUNCER_STATE_FILE =
   `${process.env.TMPDIR || '/tmp'}/azeebo-admin-pgbouncer.alert-state`;
 
 /**
+ * Ledger-cadence suppression state: JSON map job → last-alert epoch ms.
+ * Keeps the silence alert to one entry per job per hour in the feed even if
+ * getStatus is polled aggressively. Env-overridable for tests.
+ */
+const LEDGER_CADENCE_STATE_FILE =
+  process.env.LEDGER_CADENCE_STATE_FILE ||
+  `${process.env.TMPDIR || '/tmp'}/azeebo-admin-ledger-cadence.alert-state`;
+
+/**
  * pool-audit job log (scripts/database/pool-audit.sh): hourly headless
  * watchdog for pooler saturation + direct-5432 bypasses. Same LOG_LINE
  * format so recentAlerts() can parse WARN/ERROR lines as the 'pool-audit'
@@ -513,6 +522,28 @@ const FRESHNESS_STALE_MINUTES = 120; // hourly schedule → 2h without a pass is
 const RETENTION_STALE_MINUTES = 26 * 60; // daily schedule → warn after ~26h (one missed day)
 const POOL_AUDIT_STALE_MINUTES = 120; // hourly schedule (launchd at :21) → 2h stall threshold
 
+/**
+ * Expected max gap between ledger passes per job (minutes) — the LEDGER-side
+ * cadence contract. checkJob staleness (above) is log-file based and only
+ * covers jobs with cards; this map is the safety net that (a) covers drill,
+ * which has no card, and (b) catches a broken ledger-write path, where logs
+ * keep advancing but job_runs goes silent — the exact failure mode the
+ * record-job-run.sh `|| true` swallow can produce. Values = one cadence +
+ * one grace period: hourly jobs 120m (2 missed hours), daily 26h (one
+ * missed day + slack), weekly drill 8d (one missed Friday + slack).
+ */
+const LEDGER_CADENCE_MINUTES: Record<string, number> = {
+  freshness: 120,
+  drill: 8 * 24 * 60,
+  'audit-retention': 26 * 60,
+  'data-retention': 26 * 60,
+  'pool-audit': 120,
+};
+export { LEDGER_CADENCE_MINUTES };
+
+/** Ledger-staleness check runs inside getStatus(); de-jitter repeats. */
+const LEDGER_CADENCE_SUPPRESS_MS = 60 * 60_000; // one alert per job per hour
+
 /** Ledger jobs, in card order. Drills have no dedicated card but still chart. */
 const KNOWN_JOBS = [
   'freshness',
@@ -521,6 +552,7 @@ const KNOWN_JOBS = [
   'data-retention',
   'pool-audit',
 ] as const;
+export { KNOWN_JOBS };
 const MAX_RUNS_PER_JOB = 40;
 
 /**
@@ -530,9 +562,7 @@ const MAX_RUNS_PER_JOB = 40;
  * process.cwd(), which is apps/admin in dev — every repo-root-relative path
  * then failed with "No such file or directory".
  */
-const OPS_REPO_ROOT =
-  process.env.OPS_REPO_ROOT ||
-  join(__dirname, '..', '..', '..', '..', '..'); // dist/modules/ops → repo root
+const OPS_REPO_ROOT = process.env.OPS_REPO_ROOT || join(__dirname, '..', '..', '..', '..', '..'); // dist/modules/ops → repo root
 const RUN_JOBS: Record<string, { script: string[]; timeoutMs: number }> = {
   freshness: { script: ['scripts/database/admin-data-freshness.sh', 'run'], timeoutMs: 120_000 },
   drill: { script: ['scripts/database/admin-data-freshness.sh', 'drill'], timeoutMs: 180_000 },
@@ -543,6 +573,29 @@ const RUN_JOBS: Record<string, { script: string[]; timeoutMs: number }> = {
   },
   'pool-audit': { script: ['scripts/database/pool-audit.sh', 'run'], timeoutMs: 120_000 },
 };
+export { RUN_JOBS };
+
+/**
+ * Pure staleness decision for the ledger-cadence check (unit-tested). A job
+ * is silent when its newest job_runs pass is older than its cadence allows,
+ * or when it has NO passes at all inside the lookback window.
+ */
+export function ledgerSilenceAlert(
+  _job: string,
+  lastPassAt: string | null,
+  now: number,
+  cadenceMinutes: number
+): { level: 'WARN' | 'ERROR'; message: string } | null {
+  if (!Number.isFinite(cadenceMinutes) || cadenceMinutes <= 0) return null;
+  const ageMin = lastPassAt ? Math.round((now - Date.parse(lastPassAt)) / 60_000) : null;
+  if (ageMin !== null && Number.isFinite(ageMin) && ageMin <= cadenceMinutes) return null;
+  const level: 'WARN' | 'ERROR' = ageMin !== null && ageMin > cadenceMinutes * 3 ? 'ERROR' : 'WARN';
+  const human =
+    ageMin === null
+      ? `no pass recorded in the last ${Math.round(cadenceMinutes / 60)}h`
+      : `last pass ${ageMin < 90 ? `${ageMin}m` : `${Math.round((ageMin / 60) * 10) / 10}h`} ago (cadence ${cadenceMinutes < 1440 ? `${Math.round(cadenceMinutes / 60)}h` : `${Math.round((cadenceMinutes / 1440) * 10) / 10}d`})`;
+  return { level, message: `ledger silent — ${human}` };
+}
 
 export interface RunJobOutcome {
   job: string;
@@ -1046,31 +1099,39 @@ export class OpsService {
   }
 
   async getStatus(): Promise<OpsStatus> {
-    const [db, federation, freshness, retention, poolAudit, alerts] = await Promise.all([
-      this.checkDb(),
-      this.checkFederation(),
-      this.checkJob(
-        'Freshness job',
-        FRESHNESS_LOG,
-        ['ok:', 'WARN:', 'ERROR:', 'RECOVERED:'],
-        /drill/i
-      ),
-      this.checkJob(
-        'Audit retention',
-        RETENTION_LOG,
-        ['ok:', 'deleted', 'ERROR:'],
-        undefined,
-        RETENTION_STALE_MINUTES
-      ),
-      this.checkJob(
-        'Pool audit',
-        POOL_AUDIT_LOG,
-        ['ok:', 'WARN:', 'ERROR:'],
-        undefined,
-        POOL_AUDIT_STALE_MINUTES
-      ),
-      this.recentAlerts(),
-    ]);
+    const [db, federation, freshness, retention, poolAudit, ledgerAlerts, logAlerts] =
+      await Promise.all([
+        this.checkDb(),
+        this.checkFederation(),
+        this.checkJob(
+          'Freshness job',
+          FRESHNESS_LOG,
+          ['ok:', 'WARN:', 'ERROR:', 'RECOVERED:'],
+          /drill/i
+        ),
+        this.checkJob(
+          'Audit retention',
+          RETENTION_LOG,
+          ['ok:', 'deleted', 'ERROR:'],
+          undefined,
+          RETENTION_STALE_MINUTES
+        ),
+        this.checkJob(
+          'Pool audit',
+          POOL_AUDIT_LOG,
+          ['ok:', 'WARN:', 'ERROR:'],
+          undefined,
+          POOL_AUDIT_STALE_MINUTES
+        ),
+        this.checkLedgerCadence(),
+        this.recentAlerts(),
+      ]);
+    // Ledger-silence alerts render in the same Recent alerts table as the
+    // log-derived entries (the table is source-agnostic); log-sourced alerts
+    // stay primary so a genuine incident line outranks a cadence warning.
+    const alerts = [...logAlerts, ...ledgerAlerts]
+      .sort((a, b) => b.at.localeCompare(a.at))
+      .slice(0, 10);
 
     // Transition detection rides the page's universal heartbeat so pooler
     // degradation reaches the alerts feed even when nobody is watching the
@@ -1339,6 +1400,64 @@ export class OpsService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Ledger-cadence watchdog: for every KNOWN job, compares the newest
+   * job_runs pass against its expected cadence (LEDGER_CADENCE_MINUTES) and
+   * produces WARN/ERROR alerts for silent jobs. Complements checkJob's
+   * log-file staleness: covers the card-less drill and catches a broken
+   * ledger-write path where logs advance but job_runs goes silent. Alert
+   * entries are injected into recentAlerts() (with per-job hourly
+   * suppression) so they render in the Recent alerts table with history.
+   */
+  private async checkLedgerCadence(): Promise<OpsAlert[]> {
+    const produced: OpsAlert[] = [];
+    try {
+      const rows =
+        (await this.prisma.$queryRaw<Array<{ job: string; lastPass: Date | null }>>`
+        SELECT job, max("ranAt") AS "lastPass"
+        FROM job_runs
+        WHERE job = ANY(${KNOWN_JOBS as unknown as string[]}::text[])
+        GROUP BY job`) ?? [];
+      const lastByJob = new Map(rows.map((r) => [r.job, r.lastPass]));
+      const now = Date.now();
+      let suppressed: Record<string, number> = {};
+      try {
+        suppressed = JSON.parse(await readFile(LEDGER_CADENCE_STATE_FILE, 'utf8'));
+      } catch {
+        /* first run or corrupt file — start clean */
+      }
+      const nextSuppressed: Record<string, number> = {};
+      for (const job of KNOWN_JOBS) {
+        const cadence = LEDGER_CADENCE_MINUTES[job];
+        if (!cadence) continue;
+        const last = lastByJob.get(job) ?? null;
+        const alert = ledgerSilenceAlert(job, last ? last.toISOString() : null, now, cadence);
+        if (!alert) {
+          // Healthy again → forget the last alert so the NEXT silence re-alerts
+          // immediately rather than waiting out the suppression window.
+          continue;
+        }
+        const lastAlertAt = suppressed[job] ?? 0;
+        if (now - lastAlertAt < LEDGER_CADENCE_SUPPRESS_MS) {
+          nextSuppressed[job] = lastAlertAt; // keep the suppression clock running
+          continue;
+        }
+        nextSuppressed[job] = now;
+        produced.push({
+          at: new Date(now).toISOString(),
+          level: alert.level,
+          source: job,
+          message: `${alert.level}: ${alert.message}`,
+        });
+      }
+      await writeFile(LEDGER_CADENCE_STATE_FILE, JSON.stringify(nextSuppressed), 'utf8');
+    } catch (e) {
+      // A broken watchdog must never break the health page.
+      this.logger.warn(`ledger-cadence check failed (status unaffected): ${(e as Error).message}`);
+    }
+    return produced;
   }
 
   /**
