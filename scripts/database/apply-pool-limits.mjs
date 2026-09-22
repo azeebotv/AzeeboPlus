@@ -45,7 +45,12 @@ import { execSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const ROOT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  // Test seam: subprocess tests build a tiny fake workspace tree and point
+  // the gate's discovery at it. Unset in production → repo root.
+  process.env.POOL_LIMITS_ROOT ?? '../..'
+);
 
 // ── Per-service pool sizing ─────────────────────────────────────────────────
 // Keys are paths relative to the repo root. Everything not listed falls back
@@ -74,9 +79,46 @@ const LIMITS = {
   'services/engagement/engagement-service': 2,
   'services/engagement/notification-service': 2,
   // Everything else (universe services, referral, reward, queue,
-  // recommendation, creator, gateway) is low-traffic: default 2.
+  // recommendation, creator, gateway) is low-traffic: see
+  // QUIET_TIER_WORKSPACES below — the gate requires every workspace to be
+  // either here or in LIMITS.
 };
 const TIER_DEFAULTS = { quiet: 2 };
+
+// ── Quiet-tier opt-ins (documented) ────────────────────────────────────────
+// Workspaces WITHOUT an explicit LIMITS entry that a human has reviewed and
+// confirmed are low-connection. The `--ci` gate FAILS (exit 4) when a prisma
+// workspace is in neither list, so a new service cannot silently inherit the
+// quiet default and erode the worst-case budget — sizing is always a
+// decision, never an accident.
+const QUIET_TIER_WORKSPACES = [
+  // Read-heavy but behind the gateway GET cache; small pool is enough.
+  'services/core/content-service',
+  'services/core/knowledge-service',
+  'apps/creator',
+  // Low-traffic engagement/intelligence/operations workers.
+  'services/engagement/referral-service',
+  'services/engagement/reward-service',
+  'services/intelligence/recommendation-service',
+  'services/operations/queue-service',
+  // Universe services: single-vertical, low-traffic reads.
+  'services/universes/comedy-service',
+  'services/universes/creator-service',
+  'services/universes/games-service',
+  'services/universes/lifestyle-service',
+  'services/universes/live-event-service',
+  'services/universes/movie-service',
+  'services/universes/reality-service',
+  'services/universes/sports-service',
+  'services/universes/vertical-service',
+];
+
+/** 'explicit' (LIMITS) | 'quiet' (documented opt-in) | 'unknown' (gate fails). */
+function classifyWorkspace(relPath) {
+  if (LIMITS[relPath] !== undefined) return 'explicit';
+  if (QUIET_TIER_WORKSPACES.includes(relPath)) return 'quiet';
+  return 'unknown';
+}
 
 const POOL_TIMEOUT_MS = 10_000; // fail fast instead of queueing when saturated
 const CONNECT_TIMEOUT_MS = 5_000;
@@ -92,7 +134,10 @@ const CHECK = args.includes('--check');
 // therefore recomputes the worst case from committed sources (one entry per
 // workspace with a prisma/schema.prisma, sized by the same tier map) and
 // reads max_connections from POOL_CHECK_DATABASE_URL. Exit codes:
-//   0 = within the 80% margin, 2 = over budget, 3 = could not verify.
+//   0 = within the 80% margin, 2 = over budget, 3 = could not verify,
+//   4 = a prisma workspace is neither in LIMITS nor QUIET_TIER_WORKSPACES
+//       (checked FIRST, before any DB access — classification is a code
+//       review problem, not a database problem).
 if (args.includes('--ci')) {
   const schemaRel = execSync(
     `find ${ROOT}/services ${ROOT}/apps -maxdepth 5 -path "*/prisma/schema.prisma" ` +
@@ -110,12 +155,32 @@ if (args.includes('--ci')) {
     process.exit(3);
   }
 
+  // ── Classification gate: every workspace must be sized ON PURPOSE ──
+  // Explicit LIMITS entry or documented quiet-tier opt-in. Unknown
+  // workspaces fail the PR before any DB access, so the fix (add an entry
+  // with a one-line justification) is a code change reviewers can see.
+  const unknown = schemaRel.filter((rel) => classifyWorkspace(rel) === 'unknown');
+  if (unknown.length > 0) {
+    console.error(
+      `FAIL: ${unknown.length} prisma workspace(s) have no pool sizing decision:\n` +
+        unknown.map((rel) => `  - ${rel}`).join('\n')
+    );
+    console.error(
+      'Add an explicit entry to LIMITS (with a one-line why) or, for genuinely\n' +
+        'low-connection services, a documented line in QUIET_TIER_WORKSPACES —\n' +
+        'both in scripts/database/apply-pool-limits.mjs. New services must never\n' +
+        'inherit a pool size by accident.'
+    );
+    process.exit(4);
+  }
+
   let budget = 0;
   console.log('Worst-case pool budget by workspace (tier map × prisma schemas):');
   for (const rel of schemaRel) {
     const limit = limitFor(rel);
     budget += limit;
-    console.log(`  ${String(limit).padStart(2)}  ${rel}`);
+    const cls = classifyWorkspace(rel);
+    console.log(`  ${String(limit).padStart(2)}  ${rel}  [${cls}]`);
   }
   console.log(
     `\nWorst-case pool budget across ${schemaRel.length} prisma workspaces: ${budget} connections`

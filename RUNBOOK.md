@@ -246,6 +246,42 @@ ALERT_WEBHOOK_URL='https://hooks.slack.com/services/…' \
   bash scripts/database/admin-data-freshness.sh install
 ```
 
+### Pool Audit (pgbouncer watchdog)
+
+Hourly headless audit of the two connection-hygiene failure modes —
+complements the live probes on the Ops Health pgbouncer card, which only run
+while admin-backend is up:
+
+1. **Saturation** — client connections vs `max_client_conn`, same
+   80%/95% bands as the backend (`gradePgbouncerUsage`). Degraded → WARN,
+   critical/unreachable → ERROR.
+2. **Bypasses** — repo-owned processes holding ESTABLISHED sockets directly
+   to Postgres :5432 (pgbouncer allowlisted; foreign projects reported but
+   never flagged). These connections skip pool budgeting entirely.
+
+Every pass appends one `[ts] LEVEL message` line to the audit log and one
+`job_runs` row (job `pool-audit`), so the Ops Health page charts it as a
+third job card and surfaces its WARN/ERROR lines in Recent alerts (source
+`pool-audit`). Repeat suppression: a persistent condition warns once per
+24h (`POOL_AUDIT_REPEAT_HOURS`), state in a tmp file; recovery clears it on
+the next clean pass without an alert.
+
+```bash
+bash scripts/database/pool-audit.sh run         # one pass (also "Run now")
+bash scripts/database/pool-audit.sh install     # LaunchAgent: hourly at :21 + at login
+bash scripts/database/pool-audit.sh uninstall
+bash scripts/database/pool-audit.sh status      # current state + last 12 log lines
+
+# optional webhook delivery (re-install bakes it into the LaunchAgent):
+ALERT_WEBHOOK_URL='https://hooks.slack.com/services/…' \
+  bash scripts/database/pool-audit.sh install
+```
+
+Env knobs: `PGBOUNCER_HOST/PORT/ADMIN_USER/ADMIN_PASSWORD` (admin console),
+`POOL_LIMITS_ROOT` (repo root for bypass cwd attribution),
+`POOL_AUDIT_LOG`/`POOL_AUDIT_STATE` (paths, TMPDIR by default).
+Subprocess tests: `node --test scripts/__tests__/pool-audit.test.mjs`.
+
 ### Federation Drill (drop + re-federate test)
 
 Automated test that proves the admin panel's federation survives service-DB
@@ -513,6 +549,13 @@ queries failed mid-flight).
 > This budget leaves ~20% headroom for superuser/psql/admin sessions and
 > short-lived tooling. It is intentionally sized for the dev machine; for
 > production, use pgbouncer (see below) instead of raising these numbers.
+>
+> **Every prisma workspace must have a sizing decision on record.** The CI
+> gate (`apply-pool-limits.mjs --ci`) fails with exit 4 when a workspace is
+> in neither `LIMITS` (explicit cap + one-line why) nor
+> `QUIET_TIER_WORKSPACES` (documented quiet-tier opt-in), both in
+> scripts/database/apply-pool-limits.mjs — a new service can never inherit a
+> pool size by accident. Add the entry in the same PR that adds the service.
 
 **Manage / verify:**
 

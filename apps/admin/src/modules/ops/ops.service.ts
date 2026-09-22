@@ -1,8 +1,20 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { readFile } from 'node:fs/promises';
+import { appendFile, readFile, writeFile } from 'node:fs/promises';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { PrismaService } from '../../database/prisma.service';
 import { buildServiceStampHeaders } from '../../common/upstream-auth.middleware';
+
+/** pg is a transitive dependency via Prisma's engines; resolve defensively. */
+
+const PgClient: typeof import('pg').Client | null = (() => {
+  try {
+    return require('pg').Client;
+  } catch {
+    return null;
+  }
+})();
 
 export interface OpsCheck {
   ok: boolean;
@@ -78,6 +90,57 @@ export interface ServiceHealthResult {
   dbStatus: 'up' | 'down' | 'unknown';
 }
 
+/** One database's client/server pool snapshot from pgbouncer SHOW POOLS. */
+export interface PgbouncerPoolRow {
+  database: string;
+  user: string;
+  clActive: number;
+  clWaiting: number;
+  svActive: number;
+  svIdle: number;
+}
+
+/**
+ * Result of the pgbouncer health probe. `available: false` covers every
+ * degenerate state (pooler down, admin console unreachable, pg driver
+ * missing) — the page shows each honestly instead of failing the request.
+ */
+export interface PgbouncerHealth {
+  available: boolean;
+  /** Unavailable only: why the probe failed. */
+  detail?: string;
+  /** Present when available: pgbouncer's hard client-connection ceiling. */
+  maxClientConn?: number;
+  /** Present when available: total client connections across all pools. */
+  totalClients?: number;
+  /** Present when available: round(100 * totalClients / maxClientConn). */
+  usagePercent?: number;
+  /** 'ok' <80%, 'degraded' 80–94%, 'critical' ≥95%. */
+  level?: 'ok' | 'degraded' | 'critical';
+  pools?: PgbouncerPoolRow[];
+  /**
+   * Per-database rollup of client-side pool budgets from every prisma
+   * workspace's .env, joined against SHOW POOLS by database name. Empty
+   * when the repo tree is unreachable (bundled deploys) — the card then
+   * degrades to client saturation only.
+   */
+  serviceBudgets?: PgbouncerDatabaseBudget[];
+  /** Present when serviceBudgets is empty: why discovery produced nothing. */
+  budgetsDetail?: string;
+  /**
+   * Repo-owned processes holding ESTABLISHED sockets DIRECTLY to Postgres
+   * (:5432) instead of through pgbouncer — the bypass detector. Empty when
+   * every repo client went through the pooler.
+   */
+  bypasses?: PgbouncerBypass[];
+  /** Foreign (non-repo) direct clients, attributed for context — noise, not ours. */
+  foreignDirectClients?: Array<{ workspace: string; connections: number }>;
+  /** Present when the bypass scan itself failed (e.g. lsof missing). */
+  bypassesDetail?: string;
+  checkedAt: string;
+  latencyMs: number;
+}
+
 /**
  * Server-side fleet probe. The browser must never dial localhost:30xx
  * directly — in any deployed environment those hostnames point at the
@@ -125,6 +188,248 @@ export interface CreatorTipSummary {
   totalTips: number;
   totalAmount: number;
   topTier: string | null;
+}
+
+/**
+ * Alert thresholds for the pgbouncer client-connection budget. At ≥95% of
+ * max_client_conn pgbouncer starts refusing new clients ("no more connections
+ * allowed"), which looks to every service like a sudden total database
+ * outage — hence the dedicated critical band rather than reusing 80/100.
+ */
+const PGBOUNCER_WARN_PERCENT = 80;
+const PGBOUNCER_CRITICAL_PERCENT = 95;
+
+/** Grade a client-connection count against the pooler's ceiling. Exported for tests. */
+export function gradePgbouncerUsage(
+  totalClients: number,
+  maxClientConn: number
+): { usagePercent: number; level: 'ok' | 'degraded' | 'critical' } {
+  const usagePercent = Math.round((100 * totalClients) / maxClientConn);
+  const level: 'ok' | 'degraded' | 'critical' =
+    usagePercent >= PGBOUNCER_CRITICAL_PERCENT
+      ? 'critical'
+      : usagePercent >= PGBOUNCER_WARN_PERCENT
+        ? 'degraded'
+        : 'ok';
+  return { usagePercent, level };
+}
+
+/** Persisted alert states for the pgbouncer probe (alert-state file content). */
+export type PgbouncerAlertState = 'ok' | 'degraded' | 'critical' | 'unavailable';
+
+/** One prisma workspace's client-side pool cap as configured in its .env. */
+export interface PgbouncerServiceBudget {
+  /** Repo-relative workspace path (e.g. services/core/auth-service). */
+  workspace: string;
+  /** Database name from its DATABASE_URL (null if unparseable). */
+  database: string | null;
+  /** Explicit connection_limit; null means UNCAPPED (Prisma default pool). */
+  connectionLimit: number | null;
+}
+
+/** Per-database rollup of service budgets, aligned with SHOW POOLS rows. */
+export interface PgbouncerDatabaseBudget {
+  database: string;
+  services: PgbouncerServiceBudget[];
+  /** Sum of explicit caps — the worst-case client count this database can
+   * open against the pooler. Uncapped services are NOT counted here (they
+   * have no ceiling); they are listed in `uncapped` instead. */
+  worstCaseTotal: number;
+  /** Workspaces with no connection_limit — the budget hole. */
+  uncapped: string[];
+}
+
+/**
+ * Extract the database name and connection_limit from a prisma DATABASE_URL.
+ * Exported for tests. Lenient by design: any unparseable piece returns null
+ * rather than throwing — a weird URL must surface as "uncapped/unknown" on
+ * the card, not break the whole health probe.
+ */
+export function parseDatabaseUrlBudget(url: string): {
+  database: string | null;
+  connectionLimit: number | null;
+} {
+  let database: string | null = null;
+  let connectionLimit: number | null = null;
+  try {
+    const u = new URL(url);
+    const db = u.pathname.replace(/^\/+/, '').split('/')[0];
+    database = db || null;
+    const cl = u.searchParams.get('connection_limit');
+    if (cl !== null) {
+      const n = Number(cl);
+      if (Number.isInteger(n) && n > 0) connectionLimit = n;
+    }
+  } catch {
+    /* leave nulls — caller flags the workspace as uncapped/unknown */
+  }
+  return { database, connectionLimit };
+}
+
+/**
+ * Roll flat workspace budgets into per-database groups sorted by database
+ * name, uncapped services listed per group. Exported for tests.
+ */
+export function summarizeServiceBudgets(
+  workspaces: PgbouncerServiceBudget[]
+): PgbouncerDatabaseBudget[] {
+  const byDb = new Map<string, PgbouncerDatabaseBudget>();
+  for (const w of workspaces) {
+    const key = w.database ?? '(unknown)';
+    let group = byDb.get(key);
+    if (!group) {
+      group = { database: key, services: [], worstCaseTotal: 0, uncapped: [] };
+      byDb.set(key, group);
+    }
+    group.services.push(w);
+    if (w.connectionLimit !== null) group.worstCaseTotal += w.connectionLimit;
+    else group.uncapped.push(w.workspace);
+  }
+  return [...byDb.values()].sort((a, b) => a.database.localeCompare(b.database));
+}
+
+/**
+ * Decide whether a pgbouncer level change deserves a feed alert. Exported for
+ * tests. Severity follows the DESTINATION state: entering degraded is WARN,
+ * entering critical/unavailable is ERROR. Recoveries (→ ok) return null —
+ * they are real state changes worth persisting but do not belong in an
+ * alerts table. A first observation (prev null) never alerts: without a
+ * known previous state a "degraded" reading could be hours old steady
+ * state, and alerting on it would spam the feed after every backend restart.
+ */
+export function pgbouncerTransitionAlert(
+  prev: PgbouncerAlertState | null,
+  next: PgbouncerAlertState,
+  ctx: {
+    totalClients?: number;
+    maxClientConn?: number;
+    usagePercent?: number;
+    detail?: string;
+  }
+): { level: 'WARN' | 'ERROR'; message: string } | null {
+  if (!prev || prev === next) return null;
+  const counts = ctx.maxClientConn
+    ? `: ${ctx.totalClients}/${ctx.maxClientConn} clients (${ctx.usagePercent}%)`
+    : '';
+  switch (next) {
+    case 'degraded':
+      return { level: 'WARN', message: `client connections degraded${counts}` };
+    case 'critical':
+      return {
+        level: 'ERROR',
+        message: `client connections critical${counts} — pgbouncer near connection-refusal threshold`,
+      };
+    case 'unavailable':
+      return {
+        level: 'ERROR',
+        message: `pgbouncer admin console unreachable${ctx.detail ? `: ${ctx.detail}` : ''}`,
+      };
+    case 'ok':
+      return null;
+  }
+}
+
+/** One detected direct-Postgres client, as lsof reports it. */
+export interface DirectPgClient {
+  pid: number;
+  command: string;
+  /** Resolved separately per-pid (a second lsof call); null when unavailable. */
+  cwd?: string | null;
+  /** Established connections this process holds to :5432. */
+  connections: number;
+}
+
+/** One classified bypass: a repo-owned process dialed Postgres directly. */
+export interface PgbouncerBypass {
+  workspace: string;
+  command: string;
+  pid: number;
+  connections: number;
+}
+
+/** Port Postgres listens on — the direct path a bypass takes. */
+const PG_DIRECT_PORT = 5432;
+/**
+ * Parse `lsof -nP -iTCP:5432 -sTCP:ESTABLISHED -Fpcn` output into one entry
+ * per client process. Exported for tests. Field codes: p=pid, c=command,
+ * n=socket address. A bypass is a CLIENT dialing Postgres, so only sockets
+ * whose REMOTE end is `<host>:5432` count — rows where :5432 is the local
+ * end are the Postgres server (and pgbouncer's server-side backend sockets),
+ * never offenders.
+ */
+export function parseDirectPgClients(lsofOutput: string): DirectPgClient[] {
+  const byPid = new Map<number, { command: string; connections: number }>();
+  let pid = 0;
+  let command = '';
+  for (const line of lsofOutput.split('\n')) {
+    const code = line.slice(0, 1);
+    const value = line.slice(1);
+    if (code === 'p') {
+      pid = Number(value) || 0;
+      command = '';
+    } else if (code === 'c') {
+      command = value;
+    } else if (code === 'n' && pid > 0) {
+      const remote = value.split('->')[1] ?? '';
+      // IPv6 remotes look like `[::1]:5432` — take the segment after the
+      // LAST colon, not [1] of a naive split (which returns '' there).
+      const remotePort = Number(remote.slice(remote.lastIndexOf(':') + 1));
+      if (remotePort !== PG_DIRECT_PORT) continue;
+      const entry = byPid.get(pid) ?? { command, connections: 0 };
+      entry.connections += 1;
+      byPid.set(pid, entry);
+    }
+  }
+  return [...byPid.entries()]
+    .map(([p, e]) => ({ pid: p, command: e.command, connections: e.connections }))
+    .sort((a, b) => a.pid - b.pid);
+}
+
+/**
+ * Classify parsed clients: repo-owned bypasses vs foreign noise. Exported
+ * for tests. pgbouncer itself is allowlisted (dialing 5432 is its whole
+ * job). A client is "ours" when its cwd (or command) sits inside repoRoot —
+ * cwd is checked first because bundled commands (tsx, node) carry no repo
+ * marker in argv. Everything else is foreign: reported with its nearest
+ * path segment so the card can say "not ours" instead of crying wolf.
+ */
+export function classifyDirectPgClients(
+  clients: Array<DirectPgClient & { cwd?: string | null }>,
+  repoRoot: string
+): { bypasses: PgbouncerBypass[]; foreign: Array<{ workspace: string; connections: number }> } {
+  const bypasses: PgbouncerBypass[] = [];
+  const foreign = new Map<string, number>();
+  for (const c of clients) {
+    if (c.command === 'pgbouncer') continue; // the one legitimate direct client
+    const cwd = c.cwd ?? '';
+    if (cwd && cwd.startsWith(repoRoot)) {
+      const workspace = cwd.slice(repoRoot.length).replace(/^\//, '') || '(repo root)';
+      bypasses.push({
+        workspace,
+        command: c.command,
+        pid: c.pid,
+        connections: c.connections,
+      });
+    } else {
+      // Attribute by cwd when we have one, else the command name — enough
+      // for a human to know which project to go scold. Foreign trees often
+      // end in generic segments (services/feed), so prefer the project
+      // directory under /www/ when one exists to keep identities distinct.
+      const wwwIdx = cwd.indexOf('/www/');
+      const key = cwd
+        ? wwwIdx >= 0
+          ? cwd.slice(wwwIdx + 5).replace(/\/+$/, '')
+          : cwd.split('/').filter(Boolean).slice(-2).join('/')
+        : c.command || '(unknown)';
+      foreign.set(key, (foreign.get(key) ?? 0) + c.connections);
+    }
+  }
+  return {
+    bypasses,
+    foreign: [...foreign.entries()]
+      .map(([workspace, connections]) => ({ workspace, connections }))
+      .sort((a, b) => b.connections - a.connections),
+  };
 }
 
 /** One endpoint's latency profile from the gateway's Prometheus histogram. */
@@ -178,18 +483,56 @@ const ALERT_STATE_FILE =
   process.env.ALERT_STATE_FILE ||
   `${process.env.TMPDIR || '/tmp'}/azeebo-admin-freshness.alert-state`;
 
+/**
+ * pgbouncer transition log + persisted level state. The log uses the same
+ * `[ts] LEVEL message` line format as the job logs so recentAlerts() can
+ * parse it with LOG_LINE; the state file survives backend restarts so a
+ * degradation that outlives a restart re-alerts only when it CHANGES again
+ * (first observation after restart is never an alert).
+ */
+const PGBOUNCER_LOG = process.env.PGBOUNCER_LOG || '/tmp/azeebo-admin-pgbouncer.log';
+const PGBOUNCER_STATE_FILE =
+  process.env.PGBOUNCER_STATE_FILE ||
+  `${process.env.TMPDIR || '/tmp'}/azeebo-admin-pgbouncer.alert-state`;
+
+/**
+ * pool-audit job log (scripts/database/pool-audit.sh): hourly headless
+ * watchdog for pooler saturation + direct-5432 bypasses. Same LOG_LINE
+ * format so recentAlerts() can parse WARN/ERROR lines as the 'pool-audit'
+ * source. Complements the live pgbouncer card probe, which only runs while
+ * admin-backend is up.
+ */
+const POOL_AUDIT_LOG =
+  process.env.POOL_AUDIT_LOG || `${process.env.TMPDIR || '/tmp'}/azeebo-admin-pool-audit.log`;
+
 /** Timestamp prefix of a job log line: `[2026-09-14 10:23:33] …` */
 const LOG_LINE = /^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]\s*(.*)$/;
 
 /** A job is "stale" if its last pass is older than its cadence allows. */
 const FRESHNESS_STALE_MINUTES = 120; // hourly schedule → 2h without a pass is a stall
 const RETENTION_STALE_MINUTES = 26 * 60; // daily schedule → warn after ~26h (one missed day)
+const POOL_AUDIT_STALE_MINUTES = 120; // hourly schedule (launchd at :21) → 2h stall threshold
 
 /** Ledger jobs, in card order. Drills have no dedicated card but still chart. */
-const KNOWN_JOBS = ['freshness', 'drill', 'audit-retention', 'data-retention'] as const;
+const KNOWN_JOBS = [
+  'freshness',
+  'drill',
+  'audit-retention',
+  'data-retention',
+  'pool-audit',
+] as const;
 const MAX_RUNS_PER_JOB = 40;
 
-/** Manual "Run now" targets — scripts relative to the repo root (launchd cwd). */
+/**
+ * Manual "Run now" targets. Paths are relative to the REPO ROOT and resolved
+ * against OPS_REPO_ROOT (default: two levels up from the compiled file —
+ * apps/admin/dist/modules/ops → repo root). The runner used to spawn with
+ * process.cwd(), which is apps/admin in dev — every repo-root-relative path
+ * then failed with "No such file or directory".
+ */
+const OPS_REPO_ROOT =
+  process.env.OPS_REPO_ROOT ||
+  join(__dirname, '..', '..', '..', '..', '..'); // dist/modules/ops → repo root
 const RUN_JOBS: Record<string, { script: string[]; timeoutMs: number }> = {
   freshness: { script: ['scripts/database/admin-data-freshness.sh', 'run'], timeoutMs: 120_000 },
   drill: { script: ['scripts/database/admin-data-freshness.sh', 'drill'], timeoutMs: 180_000 },
@@ -198,6 +541,7 @@ const RUN_JOBS: Record<string, { script: string[]; timeoutMs: number }> = {
     script: ['node_modules/tsx/dist/cli.mjs', 'scripts/data-retention-enforcement.ts', '--apply'],
     timeoutMs: 120_000,
   },
+  'pool-audit': { script: ['scripts/database/pool-audit.sh', 'run'], timeoutMs: 120_000 },
 };
 
 export interface RunJobOutcome {
@@ -212,6 +556,20 @@ export interface RunJobOutcome {
 export class OpsService {
   private readonly logger = new Logger(OpsService.name);
   private runningJobs = new Set<string>();
+  /**
+   * Serializes pgbouncer transition recording across concurrent probes (the
+   * status heartbeat and the card endpoint can overlap). Without this, two
+   * probes could interleave read-state→write-state and both see the same
+   * previous level, double-appending one transition to the alert log.
+   */
+  private pgbouncerTransitionChain: Promise<void> = Promise.resolve();
+  /** 60s cache for the direct-5432 bypass scan (lsof is not free). */
+  private cachedBypassScan: {
+    at: number;
+    bypasses: PgbouncerBypass[];
+    foreign: Array<{ workspace: string; connections: number }>;
+    detail?: string;
+  } | null = null;
 
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
@@ -235,7 +593,7 @@ export class OpsService {
     const output: string[] = [];
     try {
       await new Promise<void>((resolve) => {
-        const child = spawn('bash', target.script, { cwd: process.cwd() });
+        const child = spawn('bash', target.script, { cwd: OPS_REPO_ROOT });
         const grab = (buf: Buffer) => {
           for (const line of buf.toString().split('\n')) {
             if (line.trim()) output.push(line);
@@ -260,6 +618,333 @@ export class OpsService {
     } finally {
       this.runningJobs.delete(job);
     }
+  }
+
+  /**
+   * Probe pgbouncer's admin console (SHOW POOLS + SHOW CONFIG) and grade the
+   * client-connection budget against max_client_conn. The pooler runs in
+   * transaction mode, so cl_waiting > 0 means clients are queued waiting for
+   * a server slot — surfaced in the per-pool rows for triage.
+   *
+   * Env knobs: PGBOUNCER_HOST/PORT/ADMIN_USER/ADMIN_PASSWORD. Defaults are
+   * derived from DATABASE_URL's host:port when present, so the probe follows
+   * the .env cutover automatically (dev default 127.0.0.1:6432, user
+   * pgbouncer, password 'whatever' — trust auth locally).
+   */
+  async getPgbouncerHealth(): Promise<PgbouncerHealth> {
+    const start = Date.now();
+    const checkedAt = new Date().toISOString();
+    const unavailable = (detail: string): PgbouncerHealth => ({
+      available: false,
+      detail,
+      checkedAt,
+      latencyMs: Date.now() - start,
+    });
+
+    /**
+     * Persist the new alert state and append a WARN/ERROR line on any
+     * degraded/critical/unavailable transition. Reads the previous state,
+     * so restarts don't re-alert on unchanged (possibly stale) conditions.
+     * Fire-and-forget: a state-file write failure must never fail the probe.
+     */ const recordTransition = (
+      next: PgbouncerAlertState,
+      ctx: {
+        totalClients?: number;
+        maxClientConn?: number;
+        usagePercent?: number;
+        detail?: string;
+      }
+    ) => {
+      // Chain onto the previous record: strict ordering without dropping
+      // either probe's result, even under concurrent invocations.
+      this.pgbouncerTransitionChain = this.pgbouncerTransitionChain.then(() =>
+        this.recordPgbouncerTransition(next, ctx)
+      );
+    };
+
+    if (!PgClient) return unavailable('pg driver unavailable in admin-backend');
+
+    let host = process.env.PGBOUNCER_HOST || '127.0.0.1';
+    let port = '6432';
+    const dbUrl = process.env.DATABASE_URL;
+    if (dbUrl) {
+      try {
+        const u = new URL(dbUrl);
+        if (u.hostname) host = u.hostname;
+        if (u.port) port = u.port;
+      } catch {
+        /* keep defaults */
+      }
+    }
+    const client = new PgClient({
+      host,
+      port: Number(port),
+      user: process.env.PGBOUNCER_ADMIN_USER || 'pgbouncer',
+      password: process.env.PGBOUNCER_ADMIN_PASSWORD || 'whatever',
+      database: 'pgbouncer',
+      connectionTimeoutMillis: 3_000,
+    });
+
+    try {
+      await client.connect();
+      const poolsRes = await client.query('SHOW POOLS');
+      const configRes = await client.query('SHOW CONFIG');
+
+      // SHOW CONFIG columns are (key, value, default, changeable).
+      const maxCfg = configRes.rows.find((r: { key: string }) => r.key === 'max_client_conn');
+      const maxClientConn = Number(maxCfg?.value);
+      if (!Number.isFinite(maxClientConn) || maxClientConn <= 0) {
+        return unavailable('max_client_conn missing from SHOW CONFIG');
+      }
+
+      const pools: PgbouncerPoolRow[] = poolsRes.rows
+        .filter((r: { database: string }) => r.database !== 'pgbouncer')
+        .map((r: Record<string, string>) => ({
+          database: r.database,
+          user: r.user,
+          clActive: Number(r.cl_active) || 0,
+          clWaiting: Number(r.cl_waiting) || 0,
+          svActive: Number(r.sv_active) || 0,
+          svIdle: Number(r.sv_idle) || 0,
+        }));
+      const totalClients =
+        pools.reduce((sum, p) => sum + p.clActive + p.clWaiting, 0) +
+        // pgbouncer's own admin console row is filtered from `pools` but its
+        // connection still consumes the budget — count it.
+        poolsRes.rows
+          .filter((r: { database: string }) => r.database === 'pgbouncer')
+          .reduce(
+            (sum: number, r: Record<string, string>) =>
+              sum + (Number(r.cl_active) || 0) + (Number(r.cl_waiting) || 0),
+            0
+          );
+      const usage = gradePgbouncerUsage(totalClients, maxClientConn);
+
+      await recordTransition(usage.level, {
+        totalClients,
+        maxClientConn,
+        usagePercent: usage.usagePercent,
+      });
+
+      const serviceBudgets = this.getServiceBudgets();
+      const scan = await this.getDirectPgBypasses();
+
+      return {
+        available: true,
+        maxClientConn,
+        totalClients,
+        usagePercent: usage.usagePercent,
+        level: usage.level,
+        pools,
+        serviceBudgets: serviceBudgets.budgets,
+        ...(serviceBudgets.detail ? { budgetsDetail: serviceBudgets.detail } : {}),
+        bypasses: scan.bypasses,
+        foreignDirectClients: scan.foreign,
+        ...(scan.detail ? { bypassesDetail: scan.detail } : {}),
+        checkedAt,
+        latencyMs: Date.now() - start,
+      };
+    } catch (e) {
+      const detail = `pgbouncer admin console unreachable: ${(e as Error).message}`;
+      await recordTransition('unavailable', { detail });
+      return unavailable(detail);
+    } finally {
+      await client.end().catch(() => undefined);
+    }
+  }
+
+  /**
+   * Discover every prisma workspace's client-side pool budget by reading its
+   * committed tier sizing out of the local .env files (the ground truth the
+   * services actually run with). Sync fs is deliberate: ~30 small files,
+   * called at probe frequency — sub-millisecond. Cached after first success;
+   * pool sizing changes only via apply-pool-limits.mjs re-runs, and the
+   * card is honest about staleness via the cachedAt detail. Exported field
+   * data lets tests point discovery at a fixture tree.
+   */
+  private cachedBudgets: {
+    at: number;
+    budgets: PgbouncerDatabaseBudget[];
+    detail?: string;
+  } | null = null;
+
+  getServiceBudgets(): { budgets: PgbouncerDatabaseBudget[]; detail?: string } {
+    const TTL_MS = 5 * 60_000; // rebalance runs are rare; 5 min staleness is fine
+    if (this.cachedBudgets && Date.now() - this.cachedBudgets.at < TTL_MS) {
+      return { budgets: this.cachedBudgets.budgets, detail: this.cachedBudgets.detail };
+    }
+
+    const root = process.env.POOL_LIMITS_ROOT || '/Users/deprof/www/azeebo+';
+    const workspaces: PgbouncerServiceBudget[] = [];
+    try {
+      // services/<area>/<svc>/ is the fleet layout; each prisma workspace's
+      // .env carries the DATABASE_URL (pooler host, database, capped
+      // connection_limit) that apply-pool-limits.mjs maintains.
+      const servicesRoot = join(root, 'services');
+      for (const area of readdirSync(servicesRoot, { withFileTypes: true })) {
+        if (!area.isDirectory()) continue;
+        const areaPath = join(servicesRoot, area.name);
+        for (const svc of readdirSync(areaPath, { withFileTypes: true })) {
+          if (!svc.isDirectory()) continue;
+          const svcPath = join(areaPath, svc.name);
+          // Only prisma workspaces have a client-side pool to budget.
+          if (!existsSync(join(svcPath, 'prisma', 'schema.prisma'))) continue;
+          const envPath = join(svcPath, '.env');
+          if (!existsSync(envPath)) continue;
+          const url = readFileSync(envPath, 'utf8')
+            .split('\n')
+            .find((l) => l.startsWith('DATABASE_URL='));
+          if (!url) continue;
+          const { database, connectionLimit } = parseDatabaseUrlBudget(
+            url
+              .slice('DATABASE_URL='.length)
+              .trim()
+              .replace(/^['"]|['"]$/g, '')
+          );
+          workspaces.push({
+            workspace: `services/${area.name}/${svc.name}`,
+            database,
+            connectionLimit,
+          });
+        }
+      }
+      // apps/<name>/ (admin, creator) also run prisma clients — flat layout.
+      const appsDir = join(root, 'apps');
+      if (existsSync(appsDir)) {
+        for (const app of readdirSync(appsDir, { withFileTypes: true })) {
+          if (!app.isDirectory()) continue;
+          const appPath = join(appsDir, app.name);
+          if (!existsSync(join(appPath, 'prisma', 'schema.prisma'))) continue;
+          const envPath = join(appPath, '.env');
+          if (!existsSync(envPath)) continue;
+          const url = readFileSync(envPath, 'utf8')
+            .split('\n')
+            .find((l) => l.startsWith('DATABASE_URL='));
+          if (!url) continue;
+          const { database, connectionLimit } = parseDatabaseUrlBudget(
+            url
+              .slice('DATABASE_URL='.length)
+              .trim()
+              .replace(/^['"]|['"]$/g, '')
+          );
+          workspaces.push({ workspace: `apps/${app.name}`, database, connectionLimit });
+        }
+      }
+    } catch (e) {
+      const detail = `service-budget discovery failed: ${(e as Error).message}`;
+      this.cachedBudgets = { at: Date.now(), budgets: [], detail };
+      return { budgets: [], detail };
+    }
+
+    if (workspaces.length === 0) {
+      const detail = 'no prisma workspaces found — card shows saturation only';
+      this.cachedBudgets = { at: Date.now(), budgets: [], detail };
+      return { budgets: [], detail };
+    }
+
+    const budgets = summarizeServiceBudgets(workspaces);
+    const uncappedCount = budgets.reduce((n, b) => n + b.uncapped.length, 0);
+    this.cachedBudgets = {
+      at: Date.now(),
+      budgets,
+      ...(uncappedCount > 0
+        ? { detail: `${uncappedCount} workspace(s) have no connection_limit` }
+        : {}),
+    };
+    return { budgets, detail: this.cachedBudgets.detail };
+  }
+
+  /**
+   * Scan for client processes holding ESTABLISHED connections directly to
+   * Postgres (:5432) — i.e. bypassing pgbouncer. lsof enumerates sockets,
+   * per-PID lsof resolves each process's cwd, and classification splits
+   * repo-owned bypasses (real violations) from foreign clients (another
+   * project's noise). Cached 60s: lsof is not free and bypasses persist.
+   */
+  private async getDirectPgBypasses(): Promise<{
+    bypasses: PgbouncerBypass[];
+    foreign: Array<{ workspace: string; connections: number }>;
+    detail?: string;
+  }> {
+    const TTL_MS = 60_000;
+    if (this.cachedBypassScan && Date.now() - this.cachedBypassScan.at < TTL_MS) {
+      return {
+        bypasses: this.cachedBypassScan.bypasses,
+        foreign: this.cachedBypassScan.foreign,
+        ...(this.cachedBypassScan.detail ? { detail: this.cachedBypassScan.detail } : {}),
+      };
+    }
+
+    const fail = (detail: string) => {
+      this.cachedBypassScan = { at: Date.now(), bypasses: [], foreign: [], detail };
+      return {
+        bypasses: [],
+        foreign: [] as Array<{ workspace: string; connections: number }>,
+        detail,
+      };
+    };
+
+    const lsofOut = await this.runCommand(
+      'lsof',
+      ['-nP', `-iTCP:${PG_DIRECT_PORT}`, '-sTCP:ESTABLISHED', '-Fpcn'],
+      5_000
+    );
+    if (lsofOut === null) return fail('lsof unavailable or timed out — bypass scan skipped');
+
+    const parsed = parseDirectPgClients(lsofOut);
+    // Resolve cwd for each unique client pid concurrently (lsof per-pid is
+    // slow serially on macOS); failures degrade to cwd-less classification.
+    const withCwd = await Promise.all(
+      parsed.map(async (c) => {
+        const cwdOut = await this.runCommand(
+          'lsof',
+          ['-a', '-p', String(c.pid), '-d', 'cwd', '-Fn'],
+          3_000
+        );
+        const cwd =
+          cwdOut
+            ?.split('\n')
+            .find((l) => l.startsWith('n'))
+            ?.slice(1) ?? null;
+        return { ...c, cwd };
+      })
+    );
+
+    const result = classifyDirectPgClients(
+      withCwd,
+      process.env.POOL_LIMITS_ROOT || '/Users/deprof/www/azeebo+'
+    );
+    this.cachedBypassScan = { at: Date.now(), ...result };
+    return result;
+  }
+
+  /** spawn → buffered stdout, null on any failure/timeout. Null is the
+   * caller's signal to degrade honestly ("scan skipped"), never to guess. */
+  private runCommand(cmd: string, args: string[], timeoutMs: number): Promise<string | null> {
+    return new Promise((resolve) => {
+      let settled = false;
+      const done = (v: string | null) => {
+        if (!settled) {
+          settled = true;
+          resolve(v);
+        }
+      };
+      try {
+        const child = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+        let out = '';
+        child.stdout.on('data', (d: Buffer) => {
+          out += d.toString();
+        });
+        child.on('error', () => done(null));
+        child.on('close', (code) => done(code === 0 ? out : null));
+        setTimeout(() => {
+          done(null);
+          child.kill('SIGKILL');
+        }, timeoutMs).unref();
+      } catch {
+        done(null);
+      }
+    });
   }
 
   /**
@@ -361,7 +1046,7 @@ export class OpsService {
   }
 
   async getStatus(): Promise<OpsStatus> {
-    const [db, federation, freshness, retention, alerts] = await Promise.all([
+    const [db, federation, freshness, retention, poolAudit, alerts] = await Promise.all([
       this.checkDb(),
       this.checkFederation(),
       this.checkJob(
@@ -377,10 +1062,25 @@ export class OpsService {
         undefined,
         RETENTION_STALE_MINUTES
       ),
+      this.checkJob(
+        'Pool audit',
+        POOL_AUDIT_LOG,
+        ['ok:', 'WARN:', 'ERROR:'],
+        undefined,
+        POOL_AUDIT_STALE_MINUTES
+      ),
       this.recentAlerts(),
     ]);
 
-    const checks = [db, federation, freshness, retention];
+    // Transition detection rides the page's universal heartbeat so pooler
+    // degradation reaches the alerts feed even when nobody is watching the
+    // pgbouncer card specifically. First-observation + state-file semantics
+    // make this idempotent for any polling pattern (card + status + manual).
+    void this.getPgbouncerHealth().catch((e: Error) =>
+      this.logger.warn(`background pgbouncer probe failed: ${e.message}`)
+    );
+
+    const checks = [db, federation, freshness, retention, poolAudit];
     const overall = checks.some((c) => !c.ok && /ERROR|down|stale|broken/i.test(c.detail))
       ? 'down'
       : checks.every((c) => c.ok)
@@ -391,7 +1091,7 @@ export class OpsService {
       overall,
       db,
       federation,
-      jobs: [freshness, retention],
+      jobs: [freshness, retention, poolAudit],
       alerts,
       checkedAt: new Date().toISOString(),
     };
@@ -594,15 +1294,65 @@ export class OpsService {
   }
 
   /**
+   * Previous persisted pgbouncer alert level ('ok' | 'degraded' |
+   * 'critical' | 'unavailable'). Missing/unreadable file → null: the next
+   * probe records a first observation without alerting.
+   */
+  /**
+   * Serialized by pgbouncerTransitionChain. Persists the new level, then
+   * appends a WARN/ERROR line to the pgbouncer transition log on any
+   * degraded/critical/unavailable ENTRY. Failures here degrade to a warning
+   * — an observability write must never fail the health probe itself.
+   */
+  private async recordPgbouncerTransition(
+    next: PgbouncerAlertState,
+    ctx: {
+      totalClients?: number;
+      maxClientConn?: number;
+      usagePercent?: number;
+      detail?: string;
+    }
+  ): Promise<void> {
+    try {
+      const prev = await this.readPgbouncerState();
+      await writeFile(PGBOUNCER_STATE_FILE, next, 'utf8');
+      const alert = pgbouncerTransitionAlert(prev, next, ctx);
+      if (!alert) return;
+      const stamp = new Date().toISOString().replace('T', ' ').slice(0, 19); // LOG_LINE expects [YYYY-MM-DD HH:MM:SS]
+      const line = `[${stamp}] ${alert.level} ${alert.message}\n`;
+      await appendFile(PGBOUNCER_LOG, line, 'utf8');
+      this.logger.warn(`pgbouncer ${next}: ${alert.message}`);
+    } catch (e) {
+      this.logger.warn(
+        `pgbouncer alert-state persistence failed (probe result unaffected): ${(e as Error).message}`
+      );
+    }
+  }
+
+  private async readPgbouncerState(): Promise<PgbouncerAlertState | null> {
+    try {
+      const raw = (await readFile(PGBOUNCER_STATE_FILE, 'utf8')).trim();
+      if (raw === 'ok' || raw === 'degraded' || raw === 'critical' || raw === 'unavailable') {
+        return raw;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Recent alerts: (1) the freshness job's current alert state file (DOWN /
-   * still-DOWN, cleared on recovery) and (2) WARN/ERROR lines from both job
-   * logs, newest first, capped at 10.
+   * still-DOWN, cleared on recovery) and (2) WARN/ERROR lines from the job
+   * logs and the pgbouncer transition log, newest first, capped at 10.
    */
   private async recentAlerts(): Promise<OpsAlert[]> {
     const alerts: OpsAlert[] = [];
     const logs = [
       { source: 'freshness', path: FRESHNESS_LOG },
       { source: 'retention', path: RETENTION_LOG },
+      { source: 'pgbouncer', path: PGBOUNCER_LOG },
+      { source: 'pool-audit', path: POOL_AUDIT_LOG },
     ];
     await Promise.all(
       logs.map(async ({ source, path }) => {
@@ -871,14 +1621,19 @@ export class OpsService {
     const row = await this.prisma.systemSettings.findUnique({ where: { key } });
     const val = row?.value as Record<string, unknown> | null;
     return {
-      platformCommissionPct: typeof val?.platformCommissionPct === 'number' ? val.platformCommissionPct : 10,
+      platformCommissionPct:
+        typeof val?.platformCommissionPct === 'number' ? val.platformCommissionPct : 10,
       maxTipAmount: typeof val?.maxTipAmount === 'number' ? val.maxTipAmount : 500000,
       currency: typeof val?.currency === 'string' ? val.currency : 'NGN',
       updatedAt: row?.updatedAt?.toISOString() || new Date().toISOString(),
     };
   }
 
-  async updateTippingConfig(cfg: { platformCommissionPct?: number; maxTipAmount?: number; currency?: string }) {
+  async updateTippingConfig(cfg: {
+    platformCommissionPct?: number;
+    maxTipAmount?: number;
+    currency?: string;
+  }) {
     const key = 'tipping.platform_config';
     const current = await this.getTippingConfig();
     const updated = {
@@ -907,4 +1662,3 @@ export class OpsService {
     return updated;
   }
 }
-

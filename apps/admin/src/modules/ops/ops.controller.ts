@@ -23,6 +23,7 @@ import {
   CreatorTipSummary,
   GatewayHttpSummary,
   GatewayRateLimitSnapshot,
+  PgbouncerHealth,
 } from './ops.service';
 
 @Controller('admin/ops')
@@ -47,6 +48,12 @@ export class OpsController {
   @Get('services')
   getServiceHealth(): Promise<{ services: ServiceHealthResult[]; checkedAt: string }> {
     return this.opsService.getServiceHealth();
+  }
+
+  /** pgbouncer pool saturation (SHOW POOLS vs max_client_conn). */
+  @Get('pgbouncer')
+  getPgbouncerHealth(): Promise<PgbouncerHealth> {
+    return this.opsService.getPgbouncerHealth();
   }
 
   /** Aggregated creator tipping overview (single call — no client fan-out). */

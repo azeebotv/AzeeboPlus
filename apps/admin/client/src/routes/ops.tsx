@@ -8,6 +8,8 @@ import type {
   JobRunSummary,
   JobRunDailySummary,
   RunJobOutcome,
+  PgbouncerHealth,
+  PgbouncerPoolRow,
 } from '@/lib/api/admin';
 import { Icon } from '@/components/Icons';
 
@@ -56,6 +58,387 @@ const RUN_COLORS: Record<JobRunSummary['runs'][number]['status'], string> = {
 
 /** Human window label: 168 → "7d", but 24 stays "24h". */
 const windowLabel = (h: number) => (h > 24 && h % 24 === 0 ? `${h / 24}d` : `${h}h`);
+
+/** Per-pool color/label for the pgbouncer saturation level. */
+const PG_LEVEL: Record<
+  NonNullable<PgbouncerHealth['level']>,
+  { label: string; color: string; bg: string }
+> = {
+  ok: { label: 'OK', color: 'var(--admin-emerald)', bg: 'rgba(16,185,129,0.15)' },
+  degraded: { label: 'DEGRADED', color: 'var(--admin-amber)', bg: 'rgba(245,158,11,0.15)' },
+  critical: { label: 'CRITICAL', color: 'var(--admin-red)', bg: 'rgba(204,28,28,0.18)' },
+};
+
+/**
+ * pgbouncer saturation card: client-connection budget against
+ * max_client_conn plus the per-database pool breakdown. At ≥95% the
+ * pooler refuses new clients — every service sees it as a total DB outage
+ * — so this card has its own dedicated alert band (80% warn, 95% critical).
+ */
+function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
+  if (!health) return null;
+  const level = PG_LEVEL[health.level ?? 'ok'];
+  return (
+    <div
+      style={{
+        flex: '1 1 100%',
+        border: '1px solid var(--admin-card)',
+        borderRadius: 14,
+        backgroundColor: 'var(--admin-surface)',
+        padding: '16px 18px',
+        marginBottom: 28,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <Icon
+          name="activity"
+          size={16}
+          color={health.available ? level.color : 'var(--admin-amber)'}
+        />
+        <span style={{ fontWeight: 600, fontSize: 14 }}>pgbouncer pools</span>
+        {health.available && (
+          <span
+            style={{
+              padding: '2px 10px',
+              borderRadius: 999,
+              fontSize: 11,
+              fontWeight: 700,
+              color: level.color,
+              background: level.bg,
+            }}
+          >
+            {level.label}
+          </span>
+        )}
+        <span style={{ marginLeft: 'auto', color: 'var(--admin-text-muted)', fontSize: 11 }}>
+          probed in {health.latencyMs} ms
+        </span>
+      </div>
+
+      {!health.available ? (
+        <div style={{ color: 'var(--admin-amber)', fontSize: 13 }}>
+          Pooler not reachable — {health.detail ?? 'unknown reason'}
+        </div>
+      ) : (
+        <>
+          {health.level === 'critical' && (
+            <div
+              style={{
+                marginBottom: 10,
+                padding: '8px 12px',
+                borderRadius: 8,
+                background: 'rgba(204,28,28,0.15)',
+                color: 'var(--admin-red)',
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              Alert: client connections ≥95% of max_client_conn — pgbouncer will refuse new clients
+              and every service will see connection failures.
+            </div>
+          )}
+          {health.level === 'degraded' && (
+            <div
+              style={{
+                marginBottom: 10,
+                padding: '8px 12px',
+                borderRadius: 8,
+                background: 'rgba(245,158,11,0.12)',
+                color: 'var(--admin-amber)',
+                fontSize: 13,
+              }}
+            >
+              Warning: client connections ≥80% of max_client_conn — approaching the ceiling.
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <div
+              style={{
+                flex: 1,
+                height: 10,
+                borderRadius: 5,
+                background: 'var(--admin-surface)',
+                border: '1px solid var(--admin-card)',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  width: `${Math.min(100, health.usagePercent ?? 0)}%`,
+                  height: '100%',
+                  borderRadius: 5,
+                  backgroundColor: level.color,
+                  transition: 'width 0.3s ease',
+                }}
+              />
+            </div>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                fontVariantNumeric: 'tabular-nums',
+                color: level.color,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {health.totalClients} / {health.maxClientConn} clients ({health.usagePercent}%)
+            </span>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <thead>
+              <tr style={{ color: 'var(--admin-text-muted)', textAlign: 'left' }}>
+                {[
+                  'Database',
+                  'User',
+                  'Clients active',
+                  'Clients waiting',
+                  'Servers active',
+                  'Servers idle',
+                ].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: '4px 8px 4px 0',
+                      fontSize: 10,
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(health.pools ?? []).map((p) => (
+                <PgbouncerPoolRowView key={`${p.database}-${p.user}`} p={p} />
+              ))}
+              {(health.pools ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ color: 'var(--admin-text-muted)', padding: '6px 0' }}>
+                    No pools yet — no service has connected since the pooler started.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          {/* Per-service pool budgets: what each workspace's prisma client is
+              CAPPED to open against the pooler (from its .env), rolled up by
+              database. Together with the pool table above, one card shows
+              both sides of the connection economy: what clients may open
+              (budgets) and what they have opened (pools). */}
+          <p
+            style={{
+              margin: '18px 0 6px',
+              fontSize: 12,
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: 'var(--admin-text-muted)',
+            }}
+          >
+            Per-service pool budgets
+          </p>
+          {(health.serviceBudgets ?? []).length > 0 ? (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr style={{ color: 'var(--admin-text-muted)', textAlign: 'left' }}>
+                  {['Database', 'Service', 'connection_limit', 'Uncapped'].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: '4px 8px 4px 0',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(health.serviceBudgets ?? []).map((b) =>
+                  b.services.map((s, i) => (
+                    <tr key={s.workspace} style={{ borderTop: '1px solid var(--admin-card)' }}>
+                      <td style={{ padding: '5px 8px 5px 0', color: 'var(--admin-text-muted)' }}>
+                        {i === 0 ? b.database : ''}
+                      </td>
+                      <td style={{ padding: '5px 8px 5px 0', fontWeight: 600 }}>{s.workspace}</td>
+                      <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
+                        {s.connectionLimit ?? '—'}
+                      </td>
+                      <td style={{ padding: '5px 8px 5px 0' }}>
+                        {s.connectionLimit === null ? (
+                          <span
+                            style={{ color: 'var(--admin-amber)', fontWeight: 600 }}
+                            title="No connection_limit in its .env — Prisma default pool, unbounded worst case"
+                          >
+                            uncapped
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--admin-text-muted)' }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+                {/* Rollup rows: per-database worst case, aligned with the
+                    pool table's database names for quick comparison. */}
+                {(health.serviceBudgets ?? []).map((b) => (
+                  <tr
+                    key={`rollup-${b.database}`}
+                    style={{ borderTop: '2px solid var(--admin-card)' }}
+                  >
+                    <td style={{ padding: '5px 8px 5px 0', fontWeight: 700 }}>{b.database}</td>
+                    <td style={{ padding: '5px 8px 5px 0', color: 'var(--admin-text-muted)' }}>
+                      worst case — {b.services.length} service{sPlural(b.services.length)}
+                      {b.uncapped.length > 0 ? ` (+${b.uncapped.length} uncapped)` : ''}
+                    </td>
+                    <td
+                      style={{
+                        padding: '5px 8px 5px 0',
+                        fontVariantNumeric: 'tabular-nums',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {b.uncapped.length > 0 ? `${b.worstCaseTotal}+` : b.worstCaseTotal}
+                    </td>
+                    <td style={{ padding: '5px 8px 5px 0' }} />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p style={{ color: 'var(--admin-text-muted)', fontSize: 12, margin: 0 }}>
+              Per-service budgets unavailable — {health.budgetsDetail ?? 'workspace tree not found'}
+              .
+            </p>
+          )}
+
+          {/* Direct-Postgres bypass detector: repo-owned processes holding
+              ESTABLISHED sockets straight to :5432 instead of through the
+              pooler. Foreign (non-repo) clients are listed separately —
+              noise, not ours. */}
+          <p
+            style={{
+              margin: '18px 0 6px',
+              fontSize: 12,
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: 'var(--admin-text-muted)',
+            }}
+          >
+            Direct-Postgres bypasses
+          </p>
+          {health.bypassesDetail ? (
+            <p style={{ color: 'var(--admin-text-muted)', fontSize: 12, margin: 0 }}>
+              Bypass scan skipped — {health.bypassesDetail}
+            </p>
+          ) : (health.bypasses ?? []).length === 0 ? (
+            <p style={{ color: 'var(--admin-emerald)', fontSize: 12, margin: 0 }}>
+              ✓ No repo processes are connecting to Postgres directly — all traffic goes through
+              pgbouncer.
+              {(health.foreignDirectClients ?? []).length > 0 && (
+                <span style={{ color: 'var(--admin-text-muted)' }}>
+                  {' '}
+                  ({(health.foreignDirectClients ?? []).reduce((n, f) => n + f.connections, 0)}{' '}
+                  direct connections from other projects on this host.)
+                </span>
+              )}
+            </p>
+          ) : (
+            <>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ color: 'var(--admin-text-muted)', textAlign: 'left' }}>
+                    {['Workspace', 'Process', 'PID', 'Conns'].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          padding: '4px 8px 4px 0',
+                          fontSize: 10,
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(health.bypasses ?? []).map((b) => (
+                    <tr key={`${b.pid}-${b.workspace}`}>
+                      <td style={{ padding: '5px 8px 5px 0', fontWeight: 600 }}>{b.workspace}</td>
+                      <td style={{ padding: '5px 8px 5px 0', color: 'var(--admin-amber)' }}>
+                        {b.command}
+                      </td>
+                      <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
+                        {b.pid}
+                      </td>
+                      <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
+                        {b.connections}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '4px 0 0' }}>
+                These processes dial Postgres :5432 directly, skipping pgbouncer — connection limits
+                and pool budgeting do not apply to them. Restart them on the pooler DATABASE_URL.
+                {(health.foreignDirectClients ?? []).length > 0 && (
+                  <>
+                    {' '}
+                    ({(health.foreignDirectClients ?? []).reduce(
+                      (n, f) => n + f.connections,
+                      0
+                    )}{' '}
+                    other direct connections on this host belong to different projects.)
+                  </>
+                )}
+              </p>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function sPlural(n: number): string {
+  return n === 1 ? '' : 's';
+}
+
+function PgbouncerPoolRowView({ p }: { p: PgbouncerPoolRow }) {
+  const waiting = p.clWaiting > 0;
+  return (
+    <tr style={{ borderTop: '1px solid var(--admin-card)' }}>
+      <td style={{ padding: '5px 8px 5px 0', fontWeight: 600 }}>{p.database}</td>
+      <td style={{ padding: '5px 8px 5px 0', color: 'var(--admin-text-muted)' }}>{p.user}</td>
+      <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>{p.clActive}</td>
+      <td
+        style={{
+          padding: '5px 8px 5px 0',
+          fontVariantNumeric: 'tabular-nums',
+          color: waiting ? 'var(--admin-amber)' : 'var(--admin-text-muted)',
+          fontWeight: waiting ? 700 : 400,
+        }}
+        title={waiting ? 'Clients queued waiting for a server connection' : undefined}
+      >
+        {p.clWaiting}
+      </td>
+      <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>{p.svActive}</td>
+      <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>{p.svIdle}</td>
+    </tr>
+  );
+}
 
 /**
  * Pass-history strip from the job_runs ledger: one bar per recorded pass,
@@ -388,6 +771,14 @@ export default function OpsPage() {
     },
     refetchInterval: 60_000,
   });
+  const { data: pgbouncer } = useQuery({
+    queryKey: ['admin', 'ops-pgbouncer'],
+    queryFn: async () => {
+      const res = await adminApi.getOpsPgbouncer();
+      return res.success ? (res.data as PgbouncerHealth) : null;
+    },
+    refetchInterval: 30_000,
+  });
   const queryClient = useQueryClient();
   const [runJobId, setRunJobId] = useState<string | null>(null);
   const [runOutcome, setRunOutcome] = useState<Record<string, RunOutcomeView>>({});
@@ -498,6 +889,8 @@ export default function OpsPage() {
           </button>
         ))}
       </div>
+
+      <PgbouncerCard health={pgbouncer} />
 
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 28 }}>
         <CheckCard check={data.db} icon="activity" historyHours={historyHours} />
