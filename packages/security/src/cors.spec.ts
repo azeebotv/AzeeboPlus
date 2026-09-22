@@ -97,10 +97,9 @@ describe('configureCors', () => {
       const originCallback = mockApp.enableCors.mock.calls[0][0].origin;
       const callback = jest.fn();
       originCallback('https://evil.com', callback);
-      // CORS callback receives Error as first arg, no second arg on rejection
-      expect(callback).toHaveBeenCalledWith(expect.any(Error));
-      const errorArg = callback.mock.calls[0][0];
-      expect(errorArg.message).toContain('Not allowed by CORS');
+      // Standard denial: proceed without CORS headers (browser enforces the
+      // block). Never reject with an Error — that would 500 the request.
+      expect(callback).toHaveBeenCalledWith(null, false);
     });
 
     it('should allow missing origin for server-to-server requests', () => {

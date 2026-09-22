@@ -70,8 +70,17 @@ export class GatewayAuthGuard implements CanActivate {
     // genre-detail & artist-detail pages (slug/id = slugified name, derived from entries)
     /^\/api\/v\d+\/lifestyle\/music\/(genres|artists)\/[a-z0-9-]+$/,
     /^\/api\/v\d+\/lifestyle\/music\/[a-z0-9-]+$/,
+    // Lifestyle guides (9TLIFE) — read-only public catalogs and detail pages;
+    // everything under /lifestyle/admin stays auth-gated (exact segments only).
+    /^\/api\/v\d+\/lifestyle\/(itineraries|neighborhoods|partners|offers)$/,
+    /^\/api\/v\d+\/lifestyle\/(itineraries|neighborhoods|partners|offers)\/[a-z0-9-]+$/,
+    // Participation result page (writes — votes, quiz submits — still require auth)
+    /^\/api\/v\d+\/participation\/[a-z0-9-]+\/result$/,
     // Moderation report types (needed for report forms before login)
     /^\/api\/v\d+\/moderation\/report-types$/,
+    // Public challenge boards — read-only leaderboard data behind the shared
+    // /boards/:challengeId pages (writes and everything else stay gated)
+    /^\/api\/v\d+\/creator\/boards\/[^/]+$/,
   ];
 
   constructor(

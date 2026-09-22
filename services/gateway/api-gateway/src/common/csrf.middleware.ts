@@ -37,25 +37,33 @@ export class CsrfMiddleware implements NestMiddleware {
 
     // Skip CSRF for safe methods
     if (CsrfMiddleware.SAFE_METHODS.includes(req.method)) {
-      // Set CSRF token on safe methods so client can read it
-      let csrfToken = req.cookies?.[CsrfMiddleware.CSRF_COOKIE_NAME];
-      if (!csrfToken) {
-        // Mint AND register: the token only validates later if it exists in
-        // the Redis-backed registry (persists across gateway restarts, so
-        // clients' cached tokens survive deploys).
-        csrfToken = this.csrfRegistry.mint();
-        void this.csrfRegistry.register(csrfToken);
-        res.cookie(CsrfMiddleware.CSRF_COOKIE_NAME, csrfToken, {
-          httpOnly: true, // Prevents XSS exfiltration — token is sent in response header instead
-          secure: process.env.NODE_ENV !== 'development',
-          sameSite: 'strict',
-          path: '/',
-        });
-        // Send token in response header so clients can read it and set the
-        // X-CSRF-Token header on subsequent requests. httpOnly cookie blocks
-        // JavaScript access; this header is the client-side source of truth.
-        res.setHeader('X-CSRF-Token', csrfToken);
+      const cookieToken = req.cookies?.[CsrfMiddleware.CSRF_COOKIE_NAME];
+      if (cookieToken && (await this.csrfRegistry.isRegistered(cookieToken))) {
+        // Still-valid cookie: echo the token in the response header so clients
+        // can always re-sync. Without this echo, a client whose cached header
+        // drifted from its httpOnly cookie (page reload, partial cookie
+        // expiry, restored session) could never learn the current token —
+        // every mutation would 403 forever, and each failure fed the
+        // per-IP violation counter toward a full client ban.
+        res.setHeader(CsrfMiddleware.CSRF_HEADER_NAME, cookieToken);
+        return next();
       }
+      // Absent, expired, or unregistered cookie: mint AND register a fresh
+      // token (the token only validates later if it exists in the Redis-backed
+      // registry — persists across gateway restarts, so clients' cached tokens
+      // survive deploys).
+      const csrfToken = this.csrfRegistry.mint();
+      void this.csrfRegistry.register(csrfToken);
+      res.cookie(CsrfMiddleware.CSRF_COOKIE_NAME, csrfToken, {
+        httpOnly: true, // Prevents XSS exfiltration — token is sent in response header instead
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: 'strict',
+        path: '/',
+      });
+      // Send token in response header so clients can read it and set the
+      // X-CSRF-Token header on subsequent requests. httpOnly cookie blocks
+      // JavaScript access; this header is the client-side source of truth.
+      res.setHeader(CsrfMiddleware.CSRF_HEADER_NAME, csrfToken);
       return next();
     }
 

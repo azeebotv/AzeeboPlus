@@ -23,7 +23,12 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('User role not found');
     }
 
-    const hasRole = requiredRoles.some((role) => user.role === role);
+    // Case-insensitive: identity providers store roles in varying cases
+    // (auth-service DB has lowercase 'admin'/'moderator'), while decorators
+    // across services use uppercase ('ADMIN'). Exact matching made every
+    // uppercase-decorated route unreachable for real traffic.
+    const userRole = (user.role || '').toLowerCase();
+    const hasRole = requiredRoles.some((role) => role.toLowerCase() === userRole);
     if (!hasRole) {
       throw new ForbiddenException(`Access denied. Required roles: ${requiredRoles.join(', ')}`);
     }
