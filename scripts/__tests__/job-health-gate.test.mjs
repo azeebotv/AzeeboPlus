@@ -15,7 +15,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { evaluateJobHealth, JOB_PROFILES } from '../database/job-health-gate.mjs';
+import { evaluateJobHealth, parseForeignDirect, JOB_PROFILES } from '../database/job-health-gate.mjs';
 
 const CLI = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -157,6 +157,131 @@ describe('evaluateJobHealth', () => {
       assert.ok(['hourly', 'nightly', 'weekly'].includes(prof.cadence), `${job} cadence`);
       assert.ok(['streak', 'consecutive'].includes(prof.profile), `${job} profile`);
     }
+  });
+});
+
+// ── foreign direct clients ──────────────────────────────────────────────
+
+const foreignDetail = (ws, conns = 2) =>
+  `pgbouncer 28/200 clients; foreign direct clients (context, not violations): ${ws}(node 5, ${conns} conns); no pooler bypasses`;
+const bypassDetail = (ws) =>
+  `pgbouncer 28/200 clients; 1 repo process(es) bypassing pgbouncer: ${ws}(node 7, 1 conns)`;
+
+describe('parseForeignDirect', () => {
+  it('extracts the workspace + conns from a foreign segment', () => {
+    assert.deepEqual(parseForeignDirect(foreignDetail('/other/proj', 3)), [
+      { workspace: '/other/proj', conns: 3, raw: '/other/proj(node 5, 3 conns)' },
+    ]);
+  });
+
+  it('stops the capture at the repo-bypass segment that always follows', () => {
+    // Real composed shape: saturation; foreign…; repo-bypass… (bypass segment
+    // last — the gate's tail anchor depends on that order).
+    const detail = 'pgbouncer 30/200 clients; foreign direct clients (context, not violations): /a/b(Python 9, 1 conns); 1 repo process(es) bypassing pgbouncer: apps/creator(node 7, 1 conns)';
+    const parsed = parseForeignDirect(detail);
+    assert.equal(parsed.length, 1);
+    assert.equal(parsed[0].workspace, '/a/b');
+    assert.ok(!parsed[0].raw.includes('bypassing'));
+  });
+
+  it('returns empty for the zero case and for non-pool-audit details', () => {
+    assert.deepEqual(parseForeignDirect('pgbouncer 28/200 clients; no pooler bypasses'), []);
+    assert.deepEqual(parseForeignDirect('freshness probe failed'), []);
+    assert.deepEqual(parseForeignDirect(null), []);
+  });
+
+  it('handles multiple foreign workspaces in one pass', () => {
+    const detail = 'pgbouncer 40/200 clients; foreign direct clients (context, not violations): /x(Python 1, 2 conns); /y/node(Python 2, 4 conns); no pooler bypasses';
+    const parsed = parseForeignDirect(detail);
+    assert.deepEqual(parsed.map((p) => p.workspace), ['/x', '/y/node']);
+  });
+});
+
+describe('new-foreign-workspace alert', () => {
+  const fRow = (ws, agoH, conns) => row('pool-audit', 'ok', h(agoH), foreignDetail(ws, conns));
+
+  it('fails when an unseen workspace is flagged in >= 2 passes', () => {
+    const rows = [fRow('/new/proj', 1), fRow('/new/proj', 2), row('freshness', 'ok', h(1))];
+    const r = evaluateJobHealth(rows, { knownForeignWorkspaces: new Set(), now: NOW });
+    assert.equal(r.verdict, 'fail');
+    assert.equal(r.newForeign.length, 1);
+    assert.equal(r.newForeign[0].workspace, '/new/proj');
+    assert.equal(r.newForeign[0].passes, 2);
+    assert.match(r.reason, /new foreign direct-Postgres workspace/);
+  });
+
+  it('passes when the workspace is already known (present in the pre-window baseline)', () => {
+    const rows = [fRow('/old/proj', 1), fRow('/old/proj', 2)];
+    const r = evaluateJobHealth(rows, {
+      knownForeignWorkspaces: new Set(['/old/proj', '/another/one']),
+      now: NOW,
+    });
+    assert.equal(r.verdict, 'pass');
+    assert.deepEqual(r.newForeign, []);
+  });
+
+  it('single pass of a new workspace is a one-off sniff — pass', () => {
+    const rows = [fRow('/sniffer', 1)];
+    const r = evaluateJobHealth(rows, { knownForeignWorkspaces: new Set(), now: NOW });
+    assert.equal(r.verdict, 'pass');
+    assert.deepEqual(r.newForeign, []);
+  });
+
+  it('minForeignPasses is tunable (1 makes a single pass fail)', () => {
+    const rows = [fRow('/sniffer', 1)];
+    const r = evaluateJobHealth(rows, { knownForeignWorkspaces: new Set(), minForeignPasses: 1, now: NOW });
+    assert.equal(r.verdict, 'fail');
+    assert.equal(r.newForeign[0].passes, 1);
+  });
+
+  it('null known set (lookup failed) skips the alert entirely — never fails on missing bookkeeping', () => {
+    const rows = [fRow('/new/proj', 1), fRow('/new/proj', 2)];
+    const r = evaluateJobHealth(rows, { knownForeignWorkspaces: null, now: NOW });
+    assert.equal(r.verdict, 'pass');
+  });
+
+  it('known-set lookup failure must not mask an error-heavy verdict (alert skipped, profiles still run)', () => {
+    const rows = [fRow('/new/proj', 1), row('freshness', 'error', h(1)), row('freshness', 'error', h(2)), row('freshness', 'error', h(3))];
+    const r = evaluateJobHealth(rows, { knownForeignWorkspaces: null, now: NOW });
+    assert.equal(r.verdict, 'fail');
+    assert.equal(r.failing[0].job, 'freshness');
+    assert.deepEqual(r.newForeign, []);
+  });
+
+  it('baseline only counts workspaces OLDER than the window (in-window history is not a baseline)', () => {
+    // /mixed appears at h(70) — outside the default 56h window — so it is
+    // KNOWN; the same rows would be in-window (h(10)) if the window were
+    // 80h. evaluateJobHealth itself just takes the set; this test pins the
+    // semantics the CLI's knownForeignWorkspaces() implements.
+    const rows = [fRow('/mixed', 1), fRow('/mixed', 2)];
+    const olderKnown = evaluateJobHealth(rows, { knownForeignWorkspaces: new Set(['/mixed']), now: NOW });
+    assert.equal(olderKnown.verdict, 'pass');
+  });
+
+  it('combines with error-heavy failures into one reason line', () => {
+    const rows = [
+      fRow('/new/proj', 1),
+      fRow('/new/proj', 2),
+      row('data-retention', 'error', d(1)),
+      row('data-retention', 'error', d(2)),
+    ];
+    const r = evaluateJobHealth(rows, { knownForeignWorkspaces: new Set(), now: NOW });
+    assert.equal(r.verdict, 'fail');
+    assert.match(r.reason, /error-heavy scheduled job\(s\): data-retention/);
+    assert.match(r.reason, /new foreign direct-Postgres workspace\(s\) \(context, not repo violations\): \/new\/proj/);
+  });
+
+  it('empty set = bootstrap semantics: every in-window foreign workspace is new', () => {
+    const rows = [fRow('/first/ever', 1), fRow('/first/ever', 2)];
+    const r = evaluateJobHealth(rows, { knownForeignWorkspaces: new Set(), now: NOW });
+    assert.equal(r.verdict, 'fail');
+    assert.equal(r.newForeign[0].workspace, '/first/ever');
+  });
+
+  it('conns value tracks the latest pass', () => {
+    const rows = [fRow('/w', 1, 4), fRow('/w', 2, 2)];
+    const r = evaluateJobHealth(rows, { knownForeignWorkspaces: new Set(), now: NOW });
+    assert.equal(r.newForeign[0].conns, 4);
   });
 });
 

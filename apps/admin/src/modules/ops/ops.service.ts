@@ -545,6 +545,8 @@ const LEDGER_CADENCE_STATE_FILE =
  */
 const POOL_AUDIT_LOG =
   process.env.POOL_AUDIT_LOG || `${process.env.TMPDIR || '/tmp'}/azeebo-admin-pool-audit.log`;
+const PLIST_WATCHDOG_LOG =
+  process.env.PLIST_WATCHDOG_LOG || `${process.env.TMPDIR || '/tmp'}/azeebo-plist-watchdog.log`;
 
 /** Timestamp prefix of a job log line: `[2026-09-14 10:23:33] …` */
 const LOG_LINE = /^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]\s*(.*)$/;
@@ -553,6 +555,7 @@ const LOG_LINE = /^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]\s*(.*)$/;
 const FRESHNESS_STALE_MINUTES = 120; // hourly schedule → 2h without a pass is a stall
 const RETENTION_STALE_MINUTES = 26 * 60; // daily schedule → warn after ~26h (one missed day)
 const POOL_AUDIT_STALE_MINUTES = 120; // hourly schedule (launchd at :21) → 2h stall threshold
+const PLIST_WATCHDOG_STALE_MINUTES = 45; // 15-min schedule × 3 passes of grace
 
 /**
  * Expected max gap between ledger passes per job (minutes) — the LEDGER-side
@@ -570,6 +573,8 @@ const LEDGER_CADENCE_MINUTES: Record<string, number> = {
   'audit-retention': 26 * 60,
   'data-retention': 26 * 60,
   'pool-audit': 120,
+  // 15-min cadence × 3 passes of grace.
+  'plist-watchdog': 45,
 };
 export { LEDGER_CADENCE_MINUTES };
 
@@ -583,6 +588,7 @@ const KNOWN_JOBS = [
   'audit-retention',
   'data-retention',
   'pool-audit',
+  'plist-watchdog',
 ] as const;
 export { KNOWN_JOBS };
 const MAX_RUNS_PER_JOB = 40;
@@ -604,6 +610,7 @@ const RUN_JOBS: Record<string, { script: string[]; timeoutMs: number }> = {
     timeoutMs: 120_000,
   },
   'pool-audit': { script: ['scripts/database/pool-audit.sh', 'run'], timeoutMs: 120_000 },
+  'plist-watchdog': { script: ['scripts/launchd/plist-watchdog.sh', 'run'], timeoutMs: 120_000 },
 };
 export { RUN_JOBS };
 
@@ -1131,8 +1138,16 @@ export class OpsService {
   }
 
   async getStatus(): Promise<OpsStatus> {
-    const [db, federation, freshness, retention, poolAudit, ledgerAlerts, logAlerts] =
-      await Promise.all([
+    const [
+      db,
+      federation,
+      freshness,
+      retention,
+      poolAudit,
+      plistWatchdog,
+      ledgerAlerts,
+      logAlerts,
+    ] = await Promise.all([
         this.checkDb(),
         this.checkFederation(),
         this.checkJob(
@@ -1148,14 +1163,21 @@ export class OpsService {
           undefined,
           RETENTION_STALE_MINUTES
         ),
-        this.checkJob(
-          'Pool audit',
-          POOL_AUDIT_LOG,
-          ['ok:', 'WARN:', 'ERROR:'],
-          undefined,
-          POOL_AUDIT_STALE_MINUTES
-        ),
-        this.checkLedgerCadence(),
+      this.checkJob(
+        'Pool audit',
+        POOL_AUDIT_LOG,
+        ['ok:', 'WARN:', 'ERROR:'],
+        undefined,
+        POOL_AUDIT_STALE_MINUTES
+      ),
+      this.checkJob(
+        'Plist watchdog',
+        PLIST_WATCHDOG_LOG,
+        ['ok:', 'WARN:', 'ERROR:'],
+        undefined,
+        PLIST_WATCHDOG_STALE_MINUTES
+      ),
+      this.checkLedgerCadence(),
         this.recentAlerts(),
       ]);
     // Ledger-silence alerts render in the same Recent alerts table as the
@@ -1173,7 +1195,7 @@ export class OpsService {
       this.logger.warn(`background pgbouncer probe failed: ${e.message}`)
     );
 
-    const checks = [db, federation, freshness, retention, poolAudit];
+    const checks = [db, federation, freshness, retention, poolAudit, plistWatchdog];
     const overall = checks.some((c) => !c.ok && /ERROR|down|stale|broken/i.test(c.detail))
       ? 'down'
       : checks.every((c) => c.ok)
@@ -1184,7 +1206,7 @@ export class OpsService {
       overall,
       db,
       federation,
-      jobs: [freshness, retention, poolAudit],
+      jobs: [freshness, retention, poolAudit, plistWatchdog],
       alerts,
       checkedAt: new Date().toISOString(),
     };
