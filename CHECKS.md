@@ -43,14 +43,34 @@ Two conventions hold across all of them:
 - **Scheduled-job health gate** (nightly, schema-lock-nightly.yml → "Fail
   on error-heavy scheduled jobs"): extends the pool-gate idea to every
   known ledger job — freshness, drill, audit-retention, data-retention,
-  pool-audit — each with a per-cadence fail profile: hourly jobs need a
-  sustained streak (≥3 consecutive error passes spanning ≥2h, mirroring the
-  saturation gate), nightly and weekly jobs fail on 2 consecutive error
-  passes. Runs are broken by ledger gaps > cadence × 1.5 so a job that
-  stopped recording isn't read as a health streak (the Ops Health cadence
-  watchdog covers silence). warn rows never fail but do break error runs.
+  pool-audit, plist-watchdog — each with a per-cadence fail profile: hourly
+  jobs need a sustained streak (≥3 consecutive error passes spanning ≥2h,
+  mirroring the saturation gate), plist-watchdog fails on 2 consecutive
+  error passes (15-min cadence, fleet-stakes), nightly and weekly jobs fail
+  on 2 consecutive error passes. Runs are broken by ledger gaps > cadence ×
+  1.5 so a job that stopped recording isn't read as a health streak (the
+  Ops Health cadence watchdog covers silence). warn rows never fail but do
+  break error runs. Also alerts when a NEW foreign workspace (another
+  project on this machine) starts dialing Postgres directly: pool-audit
+  records foreign direct clients as a context detail segment, and a
+  workspace not present in the pre-window ledger baseline fails the gate
+  after ≥JOB_HEALTH_MIN_FOREIGN_PASSES (default 2) passes — repo bypasses
+  stay the bypass gate's job; this is the "who else is dialing" signal.
   Locally: `LIVE_DB_URL_BASE=postgresql://…@127.0.0.1:6432
   JOB_HEALTH_HOURS=56 node scripts/database/job-health-gate.mjs`.
+- **Plist watchdog** (local, LaunchAgent `com.azeebo.plist-watchdog`, every
+  15 min): self-healing guard for every `com.azeebo.*` agent — the response
+  to plists vanishing twice on 2026-09-22. Services: any MISSING/drifted
+  plist is regenerated from the manifest and the affected labels
+  re-bootstrapped (manifest contract violations alert without healing —
+  that's a code bug, not drift). Jobs: a missing plist is reinstalled via
+  its script's own install mode (installers may bake env at install time,
+  so job-plist drift is left for humans). Every pass records a
+  `plist-watchdog` row in the job_runs ledger through the pooler, so the
+  Ops Health card, the cadence watchdog, and this gate all police the
+  watchdog itself. Alerts repeat-suppressed (12h) via notification +
+  optional webhook. Manage: `scripts/launchd/plist-watchdog.sh
+  [run|status|install|uninstall]`.
 - **Exit codes** — `0` = invariant holds (or advisory-only findings), `1` =
   violation. Checks that need a database (migrations/deployed-schema/drift)
   create and drop throwaway shadow databases; they never touch real data.
@@ -334,6 +354,42 @@ author-triage territory, not darkness.
 
 **Fix:** read the tracking issue's cause column; billing blocks need a human
 in Settings → Billing & plans.
+
+### `gen-service-plists` — service LaunchAgent contract (PR gate + local check)
+
+**Invariant:** every `com.azeebo.*` SERVICE LaunchAgent plist is a pure
+emission of `scripts/launchd/service-manifest.mjs` — no hand-edited plists.
+Three rules are enforced mechanically, because each one already caused an
+incident:
+
+1. **No inline env secrets.** launchd `EnvironmentVariables` override
+   `node --env-file`, so an inline `DATABASE_URL` pins a service to direct
+   5432 *even when its .env points at pgbouncer* — exactly how 11 plists
+   silently bypassed the pooler (2026-09-21). The generator hard-fails on
+   any `FORBIDDEN_ENV_KEYS` key (`DATABASE_URL`, JWT/AWS/Gateway secrets,
+   passwords) in any entry or emitted plist.
+2. **`--env-file` is forced by construction** for every DB-backed service:
+   membership in `DB_SERVICES` guarantees the argv contains
+   `--env-file=<svc>/.env`, and the audit verifies the .env exists and
+   defines `PORT`.
+3. **Drift tripwire** (`--check`, run locally / in CI as `--ci`): the
+   installed plist must match the manifest byte-for-byte — or be MISSING,
+   which also fails (a LaunchAgent vanished twice on the dev machine before
+   this gate existed).
+
+Where it runs: `pr-checks.yml` → Postgres Pool Budget job
+(`--ci`, machine-independent — emits to a temp dir, no plutil/
+`~/Library/LaunchAgents`/`.env` needed) and `node
+scripts/launchd/gen-service-plists.mjs [--check]` locally (write mode
+generates + you re-bootstrap; `--check` diffs without writing).
+
+Tests: `node --test scripts/__tests__/launchd-plists.test.mjs`.
+
+**Fix:** after any manifest edit run `node scripts/launchd/gen-service-plists.mjs`,
+then `launchctl bootout gui/$(id -u)/com.azeebo.<label>; launchctl bootstrap
+gui/$(id -u) ~/Library/LaunchAgents/com.azeebo.<label>.plist` for each
+changed service. To recover a vanished plist, just regenerate (then re-run
+`--check` to confirm the deleter hasn't struck again).
 
 ---
 

@@ -174,6 +174,17 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client
+      # LaunchAgent contract gate: every service plist must be a pure
+      # manifest emission — no inline DATABASE_URL/secrets in
+      # EnvironmentVariables, --env-file forced for every DB-backed service.
+      # This is the structural fix for the 2026-09-21 incident where 11
+      # service plists carried inline direct-5432 DATABASE_URLs that launchd
+      # injected OVER the pooler --env-file, silently bypassing pgbouncer.
+      # Runs before the pool budget gate so the review sees both violations
+      # in one look. Machine-independent: emits to a temp dir, no plutil,
+      # no ~/Library/LaunchAgents, no .env files needed.
+      - name: Check service plist contract
+        run: node scripts/launchd/gen-service-plists.mjs --ci
       - name: Check pool budget against 80% safety margin
         run: node scripts/database/apply-pool-limits.mjs --ci
         env:

@@ -58,6 +58,87 @@
 ./start-all.sh
 ```
 
+### Service LaunchAgents (generated, never hand-edited)
+
+Every `com.azeebo.*` service plist on this machine is generated from
+`scripts/launchd/service-manifest.mjs` by `gen-service-plists.mjs`. Never
+edit an installed plist by hand — the next generation wipes it, and PR gate
+`gen-service-plists --ci` fails when an installed plist drifts from the
+manifest. The point of the machinery: launchd `EnvironmentVariables`
+override `node --env-file`, so an inline `DATABASE_URL` in a plist silently
+bypasses pgbouncer (this happened to 11 services on 2026-09-21) — the
+generator makes such a plist impossible to emit.
+
+```bash
+# Regenerate after editing the manifest (service-manifest.mjs):
+node scripts/launchd/gen-service-plists.mjs
+
+# Reload one service to pick up its new plist:
+launchctl bootout gui/$(id -u)/com.azeebo.<label>
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.azeebo.<label>.plist
+
+# Reload the whole fleet:
+for f in ~/Library/LaunchAgents/com.azeebo.*.plist; do \
+  launchctl bootout "gui/$(id -u)/$(basename "$f" .plist)" 2>/dev/null; \
+  launchctl bootstrap "gui/$(id -u)" "$f"; done
+
+# Verify installed plists match the manifest (also a PR gate via --ci):
+node scripts/launchd/gen-service-plists.mjs --check
+```
+
+Notes:
+- Services load their OWN `<dir>/.env` via `--env-file`; the plist carries
+  no DB URLs or secrets. PORT and every credential live in the .env.
+- The nest-dev kind (`lifestyle-dev`) passes `--env-file` to `nest start`
+  and needs `PATH` in its inline env (nest shells out to `node`).
+- If a plist disappears (a deleter has struck twice on this machine),
+  regenerate and re-run `--check` — the check mode reports missing files.
+
+### Loopback transport: IPv6-only listeners
+
+Services bind different loopback families — `admin-backend` (4100) listens on
+`[::1]:4100` ONLY, so `curl 127.0.0.1:4100/v1/health` returns connection-refused
+while the service is perfectly healthy. When probing anything by port:
+
+- Try `localhost` first (dual-stack), then `http://[::1]:PORT`, then
+  `http://127.0.0.1:PORT` — this is exactly what the Ops Health service prober
+  does (`apps/admin/src/modules/ops/service-probe.ts`), and it records which
+  transport answered so the UI can flag an IPv6-only listener instead of
+  inventing an outage.
+- An HTTP response on ANY transport means the service is up — a 404 or 500 is
+  a route/health mismatch, never "wrong transport", so don't retry other
+  candidates after one answers.
+- Grep / curl health checks in scripts must not hardcode `127.0.0.1` for a
+  service whose bind family is unknown; use `localhost` or the three-candidate
+  fallback.
+- Scheduled jobs (freshness, retention, pool-audit, digest, drill) are NOT
+  in the manifest — their scripts' own `install` modes remain their source
+  of truth.
+
+### Plist watchdog (self-healing LaunchAgents)
+
+On 2026-09-22 com.azeebo plists vanished twice from `~/Library/LaunchAgents`
+(pool-audit both times; culprit unproven — no repo script deletes foreign
+plists, no crontab, empty Trash). `com.azeebo.plist-watchdog` now runs every
+15 minutes: missing/drifted SERVICE plists are regenerated from the manifest
+and re-bootstrapped; missing JOB plists are reinstalled via their scripts'
+install modes. Every pass writes a `plist-watchdog` row to the job_runs
+ledger, so silence of the watchdog itself is caught by the Ops Health
+cadence check and the nightly job-health gate. Alerts (notification +
+optional webhook) repeat at most once per 12h.
+
+```bash
+bash scripts/launchd/plist-watchdog.sh run      # one pass now
+bash scripts/launchd/plist-watchdog.sh status   # state + per-plist report
+bash scripts/launchd/plist-watchdog.sh install  # 15-min LaunchAgent (+ ALERT_WEBHOOK_URL bakes in webhook delivery)
+bash scripts/launchd/plist-watchdog.sh uninstall
+```
+
+If plists keep disappearing after this, the watchdog's ledger rows and log
+(`/tmp/azeebo-plist-watchdog.log`) are the evidence trail — each detection
+row timestamps exactly when the deleter struck.
+
+
 ### Shared Runners (dev, build, app, package)
 
 Every service, schema-owning app, and package routes its dev/build scripts

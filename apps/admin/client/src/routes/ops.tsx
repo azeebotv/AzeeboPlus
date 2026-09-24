@@ -865,6 +865,8 @@ export default function OpsPage() {
     'Freshness job': 'freshness',
     'Audit retention': 'audit-retention',
     'Pool audit': 'pool-audit',
+    'Plist watchdog': 'plist-watchdog',
+    'Plist watchdog': 'plist-watchdog',
   };
 
   if (isLoading || !data) {

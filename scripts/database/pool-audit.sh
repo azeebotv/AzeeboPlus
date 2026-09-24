@@ -42,10 +42,14 @@ PB_HOST="${PGBOUNCER_HOST:-127.0.0.1}"
 PB_PORT="${PGBOUNCER_PORT:-6432}"
 PB_USER="${PGBOUNCER_ADMIN_USER:-pgbouncer}"
 PB_PASS="${PGBOUNCER_ADMIN_PASSWORD:-whatever}"
-PG_DIRECT_PORT=5432
+PG_DIRECT_PORT="${PG_DIRECT_PORT:-5432}"
 
 # Ledger credentials (record-job-run.sh shares these defaults).
 export PGHOST="${PGHOST:-localhost}" PGPORT="${PGPORT:-5432}"
+
+# Direct-Postgres port (the bypass probe dials this): defaults to 5432. The
+# Ops Health card and the nightly gates read what this records. PG_DIRECT_PORT
+# is overridable for drills (PG_DIRECT_PORT=5433 …) — defaults to 5432.
 export PGUSER="${PGUSER:-azeebo}" PGPASSWORD="${PGPASSWORD:-azeebo_dev_2024}"
 
 PSQL_BIN="${PSQL_BIN:-$(command -v psql || true)}"
@@ -91,8 +95,8 @@ probe_saturation() {
 # Repo-owned client processes whose ESTABLISHED sockets dial :5432 directly.
 # Prints "COUNT|summary" where summary lists up to 5 "workspace(cmd pid, N conns)".
 probe_bypasses() {
-  local raw pids pid cmd cwd block summary="" count=0 item
-  raw=$(lsof -nP -iTCP:$PG_DIRECT_PORT -sTCP:ESTABLISHED -Fpcn 2>/dev/null) || { echo "0|"; return; }
+  local raw pids pid cmd cwd block summary="" count=0 item foreign="" fcount=0
+  raw=$(lsof -nP -iTCP:$PG_DIRECT_PORT -sTCP:ESTABLISHED -Fpcn 2>/dev/null) || { echo "0||"; return; }
   # Parse lsof -F output: per-process blocks of p/c/f/n lines; count only
   # sockets whose REMOTE end is :5432 (server-side rows have it as local end).
   pids=$(printf '%s\n' "$raw" | awk -v P=$PG_DIRECT_PORT '
@@ -110,7 +114,14 @@ probe_bypasses() {
     case "$cwd" in
       "$REPO_ROOT") workspace="(repo root)" ;;
       "$REPO_ROOT"/*) workspace="${cwd#"$REPO_ROOT"/}" ;;
-      *) continue ;; # foreign project — context for the card, not a violation
+      *) # foreign project — not a violation (the bypass gate's job), but the
+         # job-health gate compares the foreign set against a pre-window
+         # baseline to alert on NEW foreign dialers, so it must be recorded.
+         fcount=$((fcount + 1))
+         if [ "$fcount" -le 5 ]; then
+           foreign="${foreign:+$foreign; }$cwd"
+         fi
+         continue ;;
     esac
     cmd=$(ps -p "$pid" -o command= 2>/dev/null | awk '{print $1}' | awk -F/ '{print $NF}')
     conns=$(printf '%s\n' "$raw" | awk -v P=$PG_DIRECT_PORT -v pid="p$pid" '
@@ -127,7 +138,13 @@ probe_bypasses() {
       summary="$summary; $item"
     fi
   done
-  echo "$count|$summary"
+  local out="$count|$summary"
+  # Third field: foreign direct clients as context (not violations). Only when
+  # present — a missing third field must read as the clean/legacy case.
+  if [ "$fcount" -gt 0 ]; then
+    out="$out|foreign direct clients (context, not violations): $foreign"
+  fi
+  echo "$out"
 }
 
 # --- state + repeat suppression -------------------------------------------
@@ -158,9 +175,9 @@ decide() { # $1 = current fingerprint ("" = clean)
 # pass detail — the history shows the audit ran and what it saw.
 run_pass() {
   local start=$(date +%s)
-  local sat bypass sat_level sat_total sat_max bp_count bp_summary
+  local sat bypass sat_level sat_total sat_max bp_count bp_summary foreign_segment
   sat=$(probe_saturation); IFS='|' read -r sat_level sat_total sat_max <<<"$sat"
-  bypass=$(probe_bypasses); IFS='|' read -r bp_count bp_summary <<<"$bypass"
+  bypass=$(probe_bypasses); IFS='|' read -r bp_count bp_summary foreign_segment <<<"$bypass"
 
   local sat_part bp_part fingerprint=""
   case "$sat_level" in
@@ -178,6 +195,13 @@ run_pass() {
     fingerprint="${fingerprint:+$fingerprint+}bp:$bp_count"
   else
     bp_part="no pooler bypasses"
+  fi
+  # Foreign segment MUST sit between saturation and repo-bypass segments:
+  # pool-bypass-gate's tail-anchored "bypassing pgbouncer: (.*)$" requires the
+  # repo segment last, and job-health-gate's foreign parser anchors on what
+  # follows it.
+  if [ -n "$foreign_segment" ]; then
+    bp_part="$bp_part; $foreign_segment"
   fi
 
   local status=ok level=ok notify=""
