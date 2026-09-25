@@ -16,10 +16,11 @@ import {
   parsePoolIssueTable,
   poolBodyDiffers,
 } from '../lib/drift-issue.mjs';
-import { violationsFromGates, decidePoolAction } from '../pool-issue-tracker.mjs';
+import { violationsFromGates, decidePoolAction, parseAllowlist } from '../pool-issue-tracker.mjs';
 
 const SAT = { kind: 'saturation', workspace: null, reason: 'sustained critical saturation: streak 4, span 3.0h' };
 const BP = { kind: 'bypass', workspace: 'apps/creator', reason: 'sustained pgbouncer bypass: apps/creator flagged in 30 pass(es) spanning 29.0h' };
+const FW = { kind: 'foreign', workspace: 'YCN/services/gateway', reason: 'sustained foreign direct-Postgres dialer: YCN/services/gateway flagged in 30 pass(es) spanning 29.0h, 1 conns at last sighting' };
 
 test('pool-issue core: identity constants are pool-specific', () => {
   assert.equal(POOL_ISSUE_MARKER, '<!-- azeebo:pool-saturation-tracking -->');
@@ -77,6 +78,29 @@ test('violationsFromGates: only sustained offenders listed, sorted, saturation f
   assert.ok(violationsFromGates(sat, bp)[0].kind === 'saturation');
 });
 
+test('violationsFromGates: foreign dialers join as the third kind, sustained-only', () => {
+  const bp = { verdict: 'fail', sustained: [{ workspace: 'apps/creator', length: 30, spanH: 29 }] };
+  const fw = {
+    verdict: 'fail',
+    offenders: ['YCN/services/gateway', 'YCN/services/admin', '/private/tmp-blip'],
+    sustained: [
+      { workspace: 'YCN/services/admin', length: 30, spanH: 29.1, conns: 5 },
+      { workspace: 'YCN/services/gateway', length: 26, spanH: 25, conns: 1 },
+    ],
+  };
+  const open = violationsFromGates({ verdict: 'pass' }, bp, fw);
+  assert.deepEqual(
+    open.map((o) => [o.kind, o.workspace]),
+    [['bypass', 'apps/creator'], ['foreign', 'YCN/services/admin'], ['foreign', 'YCN/services/gateway']]
+  );
+  // Non-sustained foreign offender excluded (one sniff never tracks).
+  assert.equal(open.some((o) => o.workspace === '/private/tmp-blip'), false);
+  // conns rides the reason text when known.
+  assert.match(open.find((o) => o.workspace === 'YCN/services/admin').reason, /5 conns at last sighting/);
+  // fw omitted entirely (legacy callers) → no foreign rows, no crash.
+  assert.equal(violationsFromGates({ verdict: 'pass' }, bp).some((o) => o.kind === 'foreign'), false);
+});
+
 test('violationsFromGates: passing gates yield an empty set', () => {
   assert.deepEqual(violationsFromGates({ verdict: 'pass' }, { verdict: 'pass' }), []);
   // A bypass fail with no sustained rows (defensive) → no phantom rows.
@@ -101,4 +125,43 @@ test('decidePoolAction: the full lifecycle', () => {
   // Clean + open → close. Clean + none → none.
   assert.equal(decidePoolAction([open], []).action, 'close');
   assert.equal(decidePoolAction([], []).action, 'none');
+});
+
+test('foreign kind: render/parse/differ round-trip and identity semantics', () => {
+  // Three-kind body renders all rows in urgency order.
+  const body = renderPoolIssueBody([FW, SAT, BP]);
+  const rows = body.split('\n').filter((l) => /^\| (saturation|bypass|foreign) /.test(l));
+  assert.deepEqual(rows.map((r) => r.split('|')[1].trim()), ['saturation', 'bypass', 'foreign']);
+  // Round-trip: parse reads foreign rows back with kind + identity intact.
+  const parsed = parsePoolIssueTable(body);
+  assert.ok(parsed.some((r) => r.kind === 'foreign' && r.workspace === 'YCN/services/gateway'));
+  // Same set (evolved reason text) → no update. Set change → update.
+  assert.equal(poolBodyDiffers(body, [SAT, BP, { ...FW, reason: 'now 29.4h' }]), false);
+  // A foreign row REMOVED (dialer went away) → update.
+  assert.equal(poolBodyDiffers(body, [SAT, BP]), true);
+  // A foreign row ADDED → update.
+  assert.equal(poolBodyDiffers(body, [SAT, BP, FW, { kind: 'foreign', workspace: '/other/proj' }]), true);
+  // Kind flip on same path (repo started bypassing from the foreign cwd) → update.
+  assert.equal(poolBodyDiffers(body, [SAT, BP, { kind: 'bypass', workspace: 'YCN/services/gateway' }]), true);
+  // Foreign-only body round-trips clean.
+  const fwOnly = renderPoolIssueBody([FW]);
+  assert.equal(poolBodyDiffers(fwOnly, [FW]), false);
+  assert.match(fwOnly, /1 pool-health violation/);
+});
+
+test('parseAllowlist: POOL_FOREIGN_ALLOWLIST parsing contract', () => {
+  // Absent / non-string → nothing approved (the safe default).
+  assert.deepEqual(parseAllowlist(undefined), []);
+  assert.deepEqual(parseAllowlist(null), []);
+  assert.deepEqual(parseAllowlist(42), []);
+  assert.deepEqual(parseAllowlist(''), []);
+  // Comma-separated exact paths, whitespace tolerated, empties dropped.
+  assert.deepEqual(
+    parseAllowlist(' /Users/me/YCN/services/api , /Users/partner/fleet ,,'),
+    ['/Users/me/YCN/services/api', '/Users/partner/fleet']
+  );
+  // Single entry with no comma.
+  assert.deepEqual(parseAllowlist('/only/one'), ['/only/one']);
+  // Inner entries are trimmed, not stripped of internal spacing (exact paths).
+  assert.deepEqual(parseAllowlist('/a /b, /c'), ['/a /b', '/c']);
 });

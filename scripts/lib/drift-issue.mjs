@@ -35,8 +35,8 @@ export const POOL_ISSUE_LABEL = 'pool-health';
 /**
  * The body the pool tracking issue should carry.
  *
- * open:   [{ kind: 'saturation'|'bypass', workspace?, reason, detail }]
- *         sorted saturation-first (the more urgent class), then by identity.
+ * open:   [{ kind: 'saturation'|'bypass'|'foreign', workspace?, reason }]
+ *         ordered saturation → bypass → foreign (most urgent class first).
  * closed: rendered as the resolved state (empty list).
  */
 export function renderPoolIssueBody(open, { generatedAt = null, runUrl = null } = {}) {
@@ -50,15 +50,16 @@ export function renderPoolIssueBody(open, { generatedAt = null, runUrl = null } 
   } else {
     const sat = open.filter((o) => o.kind === 'saturation');
     const bp = open.filter((o) => o.kind === 'bypass');
+    const fw = open.filter((o) => o.kind === 'foreign');
     lines.push(`### 🚨 ${open.length} pool-health violation(s) sustained`);
     lines.push('');
-    lines.push('_Detected nightly by `schema-lock-nightly.yml` from the `pool-audit` job_runs ledger (read-only). Fix: scale pgbouncer `max_client_conn`, shed connections, or move the flagged process onto the pooler DATABASE_URL (port 6432, `pgbouncer=true`)._');
+    lines.push('_Detected nightly by `schema-lock-nightly.yml` from the `pool-audit` job_runs ledger (read-only). Fix: scale pgbouncer `max_client_conn`, shed connections, or move the flagged process onto the pooler DATABASE_URL (port 6432, `pgbouncer=true`). Foreign dialers are another project\'s clients landing in our connection budget — coordinate with that workspace\'s owners or firewall the direct port._');
     lines.push('');
     lines.push('| Kind | Identity | Detail |');
     lines.push('|---|---|---|');
-    // Render saturation rows first regardless of caller order — saturation
-    // is the more urgent class and the table order must be deterministic.
-    for (const o of [...sat, ...bp]) {
+    // Render in urgency order regardless of caller order — saturation first
+    // (our budget failing), then repo bypasses, then foreign dialers.
+    for (const o of [...sat, ...bp, ...fw]) {
       lines.push(`| ${o.kind} | ${o.workspace ?? 'pgbouncer'} | ${String(o.reason).replaceAll('|', '\\|').replaceAll('\n', ' ')} |`);
     }
     const ctx = [];

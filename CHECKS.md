@@ -30,15 +30,37 @@ Two conventions hold across all of them:
   `LIVE_DB_URL_BASE=postgresql://…@127.0.0.1:6432 node scripts/database/pool-bypass-gate.mjs`.
 - **Pool tracking issue** (nightly, schema-lock-nightly.yml → "Update
   pool-health tracking issue", production leg): a persistent home for the
-  two pool gates' verdicts, mirroring the production-drift tracker — ONE
+  pool gates' verdicts, mirroring the production-drift tracker — ONE
   marker-scoped GitHub issue under the azeebo-drift-bot App, created when a
   sustained violation first appears, updated only when the (kind, identity)
   violation set changes (detail churn never triggers edits), closed when
-  both gates pass, reopened on return. The bot RE-EVALUATES both gate cores
-  against the ledger (one source of truth) rather than parsing CI step
-  exits; lists only *sustained* bypass workspaces; degrades silently when
-  the ledger is unreachable (the gates own the blocking signal). Runs under
-  `always()` so a gate trip still updates the issue. Locally:
+  all pass, reopened on return. The bot RE-EVALUATES all three decision
+  cores against the ledger (one source of truth) rather than parsing CI
+  step exits — saturation, sustained repo bypasses, and now FOREIGN
+  DIALERS: another project on this host holding direct-Postgres
+  connections for 24h+ (the YCN-fleet shape) gets its own `foreign` row,
+  because someone else's clients land in OUR connection budget. Foreign
+  rows use the same sustained-only rule (one sniff never tracks; only a
+  24h+ persistence does) with their own threshold
+  (POOL_FOREIGN_MIN_SPAN_H, default 24, mirroring the bypass span) and
+  gap (POOL_FOREIGN_MAX_GAP_H). APPROVED dialers: POOL_FOREIGN_ALLOWLIST
+  (comma-separated exact workspace paths, whitespace tolerated; parsed by
+  pool-issue-tracker.mjs parseAllowlist) waives TRACKING, not visibility —
+  an approved workspace is still counted in offenders/passes (the budget
+  impact is real) but can never read as `sustained`, so the tracker never
+  opens, updates, or keeps an issue for it and the gate passes with an
+  "approved (allowlist), not tracked" reason when the only ≥threshold
+  dialer is approved. Matching is exact-path (no globbing) so an entry can
+  never approve a sibling path. The admin Ops Health card mirrors the
+  same list: approved rows show an "approved — not tracked" tag instead
+  of "sustained — tracked nightly" (see apps/admin/src/modules/ops/
+  ops.service.ts parseForeignAllowlist — a local copy; the admin build is
+  hermetic and cannot import scripts/). The foreign parser lives in
+  pool-bypass-gate.mjs alongside the bypass parser it mirrors (job-health
+  gate re-exports it — one segment-anchor semantic to evolve). Degrades
+  silently when the ledger is unreachable (the gates own the blocking
+  signal). Runs under `always()` so a gate trip still updates the issue.
+  Locally:
   `LIVE_DB_URL_BASE=postgresql://…@127.0.0.1:6432 node scripts/pool-issue-tracker.mjs --dry-run`.
 - **Scheduled-job health gate** (nightly, schema-lock-nightly.yml → "Fail
   on error-heavy scheduled jobs"): extends the pool-gate idea to every
@@ -100,6 +122,8 @@ Two conventions hold across all of them:
 | `check:live-schema-lock` | none (report only, never fails a PR) | read-only probe of live DBs |
 | `check:upstreams` | none (startup advisory; `--strict` for CI) | run after `start-all.sh` |
 | route-contracts (`check:route-contracts`) | Flag & Swagger Conventions | client↔gateway contract audit + dead-route advisory; ratchet baseline |
+| expo-routes (`check:expo-routes`) | Flag & Swagger Conventions | every mobile/TV navigation target must resolve to an Expo Router route file |
+| typed routes (`tv-bundle-pr` typecheck steps) | TV Metro Graph Check | compiler-level route validation: `Href` params typed, invalid targets are type errors |
 | federation-drill | Federation Drill (`.github/workflows/federation-drill.yml`) | weekly LaunchAgent on dev machines |
 
 ---
@@ -239,7 +263,27 @@ against a scratch pair to reproduce (see RUNBOOK "Federation Drill"), patch
 
 ### route-contracts (`check:route-contracts`)
 
-**Invariant (gating pass):** every API call extracted from client code —
+**Invariant (pass 3, gateway↔backend, gating):** every SERVICE_CONFIGS
+endpoint entry must match an actual backend NestJS controller route, and
+every backend controller route on a proxied upstream must be declared.
+The proxy forwards purely by service prefix (`/api/v1/{service}/...` →
+`{upstream}/v1/{service}/...`), so the declarations are documentation — when
+documentation and backend disagree, the failure is silent (404/502 from the
+upstream, or invisible surface). The diff reconstructs the upstream path
+from each service's own `pathStrategy` + version + `pathRewrite` (mirroring
+`forwardRequest()`), extracts `@Controller`/`@Get`/`@Post`/... routes from
+the backend directories (`envKey` → dir map in
+`scripts/lib/gateway-backend-contracts.mjs`), and compares both sides in
+upstream form. Backend routes are prefixed with `/v{version}` only —
+Nest bakes the service slug into the controller path (e.g.
+`@Controller('lifestyle/celebrities')`). Shared upstreams (public/content/
+universe → content-service) pool their declarations. Verb drift (declared
+PATCH vs backend PUT) fails both directions. Rule core is unit-tested in
+`scripts/__tests__/route-contracts-gateway-backend.test.mjs`; known debt is
+ratcheted in the baseline (`gatewayGhostEndpoints`,
+`gatewayUndeclaredBackendRoutes` — dir-scoped keys, may only shrink).
+
+**Invariant (passes 1–2, gating + advisory):** every API call extracted from client code —
 including template literals and raw query strings — matches a route declared
 in the gateway's `SERVICE_CONFIGS` on **path AND HTTP method**. Exit 1 on any
 NEW mismatch: an unmatched path 404s at runtime, a wrong verb (POST vs PUT)
@@ -258,7 +302,54 @@ path out of verb checking (matches any client verb).
 listed but never gate — they may serve partners, scripts, or mobile releases.
 
 **Run:** in the Flag & Swagger Conventions job (PRs) and via
-`pnpm check:route-contracts` locally.
+`pnpm check:route-contracts` locally (all three passes run in one invocation;
+`--update` regenerates all baseline sections).
+
+### expo-routes (`check:expo-routes`)
+
+**Invariant (gating):** every navigation target extracted from
+`apps/mobile` + `apps/tv` source — `router.push/replace/navigate('/...')`
+(string or template literal) and `href="/..."` — resolves to a route file
+in that app's Expo Router `app/` directory. A target with no route throws
+"Unhandled route" at runtime: the user taps a visible button and nothing
+happens. Matching understands route groups `(tabs)`, dynamic segments
+(`[param]` fills from either a literal or `${...}` target segment), catch-alls
+(`[...all]` / `[[...all]]`), and ignores query strings. Layouts, private
+folders (`_*`), `+specials`, test files and dot-directories (`.expo`) are
+excluded on both sides. `apps/*` workspaces without an `app/` directory are
+skipped. `scripts/lib/expo-routes-core.mjs` is the tested rule core; the CLI
+accepts `--root` for fixtures. The only escape hatch is `EXPO_ROUTE_ALLOWLIST`
+in the core (each entry must carry a `reason`) — keep it empty and create the
+missing route instead.
+
+**Run:** in the Flag & Swagger Conventions job (PRs) and via
+`pnpm check:expo-routes` locally.
+
+### typed routes (Expo Router, compile time)
+
+**Invariant (gating):** `experiments.typedRoutes: true` is set in both
+`apps/mobile/app.json` and `apps/tv/app.json`, so expo-router generates the
+full route union into `.expo/types/router.d.ts` (gitignored) and `Href` stops
+being plain `string`: `router.push('/definitely-not-a-route')` is a TS2322/2345
+compile error, dynamic-route params become required, and object-href calls are
+param-checked. Enforcement was proven with a throwaway probe file (bogus
+`push` target errors under the app tsconfig; valid targets pass). Generated
+types are not committed — the `tv-bundle-pr` job runs
+`pnpm --filter @azeebo/{mobile,tv} exec expo customize tsconfig.json` before
+typechecking both apps (regenerates route types without touching the committed
+tsconfigs). Without that step CI's tsc would silently run with the loose
+`Href = string | HrefObject` fallback and enforce nothing.
+
+**Notes:**
+- Type-escape hatches (`as never` / `as any` on push targets) defeat the gate;
+  none remain in either app. When adding a screen, write the literal path —
+  tsc rejects it immediately if the route doesn't exist.
+- The runtime `check:expo-routes` gate still runs on every PR: it covers
+template-literal and variable targets tsc can't see, and guards against the
+route types going stale (typed routes is only as fresh as the last
+generation).
+- Keep `href` state typed as `Href` (from `expo-router`), not `string` — a
+plain `string` field silently re-opens the loose-type hole at the call site.
 
 ---
 
@@ -390,6 +481,97 @@ then `launchctl bootout gui/$(id -u)/com.azeebo.<label>; launchctl bootstrap
 gui/$(id -u) ~/Library/LaunchAgents/com.azeebo.<label>.plist` for each
 changed service. To recover a vanished plist, just regenerate (then re-run
 `--check` to confirm the deleter hasn't struck again).
+
+### `transport-drill` — service prober contract drill (nightly)
+
+**Invariant:** the Ops Health service prober compiles, attributes
+transports, and detects re-bind flips. The drill (runs nightly in
+schema-lock-nightly.yml → "Transport drill (service prober contract)")
+proves four things on a fresh runner:
+
+1. The REAL `service-probe.ts` compiles standalone with the workspace tsc —
+   a type error or a new dependency that breaks standalone compilation
+   fails here, before it can break the page.
+2. A REAL v4-only listener on a spare port probed with the real
+   `probeAcrossTransports` + real fetch comes back **healthy** with a
+   transport recorded — a family-narrow bind must never read as `down`
+   (the exact bug the prober was written to fix). The listener first
+   proves its own narrowness (v4 answers, v6 refuses) so the result can't
+   be a stolen port.
+3. The REAL `mergeTransportHistory` core, fed the real sweep-1 outcome and
+   a modeled sweep-2 re-bind, emits the flip — including a crossing-family
+   flip with `familyChanged: true` (the banner's data path).
+4. First sightings never flip; impossible transports (`ipv6` against a
+   v4-only listener) are rejected.
+
+The sweep-2 socket layer is scripted rather than bound live: no stock
+resolver can make `localhost` fail while an explicit candidate answers
+(macOS tries both families — see "Loopback transport" in RUNBOOK.md), so
+the re-bind is modeled at the outcome layer and driven through the same
+compiled production merge code the banner renders from. Honest limit
+(verified by mutation drill): removing the explicit CANDIDATES alone does
+NOT fail this drill on a dual-stack-resolver runner — `localhost` still
+answers — so the candidate list's breadth is policed by the unit tests
+(`probeCandidates` ordering) and code review, not by CI. What the drill
+uniquely catches is a compile break and lost TRANSPORT ATTRIBUTION (the
+field is optional, so tsc passes) — verified: dropping `transport` from
+the outcome fails with exit 1. Fail closed: exit 1 with a `::error`
+annotation; exit 2 only on environment errors (missing tsc). Locally:
+`node scripts/ops/transport-drill.mjs`. Tests:
+`node --test scripts/__tests__/transport-drill.test.mjs`.
+
+### `transport-flip` ledger — flip persistence + trend (event-driven)
+
+**Invariant:** a transport flip outlives its 10-minute hold window. The
+Redis flips hash (`ops:transport:flips`) answers "what changed just now"
+for the banner; the job_runs ledger (job `transport-flip`) answers "what
+changed all month". `OpsService.recordTransportSweep` (apps/admin/src/
+modules/ops/ops.service.ts) fires on EVERY successful probe sweep —
+steady states included, so a gap in the ledger means "sweeps stopped",
+never "nothing happened" — and UPSERT-merges ONE row per (service, UTC
+day): counters accumulate (sweeps in `durationMs`, flips in `rowsPurged`
+AND as `sweeps=`/`flips=`/`familyFlips=` keys in `detail` — the detail is
+the trend's single source of truth), the `last=from->to@ms` pair and the
+ending `transport` refresh to the newest observation, and `status` reads
+`ok` (steady) or `warn` (day saw a flip). The concurrent-replica race is
+serialized by a `SELECT … FOR UPDATE` on the row id before the merge, so
+two replicas sweeping simultaneously write the same merged truth.
+`getTransportFlipTrend` parses rows back for GET /admin/ops/transport-
+flips and the Ops Health "Transport flip trend" card (flip-only services,
+loudest first). Deliberately NOT in KNOWN_JOBS: the ledger-cadence
+watchdog and "Run now" targets are for scheduled jobs, and for an
+event-driven job silence IS the healthy state — a day with zero flips
+writes no row and must not page anyone. The job-health gate ignores the
+job (no JOB_PROFILES entry). Row growth is bounded at ~(services × days
+in the window) by the UPSERT — no retention entry needed. The ledger
+write is fire-and-forget: a failed write warns and never fails (or slows)
+the health sweep. Tests: `cd apps/admin && npx jest transport-flip`
+(codec) and the ops.test.tsx trend-card render tests.
+
+### `prober-coverage-gate` — Ops Health fleet ⊆ launchd manifest (PR gate)
+
+**Invariant:** every entry in `PROBED_SERVICES`
+(`apps/admin/src/modules/ops/ops.service.ts`) has a matching entry in the
+launchd manifest (`scripts/launchd/service-manifest.mjs`). Join key is
+**port** (prober names and manifest labels are deliberately different
+vocabularies — `payment-service` vs `payment` — while ports are unique in
+both lists). This closes the gap where the 15 newer services were added to
+the prober but not the manifest: Ops Health reported them permanently down
+because nothing would ever start them.
+
+Runs as a static parse of committed sources — no DB, no launchd, no node
+modules — so it's safe in CI and cannot false-green on environment
+differences. Unparseable or empty `PROBED_SERVICES`/`SERVICES` blocks FAIL
+the gate rather than skip it, so a refactor that renames the array can't
+silently void the check. Duplicate ports within either list also fail (a
+prober dup double-probes; a manifest dup means two agents fight over one
+port). Runs in `pr-checks.yml` right after the plist contract check.
+
+Locally: `node scripts/launchd/prober-coverage-gate.mjs`.
+Tests: `node --test scripts/__tests__/prober-coverage-gate.test.mjs`
+(14 cases: parse fail-loud rules, port join semantics, duplicate detection,
+and subprocess runs — the real fleet must pass at HEAD; fake-tree drills
+for every failure mode).
 
 ---
 

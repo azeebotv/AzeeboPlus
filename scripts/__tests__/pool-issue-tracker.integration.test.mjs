@@ -96,6 +96,13 @@ function trackerEnv({ base, token = 'ghs_driftbot_app_token', extra = {} }) {
     GITHUB_API_BASE_URL: base,
     LIVE_DB_URL_BASE: BASE_URL,
     ...(token != null ? { GITHUB_TOKEN: token } : {}),
+    // The REAL ledger carries real foreign-dialer context (another project
+    // on this host dials Postgres directly and persists for days). With the
+    // foreign kind tracking-eligible, the default 24h threshold would let
+    // that real traffic keep the tracker open through the close-legs and
+    // inject non-deterministic rows. Neutralize it here; the dedicated
+    // foreign-kind test re-enables it deliberately.
+    POOL_FOREIGN_MIN_SPAN_H: '9999',
     ...extra,
   };
 }
@@ -163,18 +170,23 @@ test('pool tracker lifecycle: create → none → update → close → reopen', 
 
 test('pool tracker: saturation joins the same issue when it trips', { skip: !ledgerUp && 'local ledger unreachable' }, async (t) => {
   // Bypass sustained + synthetic saturation errors → both kinds in one issue.
-  // Seeding must be deterministic against the REAL hourly watchdog pass
-  // (:21) interleaving into the window and chopping the synthetic streak —
-  // so the error burst is placed in the gap immediately AFTER the last real
-  // pass, where no real pass can land until the next hour. 5 rows at 6-minute
-  // intervals (24m span) with POOL_GATE_MIN_SPAN_H=0.3 and a 1h window.
+  // Seeding must be deterministic against the REAL hourly watchdog passes
+  // interleaving into the window and chopping the synthetic streak — so the
+  // error burst is placed immediately AFTER the NEWEST real pass (queried,
+  // not assumed: real passes have landed at :23/:36, not just :21), at
+  // 30-second intervals (2m span) so the burst completes long before the
+  // next real pass can land (the test finishes in well under a minute).
+  // 5 consecutive errors with POOL_GATE_MIN_SPAN_H=0.02 and a 1h window.
   seedBypass(HOURLY_BYPASS);
   t.after(() => cleanLedger());
-  const lastPass = new Date();
-  lastPass.setMinutes(21, 0, 0);
-  if (lastPass.getTime() > Date.now()) lastPass.setTime(lastPass.getTime() - 3_600_000);
+  const newestReal = execFileSync(
+    'psql',
+    [BASE_URL + '/azeebo_admin', '-tAc', `SELECT COALESCE(max("ranAt"), now()) FROM "job_runs" WHERE job='pool-audit' AND id NOT LIKE 'pooltrk-%'`],
+    { encoding: 'utf8', timeout: 10000, env: psqlEnv },
+  ).trim();
+  const burstStart = new Date(Date.parse(newestReal) + 30_000);
   const satValues = Array.from({ length: 5 }, (_, g) => {
-    const at = new Date(lastPass.getTime() + (3 + g * 6) * 60_000).toISOString();
+    const at = new Date(burstStart.getTime() + g * 30_000).toISOString();
     return `SELECT 'pooltrk-sat-' || ${g}, 'pool-audit', 'error', 'saturation critical: 196/200 clients; no pooler bypasses', '${at}'::timestamptz`;
   }).join(' UNION ALL ');
   execFileSync(
@@ -189,7 +201,7 @@ test('pool tracker: saturation joins the same issue when it trips', { skip: !led
   t.after(() => api.close());
 
   const run = await runTracker({
-    env: trackerEnv({ base: api.base, extra: { POOL_GATE_HOURS: '1', POOL_GATE_MIN_SPAN_H: '0.3' } }),
+    env: trackerEnv({ base: api.base, extra: { POOL_GATE_HOURS: '1', POOL_GATE_MIN_SPAN_H: '0.02' } }),
   });
   assert.equal(run.code, 0, `run\n${run.stdout}\n${run.stderr}`);
   assert.equal(api.state.issues.length, 1);
@@ -226,6 +238,41 @@ test('pool tracker: identity + degradation paths', async (t) => {
   } else {
     assert.equal(local.code, 0);
   }
+});
+
+test('pool tracker: sustained foreign dialer gets its own row', { skip: !ledgerUp && 'local ledger unreachable' }, async (t) => {
+  // Seed synthetic foreign-dialer context rows (the YCN-fleet shape: hourly
+  // passes carrying a foreign segment for another project's cwd). Bypass and
+  // saturation thresholds pinned high so ONLY the foreign kind can trip —
+  // the assertion targets the foreign row specifically, whatever real
+  // foreign workspaces the live ledger also contributes.
+  const FW_WS = '/foreign/pooltrk-proj';
+  const values = Array.from({ length: 26 }, (_, i) => {
+    const detail = `pgbouncer 62/200 clients; foreign direct clients (context, not violations): ${FW_WS}(python 777, 2 conns); no pooler bypasses`;
+    return `SELECT 'pooltrk-fw-' || ${i}, 'pool-audit', 'ok', '${detail.replace(/'/g, "''")}', now() - interval '${(25 - i) * 60} minutes'`;
+  }).join(' UNION ALL ');
+  execFileSync(
+    'psql',
+    [BASE_URL + '/azeebo_admin', '-v', 'ON_ERROR_STOP=1', '-q', '-c',
+      `INSERT INTO "job_runs" (id, job, status, detail, "ranAt") ${values};`],
+    { encoding: 'utf8', timeout: 10000, env: psqlEnv }
+  );
+  t.after(() => execFileSync('psql', [BASE_URL + '/azeebo_admin', '-q', '-c', `DELETE FROM "job_runs" WHERE id LIKE 'pooltrk-fw-%';`], { encoding: 'utf8', timeout: 10000, env: psqlEnv }));
+
+  const api = await startFakeGitHub({ issues: [] });
+  t.after(() => api.close());
+
+  const run = await runTracker({
+    env: trackerEnv({ base: api.base, extra: { POOL_FOREIGN_MIN_SPAN_H: '2', POOL_BYPASS_MIN_SPAN_H: '9999' } }),
+  });
+  assert.equal(run.code, 0, `run\n${run.stdout}\n${run.stderr}`);
+  const bodies = api.state.issues.map((i) => i.body);
+  assert.ok(bodies.length >= 1, 'tracker exists (created or updated)');
+  assert.ok(
+    bodies.some((b) => b.includes(`| foreign | ${FW_WS} |`)),
+    `foreign row present\n${bodies.join('\n---\n')}`,
+  );
+  assert.match(bodies.find((b) => b.includes(`| foreign | ${FW_WS} |`)), /sustained foreign direct-Postgres dialer/);
 });
 
 test('pool tracker: --dry-run makes no writes', { skip: !ledgerUp && 'local ledger unreachable' }, async (t) => {

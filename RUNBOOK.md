@@ -9,8 +9,10 @@
 | API Gateway | 3013 | `curl http://localhost:3013/health` |
 | Auth Service | 3000 | `curl http://localhost:3000/v1/health` |
 | Web App | 4000 | `curl http://localhost:4000` |
-| Admin Panel | 4100 | `curl http://localhost:4100` |
-| Creator App | 4104 | `curl http://localhost:4104` |
+| Admin Panel (SPA dev) | 5173 | `curl http://localhost:5173` |
+| Admin Backend | 4016 | `curl http://localhost:4016/v1/health` |
+| Creator Panel (SPA dev) | 5174 | `curl http://localhost:5174` |
+| Creator Backend | 4014 | `curl http://localhost:4014/v1/health` |
 
 ## Incident Response
 
@@ -96,9 +98,9 @@ Notes:
 
 ### Loopback transport: IPv6-only listeners
 
-Services bind different loopback families — `admin-backend` (4100) listens on
-`[::1]:4100` ONLY, so `curl 127.0.0.1:4100/v1/health` returns connection-refused
-while the service is perfectly healthy. When probing anything by port:
+Services bind different loopback families — the admin SPA dev server (vite)
+listens on `[::1]:5173` ONLY, so `curl 127.0.0.1:5173` returns connection-refused
+while the server is perfectly healthy. When probing anything by port:
 
 - Try `localhost` first (dual-stack), then `http://[::1]:PORT`, then
   `http://127.0.0.1:PORT` — this is exactly what the Ops Health service prober
@@ -119,6 +121,14 @@ while the service is perfectly healthy. When probing anything by port:
   means someone re-bound the service — check the plist/env before assuming
   it's benign. A down→return on a new family does NOT flip: the baseline is
   dropped while the service is down, since down→rebind is normal ops.
+  Baselines and the flip hold-window live in REDIS (keys
+  `ops:transport:baseline` / `ops:transport:flips`, 7-day/10-min TTLs), so
+  flips survive an admin-backend restart (a re-bind around a deploy stays
+  visible) and every replica detects flips against the same fleet truth
+  atomically (Lua compare-and-set — two replicas sweeping concurrently
+  cannot race past each other). Redis unreachable → the store fails OPEN to
+  the old per-process semantics with a warn; health verdicts never depend
+  on it. Point it at a non-default Redis with OPS_REDIS_URL/REDIS_URL.
 - Scheduled jobs (freshness, retention, pool-audit, digest, drill) are NOT
   in the manifest — their scripts' own `install` modes remain their source
   of truth.

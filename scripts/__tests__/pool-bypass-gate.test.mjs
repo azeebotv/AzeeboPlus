@@ -18,7 +18,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { evaluateBypasses, parseBypasses } from '../database/pool-bypass-gate.mjs';
+import {
+  evaluateBypasses,
+  parseBypasses,
+  evaluateForeignDialers,
+  parseForeignDirect,
+} from '../database/pool-bypass-gate.mjs';
 
 const CLI = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -182,6 +187,151 @@ describe('evaluateBypasses', () => {
     );
     assert.equal(asString.verdict, 'fail');
     assert.equal(asDate.verdict, 'fail');
+  });
+});
+
+describe('evaluateForeignDialers', () => {
+  /** A pass detail exactly as pool-audit.sh composes it with a foreign leg. */
+  const foreignDetail = (list, opts = {}) =>
+    `${opts.sat ?? 'pgbouncer 62/200 clients'}; foreign direct clients (context, not violations): ${list}; ${opts.bp ?? 'no pooler bypasses'}`;
+
+  /** Hourly foreign-flagged ok rows for `hours` hours (newest-first). */
+  function foreignRows(hours, workspace = '/Users/me/YCN/services/api') {
+    const rows = [];
+    for (let ago = 0; ago <= hours; ago += 1) {
+      rows.push({
+        status: 'ok',
+        detail: foreignDetail(`${workspace}(python 777, 2 conns)`),
+        ranAt: h(ago),
+      });
+    }
+    return rows;
+  }
+
+  it('parses the foreign segment (sanity: the allowlist matches what is parsed)', () => {
+    const out = parseForeignDirect(foreignDetail('/a(python 777, 2 conns); /b(node 9, 1 conns)'));
+    assert.deepEqual(out.map((f) => f.workspace), ['/a', '/b']);
+    assert.deepEqual(out.map((f) => f.conns), [2, 1]);
+  });
+
+  it('never sustains an allowlisted 25h dialer — pass verdict with an approved reason', () => {
+    const rows = foreignRows(25);
+    const r = evaluateForeignDialers(rows, {
+      minSpanH: 24,
+      maxGapH: 3,
+      allowlist: ['/Users/me/YCN/services/api'],
+    });
+    assert.equal(r.verdict, 'pass');
+    assert.deepEqual(r.sustained, [], 'approved workspace must never appear in sustained');
+    assert.ok(r.reason.includes('approved (allowlist), not tracked'));
+    assert.ok(r.longestSpanH >= 24, 'the span is still reported — budget impact is real');
+  });
+
+  it('accepts the allowlist as a Set as well as an array', () => {
+    const rows = foreignRows(25);
+    for (const allowlist of [
+      new Set(['/Users/me/YCN/services/api']),
+      ['/Users/me/YCN/services/api'],
+    ]) {
+      const r = evaluateForeignDialers(rows, { minSpanH: 24, maxGapH: 3, allowlist });
+      assert.equal(r.verdict, 'pass');
+      assert.deepEqual(r.sustained, []);
+    }
+  });
+
+  it('still lists the approved workspace in offenders (budget context)', () => {
+    const rows = foreignRows(25);
+    const r = evaluateForeignDialers(rows, {
+      minSpanH: 24,
+      maxGapH: 3,
+      allowlist: ['/Users/me/YCN/services/api'],
+    });
+    assert.deepEqual(r.offenders, ['/Users/me/YCN/services/api']);
+    assert.equal(r.worst.workspace, '/Users/me/YCN/services/api');
+  });
+
+  it('without the allowlist the same dialer still fails (nothing approved by default)', () => {
+    const rows = foreignRows(25);
+    const r = evaluateForeignDialers(rows, { minSpanH: 24, maxGapH: 3 });
+    assert.equal(r.verdict, 'fail');
+    assert.equal(r.sustained.length, 1);
+    assert.ok(r.reason.includes('sustained foreign direct-Postgres dialer'));
+  });
+
+  it('matching is exact-path: a sibling path is never approved by a prefix entry', () => {
+    const rows = foreignRows(25, '/Users/me/YCN/services/api-v2');
+    const r = evaluateForeignDialers(rows, {
+      minSpanH: 24,
+      maxGapH: 3,
+      allowlist: ['/Users/me/YCN/services/api'],
+    });
+    assert.equal(r.verdict, 'fail');
+  });  it('a non-allowlisted offender alongside an approved one still fails', () => {
+    const rows = foreignRows(25, '/Users/me/YCN/services/api').map((r, i) =>
+      i === 0
+        ? {
+            status: 'ok',
+            detail: foreignDetail(
+              '/Users/me/YCN/services/api(python 777, 2 conns); /other/proj(node 9, 1 conns)'
+            ),
+            ranAt: r.ranAt,
+          }
+        : r
+    );
+    // Give /other/proj its own 25h history so IT sustains while the approved
+    // one cannot.
+    for (let ago = 0; ago <= 25; ago += 1) {
+      if (ago === 0) continue;
+      rows.push({
+        status: 'ok',
+        detail: foreignDetail('/other/proj(node 9, 1 conns)'),
+        ranAt: h(ago),
+      });
+    }
+    const r = evaluateForeignDialers(rows, {
+      minSpanH: 24,
+      maxGapH: 3,
+      allowlist: ['/Users/me/YCN/services/api'],
+    });
+    assert.equal(r.verdict, 'fail');
+    assert.ok(r.sustained.some((s) => s.workspace === '/other/proj'));
+    assert.equal(r.sustained.some((s) => s.workspace === '/Users/me/YCN/services/api'), false);
+  });
+
+  it('an approved worst does not mask a smaller-span real offender (tie + shorter spans)', () => {
+    // Approved workspace spans 25h; a real offender spans 24.5h and would be
+    // masked if the verdict keyed off `worst` instead of the sustained set.
+    const rows = foreignRows(25, '/approved/fleet');
+    for (let ago = 0; ago <= 24.5; ago += 1) {
+      rows.push({ status: 'ok', detail: foreignDetail('/rogue/proj(node 5, 3 conns)'), ranAt: h(ago) });
+    }
+    const r = evaluateForeignDialers(rows, {
+      minSpanH: 24,
+      maxGapH: 3,
+      allowlist: ['/approved/fleet'],
+    });
+    assert.equal(r.verdict, 'fail');
+    assert.ok(r.reason.includes('/rogue/proj'), `fail reason must name the real offender, got: ${r.reason}`);
+    assert.deepEqual(r.sustained.map((s) => s.workspace), ['/rogue/proj']);
+  });
+
+  it('tolerates a whitespace-ridden allowlist (entries arrive pre-trimmed)', () => {
+    const rows = foreignRows(25);
+    const r = evaluateForeignDialers(rows, {
+      minSpanH: 24,
+      maxGapH: 3,
+      allowlist: ['/Users/me/YCN/services/api'],
+    });
+    assert.equal(r.verdict, 'pass');
+  });
+
+  it('absent allowlist option behaves as an empty one (legacy callers safe)', () => {
+    const rows = foreignRows(25);
+    const r = evaluateForeignDialers(rows, { minSpanH: 24, maxGapH: 3 });
+    assert.equal(r.verdict, 'fail');
+    const below = evaluateForeignDialers(foreignRows(3), { minSpanH: 24, maxGapH: 3 });
+    assert.equal(below.verdict, 'pass');
+    assert.ok(below.reason.includes('not sustained'));
   });
 });
 
