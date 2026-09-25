@@ -24,6 +24,7 @@ import {
   GatewayHttpSummary,
   GatewayRateLimitSnapshot,
   PgbouncerHealth,
+  TransportFlipTrend,
 } from './ops.service';
 
 @Controller('admin/ops')
@@ -54,6 +55,15 @@ export class OpsController {
   @Get('pgbouncer')
   getPgbouncerHealth(): Promise<PgbouncerHealth> {
     return this.opsService.getPgbouncerHealth();
+  }
+
+  /** Transport-flip persistence trend (ledger-backed, default 14 days). */
+  @Get('transport-flips')
+  getTransportFlipTrend(@Query('days') days?: string): Promise<TransportFlipTrend> {
+    const parsed = Number(days);
+    return this.opsService.getTransportFlipTrend(
+      Number.isFinite(parsed) && parsed > 0 ? parsed : 14
+    );
   }
 
   /** Aggregated creator tipping overview (single call — no client fan-out). */

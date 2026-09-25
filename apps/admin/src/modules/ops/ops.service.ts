@@ -5,13 +5,8 @@ import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { PrismaService } from '../../database/prisma.service';
 import { buildServiceStampHeaders } from '../../common/upstream-auth.middleware';
-import {
-  probeAcrossTransports,
-  mergeTransportHistory,
-  type LoopbackTransport,
-  type TransportFlip,
-  type ProbeOutcome,
-} from './service-probe';
+import { RedisTransportStore } from './transport-store';
+import { probeAcrossTransports, type LoopbackTransport, type TransportFlip } from './service-probe';
 
 /** pg is a transitive dependency via Prisma's engines; resolve defensively. */
 
@@ -149,6 +144,9 @@ export interface PgbouncerHealth {
    * (::1), the transport many foreign dev fleets bind exclusively.
    */
   foreignDirectClients?: Array<{ workspace: string; connections: number; ipv6?: number }>;
+  /** Ledger-derived per-workspace persistence spans (24h+ = sustained, the
+   * tracking-issue threshold). Absent when the ledger read failed. */
+  foreignPersistence?: ForeignPersistenceData;
   /** Present when the bypass scan itself failed (e.g. lsof missing). */
   bypassesDetail?: string;
   checkedAt: string;
@@ -193,12 +191,180 @@ export const PROBED_SERVICES: Array<{ name: string; port: number }> = [
 ];
 
 const SERVICE_HEALTH_TIMEOUT_MS = 4_000;
-/** How long a detected transport flip stays in the API response after its last
- * observation. Both admin pages poll the same endpoint on their own cadence
- * (30s/10s), so one-shot flip lists race: whoever polls second sees an empty
- * array and clears the banner. A hold window makes the alert last as long as
- * it could plausibly matter, without any client-side state. */
-const TRANSPORT_FLIP_HOLD_MS = 10 * 60_000;
+// ── foreign dialer persistence (ledger-derived) ──────────────────────────
+
+// Matches the foreign-segment pool-audit.sh composes into every pass detail
+// ("foreign direct clients (context, not violations): /proj(node 1, 2 conns)")
+// — identical regex to scripts/database/pool-bypass-gate.mjs, kept local:
+// apps/admin builds are hermetic (rootDir: src) and must not import scripts.
+const FOREIGN_SEGMENT_RE =
+  /foreign direct clients [(]context, not violations[)]: ?(.*?)(?=; (?:[0-9]+ repo process\(es\) bypassing pgbouncer|no pooler bypasses)|$)/;
+
+/** One foreign workspace's tracked persistence in the ledger window. */
+export interface ForeignPersistenceRow {
+  workspace: string;
+  /** Passes (within the window) whose detail flagged this workspace. */
+  passes: number;
+  /** Hours between the workspace's first and last flagged pass. */
+  spanHours: number;
+  /** ISO time of the newest flagged pass. */
+  lastSeen: string;
+  /** Connection count from the newest flagged pass (null when unrecorded). */
+  conns: number | null;
+  /** True when spanHours >= FOREIGN_SUSTAINED_MIN_SPAN_H — the tracker's
+   * threshold; a sustained row is the shape that opens a tracking issue. */
+  sustained: boolean;
+  /** True when the workspace is on POOL_FOREIGN_ALLOWLIST — approved:
+   * never sustained/tracked regardless of span. Budget impact is still
+   * real, so the row stays visible. */
+  approved: boolean;
+}
+
+/** Per-workspace persistence over the ledger window (card data). */
+export interface ForeignPersistence {
+  windowHours: number;
+  /** Sustained threshold applied (mirrors POOL_FOREIGN_MIN_SPAN_H default). */
+  sustainedMinSpanHours: number;
+  rows: ForeignPersistenceRow[];
+  detail?: string;
+}
+
+/** Legacy name for the same payload (PgbouncerHealth.foreignPersistence). */
+export type ForeignPersistenceData = ForeignPersistence;
+
+/**
+ * Parse POOL_FOREIGN_ALLOWLIST (comma-separated exact workspace paths,
+ * whitespace tolerated; empty/absent → no approvals). Local mirror of
+ * scripts/pool-issue-tracker.mjs parseAllowlist — apps/admin builds are
+ * hermetic (rootDir: src) and must not import scripts/. Exported for tests.
+ */
+export function parseForeignAllowlist(raw: string | undefined | null): Set<string> {
+  if (!raw || typeof raw !== 'string') return new Set();
+  return new Set(
+    raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
+}
+
+/**
+ * Pull the flagged foreign workspaces out of one pass detail line:
+ * [{ workspace, conns }] — empty when the pass recorded none.
+ */
+export function parseForeignSegment(
+  detail: string | null
+): Array<{ workspace: string; conns: number | null }> {
+  const m = FOREIGN_SEGMENT_RE.exec(detail ?? '');
+  if (!m) return [];
+  return m[1]
+    .split(';')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const open = item.lastIndexOf('(');
+      if (open === -1) return { workspace: item, conns: null };
+      const close = item.lastIndexOf(')');
+      const inner = close > open ? item.slice(open + 1, close) : '';
+      const workspace = item.slice(0, open).trim() || item;
+      const nums = (inner.match(/\d+/g) ?? []).map(Number);
+      return { workspace, conns: nums[nums.length - 1] ?? null };
+    });
+}
+
+/**
+ * Per-workspace persistence spans over newest-first ledger rows — the same
+ * semantics as the nightly foreign-dialer core (scripts/database/
+ * pool-bypass-gate.mjs evaluateForeignDialers): consecutive flagged passes
+ * per workspace, a run broken when the ledger goes quiet for it longer than
+ * the gap, span = hours between first and last pass of the run. The card
+ * shows EVERY workspace's current span; `sustained` marks the rows that
+ * would open a tracking issue.
+ */
+export function computeForeignPersistence(
+  rows: Array<{ detail: string | null; ranAt: Date | string }>,
+  opts: {
+    minSpanHours?: number;
+    maxGapHours?: number;
+    /** Approved foreign workspaces (POOL_FOREIGN_ALLOWLIST) — never sustained. */
+    allowlist?: Set<string> | string[];
+  } = {}
+): ForeignPersistenceRow[] {
+  const minSpanHours = opts.minSpanHours ?? 24;
+  const maxGapHours = opts.maxGapHours ?? 3;
+  const allowSet = opts.allowlist instanceof Set ? opts.allowlist : new Set(opts.allowlist ?? []);
+  const byWorkspace = new Map<string, Array<{ atMs: number; conns: number | null }>>();
+  for (const r of rows) {
+    const atMs = r.ranAt instanceof Date ? r.ranAt.getTime() : Date.parse(r.ranAt);
+    if (!Number.isFinite(atMs)) continue;
+    for (const f of parseForeignSegment(r.detail)) {
+      const list = byWorkspace.get(f.workspace) ?? [];
+      list.push({ atMs, conns: f.conns });
+      byWorkspace.set(f.workspace, list);
+    }
+  }
+  const out: ForeignPersistenceRow[] = [];
+  interface BestRun {
+    length: number;
+    spanH: number;
+    lastAtMs: number;
+    conns: number | null;
+  }
+  for (const [workspace, passes] of byWorkspace) {
+    // Rows are newest-first; a gap > maxGapHours splits the runs. `consider`
+    // is pure (returns the better run) rather than mutating a closure let —
+    // TS control-flow analysis can't see closure mutations and narrows a
+    // closure-assigned `let` to `never` past its null guard.
+    let best: BestRun | null = null;
+    let cur: Array<{ atMs: number; conns: number | null }> = [];
+    const consider = (prev: BestRun | null): BestRun | null => {
+      if (cur.length === 0) return prev;
+      const spanH = (cur[0].atMs - cur[cur.length - 1].atMs) / 3_600_000;
+      const run = { length: cur.length, spanH, lastAtMs: cur[0].atMs, conns: cur[0].conns };
+      cur = []; // close the run — the caller starts a fresh one
+      if (
+        !prev ||
+        run.length > prev.length ||
+        (run.length === prev.length && run.spanH > prev.spanH)
+      ) {
+        return run;
+      }
+      return prev;
+    };
+    for (let i = 0; i < passes.length; i++) {
+      // A run breaks when two ADJACENT passes are too far apart (the nightly
+      // core's semantics): gap between passes[i-1] and passes[i]. Measuring
+      // from the run's head (cur[0]) instead would split healthy hourly
+      // streaks once they outlive maxGapHours from the run's start.
+      if (i > 0) {
+        const gapH = (passes[i - 1].atMs - passes[i].atMs) / 3_600_000;
+        if (gapH > maxGapHours) best = consider(best);
+      }
+      cur.push(passes[i]);
+    }
+    best = consider(best);
+    if (!best) continue;
+    const approved = allowSet.has(workspace);
+    out.push({
+      workspace,
+      passes: best.length,
+      spanHours: Math.round(best.spanH * 10) / 10,
+      lastSeen: new Date(best.lastAtMs).toISOString(),
+      conns: best.conns,
+      // An approved workspace never reads as sustained — mirroring the
+      // nightly core's allowlist rule, so card and tracker never disagree.
+      sustained: !approved && best.spanH >= minSpanHours - 1e-9,
+      approved,
+    });
+  }
+  return out.sort((a, b) => b.spanHours - a.spanHours || a.workspace.localeCompare(b.workspace));
+}
+// The flip hold window (10 min) now lives server-side as the flips-hash TTL
+// in transport-store.ts (FLIP_TTL_S) — both admin pages poll the same
+// endpoint on their own cadence (30s/10s), so one-shot flip lists race:
+// whoever polls second would see an empty array and clear the banner. A TTL
+// hold window makes the alert last as long as it could plausibly matter,
+// without any client-side state and without per-replica timers.
 
 /** Aggregated tipping stats for all creators (one upstream fan-out, server-side). */
 export interface CreatorTipSummary {
@@ -599,7 +765,14 @@ export { LEDGER_CADENCE_MINUTES };
 /** Ledger-staleness check runs inside getStatus(); de-jitter repeats. */
 const LEDGER_CADENCE_SUPPRESS_MS = 60 * 60_000; // one alert per job per hour
 
-/** Ledger jobs, in card order. Drills have no dedicated card but still chart. */
+/**
+ * SCHEDULED ledger jobs, in card order. Drills have no dedicated card but
+ * still chart. Deliberately EXCLUDES 'transport-flip' (the event-driven
+ * flip-persistence ledger, recordTransportSweep): KNOWN_JOBS drives the
+ * silence watchdog and the "Run now" targets, and for an event-driven job
+ * silence IS the healthy state — a day with zero flips writes no row and
+ * must not page anyone. The trend section reads it via its own endpoint.
+ */
 const KNOWN_JOBS = [
   'freshness',
   'drill',
@@ -610,6 +783,128 @@ const KNOWN_JOBS = [
 ] as const;
 export { KNOWN_JOBS };
 const MAX_RUNS_PER_JOB = 40;
+
+/**
+ * Transport-flip ledger shape (one row per (service, UTC day) — a service
+ * that flaps 40 times in a day still writes exactly one row, UPSERT-merged).
+ * `status` mirrors the job_runs convention so pass-rate charts and the
+ * job-health gate read it unchanged: ok = steady (sweeps recorded, no
+ * flip), warn = flipped ≥1 time (family or rebind), error = reserved
+ * (never written — the banner owns incident severity).
+ */
+export interface TransportFlipLedgerRow {
+  service: string;
+  /** The transport the service answered on as of this row's last sweep. */
+  transport: LoopbackTransport;
+  day: string;
+  /** Probe sweeps that committed this service's transport that day. */
+  sweeps: number;
+  /** Transitions observed between consecutive sweeps that day. */
+  flips: number;
+  /** How many of those flips crossed loopback families (::1 ↔ 127.0.0.1). */
+  familyFlips: number;
+  /** ISO of the newest flip that day (null when the day was steady). */
+  lastFlipAt: string | null;
+  /** Newest recorded flip pair that day (null when steady). */
+  lastFrom: LoopbackTransport | null;
+  lastTo: LoopbackTransport | null;
+}
+
+/** Per-day aggregation of the transport-flip ledger (trend card data). */
+export interface TransportFlipTrend {
+  windowDays: number;
+  rows: TransportFlipLedgerRow[];
+  /** Distinct services that flipped at least once in the window. */
+  servicesWithFlips: number;
+  totalFlips: number;
+  totalFamilyFlips: number;
+  detail?: string;
+}
+
+/** One UTC day, YYYY-MM-DD. */
+function utcDay(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+/**
+ * Detail-line codec for transport-flip ledger rows — the same pattern as the
+ * pool-audit foreign segment: counters ride the detail as explicit keys
+ * (sweeps=, flips=, familyFlips=) so rows parse back losslessly without
+ * overloading the job_runs integer columns, plus `last=from->to@ms` for the
+ * day's newest flip pair. Exported for tests.
+ */
+export function renderTransportFlipDetail(row: {
+  service: string;
+  transport: LoopbackTransport;
+  sweeps: number;
+  flips: number;
+  familyFlips: number;
+  lastFrom: LoopbackTransport | null;
+  lastTo: LoopbackTransport | null;
+  lastFlipAt: number | null;
+}): string {
+  const parts = [
+    `service=${row.service}`,
+    `transport=${row.transport}`,
+    `sweeps=${row.sweeps}`,
+    `flips=${row.flips}`,
+    `familyFlips=${row.familyFlips}`,
+  ];
+  if (row.lastFlipAt !== null && row.lastFrom && row.lastTo) {
+    parts.push(`last=${row.lastFrom}->${row.lastTo}@${row.lastFlipAt}`);
+  }
+  return parts.join('; ');
+}
+
+/**
+ * Parse a transport-flip detail line back into its row. `ranAt` supplies the
+ * day bucket (the ledger row's own timestamp). Returns null for rows that
+ * don't parse (hand-edited/foreign) — the trend skips them, never throws.
+ */
+export function parseTransportFlipDetail(
+  detail: string | null,
+  ranAt: Date | string
+): TransportFlipLedgerRow | null {
+  if (!detail) return null;
+  const kv = new Map<string, string>();
+  for (const part of detail.split(';')) {
+    const eq = part.indexOf('=');
+    if (eq > 0) kv.set(part.slice(0, eq).trim(), part.slice(eq + 1).trim());
+  }
+  const service = kv.get('service');
+  const transport = kv.get('transport') as LoopbackTransport | undefined;
+  if (!service || !transport) return null;
+  const flips = Number(kv.get('flips') ?? 0);
+  const familyFlips = Number(kv.get('familyFlips') ?? 0);
+  const lastRaw = kv.get('last');
+  let lastFrom: LoopbackTransport | null = null;
+  let lastTo: LoopbackTransport | null = null;
+  let lastFlipAt: string | null = null;
+  if (lastRaw) {
+    const m = /^([^->]+)->([^@]+)@(.+)$/.exec(lastRaw);
+    if (m) {
+      lastFrom = m[1] as LoopbackTransport;
+      lastTo = m[2] as LoopbackTransport;
+      lastFlipAt = new Date(Number(m[3])).toISOString();
+    }
+  }
+  const at = ranAt instanceof Date ? ranAt : new Date(ranAt);
+  const sweeps = Number(kv.get('sweeps') ?? 1);
+  return {
+    service,
+    transport,
+    day: utcDay(at.getTime()),
+    // Sweeps ride the row's own counter when the detail predates it (older
+    // rows always carry sweeps= in the detail — renderTransportFlipDetail —
+    // so this fallback only matters for hand-inserted rows).
+    sweeps: Number.isFinite(sweeps) && sweeps > 0 ? sweeps : 1,
+    flips: Number.isFinite(flips) ? flips : 0,
+    familyFlips: Number.isFinite(familyFlips) ? familyFlips : 0,
+    lastFlipAt,
+    lastFrom,
+    lastTo,
+  };
+}
 
 /**
  * Manual "Run now" targets. Paths are relative to the REPO ROOT and resolved
@@ -664,14 +959,13 @@ export interface RunJobOutcome {
 
 @Injectable()
 export class OpsService {
-  /** Last sweep's answering transport per service — the flip-detection
-   * baseline. In-memory by design: a backend restart reseeds it, and a flip
-   * is only defined between two observations from the same watcher. */
-  private transportBaseline: Record<string, LoopbackTransport> = {};
-  /** Most recent flip per service, kept until TRANSPORT_FLIP_HOLD_MS elapses
-   * without a new flip — so independent page polls can't clear each other's
-   * banner (one-shot lists race; hold windows don't). */
-  private transportFlipsRecent = new Map<string, TransportFlip>();
+  /** Fleet-wide transport baseline + flip hold-window, persisted in Redis.
+   * Replaces the former in-memory maps: a backend restart no longer reseeds
+   * the baselines (a re-bind around a deploy stays visible) and multiple
+   * replicas compare against — and detect flips through — the same fleet
+   * truth, atomically (Lua compare-and-set). Degrades to the previous
+   * per-process semantics when Redis is unreachable. */
+  private readonly transportStore = new RedisTransportStore();
   private readonly logger = new Logger(OpsService.name);
   private runningJobs = new Set<string>();
   /**
@@ -846,6 +1140,10 @@ export class OpsService {
 
       const serviceBudgets = this.getServiceBudgets();
       const scan = await this.getDirectPgBypasses();
+      // Ledger-derived persistence: how long each foreign workspace has been
+      // dialing, not just who is dialing right now (the lsof scan above).
+      // Best-effort — the card shows the live scan even if this read fails.
+      const foreignPersistence = await this.getForeignPersistence();
 
       return {
         available: true,
@@ -859,6 +1157,7 @@ export class OpsService {
         bypasses: scan.bypasses,
         foreignDirectClients: scan.foreign,
         ...(scan.detail ? { bypassesDetail: scan.detail } : {}),
+        ...(foreignPersistence ? { foreignPersistence } : {}),
         checkedAt,
         latencyMs: Date.now() - start,
       };
@@ -973,6 +1272,186 @@ export class OpsService {
   }
 
   /**
+   * Per-workspace foreign-dialer persistence from the job_runs ledger: how
+   * long each foreign workspace has been dialing Postgres directly, over the
+   * window (48h default — long enough to show a 24h+ sustained dialer plus
+   * context). Same run/gap/span semantics as the nightly foreign-dialer core
+   * (pool-bypass-gate.mjs evaluateForeignDialers), so the card and the
+   * tracker can never disagree about who is sustained. Best-effort: null on
+   * ledger failure (card still shows the live lsof scan), never throws.
+   */
+  async getForeignPersistence(windowHours = 48): Promise<ForeignPersistence | null> {
+    const hours = Math.min(Math.max(windowHours, 6), 24 * 14);
+    try {
+      const raw = await this.prisma.$queryRaw<Array<{ detail: string | null; ranAt: Date }>>`
+        SELECT detail, "ranAt"
+        FROM job_runs
+        WHERE job = 'pool-audit'
+          AND "ranAt" >= now() - ${`${hours} hours`}::interval
+        ORDER BY "ranAt" DESC`;
+      const sustainedMinSpanHours = Number(process.env.POOL_FOREIGN_MIN_SPAN_H ?? 24);
+      return {
+        windowHours: hours,
+        sustainedMinSpanHours,
+        rows: computeForeignPersistence(raw ?? [], {
+          minSpanHours: sustainedMinSpanHours,
+          // Same allowlist the nightly tracker applies — approved workspaces
+          // show on the card (budget impact is real) but never read as
+          // sustained, so card and tracker never disagree.
+          allowlist: parseForeignAllowlist(process.env.POOL_FOREIGN_ALLOWLIST),
+        }),
+      };
+    } catch (e) {
+      return {
+        windowHours: hours,
+        sustainedMinSpanHours: Number(process.env.POOL_FOREIGN_MIN_SPAN_H ?? 24),
+        rows: [],
+        detail: `ledger read failed: ${(e as Error).message.split('\n')[0]}`,
+      };
+    }
+  }
+
+  /**
+   * Persist one probe sweep's per-service transport observations into the
+   * flip-persistence ledger (job_runs, job='transport-flip').
+   *
+   * Why a ledger: flips already survive 10 minutes in the Redis hold window
+   * (transport-store.ts) — long enough for the banner, useless for "does
+   * payment-service re-bind every Tuesday after deploys?". This records
+   * every sweep's outcome (steady days included — absence of rows must mean
+   * "sweeps stopped", never "nothing happened"), one row per
+   * (service, transport, UTC day), UPSERT-merged so N sweeps of the same
+   * steady state collapse into one row carrying the day's totals. The
+   * nightly job-health gate and audit retention treat it like any other
+   * ledger job; getTransportFlipTrend reads it back for the card.
+   *
+   * Fire-and-forget by contract: a ledger write may never fail (or slow) a
+   * health sweep — callers .catch() into a warn.
+   */
+  async recordTransportSweep(
+    services: ServiceHealthResult[],
+    flips: TransportFlip[],
+    now = Date.now()
+  ): Promise<void> {
+    try {
+      const day = utcDay(now);
+      const ranAt = new Date(now).toISOString();
+      // Flip lookup per service: the newest flip wins for the day's last= pair.
+      const flipByService = new Map(flips.map((f) => [f.service, f]));
+      for (const s of services) {
+        const transport = s.transport;
+        if (!transport) continue; // down/unknown sweeps record nothing — the
+        // baseline is dropped for down services; there is no transport to trend.
+        const flip = flipByService.get(s.name) ?? null;
+        // Deterministic id: one row per (service, UTC day). Whatever
+        // transport the day ENDED on owns the row (the ON CONFLICT update
+        // rewrites the id when the transport changed — the old steady row is
+        // replaced, not duplicated, because a day has exactly one truth: the
+        // trend wants "how did service X behave on day D", not one row per
+        // transport). flips/familyFlips/last= survive across transports so a
+        // morning ipv6→ipv4 flip still counts on the ipv4 day-row.
+        const id = `transport-flip:${s.name}:${day}`;
+        // status mirrors the job_runs convention: ok = steady day so far,
+        // warn = this day has seen a flip (family or rebind — the banner owns
+        // incident severity; the ledger owns persistence).
+        const status = flip ? 'warn' : 'ok';
+        // SQL-side accumulation: the SELECT ... FOR UPDATE row-locks the
+        // existing entry (concurrent replicas serialize per id), the detail is
+        // re-rendered with the MERGED totals (existing counters + this sweep's
+        // deltas, computed from the parsed previous detail) and the `last=`
+        // pair refreshed to THIS sweep's flip. Then a single UPSERT overwrites
+        // with the merged truth — two replicas racing write the same merged
+        // values for the same observations, so last-write-wins is exact.
+        // Counters double as belt-and-braces: durationMs (sweeps) and
+        // rowsPurged (flips) mirror the detail values, and the trend reads the
+        // DETAIL — renderTransportFlipDetail/parseTransportFlipDetail are the
+        // single source of truth for the row's meaning.
+        const prev = await this.prisma.$queryRaw<
+          Array<{ durationMs: number | null; rowsPurged: number | null; detail: string | null }>
+        >`SELECT "durationMs", "rowsPurged", detail FROM job_runs WHERE id = ${id} FOR UPDATE`;
+        const existing = prev[0] ? parseTransportFlipDetail(prev[0].detail, ranAt) : null;
+        const mergedSweeps = (existing?.sweeps ?? 0) + 1;
+        const mergedFlips = (existing?.flips ?? 0) + (flip ? 1 : 0);
+        const mergedFamily = (existing?.familyFlips ?? 0) + (flip?.familyChanged ? 1 : 0);
+        await this.prisma.$executeRaw`
+          INSERT INTO job_runs
+            (id, job, status, detail, "rowsPurged", "durationMs", "ranAt")
+          VALUES (
+            ${id},
+            'transport-flip',
+            ${status},
+            ${renderTransportFlipDetail({
+              service: s.name,
+              transport,
+              sweeps: mergedSweeps,
+              flips: mergedFlips,
+              familyFlips: mergedFamily,
+              lastFrom: flip?.from ?? existing?.lastFrom ?? null,
+              lastTo: flip?.to ?? existing?.lastTo ?? null,
+              lastFlipAt: flip
+                ? flip.detectedAt
+                : existing?.lastFlipAt
+                  ? Date.parse(existing.lastFlipAt)
+                  : null,
+            })},
+            ${mergedFlips},
+            ${mergedSweeps},
+            ${ranAt}::timestamptz
+          )
+          ON CONFLICT (id) DO UPDATE SET
+            status = ${status},
+            detail = EXCLUDED.detail,
+            "rowsPurged" = EXCLUDED."rowsPurged",
+            "durationMs" = EXCLUDED."durationMs",
+            "ranAt" = EXCLUDED."ranAt"
+        `;
+      }
+    } catch (e) {
+      // Ledger write failure must never fail (or slow) the health sweep.
+      this.logger.warn(
+        `transport-flip ledger write failed: ${(e as Error).message.split('\n')[0]}`
+      );
+    }
+  }
+
+  /**
+   * Transport-flip trend over the window (default 14 days): per
+   * (service, day) persistence rows parsed back out of the ledger detail,
+   * newest day first, then rolled up into fleet-wide counts for the card.
+   * Same degrade-to-empty contract as getRunHistory.
+   */
+  async getTransportFlipTrend(windowDays = 14): Promise<TransportFlipTrend> {
+    const days = Math.min(Math.max(windowDays, 1), 90);
+    try {
+      const raw = await this.prisma.$queryRaw<Array<{ detail: string | null; ranAt: Date }>>`
+        SELECT detail, "ranAt"
+        FROM job_runs
+        WHERE job = 'transport-flip'
+          AND "ranAt" >= now() - ${`${days} days`}::interval
+        ORDER BY "ranAt" DESC`;
+      const rows = (raw ?? [])
+        .map((r) => parseTransportFlipDetail(r.detail, r.ranAt))
+        .filter((r): r is TransportFlipLedgerRow => r !== null);
+      return {
+        windowDays: days,
+        rows,
+        servicesWithFlips: new Set(rows.filter((r) => r.flips > 0).map((r) => r.service)).size,
+        totalFlips: rows.reduce((n, r) => n + r.flips, 0),
+        totalFamilyFlips: rows.reduce((n, r) => n + r.familyFlips, 0),
+      };
+    } catch (e) {
+      return {
+        windowDays: days,
+        rows: [],
+        servicesWithFlips: 0,
+        totalFlips: 0,
+        totalFamilyFlips: 0,
+        detail: `ledger read failed: ${(e as Error).message.split('\n')[0]}`,
+      };
+    }
+  }
+
+  /**
    * Scan for client processes holding ESTABLISHED connections directly to
    * Postgres (:5432) — i.e. bypassing pgbouncer. lsof enumerates sockets,
    * per-PID lsof resolves each process's cwd, and classification splits
@@ -1070,10 +1549,10 @@ export class OpsService {
    * concurrent with a per-probe timeout; failures degrade to 'down', never
    * throw — a half-asleep fleet is exactly the state this page must show.
    *
-   * Transport flips: each sweep is compared against the previous sweep's
-   * answering transports (in-memory, per process — a backend restart reseeds
-   * the baseline, which is the honest behavior: a flip is only meaningful
-   * between two observations from the same watcher).
+   * Transport flips: each sweep is committed to the Redis-backed store
+   * (transport-store.ts), which compares against the fleet-wide persisted
+   * baseline atomically — flips survive restarts and are detected across
+   * replicas. Redis unreachable → per-process fallback (fail-open).
    */
   async getServiceHealth(): Promise<{
     services: ServiceHealthResult[];
@@ -1118,12 +1597,26 @@ export class OpsService {
       };
     });
     const services = await Promise.all(probes);
-    // Flip detection against the previous sweep's baseline (stateless merge,
-    // seeded empty on process start — see the method doc above).
-    const { flips, next } = mergeTransportHistory(
-      this.transportBaseline,
-      services.map((s) => ({ name: s.name, port: s.port, outcome: s as ProbeOutcome }))
-    );
+    // Flip detection against the fleet-wide Redis baseline: each service's
+    // fresh transport is committed atomically (Lua CAS), which records a
+    // flip into the hold-window hash exactly when the stored previous
+    // transport differs. Cross-restart AND cross-replica; TTLs enforce the
+    // hold window server-side. Down sweeps are committed with no transport
+    // → the Lua path must drop the baseline entry (same re-baseline rule as
+    // mergeTransportHistory documented in service-probe.ts).
+    const flips: TransportFlip[] = [];
+    for (const s of services) {
+      if (s.status === 'down') {
+        // Down: drop the baseline so the return probe (possibly on a new
+        // family) re-baselines instead of flipping against a stale value —
+        // down→rebind is normal ops, and down-state is already surfaced.
+        await this.transportStore.dropBaseline(s.name);
+        continue;
+      }
+      if (s.transport === undefined) continue;
+      const flip = await this.transportStore.commitTransport(s.name, s.port, s.transport);
+      if (flip) flips.push(flip);
+    }
     if (flips.length > 0) {
       this.logger.warn(
         `transport flips since previous probe sweep: ${flips
@@ -1131,15 +1624,18 @@ export class OpsService {
           .join(', ')}`
       );
     }
-    this.transportBaseline = next;
-    for (const f of flips) this.transportFlipsRecent.set(f.service, f);
-    const holdCutoff = Date.now() - TRANSPORT_FLIP_HOLD_MS;
-    for (const [svc, f] of this.transportFlipsRecent) {
-      if (f.detectedAt < holdCutoff) this.transportFlipsRecent.delete(svc);
+    // Fire-and-forget persistence: the 10-minute hold window answers "what
+    // just changed"; the ledger answers "what changed all month". A failed
+    // (or slow) write must never fail or slow the sweep — recordTransportSweep
+    // catches its own errors and logs.
+    void this.recordTransportSweep(services, flips);
+    const transportFlips = await this.transportStore.recentFlips();
+    if (this.transportStore.degraded) {
+      // One warn per degraded sweep at most — the store itself logs nothing.
+      this.logger.warn(
+        'transport store degraded: Redis unreachable, flip memory is per-process only'
+      );
     }
-    const transportFlips = [...this.transportFlipsRecent.values()].sort((a, b) =>
-      a.service.localeCompare(b.service)
-    );
     return { services, transportFlips, checkedAt: new Date().toISOString() };
   }
 

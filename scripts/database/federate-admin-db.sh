@@ -257,7 +257,12 @@ CREATE TABLE IF NOT EXISTS job_runs (
 );
 CREATE INDEX IF NOT EXISTS job_runs_job_ranat_idx ON job_runs (job, "ranAt" DESC);
 SQL
-echo "ok"
+# The transport-flip ledger (apps/admin ops.service recordTransportSweep)
+# UPSERTs on a deterministic per-(service, transport, day) id — the unique
+# index makes ON CONFLICT (id) a guaranteed no-throw merge even on the plain
+# PRIMARY KEY alone, but the partial index keeps the trend query fast as the
+# ledger grows.
+psql_admin -v ON_ERROR_STOP=1 -c "CREATE INDEX IF NOT EXISTS job_runs_transport_flip_idx ON job_runs (\"ranAt\" DESC) WHERE job = 'transport-flip'" || true
 
 echo
 echo "Federation complete. azeebo_admin now serves LIVE data for the swapped tables."

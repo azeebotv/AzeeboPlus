@@ -828,6 +828,8 @@ export const adminApi = {
   getOpsRunHistory: (hours?: number) =>
     apiFetch<OpsRunHistory>(`/api/v1/admin/ops/runs${hours ? `?hours=${hours}` : ''}`),
   getOpsPgbouncer: () => apiFetch<PgbouncerHealth>('/api/v1/admin/ops/pgbouncer'),
+  getOpsTransportFlipTrend: (days?: number) =>
+    apiFetch<TransportFlipTrend>(`/api/v1/admin/ops/transport-flips${days ? `?days=${days}` : ''}`),
   getGatewayHttp: () => apiFetch<GatewayHttpSummary>('/api/v1/admin/ops/gateway-http'),
   getGatewayRateLimits: () =>
     apiFetch<GatewayRateLimitSnapshot>('/api/v1/admin/ops/gateway-rate-limits'),
@@ -1198,6 +1200,28 @@ export interface OpsServicesSnapshot {
   checkedAt: string;
 }
 
+/** GET /admin/ops/transport-flips — ledger-backed flip persistence trend. */
+export interface TransportFlipTrendRow {
+  service: string;
+  transport: string;
+  day: string;
+  sweeps: number;
+  flips: number;
+  familyFlips: number;
+  lastFlipAt: string | null;
+  lastFrom: string | null;
+  lastTo: string | null;
+}
+
+export interface TransportFlipTrend {
+  windowDays: number;
+  rows: TransportFlipTrendRow[];
+  servicesWithFlips: number;
+  totalFlips: number;
+  totalFamilyFlips: number;
+  detail?: string;
+}
+
 export interface OpsStatus {
   overall: 'healthy' | 'degraded' | 'down';
   db: OpsCheck;
@@ -1260,6 +1284,25 @@ export interface PgbouncerHealth {
    * `ipv6` (when present) counts that workspace's dials over IPv6 loopback (::1).
    */
   foreignDirectClients?: Array<{ workspace: string; connections: number; ipv6?: number }>;
+  /** Ledger-derived per-workspace persistence spans over the window — how
+   * LONG each foreign dialer has been dialing, not just who dials right now.
+   * `sustained` marks rows at/over the tracking-issue threshold (24h+);
+   * `approved` marks rows on POOL_FOREIGN_ALLOWLIST — visible (the budget
+   * impact is real) but never sustained, so never tracked. */
+  foreignPersistence?: {
+    windowHours: number;
+    sustainedMinSpanHours: number;
+    rows: Array<{
+      workspace: string;
+      passes: number;
+      spanHours: number;
+      lastSeen: string;
+      conns: number | null;
+      sustained: boolean;
+      approved: boolean;
+    }>;
+    detail?: string;
+  };
   /** Present when the bypass scan itself failed (e.g. lsof unavailable). */
   bypassesDetail?: string;
   checkedAt: string;

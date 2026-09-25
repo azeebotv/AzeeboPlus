@@ -1,13 +1,13 @@
 /**
  * Transport-resilient service health probing.
  *
- * Why: services bind different loopback families. admin-backend listens on
- * [::1]:4100 only (IPv6), so `curl 127.0.0.1:4100` is ECONNREFUSED while the
- * service is perfectly healthy; a Node fetch against `localhost` works only
- * when the OS resolver happens to try both families. The prober must never
- * fail a healthy service on transport alone: it tries explicit candidates in
- * order and records which transport answered, so the card can show an
- * IPv6-only listener instead of a phantom outage.
+ * Why: services bind different loopback families. The admin SPA dev server
+ * (vite) listens on [::1]:5173 only (IPv6), so `curl 127.0.0.1:5173` is
+ * ECONNREFUSED while the server is perfectly healthy; a Node fetch against
+ * `localhost` works only when the OS resolver happens to try both families.
+ * The prober must never fail a healthy service on transport alone: it tries
+ * explicit candidates in order and records which transport answered, so the
+ * card can show an IPv6-only listener instead of a phantom outage.
  *
  * Exported pure (probeCandidates, isRetryableTransportError) for tests; the
  * runner takes a fetch-like function so unit tests inject fakes.
@@ -19,7 +19,7 @@ export type LoopbackTransport = 'localhost' | 'ipv6' | 'ipv4';
 /**
  * Candidate URLs for a loopback service, most-natural first:
  *   1. localhost   — the normal case; happy-path latency, dual-stack resolvers win
- *   2. [::1]       — IPv6-only listeners (admin-backend on [::1]:4100)
+ *   2. [::1]       — IPv6-only listeners (the admin SPA dev server on [::1]:5173)
  *   3. 127.0.0.1   — IPv4-only listeners (some tooling binds v4 explicitly)
  * A service that answers any candidate is healthy; only all-three failure
  * means 'down'.

@@ -10,11 +10,11 @@ import {
 /**
  * Tests for the family-failover service probe.
  *
- * Why this exists: services bind different loopback families — admin-backend
- * listens on [::1]:4100 only, so a single-URL probe that dials
- * 127.0.0.1 (or a resolver that picks v4) reports a healthy service as
- * ECONNREFUSED. The probe tries localhost → [::1] → 127.0.0.1 and never
- * fails a service on transport alone.
+ * Why this exists: services bind different loopback families — the admin
+ * SPA dev server (vite) listens on [::1]:5173 only, so a single-URL probe
+ * that dials 127.0.0.1 (or a resolver that picks v4) reports a healthy
+ * server as ECONNREFUSED. The probe tries localhost → [::1] → 127.0.0.1 and
+ * never fails a service on transport alone.
  */
 
 describe('probeCandidates', () => {
