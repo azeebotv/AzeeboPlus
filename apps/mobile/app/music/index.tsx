@@ -14,7 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi, MusicTrack } from '@azeebo/react-data/api/lifestyle';
+import { lifestyleApi } from '@azeebo/react-data/api/lifestyle';
+import { extractTracks, extractGenres, NormalizedTrack, NormalizedGenre } from '../../src/lib/music';
 
 export default function MusicScreen() {
   const router = useRouter();
@@ -23,28 +24,19 @@ export default function MusicScreen() {
 
   const tracksQuery = useQuery({
     queryKey: ['lifestyle', 'music', selectedGenre],
-    queryFn: async () => {
-      const res = await lifestyleApi.getTracks(selectedGenre);
-      return Array.isArray(res) ? res : (res?.data ?? []);
-    },
+    queryFn: async () => extractTracks(await lifestyleApi.getTracks(selectedGenre)),
     staleTime: 60_000,
   });
 
   const trendingQuery = useQuery({
     queryKey: ['lifestyle', 'music', 'trending'],
-    queryFn: async () => {
-      const res = await lifestyleApi.getTrendingTracks();
-      return Array.isArray(res) ? res : (res?.data ?? []);
-    },
+    queryFn: async () => extractTracks(await lifestyleApi.getTrendingTracks()),
     staleTime: 60_000,
   });
 
   const genresQuery = useQuery({
     queryKey: ['lifestyle', 'music', 'genres'],
-    queryFn: async () => {
-      const res = await lifestyleApi.getGenres();
-      return Array.isArray(res) ? res : (res?.data ?? []);
-    },
+    queryFn: async () => extractGenres(await lifestyleApi.getGenres()),
     staleTime: 60_000,
   });
 
@@ -63,14 +55,14 @@ export default function MusicScreen() {
     setPlayingId((prev) => (prev === trackId ? null : trackId));
   }, []);
 
-  const renderTrack = ({ item }: { item: MusicTrack }) => (
+  const renderTrack = ({ item }: { item: NormalizedTrack }) => (
     <TouchableOpacity
       style={[styles.trackCard, { backgroundColor: colors.bg.tertiary }]}
       onPress={() => togglePlay(item.id)}
       activeOpacity={0.7}
     >
       <Image
-        source={{ uri: item.coverArt || 'https://placehold.co/80x80/1a1a1a/ffffff?text=♪' }}
+        source={{ uri: item.thumbnail || 'https://placehold.co/80x80/1a1a1a/ffffff?text=♪' }}
         style={styles.trackCover}
         resizeMode="cover"
       />
@@ -95,7 +87,7 @@ export default function MusicScreen() {
     </TouchableOpacity>
   );
 
-  const renderTrendingTrack = ({ item, index }: { item: MusicTrack; index: number }) => (
+  const renderTrendingTrack = ({ item, index }: { item: NormalizedTrack; index: number }) => (
     <TouchableOpacity
       style={[styles.trendingCard, { backgroundColor: colors.bg.tertiary }]}
       onPress={() => togglePlay(item.id)}
@@ -105,7 +97,7 @@ export default function MusicScreen() {
         <Text style={styles.rankText}>{index + 1}</Text>
       </View>
       <Image
-        source={{ uri: item.coverArt || 'https://placehold.co/60x60/1a1a1a/ffffff?text=♪' }}
+        source={{ uri: item.thumbnail || 'https://placehold.co/60x60/1a1a1a/ffffff?text=♪' }}
         style={styles.trendingCover}
         resizeMode="cover"
       />
@@ -123,7 +115,10 @@ export default function MusicScreen() {
     </TouchableOpacity>
   );
 
-  const genresWithAll = [{ id: 'All', name: 'All', icon: '🎵' }, ...genres];
+  const genresWithAll: NormalizedGenre[] = [
+    { id: 'All', name: 'All', slug: 'All', icon: '🎵' },
+    ...genres,
+  ];
 
   return (
     <SafeAreaView style={styles.container}>

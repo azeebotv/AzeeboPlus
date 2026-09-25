@@ -16,7 +16,6 @@ test.describe('F-012: Games Flow', () => {
 
   test('games page loads and shows hero section', async ({ page }) => {
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     // Hero should show first game title
     await expect(page.locator('text=Trivia Master').first()).toBeVisible({ timeout: 15000 });
@@ -24,7 +23,6 @@ test.describe('F-012: Games Flow', () => {
 
   test('hero section shows game description', async ({ page }) => {
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=Test your knowledge across categories').first()).toBeVisible({
       timeout: 15000,
@@ -33,7 +31,6 @@ test.describe('F-012: Games Flow', () => {
 
   test('hero section shows Play Now and Leaderboard buttons', async ({ page }) => {
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('button:has-text("Play Now")').first()).toBeVisible({ timeout: 15000 });
     await expect(page.locator('button:has-text("Leaderboard")').first()).toBeVisible();
@@ -43,7 +40,6 @@ test.describe('F-012: Games Flow', () => {
 
   test('featured games grid shows all games', async ({ page }) => {
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=Featured Games').first()).toBeVisible({ timeout: 15000 });
 
@@ -58,7 +54,6 @@ test.describe('F-012: Games Flow', () => {
 
   test('game cards show descriptions', async ({ page }) => {
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=Test your knowledge across categories').first()).toBeVisible({
       timeout: 15000,
@@ -68,7 +63,6 @@ test.describe('F-012: Games Flow', () => {
 
   test('game cards show premium badges', async ({ page }) => {
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     // All game cards should have Premium badge
     const premiumBadges = page.locator('text=Premium');
@@ -78,7 +72,6 @@ test.describe('F-012: Games Flow', () => {
 
   test('game cards show Play Now buttons', async ({ page }) => {
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     // Grid cards should each have a Play Now button
     const playButtons = page.locator('button:has-text("Play Now")');
@@ -121,7 +114,6 @@ test.describe('F-012: Games Flow', () => {
     );
 
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     const errorIndicator = page.locator('text=/Failed|Error/i').first();
     await expect(errorIndicator).toBeVisible({ timeout: 15000 });
@@ -137,7 +129,6 @@ test.describe('F-012: Games Flow', () => {
     );
 
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     const errorIndicator = page.locator('text=/Failed|Error|not found/i').first();
     await expect(errorIndicator).toBeVisible({ timeout: 15000 });
@@ -155,7 +146,6 @@ test.describe('F-012: Games Flow', () => {
     );
 
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=/No games available/i').first()).toBeVisible({ timeout: 15000 });
   });
@@ -165,7 +155,6 @@ test.describe('F-012: Games Flow', () => {
   test('renders correctly on mobile viewport', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=Featured Games').first()).toBeVisible({ timeout: 15000 });
   });
@@ -173,7 +162,6 @@ test.describe('F-012: Games Flow', () => {
   test('renders correctly on tablet viewport', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=Featured Games').first()).toBeVisible({ timeout: 15000 });
   });
@@ -181,7 +169,6 @@ test.describe('F-012: Games Flow', () => {
   test('renders correctly on desktop viewport', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=Featured Games').first()).toBeVisible({ timeout: 15000 });
   });
@@ -190,7 +177,6 @@ test.describe('F-012: Games Flow', () => {
 
   test('Play Now button navigates to watch page', async ({ page }) => {
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     // Click the first Play Now button (hero section)
     const playNowBtn = page.locator('a:has-text("Play Now")').first();
@@ -205,7 +191,6 @@ test.describe('F-012: Games Flow', () => {
 
   test('game card click navigates to watch page', async ({ page }) => {
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     // Click on a game card
     const gameCard = page.locator('a[href*="/watch/"]').first();
@@ -218,7 +203,6 @@ test.describe('F-012: Games Flow', () => {
 
   test('Leaderboard button navigates to rankings', async ({ page }) => {
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     const leaderboardLink = page.locator('a:has-text("Leaderboard")').first();
     await expect(leaderboardLink).toBeVisible({ timeout: 15000 });
@@ -238,7 +222,6 @@ test.describe('F-012: Games Flow', () => {
     });
 
     await page.goto('/games');
-    await page.waitForLoadState('networkidle');
 
     // Analytics might fire but we just verify page loads without error
     await expect(page.locator('text=Featured Games').first()).toBeVisible({ timeout: 15000 });

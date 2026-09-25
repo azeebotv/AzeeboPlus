@@ -1,24 +1,18 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors, radius } from '../../src/theme';
-import { apiClient } from '@azeebo/react-data/api/client';
+import { lifestyleApi } from '@azeebo/react-data/api/lifestyle';
+import { extractGenres } from '../../src/lib/music';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-
-interface Genre {
-  id: string;
-  name: string;
-  slug: string;
-  trackCount: number;
-  color?: string;
-}
 
 const GENRE_COLORS: Record<string, string> = {
   afrobeats: '#E8420A',
   hiphop: '#8B5CF6',
+  'hip-hop': '#8B5CF6',
   rnb: '#EC4899',
+  'r&b': '#EC4899',
   pop: '#3B82F6',
   gospel: '#F59E0B',
   highlife: '#10B981',
@@ -29,39 +23,35 @@ const GENRE_COLORS: Record<string, string> = {
 };
 
 export default function MusicGenresScreen() {
-  const colorScheme = useColorScheme();
   const router = useRouter();
-  const isDark = colorScheme === 'dark';
 
   const genresQuery = useQuery({
-    queryKey: ['music', 'genres'],
-    queryFn: async () => {
-      const res = await apiClient.get<Genre[]>('/v1/music/genres');
-      return Array.isArray(res) ? res : [];
-    },
+    queryKey: ['lifestyle', 'music', 'genres'],
+    queryFn: async () => extractGenres(await lifestyleApi.getGenres()),
     staleTime: 300_000,
   });
 
   const genres = genresQuery.data ?? [];
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Genres</Text>
-        <View style={{ width: 40 }} />
+        <View style={styles.backButton} />
       </View>
 
       {genresQuery.isLoading ? (
         <LoadingState text="Loading genres..." />
       ) : genresQuery.error ? (
-        <ErrorState description={genresQuery.error.message} onRetry={() => genresQuery.refetch()} />
+        <ErrorState
+          description={genresQuery.error?.message ?? 'Failed to load genres'}
+          onRetry={() => genresQuery.refetch()}
+        />
       ) : genres.length === 0 ? (
-        <EmptyState icon="🎶" title="No genres" description="Genre browsing coming soon" />
+        <EmptyState icon="🎶" title="No genres yet" description="Genres appear as music is added" />
       ) : (
         <FlatList
           data={genres}
@@ -70,15 +60,18 @@ export default function MusicGenresScreen() {
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.gridRow}
           renderItem={({ item }) => {
-            const bgColor = GENRE_COLORS[item.slug] || item.color || colors.primary[500];
+            // NormalizedGenre has no color field — fall back to theme primary.
+            const bgColor = GENRE_COLORS[item.slug] || colors.primary[500];
             return (
               <TouchableOpacity
                 style={[styles.card, { backgroundColor: bgColor + '15' }]}
-                onPress={() => router.push(`/music/genres/${item.slug}`)}
+                onPress={() => router.push(`/music/genres/${encodeURIComponent(item.slug)}`)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Browse ${item.name} genre`}
               >
                 <Text style={[styles.genreName, { color: bgColor }]}>{item.name}</Text>
-                <Text style={styles.trackCount}>{item.trackCount} tracks</Text>
+                <Text style={styles.browseHint}>Browse →</Text>
               </TouchableOpacity>
             );
           }}
@@ -95,7 +88,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    paddingTop: 40,
+    paddingTop: 12,
   },
   backButton: {
     width: 40,
@@ -117,6 +110,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 90,
   },
-  genreName: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
-  trackCount: { fontSize: 12, color: colors.text.tertiary },
+  genreName: { fontSize: 16, fontWeight: '700', marginBottom: 4, textTransform: 'capitalize' },
+  browseHint: { fontSize: 12, color: colors.text.tertiary },
 });

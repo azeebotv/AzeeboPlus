@@ -8,7 +8,7 @@ export default defineConfig({
   workers: 2,
   timeout: 30_000,
   use: {
-    baseURL: process.env.CREATOR_URL || 'http://localhost:4104',
+    baseURL: process.env.CREATOR_URL || 'http://localhost:5174',
     trace: 'off',
   },
   projects: [

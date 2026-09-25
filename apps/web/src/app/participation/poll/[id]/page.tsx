@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
@@ -11,31 +11,42 @@ import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHero } from '@/components/layout/PageHero';
 import { ArrowLeft, CheckCircle2, Vote, Clock, Users } from 'lucide-react';
+import analytics from '@/lib/analytics';
+
+/**
+ * Community fan poll — backed by lifestyle-service:
+ *   GET  /v1/polls/:id        → { poll: { id, title, description, status, totalVotes, expiresAt, options[] } }
+ *   POST /v1/polls/:id/vote   → { optionId } (auth required)
+ * `apiFetch` normalizes to /api/v1/... which the Next rewrite forwards to the gateway.
+ */
 
 interface PollOption {
   id: string;
   text: string;
-  votes: number;
-  percentage: number;
+  imageUrl?: string | null;
+  voteCount: number;
 }
 
 interface Poll {
   id: string;
-  question: string;
-  description?: string;
-  options: PollOption[];
+  title: string;
+  description?: string | null;
+  status: string;
   totalVotes: number;
-  endsAt: string;
-  userVote?: string;
-  isActive: boolean;
+  expiresAt?: string | null;
+  options: PollOption[];
 }
 
 export default function PollDetailPage(): React.JSX.Element {
   const params = useParams();
   const pollId = params.id as string;
-  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+
+  useEffect(() => {
+    analytics.pageView('participation-poll');
+  }, []);
 
   const {
     data: poll,
@@ -45,14 +56,15 @@ export default function PollDetailPage(): React.JSX.Element {
   } = useQuery({
     queryKey: ['poll', pollId],
     queryFn: async () => {
-      const res = await apiFetch<Poll>(`/v1/engagement/polls/${pollId}`);
-      return res.success && res.data ? res.data : null;
+      const res = await apiFetch<{ poll: Poll }>(`/v1/polls/${pollId}`);
+      return res.success && res.data ? res.data.poll : null;
     },
+    enabled: Boolean(pollId),
   });
 
   const voteMutation = useMutation({
     mutationFn: (optionId: string) =>
-      apiFetch(`/v1/engagement/polls/${pollId}/vote`, {
+      apiFetch(`/v1/polls/${pollId}/vote`, {
         method: 'POST',
         body: JSON.stringify({ optionId }),
       }),
@@ -72,17 +84,17 @@ export default function PollDetailPage(): React.JSX.Element {
     );
   }
 
-  const hasVoted = Boolean(poll?.userVote);
-  const isExpired = poll ? new Date(poll.endsAt) < new Date() : false;
+  const isExpired = poll ? Boolean(poll.expiresAt && new Date(poll.expiresAt) < new Date()) || poll.status === 'closed' : false;
+  const hasVoted = voteMutation.isSuccess;
 
   return (
     <PageShell activeNav="Reality" glowColor="rgba(232, 66, 10, 0.2)">
       <div className="mb-6">
         <Link
-          href="/vote"
+          href="/participation"
           className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Voting & Fan Polls
+          <ArrowLeft className="w-4 h-4" /> Back to Community Participation
         </Link>
       </div>
 
@@ -92,13 +104,20 @@ export default function PollDetailPage(): React.JSX.Element {
             <Skeleton height="36px" width="200px" />
             <Skeleton height="280px" borderRadius="24px" />
           </div>
-        ) : poll ? (
+        ) : !poll ? (
+          <ErrorState
+            title="Poll Not Found"
+            description="This poll may have concluded or been removed."
+            buttonText="Browse Community Activities"
+            onButtonPress={() => refetch()}
+          />
+        ) : (
           <>
             <PageHero
               eyebrow="COMMUNITY INTERACTION"
               eyebrowColor="var(--brand-orange)"
               badge={hasVoted ? 'VOTE RECORDED' : isExpired ? 'ENDED' : 'LIVE POLL'}
-              title={poll.question}
+              title={poll.title}
               subtitle={poll.description || 'Cast your vote and see real-time audience opinions.'}
               glowColor="rgba(232, 66, 10, 0.25)"
             />
@@ -124,7 +143,9 @@ export default function PollDetailPage(): React.JSX.Element {
                   <span>
                     {isExpired
                       ? 'Voting concluded'
-                      : `Closes ${new Date(poll.endsAt).toLocaleDateString()}`}
+                      : poll.expiresAt
+                        ? `Closes ${new Date(poll.expiresAt).toLocaleDateString()}`
+                        : 'No end date'}
                   </span>
                 </div>
               </div>
@@ -132,11 +153,13 @@ export default function PollDetailPage(): React.JSX.Element {
               {/* Options List */}
               <div className="space-y-3.5">
                 {poll.options.map((option) => {
-                  const isSelected = selectedOption === option.id || poll.userVote === option.id;
+                  const isSelected = selectedOption === option.id;
+                  const pct =
+                    poll.totalVotes > 0 ? Math.round((option.voteCount / poll.totalVotes) * 100) : 0;
                   return (
                     <button
                       key={option.id}
-                      disabled={hasVoted || isExpired || !user}
+                      disabled={hasVoted || isExpired || !isAuthenticated}
                       onClick={() => setSelectedOption(option.id)}
                       className={`w-full text-left rounded-2xl p-4 sm:p-5 border transition-all relative overflow-hidden group ${
                         isSelected
@@ -148,7 +171,7 @@ export default function PollDetailPage(): React.JSX.Element {
                       {hasVoted && (
                         <div
                           className="absolute inset-y-0 left-0 bg-gradient-to-r from-[var(--brand-orange)]/20 to-transparent transition-all duration-700 pointer-events-none"
-                          style={{ width: `${option.percentage}%` }}
+                          style={{ width: `${pct}%` }}
                         />
                       )}
 
@@ -169,9 +192,7 @@ export default function PollDetailPage(): React.JSX.Element {
                         </div>
 
                         {hasVoted && (
-                          <span className="text-sm font-bold text-white/90 shrink-0">
-                            {option.percentage}%
-                          </span>
+                          <span className="text-sm font-bold text-white/90 shrink-0">{pct}%</span>
                         )}
                       </div>
 
@@ -179,7 +200,7 @@ export default function PollDetailPage(): React.JSX.Element {
                         <div className="mt-3 w-full bg-white/10 rounded-full h-1.5 overflow-hidden relative z-10">
                           <div
                             className="bg-gradient-to-r from-[var(--brand-orange)] to-[#cc1c1c] h-full rounded-full transition-all duration-700"
-                            style={{ width: `${option.percentage}%` }}
+                            style={{ width: `${pct}%` }}
                           />
                         </div>
                       )}
@@ -189,7 +210,7 @@ export default function PollDetailPage(): React.JSX.Element {
               </div>
 
               {/* Action State */}
-              {user && !hasVoted && !isExpired && (
+              {isAuthenticated && !hasVoted && !isExpired && (
                 <button
                   onClick={() => selectedOption && voteMutation.mutate(selectedOption)}
                   disabled={voteMutation.isPending || !selectedOption}
@@ -203,24 +224,30 @@ export default function PollDetailPage(): React.JSX.Element {
                   ) : (
                     <>
                       <Vote className="w-4 h-4" />
-                      Confirm & Submit Vote
+                      Confirm &amp; Submit Vote
                     </>
                   )}
                 </button>
               )}
 
-              {hasVoted && (
-                <div className="mt-6 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center gap-2 text-emerald-400 text-xs sm:text-sm font-semibold">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Your vote has been recorded on the live blockchain ledger.
+              {voteMutation.isError && (
+                <div className="mt-4 p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs sm:text-sm font-semibold text-center">
+                  Your vote could not be recorded — please try again.
                 </div>
               )}
 
-              {!user && (
+              {hasVoted && (
+                <div className="mt-6 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center gap-2 text-emerald-400 text-xs sm:text-sm font-semibold">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Your vote has been recorded.
+                </div>
+              )}
+
+              {!isAuthenticated && (
                 <div className="az-glass p-4 rounded-xl text-center mt-6 border border-white/10">
                   <p className="text-white/60 text-sm">
                     <Link
-                      href="/auth/login"
+                      href={`/auth/login?redirect=${encodeURIComponent(`/participation/poll/${pollId}`)}`}
                       className="text-[var(--brand-orange)] font-bold hover:underline"
                     >
                       Sign in to your account
@@ -231,7 +258,7 @@ export default function PollDetailPage(): React.JSX.Element {
               )}
             </motion.div>
           </>
-        ) : null}
+        )}
       </div>
     </PageShell>
   );

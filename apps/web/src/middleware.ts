@@ -42,8 +42,8 @@ const protectedRoutes = [
 const adminRoutes = ['/admin'];
 
 // Standalone app hosts (set via env vars in production)
-const ADMIN_HOST = process.env.ADMIN_APP_URL || 'http://localhost:4100';
-const CREATOR_HOST = process.env.CREATOR_APP_URL || 'http://localhost:4104';
+const ADMIN_HOST = process.env.ADMIN_APP_URL || 'http://localhost:5173';
+const CREATOR_HOST = process.env.CREATOR_APP_URL || 'http://localhost:5174';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

@@ -24,7 +24,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=Sign in to View Tips').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('a[href*="/auth/login"]')).toBeVisible();
@@ -32,7 +31,6 @@ test.describe('F-011: Tipping Flow', () => {
 
   test('tipping page loads for authenticated users', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
 
     await page.evaluate(() => {
       localStorage.setItem('azeebo_access_token', 'test-access-token');
@@ -50,7 +48,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=My Tips').first()).toBeVisible({ timeout: 10000 });
   });
@@ -65,7 +62,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=Tips Sent').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('text=Total Tipped').first()).toBeVisible();
@@ -80,7 +76,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     // Mock returns topTier: 'gold'
     await expect(page.locator('text=Gold').first()).toBeVisible({ timeout: 10000 });
@@ -96,7 +91,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     // History tab should be active by default
     await expect(page.locator('text=Comedy King').first()).toBeVisible({ timeout: 10000 });
@@ -112,7 +106,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=Gold').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('text=Silver').first()).toBeVisible();
@@ -127,7 +120,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=₦1,000').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('text=₦500').first()).toBeVisible();
@@ -142,7 +134,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=Love your content!').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('text=Great analysis').first()).toBeVisible();
@@ -158,7 +149,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await page.locator('button:has-text("Send Tip")').click();
 
@@ -175,7 +165,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await page.locator('button:has-text("Send Tip")').click();
 
@@ -201,7 +190,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await page.locator('button:has-text("Send Tip")').click();
 
@@ -220,7 +208,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await page.locator('button:has-text("Send Tip")').click();
 
@@ -236,7 +223,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await page.locator('button:has-text("Send Tip")').click();
 
@@ -267,7 +253,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=No tips sent yet').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('button:has-text("Send Your First Tip")').first()).toBeVisible();
@@ -291,7 +276,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     // Should show error state with retry
     const errorIndicator = page.locator('text=/Failed|Error|retry/i').first();
@@ -309,7 +293,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=My Tips').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('text=Tips Sent').first()).toBeVisible();
@@ -324,7 +307,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=My Tips').first()).toBeVisible({ timeout: 10000 });
   });
@@ -339,7 +321,6 @@ test.describe('F-011: Tipping Flow', () => {
     });
 
     await page.goto('/tipping');
-    await page.waitForLoadState('networkidle');
 
     // Each history entry should be a link to the creator
     const entryLink = page.locator('a[href*="/creators/creator-"]').first();

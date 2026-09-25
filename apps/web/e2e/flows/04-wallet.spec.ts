@@ -30,7 +30,6 @@ test.describe('F-007: Wallet Operations Flow', () => {
 
   test('wallet page loads with balance display', async ({ page }) => {
     await page.goto('/wallet');
-    await page.waitForLoadState('networkidle');
 
     // Page should load
     await expect(page.locator('body')).toBeVisible();
@@ -44,7 +43,6 @@ test.describe('F-007: Wallet Operations Flow', () => {
 
   test('fund wallet flow completes', async ({ page }) => {
     await page.goto('/wallet/add-funds');
-    await page.waitForLoadState('networkidle');
 
     const amountInput = page.locator('input[name="amount"], input[type="number"]').first();
     if (await amountInput.isVisible().catch(() => false)) {
@@ -59,7 +57,6 @@ test.describe('F-007: Wallet Operations Flow', () => {
 
   test('wallet shows transaction history', async ({ page }) => {
     await page.goto('/wallet/transactions');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('body')).toBeVisible();
 
@@ -77,7 +74,6 @@ test.describe('F-007: Wallet Operations Flow', () => {
 
   test('withdraw page renders correctly', async ({ page }) => {
     await page.goto('/wallet/withdraw');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('body')).toBeVisible();
 
@@ -93,7 +89,6 @@ test.describe('F-007: Wallet Operations Flow', () => {
 
   test('subscription payment page renders correctly', async ({ page }) => {
     await page.goto('/wallet/subscription-payment');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('body')).toBeVisible();
   });
@@ -101,7 +96,6 @@ test.describe('F-007: Wallet Operations Flow', () => {
   test('concurrent wallet operations are handled safely', async ({ page }) => {
     // Navigate to wallet
     await page.goto('/wallet');
-    await page.waitForLoadState('networkidle');
 
     // The wallet should load without crashing even with concurrent requests
     const responses: number[] = [];
@@ -113,7 +107,6 @@ test.describe('F-007: Wallet Operations Flow', () => {
 
     // Reload a few times quickly
     await page.reload();
-    await page.waitForLoadState('networkidle');
 
     // All responses should be successful
     const hasErrors = responses.some((status) => status >= 500);
@@ -135,7 +128,6 @@ test.describe('F-007: Wallet Operations Flow', () => {
     });
 
     await page.goto('/wallet');
-    await page.waitForLoadState('networkidle');
 
     // Balance should be displayed
     const balanceText = await page.locator('body').textContent();

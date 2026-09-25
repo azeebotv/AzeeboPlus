@@ -8,15 +8,7 @@ import { colors, radius } from '../../src/theme';
 import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
-
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  thumbnail: string;
-  duration: number;
-  genre: string;
-}
+import { extractTracks, NormalizedTrack } from '../../src/lib/music';
 
 export default function LifestyleMusicScreen() {
   const colorScheme = useColorScheme();
@@ -25,10 +17,7 @@ export default function LifestyleMusicScreen() {
 
   const musicQuery = useQuery({
     queryKey: ['lifestyle', 'music'],
-    queryFn: async () => {
-      const res = await apiClient.get<Track[]>('/v1/lifestyle/music');
-      return Array.isArray(res) ? res : [];
-    },
+    queryFn: async () => extractTracks(await apiClient.get('/v1/lifestyle/music')),
     staleTime: 60_000,
   });
 
@@ -38,13 +27,20 @@ export default function LifestyleMusicScreen() {
 
   const tracks = musicQuery.data ?? [];
 
-  const formatDuration = (s: number) =>
-    `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+  const formatDuration = (s?: number) =>
+    typeof s === 'number' ? `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}` : '--:--';
 
-  const renderItem = ({ item }: { item: Track }) => (
+  const renderItem = ({ item }: { item: NormalizedTrack }) => (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
       activeOpacity={0.7}
+      onPress={() =>
+        item.artistId
+          ? router.push(`/music/${encodeURIComponent(item.artistId)}`)
+          : router.push('/music')
+      }
+      accessibilityRole="button"
+      accessibilityLabel={`${item.title} by ${item.artist}`}
     >
       <View style={[styles.thumb, { backgroundColor: colors.primary[500] + '20' }]}>
         <Text style={styles.thumbText}>🎵</Text>

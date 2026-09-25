@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -114,11 +114,15 @@ export default function SplashScreen() {
     transform: [{ translateY: featuresTranslate.value }],
   }));
 
-  const featureItems: Array<{ icon: keyof typeof Feather.glyphMap; label: string }> = [
-    { icon: 'film', label: 'Movies' },
-    { icon: 'music', label: 'Music' },
-    { icon: 'play-circle', label: 'Games' },
-    { icon: 'award', label: 'Sports' },
+  const featureItems: Array<{
+    icon: keyof typeof Feather.glyphMap;
+    label: string;
+    href: Href;
+  }> = [
+    { icon: 'film', label: 'Movies', href: '/(tabs)/watch' },
+    { icon: 'music', label: 'Music', href: '/music' },
+    { icon: 'play-circle', label: 'Games', href: '/vertical' },
+    { icon: 'award', label: 'Rewards', href: '/(tabs)/rewards' },
   ];
 
   return (
@@ -147,7 +151,7 @@ export default function SplashScreen() {
               <ScrollReveal key={index} direction="up" delay={500 + itemDelay}>
                 <AnimatedTouchable
                   style={styles.featureIcon}
-                  onPress={() => {}}
+                  onPress={() => router.push(item.href)}
                   accessibilityLabel={item.label}
                   accessibilityRole="button"
                 >
