@@ -12,6 +12,8 @@ import type {
   PgbouncerPoolRow,
   OpsServicesSnapshot,
   OpsTransportFlip,
+  TransportFlipTrend,
+  TransportFlipTrendRow,
 } from '@/lib/api/admin';
 import { Icon } from '@/components/Icons';
 
@@ -550,6 +552,235 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
               </p>
             </>
           )}
+          {health.foreignPersistence && health.foreignPersistence.rows.length > 0 && (
+            <>
+              <div
+                style={{
+                  marginTop: 14,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: 'var(--admin-text-muted)',
+                }}
+              >
+                Foreign dialer persistence — ledger, last {health.foreignPersistence.windowHours}h
+              </div>
+              <table
+                style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 6 }}
+              >
+                <thead>
+                  <tr style={{ color: 'var(--admin-text-muted)', textAlign: 'left' }}>
+                    {['Foreign project', 'Flagged passes', 'Span', 'Last seen', ''].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          padding: '4px 8px 4px 0',
+                          fontSize: 10,
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {health.foreignPersistence.rows.map((f) => (
+                    <tr key={f.workspace}>
+                      <td style={{ padding: '5px 8px 5px 0' }}>{f.workspace}</td>
+                      <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
+                        {f.passes}
+                      </td>
+                      <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
+                        {f.spanHours >= 1
+                          ? `${f.spanHours.toFixed(1)}h`
+                          : `${Math.round(f.spanHours * 60)}m`}
+                      </td>
+                      <td style={{ padding: '5px 8px 5px 0', color: 'var(--admin-text-muted)' }}>
+                        {new Date(f.lastSeen).toLocaleTimeString()}
+                      </td>
+                      <td style={{ padding: '5px 8px 5px 0' }}>
+                        {f.approved ? (
+                          <span
+                            style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}
+                            title={`On POOL_FOREIGN_ALLOWLIST — approved, never tracked by the nightly pool-health tracker (span shown for budget context)`}
+                          >
+                            approved — not tracked
+                          </span>
+                        ) : f.sustained ? (
+                          <span
+                            style={{
+                              color: 'var(--admin-amber)',
+                              fontWeight: 600,
+                              fontSize: 11,
+                            }}
+                            title={`At/over the ${health.foreignPersistence?.sustainedMinSpanHours}h threshold — the nightly pool-health tracker opens/updates its tracking issue for this dialer`}
+                          >
+                            sustained — tracked nightly
+                          </span>
+                        ) : (
+                          <span
+                            style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}
+                            title={`Below the ${health.foreignPersistence?.sustainedMinSpanHours}h sustained threshold — context only, no tracking issue`}
+                          >
+                            below threshold
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '4px 0 0' }}>
+                Per-workspace persistence from the pool-audit ledger (same run/gap semantics as the
+                nightly foreign-dialer tracker — a span ≥{' '}
+                {health.foreignPersistence.sustainedMinSpanHours}h is what opens its tracking
+                issue). This is history, not a live scan: a workspace can appear here after it
+                stopped dialing.
+              </p>
+            </>
+          )}
+          {health.foreignPersistence &&
+            health.foreignPersistence.rows.length === 0 &&
+            !health.foreignPersistence.detail &&
+            (health.foreignDirectClients ?? []).length > 0 && (
+              <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '8px 0 0' }}>
+                No flagged foreign passes in the last {health.foreignPersistence.windowHours}h of
+                the ledger — the clients above are new since the last watchdog pass recorded them.
+              </p>
+            )}
+          {health.foreignPersistence?.detail && (
+            <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '8px 0 0' }}>
+              Persistence history unavailable — {health.foreignPersistence.detail}
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Transport-flip persistence trend — ledger-backed history of which services
+ * re-bound and how often. The live banner answers "what is flipping RIGHT
+ * NOW" (10-minute hold window); this answers "what has been flipping all
+ * month". Only services that actually flipped in the window render; steady
+ * days are recorded in the ledger but need no row here.
+ */
+function TransportFlipTrendCard({ trend }: { trend?: TransportFlipTrend | null }) {
+  if (!trend) return null;
+  // Per-service rollup: rows are (service, day); flip-only services sort by
+  // flip volume desc, then name — the noisy re-binder tops the table.
+  const flipServices = (() => {
+    const byService = new Map<string, TransportFlipTrendRow[]>();
+    for (const r of trend.rows) {
+      const list = byService.get(r.service) ?? [];
+      list.push(r);
+      byService.set(r.service, list);
+    }
+    return [...byService.entries()]
+      .filter(([, perDay]) => perDay.some((d) => d.flips > 0))
+      .map(([service, perDay]) => {
+        perDay.sort((a, b) => b.day.localeCompare(a.day));
+        return [service, perDay] as const;
+      })
+      .sort(
+        (a, b) =>
+          b[1].reduce((n, r) => n + r.flips, 0) - a[1].reduce((n, r) => n + r.flips, 0) ||
+          a[0].localeCompare(b[0])
+      );
+  })();
+  // Quiet window (rows exist, nobody flipped) hides the card entirely: a
+  // permanently-empty table is noise, and the banner owns "what changed
+  // recently". The card earns its place only when there is something to
+  // trend — or when the ledger read itself failed (honest degrade).
+  if (flipServices.length === 0 && !trend.detail) return null;
+  return (
+    <div
+      style={{
+        background: 'var(--admin-card)',
+        border: '1px solid var(--admin-border)',
+        borderRadius: 10,
+        padding: 16,
+      }}
+    >
+      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>
+        Transport flip trend
+        <span
+          style={{ color: 'var(--admin-text-muted)', fontWeight: 400, fontSize: 12, marginLeft: 8 }}
+        >
+          ledger, last {trend.windowDays}d
+        </span>
+      </div>
+      {trend.detail ? (
+        <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '8px 0 0' }}>
+          Flip trend unavailable — {trend.detail}
+        </p>
+      ) : (
+        <>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 8 }}>
+            <thead>
+              <tr style={{ color: 'var(--admin-text-muted)', textAlign: 'left' }}>
+                {['Service', 'Days seen', 'Flips', 'Family flips', 'Last flip'].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: '4px 8px 4px 0',
+                      fontSize: 10,
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {flipServices.map(([service, perDay]) => {
+                const totalFlips = perDay.reduce((n, r) => n + r.flips, 0);
+                const totalFamily = perDay.reduce((n, r) => n + r.familyFlips, 0);
+                const newest = perDay[0];
+                return (
+                  <tr key={service}>
+                    <td style={{ padding: '5px 8px 5px 0', fontWeight: 600 }}>{service}</td>
+                    <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
+                      {perDay.length}
+                    </td>
+                    <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
+                      {totalFlips}
+                    </td>
+                    <td
+                      style={{
+                        padding: '5px 8px 5px 0',
+                        fontVariantNumeric: 'tabular-nums',
+                        color: totalFamily > 0 ? 'var(--admin-amber)' : 'var(--admin-text-muted)',
+                        fontWeight: totalFamily > 0 ? 700 : 400,
+                      }}
+                    >
+                      {totalFamily}
+                    </td>
+                    <td style={{ padding: '5px 8px 5px 0', color: 'var(--admin-text-muted)' }}>
+                      {newest?.lastFlipAt
+                        ? `${new Date(newest.lastFlipAt).toLocaleDateString()} ${newest.lastFrom}→${newest.lastTo}`
+                        : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '4px 0 0' }}>
+            Recorded server-side on every probe sweep (one row per service per day, flips merged):{' '}
+            {trend.servicesWithFlips} service{sPlural(trend.servicesWithFlips)} flipped at least
+            once, {trend.totalFlips} flip{sPlural(trend.totalFlips)} total, {trend.totalFamilyFlips}{' '}
+            crossing loopback families. A quiet window hides this card — steady-state sweeps are
+            recorded in the ledger either way.
+          </p>
         </>
       )}
     </div>
@@ -933,6 +1164,18 @@ export default function OpsPage() {
     },
     refetchInterval: 30_000,
   });
+  // Ledger-backed flip history: the banner shows what changed in the last
+  // 10 minutes; the trend card shows what changed across the fortnight.
+  // 5-min staleness fits — the underlying rows update at most once per sweep.
+  const { data: flipTrend } = useQuery({
+    queryKey: ['admin', 'ops-flip-trend'],
+    queryFn: async () => {
+      const res = await adminApi.getOpsTransportFlipTrend();
+      return res.success ? (res.data as TransportFlipTrend) : null;
+    },
+    refetchInterval: 60_000,
+    staleTime: 5 * 60_000,
+  });
   const [dismissedFlipKeys, setDismissedFlipKeys] = useState<Set<string>>(new Set());
   const liveFlips = (servicesSnapshot?.transportFlips ?? []).filter(
     (f) => !dismissedFlipKeys.has(`${f.service}:${f.detectedAt}`)
@@ -1059,6 +1302,9 @@ export default function OpsPage() {
       </div>
 
       <PgbouncerCard health={pgbouncer} />
+      <div style={{ marginTop: 16 }}>
+        <TransportFlipTrendCard trend={flipTrend} />
+      </div>
 
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 28 }}>
         <CheckCard check={data.db} icon="activity" historyHours={historyHours} />

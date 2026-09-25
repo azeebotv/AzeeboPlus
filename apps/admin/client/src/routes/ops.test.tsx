@@ -166,3 +166,87 @@ describe('Ops page transport-mismatch banner', () => {
     expect(client.service).toBe('payment-service');
   });
 });
+
+describe('Ops page transport-flip trend card', () => {
+  const trendRow = {
+    service: 'payment-service',
+    transport: 'ipv4',
+    day: '2026-09-24',
+    sweeps: 42,
+    flips: 3,
+    familyFlips: 1,
+    lastFlipAt: '2026-09-24T08:11:00.000Z',
+    lastFrom: 'ipv6',
+    lastTo: 'ipv4',
+  };
+
+  const stubWithTrend = (trend: unknown) => {
+    const respond = (url: unknown) => {
+      const u = String(url);
+      if (u.includes('/admin/ops/transport-flips'))
+        return Promise.resolve({ success: true, data: trend });
+      if (u.includes('/admin/ops/services'))
+        return Promise.resolve({ success: true, data: baseSnapshot([]) });
+      if (u.includes('/admin/ops/runs'))
+        return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+      if (u.includes('/admin/ops/pgbouncer'))
+        return Promise.resolve({ success: true, data: { available: true } });
+      if (u.includes('/admin/ops/status'))
+        return Promise.resolve({ success: true, data: baseStatus });
+      return Promise.resolve({ success: false, data: null });
+    };
+    vi.mocked(apiFetch).mockImplementation(respond as never);
+  };
+
+  it('renders the trend card when the ledger has flip rows, loudest service first', async () => {
+    stubWithTrend({
+      windowDays: 14,
+      rows: [trendRow, { ...trendRow, service: 'auth-service', flips: 1, familyFlips: 0 }],
+      servicesWithFlips: 2,
+      totalFlips: 4,
+      totalFamilyFlips: 1,
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/Transport flip trend/i)).toBeTruthy());
+    expect(screen.getByText('payment-service')).toBeTruthy();
+    expect(screen.getByText(/last 14d/i)).toBeTruthy();
+    // Row content carries the rollup: flips count + last flip pair.
+    const row = screen.getByText('payment-service').closest('tr');
+    expect(row?.textContent).toContain('3');
+    expect(row?.textContent).toContain('ipv6→ipv4');
+    // The quieter service sorts below the louder one (flip volume desc).
+    const names = screen.getAllByRole('row').map((r) => r.textContent ?? '');
+    expect(names.findIndex((t) => t.includes('payment-service'))).toBeLessThan(
+      names.findIndex((t) => t.includes('auth-service'))
+    );
+  });
+
+  it('renders nothing when no service flipped (steady ledger)', async () => {
+    stubWithTrend({
+      windowDays: 14,
+      rows: [
+        { ...trendRow, flips: 0, familyFlips: 0, lastFlipAt: null, lastFrom: null, lastTo: null },
+      ],
+      servicesWithFlips: 0,
+      totalFlips: 0,
+      totalFamilyFlips: 0,
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/All systems healthy/i)).toBeTruthy());
+    expect(screen.queryByText(/Transport flip trend/i)).toBeNull();
+  });
+
+  it('shows the degrade note when the ledger read failed', async () => {
+    stubWithTrend({
+      windowDays: 14,
+      rows: [],
+      servicesWithFlips: 0,
+      totalFlips: 0,
+      totalFamilyFlips: 0,
+      detail: 'ledger read failed: boom',
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/Flip trend unavailable/i)).toBeTruthy());
+    expect(screen.getByText(/ledger read failed: boom/i)).toBeTruthy();
+  });
+});
