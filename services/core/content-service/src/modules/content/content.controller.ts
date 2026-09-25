@@ -229,6 +229,9 @@ export class ContentController {
   }
 
   // Category endpoints
+  // Categories are rendered on the public /browse page for logged-out
+  // visitors (featured + universes already are) — reads must be public too.
+  @Public()
   @Get('categories')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
@@ -238,7 +241,10 @@ export class ContentController {
     return this.contentService.getCategories();
   }
 
+  @Public()
   @Get('categories/:id/content')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get content by category' })
   @ApiResponse({ status: 200, description: 'Content list' })
   async getContentByCategory(@Param('id') id: string): Promise<ContentResponse> {

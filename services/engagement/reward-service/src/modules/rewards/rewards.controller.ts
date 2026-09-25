@@ -68,6 +68,14 @@ export class RewardsController {
     return this.rewardsService.getStreak(req.user.id);
   }
 
+  @Get('redeem-options')
+  @ApiOperation({ summary: 'List active rewards available for redemption' })
+  @ApiResponse({ status: 200, description: 'Redeem options catalog' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getRedeemOptions(): Promise<RewardResponse> {
+    return this.rewardsService.getRedeemOptions();
+  }
+
   @Post('redeem')
   @RateLimit(30, 60000)
   @HttpCode(HttpStatus.OK)

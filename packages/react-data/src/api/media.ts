@@ -94,6 +94,18 @@ export const mediaApi = {
   ): Promise<ApiResponse<MediaUploadResponse>> =>
     uploadFile('/api/v1/media/upload/video', file, options),
 
+  uploadAudio: (
+    file: FormData,
+    options?: MediaUploadOptions
+  ): Promise<ApiResponse<MediaUploadResponse>> =>
+    uploadFile('/api/v1/media/upload/audio', file, options),
+
+  uploadDocument: (
+    file: FormData,
+    options?: MediaUploadOptions
+  ): Promise<ApiResponse<MediaUploadResponse>> =>
+    uploadFile('/api/v1/media/upload/document', file, options),
+
   uploadAvatar: (
     file: FormData,
     options?: MediaUploadOptions

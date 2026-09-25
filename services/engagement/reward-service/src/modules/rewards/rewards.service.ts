@@ -268,6 +268,45 @@ export class RewardsService {
     }
   }
 
+  /**
+   * Catalog of active rewards available for redemption. This backs the mobile
+   * Rewards tab's "Redeem Rewards" grid — previously the app fetched a
+   * /rewards/redeem-options route that did not exist, so the grid was always
+   * empty and the tap handlers were no-ops.
+   */
+  async getRedeemOptions(): Promise<RewardResponse> {
+    try {
+      const rewards = await this.prisma.reward.findMany({
+        where: { isActive: true },
+        orderBy: { cost: 'asc' },
+        take: 50,
+      });
+
+      return {
+        success: true,
+        data: {
+          options: rewards.map((r) => ({
+            id: r.id,
+            name: r.name,
+            description: r.description,
+            cost: r.cost,
+            type: r.type,
+            metadata: r.metadata,
+          })),
+        },
+      };
+    } catch (error) {
+      this.logger.error(
+        `getRedeemOptions failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
+    }
+  }
+
   async redeemReward(userId: string, rewardId: string): Promise<RewardResponse> {
     try {
       const reward = await this.prisma.reward.findUnique({

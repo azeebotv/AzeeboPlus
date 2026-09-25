@@ -13,7 +13,9 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { Public, ServiceAuthGuard } from '@azeebo/security';
+import { ensureUser } from '../../common/user-provisioning';
+import { PrismaService } from '../database/prisma.service';
 
 import { QuizService } from './quiz.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
@@ -25,8 +27,12 @@ import { SubmitQuizDto } from './dto/submit-quiz.dto';
 @UseGuards(FeatureFlagGuard)
 @Controller('quizzes')
 export class QuizController {
-  constructor(@Inject(QuizService) private readonly quizService: QuizService) {}
+  constructor(
+    @Inject(QuizService) private readonly quizService: QuizService,
+    @Inject(PrismaService) private readonly prisma: PrismaService
+  ) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'List quizzes' })
   @ApiResponse({ status: 200, description: 'List of quizzes' })
@@ -44,6 +50,7 @@ export class QuizController {
     );
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get quiz details' })
   @ApiResponse({ status: 200, description: 'Quiz details' })
@@ -58,6 +65,7 @@ export class QuizController {
   @ApiResponse({ status: 201, description: 'Quiz created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createQuiz(@Request() req: { user: { id: string } }, @Body() data: CreateQuizDto) {
+    await ensureUser(this.prisma, req.user);
     return this.quizService.createQuiz(req.user.id, data);
   }
 
@@ -68,6 +76,7 @@ export class QuizController {
   @ApiResponse({ status: 400, description: 'Invalid request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async startQuiz(@Request() req: { user: { id: string } }, @Param('id') quizId: string) {
+    await ensureUser(this.prisma, req.user);
     return this.quizService.startQuiz(quizId, req.user.id);
   }
 
