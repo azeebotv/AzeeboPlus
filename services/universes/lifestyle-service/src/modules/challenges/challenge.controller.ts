@@ -12,7 +12,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { Public, ServiceAuthGuard } from '@azeebo/security';
+import { ensureUser } from '../../common/user-provisioning';
+import { PrismaService } from '../database/prisma.service';
 
 import {
   ChallengeService,
@@ -24,8 +26,12 @@ import {
 @UseGuards(ServiceAuthGuard)
 @Controller('challenges')
 export class ChallengeController {
-  constructor(@Inject(ChallengeService) private readonly challengeService: ChallengeService) {}
+  constructor(
+    @Inject(ChallengeService) private readonly challengeService: ChallengeService,
+    @Inject(PrismaService) private readonly prisma: PrismaService
+  ) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'List challenges' })
   @ApiResponse({ status: 200, description: 'List of challenges' })
@@ -43,6 +49,7 @@ export class ChallengeController {
     );
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get challenge details' })
   @ApiResponse({ status: 200, description: 'Challenge details' })
@@ -60,6 +67,7 @@ export class ChallengeController {
     @Request() req: { user: { id: string } },
     @Body() data: CreateChallengeInput
   ) {
+    await ensureUser(this.prisma, req.user);
     return this.challengeService.createChallenge(req.user.id, data);
   }
 
@@ -74,6 +82,7 @@ export class ChallengeController {
     @Param('id') challengeId: string,
     @Body() data: ChallengeSubmissionInput
   ) {
+    await ensureUser(this.prisma, req.user);
     return this.challengeService.submitToChallenge(challengeId, req.user.id, data);
   }
 
@@ -86,6 +95,7 @@ export class ChallengeController {
     @Request() req: { user: { id: string } },
     @Param('id') submissionId: string
   ) {
+    await ensureUser(this.prisma, req.user);
     return this.challengeService.voteSubmission(submissionId, req.user.id);
   }
 }

@@ -373,6 +373,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'GET', path: '/', description: 'Get user rewards' },
       { method: 'POST', path: '/earn', description: 'Earn reward points' },
+      { method: 'GET', path: '/redeem-options', description: 'List active rewards for redemption' },
       { method: 'POST', path: '/redeem', description: 'Redeem reward points' },
       { method: 'GET', path: '/history', description: 'Get reward history' },
       { method: 'GET', path: '/levels', description: 'Get available reward levels' },
@@ -848,6 +849,33 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         path: '/agbala/storyworlds/:id/characters',
         description: 'List storyworld characters',
       },
+      {
+        method: 'POST',
+        path: '/agbala/storyworlds/:id/paths',
+        description: 'Create story path in a storyworld',
+      },
+      {
+        method: 'GET',
+        path: '/agbala/storyworlds/:id/paths',
+        description: 'List storyworld paths',
+      },
+      {
+        method: 'GET',
+        path: '/agbala/moderation/review-queue',
+        description: 'Agbala moderation review queue',
+      },
+      {
+        method: 'POST',
+        path: '/agbala/moderation/:id/approve',
+        description: 'Approve an agbala moderation item',
+      },
+      {
+        method: 'POST',
+        path: '/agbala/moderation/:id/reject',
+        description: 'Reject an agbala moderation item',
+      },
+      { method: 'GET', path: '/ops/pgbouncer', description: 'Pgbouncer pool stats' },
+      { method: 'GET', path: '/ops/transport-flips', description: 'Recent gateway transport flips' },
       { method: 'GET', path: '/universes', description: 'List universes' },
       { method: 'GET', path: '/universes/:id', description: 'Get universe by ID' },
       { method: 'GET', path: '/universes/name/:name', description: 'Get universe by name' },
@@ -1619,6 +1647,20 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       // Music detail routes (music.controller @Controller('lifestyle/music'))
       { method: 'GET', path: '/music/artists/:id', description: 'Artist details' },
       { method: 'GET', path: '/music/genres/:slug', description: 'Genre details' },
+      // City guide (city-guide.controller @Controller('lifestyle/city-guide'))
+      { method: 'GET', path: '/city-guide', description: 'City guide entries' },
+      {
+        method: 'GET',
+        path: '/city-guide/featured',
+        description: 'Featured city guide entries',
+      },
+      { method: 'GET', path: '/city-guide/search', description: 'Search city guide entries' },
+      { method: 'GET', path: '/city-guide/tags', description: 'City guide tags' },
+      {
+        method: 'GET',
+        path: '/city-guide/:slug',
+        description: 'City guide entry by slug',
+      },
       // Event RSVP + attendees (events.controller @Controller('lifestyle/events'))
       { method: 'POST', path: '/events/:id/rsvp', description: 'RSVP to an event' },
       {
@@ -1790,6 +1832,46 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         method: 'GET',
         path: '/:id/result',
         description: 'Unified poll or quiz attempt result',
+      },
+    ],
+  },
+  {
+    path: '/polls',
+    envKey: 'LIFESTYLE_SERVICE_URL',
+    fallbackUrl: 'http://lifestyle-service:3016',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'default',
+    endpoints: [
+      { method: 'GET', path: '/', description: 'List polls' },
+      { method: 'GET', path: '/:id', description: 'Get poll details' },
+      { method: 'POST', path: '/:id/vote', description: 'Vote in a poll' },
+    ],
+  },
+  {
+    path: '/quizzes',
+    envKey: 'LIFESTYLE_SERVICE_URL',
+    fallbackUrl: 'http://lifestyle-service:3016',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'default',
+    endpoints: [
+      { method: 'GET', path: '/', description: 'List quizzes' },
+      { method: 'GET', path: '/:id', description: 'Get quiz details' },
+      {
+        method: 'POST',
+        path: '/:id/start',
+        description: 'Start a quiz attempt',
+      },
+      {
+        method: 'POST',
+        path: '/attempts/:attemptId/submit',
+        description: 'Submit a quiz attempt',
+      },
+      {
+        method: 'GET',
+        path: '/:id/leaderboard',
+        description: 'Get quiz leaderboard',
       },
     ],
   },

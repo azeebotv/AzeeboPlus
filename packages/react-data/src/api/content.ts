@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { mediaApi } from './media';
 import type { ApiResponse, PaginatedResponse, Contestant } from '../types/api';
 
 export type { PaginatedResponse, Contestant } from '../types/api';
@@ -318,6 +319,13 @@ export const contentApi = {
     );
   },
 
+  /** Publish a content item via the content service (`POST /content/:id/publish`).
+   * The create endpoint always persists items as drafts, so this must be called
+   * after createContent for the item to appear in public feeds. */
+  publishContentItem: async (contentId: string): Promise<ApiResponse<unknown>> => {
+    return apiClient.post<ApiResponse<unknown>>(`/api/v1/content/${contentId}/publish`, {});
+  },
+
   getDrafts: async (): Promise<ApiResponse<CreatorContent[]>> => {
     return apiClient.get<ApiResponse<CreatorContent[]>>('/api/v1/creator/drafts');
   },
@@ -377,10 +385,26 @@ export const contentApi = {
     universe: string;
     contentType: string;
     mediaUrl?: string;
-    thumbnail?: string;
     isPremium?: boolean;
+    tags?: string[];
+    metadata?: Record<string, unknown>;
   }): Promise<ApiResponse<ContentItem>> => {
-    return apiClient.post<ApiResponse<ContentItem>>('/api/v1/content', data);
+    // The content-service CreateContentDto validates: `universeId` (UUID),
+    // `type`, required `thumbnail` string, and forbids unknown fields
+    // (forbidNonWhitelisted) — so `universe`/`contentType` must be mapped
+    // before sending. `status` is forced to 'draft' by the repository; call
+    // `/content/:id/publish` afterwards to make the item visible in feeds.
+    return apiClient.post<ApiResponse<ContentItem>>('/api/v1/content', {
+      title: data.title,
+      description: data.description,
+      universeId: data.universe,
+      type: data.contentType,
+      thumbnail: data.mediaUrl ?? '',
+      mediaUrl: data.mediaUrl,
+      isPremium: data.isPremium,
+      tags: data.tags,
+      metadata: data.metadata,
+    });
   },
 
   createContentWithFile: async (data: {
@@ -392,17 +416,56 @@ export const contentApi = {
     fileType: string;
     fileName: string;
   }): Promise<ApiResponse<{ id: string }>> => {
+    // The content-service create endpoint only accepts JSON against
+    // CreateContentDto, so files must go through the media-service upload
+    // endpoints first; the returned URL is attached to the new content item
+    // and the item is published (create always persists as a draft).
     const formData = new FormData();
-    formData.append('title', data.title);
-    if (data.description) formData.append('description', data.description);
-    formData.append('universeId', data.universe);
-    formData.append('contentType', data.contentType);
     formData.append('file', {
       uri: data.fileUri,
       type: data.fileType,
       name: data.fileName,
     } as unknown as Blob);
-    return apiClient.upload<ApiResponse<{ id: string }>>('/api/v1/content', formData);
+
+    const kind =
+      data.contentType === 'image' || data.fileType.startsWith('image/')
+        ? 'image'
+        : data.fileType.startsWith('audio/') || data.contentType === 'audio'
+          ? 'audio'
+          : 'video';
+    const upload =
+      kind === 'image'
+        ? await mediaApi.uploadImage(formData)
+        : kind === 'audio'
+          ? await mediaApi.uploadAudio(formData)
+          : await mediaApi.uploadVideo(formData);
+    if (!upload.success || !upload.data) {
+      return {
+        success: false,
+        error: {
+          code: 'UPLOAD_FAILED',
+          message: typeof upload.error === 'string' ? upload.error : 'Failed to upload media',
+        },
+      };
+    }
+
+    const created = await contentApi.createContent({
+      title: data.title,
+      description: data.description,
+      universe: data.universe,
+      contentType: data.contentType,
+      mediaUrl: upload.data.url,
+    });
+    if (!created.success || !created.data) {
+      return {
+        success: false,
+        error: created.error ?? { code: 'CREATE_FAILED', message: created.message ?? 'Failed to create content' },
+      };
+    }
+
+    // Best-effort publish so the item shows up in public feeds.
+    await contentApi.publishContentItem(created.data.id).catch(() => undefined);
+    return { success: true, data: { id: created.data.id } };
   },
 
   uploadFile: async (

@@ -17,12 +17,16 @@ export class HealthController {
     {
       name: 'payment_gateway_paystack',
       url: process.env.PAYSTACK_API_URL || 'https://api.paystack.co',
-      timeout: 5000,
+      // Unreachable gateways must fail FAST: this timeout bounds every
+      // /health response, and anything ≥5s exceeds downstream probes' 4s
+      // budget (Ops Health dials localhost → [::1] → 127.0.0.1 at 4s each).
+      // 2s still leaves room for a healthy gateway's round trip.
+      timeout: 2000,
     },
     {
       name: 'payment_gateway_flutterwave',
       url: process.env.FLUTTERWAVE_API_URL || 'https://api.flutterwave.co',
-      timeout: 5000,
+      timeout: 2000,
     },
   ];
 

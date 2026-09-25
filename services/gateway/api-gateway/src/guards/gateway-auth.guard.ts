@@ -76,6 +76,10 @@ export class GatewayAuthGuard implements CanActivate {
     /^\/api\/v\d+\/lifestyle\/(itineraries|neighborhoods|partners|offers)\/[a-z0-9-]+$/,
     // Participation result page (writes — votes, quiz submits — still require auth)
     /^\/api\/v\d+\/participation\/[a-z0-9-]+\/result$/,
+    // Participation hub + detail pages — read-only listings (votes/quiz attempts
+    // and challenge submissions remain auth-gated on the same services)
+    /^\/api\/v\d+\/(polls|quizzes|challenges)$/,
+    /^\/api\/v\d+\/(polls|quizzes|challenges)\/[a-zA-Z0-9-]+$/,
     // Moderation report types (needed for report forms before login)
     /^\/api\/v\d+\/moderation\/report-types$/,
     // Public challenge boards — read-only leaderboard data behind the shared
