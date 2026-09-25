@@ -20,7 +20,10 @@ export default defineConfig({
     },
   },
   server: {
-    port: 4100,
+    // Dedicated dev port — must match the manifest's `admin-vite` entry
+    // (scripts/launchd/service-manifest.mjs). 4100 is admin-backend's port;
+    // binding vite there is a latent conflict.
+    port: 5173,
     proxy: {
       '/api': {
         target: 'http://localhost:3013',

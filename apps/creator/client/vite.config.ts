@@ -20,7 +20,9 @@ export default defineConfig({
     },
   },
   server: {
-    port: 4104,
+    // Dedicated dev port — must match the manifest's `creator-vite` entry
+    // (scripts/launchd/service-manifest.mjs). 4014 is creator-backend's port.
+    port: 5174,
     proxy: {
       '/api': {
         target: 'http://localhost:3013',
