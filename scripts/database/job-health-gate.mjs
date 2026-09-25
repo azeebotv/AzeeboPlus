@@ -64,46 +64,12 @@ export const JOB_PROFILES = {
 
 const HOURS = (n) => n * 3_600_000;
 
-// ── foreign direct-client parsing -------------------------------------------
-
-// Matches the foreign segment pool-audit.sh appends between saturation and
-// repo bypasses. Zero-case (no foreign segment) must NOT match. The capture
-// is LAZY and stops at the next known segment ("; N repo process(es)…" or
-// "; no pooler bypasses") — a tail-anchored (.*)$ would swallow the repo
-// bypass segment that always follows.
-const FOREIGN_RE =
-  /foreign direct clients [(]context, not violations[)]: ?(.*?)(?=; (?:[0-9]+ repo process\(es\) bypassing pgbouncer|no pooler bypasses)|$)/;
-
-/**
- * Split one "workspace(cmd pid, N conns)" foreign item — same shape and
- * lastIndexOf('(') semantics as pool-bypass-gate's splitItem (kept local:
- * that one is private and the two must evolve independently around their
- * segment anchors).
- */
-function splitForeignItem(item) {
-  const open = item.lastIndexOf('(');
-  if (open === -1) return { workspace: item.trim() || '(unknown)', conns: null, raw: item };
-  const close = item.lastIndexOf(')');
-  const inner = close > open ? item.slice(open + 1, close) : '';
-  const workspace = item.slice(0, open).trim() || item.slice(open, close + 1).trim() || '(unknown)';
-  const nums = (inner.match(/[0-9]+/g) ?? []).map(Number);
-  return { workspace, conns: nums[nums.length - 1] ?? null, raw: item };
-}
-
-/**
- * Extract the foreign direct clients a pool-audit pass detail recorded:
- * [{ workspace, conns }] — empty for every non-pool-audit detail and for
- * passes that saw no foreign clients.
- */
-export function parseForeignDirect(detail) {
-  const match = FOREIGN_RE.exec(detail ?? '');
-  if (!match) return [];
-  return match[1]
-    .split(';')
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .map(splitForeignItem);
-}
+// Foreign direct-client parsing lives in pool-bypass-gate.mjs (shared owner
+// of the "who dials Postgres directly" persistence evaluation this gate's
+// new-foreign alert and the pool tracker's foreign kind both consume) — one
+// parser, one set of segment-anchor semantics to evolve.
+import { parseForeignDirect } from './pool-bypass-gate.mjs';
+export { parseForeignDirect };
 
 /** Hours between the oldest and newest finite timestamp (needs 2+ values). */
 function spanOf(times) {

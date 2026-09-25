@@ -30,21 +30,39 @@
 
 import { readFileSync, readdirSync, statSync, existsSync, writeFileSync } from 'node:fs';
 import { join, relative, extname } from 'node:path';
+import {
+  diffGatewayBackend,
+  ghostKey,
+  undeclaredKey,
+  GATEWAY_PROXY_FILE,
+} from './lib/gateway-backend-contracts.mjs';
 
-// Ratchet baseline: client calls (path + method) known to have no matching
-// SERVICE_CONFIGS entry. The list may only shrink; a NEW unmatched call fails
-// CI even though old ones are accepted. Regenerate with --update after fixing
-// entries. Entries look like "/api/v1/service/path [METHOD]" ("[ANY]" when the
-// client method could not be determined at the call site).
+// Ratchet baseline, three sections (each may only shrink; a NEW violation in
+// any section fails CI even though old ones are accepted. Regenerate with
+// --update after fixing entries):
+//   unmatchedClientCalls            — client calls with no gateway entry
+//                                     ("/api/v1/service/path [METHOD]", "[ANY]"
+//                                     when the client method is indeterminable)
+//   gatewayGhostEndpoints           — SERVICE_CONFIGS endpoint entries with no
+//                                     matching backend controller route, keyed
+//                                     "ghost:{service}:{METHOD} {upstreamPath}"
+//                                     (would 404/502 at runtime)
+//   gatewayUndeclaredBackendRoutes  — backend controller routes absent from
+//                                     SERVICE_CONFIGS, keyed
+//                                     "undeclared:{METHOD} {upstreamPath}"
 const BASELINE_PATH = join(process.cwd(), 'scripts/route-contracts-baseline.json');
 const UPDATE_MODE = process.argv.includes('--update');
 
 function loadBaseline() {
   try {
     const parsed = JSON.parse(readFileSync(BASELINE_PATH, 'utf8'));
-    return new Set(parsed.unmatchedClientCalls ?? []);
+    return {
+      client: new Set(parsed.unmatchedClientCalls ?? []),
+      ghost: new Set(parsed.gatewayGhostEndpoints ?? []),
+      undeclared: new Set(parsed.gatewayUndeclaredBackendRoutes ?? []),
+    };
   } catch {
-    return new Set();
+    return { client: new Set(), ghost: new Set(), undeclared: new Set() };
   }
 }
 
@@ -335,35 +353,47 @@ const baseline = loadBaseline();
 const mismatchKey = ({ service, path, method }) =>
   `/api/v1/${service}${path} [${describeMethod(method)}]`;
 const allMismatches = [...mismatches, ...verbMismatches];
-const active = allMismatches.filter((m) => !baseline.has(mismatchKey(m)));
-const staleBaseline = [...baseline].filter(
+const active = allMismatches.filter((m) => !baseline.client.has(mismatchKey(m)));
+const staleBaseline = [...baseline.client].filter(
   (b) => !allMismatches.some((m) => mismatchKey(m) === b)
 );
 
 if (UPDATE_MODE) {
+  // Re-run the gateway↔backend diff for the baseline file too.
+  const gatewayContent = readFileSync(join(process.cwd(), GATEWAY_PROXY_FILE), 'utf8');
+  const { results: gbResults } = diffGatewayBackend(process.cwd(), gatewayContent);
+  const ghostKeys = [];
+  const undeclaredKeys = [];
+  for (const r of gbResults) {
+    if (r.skipped) continue;
+    for (const g of r.ghost) ghostKeys.push(ghostKey(g));
+    for (const u of r.undeclared) undeclaredKeys.push(undeclaredKey(u, r.backendDir));
+  }
   writeFileSync(
     BASELINE_PATH,
     JSON.stringify(
       {
         description:
-          'Client calls with no SERVICE_CONFIGS entry matching on path AND HTTP method ("[ANY]" = client method not determinable at the call site). Ratchet: entries may only be REMOVED (by fixing the route, the verb, or the client); a new unmatched call fails CI. Regenerate with: node scripts/check-route-contracts.mjs --update',
+          'Route-contract ratchet: entries may only be REMOVED (by fixing the route, the verb, the declaration, or the client); a NEW violation in any section fails CI. Sections: unmatchedClientCalls (client calls with no SERVICE_CONFIGS entry on path AND method; "[ANY]" = client method not determinable), gatewayGhostEndpoints (declared endpoints with no matching backend controller route, in upstream form), gatewayUndeclaredBackendRoutes (backend controller routes absent from SERVICE_CONFIGS, in upstream form). Regenerate with: node scripts/check-route-contracts.mjs --update',
         generatedAt: new Date().toISOString(),
         total: allMismatches.length,
         unmatchedClientCalls: allMismatches.map(mismatchKey).sort(),
+        gatewayGhostEndpoints: [...new Set(ghostKeys)].sort(),
+        gatewayUndeclaredBackendRoutes: [...new Set(undeclaredKeys)].sort(),
       },
       null,
       2
     ) + '\n'
   );
   console.log(
-    `Baseline written: ${allMismatches.length} entries → ${relative(process.cwd(), BASELINE_PATH)}`
+    `Baseline written: ${allMismatches.length} client + ${new Set(ghostKeys).size} ghost + ${new Set(undeclaredKeys).size} undeclared entries → ${relative(process.cwd(), BASELINE_PATH)}`
   );
   process.exit(0);
 }
 
 if (active.length > 0) {
-  if (mismatches.some((m) => !baseline.has(mismatchKey(m)))) {
-    const newMissing = mismatches.filter((m) => !baseline.has(mismatchKey(m)));
+  if (mismatches.some((m) => !baseline.client.has(mismatchKey(m)))) {
+    const newMissing = mismatches.filter((m) => !baseline.client.has(mismatchKey(m)));
     console.log(
       `❌ Found ${newMissing.length} NEW client API calls with no matching gateway route:\n`
     );
@@ -371,8 +401,8 @@ if (active.length > 0) {
       console.log(`  ${mismatchKey(m)}`);
     }
   }
-  if (verbMismatches.some((m) => !baseline.has(mismatchKey(m)))) {
-    const newVerb = verbMismatches.filter((m) => !baseline.has(mismatchKey(m)));
+  if (verbMismatches.some((m) => !baseline.client.has(mismatchKey(m)))) {
+    const newVerb = verbMismatches.filter((m) => !baseline.client.has(mismatchKey(m)));
     console.log(`\n❌ Found ${newVerb.length} HTTP-verb mismatches (client vs gateway doc):\n`);
     for (const m of newVerb.sort((a, b) => a.service.localeCompare(b.service))) {
       console.log(
@@ -393,11 +423,65 @@ if (active.length > 0) {
 }
 
 console.log(`✅ All ${clientCalls.size} client API calls match gateway routes (path + method).`);
-if (baseline.size > 0) {
+if (baseline.client.size > 0) {
   console.log(
-    `   (${baseline.size} known-unmatched calls accepted via the ratchet baseline —\n    prune it with --update as the underlying routes get fixed${
+    `   (${baseline.client.size} known-unmatched calls accepted via the ratchet baseline —\n    prune it with --update as the underlying routes get fixed${
       staleBaseline.length > 0 ? `; ${staleBaseline.length} entries are already stale` : ''
     })`
+  );
+}
+
+// Pass 3: gateway ↔ backend (gating, ratcheted). SERVICE_CONFIGS endpoint
+// entries are the contract doc; the proxy just forwards by service prefix,
+// so a declared-but-missing upstream route 404s/502s at runtime and an
+// undeclared backend route is invisible surface. Both directions are diffed
+// against the actual NestJS controllers (scripts/lib/gateway-backend-contracts.mjs).
+const gatewayContent = readFileSync(join(process.cwd(), GATEWAY_PROXY_FILE), 'utf8');
+const { results: gbResults, stats: gbStats } = diffGatewayBackend(process.cwd(), gatewayContent);
+
+const activeGhosts = [];
+const activeUndeclared = [];
+for (const r of gbResults) {
+  if (r.skipped) continue;
+  for (const g of r.ghost) {
+    if (!baseline.ghost.has(ghostKey(g))) activeGhosts.push(g);
+  }
+  for (const u of r.undeclared) {
+    if (!baseline.undeclared.has(undeclaredKey(u, r.backendDir))) activeUndeclared.push(u);
+  }
+}
+
+if (activeGhosts.length > 0 || activeUndeclared.length > 0) {
+  if (activeGhosts.length > 0) {
+    console.log(
+      `\n❌ ${activeGhosts.length} gateway endpoint entries have NO matching backend route (would 404/502 at runtime):\n`
+    );
+    for (const g of activeGhosts.sort(
+      (a, b) => a.service.localeCompare(b.service) || a.method.localeCompare(b.method)
+    )) {
+      console.log(`  [${g.service}] ${g.method} ${g.path}`);
+    }
+  }
+  if (activeUndeclared.length > 0) {
+    console.log(
+      `\n❌ ${activeUndeclared.length} backend routes are NOT declared in SERVICE_CONFIGS (invisible surface):\n`
+    );
+    for (const u of activeUndeclared.sort((a, b) => a.path.localeCompare(b.path))) {
+      console.log(`  ${u.method} ${u.path}  (${u.file})`);
+    }
+  }
+  console.log(
+    `\nAdd the missing backend routes or declarations, remove dead endpoint entries,\nor refresh the ratchet baseline with --update after fixing.`
+  );
+  process.exit(1);
+}
+
+console.log(
+  `✅ Gateway↔backend contract OK — ${gbStats.declaredTotal} declared endpoints match ${gbStats.backendRoutesTotal} backend controller routes across ${gbStats.servicesCompared} upstream(s).`
+);
+if (baseline.ghost.size > 0 || baseline.undeclared.size > 0) {
+  console.log(
+    `   (${baseline.ghost.size} ghost + ${baseline.undeclared.size} undeclared accepted via the ratchet baseline — prune with --update as they get fixed)`
   );
 }
 

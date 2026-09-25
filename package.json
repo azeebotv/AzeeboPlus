@@ -29,6 +29,7 @@
     "check:env": "node scripts/check-env-consistency.mjs",
     "check:upstreams": "node scripts/check-gateway-upstreams.mjs",
     "check:route-contracts": "node scripts/check-route-contracts.mjs",
+    "check:expo-routes": "node scripts/check-expo-routes.mjs",
     "drift:live-db": "node scripts/drift-live-db.mjs",
     "smoke:gateway": "node scripts/smoke-gateway-get.mjs",
     "seed:flags": "node scripts/seed-dev-flags.mjs",

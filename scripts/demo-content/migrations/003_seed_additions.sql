@@ -23,13 +23,80 @@ ON CONFLICT (id) DO NOTHING;
 -- LIFESTYLE UNIVERSE: City Guide Entries
 -- ============================================================================
 
-INSERT INTO "city_guide_entry" (id, name, slug, type, description, coverImage, address, city, country, latitude, longitude, rating, "priceLevel", hours, amenities, status, "viewCount", "createdById", "publishedAt", "createdAt", "updatedAt") VALUES
-  ('cg000001-0000-0000-0000-000000000001', 'Terra Kulture', 'terra-kulture', 'venue', 'Lagos premier art, culture, and entertainment center. Live shows, art gallery, restaurant.', '/images/city-guide/terra-kulture.jpg', '14 Tiamiyu Savage Street, Victoria Island', 'Lagos', 'Nigeria', 6.4281, 3.4219, 4.5, 3, 'Mon-Sat 9AM-10PM, Sun 12PM-8PM', ARRAY['wifi','parking','restaurant','gallery'], 'published', 34000, 'a0000001-0000-0000-0000-000000000001', '2025-01-20T00:00:00Z', NOW(), NOW()),
-  ('cg000001-0000-0000-0000-000000000002', 'Nike Art Gallery', 'nike-art-gallery', 'gallery', 'One of the largest art galleries in West Africa with over 7,000 artworks.', '/images/city-guide/nike-art.jpg', '2 Eti Osa South Union, Lekki Phase 1', 'Lagos', 'Nigeria', 6.4281, 3.4219, 4.7, 2, 'Mon-Sat 10AM-6PM', ARRAY['wifi','parking','air conditioning'], 'published', 28000, 'a0000001-0000-0000-0000-000000000001', '2025-01-20T00:00:00Z', NOW(), NOW()),
-  ('cg000001-0000-0000-0000-000000000003', 'Eko Hotels & Suites', 'eko-hotels', 'hotel', 'Lagos most prestigious hotel and event center. Host to major concerts and galas.', '/images/city-guide/eko-hotels.jpg', 'Adetokunbo Ademola Street, Victoria Island', 'Lagos', 'Nigeria', 6.4281, 3.4219, 4.6, 4, '24/7', ARRAY['wifi','pool','spa','gym','restaurant','parking'], 'published', 45000, 'a0000001-0000-0000-0000-000000000001', '2025-02-01T00:00:00Z', NOW(), NOW()),
-  ('cg000001-0000-0000-0000-000000000004', 'Buka Hut', 'buka-hut', 'restaurant', 'Authentic Nigerian buka experience. Best of local cuisine in a vibrant setting.', '/images/city-guide/buka-hut.jpg', '15 Bode Thomas Street, Surulere', 'Lagos', 'Nigeria', 6.4281, 3.4219, 4.3, 1, 'Mon-Sun 8AM-11PM', ARRAY['wifi','outdoor seating','delivery'], 'published', 19000, 'a0000001-0000-0000-0000-000000000001', '2025-02-15T00:00:00Z', NOW(), NOW()),
-  ('cg000001-0000-0000-0000-000000000005', 'Freedom Park', 'freedom-park', 'park', 'Historical park and memorial on the site of the old Broad Street Prison. Cultural events hub.', '/images/city-guide/freedom-park.jpg', '1 Broad Street, Lagos Island', 'Lagos', 'Nigeria', 6.4281, 3.4219, 4.4, 1, 'Mon-Sun 8AM-9PM', ARRAY['wifi','parking','art installations','events space'], 'published', 22000, 'a0000001-0000-0000-0000-000000000001', '2025-03-01T00:00:00Z', NOW(), NOW())
-ON CONFLICT (id) DO NOTHING;
+-- ============================================================================
+-- LIFESTYLE UNIVERSE: City Guide Entries
+-- ============================================================================
+-- The lifestyle-service Prisma schema maps CityGuideEntry WITHOUT @@map, so
+-- the real table in service databases is `"CityGuideEntry"` (PascalCase);
+-- older merged demo DBs used snake_case "city_guide_entry". Resolve the
+-- target at runtime into a temp table, then insert through it so the same
+-- file works against both layouts.
+
+-- The service's CityGuideEntry.createdById has an FK to its own users
+-- table; seed the referenced demo admin first (no-op when it exists).
+-- User tables vary per service (some have NOT NULL password/hash columns),
+-- so adapt to whichever shape is present.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'users' AND column_name IN ('password', 'passwordHash')
+    ) THEN
+      INSERT INTO "users" (id, email, password, "displayName", role, "createdAt", "updatedAt")
+      VALUES ('a0000001-0000-0000-0000-000000000001', 'admin@azeeboplus.com',
+              '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.',
+              'Admin Chidi', 'admin', NOW(), NOW())
+      ON CONFLICT (id) DO NOTHING;
+    ELSE
+      INSERT INTO "users" (id, email, "displayName", role, "createdAt", "updatedAt")
+      VALUES ('a0000001-0000-0000-0000-000000000001', 'admin@azeeboplus.com', 'Admin Chidi', 'admin', NOW(), NOW())
+      ON CONFLICT (id) DO NOTHING;
+    END IF;
+  END IF;
+END $$;
+
+CREATE TEMP TABLE _city_guide_seed (
+  id TEXT PRIMARY KEY,
+  name TEXT, slug TEXT, type TEXT, description TEXT, "coverImage" TEXT,
+  address TEXT, city TEXT, country TEXT, latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION, rating DOUBLE PRECISION, "priceLevel" INTEGER,
+  hours TEXT, phone TEXT, website TEXT, amenities TEXT[], status TEXT,
+  "viewCount" INTEGER, "createdById" TEXT, "publishedAt" TIMESTAMPTZ
+);
+
+INSERT INTO _city_guide_seed VALUES
+  ('cg000001-0000-0000-0000-000000000001', 'Terra Kulture', 'terra-kulture', 'venue', 'Lagos premier art, culture, and entertainment center. Live shows, art gallery, restaurant.', '/images/city-guide/terra-kulture.jpg', '14 Tiamiyu Savage Street, Victoria Island', 'Lagos', 'Nigeria', 6.4281, 3.4219, 4.5, 3, 'Mon-Sat 9AM-10PM, Sun 12PM-8PM', NULL, NULL, ARRAY['wifi','parking','restaurant','gallery'], 'published', 34000, 'a0000001-0000-0000-0000-000000000001', '2025-01-20T00:00:00Z'),
+  ('cg000001-0000-0000-0000-000000000002', 'Nike Art Gallery', 'nike-art-gallery', 'gallery', 'One of the largest art galleries in West Africa with over 7,000 artworks.', '/images/city-guide/nike-art.jpg', '2 Eti Osa South Union, Lekki Phase 1', 'Lagos', 'Nigeria', 6.4281, 3.4219, 4.7, 2, 'Mon-Sat 10AM-6PM', NULL, NULL, ARRAY['wifi','parking','air conditioning'], 'published', 28000, 'a0000001-0000-0000-0000-000000000001', '2025-01-20T00:00:00Z'),
+  ('cg000001-0000-0000-0000-000000000003', 'Eko Hotels & Suites', 'eko-hotels', 'hotel', 'Lagos most prestigious hotel and event center. Host to major concerts and galas.', '/images/city-guide/eko-hotels.jpg', 'Adetokunbo Ademola Street, Victoria Island', 'Lagos', 'Nigeria', 6.4281, 3.4219, 4.6, 4, '24/7', NULL, NULL, ARRAY['wifi','pool','spa','gym','restaurant','parking'], 'published', 45000, 'a0000001-0000-0000-0000-000000000001', '2025-02-01T00:00:00Z'),
+  ('cg000001-0000-0000-0000-000000000004', 'Buka Hut', 'buka-hut', 'restaurant', 'Authentic Nigerian buka experience. Best of local cuisine in a vibrant setting.', '/images/city-guide/buka-hut.jpg', '15 Bode Thomas Street, Surulere', 'Lagos', 'Nigeria', 6.4281, 3.4219, 4.3, 1, 'Mon-Sun 8AM-11PM', NULL, NULL, ARRAY['wifi','outdoor seating','delivery'], 'published', 19000, 'a0000001-0000-0000-0000-000000000001', '2025-02-15T00:00:00Z'),
+  ('cg000001-0000-0000-0000-000000000005', 'Freedom Park', 'freedom-park', 'park', 'Historical park and memorial on the site of the old Broad Street Prison. Cultural events hub.', '/images/city-guide/freedom-park.jpg', '1 Broad Street, Lagos Island', 'Lagos', 'Nigeria', 6.4281, 3.4219, 4.4, 1, 'Mon-Sun 8AM-9PM', NULL, NULL, ARRAY['wifi','parking','art installations','events space'], 'published', 22000, 'a0000001-0000-0000-0000-000000000001', '2025-03-01T00:00:00Z'),
+  ('cg000001-0000-0000-0000-000000000006', 'Jazzhole Coffee', 'jazzhole-coffee', 'cafe', 'Legendary bookstore-cafe with vinyl records, espresso, and live jazz nights.', '/images/city-guide/jazzhole.jpg', '168 Awolowo Road, Ikoyi', 'Lagos', 'Nigeria', 6.4489, 3.4257, 4.5, 2, 'Mon-Sat 8AM-8PM', NULL, NULL, ARRAY['wifi','coffee','bookstore','live music'], 'published', 15400, 'a0000001-0000-0000-0000-000000000001', '2025-03-10T00:00:00Z'),
+  ('cg000001-0000-0000-0000-000000000007', 'Jabi Lake Mall Waterfront', 'jabi-lake-waterfront', 'attraction', 'Lakeside promenade with boat rides, street food, and sunset views over Jabi Lake.', '/images/city-guide/jabi-lake.jpg', 'Jabi Lake Mall, Bala Sokoto Way', 'Abuja', 'Nigeria', 9.0865, 7.4395, 4.4, 2, 'Daily 10AM-10PM', NULL, NULL, ARRAY['parking','boat rides','food court','family friendly'], 'published', 21100, 'a0000001-0000-0000-0000-000000000001', '2025-03-18T00:00:00Z'),
+  ('cg000001-0000-0000-0000-000000000008', 'Nairobi National Museum', 'nairobi-national-museum', 'museum', 'Kenya''s flagship museum: hominid fossils, contemporary art, and the snake park.', '/images/city-guide/nairobi-museum.jpg', 'Museum Hill, Museum Road', 'Nairobi', 'Kenya', -1.2741, 36.8053, 4.6, 2, 'Daily 8:30AM-5:30PM', NULL, NULL, ARRAY['guided tours','parking','cafe','accessible'], 'published', 26800, 'a0000001-0000-0000-0000-000000000001', '2025-03-25T00:00:00Z'),
+  ('cg000001-0000-0000-0000-000000000009', 'Arts Centre Accra', 'arts-centre-accra', 'market', 'Ghana''s craft bazaar: kente, wood carvings, beads, and live drumming workshops.', '/images/city-guide/accra-arts-centre.jpg', '28th February Road, Independence Square', 'Accra', 'Ghana', 5.5504, -0.1963, 4.3, 1, 'Mon-Sat 8AM-6PM', NULL, NULL, ARRAY['crafts','guided tours','cash only'], 'published', 12900, 'a0000001-0000-0000-0000-000000000001', '2025-04-02T00:00:00Z'),
+  ('cg000001-0000-0000-0000-000000000010', 'Kigali Convention Centre Rooftop', 'kcc-rooftop', 'venue', 'Iconic dome-lit rooftop bar with skyline views — Kigali''s upscale night out.', '/images/city-guide/kcc-rooftop.jpg', 'KG 2 Ave, Kimihurura', 'Kigali', 'Rwanda', -1.9426, 30.0919, 4.7, 3, 'Daily 4PM-1AM', NULL, NULL, ARRAY['rooftop','wifi','valet parking','cocktails'], 'published', 18200, 'a0000001-0000-0000-0000-000000000001', '2025-04-10T00:00:00Z');
+
+DO $$
+DECLARE
+  target TEXT;
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'CityGuideEntry') THEN
+    target := 'CityGuideEntry';
+  ELSIF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'city_guide_entry') THEN
+    target := 'city_guide_entry';
+  ELSE
+    RAISE NOTICE 'city guide table not present, skipping seed';
+    RETURN;
+  END IF;
+
+  EXECUTE format(
+    $q$INSERT INTO %I (id, name, slug, type, description, "coverImage", address, city, country, latitude, longitude, rating, "priceLevel", hours, phone, website, amenities, status, "viewCount", "createdById", "publishedAt", "createdAt", "updatedAt")
+    SELECT s.id, s.name, s.slug, s.type, s.description, s."coverImage", s.address, s.city, s.country, s.latitude, s.longitude, s.rating, s."priceLevel", s.hours, COALESCE(s.phone, ''), COALESCE(s.website, ''), s.amenities, s.status, s."viewCount", s."createdById", s."publishedAt", NOW(), NOW()
+    FROM _city_guide_seed s ON CONFLICT (id) DO NOTHING$q$,
+    target
+  );
+END $$;
 
 -- ============================================================================
 -- LIFESTYLE UNIVERSE: Music Entries
@@ -214,3 +281,36 @@ INSERT INTO "payments" (id, "userId", amount, currency, status, provider, refere
   ('pay00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000007', 10000, 'NGN', 'completed', 'paystack', 'REF-PAY-002', 'Wallet funding via Paystack', NOW(), NOW()),
   ('pay00001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000008', 2500, 'NGN', 'completed', 'flutterwave', 'REF-PAY-003', 'Wallet funding via Flutterwave', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- MOVIES UNIVERSE: Genres (movie-service genre module / GET /v1/genres)
+-- ============================================================================
+-- The genres table only exists after the movie-service
+-- 20260925000000_add_genres migration; guard everything so older demo
+-- databases keep seeding cleanly.
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'genres') THEN
+
+INSERT INTO "genres" (id, name, slug, description, icon, "sortOrder", "isActive", "createdAt", "updatedAt") VALUES
+  ('gen00001-0000-0000-0000-000000000001', 'Action', 'action', 'High-stakes thrillers, chase sequences, and fight choreography.', '💥', 1, true, NOW(), NOW()),
+  ('gen00001-0000-0000-0000-000000000002', 'Comedy', 'comedy', 'Laugh-out-loud Nollywood comedies and satire.', '😂', 2, true, NOW(), NOW()),
+  ('gen00001-0000-0000-0000-000000000003', 'Drama', 'drama', 'Character-driven stories about family, ambition, and society.', '🎭', 3, true, NOW(), NOW()),
+  ('gen00001-0000-0000-0000-000000000004', 'Romance', 'romance', 'Love stories from Lagos to London and everywhere between.', '❤️', 4, true, NOW(), NOW()),
+  ('gen00001-0000-0000-0000-000000000005', 'Horror', 'horror', 'Folklore horror and modern scares from across Africa.', '👻', 5, true, NOW(), NOW()),
+  ('gen00001-0000-0000-0000-000000000006', 'Sci-Fi', 'scifi', 'Afrofuturism, AI, and speculative futures rooted in the continent.', '🚀', 6, true, NOW(), NOW()),
+  ('gen00001-0000-0000-0000-000000000007', 'Historical', 'historical', 'Epic retellings of the moments that shaped Nigeria.', '📜', 7, true, NOW(), NOW()),
+  ('gen00001-0000-0000-0000-000000000008', 'Documentary', 'documentary', 'True stories, music films, and investigative features.', '🎥', 8, true, NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
+
+-- Attach the five demo movies (seeded above in this file) to their genres.
+UPDATE "movies" SET "genreId" = 'gen00001-0000-0000-0000-000000000004' WHERE id = 'mov00001-0000-0000-0000-000000000001';
+UPDATE "movies" SET "genreId" = 'gen00001-0000-0000-0000-000000000001' WHERE id = 'mov00001-0000-0000-0000-000000000002';
+UPDATE "movies" SET "genreId" = 'gen00001-0000-0000-0000-000000000006' WHERE id = 'mov00001-0000-0000-0000-000000000003';
+UPDATE "movies" SET "genreId" = 'gen00001-0000-0000-0000-000000000007' WHERE id = 'mov00001-0000-0000-0000-000000000004';
+UPDATE "movies" SET "genreId" = 'gen00001-0000-0000-0000-000000000003' WHERE id = 'mov00001-0000-0000-0000-000000000005';
+
+  END IF;
+END $$;
+

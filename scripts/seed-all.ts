@@ -32,6 +32,7 @@ import { seedEngagementService } from './seeders/engagement-seeder.js';
 import { seedSubscriptionService } from './seeders/subscription-seeder.js';
 import { seedLifestyleService } from './seeders/lifestyle-seeder.js';
 import { seedLifestyleGuidesService } from './seeders/lifestyle-guides-seeder.js';
+import { seedLifestyleParticipation } from './seeders/lifestyle-participation-seeder.js';
 
 const SEED_ORDER = [
   { name: 'user', fn: seedUserService },
@@ -45,6 +46,7 @@ const SEED_ORDER = [
   { name: 'subscription', fn: seedSubscriptionService },
   { name: 'lifestyle', fn: seedLifestyleService },
   { name: 'lifestyle-guides', fn: seedLifestyleGuidesService },
+  { name: 'lifestyle-participation', fn: seedLifestyleParticipation },
 ] as const;
 
 async function main() {
