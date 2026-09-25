@@ -146,7 +146,7 @@ async function bootstrap() {
   const allowedOrigins = process.env.ADMIN_ALLOWED_ORIGINS?.split(',') || [
     'https://admin.azeeboplus.com',
     'http://localhost:4016',
-    'http://localhost:4100',
+    'http://localhost:5173',
   ];
 
   configureCors(app, {
