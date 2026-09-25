@@ -12,6 +12,11 @@ interface ServiceHealth {
   latency: number;
   lastCheck: number;
   dbStatus?: 'up' | 'down' | 'unknown';
+  /** Which loopback transport answered (backend tries localhost → [::1] →
+   * 127.0.0.1). 'ipv6' means a ::1-only listener — healthy, not an outage. */
+  transport?: 'localhost' | 'ipv6' | 'ipv4';
+  /** 'down' only: last transport failure code (e.g. ECONNREFUSED). */
+  errorDetail?: string;
 }
 
 interface HealthSnapshot {
@@ -119,6 +124,8 @@ function useHealthMonitor() {
         status: ServiceHealth['status'];
         latencyMs: number;
         dbStatus: NonNullable<ServiceHealth['dbStatus']>;
+        transport?: ServiceHealth['transport'];
+        errorDetail?: string;
       }>;
       checkedAt: string;
     }>('/api/v1/admin/ops/services');
@@ -133,6 +140,8 @@ function useHealthMonitor() {
       latency: s.latencyMs,
       lastCheck: Date.now(),
       dbStatus: s.dbStatus,
+      ...(s.transport !== undefined && { transport: s.transport }),
+      ...(s.errorDetail !== undefined && { errorDetail: s.errorDetail }),
     }));
 
     const snapshot: HealthSnapshot = {
@@ -531,7 +540,7 @@ export default function ServiceHealthPage() {
                                 {uptime}%
                               </span>
                             </span>
-                          )}
+                          )}{' '}
                           {svc?.dbStatus && (
                             <span style={{ color: 'var(--admin-text-muted)' }}>
                               DB:{' '}
@@ -546,6 +555,18 @@ export default function ServiceHealthPage() {
                               >
                                 {svc.dbStatus}
                               </span>
+                            </span>
+                          )}
+                          {svc?.transport && svc.transport !== 'localhost' && (
+                            <span
+                              style={{ color: 'var(--admin-amber)' }}
+                              title={
+                                svc.transport === 'ipv6'
+                                  ? 'Answered on [::1] — an IPv6-only listener (IPv4 dials are refused). Healthy; noted so a refused 127.0.0.1 probe is never mistaken for an outage.'
+                                  : 'Answered on 127.0.0.1 — an IPv4-only listener.'
+                              }
+                            >
+                              {svc.transport === 'ipv6' ? 'IPv6-only' : 'IPv4-only'}
                             </span>
                           )}
                         </div>
@@ -573,6 +594,20 @@ export default function ServiceHealthPage() {
                                 value={svc?.latency ? `${svc.latency}ms` : 'N/A'}
                               />
                               <DetailItem label="DB" value={svc?.dbStatus ?? 'N/A'} />
+                              <DetailItem
+                                label="Transport"
+                                value={
+                                  svc?.transport
+                                    ? svc.transport === 'localhost'
+                                      ? 'dual-stack (localhost)'
+                                      : svc.transport === 'ipv6'
+                                        ? 'IPv6 only ([::1])'
+                                        : 'IPv4 only (127.0.0.1)'
+                                    : svc?.status === 'down'
+                                      ? `unreachable${svc?.errorDetail ? ` (${svc.errorDetail})` : ''}`
+                                      : 'N/A'
+                                }
+                              />
                               {uptime !== undefined && (
                                 <DetailItem label="Session Uptime" value={`${uptime}%`} />
                               )}
@@ -597,6 +632,7 @@ export default function ServiceHealthPage() {
                                 http://localhost:{svcDef.port}
                                 {svcDef.name === 'live-event-service' ? '/health' : '/v1/health'}
                               </code>
+                              {' — probed as localhost → [::1] → 127.0.0.1 until one answers'}
                             </div>
                           </div>
                         )}
