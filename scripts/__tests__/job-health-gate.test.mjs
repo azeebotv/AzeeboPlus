@@ -283,6 +283,62 @@ describe('new-foreign-workspace alert', () => {
     const r = evaluateJobHealth(rows, { knownForeignWorkspaces: new Set(), now: NOW });
     assert.equal(r.newForeign[0].conns, 4);
   });
+
+  it('approvedForeignWorkspaces (POOL_FOREIGN_ALLOWLIST) waives the new-foreign alert — pass', () => {
+    const rows = [fRow('/Users/deprof/www/YCN/services/gateway', 1), fRow('/Users/deprof/www/YCN/services/gateway', 2)];
+    const r = evaluateJobHealth(rows, {
+      knownForeignWorkspaces: new Set(),
+      approvedForeignWorkspaces: ['/Users/deprof/www/YCN/services/gateway'],
+      now: NOW,
+    });
+    assert.equal(r.verdict, 'pass');
+    assert.deepEqual(r.newForeign, []);
+    // Approval waives alerting, not visibility: the row stays for the summary.
+    assert.equal(r.newForeignApproved.length, 1);
+    assert.equal(r.newForeignApproved[0].workspace, '/Users/deprof/www/YCN/services/gateway');
+    assert.equal(r.newForeignApproved[0].passes, 2);
+  });
+
+  it('an approved dialer cannot mask a real new one (bypass-gate parallel)', () => {
+    const rows = [fRow('/approved/fleet', 1), fRow('/approved/fleet', 2), fRow('/rogue/proj', 1), fRow('/rogue/proj', 2)];
+    const r = evaluateJobHealth(rows, {
+      knownForeignWorkspaces: new Set(),
+      approvedForeignWorkspaces: new Set(['/approved/fleet']),
+      now: NOW,
+    });
+    assert.equal(r.verdict, 'fail');
+    assert.deepEqual(r.newForeign.map((f) => f.workspace), ['/rogue/proj']);
+    assert.deepEqual(r.newForeignApproved.map((f) => f.workspace), ['/approved/fleet']);
+  });
+
+  it('approved dialers skip the ≥minForeignPasses bar (alert waived, row still visible)', () => {
+    const rows = [fRow('/approved/fleet', 1)];
+    const r = evaluateJobHealth(rows, {
+      knownForeignWorkspaces: new Set(),
+      approvedForeignWorkspaces: ['/approved/fleet'],
+      now: NOW,
+    });
+    assert.equal(r.verdict, 'pass');
+    assert.equal(r.newForeignApproved[0].passes, 1);
+  });
+
+  it('absent approval list is fully back-compat (nothing approved)', () => {
+    const rows = [fRow('/new/proj', 1), fRow('/new/proj', 2)];
+    const r = evaluateJobHealth(rows, { knownForeignWorkspaces: new Set(), now: NOW });
+    assert.equal(r.verdict, 'fail');
+    assert.deepEqual(r.newForeignApproved, []);
+  });
+
+  it('known-set membership still applies to approved dialers (no shadow rows)', () => {
+    const rows = [fRow('/old/approved', 1), fRow('/old/approved', 2)];
+    const r = evaluateJobHealth(rows, {
+      knownForeignWorkspaces: new Set(['/old/approved']),
+      approvedForeignWorkspaces: ['/old/approved'],
+      now: NOW,
+    });
+    assert.equal(r.verdict, 'pass');
+    assert.deepEqual(r.newForeignApproved, []);
+  });
 });
 
 describe('CLI subprocess', () => {

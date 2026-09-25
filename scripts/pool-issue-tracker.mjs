@@ -53,26 +53,19 @@ import {
 import { evaluateSaturation, readLedgerRows, psqlBin, queryLedgerRows } from './database/pool-saturation-gate.mjs';
 import { evaluateBypasses as evaluateBypassesCore, evaluateForeignDialers } from './database/pool-bypass-gate.mjs';
 import { searchIssuesByMarker, createIssue, updateIssue, apiBaseFromEnv } from './lib/gh-issue-api.mjs';
+// Shared approved-dialer parser (the job-health gate's new-foreign alert
+// honors the same POOL_FOREIGN_ALLOWLIST list; bypass gate + tracker too).
+import { parseAllowlist } from './lib/pool-foreign-allowlist.mjs';
+export { parseAllowlist };
 
 const DEFAULTS = {
   gateHours: 24, // POOL_GATE_HOURS — saturation window
   bypassHours: 30, // POOL_BYPASS_GATE_HOURS — bypass/foreign window
 };
 
-/**
- * Parse POOL_FOREIGN_ALLOWLIST: comma-separated exact workspace paths
- * (whitespace tolerated; empty/absent → no approvals). Paths are matched
- * exactly as pool-audit records them (absolute cwd, e.g.
- * `/Users/me/partner-fleet/services/api`) — no globbing, so an entry can
- * never accidentally approve a sibling path.
- */
-export function parseAllowlist(raw) {
-  if (!raw || typeof raw !== 'string') return [];
-  return raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+// parseAllowlist lives in scripts/lib/pool-foreign-allowlist.mjs (imported
+// and re-exported above): the job-health gate's new-foreign alert honors the
+// same list, so the parsing contract is pinned in exactly one place.
 
 /**
  * Evaluate all three pool-health conditions against the live ledger:

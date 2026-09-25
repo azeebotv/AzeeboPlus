@@ -296,6 +296,10 @@ jobs:
         if: steps.creds.outputs.have-creds == 'true'
         env:
           LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+          # Approved foreign dialers (repo VARIABLE, comma-separated exact
+          # paths) waive the new-foreign alert — the same list the pool
+          # tracker and bypass gate honor. Absent variable → no approvals.
+          POOL_FOREIGN_ALLOWLIST: ${{ vars.POOL_FOREIGN_ALLOWLIST }}
         run: node scripts/database/job-health-gate.mjs
 
       # ── Transport drill (service prober) ──────────────────────────────────
@@ -327,4 +331,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+          # Approved foreign dialers (repo VARIABLE) — never tracked.
+          POOL_FOREIGN_ALLOWLIST: ${{ vars.POOL_FOREIGN_ALLOWLIST }}
         run: node scripts/pool-issue-tracker.mjs
