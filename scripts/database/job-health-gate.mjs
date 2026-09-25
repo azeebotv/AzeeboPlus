@@ -32,6 +32,14 @@
 // (never fails closed on the wrong side — a foreign dialer is context,
 // not an incident).
 //
+// APPROVED dialers: POOL_FOREIGN_ALLOWLIST (comma-separated exact workspace
+// paths — the same list the bypass gate and pool tracker honor, parsed by
+// scripts/lib/pool-foreign-allowlist.mjs) waives the new-foreign alert, not
+// visibility: an approved workspace is never "new" (a partner fleet with a
+// standing agreement — the YCN-fleet shape — can't hold the nightly red)
+// but stays in the step summary under its own approved section, still
+// counted for the connection budget.
+//
 // Consecutive means adjacent ledger rows for the job; runs are BROKEN by a
 // ledger gap longer than the job's cadence × JOB_HEALTH_MAX_GAP_MULT (the
 // same gap-guard semantics as the bypass gate — a job that stopped being
@@ -41,9 +49,10 @@
 //
 // Env: LIVE_DB_URL_BASE (postgresql://user:pass@host:port — nightly
 // workflow convention), JOB_HEALTH_HOURS (default 56: covers two nightly
-// slots + margin), tunable streak thresholds above.
-// Exit codes: 0 = healthy/insufficient-data, 1 = error-heavy job,
-// 2 = cannot read the ledger (fails closed).
+// slots + margin), tunable streak thresholds above, POOL_FOREIGN_ALLOWLIST
+// (approved foreign dialers, see above).
+// Exit codes: 0 = healthy/insufficient-data, 1 = error-heavy job or a new
+// (unapproved) foreign dialer, 2 = cannot read the ledger (fails closed).
 // ============================================================================
 
 import fsSync from 'node:fs';
@@ -70,6 +79,9 @@ const HOURS = (n) => n * 3_600_000;
 // parser, one set of segment-anchor semantics to evolve.
 import { parseForeignDirect } from './pool-bypass-gate.mjs';
 export { parseForeignDirect };
+// The approved-dialer list is shared with the bypass gate and the pool
+// tracker — one parser so the parsing contract is pinned in exactly one place.
+import { parseAllowlist } from '../lib/pool-foreign-allowlist.mjs';
 
 /** Hours between the oldest and newest finite timestamp (needs 2+ values). */
 function spanOf(times) {
@@ -125,6 +137,12 @@ function longestErrorRun(passes, maxGapMs) {
  * alert is then SKIPPED entirely (context-level finding; never fail the
  * gate on our own missing data). An EMPTY Set is meaningful: every foreign
  * workspace in-window is new (bootstrap semantics).
+ *
+ * opts.approvedForeignWorkspaces: Set/Array of workspaces holding a
+ * standing approval (POOL_FOREIGN_ALLOWLIST). They are EXCLUDED from the
+ * new-foreign alert — never "new" — but surface in `newForeignApproved`
+ * so the CLI keeps them visible (approval waives alerting, not visibility).
+ * Absent → no approvals (behavior identical to before the option existed).
  */
 export function evaluateJobHealth(rows, opts = {}) {
   const now = opts.now ?? Date.now();
@@ -161,12 +179,23 @@ export function evaluateJobHealth(rows, opts = {}) {
   const knownForeign =
     opts.knownForeignWorkspaces instanceof Set ? opts.knownForeignWorkspaces : null;
   const minForeignPasses = opts.minForeignPasses ?? 2;
-  const foreignAcc = new Map(); // workspace → { passes, conns, lastAtMs }
+  // Same shape the bypass gate's allowlist accepts (Set | Array | absent).
+  const approvedSet =
+    opts.approvedForeignWorkspaces instanceof Set
+      ? opts.approvedForeignWorkspaces
+      : Array.isArray(opts.approvedForeignWorkspaces)
+        ? new Set(opts.approvedForeignWorkspaces)
+        : new Set(); // absent → nothing approved (back-compat)
+  const foreignAcc = new Map(); // workspace → { passes, conns, lastAtMs } (alertable)
+  const approvedAcc = new Map(); // same shape, for POOL_FOREIGN_ALLOWLIST entries
   if (knownForeign !== null) {
     for (const r of rows) {
       for (const f of parseForeignDirect(r.detail)) {
         if (knownForeign.has(f.workspace)) continue;
-        const rec = foreignAcc.get(f.workspace) ?? { passes: 0, conns: null, lastAtMs: 0 };
+        // Approved dialers land in their own accumulator: never alertable,
+        // still counted. Absent list → nothing routes here (back-compat).
+        const acc = approvedSet.has(f.workspace) ? approvedAcc : foreignAcc;
+        const rec = acc.get(f.workspace) ?? { passes: 0, conns: null, lastAtMs: 0 };
         rec.passes += 1;
         const t = r.ranAt instanceof Date ? r.ranAt.getTime() : Date.parse(r.ranAt);
         // conns tracks the NEWEST pass in time (rows are newest-first, so
@@ -176,18 +205,23 @@ export function evaluateJobHealth(rows, opts = {}) {
           rec.conns = f.conns;
         }
         if (Number.isFinite(t) && t > rec.lastAtMs) rec.lastAtMs = t;
-        foreignAcc.set(f.workspace, rec);
+        acc.set(f.workspace, rec);
       }
     }
   }
+  const toForeignRec = ([workspace, rec]) => ({
+    workspace,
+    passes: rec.passes,
+    conns: rec.conns,
+    lastAt: Number.isFinite(rec.lastAtMs) && rec.lastAtMs > 0 ? new Date(rec.lastAtMs).toISOString() : null,
+  });
   const newForeign = [...foreignAcc.entries()]
     .filter(([, rec]) => rec.passes >= minForeignPasses)
-    .map(([workspace, rec]) => ({
-      workspace,
-      passes: rec.passes,
-      conns: rec.conns,
-      lastAt: Number.isFinite(rec.lastAtMs) && rec.lastAtMs > 0 ? new Date(rec.lastAtMs).toISOString() : null,
-    }))
+    .map(toForeignRec)
+    .sort((a, b) => a.workspace.localeCompare(b.workspace));
+  // Approved workspaces skip the ≥minForeignPasses bar entirely — the alert
+  // is waived; the row exists purely for visibility in the summary.
+  const newForeignApproved = [...approvedAcc.entries()].map(toForeignRec)
     .sort((a, b) => a.workspace.localeCompare(b.workspace));
 
   const failing = [];
@@ -229,10 +263,11 @@ export function evaluateJobHealth(rows, opts = {}) {
       reason: reasons.join(' | '),
       failing,
       newForeign,
+      newForeignApproved,
       jobsEvaluated,
     };
   }
-  return { verdict: 'pass', reason: `no error-heavy streaks across ${jobsEvaluated} scheduled job(s)`, failing: [], newForeign: [], jobsEvaluated };
+  return { verdict: 'pass', reason: `no error-heavy streaks across ${jobsEvaluated} scheduled job(s)`, failing: [], newForeign: [], newForeignApproved, jobsEvaluated };
 }
 
 // ── CLI ─────────────────────────────────────────────────────────────────────
@@ -290,6 +325,7 @@ async function main() {
     minWeekly: Number(process.env.JOB_HEALTH_WEEKLY ?? 2),
     minForeignPasses: Number(process.env.JOB_HEALTH_MIN_FOREIGN_PASSES ?? 2),
     knownForeignWorkspaces: await knownForeignWorkspaces(psql, base, hours),
+    approvedForeignWorkspaces: parseAllowlist(process.env.POOL_FOREIGN_ALLOWLIST),
   });
 
   // Step-summary table: per-job verdict, then recent failing rows.
@@ -315,6 +351,16 @@ async function main() {
     summary.push('| Workspace | Passes | Conns | Last seen in window |');
     summary.push('|---|---|---|---|');
     for (const f of result.newForeign) {
+      summary.push(`| ${f.workspace.replaceAll('|', '\\|')} | ${f.passes} | ${f.conns ?? '?'} | ${f.lastAt ?? '?'} |`);
+    }
+  }
+  if ((result.newForeignApproved ?? []).length > 0) {
+    summary.push('');
+    summary.push('Approved foreign dialer(s) — standing POOL_FOREIGN_ALLOWLIST entries (never "new"; still counted for the connection budget):');
+    summary.push('');
+    summary.push('| Workspace | Passes | Conns | Last seen in window |');
+    summary.push('|---|---|---|---|');
+    for (const f of result.newForeignApproved) {
       summary.push(`| ${f.workspace.replaceAll('|', '\\|')} | ${f.passes} | ${f.conns ?? '?'} | ${f.lastAt ?? '?'} |`);
     }
   }

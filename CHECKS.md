@@ -78,8 +78,16 @@ Two conventions hold across all of them:
   workspace not present in the pre-window ledger baseline fails the gate
   after ≥JOB_HEALTH_MIN_FOREIGN_PASSES (default 2) passes — repo bypasses
   stay the bypass gate's job; this is the "who else is dialing" signal.
-  Locally: `LIVE_DB_URL_BASE=postgresql://…@127.0.0.1:6432
-  JOB_HEALTH_HOURS=56 node scripts/database/job-health-gate.mjs`.
+  APPROVED dialers: the new-foreign alert honors POOL_FOREIGN_ALLOWLIST
+  (the same list the bypass gate and pool tracker use, parsed by
+  scripts/lib/pool-foreign-allowlist.mjs) — an approved workspace is never
+  "new" (a partner fleet with a standing agreement can't hold the nightly
+  red), but it stays visible in the step summary under its own approved
+  section, still counted for the connection budget. The nightly wires the
+  list from the POOL_FOREIGN_ALLOWLIST repo VARIABLE. Locally:
+  `LIVE_DB_URL_BASE=postgresql://…@127.0.0.1:6432
+  JOB_HEALTH_HOURS=56 POOL_FOREIGN_ALLOWLIST=/Users/deprof/www/YCN/services/admin,/Users/deprof/www/YCN/services/auth,/Users/deprof/www/YCN/services/events,/Users/deprof/www/YCN/services/gateway,/Users/deprof/www/YCN/services/notifications,/Users/deprof/www/YCN/services/recommendations,/Users/deprof/www/YCN/services/rewards,/Users/deprof/www/YCN/services/search
+  node scripts/database/job-health-gate.mjs`.
 - **Plist watchdog** (local, LaunchAgent `com.azeebo.plist-watchdog`, every
   15 min): self-healing guard for every `com.azeebo.*` agent — the response
   to plists vanishing twice on 2026-09-22. Services: any MISSING/drifted
