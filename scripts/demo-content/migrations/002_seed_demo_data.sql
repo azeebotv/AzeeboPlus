@@ -894,6 +894,17 @@ INSERT INTO "reward_accounts" (id, "userId", points, "levelId", streak, "lastLog
   ('ra00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000008', 800, 'lvl00001-0000-0000-0000-000000000001', 3, '2025-06-15T08:00:00Z')
 ON CONFLICT (id) DO NOTHING;
 
+-- Rewards catalog (reward-service "rewards" table) — backs the mobile
+-- Rewards tab's "Redeem Rewards" grid via GET /v1/rewards/redeem-options.
+INSERT INTO "rewards" (id, name, description, cost, type, metadata, "isActive") VALUES
+  ('rwd00001-0000-0000-0000-000000000001', '₦500 Wallet Credit', 'Convert 5,000 points into ₦500 wallet balance', 5000, 'points', '{"creditAmount":500}', true),
+  ('rwd00001-0000-0000-0000-000000000002', '₦1,000 Wallet Credit', 'Convert 9,500 points into ₦1,000 wallet balance', 9500, 'points', '{"creditAmount":1000}', true),
+  ('rwd00001-0000-0000-0000-000000000003', '7-Day Premium Pass', 'One week of premium content access', 12000, 'promo', '{"days":7}', true),
+  ('rwd00001-0000-0000-0000-000000000004', 'Cinemaxis Ticket', 'One movie ticket at any Cinemaxis location', 15000, 'bonus', '{"partner":"cinemaxis"}', true),
+  ('rwd00001-0000-0000-0000-000000000005', '2x Points Weekend Boost', 'Double points on all activities for one weekend', 7500, 'bonus', '{"durationHours":48}', true),
+  ('rwd00001-0000-0000-0000-000000000006', 'Exclusive Badge: OG Fan', 'Show off the OG Fan badge on your profile', 3000, 'promo', '{"badgeId":"og-fan"}', true)
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO "points_ledger" (id, "userId", points, type, reason) VALUES
   ('pl00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 100, 'credit', 'Daily login bonus'),
   ('pl00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000006', 50, 'credit', 'Content watched bonus'),
