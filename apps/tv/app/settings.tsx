@@ -39,7 +39,7 @@ function SettingsGate() {
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  const goToSignIn = useCallback(() => router.replace('/signin' as never), [router]);
+  const goToSignIn = useCallback(() => router.replace('/signin'), [router]);
 
   // Guard against a signed-out TV landing here directly (deep link, stale
   // route): show something honest instead of a skeleton with "Guest".

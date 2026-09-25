@@ -13,7 +13,6 @@ test.describe('F-010: Reality Voting Flow', () => {
 
   test('voting page loads with contestants', async ({ page }) => {
     await page.goto('/reality/voting');
-    await page.waitForLoadState('networkidle');
 
     // Should show contestant names from mock
     await expect(
@@ -23,7 +22,6 @@ test.describe('F-010: Reality Voting Flow', () => {
 
   test('contestant cards are interactive', async ({ page }) => {
     await page.goto('/reality/voting');
-    await page.waitForLoadState('networkidle');
 
     // Find a contestant card/button
     const contestantCard = page.locator(
@@ -43,7 +41,6 @@ test.describe('F-010: Reality Voting Flow', () => {
 
   test('vote quantity selector works', async ({ page }) => {
     await page.goto('/reality/voting');
-    await page.waitForLoadState('networkidle');
 
     // Select a contestant
     await page.locator('text=/Contestant Alpha/i').first().click();
@@ -69,7 +66,6 @@ test.describe('F-010: Reality Voting Flow', () => {
     });
 
     await page.goto('/reality/voting');
-    await page.waitForLoadState('networkidle');
 
     // Select contestant
     await page.locator('text=/Contestant Alpha/i').first().click();
@@ -91,7 +87,6 @@ test.describe('F-010: Reality Voting Flow', () => {
 
   test('vote success shows confirmation', async ({ page }) => {
     await page.goto('/reality/voting');
-    await page.waitForLoadState('networkidle');
 
     // Select contestant
     await page.locator('text=/Contestant Alpha/i').first().click();
@@ -120,7 +115,6 @@ test.describe('F-010: Reality Voting Flow', () => {
     );
 
     await page.goto('/reality/voting');
-    await page.waitForLoadState('networkidle');
 
     await page.locator('text=/Contestant Alpha/i').first().click();
     await page.waitForTimeout(500);
@@ -146,89 +140,59 @@ test.describe('F-010: Reality Voting Flow', () => {
       });
     });
 
-    await page.route('**/api/v1/reality/vote', (route) => {
+    // Page POSTs /reality/votes/quantity { contestantId, quantity }
+    await page.route('**/api/v1/reality/votes/quantity', (route) => {
       balance -= 100; // Deduct vote cost
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true }),
+        body: JSON.stringify({ success: true, data: { recorded: true } }),
       });
     });
 
     await page.goto('/reality/voting');
-    await page.waitForLoadState('networkidle');
 
-    // Select and vote
+    // Select contestant, then submit via the sidebar vote panel
     await page.locator('text=/Contestant Alpha/i').first().click();
-    await page.waitForTimeout(500);
+    const submitBtn = page.getByRole('button', { name: 'Submit Vote' });
+    await submitBtn.click();
 
-    const voteBtn = page.locator('button:has-text("Vote")').first();
-    if (await voteBtn.isVisible().catch(() => false)) {
-      await voteBtn.click();
-      await page.waitForTimeout(2000);
-    }
-
-    // Verify balance was deducted
+    // Verify the vote POST fired (balance mutated inside the route handler)
+    await expect(page.getByText('Vote submitted successfully!')).toBeVisible({ timeout: 10000 });
     expect(balance).toBeLessThan(500000);
   });
 
   test('super-vote flow works', async ({ page }) => {
-    let superVoteCalled = false;
-    await page.route('**/api/v1/reality/supervote', (route) => {
-      superVoteCalled = true;
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, message: 'Super vote recorded' }),
-      });
-    });
-
     await page.goto('/reality/super-vote');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('body')).toBeVisible();
 
     // Should show super vote UI
-    const hasSuperVote = await page
-      .locator('text=/super vote|superpower|boost|extra/i')
-      .first()
-      .isVisible()
-      .catch(() => false);
-
-    expect(hasSuperVote).toBe(true);
+    await expect(
+      page.locator('text=/super vote|superpower|boost|extra/i').first(),
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('voting page shows vote counts for contestants', async ({ page }) => {
     await page.goto('/reality/voting');
-    await page.waitForLoadState('networkidle');
 
-    // Should show vote counts (1200, 800, 950 from mock)
-    const hasVoteCounts = await page
-      .locator('text=/1,?200|800|950|votes/i')
-      .first()
-      .isVisible()
-      .catch(() => false);
-
-    expect(hasVoteCounts).toBe(true);
+    // Should show vote counts (1,200 / 800 / 950 from mock)
+    await expect(
+      page.locator('text=/1,?200|950 votes/i').first(),
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('contestant status badges are displayed', async ({ page }) => {
     await page.goto('/reality/voting');
-    await page.waitForLoadState('networkidle');
 
-    // Should show safe/danger status
-    const hasStatus = await page
-      .locator('text=/safe|danger|eliminated|status/i')
-      .first()
-      .isVisible()
-      .catch(() => false);
-
-    expect(hasStatus).toBe(true);
+    // Should show safe/danger status (mock marks Beta "danger" → "At Risk")
+    await expect(
+      page.locator('text=/At Risk|eliminated/i').first(),
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('complete voting flow: select → choose quantity → vote → success', async ({ page }) => {
     await page.goto('/reality/voting');
-    await page.waitForLoadState('networkidle');
 
     // Step 1: Select contestant
     await page.locator('text=/Contestant Alpha/i').first().click();
@@ -240,15 +204,13 @@ test.describe('F-010: Reality Voting Flow', () => {
       await qty5.click();
     }
 
-    // Step 3: Cast vote
-    const voteBtn = page.locator('button:has-text("Vote")').first();
-    if (await voteBtn.isVisible().catch(() => false)) {
-      await voteBtn.click();
+    // Step 3: Cast vote via the sidebar vote panel
+    const voteBtn = page.getByRole('button', { name: 'Submit Vote' });
+    await voteBtn.click();
 
       // Step 4: Verify success
       await expect(
         page.locator('text=/success|recorded|thank|cast|voted/i').first(),
       ).toBeVisible({ timeout: 10000 });
-    }
   });
 });

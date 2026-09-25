@@ -11,6 +11,8 @@ interface Genre {
   id: string;
   name: string;
   slug: string;
+  description?: string | null;
+  icon?: string | null;
   movieCount: number;
 }
 
@@ -34,9 +36,18 @@ export default function MoviesGenreScreen() {
 
   const genresQuery = useQuery({
     queryKey: ['movies', 'genres'],
+    // GET /v1/genres (movie-service genre controller) → { success, data: [...] }
+    // with `_count.movies` per genre.
     queryFn: async () => {
-      const res = await apiClient.get<Genre[]>('/v1/movies/genres');
-      return Array.isArray(res) ? res : [];
+      const res = await apiClient.get<{ success: boolean; data?: Genre[] }>('/v1/genres');
+      const list = Array.isArray(res?.data) ? res.data : [];
+      return list.map((g) => ({
+        ...g,
+        movieCount:
+          typeof g.movieCount === 'number'
+            ? g.movieCount
+            : ((g as unknown as { _count?: { movies?: number } })._count?.movies ?? 0),
+      }));
     },
     staleTime: 300_000,
   });
@@ -60,7 +71,11 @@ export default function MoviesGenreScreen() {
       ) : genresQuery.error ? (
         <ErrorState description={genresQuery.error.message} onRetry={() => genresQuery.refetch()} />
       ) : genres.length === 0 ? (
-        <EmptyState icon="🎬" title="No genres" description="Genre browsing coming soon" />
+        <EmptyState
+          icon="🎬"
+          title="No genres yet"
+          description="Genres appear as movies are added"
+        />
       ) : (
         <FlatList
           data={genres}
@@ -72,9 +87,13 @@ export default function MoviesGenreScreen() {
               <TouchableOpacity
                 style={[styles.card, { backgroundColor: bgColor + '15' }]}
                 activeOpacity={0.7}
+                onPress={() => router.push(`/movies/genres/${encodeURIComponent(item.slug)}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`Browse ${item.name} movies`}
               >
                 <Text style={[styles.genreName, { color: bgColor }]}>{item.name}</Text>
                 <Text style={styles.movieCount}>{item.movieCount} movies</Text>
+                <Text style={[styles.arrow, { color: bgColor }]}>›</Text>
               </TouchableOpacity>
             );
           }}
@@ -108,9 +127,10 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: radius.lg,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
   },
-  genreName: { fontSize: 18, fontWeight: '700' },
-  movieCount: { fontSize: 13, color: colors.text.tertiary },
+  genreName: { fontSize: 17, fontWeight: '700', flex: 1 },
+  movieCount: { fontSize: 13, color: colors.text.secondary },
+  arrow: { fontSize: 22, fontWeight: '700' },
 });

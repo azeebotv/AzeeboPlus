@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,23 +9,45 @@ import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
 
-interface CityGuide {
+interface CityGuideEntry {
   id: string;
   name: string;
+  slug: string;
+  type: string;
+  description?: string | null;
+  coverImage?: string | null;
+  city: string;
   country: string;
-  description: string;
-  venueCount: number;
+  rating?: number | null;
+  priceLevel?: number | null;
 }
+
+const TYPE_ICONS: Record<string, string> = {
+  restaurant: '🍽️',
+  bar: '🍸',
+  hotel: '🏨',
+  attraction: '📸',
+  venue: '🎪',
+  park: '🌳',
+  shop: '🛍️',
+  beach: '🏖️',
+};
 
 export default function CityGuideScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+
   const citiesQuery = useQuery({
-    queryKey: ['lifestyle', 'cities'],
+    queryKey: ['lifestyle', 'city-guide'],
     queryFn: async () => {
-      const res = await apiClient.get<CityGuide[]>('/v1/lifestyle/cities');
-      return Array.isArray(res) ? res : [];
+      // GET /v1/lifestyle/city-guide (published entries) →
+      // { success, data: { items: [...], page, limit, total, totalPages } }
+      const res = await apiClient.get<{
+        success: boolean;
+        data?: { items?: CityGuideEntry[] };
+      }>('/v1/lifestyle/city-guide?limit=50');
+      return res?.data?.items ?? [];
     },
     staleTime: 300_000,
   });
@@ -57,26 +79,54 @@ export default function CityGuideScreen() {
       ) : citiesQuery.error ? (
         <ErrorState description={citiesQuery.error.message} onRetry={() => citiesQuery.refetch()} />
       ) : cities.length === 0 ? (
-        <EmptyState icon="🏙️" title="No cities" description="City guides coming soon" />
+        <EmptyState
+          icon="🏙️"
+          title="No spots yet"
+          description="City guide entries appear as they're published"
+        />
       ) : (
         <FlatList
           data={cities}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.card, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.cardIcon}>🏙️</Text>
-              <View style={styles.cardInfo}>
-                <Text style={[styles.cardName, { color: colors.text.primary }]}>{item.name}</Text>
-                <Text style={styles.cardMeta}>
-                  {item.country} • {item.venueCount} venues
-                </Text>
-              </View>
-              <Text style={[styles.arrow, { color: colors.text.secondary }]}>›</Text>
-            </TouchableOpacity>
-          )}
+          renderItem={({ item }) => {
+            const icon = TYPE_ICONS[item.type] ?? '📍';
+            return (
+              <TouchableOpacity
+                style={[styles.card, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
+                activeOpacity={0.7}
+                onPress={() =>
+                  router.push(`/lifestyle/city-guide/${encodeURIComponent(item.slug)}`)
+                }
+                accessibilityRole="button"
+                accessibilityLabel={`${item.name} in ${item.city}`}
+              >
+                {item.coverImage ? (
+                  <Image source={{ uri: item.coverImage }} style={styles.cardImage} />
+                ) : (
+                  <View
+                    style={[styles.cardImage, styles.cardImageFallback, { backgroundColor: colors.primary[500] + '20' }]}
+                  >
+                    <Text style={styles.cardIcon}>{icon}</Text>
+                  </View>
+                )}
+                <View style={styles.cardInfo}>
+                  <Text style={[styles.cardName, { color: colors.text.primary }]} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={styles.cardMeta} numberOfLines={1}>
+                    {item.city}, {item.country}
+                    {item.priceLevel ? ` • ${'$'.repeat(Math.min(item.priceLevel, 4))}` : ''}
+                  </Text>
+                  {item.rating ? (
+                    <Text style={styles.cardRating}>
+                      ★ {Number(item.rating).toFixed(1)}
+                    </Text>
+                  ) : null}
+                </View>
+                <Text style={[styles.arrow, { color: colors.text.secondary }]}>›</Text>
+              </TouchableOpacity>
+            );
+          }}
           contentContainerStyle={styles.list}
         />
       )}
@@ -108,13 +158,16 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    padding: 12,
     borderRadius: radius.lg,
     gap: 12,
   },
-  cardIcon: { fontSize: 28 },
+  cardImage: { width: 56, height: 56, borderRadius: 12 },
+  cardImageFallback: { alignItems: 'center', justifyContent: 'center' },
+  cardIcon: { fontSize: 24 },
   cardInfo: { flex: 1 },
   cardName: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
   cardMeta: { fontSize: 12, color: colors.text.tertiary },
-  arrow: { fontSize: 24 },
+  cardRating: { fontSize: 12, color: colors.primary[600], marginTop: 2, fontWeight: '600' },
+  arrow: { fontSize: 22 },
 });

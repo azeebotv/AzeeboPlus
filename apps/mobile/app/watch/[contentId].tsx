@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,12 @@ import {
   useWindowDimensions,
   useColorScheme,
   Alert,
+  Modal,
+  TextInput,
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { VideoView } from 'expo-video';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -15,7 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAzeeboVideoPlayer } from '../../src/hooks/useVideoPlayer';
 import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
-import { contentApi, type ContentItem } from '@azeebo/react-data';
+import { contentApi, apiClient, type ContentItem } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { VideoGestureLayer } from '../../src/components/video/VideoGestureLayer';
@@ -43,6 +49,20 @@ export default function WatchScreen() {
   const [relatedContent, setRelatedContent] = useState<ContentItem[]>([]);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Like state (optimistic, same as the web watch page — the content service
+  // has no like endpoint, so the count lives client-side per session).
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+
+  // Comments sheet — backed by the real content-service comments endpoints
+  // (GET/POST /v1/content/:id/comments).
+  const [commentsVisible, setCommentsVisible] = useState(false);
+  const [comments, setComments] = useState<CommentItem[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentDraft, setCommentDraft] = useState('');
+  const [isPostingComment, setIsPostingComment] = useState(false);
+  const commentsOpenedOnce = useRef(false);
 
   // Persisted playback preferences (quality / speed / autoplay-next).
   const {
@@ -153,6 +173,57 @@ export default function WatchScreen() {
     seek(time);
   };
 
+  const loadComments = useCallback(async () => {
+    if (!contentId) return;
+    setCommentsLoading(true);
+    try {
+      const res = await apiClient.get<{
+        success: boolean;
+        data: CommentItem[];
+      }>(`/v1/content/${contentId}/comments?limit=50`);
+      setComments(Array.isArray(res?.data) ? res.data : []);
+    } catch (err) {
+      logger.error('Failed to load comments', err);
+      setComments([]);
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [contentId]);
+
+  const openComments = useCallback(() => {
+    setCommentsVisible(true);
+    if (!commentsOpenedOnce.current) {
+      commentsOpenedOnce.current = true;
+      void loadComments();
+    }
+  }, [loadComments]);
+
+  const postComment = useCallback(async () => {
+    const text = commentDraft.trim();
+    if (!text || !contentId || isPostingComment) return;
+    setIsPostingComment(true);
+    try {
+      await apiClient.post(`/v1/content/${contentId}/comments`, { text });
+      setCommentDraft('');
+      await loadComments();
+    } catch (err) {
+      logger.error('Failed to post comment', err);
+      Alert.alert(
+        'Comment failed',
+        err instanceof Error ? err.message : 'Could not post your comment. Try again.'
+      );
+    } finally {
+      setIsPostingComment(false);
+    }
+  }, [commentDraft, contentId, isPostingComment, loadComments]);
+
+  const toggleLike = useCallback(() => {
+    setIsLiked((prev) => {
+      setLikeCount((count) => (prev ? Math.max(0, count - 1) : count + 1));
+      return !prev;
+    });
+  }, []);
+
   // Guest gate (parity with the TV home screen): signed-out users hitting a
   // watch route (guest homepage, shared links) previously got a raw
   // "Failed to load video" — and the failed token refresh could clear a
@@ -209,7 +280,7 @@ export default function WatchScreen() {
             title={t('common.premium')}
             description={playerError || t('common.errorEntitlement')}
             actionLabel="See Premium plans"
-            onAction={() => router.push('/premium' as never)}
+            onAction={() => router.push('/premium')}
           />
         ) : (
           <ErrorState
@@ -407,18 +478,19 @@ export default function WatchScreen() {
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => Alert.alert('Coming soon', 'Likes are not available yet — stay tuned!')}
+            onPress={toggleLike}
             accessibilityRole="button"
-            accessibilityLabel="Like"
+            accessibilityLabel={isLiked ? 'Unlike' : 'Like'}
           >
-            <Text style={styles.actionIcon}>👍</Text>
-            <Text style={styles.actionLabel}>Like</Text>
+            <Text style={styles.actionIcon}>{isLiked ? '❤️' : '👍'}</Text>
+            <Text style={styles.actionLabel}>
+              {likeCount > 0 ? `${likeCount} ` : ''}
+              {isLiked ? 'Liked' : 'Like'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() =>
-              Alert.alert('Coming soon', 'Comments are not available yet — stay tuned!')
-            }
+            onPress={openComments}
             accessibilityRole="button"
             accessibilityLabel="Comment"
           >
@@ -527,8 +599,143 @@ export default function WatchScreen() {
         onSpeedChange={setPlaybackSpeed}
         onAutoplayNextChange={setAutoplayNext}
       />
+
+      {/* Comments sheet — real backend-backed comment thread. */}
+      <Modal
+        visible={commentsVisible}
+        animationType="slide"
+        onRequestClose={() => setCommentsVisible(false)}
+      >
+        <SafeAreaView
+          style={[styles.commentsSafe, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+        >
+          <KeyboardAvoidingView
+            style={styles.commentsContainer}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <View
+              style={[
+                styles.commentsHeader,
+                { borderBottomColor: colorScheme === 'dark' ? '#333' : '#eee' },
+              ]}
+            >
+              <Text style={[styles.commentsTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                Comments
+              </Text>
+              <TouchableOpacity
+                onPress={() => setCommentsVisible(false)}
+                accessibilityLabel="Close comments"
+              >
+                <Text
+                  style={{ fontSize: 22, color: colorScheme === 'dark' ? '#fff' : '#000' }}
+                >
+                  ✕
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {commentsLoading ? (
+              <View style={styles.commentsLoadingWrap}>
+                <ActivityIndicator color={colors.primary[500]} />
+              </View>
+            ) : comments.length === 0 ? (
+              <View style={styles.commentsLoadingWrap}>
+                <Text style={{ color: colors.text.secondary, textAlign: 'center' }}>
+                  No comments yet. Be the first!
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={comments}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.commentsList}
+                renderItem={({ item }) => (
+                  <View style={styles.commentRow}>
+                    <View style={[styles.commentAvatar, { backgroundColor: colors.primary[500] }]}>
+                      <Text style={styles.commentAvatarText}>
+                        {(item.userName || 'A').charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={styles.commentBody}>
+                      <View style={styles.commentMetaRow}>
+                        <Text
+                          style={[
+                            styles.commentAuthor,
+                            { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                          ]}
+                        >
+                          {item.userName || 'Anonymous'}
+                        </Text>
+                        <Text style={styles.commentTime}>
+                          {new Date(item.timestamp).toLocaleDateString()}
+                        </Text>
+                      </View>
+                      <Text
+                        style={[
+                          styles.commentText,
+                          { color: colorScheme === 'dark' ? '#ccc' : '#444' },
+                        ]}
+                      >
+                        {item.content}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              />
+            )}
+
+            <View
+              style={[
+                styles.commentComposer,
+                { borderTopColor: colorScheme === 'dark' ? '#333' : '#eee' },
+              ]}
+            >
+              <TextInput
+                style={[
+                  styles.commentInput,
+                  {
+                    backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
+                    color: colorScheme === 'dark' ? '#fff' : '#000',
+                  },
+                ]}
+                placeholder="Add a comment..."
+                placeholderTextColor={colors.text.tertiary}
+                value={commentDraft}
+                onChangeText={setCommentDraft}
+                multiline
+                maxLength={1000}
+              />
+              <TouchableOpacity
+                style={[
+                  styles.commentSend,
+                  (!commentDraft.trim() || isPostingComment) && styles.commentSendDisabled,
+                ]}
+                onPress={postComment}
+                disabled={!commentDraft.trim() || isPostingComment}
+                accessibilityLabel="Post comment"
+              >
+                {isPostingComment ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.commentSendText}>Post</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
+}
+
+interface CommentItem {
+  id: string;
+  userId: string;
+  userName: string;
+  content: string;
+  timestamp: string;
+  likes: number;
+  likedByCurrentUser: boolean;
 }
 
 const styles = StyleSheet.create({
@@ -824,5 +1031,100 @@ const styles = StyleSheet.create({
   episodeTitle: {
     fontSize: 13,
     fontWeight: '500',
+  },
+  // ── Comments sheet ─────────────────────────────────────────
+  commentsSafe: {
+    flex: 1,
+  },
+  commentsContainer: {
+    flex: 1,
+  },
+  commentsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  commentsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  commentsLoadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  commentsList: {
+    padding: 16,
+    gap: 16,
+  },
+  commentRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  commentAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  commentAvatarText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  commentBody: {
+    flex: 1,
+    gap: 2,
+  },
+  commentMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  commentAuthor: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  commentTime: {
+    fontSize: 11,
+    color: colors.text.tertiary,
+  },
+  commentText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  commentComposer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    padding: 12,
+    borderTopWidth: 1,
+  },
+  commentInput: {
+    flex: 1,
+    minHeight: 40,
+    maxHeight: 100,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 14,
+  },
+  commentSend: {
+    backgroundColor: colors.primary[500],
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  commentSendDisabled: {
+    opacity: 0.5,
+  },
+  commentSendText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

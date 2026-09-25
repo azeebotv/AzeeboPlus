@@ -9,7 +9,7 @@
  */
 import { test, expect } from '@playwright/test';
 
-const CREATOR_URL = process.env.CREATOR_URL || 'http://localhost:4104';
+const CREATOR_URL = process.env.CREATOR_URL || 'http://localhost:5174';
 const CREATOR_EMAIL = process.env.CREATOR_EMAIL || 'creator@azeeboplus.com';
 const CREATOR_PASSWORD = process.env.CREATOR_PASSWORD || 'Creator123!';
 

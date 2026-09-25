@@ -17,14 +17,12 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('notifications page loads and shows header', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('h1:has-text("Notifications")').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('shows unread count summary', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     // Mock has 3 unread notifications (n1, n2, n4)
     await expect(page.locator('text=/3 unread notification/').first()).toBeVisible({ timeout: 10000 });
@@ -52,7 +50,6 @@ test.describe('F-013: Notifications Flow', () => {
     });
 
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=All caught up!').first()).toBeVisible({ timeout: 10000 });
   });
@@ -61,7 +58,6 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('displays all notifications in the list', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=New Like').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('text=New Follower').first()).toBeVisible();
@@ -72,7 +68,6 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('shows notification messages', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=Comedy King liked your comment').first()).toBeVisible({
       timeout: 10000,
@@ -82,7 +77,6 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('unread notifications have visual indicator', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     // Unread items should have a colored border
     const unreadItems = page.locator('[role="listitem"][class*="border-l-2"]');
@@ -92,7 +86,6 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('notification type icons are displayed', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     // Each notification should have an icon
     const icons = page.locator('[role="listitem"] .text-lg');
@@ -104,7 +97,6 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('tab bar shows All, Unread, and Mentions tabs', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('[role="tab"]:has-text("all")').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('[role="tab"]:has-text("unread")').first()).toBeVisible();
@@ -113,7 +105,6 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('All tab shows all notifications', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     // All tab should be selected by default
     const allTab = page.locator('[role="tab"]:has-text("all")').first();
@@ -125,7 +116,6 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('Unread tab filters to unread only', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     // Click unread tab
     await page.locator('[role="tab"]:has-text("unread")').first().click();
@@ -141,7 +131,6 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('Mentions tab filters to mentions only', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     // Click mentions tab
     await page.locator('button:has-text("mentions")').first().click();
@@ -175,7 +164,6 @@ test.describe('F-013: Notifications Flow', () => {
     });
 
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     await page.locator('[role="tab"]:has-text("unread")').first().click();
 
@@ -199,7 +187,6 @@ test.describe('F-013: Notifications Flow', () => {
     });
 
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     // Click first notification
     const firstNotification = page.locator('[role="listitem"]').first();
@@ -230,7 +217,6 @@ test.describe('F-013: Notifications Flow', () => {
     });
 
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     // Mark all read button should be visible (there are unread notifications)
     const markAllBtn = page.locator('button:has-text("Mark all read")').first();
@@ -262,7 +248,6 @@ test.describe('F-013: Notifications Flow', () => {
     });
 
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     const markAllBtn = page.locator('button:has-text("Mark all read")');
     await expect(markAllBtn).not.toBeVisible({ timeout: 5000 });
@@ -283,14 +268,12 @@ test.describe('F-013: Notifications Flow', () => {
     });
 
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('text=No notifications').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('empty Mentions tab shows "No mentions yet"', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     // Click mentions tab — mock has 1 mention so override to 0
     await page.route('**/api/v1/notifications', (route) => {
@@ -312,7 +295,6 @@ test.describe('F-013: Notifications Flow', () => {
     });
 
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     await page.locator('button:has-text("mentions")').click();
 
@@ -334,7 +316,6 @@ test.describe('F-013: Notifications Flow', () => {
     });
 
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     const errorIndicator = page.locator('text=/Failed|Error/i').first();
     await expect(errorIndicator).toBeVisible({ timeout: 10000 });
@@ -345,7 +326,6 @@ test.describe('F-013: Notifications Flow', () => {
   test('renders correctly on mobile viewport', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('h1:has-text("Notifications")').first()).toBeVisible({ timeout: 10000 });
   });
@@ -353,7 +333,6 @@ test.describe('F-013: Notifications Flow', () => {
   test('renders correctly on tablet viewport', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('h1:has-text("Notifications")').first()).toBeVisible({ timeout: 10000 });
   });
@@ -361,7 +340,6 @@ test.describe('F-013: Notifications Flow', () => {
   test('renders correctly on desktop viewport', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('h1:has-text("Notifications")').first()).toBeVisible({ timeout: 10000 });
   });
@@ -377,7 +355,6 @@ test.describe('F-013: Notifications Flow', () => {
     });
 
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     // Page should load even if WebSocket fails
     await expect(page.locator('h1:has-text("Notifications")').first()).toBeVisible({ timeout: 10000 });
@@ -390,7 +367,6 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('notification list has proper ARIA roles', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     // List should have role="list"
     const list = page.locator('[role="list"]');
@@ -404,7 +380,6 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('tab bar has proper ARIA attributes', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     const tablist = page.locator('[role="tablist"]');
     await expect(tablist.first()).toBeVisible({ timeout: 10000 });
@@ -417,7 +392,6 @@ test.describe('F-013: Notifications Flow', () => {
 
   test('Mark all read button has accessible label', async ({ page }) => {
     await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
 
     const markAllBtn = page.locator('button[aria-label="Mark all notifications as read"]');
     await expect(markAllBtn).toBeVisible({ timeout: 10000 });

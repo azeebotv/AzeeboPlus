@@ -1,84 +1,75 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput } from 'react-native';
-import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors, radius } from '../../src/theme';
-import { apiClient } from '@azeebo/react-data/api/client';
+import { lifestyleApi } from '@azeebo/react-data/api/lifestyle';
+import { extractTracks } from '../../src/lib/music';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  genre: string;
-  duration: number;
-  playCount: number;
-  isExplicit: boolean;
-}
-
 export default function MusicTracksScreen() {
-  const colorScheme = useColorScheme();
   const router = useRouter();
-  const isDark = colorScheme === 'dark';
   const [search, setSearch] = useState('');
 
   const tracksQuery = useQuery({
-    queryKey: ['music', 'tracks', search],
-    queryFn: async () => {
-      const params = search ? `?search=${encodeURIComponent(search)}` : '';
-      const res = await apiClient.get<Track[]>(`/v1/music/tracks${params}`);
-      return Array.isArray(res) ? res : [];
-    },
+    queryKey: ['lifestyle', 'music', 'all-tracks'],
+    queryFn: async () => extractTracks(await lifestyleApi.getTracks()),
     staleTime: 60_000,
   });
 
-  const tracks = tracksQuery.data ?? [];
+  const tracks = useMemo(() => {
+    const all = tracksQuery.data ?? [];
+    if (!search.trim()) return all;
+    const q = search.toLowerCase();
+    return all.filter(
+      (t) =>
+        t.title.toLowerCase().includes(q) ||
+        t.artist.toLowerCase().includes(q) ||
+        (t.genre ?? '').toLowerCase().includes(q)
+    );
+  }, [tracksQuery.data, search]);
 
-  const formatDuration = (seconds: number) => {
+  const formatDuration = (seconds?: number) => {
+    if (!seconds) return '—';
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Tracks</Text>
-        <View style={{ width: 40 }} />
+        <View style={styles.backButton} />
       </View>
 
       <View style={styles.searchContainer}>
         <TextInput
-          style={[
-            styles.searchInput,
-            {
-              backgroundColor: isDark ? colors.bg.tertiary : '#f0f0f0',
-              color: colors.text.primary,
-            },
-          ]}
+          style={[styles.searchInput, { backgroundColor: colors.bg.tertiary, color: colors.text.primary }]}
           placeholder="Search tracks..."
           placeholderTextColor={colors.text.tertiary}
           value={search}
           onChangeText={setSearch}
+          accessibilityLabel="Search tracks"
         />
       </View>
 
       {tracksQuery.isLoading ? (
         <LoadingState text="Loading tracks..." />
       ) : tracksQuery.error ? (
-        <ErrorState description={tracksQuery.error.message} onRetry={() => tracksQuery.refetch()} />
+        <ErrorState
+          description={tracksQuery.error?.message ?? 'Failed to load tracks'}
+          onRetry={() => tracksQuery.refetch()}
+        />
       ) : tracks.length === 0 ? (
         <EmptyState
           icon="🎵"
           title="No tracks"
-          description={search ? 'No tracks match your search' : 'Tracks coming soon'}
+          description={search ? 'No tracks match your search' : 'Check back for new releases'}
         />
       ) : (
         <FlatList
@@ -87,20 +78,30 @@ export default function MusicTracksScreen() {
           contentContainerStyle={styles.list}
           renderItem={({ item, index }) => (
             <TouchableOpacity
-              style={[styles.card, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
+              style={[styles.card, { backgroundColor: colors.bg.tertiary }]}
               activeOpacity={0.7}
+              onPress={() =>
+                item.artistId
+                  ? router.push(`/music/${encodeURIComponent(item.artistId)}`)
+                  : router.push('/music')
+              }
+              accessibilityRole="button"
+              accessibilityLabel={`${item.title} by ${item.artist}`}
             >
               <Text style={styles.index}>{index + 1}</Text>
               <View style={styles.info}>
                 <Text style={[styles.title, { color: colors.text.primary }]} numberOfLines={1}>
-                  {item.title} {item.isExplicit && <Text style={styles.explicit}>E</Text>}
+                  {item.title}
                 </Text>
                 <Text style={styles.artist} numberOfLines={1}>
                   {item.artist}
+                  {item.genre ? ` · ${item.genre}` : ''}
                 </Text>
               </View>
               <Text style={styles.duration}>{formatDuration(item.duration)}</Text>
-              <Text style={styles.plays}>{(item.playCount / 1000).toFixed(0)}K</Text>
+              <Text style={styles.plays}>
+                {item.playCount ? `${Math.round(item.playCount / 1000)}K` : ''}
+              </Text>
             </TouchableOpacity>
           )}
         />
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    paddingTop: 40,
+    paddingTop: 12,
   },
   backButton: {
     width: 40,
@@ -147,15 +148,6 @@ const styles = StyleSheet.create({
   },
   info: { flex: 1 },
   title: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
-  explicit: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.text.tertiary,
-    backgroundColor: colors.bg.tertiary,
-    paddingHorizontal: 4,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
   artist: { fontSize: 12, color: colors.text.tertiary },
   duration: { fontSize: 12, color: colors.text.tertiary, width: 40, textAlign: 'right' },
   plays: { fontSize: 12, color: colors.text.tertiary, width: 40, textAlign: 'right' },

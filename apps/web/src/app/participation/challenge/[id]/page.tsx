@@ -6,30 +6,39 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHero } from '@/components/layout/PageHero';
 import { ArrowLeft, Trophy, Calendar, Users, Rocket, CheckCircle2, Award, ListChecks } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
+/**
+ * Community challenge detail — backed by lifestyle-service:
+ *   GET  /v1/challenges/:id         → { challenge: { ...fields, submissions[] } } (public read)
+ *   POST /v1/challenges/:id/submit  → { content, mediaUrl? } (auth required)
+ */
+
 interface Challenge {
   id: string;
   title: string;
+  slug: string;
   description: string;
-  universe: string;
-  type: 'creative' | 'quiz' | 'prediction' | 'trivia';
-  reward: number;
-  deadline: string;
-  participants: number;
-  maxParticipants?: number;
-  status: 'active' | 'ended' | 'upcoming';
-  requirements: string[];
-  prizes: { place: number; reward: number; label: string }[];
+  coverImage?: string | null;
+  type: string;
+  status: string;
+  rules?: string | null;
+  prize?: string | null;
+  startDate: string;
+  endDate: string;
+  participantCount: number;
+  submissions?: { id: string; content: string; mediaUrl?: string | null; votes: number }[];
 }
 
 function ChallengeDetailContent(): React.JSX.Element {
   const params = useParams();
   const id = params?.id as string;
+  const { isAuthenticated } = useAuth();
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -39,16 +48,23 @@ function ChallengeDetailContent(): React.JSX.Element {
   const query = useQuery({
     queryKey: ['challenge', id],
     queryFn: async () => {
-      const res = await api.request<Challenge>(`/api/v1/challenges/${id}`);
-      if (res.success && res.data) return res.data;
+      const res = await api.request<{ challenge: Challenge }>(`/api/v1/challenges/${id}`);
+      if (res.success && res.data) return res.data.challenge;
       throw new Error(res.message || 'Challenge not found');
     },
     enabled: Boolean(id),
   });
 
   const submitMutation = useMutation({
-    mutationFn: async () =>
-      api.request(`/api/v1/challenges/${id}/submit`, { method: 'POST' }),
+    mutationFn: async () => {
+      const challenge = query.data;
+      const res = await api.request(`/api/v1/challenges/${id}/submit`, {
+        method: 'POST',
+        body: JSON.stringify({ content: `Entry for ${challenge?.title ?? 'challenge'}` }),
+      });
+      if (!res.success) throw new Error(res.message || 'Submission failed');
+      return res;
+    },
     onSuccess: () => setSubmitted(true),
   });
 
@@ -80,25 +96,26 @@ function ChallengeDetailContent(): React.JSX.Element {
 
   const daysLeft = Math.max(
     0,
-    Math.ceil((new Date(challenge.deadline).getTime() - Date.now()) / 86400000)
+    Math.ceil((new Date(challenge.endDate).getTime() - Date.now()) / 86400000)
   );
+  const isActive = challenge.status === 'active' && daysLeft > 0;
 
   return (
     <PageShell activeNav="Reality" glowColor="rgba(232, 66, 10, 0.2)">
       <div className="mb-6">
         <Link
-          href="/creator/challenges"
+          href="/participation"
           className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Creator & Community Challenges
+          <ArrowLeft className="w-4 h-4" /> Back to Community Participation
         </Link>
       </div>
 
       <div className="max-w-4xl mx-auto">
         <PageHero
-          eyebrow={`${challenge.universe.toUpperCase()} CHALLENGE`}
+          eyebrow="COMMUNITY CHALLENGE"
           eyebrowColor="var(--brand-orange)"
-          badge={`₦${challenge.reward.toLocaleString()} POOL`}
+          badge={challenge.prize ? `${challenge.prize} PRIZE` : challenge.type.toUpperCase()}
           title={challenge.title}
           subtitle={challenge.description}
           glowColor="rgba(232, 66, 10, 0.25)"
@@ -107,24 +124,20 @@ function ChallengeDetailContent(): React.JSX.Element {
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
+          className="space-y-8 mt-6"
         >
           {/* Key Metrics Strip */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="az-glass p-5 rounded-2xl text-center border border-white/10">
               <Trophy className="w-5 h-5 text-amber-400 mx-auto mb-1.5" />
-              <p className="text-xl sm:text-2xl font-extrabold text-white">
-                ₦{challenge.reward.toLocaleString()}
-              </p>
-              <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mt-1">
-                Grand Prize
-              </p>
+              <p className="text-xl sm:text-2xl font-extrabold text-white">{challenge.prize || '—'}</p>
+              <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mt-1">Prize</p>
             </div>
 
             <div className="az-glass p-5 rounded-2xl text-center border border-white/10">
               <Users className="w-5 h-5 text-[var(--brand-orange)] mx-auto mb-1.5" />
               <p className="text-xl sm:text-2xl font-extrabold text-white">
-                {challenge.participants.toLocaleString()}
+                {(challenge.participantCount ?? challenge.submissions?.length ?? 0).toLocaleString()}
               </p>
               <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mt-1">
                 Participants
@@ -150,48 +163,39 @@ function ChallengeDetailContent(): React.JSX.Element {
             </div>
           </div>
 
-          {/* Requirements */}
-          {challenge.requirements.length > 0 && (
+          {/* Rules */}
+          {challenge.rules && (
             <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
               <div className="flex items-center gap-2 mb-4">
                 <ListChecks className="w-5 h-5 text-[var(--brand-orange)]" />
                 <h2 className="az-headline text-lg sm:text-xl font-bold text-white">
-                  Entry Criteria & Rules
+                  Entry Criteria &amp; Rules
                 </h2>
               </div>
-              <ul className="space-y-3">
-                {challenge.requirements.map((req, i) => (
-                  <li key={i} className="text-sm text-white/70 flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-white/10 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                      {i + 1}
-                    </div>
-                    <span>{req}</span>
-                  </li>
-                ))}
-              </ul>
+              <p className="text-sm text-white/70 leading-relaxed whitespace-pre-line">{challenge.rules}</p>
             </div>
           )}
 
-          {/* Prize Breakdown */}
-          {challenge.prizes.length > 0 && (
+          {/* Recent submissions */}
+          {(challenge.submissions?.length ?? 0) > 0 && (
             <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
               <div className="flex items-center gap-2 mb-4">
-                <Trophy className="w-5 h-5 text-amber-400" />
+                <Award className="w-5 h-5 text-[var(--brand-orange)]" />
                 <h2 className="az-headline text-lg sm:text-xl font-bold text-white">
-                  Prize Distribution
+                  Top Submissions
                 </h2>
               </div>
               <div className="divide-y divide-white/5">
-                {challenge.prizes.map((p) => (
-                  <div key={p.place} className="flex justify-between items-center py-3.5">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold flex items-center justify-center">
-                        #{p.place}
+                {challenge.submissions!.slice(0, 10).map((s, i) => (
+                  <div key={s.id} className="flex justify-between items-center py-3.5 gap-4">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold flex items-center justify-center shrink-0">
+                        #{i + 1}
                       </span>
-                      <span className="text-sm font-semibold text-white/80">{p.label}</span>
+                      <span className="text-sm font-semibold text-white/80 truncate">{s.content}</span>
                     </div>
-                    <span className="text-base font-extrabold text-amber-400">
-                      ₦{p.reward.toLocaleString()}
+                    <span className="text-sm font-extrabold text-amber-400 shrink-0">
+                      {s.votes} votes
                     </span>
                   </div>
                 ))}
@@ -200,7 +204,12 @@ function ChallengeDetailContent(): React.JSX.Element {
           )}
 
           {/* Submission Action */}
-          {challenge.status === 'active' && !submitted ? (
+          {submitted ? (
+            <div className="p-5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center gap-3 text-emerald-400 font-bold text-center">
+              <CheckCircle2 className="w-6 h-6 shrink-0" />
+              <span>Official entry confirmed! Track your status in your Creator Dashboard.</span>
+            </div>
+          ) : isActive && isAuthenticated ? (
             <button
               onClick={() => submitMutation.mutate()}
               disabled={submitMutation.isPending}
@@ -217,14 +226,25 @@ function ChallengeDetailContent(): React.JSX.Element {
                 </>
               )}
             </button>
-          ) : submitted ? (
-            <div className="p-5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center gap-3 text-emerald-400 font-bold text-center">
-              <CheckCircle2 className="w-6 h-6 shrink-0" />
-              <span>Official entry confirmed! Track your status in your Creator Dashboard.</span>
+          ) : isActive && !isAuthenticated ? (
+            <div className="p-5 rounded-2xl bg-white/5 border border-white/10 text-center text-white/70 text-sm font-medium">
+              <Link
+                href={`/auth/login?redirect=${encodeURIComponent(`/participation/challenge/${id}`)}`}
+                className="text-[var(--brand-orange)] font-bold hover:underline"
+              >
+                Sign in
+              </Link>{' '}
+              to submit your entry to this challenge.
             </div>
           ) : (
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center text-white/50 text-sm font-medium">
-              This challenge is currently {challenge.status}.
+              This challenge is currently {daysLeft <= 0 ? 'closed' : challenge.status}.
+            </div>
+          )}
+
+          {submitMutation.isError && (
+            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/25 text-center text-red-400 text-sm font-semibold">
+              {submitMutation.error?.message || 'Entry could not be submitted — please try again.'}
             </div>
           )}
         </motion.div>

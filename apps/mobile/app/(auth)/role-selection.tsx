@@ -14,7 +14,7 @@ export default function RoleSelectionScreen() {
     setError(null);
     try {
       await authApi.selectRole(role);
-      router.replace('/(auth)/profile-setup' as never);
+      router.replace('/(auth)/profile-setup');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to select role');
     } finally {

@@ -2,7 +2,7 @@
  * Auth cookie names for the web app.
  *
  * Cookie names are host-scoped, not port-scoped: every localhost dev app
- * (web :4000, admin :4100, creator :4104, other projects, ...) shares one
+ * (web :4000, admin :5173, creator :5174, other projects, ...) shares one
  * browser jar. Any app that writes an unprefixed `auth` cookie clobbers
  * every other app's session marker, so web namespaces its middleware
  * marker. (The httpOnly access/refresh token cookies are gateway-minted

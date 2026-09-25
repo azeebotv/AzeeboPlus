@@ -13,7 +13,6 @@ test.describe('F-009: Subscription Flow', () => {
 
   test('pricing/subscription page shows available plans', async ({ page }) => {
     await page.goto('/subscription/plans');
-    await page.waitForLoadState('networkidle');
 
     // Should show at least one plan
     await expect(page.locator('body')).toBeVisible();
@@ -30,7 +29,6 @@ test.describe('F-009: Subscription Flow', () => {
 
   test('subscription plans show pricing', async ({ page }) => {
     await page.goto('/subscription/plans');
-    await page.waitForLoadState('networkidle');
 
     // Should show pricing (₦ or NGN)
     const hasPricing = await page
@@ -57,7 +55,6 @@ test.describe('F-009: Subscription Flow', () => {
     });
 
     await page.goto('/subscription/plans');
-    await page.waitForLoadState('networkidle');
 
     // Click subscribe button
     const subscribeBtn = page.locator(
@@ -75,7 +72,6 @@ test.describe('F-009: Subscription Flow', () => {
 
   test('current subscription page shows status', async ({ page }) => {
     await page.goto('/subscription/current');
-    await page.waitForLoadState('networkidle');
 
     // Should show subscription status or empty state
     await expect(page.locator('body')).toBeVisible();
@@ -104,7 +100,6 @@ test.describe('F-009: Subscription Flow', () => {
     );
 
     await page.goto('/subscription/history');
-    await page.waitForLoadState('networkidle');
 
     await expect(page.locator('body')).toBeVisible();
   });
@@ -128,7 +123,6 @@ test.describe('F-009: Subscription Flow', () => {
     );
 
     await page.goto('/watch/premium-video');
-    await page.waitForLoadState('networkidle');
 
     // Should show subscription prompt / paywall
     const hasPaywall = await page
@@ -142,7 +136,6 @@ test.describe('F-009: Subscription Flow', () => {
 
   test('subscription payment page loads with plan details', async ({ page }) => {
     await page.goto('/subscription/payment?plan=premium');
-    await page.waitForLoadState('networkidle');
 
     // Should show payment form or redirect
     await expect(page.locator('body')).toBeVisible();
@@ -178,7 +171,6 @@ test.describe('F-009: Subscription Flow', () => {
     );
 
     await page.goto('/subscription/current');
-    await page.waitForLoadState('networkidle');
 
     // Should show cancel option
     const cancelBtn = page.locator(

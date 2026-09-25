@@ -27,11 +27,9 @@ test.describe('F-004: User Registration Flow', () => {
 
     await page.click('button[type="submit"]');
 
-    // Should show at least one validation message
-    const errorText = page.locator(
-      'text=/required|must be|at least|minimum|invalid/i',
-    );
-    await expect(errorText.first()).toBeVisible({ timeout: 5000 });
+    // Inputs are HTML `required` — the browser blocks submission (native
+    // tooltip, no DOM text), so the user must still be on the register page.
+    await expect(page).toHaveURL(/\/auth\/register/, { timeout: 5000 });
   });
 
   test('shows validation error for short name', async ({ page }) => {
@@ -103,13 +101,14 @@ test.describe('F-004: User Registration Flow', () => {
 
     await page.click('button[type="submit"]');
 
-    // Should navigate away from register page
+    // Should navigate away from register page (app routes to role-selection)
     await page.waitForURL(
       (url) =>
         url.pathname.includes('/otp') ||
         url.pathname.includes('/verify') ||
         url.pathname === '/' ||
-        url.pathname.includes('/profile-setup'),
+        url.pathname.includes('/profile-setup') ||
+        url.pathname.includes('/role-selection'),
       { timeout: 15000 },
     );
   });
@@ -138,8 +137,8 @@ test.describe('F-004: User Registration Flow', () => {
     const passwordInput = page.locator('input[name="password"]');
     await expect(passwordInput).toHaveAttribute('type', 'password');
 
-    // Click toggle button (eye icon)
-    const toggleBtn = page.locator('button').filter({ has: page.locator('svg, [data-icon="eye"]') }).first();
+    // Click toggle button — the register page exposes it as "Show password"
+    const toggleBtn = page.getByRole('button', { name: 'Show password' });
     if (await toggleBtn.isVisible().catch(() => false)) {
       await toggleBtn.click();
       await expect(passwordInput).toHaveAttribute('type', 'text');
@@ -168,7 +167,8 @@ test.describe('F-004: User Registration Flow', () => {
       }),
     );
 
-    await mockApiForAuth(page);
+    // Registration must start logged-out — skip planting the seeded session
+    await mockApiForAuth(page, { seedSession: false });
 
     const user = await registerUser(page);
 

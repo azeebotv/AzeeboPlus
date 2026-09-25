@@ -35,7 +35,14 @@ export async function registerUser(page: Page, overrides?: Partial<typeof TEST_U
   await page.fill('input[name="displayName"], input[name="name"]', user.name);
   await page.fill('input[type="email"]', user.email);
   await page.fill('input[name="password"]', user.password);
-  await page.fill('input[name="confirmPassword"], input[name="confirm-password"]', user.password);
+  // Some auth pages don't render a confirm-password field — only fill it
+  // when present.
+  const confirmInput = page.locator(
+    'input[name="confirmPassword"], input[name="confirm-password"]',
+  );
+  if (await confirmInput.count()) {
+    await confirmInput.first().fill(user.password);
+  }
 
   // Tick agree checkbox if present
   const agreeCheckbox = page.locator('input[type="checkbox"]').first();
@@ -77,9 +84,60 @@ export async function loginAsCreator(page: Page) {
 // Mock helpers — intercept API calls so tests run without a real backend
 // ---------------------------------------------------------------------------
 
-/** Seed standard API mocks for a logged-in session. */
-export async function mockApiForAuth(page: Page) {
-  // Auth session
+/**
+ * Seed standard API mocks for a logged-in session.
+ *
+ * `seedSession: false` skips planting the localStorage session + cookie
+ * consent — used by specs that exercise the logged-out/registration paths
+ * (e.g. 01-signup) but still want the API mocks.
+ */
+export async function mockApiForAuth(page: Page, { seedSession = true }: { seedSession?: boolean } = {}) {
+  // Auth session. NOTE: the client bootstraps its session from
+  // GET /api/v1/users/me (user.getProfile), not /auth/me — both are mocked
+  // for backward compatibility with older specs.
+  //
+  // AuthContext.isAuthenticed requires a stored token (localStorage
+  // `azeebo_access_token` + cached user), so seed those before any app code
+  // runs — the /users/me route below then validates the session.
+  if (seedSession) {
+  await page.addInitScript(
+    ({ userKey, userValue, accessKey, refreshKey }) => {
+      window.localStorage.setItem(userKey, userValue);
+      window.localStorage.setItem(accessKey, 'e2e-access-token');
+      window.localStorage.setItem(refreshKey, 'e2e-refresh-token');
+    },
+    {
+      userKey: 'azeebo_user',
+      userValue: JSON.stringify({
+        id: 'user-001',
+        email: TEST_USER.email,
+        name: TEST_USER.name,
+        displayName: TEST_USER.name,
+        role: 'user',
+      }),
+      accessKey: 'azeebo_access_token',
+      refreshKey: 'azeebo_refresh_token',
+    },
+  );
+  }
+
+  // Pre-accept the cookie banner so its fixed bottom bar can't overlap
+  // click targets (the banner parks itself over the page at z-50 until a
+  // version-keyed consent entry exists in localStorage). Applied even for
+  // unseeded sessions — it never affects auth state.
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'azeebo_cookie_consent',
+      JSON.stringify({
+        necessary: true,
+        analytics: false,
+        marketing: false,
+        timestamp: new Date().toISOString(),
+        version: '1.0',
+      })
+    );
+  });
+
   await page.route('**/api/v1/auth/me', (route) =>
     route.fulfill({
       status: 200,
@@ -91,6 +149,45 @@ export async function mockApiForAuth(page: Page) {
           email: TEST_USER.email,
           displayName: TEST_USER.name,
           role: 'user',
+        },
+      }),
+    }),
+  );
+
+  await page.route('**/api/v1/users/me', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          id: 'user-001',
+          email: TEST_USER.email,
+          displayName: TEST_USER.name,
+          name: TEST_USER.name,
+          role: 'user',
+        },
+      }),
+    }),
+  );
+
+  // Session bootstrap falls back to refresh when no token is in localStorage;
+  // mock it so clearSession() never wipes the mocked state mid-test.
+  await page.route('**/api/v1/auth/refresh', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          access_token: 'e2e-access-token',
+          refresh_token: 'e2e-refresh-token',
+          user: {
+            id: 'user-001',
+            email: TEST_USER.email,
+            displayName: TEST_USER.name,
+            role: 'user',
+          },
         },
       }),
     }),
@@ -113,7 +210,8 @@ export async function mockApiForAuth(page: Page) {
 export async function mockApiForVoting(page: Page) {
   await mockApiForAuth(page);
 
-  await page.route('**/api/v1/reality/contestants*', (route) =>
+  // Page calls api.reality.getContestants → /reality/shows/:id/contestants
+  await page.route('**/api/v1/reality/shows/*/contestants', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -128,19 +226,21 @@ export async function mockApiForVoting(page: Page) {
     }),
   );
 
-  await page.route('**/api/v1/reality/vote', (route) =>
+  // Page POSTs /reality/votes/quantity { contestantId, quantity }
+  await page.route('**/api/v1/reality/votes/quantity', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ success: true, message: 'Vote recorded' }),
+      body: JSON.stringify({ success: true, message: 'Vote recorded', data: { recorded: true } }),
     }),
   );
 
-  await page.route('**/api/v1/reality/supervote', (route) =>
+  // Legacy single-vote shape used by older specs
+  await page.route('**/api/v1/reality/votes', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ success: true, message: 'Super vote recorded' }),
+      body: JSON.stringify({ success: true, message: 'Vote recorded', data: { recorded: true } }),
     }),
   );
 }

@@ -13,7 +13,6 @@ test.describe('F-006: Payment Initialization Flow', () => {
 
   test('wallet page displays balance and fund button', async ({ page }) => {
     await page.goto('/wallet');
-    await page.waitForLoadState('networkidle');
 
     // Balance should be visible (or at least the page loads)
     await expect(page.locator('body')).toBeVisible();
@@ -27,7 +26,6 @@ test.describe('F-006: Payment Initialization Flow', () => {
 
   test('clicking fund wallet opens amount input or modal', async ({ page }) => {
     await page.goto('/wallet');
-    await page.waitForLoadState('networkidle');
 
     await page.click('text=/fund|add funds|top up|deposit/i');
 
@@ -42,7 +40,6 @@ test.describe('F-006: Payment Initialization Flow', () => {
 
   test('validates minimum amount', async ({ page }) => {
     await page.goto('/wallet/add-funds');
-    await page.waitForLoadState('networkidle');
 
     // Try submitting with 0 amount
     const amountInput = page.locator('input[name="amount"], input[type="number"]').first();
@@ -71,7 +68,6 @@ test.describe('F-006: Payment Initialization Flow', () => {
     });
 
     await page.goto('/wallet/add-funds');
-    await page.waitForLoadState('networkidle');
 
     const amountInput = page.locator('input[name="amount"], input[type="number"]').first();
     if (await amountInput.isVisible().catch(() => false)) {
@@ -99,7 +95,6 @@ test.describe('F-006: Payment Initialization Flow', () => {
 
     // Simulate returning from payment provider
     await page.goto('/wallet?payment=success&ref=pay_ref_001');
-    await page.waitForLoadState('networkidle');
 
     // Should show some success indication
     await expect(
@@ -109,7 +104,6 @@ test.describe('F-006: Payment Initialization Flow', () => {
 
   test('payment failure shows error state', async ({ page }) => {
     await page.goto('/wallet?payment=failed&ref=pay_ref_001');
-    await page.waitForLoadState('networkidle');
 
     // Should show error or failed state
     await expect(
@@ -119,7 +113,6 @@ test.describe('F-006: Payment Initialization Flow', () => {
 
   test('transaction history shows recent transactions', async ({ page }) => {
     await page.goto('/wallet/transactions');
-    await page.waitForLoadState('networkidle');
 
     // Should show transaction list or empty state
     await expect(page.locator('body')).toBeVisible();

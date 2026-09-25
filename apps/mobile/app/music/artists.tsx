@@ -1,79 +1,97 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput } from 'react-native';
-import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors, radius } from '../../src/theme';
-import { apiClient } from '@azeebo/react-data/api/client';
+import { lifestyleApi } from '@azeebo/react-data/api/lifestyle';
+import { extractTracks } from '../../src/lib/music';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 
-interface Artist {
+interface DerivedArtist {
   id: string;
   name: string;
   genre: string;
-  followerCount: number;
+  trackCount: number;
+  playCount: number;
   avatar?: string;
 }
 
+/**
+ * The lifestyle-service has no artists-list endpoint — artists are free-text
+ * `artistName` values on music entries, with detail available at
+ * GET /v1/lifestyle/music/artists/:id (slugified name). So derive the
+ * artist list from the tracks the way the web app does.
+ */
 export default function MusicArtistsScreen() {
-  const colorScheme = useColorScheme();
   const router = useRouter();
-  const isDark = colorScheme === 'dark';
   const [search, setSearch] = useState('');
 
-  const artistsQuery = useQuery({
-    queryKey: ['music', 'artists', search],
-    queryFn: async () => {
-      const params = search ? `?search=${encodeURIComponent(search)}` : '';
-      const res = await apiClient.get<Artist[]>(`/v1/music/artists${params}`);
-      return Array.isArray(res) ? res : [];
-    },
+  const tracksQuery = useQuery({
+    queryKey: ['lifestyle', 'music', 'all-tracks'],
+    queryFn: async () => extractTracks(await lifestyleApi.getTracks()),
     staleTime: 60_000,
   });
 
-  const artists = artistsQuery.data ?? [];
+  const artists = useMemo<DerivedArtist[]>(() => {
+    const map = new Map<string, DerivedArtist>();
+    for (const t of tracksQuery.data ?? []) {
+      if (!t.artist) continue;
+      const id = t.artistId!;
+      const existing = map.get(id);
+      if (existing) {
+        existing.trackCount += 1;
+        existing.playCount += t.playCount ?? 0;
+      } else {
+        map.set(id, {
+          id,
+          name: t.artist,
+          genre: t.genre ?? '',
+          trackCount: 1,
+          playCount: t.playCount ?? 0,
+          avatar: t.thumbnail || undefined,
+        });
+      }
+    }
+    const list = [...map.values()].sort((a, b) => b.playCount - a.playCount);
+    if (!search.trim()) return list;
+    const q = search.toLowerCase();
+    return list.filter((a) => a.name.toLowerCase().includes(q));
+  }, [tracksQuery.data, search]);
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Artists</Text>
-        <View style={{ width: 40 }} />
+        <View style={styles.backButton} />
       </View>
 
       <View style={styles.searchContainer}>
         <TextInput
-          style={[
-            styles.searchInput,
-            {
-              backgroundColor: isDark ? colors.bg.tertiary : '#f0f0f0',
-              color: colors.text.primary,
-            },
-          ]}
+          style={[styles.searchInput, { backgroundColor: colors.bg.tertiary, color: colors.text.primary }]}
           placeholder="Search artists..."
           placeholderTextColor={colors.text.tertiary}
           value={search}
           onChangeText={setSearch}
+          accessibilityLabel="Search artists"
         />
       </View>
 
-      {artistsQuery.isLoading ? (
+      {tracksQuery.isLoading ? (
         <LoadingState text="Loading artists..." />
-      ) : artistsQuery.error ? (
+      ) : tracksQuery.error ? (
         <ErrorState
-          description={artistsQuery.error.message}
-          onRetry={() => artistsQuery.refetch()}
+          description={tracksQuery.error?.message ?? 'Failed to load artists'}
+          onRetry={() => tracksQuery.refetch()}
         />
       ) : artists.length === 0 ? (
         <EmptyState
           icon="🎤"
           title="No artists"
-          description={search ? 'No artists match your search' : 'Artists coming soon'}
+          description={search ? 'No artists match your search' : 'Artists appear as music is added'}
         />
       ) : (
         <FlatList
@@ -84,19 +102,32 @@ export default function MusicArtistsScreen() {
           columnWrapperStyle={styles.gridRow}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.card, { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' }]}
-              onPress={() => router.push(`/music/${item.id}`)}
+              style={[styles.card, { backgroundColor: colors.bg.tertiary }]}
+              onPress={() => router.push(`/music/${encodeURIComponent(item.id)}`)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`View ${item.name}`}
             >
-              <View style={[styles.avatar, { backgroundColor: colors.primary[500] + '20' }]}>
-                <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
-              </View>
+              {item.avatar ? (
+                <View style={styles.avatarWrap}>
+                  <View
+                    style={[styles.avatarImage, { backgroundColor: colors.primary[500] + '20' }]}
+                  />
+                  <Text style={styles.avatarEmoji}>🎤</Text>
+                </View>
+              ) : (
+                <View style={[styles.avatar, { backgroundColor: colors.primary[500] + '20' }]}>
+                  <Text style={styles.avatarText}>{item.name.charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
               <Text style={[styles.cardName, { color: colors.text.primary }]} numberOfLines={1}>
                 {item.name}
               </Text>
-              <Text style={styles.cardGenre}>{item.genre}</Text>
+              <Text style={styles.cardGenre} numberOfLines={1}>
+                {item.genre || 'Music'}
+              </Text>
               <Text style={styles.cardFollowers}>
-                {item.followerCount.toLocaleString()} followers
+                {item.trackCount} {item.trackCount === 1 ? 'track' : 'tracks'}
               </Text>
             </TouchableOpacity>
           )}
@@ -113,7 +144,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    paddingTop: 40,
+    paddingTop: 12,
   },
   backButton: {
     width: 40,
@@ -130,6 +161,19 @@ const styles = StyleSheet.create({
   grid: { padding: 16 },
   gridRow: { gap: 12, marginBottom: 12 },
   card: { flex: 1, padding: 16, borderRadius: radius.lg, alignItems: 'center' },
+  avatarWrap: { position: 'relative', marginBottom: 8 },
+  avatarImage: { width: 64, height: 64, borderRadius: 32 },
+  avatarEmoji: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    lineHeight: 64,
+    fontSize: 24,
+  },
   avatar: {
     width: 64,
     height: 64,

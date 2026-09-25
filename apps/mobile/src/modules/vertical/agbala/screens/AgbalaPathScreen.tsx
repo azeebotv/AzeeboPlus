@@ -4,6 +4,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { AgbalaEndCard } from '../components/AgbalaEndCard';
 import { colors, typography, spacing } from '../../../../theme';
 import { apiClient } from '@azeebo/react-data/api/client';
+import { useRouter } from 'expo-router';
 import { LoadingState, ErrorState } from '../../../../components/StateContainers';
 import type { AgbalaStackParamList } from '../types';
 
@@ -17,6 +18,7 @@ interface PathData {
 
 export default function AgbalaPathScreen({ route }: { route: RouteProps }) {
   const { pathId } = route?.params || {};
+  const router = useRouter();
   const [pathData, setPathData] = useState<Record<string, PathData>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, _setError] = useState<string | null>(null);
@@ -99,7 +101,11 @@ export default function AgbalaPathScreen({ route }: { route: RouteProps }) {
         title="Continue Your Journey"
         description="More chapters will be unlocked as you progress."
         buttonText="Back to Home"
-        onPress={() => {}}
+        onPress={() => {
+          // Storyworld lives outside the tab stack — route back to the
+          // vertical hub so Back behaves predictably from a deep link.
+          router.push('/vertical');
+        }}
       />
     </ScrollView>
   );

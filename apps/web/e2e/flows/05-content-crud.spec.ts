@@ -28,7 +28,6 @@ test.describe('F-008: Content CRUD Flow', () => {
     );
 
     await page.goto('/browse');
-    await page.waitForLoadState('networkidle');
 
     // Should show content cards or listings
     await expect(page.locator('body')).toBeVisible();
@@ -61,7 +60,6 @@ test.describe('F-008: Content CRUD Flow', () => {
     );
 
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
 
     const searchInput = page.locator(
       'input[name="query"], input[type="search"], input[placeholder*="search" i]',
@@ -70,7 +68,6 @@ test.describe('F-008: Content CRUD Flow', () => {
     if (await searchInput.isVisible().catch(() => false)) {
       await searchInput.fill('comedy');
       await page.keyboard.press('Enter');
-      await page.waitForLoadState('networkidle');
 
       // Should show results
       await expect(page.locator('body')).toBeVisible();
@@ -87,7 +84,6 @@ test.describe('F-008: Content CRUD Flow', () => {
     );
 
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
 
     const searchInput = page.locator(
       'input[name="query"], input[type="search"], input[placeholder*="search" i]',
@@ -96,7 +92,6 @@ test.describe('F-008: Content CRUD Flow', () => {
     if (await searchInput.isVisible().catch(() => false)) {
       await searchInput.fill('xyznonexistent123');
       await page.keyboard.press('Enter');
-      await page.waitForLoadState('networkidle');
 
       // Should show empty state
       await expect(
@@ -107,7 +102,6 @@ test.describe('F-008: Content CRUD Flow', () => {
 
   test('creator can upload content', async ({ page }) => {
     await page.goto('/creators/upload');
-    await page.waitForLoadState('networkidle');
 
     // Should show upload form
     await expect(page.locator('body')).toBeVisible();
@@ -143,7 +137,6 @@ test.describe('F-008: Content CRUD Flow', () => {
     );
 
     await page.goto('/creators/dashboard');
-    await page.waitForLoadState('networkidle');
 
     // Should show dashboard with content
     await expect(page.locator('body')).toBeVisible();
@@ -171,7 +164,6 @@ test.describe('F-008: Content CRUD Flow', () => {
     );
 
     await page.goto('/watch/v1');
-    await page.waitForLoadState('networkidle');
 
     // Page should load
     await expect(page.locator('body')).toBeVisible();
@@ -204,7 +196,6 @@ test.describe('F-008: Content CRUD Flow', () => {
     });
 
     await page.goto('/creators/dashboard');
-    await page.waitForLoadState('networkidle');
 
     // Find delete button
     const deleteBtn = page.locator('button:has-text("Delete"), button[aria-label*="delete" i]').first();
@@ -237,7 +228,6 @@ test.describe('F-008: Content CRUD Flow', () => {
     );
 
     await page.goto('/browse');
-    await page.waitForLoadState('networkidle');
 
     // Should have filter/sort controls
     const filterBtn = page.locator('button:has-text("Filter"), button:has-text("Sort"), select').first();

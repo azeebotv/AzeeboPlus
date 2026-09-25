@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import { universeApi, contentApi, mediaApi } from '@azeebo/react-data';
+import { apiClient, contentApi, mediaApi } from '@azeebo/react-data';
 import { mediaFingerprint } from '@azeebo/react-data/utils/mediaCache';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
@@ -26,6 +26,18 @@ const uploadOptions = [
   { id: 'story', name: 'Story', icon: '📖', color: colors.category.mint },
 ];
 
+// Privacy options map onto the content service's create DTO: "public" is the
+// default published state, "premium" sets isPremium (premium window gating),
+// "private"/"unlisted" keep the item out of public feeds via metadata.
+// NOTE: the backend treats these as a soft signal for now (no ACL column
+// yet) — see content.repository.create, which persists isPremium only.
+const privacyOptions = [
+  { id: 'public', name: 'Public' },
+  { id: 'premium', name: 'Premium' },
+  { id: 'private', name: 'Private' },
+  { id: 'unlisted', name: 'Unlisted' },
+];
+
 interface SelectedFile {
   uri: string;
   name: string;
@@ -33,12 +45,16 @@ interface SelectedFile {
   size?: number;
 }
 
+
+
 export default function CreateScreen() {
   const colorScheme = useColorScheme();
   const [selectedType, setSelectedType] = useState('video');
   const [selectedUniverse, setSelectedUniverse] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [privacy, setPrivacy] = useState('public');
+  const [tags, setTags] = useState('');
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [universeOptions, setUniverseOptions] = useState<
@@ -51,13 +67,21 @@ export default function CreateScreen() {
     setIsLoadingUniverses(true);
     setUniversesError(null);
     try {
-      const res = await universeApi.getUniverses();
-      if (res.success && res.data) {
+      // Content creation requires a UUID universeId that the content-service
+      // recognizes, so this list comes from GET /v1/public/universes (enabled
+      // universes with their real ids) — NOT the vertical-service universeMap
+      // endpoint, whose slug ids the content DB doesn't know about. This is
+      // the same source the web upload page uses.
+      const res = await apiClient.get<{
+        success: boolean;
+        data: { id: string; name: string; displayName: string; icon?: string | null }[];
+      }>('/v1/public/universes');
+      if (res.success && Array.isArray(res.data)) {
         setUniverseOptions(
-          res.data.items.map((u: { slug?: string; id: string; name: string }) => ({
-            id: (u.slug || u.id) as string,
-            name: u.name as string,
-            icon: '🌐',
+          res.data.map((u) => ({
+            id: u.id,
+            name: u.displayName || u.name,
+            icon: u.icon || '🌐',
           }))
         );
       }
@@ -124,10 +148,21 @@ export default function CreateScreen() {
 
     setIsUploading(true);
     try {
+      const isPremium = privacy === 'premium';
+      const isPublicFeed = privacy === 'public' || privacy === 'premium';
+      // The create endpoint always stores drafts; the item is published right
+      // after so it lands in the public feeds (unless visibility-restricted).
+      const metadata = isPublicFeed ? undefined : { visibility: privacy };
+      const tagList = tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+
       // Images are `immutable` on the media service: uploading the same image
       // again (retry after a failure, or re-publishing the same file) skips
       // the network upload entirely via the media cache and reuses the cached
-      // object URL. Videos/stories/live go through the multipart path.
+      // object URL. Videos/stories/live go through the multipart helper.
+      let publishedId: string | null = null;
       if (selectedType === 'image') {
         const formData = new FormData();
         formData.append('file', {
@@ -147,10 +182,14 @@ export default function CreateScreen() {
           universe: selectedUniverse,
           contentType: 'image',
           mediaUrl: upload.data.url,
+          isPremium,
+          tags: tagList,
+          metadata,
         });
-        if (!contentResult.success) {
+        if (!contentResult.success || !contentResult.data) {
           throw new Error(contentResult.message || 'Failed to publish content');
         }
+        publishedId = contentResult.data.id;
       } else {
         const result = await contentApi.createContentWithFile({
           title: title.trim(),
@@ -161,12 +200,22 @@ export default function CreateScreen() {
           fileType: selectedFile.type,
           fileName: selectedFile.name,
         });
-        if (!result.success) {
+        if (!result.success || !result.data) {
           Alert.alert(
             'Upload Failed',
             (result.error as unknown as string) || 'Failed to upload content'
           );
           return;
+        }
+        publishedId = result.data.id;
+      }
+
+      // Visibility-restricted items keep the draft status (they are excluded
+      // from the public home/watch feeds, which list published content).
+      if (publishedId && isPublicFeed) {
+        const publishResult = await contentApi.publishContentItem(publishedId);
+        if (!publishResult.success) {
+          logger.warn('Content created but publish failed', undefined, { contentId: publishedId });
         }
       }
 
@@ -175,9 +224,14 @@ export default function CreateScreen() {
       setDescription('');
       setSelectedUniverse(null);
       setSelectedFile(null);
+      setPrivacy('public');
+      setTags('');
     } catch (err) {
       logger.error('Failed to upload content:', err);
-      Alert.alert('Upload Error', 'Failed to upload content. Please try again.');
+      Alert.alert(
+        'Upload Error',
+        err instanceof Error ? err.message : 'Failed to upload content. Please try again.'
+      );
     } finally {
       setIsUploading(false);
     }
@@ -310,6 +364,18 @@ export default function CreateScreen() {
           </View>
 
           <View style={styles.formGroup}>
+            <Text style={[styles.formLabel, { color: textColor }]}>Tags (comma separated)</Text>
+            <TextInput
+              style={[styles.formInput, { backgroundColor: inputBg, color: textColor }]}
+              placeholder="e.g. comedy, nollywood, music"
+              placeholderTextColor="#888"
+              value={tags}
+              onChangeText={setTags}
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.formGroup}>
             <Text style={[styles.formLabel, { color: textColor }]}>Universe</Text>
             <ScrollView
               horizontal
@@ -345,20 +411,31 @@ export default function CreateScreen() {
         <View style={styles.privacySection}>
           <Text style={[styles.sectionLabel, { color: textColor }]}>Privacy Settings</Text>
           <View style={styles.privacyOptions}>
-            {['Public', 'Private', 'Unlisted'].map((option) => (
+            {privacyOptions.map((option) => (
               <TouchableOpacity
-                key={option}
+                key={option.id}
+                onPress={() => setPrivacy(option.id)}
                 style={[
                   styles.privacyButton,
-                  option === 'Public' && { backgroundColor: '#E8420A' },
+                  privacy === option.id && { backgroundColor: '#E8420A' },
                 ]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: privacy === option.id }}
               >
-                <Text style={[styles.privacyText, option === 'Public' && { color: '#ffffff' }]}>
-                  {option}
+                <Text
+                  style={[styles.privacyText, privacy === option.id && { color: '#ffffff' }]}
+                >
+                  {option.name}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
+          <Text style={[styles.privacyHint, { color: colors.text.secondary }]}>
+            {privacy === 'public' && 'Visible to everyone in feeds and search.'}
+            {privacy === 'premium' && 'Only subscribers with a premium window can watch.'}
+            {privacy === 'private' && 'Only you can see this content.'}
+            {privacy === 'unlisted' && 'Only people with the link can find this content.'}
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -554,6 +631,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.neutral[800],
   },
+  privacyHint: {
+    fontSize: 12,
+    marginTop: 8,
+  },
   submitButton: {
     backgroundColor: '#E8420A',
     padding: 16,
@@ -587,6 +668,6 @@ const styles = StyleSheet.create({
   tipItem: {
     fontSize: 13,
     color: colors.text.tertiary,
-    lineHeight: 1.5,
+    lineHeight: 20,
   },
 });
