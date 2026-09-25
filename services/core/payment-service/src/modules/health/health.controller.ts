@@ -1,12 +1,13 @@
-import { Controller, Get, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
+import { Inject, Controller, Get, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import {
   HealthCheckResult,
   ComponentStatus,
   ExternalService,
-} from './interfaces/health.interfaces';
+} from './interfaces/health.interfaces.js';
+import checkDiskSpace from 'check-disk-space';
 
 @Public()
 @ApiTags('Health')
@@ -16,16 +17,20 @@ export class HealthController {
     {
       name: 'payment_gateway_paystack',
       url: process.env.PAYSTACK_API_URL || 'https://api.paystack.co',
-      timeout: 5000,
+      // Unreachable gateways must fail FAST: this timeout bounds every
+      // /health response, and anything ≥5s exceeds downstream probes' 4s
+      // budget (Ops Health dials localhost → [::1] → 127.0.0.1 at 4s each).
+      // 2s still leaves room for a healthy gateway's round trip.
+      timeout: 2000,
     },
     {
       name: 'payment_gateway_flutterwave',
       url: process.env.FLUTTERWAVE_API_URL || 'https://api.flutterwave.co',
-      timeout: 5000,
+      timeout: 2000,
     },
   ];
 
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prismaService: PrismaService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -148,9 +153,6 @@ export class HealthController {
 
   private async checkDisk(): Promise<ComponentStatus> {
     try {
-      const checkDiskSpace = (await import('check-disk-space')).default as (
-        path: string
-      ) => Promise<{ size: number; free: number }>;
       const diskSpace = await checkDiskSpace('/');
 
       const used = diskSpace.size - diskSpace.free;

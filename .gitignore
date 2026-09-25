@@ -18,6 +18,7 @@ dist/
 **/generated/prisma/
 *.tsbuildinfo
 coverage/
+apps/web/coverage/
 
 # Logs
 yarn-error.log
@@ -73,10 +74,34 @@ infra/config/pgbouncer_userlist.txt
 # Optional npm cache
 npm-packages/
 
-# Doc Folder
-docs/
+# Doc Folder (keep docs tracked — do not exclude)
 docx/
 .trae/
 
 # Pact contract test artifacts
 pacts/
+buildpush.txt
+
+# Storybook build output
+packages/ui/storybook-static/
+
+
+.freebuff
+.claude
+
+# Test artifacts
+test-results/
+**/test-results/
+playwright-report/
+**/playwright-report/
+
+.check-prisma-drift-out/
+.check-prisma-deploy-diff-out/
+.check-live-schema-lock-out/
+.reconcile-prisma-ledger-out/
+.pool-forecast-out/
+
+.drift-live-out/
+
+# Built test artifacts
+*.apk

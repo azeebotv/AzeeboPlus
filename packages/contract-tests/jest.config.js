@@ -5,6 +5,12 @@ module.exports = {
   rootDir: 'src',
   testMatch: ['**/*.spec.ts', '**/*.pact.spec.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
+  moduleNameMapper: {
+    // Service sources (e.g. creator-service's wallet-payloads.ts) use
+    // NodeNext-style './x.js' relative imports; map them to the real .ts
+    // files so ts-jest can compile them.
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
   collectCoverageFrom: [
     '**/*.ts',
     '!**/*.spec.ts',

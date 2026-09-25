@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './modules/database/database.module';
 import { UniverseModule } from './modules/universe/universe.module';
 import { CharactersModule } from './modules/characters/characters.module';
@@ -11,23 +9,25 @@ import { TitlesModule } from './modules/titles/titles.module';
 import { LoreModule } from './modules/lore/lore.module';
 import { CrossoversModule } from './modules/crossovers/crossovers.module';
 import { AdminModule } from './modules/admin/admin.module';
-import { RateLimiterModule } from '@azeebo/security';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { AgbalaAdminModule } from './modules/agbala-admin/agbala-admin.module';
+import { StoryworldsModule } from './modules/storyworlds/storyworlds.module';
+import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
+import { ConfigModule } from '@nestjs/config';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
+import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, verticalFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
+    JwtConfigModule,
     DatabaseModule,
+    CacheModule,
     HealthModule,
     UniverseModule,
     CharactersModule,
@@ -35,7 +35,22 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
     TitlesModule,
     LoreModule,
     CrossoversModule,
+    StoryworldsModule,
     AdminModule,
+    AgbalaAdminModule,
+    // Vertical feature gates: timeline ON; crossovers, AI lore + community
+    // storyworld creation OFF until launched.
+    FlagMetricsModule.register({ service: 'vertical-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('vertical-service'),
+      defaultFlags: {
+        [verticalFlags.crossoversEnabled]: false,
+        [verticalFlags.timelineEnabled]: true,
+        [verticalFlags.loreAi]: false,
+        [verticalFlags.storyworldsCreate]: false,
+      },
+    }),
   ],
   providers: [
     {

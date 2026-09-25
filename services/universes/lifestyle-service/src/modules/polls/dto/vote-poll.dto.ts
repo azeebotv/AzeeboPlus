@@ -5,5 +5,5 @@ export class VotePollDto {
   @ApiProperty({ example: 'option-uuid-here' })
   @IsString()
   @IsNotEmpty()
-  optionId: string;
+  optionId!: string;
 }

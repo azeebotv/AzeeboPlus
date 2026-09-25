@@ -1,11 +1,48 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   output   = "../src/prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  avatar      String?
+  role        String   @default("user")
+  trustScore  Int      @default(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  moderationCases ModerationCase[] @relation("CaseUser")
+  resolvedCases   ModerationCase[] @relation("CaseResolver")
+  reportedReports Report[]         @relation("ReportReporter")
+  reportsAgainst  Report[]         @relation("ReportedUser")
+  appeals         Appeal[]
+  trustHistory    TrustScoreHistory[] @relation("TrustHistory")
+  safetyActions   SafetyAction[]   @relation("ModeratorActions")
+  reviewAssignments ReviewerAssignment[] @relation("Reviewer")
+  assignedByActions ReviewerAssignment[] @relation("AssignedBy")
+
+  @@map("users")
+}
+
+model Content {
+  id        String   @id @default(uuid())
+  title     String?
+  type      String?
+  status    String?  @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reports Report[]
+
+  @@map("contents")
 }
 
 model Report {
@@ -24,6 +61,9 @@ model Report {
   updatedAt        DateTime  @updatedAt
 
   ModerationCase ModerationCase?
+  reportingUser  User?    @relation("ReportReporter", fields: [reportingUserId], references: [id])
+  reportedUser   User?    @relation("ReportedUser", fields: [userId], references: [id])
+  content        Content? @relation(fields: [contentId], references: [id])
 
   @@map("reports")
   @@index([reportingUserId])
@@ -47,6 +87,8 @@ model ModerationCase {
   updatedAt        DateTime  @updatedAt
 
   report              Report                @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user                User?                 @relation("CaseUser", fields: [userId], references: [id])
+  resolvedByUser      User?                 @relation("CaseResolver", fields: [resolvedBy], references: [id])
   Appeal              Appeal[]
   reviewerAssignments ReviewerAssignment[]
 
@@ -70,6 +112,7 @@ model Appeal {
   updatedAt        DateTime  @updatedAt
 
   case ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user User?         @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@map("appeals")
   @@index([caseId])
@@ -107,6 +150,9 @@ model SafetyAction {
   duration     Int?    // in seconds, for temporary actions
   metadata     Json?
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  moderator User? @relation("ModeratorActions", fields: [moderatorId], references: [id], onDelete: Restrict)
 
   @@map("safety_actions")
   @@index([targetId, targetType])
@@ -123,6 +169,9 @@ model TrustScoreHistory {
   reason    String
   metadata  Json?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User? @relation("TrustHistory", fields: [userId], references: [id], onDelete: Restrict)
 
   @@map("trust_score_history")
   @@index([userId])
@@ -142,6 +191,7 @@ model AuditEvent {
   ipAddress      String?
   userAgent      String?
   createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("audit_events")
   @@index([action])
@@ -159,8 +209,11 @@ model ReviewerAssignment {
   assignedAt   DateTime @default(now())
   completedAt  DateTime?
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  case ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case     ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Restrict)
+  assigner User?          @relation("AssignedBy", fields: [assignedBy], references: [id], onDelete: SetNull)
 
   @@map("reviewer_assignments")
   @@index([caseId])

@@ -11,10 +11,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { contentApi } from '../../src/api';
-import type { ContentItem } from '../../src/api/content';
+import { contentApi } from '@azeebo/react-data';
+import type { ContentItem } from '@azeebo/react-data/api/content';
 import { colors, typography, spacing, radius, universeColors } from '../../src/theme';
 import { EmptyState } from '../../src/components/StateContainers';
+import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
 
 export default function SearchScreen() {
   const colorScheme = useColorScheme();
@@ -24,13 +25,22 @@ export default function SearchScreen() {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
+  const { universeEnabled } = useFlags();
+
+  // Universe chips use canonical DB slugs (matching the bootstrap
+  // `universe.<name>.enabled` sentinels) and are hidden when the admin toggles
+  // that universe off — same gating as the homepage explore grid.
+  const UNIVERSE_FILTERS = [
+    { key: 'reality', label: 'Reality', color: universeColors.reality },
+    { key: 'creator', label: 'Creators', color: universeColors.creator },
+    { key: 'lifestyle', label: 'Lifestyle', color: universeColors.lifestyle },
+    { key: 'vertical', label: 'Vertical', color: universeColors.vertical },
+    { key: 'music', label: 'Music', color: universeColors.music },
+  ];
 
   const filters = [
     { key: 'all', label: 'All' },
-    { key: 'reality', label: 'Reality', color: universeColors.reality },
-    { key: 'creators', label: 'Creators', color: universeColors.creators },
-    { key: 'lifestyle', label: 'Lifestyle', color: universeColors.lifestyle },
-    { key: 'vertical', label: 'Vertical', color: universeColors.vertical },
+    ...UNIVERSE_FILTERS.filter((f) => universeEnabled(f.key)),
   ];
 
   const handleSearch = useCallback(async () => {
@@ -147,6 +157,7 @@ export default function SearchScreen() {
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.resultsList}
+          keyboardDismissMode="on-drag"
           ListEmptyComponent={
             <EmptyState
               icon="⌕"

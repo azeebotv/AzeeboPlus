@@ -1,6 +1,6 @@
 import { ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import GuestHomepage from '@/components/homepage/GuestHomepage';
 import AuthenticatedHomepage from '@/components/homepage/AuthenticatedHomepage';
 

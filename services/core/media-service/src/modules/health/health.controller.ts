@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Inject, Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
 import {
@@ -16,9 +16,9 @@ import { PrismaService } from '../database/prisma.service';
 @Controller('health')
 export class HealthController {
   constructor(
-    private health: HealthCheckService,
-    private disk: DiskHealthIndicator,
-    private readonly prisma: PrismaService
+    @Inject(HealthCheckService) private health: HealthCheckService,
+    @Inject(DiskHealthIndicator) private disk: DiskHealthIndicator,
+    @Inject(PrismaService) private readonly prisma: PrismaService
   ) {}
 
   @Get()

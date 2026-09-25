@@ -1,7 +1,10 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
-import { CreateContentDto } from './dto/create-content.dto';
+import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
+import { ConfigService } from '@nestjs/config';
+import { FeatureFlagService, contentFlags } from '@azeebo/feature-flags';
+import { CreateContentDto } from './dto/create-content.dto.js';
+import axios from 'axios';
 
 type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: true } }>;
 
@@ -9,7 +12,57 @@ type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: t
 export class ContentIngestionService {
   private readonly logger = new Logger(ContentIngestionService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+  ) {}
+
+  /**
+   * content_ai_tags: when on, enrich the freshly created record with tags from
+   * the configured AI tagger (CONTENT_AI_TAGS_URL/tag, POST { title,
+   * description } → { tags: string[] }) stored in metadata.aiTags. Fail-open:
+   * no tagger configured or a tagger error only logs — ingestion never fails
+   * because of tagging.
+   */
+  private async applyAiTags(content: ContentWithUniverse): Promise<void> {
+    if (!(await this.featureFlagService.isEnabled(contentFlags.aiTags))) {
+      return;
+    }
+
+    const taggerUrl = this.configService.get<string>('CONTENT_AI_TAGS_URL');
+    if (!taggerUrl) {
+      this.logger.warn('content_ai_tags is on but CONTENT_AI_TAGS_URL is not configured');
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${taggerUrl}/tag`,
+        {
+          title: content.title,
+          description: content.description || '',
+        },
+        { timeout: 15_000 }
+      );
+      const tags = Array.isArray(response.data?.tags) ? (response.data.tags as string[]) : [];
+      if (tags.length === 0) {
+        return;
+      }
+      const metadata = (content.metadata as Record<string, unknown>) || {};
+      await this.prisma.contentItem.update({
+        where: { id: content.id },
+        data: {
+          metadata: {
+            ...metadata,
+            aiTags: tags,
+          } as Prisma.InputJsonValue,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(`AI tagging failed for content ${content.id}: ${(error as Error).message}`);
+    }
+  }
 
   private async createContentRecord(
     userId: string,
@@ -32,12 +85,14 @@ export class ContentIngestionService {
           ...(overrides.isPremiere !== undefined && { isPremiere: overrides.isPremiere }),
           ...(overrides.windowType && { windowType: overrides.windowType }),
           metadata: {
-            ...(createContentDto.metadata as Record<string, unknown> || {}),
+            ...((createContentDto.metadata as Record<string, unknown>) || {}),
             ...overrides.metadata,
           } as Prisma.InputJsonValue,
-        },
+        } as Prisma.ContentItemUncheckedCreateInput,
         include: { universe: true },
       });
+
+      await this.applyAiTags(content);
 
       return {
         success: true,
@@ -45,7 +100,10 @@ export class ContentIngestionService {
       };
     } catch (error) {
       this.logger.error(`Failed to create content record: ${error}`);
-      return { success: false, error: { code: 'CREATE_CONTENT_RECORD_FAILED', message: 'Failed to create content record' } } as never;
+      return {
+        success: false,
+        error: { code: 'CREATE_CONTENT_RECORD_FAILED', message: 'Failed to create content record' },
+      } as never;
     }
   }
 
@@ -101,7 +159,10 @@ export class ContentIngestionService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to ingest clip content: ${error}`);
-      return { success: false, error: { code: 'INGEST_CLIP_FAILED', message: 'Failed to ingest clip content' } } as never;
+      return {
+        success: false,
+        error: { code: 'INGEST_CLIP_FAILED', message: 'Failed to ingest clip content' },
+      } as never;
     }
   }
 

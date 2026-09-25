@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   output   = "../src/prisma/client"
 }
 
@@ -22,6 +23,7 @@ model Wallet {
 
   transactions     WalletTransaction[]
   balanceSnapshots BalanceSnapshot[]
+  ledgerEntries    WalletLedger[]
 
   @@map("wallets")
 }
@@ -50,7 +52,9 @@ model WalletTransaction {
   @@index([createdAt])
   @@index([idempotencyKey])
   @@index([provider])
+  @@index([reference])
   @@unique([provider, providerRef])
+  @@index([walletId, createdAt])
 }
 
 // Category A migration: point-in-time balance snapshots for reporting.
@@ -71,4 +75,29 @@ model BalanceSnapshot {
   @@index([walletId])
   @@index([capturedAt])
   @@map("balance_snapshots")
+}
+
+// Append-only audit ledger (wallet_ledger_v2 flag). Every completed money
+// movement writes an immutable entry with the balance after the operation, so
+// auditors can reconcile without trusting wallet_transactions (which can be
+// reversed). Written by WalletService.writeLedgerEntry when the flag is on.
+model WalletLedger {
+  id            String   @id @default(uuid())
+  walletId      String
+  userId        String
+  operationType String // credit, debit, withdraw, transfer_out, transfer_in, bonus, promo, refund, charge, reverse
+  amount        Decimal  @db.Decimal(18, 2)
+  balanceAfter  Decimal  @db.Decimal(18, 2)
+  reference     String?
+  idempotencyKey String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([operationType])
+  @@index([createdAt])
+  @@map("wallet_ledger")
 }

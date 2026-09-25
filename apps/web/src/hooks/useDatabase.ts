@@ -2,10 +2,6 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 
-// Re-export the canonical useUniverses hook from useUniverses.ts
-// This file is kept for backwards compatibility.
-export { useUniverses } from './useUniverses';
-
 interface UseSettingsReturn {
   settings: Record<string, unknown>;
   isLoading: boolean;

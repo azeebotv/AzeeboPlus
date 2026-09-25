@@ -1,0 +1,60 @@
+# Prometheus configuration for the local Azeebo+ monitoring stack.
+#
+# Scrapes the search-service MetricsModule (fuzzy-search alerting rules from
+# ./alerts.yml) AND the api-gateway, which evaluates feature flags on every
+# proxied request and emits the flag lifecycle counters
+# (flag_stale_running_total, flag_auto_disabled_total, flag_evaluation_total,
+# flag_cache_hits_total, …) that power the admin stale-serving report and
+# TTL-cache dashboards.
+#
+# Metrics endpoints:
+#   search-service (direct): http://host.docker.internal:3005/v1/metrics
+#   api-gateway (flags):     http://host.docker.internal:3013/metrics
+#   search via gateway:      http://localhost:3013/v1/search/metrics
+#
+# Admin stale-serving badge out of the box:
+#   1. Start this stack:      cd services/core/search-service/prometheus && docker compose up -d
+#   2. Point the admin at it: PROMETHEUS_URL=http://localhost:9090 in apps/admin/.env
+#   3. Restart the admin backend, then open the Global Flags page — the
+#      serving-past-expiry / auto-off badges and header lines read this
+#      Prometheus through GET /admin/feature-flags/stale/metrics.
+
+global:
+  scrape_interval: 15s
+  # Rules are evaluated every 30s; each alert's `for:` duration decides how
+  # long a condition must hold before it fires.
+  evaluation_interval: 30s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  # The search-service running on the host (npm run start:dev). If the whole
+  # stack runs inside compose instead, point this at the service name, e.g.
+  #   targets: ['search-service:3005']
+  - job_name: search-service
+    metrics_path: /v1/metrics
+    static_configs:
+      - targets: ['host.docker.internal:3005']
+    # Relabel the instance label so the alert annotations stay readable.
+    metric_relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # The api-gateway running on the host (npm run start:dev). Its /metrics
+  # endpoint carries the flag lifecycle counters for ALL services' evaluations
+  # that flow through the gateway — the data behind the admin stale-serving
+  # report. Add further services the same way (each exposes /v1/metrics or
+  # /metrics via its MetricsModule, labelled with {service=<name>}).
+  - job_name: api-gateway
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['host.docker.internal:3013']
+    metric_relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance

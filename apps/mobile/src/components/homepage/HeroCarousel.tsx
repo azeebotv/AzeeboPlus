@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import type { ContentItem } from '@/api';
+import type { ContentItem } from '@azeebo/react-data';
 import { colors } from '@/theme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface HeroCarouselProps {
   slides: ContentItem[];
@@ -47,6 +47,19 @@ export default function HeroCarousel({ slides, autoRotateIntervalMs = 6000 }: He
     };
   }, [isPaused, goNext, slides.length, autoRotateIntervalMs]);
 
+  // Pause rotation while the user is interacting — on touch devices
+  // onPointerEnter/Leave never fire, so without this the carousel would yank
+  // users to the next slide mid-tap.
+  const interactionRef = useRef(false);
+  const pauseForInteraction = useCallback(() => {
+    interactionRef.current = true;
+    setIsPaused(true);
+  }, []);
+  const resumeAfterInteraction = useCallback(() => {
+    interactionRef.current = false;
+    setIsPaused(false);
+  }, []);
+
   if (slides.length === 0) return null;
 
   const currentSlide = slides[currentIndex];
@@ -62,6 +75,9 @@ export default function HeroCarousel({ slides, autoRotateIntervalMs = 6000 }: He
       accessibilityRole="adjustable"
       onPointerEnter={() => setIsPaused(true)}
       onPointerLeave={() => setIsPaused(false)}
+      onTouchStart={pauseForInteraction}
+      onTouchEnd={resumeAfterInteraction}
+      onTouchCancel={resumeAfterInteraction}
     >
       <Animated.View
         key={currentSlide.id}
@@ -81,18 +97,18 @@ export default function HeroCarousel({ slides, autoRotateIntervalMs = 6000 }: He
         />
       </Animated.View>
 
-      {/* Gradient overlays */}
+      {/* Gradient overlays — dark cinematic vignette */}
       <LinearGradient
-        colors={['rgba(13,59,46,0.95)', 'rgba(13,59,46,0.6)', 'transparent']}
+        colors={['rgba(11,9,14,0.95)', 'rgba(11,9,14,0.7)', 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        colors={['rgba(13,59,46,0.9)', 'transparent']}
+        colors={['rgba(11,9,14,1)', 'rgba(11,9,14,0.4)', 'transparent']}
         start={{ x: 0, y: 1 }}
         end={{ x: 0, y: 0 }}
-        locations={[0, 0.4]}
+        locations={[0, 0.4, 0.8]}
         style={StyleSheet.absoluteFill}
       />
 

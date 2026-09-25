@@ -1,6 +1,18 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 import { CelebrityService } from './celebrity.service';
 import { UpdateCelebrityDto } from './dto/update-celebrity.dto';
 
@@ -24,22 +36,12 @@ interface CreateNewsData {
   celebrityId: string;
 }
 
-interface UpdateCelebrityData {
-  name?: string;
-  bio?: string;
-  coverImage?: string;
-  profession?: string;
-  nationality?: string;
-  birthDate?: string;
-  socialLinks?: string;
-  isFeatured?: boolean;
-  status?: string;
-}
-
 @ApiTags('Celebrity')
-@Controller('v1/lifestyle/celebrities')
+@FeatureFlag(lifestyleFlags.celebrityFeed)
+@UseGuards(FeatureFlagGuard)
+@Controller('lifestyle/celebrities')
 export class CelebrityController {
-  constructor(private readonly celebrityService: CelebrityService) {}
+  constructor(@Inject(CelebrityService) private readonly celebrityService: CelebrityService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get celebrities' })
@@ -87,7 +89,8 @@ export class CelebrityController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create celebrity entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
   async createEntry(@Body() body: CreateCelebrityData): Promise<unknown> {
@@ -95,7 +98,8 @@ export class CelebrityController {
   }
 
   @Post('news')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create celebrity news' })
   @ApiResponse({ status: 201, description: 'News created' })
   async createNews(@Body() body: CreateNewsData): Promise<unknown> {
@@ -103,18 +107,17 @@ export class CelebrityController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update celebrity entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
-  async updateEntry(
-    @Param('id') id: string,
-    @Body() body: UpdateCelebrityDto
-  ): Promise<unknown> {
+  async updateEntry(@Param('id') id: string, @Body() body: UpdateCelebrityDto): Promise<unknown> {
     return this.celebrityService.updateEntry(id, body);
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
   @ApiOperation({ summary: 'Delete celebrity entry' })
   @ApiResponse({ status: 200, description: 'Entry deleted' })
   async deleteEntry(@Param('id') id: string): Promise<unknown> {

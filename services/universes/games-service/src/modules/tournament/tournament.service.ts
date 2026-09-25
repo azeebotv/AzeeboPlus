@@ -1,8 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
-import { randomUUID } from 'crypto';
 
 interface Tournament {
   id: string;
@@ -41,16 +40,16 @@ export class TournamentService {
   private readonly walletServiceUrl: string;
 
   constructor(
-    private prisma: PrismaService,
-    private readonly configService: ConfigService,
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
-    this.walletServiceUrl = this.configService.get<string>(
-      'WALLET_SERVICE_URL',
-      'http://wallet-service:3002',
-    );
+    this.walletServiceUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
   }
 
-  private formatTournament(t: Record<string, unknown>): Tournament {
+  private formatTournament(
+    t: Record<string, unknown>,
+    counts?: { entries: number; prizes: number }
+  ): Tournament {
     return {
       id: t.id as string,
       title: t.title as string,
@@ -60,8 +59,8 @@ export class TournamentService {
       entryFee: Number(t.entryFee),
       prizePool: Number(t.prizePool),
       status: t.status as string,
-      participantCount: (t._count as { entries?: number })?.entries || 0,
-      prizeCount: (t._count as { prizes?: number })?.prizes || 0,
+      participantCount: counts?.entries ?? 0,
+      prizeCount: counts?.prizes ?? 0,
     };
   }
 
@@ -73,9 +72,6 @@ export class TournamentService {
       const [items, total] = await Promise.all([
         this.prisma.tournament.findMany({
           where,
-          include: {
-            _count: { select: { entries: true, prizes: true } },
-          },
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { startsAt: 'asc' },
@@ -83,10 +79,32 @@ export class TournamentService {
         this.prisma.tournament.count({ where }),
       ]);
 
+      const tournamentIds = items.map((t) => t.id);
+      const [entryCounts, prizeCounts] = await Promise.all([
+        this.prisma.tournamentEntry.groupBy({
+          by: ['tournamentId'],
+          _count: { id: true },
+          where: { tournamentId: { in: tournamentIds } },
+        }),
+        this.prisma.tournamentPrize.groupBy({
+          by: ['tournamentId'],
+          _count: { id: true },
+          where: { tournamentId: { in: tournamentIds } },
+        }),
+      ]);
+
+      const entryCountMap = new Map(entryCounts.map((c) => [c.tournamentId, c._count.id]));
+      const prizeCountMap = new Map(prizeCounts.map((c) => [c.tournamentId, c._count.id]));
+
       return {
         success: true,
         data: {
-          items: items.map((t) => this.formatTournament(t)),
+          items: items.map((t) =>
+            this.formatTournament(t, {
+              entries: entryCountMap.get(t.id) || 0,
+              prizes: prizeCountMap.get(t.id) || 0,
+            })
+          ),
           total,
           page,
           limit,
@@ -95,7 +113,10 @@ export class TournamentService {
       };
     } catch (error) {
       this.logger.error(`Failed to fetch tournaments: ${error}`);
-      return { success: false, error: { code: 'FETCH_ERROR', message: 'Failed to fetch tournaments' } };
+      return {
+        success: false,
+        error: { code: 'FETCH_ERROR', message: 'Failed to fetch tournaments' },
+      };
     }
   }
 
@@ -103,21 +124,28 @@ export class TournamentService {
     try {
       const tournament = await this.prisma.tournament.findUnique({
         where: { id },
-        include: {
-          _count: { select: { entries: true, prizes: true } },
-          prizes: { orderBy: { rank: 'asc' } },
-        },
       });
 
       if (!tournament) {
         throw new NotFoundException(`Tournament not found: ${id}`);
       }
 
-      return { success: true, data: this.formatTournament(tournament) };
+      const [entryCount, prizeCount] = await Promise.all([
+        this.prisma.tournamentEntry.count({ where: { tournamentId: id } }),
+        this.prisma.tournamentPrize.count({ where: { tournamentId: id } }),
+      ]);
+
+      return {
+        success: true,
+        data: this.formatTournament(tournament, { entries: entryCount, prizes: prizeCount }),
+      };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to fetch tournament ${id}: ${error}`);
-      return { success: false, error: { code: 'FETCH_ERROR', message: 'Failed to fetch tournament' } };
+      return {
+        success: false,
+        error: { code: 'FETCH_ERROR', message: 'Failed to fetch tournament' },
+      };
     }
   }
 
@@ -175,7 +203,10 @@ export class TournamentService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to enter tournament ${tournamentId}: ${error}`);
-      return { success: false, error: { code: 'ENTER_ERROR', message: 'Failed to enter tournament' } };
+      return {
+        success: false,
+        error: { code: 'ENTER_ERROR', message: 'Failed to enter tournament' },
+      };
     }
   }
 
@@ -218,7 +249,6 @@ export class TournamentService {
       const [entries, total, userEntry] = await Promise.all([
         this.prisma.tournamentEntry.findMany({
           where: { tournamentId },
-          include: { user: { select: { id: true, displayName: true, avatar: true } } },
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { score: 'desc' },
@@ -227,11 +257,20 @@ export class TournamentService {
         this.prisma.tournamentEntry.count({ where: { tournamentId, score: { gt: 0 } } }),
       ]);
 
+      const userIds = entries.map((e) => e.userId);
+      const users =
+        userIds.length > 0
+          ? await this.prisma.user.findMany({
+              where: { id: { in: userIds } },
+              select: { id: true, displayName: true },
+            })
+          : [];
+      const userMap = new Map(users.map((u) => [u.id, u.displayName]));
+
       const leaderboard = entries.map((e, index) => ({
         rank: (page - 1) * limit + index + 1,
         userId: e.userId,
-        displayName: e.user.displayName,
-        avatar: e.user.avatar,
+        displayName: userMap.get(e.userId) || 'Unknown',
         score: e.score,
         enteredAt: e.enteredAt.toISOString(),
       }));
@@ -246,7 +285,10 @@ export class TournamentService {
       };
     } catch (error) {
       this.logger.error(`Failed to fetch leaderboard for tournament ${tournamentId}: ${error}`);
-      return { success: false, error: { code: 'LEADERBOARD_ERROR', message: 'Failed to fetch leaderboard' } };
+      return {
+        success: false,
+        error: { code: 'LEADERBOARD_ERROR', message: 'Failed to fetch leaderboard' },
+      };
     }
   }
 
@@ -295,48 +337,57 @@ export class TournamentService {
     try {
       const tournament = await this.prisma.tournament.findUnique({
         where: { id: tournamentId },
-        include: {
-          prizes: { orderBy: { rank: 'asc' } },
-          entries: {
-            orderBy: { score: 'desc' },
-            take: 10,
-          },
-        },
       });
 
       if (!tournament) {
         throw new NotFoundException('Tournament not found');
       }
 
+      const [prizes, topEntries] = await Promise.all([
+        this.prisma.tournamentPrize.findMany({
+          where: { tournamentId },
+          orderBy: { rank: 'asc' },
+        }),
+        this.prisma.tournamentEntry.findMany({
+          where: { tournamentId },
+          orderBy: { score: 'desc' },
+          take: 10,
+        }),
+      ]);
+
       await this.prisma.tournament.update({
         where: { id: tournamentId },
         data: { status: 'completed' },
       });
 
-      const prizeDistribution = tournament.entries.map((entry, i) => {
-        const prize = tournament.prizes[i] ? Number(tournament.prizes[i].amount) : 0;
+      const prizeDistribution = topEntries.map((entry, i) => {
+        const prize = prizes[i] ? Number(prizes[i].amount) : 0;
         return { rank: i + 1, userId: entry.userId, score: entry.score, prize };
       });
 
       // Distribute prizes in parallel with idempotency keys for safe retry
       const prizeResults = await Promise.allSettled(
         prizeDistribution
-          .filter((winner) => winner.prize > 0)
-          .map((winner) =>
-            axios.post(`${this.walletServiceUrl}/wallet/credit`, {
-              userId: winner.userId,
-              amount: winner.prize,
-              description: `Tournament prize: ${tournament.title} (Rank #${winner.rank})`,
-              reference: `tournament-prize-${tournamentId}-${winner.rank}`,
-            }).then(() => {
-              this.logger.log(
-                `Credited ${winner.prize} to user ${winner.userId} for tournament ${tournamentId} rank #${winner.rank}`
-              );
-            })
+          .filter((winner: { prize: number }) => winner.prize > 0)
+          .map((winner: { rank: number; userId: string; prize: number }) =>
+            axios
+              .post(`${this.walletServiceUrl}/wallet/credit`, {
+                userId: winner.userId,
+                amount: winner.prize,
+                description: `Tournament prize: ${tournament.title} (Rank #${winner.rank})`,
+                reference: `tournament-prize-${tournamentId}-${winner.rank}`,
+              })
+              .then(() => {
+                this.logger.log(
+                  `Credited ${winner.prize} to user ${winner.userId} for tournament ${tournamentId} rank #${winner.rank}`
+                );
+              })
           )
       );
 
-      const failedPrizes = prizeResults.filter((r) => r.status === 'rejected');
+      const failedPrizes = prizeResults.filter(
+        (r: PromiseSettledResult<void>) => r.status === 'rejected'
+      );
       if (failedPrizes.length > 0) {
         this.logger.error(
           `${failedPrizes.length} prize credits failed for tournament ${tournamentId}. Use the idempotency reference to retry.`

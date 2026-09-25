@@ -1,7 +1,8 @@
-import { AuthClient, createMemoryAuthClient } from './auth-client';
+import { AuthClient, createMemoryAuthClient } from './auth-client.js';
 
 // Mock global fetch
 const mockFetch = jest.fn();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (global as any).fetch = mockFetch;
 
 function createMockStorage() {

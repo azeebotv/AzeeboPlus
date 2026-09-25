@@ -1,15 +1,14 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "es2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -24,18 +23,61 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@azeebo/ui": ["../../packages/ui/src"],
-      "@azeebo/ui/*": ["../../packages/ui/src/*"],
-      "@azeebo/design-tokens": ["../../packages/design-tokens/src"],
-      "@azeebo/design-tokens/*": ["../../packages/design-tokens/src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@azeebo/feature-flags/registries": [
+        "../../packages/feature-flags/dist/registries"
+      ],
+      "@azeebo/*": [
+        "../../packages/*/dist"
+      ],
+      "@azeebo/ui": [
+        "../../packages/ui/src"
+      ],
+      "@azeebo/ui/*": [
+        "../../packages/ui/src/*"
+      ],
+      "@azeebo/ui/web": [
+        "../../packages/ui/src/web-index.ts"
+      ],
+      "@azeebo/ui/mobile": [
+        "../../packages/ui/src/mobile-index.ts"
+      ],
+      "@azeebo/design-tokens": [
+        "../../packages/design-tokens/src"
+      ],
+      "@azeebo/design-tokens/*": [
+        "../../packages/design-tokens/src/*"
+      ]
     },
-    "types": []
+    "types": [],
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": true,
+    "noFallthroughCasesInSwitch": true
   },
   "typeAcquisition": {
     "enable": true,
-    "exclude": ["axe-core"]
+    "exclude": [
+      "axe-core"
+    ]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "e2e", "playwright.config.ts"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "e2e",
+    "playwright.config.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**"
+  ]
 }

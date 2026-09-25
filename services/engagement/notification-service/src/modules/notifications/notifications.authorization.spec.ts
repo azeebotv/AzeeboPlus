@@ -1,15 +1,63 @@
+jest.mock('@azeebo/shared-services', () => ({
+  FirebaseService: 'FirebaseService',
+  EmailService: 'EmailService',
+  SmsService: 'SmsService',
+  CacheService: 'CacheService',
+  cacheKey: (...args: unknown[]) => args.join(':'),
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: class MockRateLimitGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
+  ServiceAuthGuard: class MockServiceAuthGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
+  AdminGuard: class MockAdminGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
+  RateLimit: () => () => {},
+}));
+jest.mock('class-validator', () => ({
+  IsBoolean: () => () => {},
+  IsOptional: () => () => {},
+  IsString: () => () => {},
+  IsEmail: () => () => {},
+  IsEnum: () => () => {},
+  IsNotEmpty: () => () => {},
+  IsIn: () => () => {},
+  IsObject: () => () => {},
+  ValidateNested: () => () => {},
+  Type: () => () => {},
+  IsPhoneNumber: () => () => {},
+  Matches: () => () => {},
+}));
+jest.mock('class-transformer', () => ({
+  Type: () => () => {},
+  plainToInstance: (_cls: unknown, obj: unknown) => obj,
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  INestApplication,
+  ExecutionContext,
+  UnauthorizedException,
+  VersioningType,
+} from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
-import { NotificationsController } from './notifications.controller';
-import { NotificationsService } from './notifications.service';
-import { PrismaService } from '../database/prisma.service';
+import { NotificationsController } from './notifications.controller.js';
+import { NotificationsService } from './notifications.service.js';
+import { NotificationSLOService } from '../notification/notification-slo.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 describe('NotificationsController (Authorization)', () => {
   let app: INestApplication;
-  let notificationsService: NotificationsService;
+  let baseUrl: string;
+
+  // Mutable auth state read at request time by the shared JWT guard —
+  // every test runs against ONE bound app (no per-test listen/close churn).
+  let authEnabled: boolean;
 
   const mockNotificationsService = {
     getNotifications: jest.fn(),
@@ -25,44 +73,63 @@ describe('NotificationsController (Authorization)', () => {
     user: { findUnique: jest.fn(), update: jest.fn() },
   };
 
-  const createMockAuthGuard = (canActivate: boolean) => ({
-    canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
-      if (!canActivate) {
-        throw new UnauthorizedException();
-      }
-      const request = context.switchToHttp().getRequest();
-      request.user = { sub: 'user-123' };
-      return true;
-    }),
-  });
-
-  const buildModule = async (authGuardReturnValue: boolean) => {
+  const buildModule = async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [NotificationsController],
       providers: [
         { provide: NotificationsService, useValue: mockNotificationsService },
+        {
+          provide: NotificationSLOService,
+          useValue: { getCurrentSLOStatus: jest.fn(), measureSLO: jest.fn() },
+        },
         { provide: PrismaService, useValue: mockPrismaService },
       ],
     })
       .overrideGuard(AuthGuard('jwt'))
-      .useValue(createMockAuthGuard(authGuardReturnValue))
+      .useValue({
+        canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
+          if (!authEnabled) {
+            throw new UnauthorizedException();
+          }
+          const request = context.switchToHttp().getRequest();
+          request.user = { sub: 'user-123', id: 'user-123' };
+          return true;
+        }),
+      })
       .overrideGuard(RateLimitGuard)
-      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .useValue({
+        canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
+          const request = context.switchToHttp().getRequest();
+          const auth = request.headers?.authorization;
+          if (!auth || auth !== 'Bearer valid-token') {
+            throw new UnauthorizedException();
+          }
+          request.user = { sub: 'user-123', id: 'user-123' };
+          return true;
+        }),
+      })
       .compile();
 
     return module;
   };
 
-  beforeEach(async () => {
-    const module = await buildModule(true);
+  beforeAll(async () => {
+    authEnabled = true;
+    const module = await buildModule();
 
     app = module.createNestApplication();
-    notificationsService = module.get<NotificationsService>(NotificationsService);
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await app.close();
+  });
+
+  beforeEach(() => {
+    authEnabled = true;
     jest.clearAllMocks();
   });
 
@@ -76,7 +143,7 @@ describe('NotificationsController (Authorization)', () => {
       },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(baseUrl)
       .get('/v1/notifications')
       .set('Authorization', 'Bearer valid-token');
 
@@ -90,8 +157,8 @@ describe('NotificationsController (Authorization)', () => {
       data: { message: 'Notification marked as read' },
     });
 
-    const response = await request(app.getHttpServer())
-      .patch('/v1/notifications/123/read')
+    const response = await request(baseUrl)
+      .patch('/v1/notifications/550e8400-e29b-41d4-a716-446655440000/read')
       .set('Authorization', 'Bearer valid-token');
 
     expect(response.status).toBe(200);
@@ -104,7 +171,7 @@ describe('NotificationsController (Authorization)', () => {
       data: { message: 'All notifications marked as read' },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(baseUrl)
       .patch('/v1/notifications/read-all')
       .set('Authorization', 'Bearer valid-token');
 
@@ -118,7 +185,7 @@ describe('NotificationsController (Authorization)', () => {
       data: { unreadCount: 5 },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(baseUrl)
       .get('/v1/notifications/unread-count')
       .set('Authorization', 'Bearer valid-token');
 
@@ -132,7 +199,7 @@ describe('NotificationsController (Authorization)', () => {
       data: { settings: { email: true, push: false } },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(baseUrl)
       .get('/v1/notifications/settings')
       .set('Authorization', 'Bearer valid-token');
 
@@ -146,7 +213,7 @@ describe('NotificationsController (Authorization)', () => {
       data: { message: 'Notification preferences updated' },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(baseUrl)
       .put('/v1/notifications/preferences')
       .set('Authorization', 'Bearer valid-token')
       .send({ email: true, sms: false });
@@ -156,19 +223,11 @@ describe('NotificationsController (Authorization)', () => {
   });
 
   it('should reject unauthenticated requests', async () => {
-    await app.close();
-
-    const module = await buildModule(false);
-
-    const testApp = module.createNestApplication();
-    await testApp.init();
-
-    const response = await request(testApp.getHttpServer())
+    authEnabled = false;
+    const response = await request(baseUrl)
       .get('/v1/notifications')
       .set('Authorization', 'Bearer invalid-token');
 
     expect(response.status).toBe(401);
-
-    await testApp.close();
   });
 });

@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -28,7 +29,7 @@ interface AuthenticatedRequest {
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class AppealController {
-  constructor(private appealService: AppealService) {}
+  constructor(@Inject(AppealService) private appealService: AppealService) {}
 
   @Post()
   @ApiOperation({ summary: 'Submit an appeal' })

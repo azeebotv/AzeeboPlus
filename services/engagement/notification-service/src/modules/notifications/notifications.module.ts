@@ -1,15 +1,18 @@
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CacheModule } from '@azeebo/shared-services';
+import {
+  CacheModule,
+  JwtConfigModule,
+  FirebaseModule,
+  EmailModule,
+  SmsModule,
+  RedisModule,
+} from '@azeebo/shared-services';
 
-import { NotificationsController } from './notifications.controller';
-import { NotificationsService } from './notifications.service';
-import { DatabaseModule } from '../database/database.module';
-import { FirebaseModule } from '../firebase/firebase.module';
-import { EmailModule } from '../email/email.module';
-import { SmsModule } from '../sms/sms.module';
+import { NotificationsController } from './notifications.controller.js';
+import { NotificationsService } from './notifications.service.js';
+import { NotificationsGateway } from './notifications.gateway.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { NotificationSLOService } from '../notification/notification-slo.service.js';
 
 @Module({
   imports: [
@@ -17,21 +20,12 @@ import { SmsModule } from '../sms/sms.module';
     FirebaseModule,
     EmailModule,
     SmsModule,
-    PassportModule,
     CacheModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    RedisModule,
+    JwtConfigModule,
   ],
   controllers: [NotificationsController],
-  providers: [NotificationsService],
-  exports: [NotificationsService, DatabaseModule],
+  providers: [NotificationsService, NotificationSLOService, NotificationsGateway],
+  exports: [NotificationsService, NotificationSLOService, NotificationsGateway, DatabaseModule],
 })
 export class NotificationsModule {}

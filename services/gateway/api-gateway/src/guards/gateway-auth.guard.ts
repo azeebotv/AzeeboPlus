@@ -1,4 +1,5 @@
 import {
+  Inject,
   CanActivate,
   ExecutionContext,
   Injectable,
@@ -24,20 +25,71 @@ export class GatewayAuthGuard implements CanActivate {
 
   /**
    * Path patterns that do not require authentication.
-   * These are auth endpoints where the user doesn't have a token yet.
+   * Only truly public endpoints are listed here — health, auth, docs,
+   * public settings, and read-only content listings.
+   *
+   * Creator profiles, engagement data, subscription plans, and
+   * universe-specific trending require authentication for
+   * personalized behavior and access control.
    */
   private static readonly PUBLIC_PATH_PATTERNS: RegExp[] = [
+    // Auth endpoints (pre-login — user has no token yet)
     /^\/(api\/)?(v\d+\/)?auth\/(login|signup|register|refresh|forgot-password|reset-password|verify-email|resend-verification|social\/(google|apple)(\/authorize)?|social\/callback|otp\/(send|verify))$/,
     /^\/(api\/)?(v\d+\/)?auth\/health$/,
+    // SPA cookie management: the client exchanges its freshly-issued tokens for
+    // httpOnly cookies right after login and bootstraps the CSRF cookie. Both
+    // must be reachable without an existing token (cookie POST carries the
+    // token in its body; DELETE is the logout path).
+    /^\/(api\/)?(v\d+\/)?auth\/cookie$/,
+    /^\/(api\/)?(v\d+\/)?auth\/csrf$/,
+    // Gateway health checks
     /^\/(health|ready|live)$/,
-    /^\/docs(\/.*)?$/, // Swagger UI
-    /^\/api\/v\d+\/public\//, // Public settings/universes (content-service)
-    /^\/api\/v\d+\/content\/(featured|trending)$/, // Public content endpoints
+    // Client feature-flag bootstrap (public, per-user evaluation)
+    /^\/feature-flags\/bootstrap$/,
+    // Swagger UI
+    /^\/docs(\/.*)?$/,
+    // Public settings/universes (no user context needed)
+    /^\/api\/v\d+\/public\//,
+    // Public content browsing — read-only listings (no personalization)
+    /^\/api\/v\d+\/content\/(home|watch|featured|trending|new-releases|featured-slides|popular-region|categories|tags)$/,
+    // Content detail (read-only)
+    /^\/api\/v\d+\/content\/[^/]+$/,
+    // Content comments and related
+    /^\/api\/v\d+\/content\/[^/]+\/(comments|related)$/,
+    // Universe-specific content by slug
+    /^\/api\/v\d+\/content\/universe\/[^/]+$/,
+    /^\/api\/v\d+\/content\/category\/[^/]+$/,
+    // Universe detail
+    /^\/api\/v\d+\/universe\/[^/]+$/,
+    // Search suggestions and trending searches
+    /^\/api\/v\d+\/search\/(trending|suggestions)$/,
+    // Lifestyle music — read-only listings/detail served on the public
+    // /lifestyle/music browse page (writes still require auth)
+    /^\/api\/v\d+\/lifestyle\/music$/,
+    /^\/api\/v\d+\/lifestyle\/music\/(trending|genres)$/,
+    // genre-detail & artist-detail pages (slug/id = slugified name, derived from entries)
+    /^\/api\/v\d+\/lifestyle\/music\/(genres|artists)\/[a-z0-9-]+$/,
+    /^\/api\/v\d+\/lifestyle\/music\/[a-z0-9-]+$/,
+    // Lifestyle guides (9TLIFE) — read-only public catalogs and detail pages;
+    // everything under /lifestyle/admin stays auth-gated (exact segments only).
+    /^\/api\/v\d+\/lifestyle\/(itineraries|neighborhoods|partners|offers)$/,
+    /^\/api\/v\d+\/lifestyle\/(itineraries|neighborhoods|partners|offers)\/[a-z0-9-]+$/,
+    // Participation result page (writes — votes, quiz submits — still require auth)
+    /^\/api\/v\d+\/participation\/[a-z0-9-]+\/result$/,
+    // Participation hub + detail pages — read-only listings (votes/quiz attempts
+    // and challenge submissions remain auth-gated on the same services)
+    /^\/api\/v\d+\/(polls|quizzes|challenges)$/,
+    /^\/api\/v\d+\/(polls|quizzes|challenges)\/[a-zA-Z0-9-]+$/,
+    // Moderation report types (needed for report forms before login)
+    /^\/api\/v\d+\/moderation\/report-types$/,
+    // Public challenge boards — read-only leaderboard data behind the shared
+    // /boards/:challengeId pages (writes and everything else stay gated)
+    /^\/api\/v\d+\/creator\/boards\/[^/]+$/,
   ];
 
   constructor(
-    private readonly reflector: Reflector,
-    private readonly configService: ConfigService
+    @Inject(Reflector) private readonly reflector: Reflector,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -63,11 +115,25 @@ export class GatewayAuthGuard implements CanActivate {
     }
     const authHeader = request.headers['authorization'];
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Extract token from Authorization header or httpOnly cookie
+    let token: string | null = null;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else if (request.cookies?.access_token) {
+      token = request.cookies.access_token;
+    }
+
+    if (!token) {
       throw new UnauthorizedException('Missing or invalid Authorization header');
     }
 
-    const token = authHeader.substring(7);
+    // Configuration failures are misconfiguration, not bad credentials — hoisted
+    // above the try so they surface as the 500-class error they are instead of
+    // being flattened into a lying 401.
+    const jwtSecret = this.configService.get<string>('JWT_ACCESS_SECRET');
+    if (!jwtSecret) {
+      throw new Error('JWT_ACCESS_SECRET environment variable is required');
+    }
 
     try {
       const payload = this.verifyToken(token);
@@ -82,6 +148,11 @@ export class GatewayAuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
+      // allowed-fabricated-4xx: token verification is pure client input — every
+      // failure shape (malformed, expired, wrong signature) must be
+      // indistinguishable to callers (anti-enumeration), so a uniform 401 is
+      // the correct answer and mapAndThrow would wrongly escalate a plain JWT
+      // error to a 500. Configuration failures are no longer caught here.
       this.logger.warn(`Auth validation failed: ${(error as Error).message}`);
       throw new UnauthorizedException('Invalid or expired token');
     }
@@ -106,6 +177,7 @@ export class GatewayAuthGuard implements CanActivate {
       const payload = jwt.verify(token, jwtSecret, {
         issuer: this.configService.get<string>('JWT_ISSUER'),
         audience: this.configService.get<string>('JWT_AUDIENCE'),
+        algorithms: ['HS256'],
       }) as {
         sub: string;
         email: string;
@@ -122,11 +194,14 @@ export class GatewayAuthGuard implements CanActivate {
         role: payload.role,
       };
     } catch (error) {
+      // allowed-fabricated-4xx: deliberate cause-inspected classification —
+      // jwt error types distinguish expired vs malformed credentials, which
+      // mapAndThrow cannot see; auth failures are 401, never a 500.
       if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('Token expired');
+        throw new UnauthorizedException('Token expired');
       }
       if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error(`Invalid token: ${(error as Error).message}`);
+        throw new UnauthorizedException(`Invalid token: ${(error as Error).message}`);
       }
       throw error;
     }

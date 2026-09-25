@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createEngagementMethods } from '../engagement';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 describe('Engagement API Methods', () => {
@@ -16,7 +16,10 @@ describe('Engagement API Methods', () => {
   });
 
   it('getRecentlyWatched should GET /api/v1/users/me/history with limit and offset', async () => {
-    client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 10, hasMore: false } });
+    client.request.mockResolvedValue({
+      success: true,
+      data: { items: [], total: 0, page: 1, limit: 10, hasMore: false },
+    });
 
     await engagement.getRecentlyWatched(10, 0);
 
@@ -44,7 +47,9 @@ describe('Engagement API Methods', () => {
 
     await engagement.getContentByUniverse('movie', 12);
 
-    expect(client.request).toHaveBeenCalledWith('/api/v1/content/universe/movie?limit=12&sort=trending');
+    expect(client.request).toHaveBeenCalledWith(
+      '/api/v1/content/universe/movie?limit=12&sort=trending'
+    );
   });
 
   it('getNewReleases should GET /api/v1/content/new-releases', async () => {
@@ -71,12 +76,12 @@ describe('Engagement API Methods', () => {
     expect(client.request).toHaveBeenCalledWith('/api/v1/content/popular-region?limit=12');
   });
 
-  it('getPersonalizedRecommendations should GET /api/v1/recommendation/personalized', async () => {
+  it('getPersonalizedRecommendations should GET /api/v1/recommendation/personalized-feed', async () => {
     client.request.mockResolvedValue({ success: true, data: [] });
 
     await engagement.getPersonalizedRecommendations();
 
-    expect(client.request).toHaveBeenCalledWith('/api/v1/recommendation/personalized');
+    expect(client.request).toHaveBeenCalledWith('/api/v1/recommendation/personalized-feed');
   });
 
   it('getFeaturedSlides should GET /api/v1/content/featured-slides', async () => {

@@ -1,12 +1,14 @@
 'use client';
-import React, { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import BrandLogo from '@/components/auth/BrandLogo';
 import { Alert, Spinner } from '@/components/auth/FormBits';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
-const INTERESTS = [
+// Default interests - can be overridden via user-service API
+const DEFAULT_INTERESTS = [
   'Comedy',
   'Movies',
   'Sports',
@@ -19,7 +21,7 @@ const INTERESTS = [
   'Technology',
 ];
 
-const GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
+const DEFAULT_GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
 
 export default function ProfileSetupPage(): React.JSX.Element {
   const router = useRouter();
@@ -41,6 +43,43 @@ export default function ProfileSetupPage(): React.JSX.Element {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [interests, setInterests] = useState<string[]>(DEFAULT_INTERESTS);
+  const [genders, setGenders] = useState<string[]>(DEFAULT_GENDERS);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [interestsRes, gendersRes] = await Promise.allSettled([
+          apiFetch<string[]>('/v1/users/profile-options/interests'),
+          apiFetch<string[]>('/v1/users/profile-options/genders'),
+        ]);
+        if (
+          interestsRes.status === 'fulfilled' &&
+          interestsRes.value.success &&
+          interestsRes.value.data
+        ) {
+          setInterests(interestsRes.value.data);
+        }
+        if (
+          gendersRes.status === 'fulfilled' &&
+          gendersRes.value.success &&
+          gendersRes.value.data
+        ) {
+          setGenders(gendersRes.value.data);
+        }
+      } catch {
+        // Use defaults
+      }
+    };
+    fetchOptions();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,7 +99,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
       const formData = new FormData();
       formData.append('file', file);
 
-      const result = await apiFetch('/v1/media/upload', {
+      const result = await apiFetch('/media/upload/avatar', {
         method: 'POST',
         body: formData,
         headers: {},
@@ -120,7 +159,8 @@ export default function ProfileSetupPage(): React.JSX.Element {
 
       await refreshUser?.();
       setSuccess(true);
-      setTimeout(() => router.push('/home'), 2000);
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = setTimeout(() => router.push('/home'), 2000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred during profile setup';
       setError(message);
@@ -133,7 +173,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
     return (
       <div
         className="min-h-screen flex items-center justify-center p-6"
-        style={{ backgroundColor: '#1A0A0A' }}
+        style={{ backgroundColor: 'var(--brand-near-black)' }}
       >
         <div className="text-center max-w-md">
           <div
@@ -169,7 +209,10 @@ export default function ProfileSetupPage(): React.JSX.Element {
   const profileInitial = (fullName || 'Y').charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen w-full p-6 sm:p-10" style={{ backgroundColor: '#1A0A0A' }}>
+    <div
+      className="min-h-screen w-full p-6 sm:p-10"
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
+    >
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <BrandLogo variant="light" />
@@ -200,20 +243,21 @@ export default function ProfileSetupPage(): React.JSX.Element {
                   fontSize: 48,
                   background: avatarUrl
                     ? 'transparent'
-                    : 'linear-gradient(135deg, #0D3B2E, #1A0A0A)',
+                    : 'linear-gradient(135deg, #E8420A, #CC1C1C)',
                   border: '2px solid rgba(255,255,255,0.2)',
                 }}
               >
                 {isUploadingAvatar ? (
                   <Spinner />
                 ) : avatarUrl ? (
-                  <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                  <OptimizedImage src={avatarUrl} alt="Profile" fill className="object-cover" />
                 ) : (
                   profileInitial
                 )}
               </div>
               <input
                 ref={fileInputRef}
+                aria-label="Upload profile picture"
                 type="file"
                 accept="image/*"
                 className="hidden"
@@ -222,15 +266,13 @@ export default function ProfileSetupPage(): React.JSX.Element {
               <span
                 onClick={() => fileInputRef.current?.click()}
                 className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs font-bold text-white whitespace-nowrap px-3 py-1 cursor-pointer"
-                style={{ background: '#CC1C1C', borderRadius: 999 }}
+                style={{ background: 'var(--brand-red)', borderRadius: 999 }}
               >
                 Change profile picture
               </span>
             </div>
-            <p className="az-headline text-white text-lg">
-              {fullName.trim() || 'Yetunde Williams'}
-            </p>
-            <p className="text-white/50 text-sm">@{username.trim() || 'YetyWilly'}</p>
+            <p className="az-headline text-white text-lg">{fullName.trim() || 'Your Name'}</p>
+            <p className="text-white/50 text-sm">@{username.trim() || 'username'}</p>
           </div>
 
           {/* Right: form grid */}
@@ -332,11 +374,11 @@ export default function ProfileSetupPage(): React.JSX.Element {
                   className="az-input"
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
-                  style={{ color: gender ? '#fff' : 'rgba(255,255,255,0.4)' }}
+                  style={{ color: gender ? 'white' : 'rgba(255,255,255,0.4)' }}
                 >
                   <option value="">Select gender</option>
-                  {GENDERS.map((g) => (
-                    <option key={g} value={g} style={{ color: '#000' }}>
+                  {genders.map((g) => (
+                    <option key={g} value={g} style={{ color: 'var(--brand-near-black)' }}>
                       {g}
                     </option>
                   ))}
@@ -364,7 +406,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
             <div>
               <span className="az-label">Select Your Interests</span>
               <div className="flex flex-wrap gap-2">
-                {INTERESTS.map((interest) => {
+                {interests.map((interest) => {
                   const selected = selectedInterests.includes(interest);
                   return (
                     <button
@@ -375,7 +417,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
                       style={{
                         background: selected ? 'rgba(204,28,28,0.25)' : 'rgba(255,255,255,0.06)',
                         border: selected ? '1px solid #CC1C1C' : '1px solid rgba(255,255,255,0.12)',
-                        color: selected ? '#fff' : 'rgba(255,255,255,0.75)',
+                        color: selected ? 'white' : 'rgba(255,255,255,0.75)',
                       }}
                     >
                       {interest}

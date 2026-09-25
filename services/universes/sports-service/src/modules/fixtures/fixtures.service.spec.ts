@@ -1,6 +1,12 @@
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { FixturesService } from './fixtures.service';
-import { PrismaService } from '../database/prisma.service';
+import { FixturesService } from './fixtures.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { CacheService } from '@azeebo/shared-services';
 import { NotFoundException } from '@nestjs/common';
 
 describe('FixturesService', () => {
@@ -42,6 +48,14 @@ describe('FixturesService', () => {
             },
           },
         },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
@@ -63,6 +77,7 @@ describe('FixturesService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('items');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).items).toHaveLength(1);
     });
 
@@ -96,6 +111,7 @@ describe('FixturesService', () => {
       const result = await service.getFixtureById('event-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Test Event');
     });
 
@@ -118,6 +134,7 @@ describe('FixturesService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).metadataId).toBe('metadata-1');
     });
 

@@ -1,18 +1,35 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
 
-type ContentRelationshipWithContent = Prisma.ContentRelationshipGetPayload<{ include: { content: true; relatedContent: true } }>;
-type ContentRelationshipWithRelatedUniverse = Prisma.ContentRelationshipGetPayload<{ include: { relatedContent: { include: { universe: true } } } }>;
-type ContentWithUniverseMediaAsset = Prisma.ContentItemGetPayload<{ include: { universe: true; mediaAsset: true } }>;
+type ContentRelationshipWithContent = Prisma.ContentRelationshipGetPayload<{
+  include: { content: true; relatedContent: true };
+}>;
+type ContentRelationshipWithRelatedUniverse = Prisma.ContentRelationshipGetPayload<{
+  include: { relatedContent: { include: { universe: true } } };
+}>;
+type ContentWithUniverseMediaAsset = Prisma.ContentItemGetPayload<{
+  include: { universe: true; mediaAsset: true };
+}>;
 
 @Injectable()
 export class ContentRelationshipService {
   private readonly logger = new Logger(ContentRelationshipService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  private canModifyContent(userId: string, userRole: string | undefined, creatorId: string): boolean {
+  private canModifyContent(
+    userId: string,
+    userRole: string | undefined,
+    creatorId: string
+  ): boolean {
     return creatorId === userId || userRole === 'admin' || userRole === 'moderator';
   }
 
@@ -69,9 +86,17 @@ export class ContentRelationshipService {
         data: relationship,
       };
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof BadRequestException) throw error;
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException
+      )
+        throw error;
       this.logger.error(`Failed to add content relationship: ${error}`);
-      return { success: false, error: { code: 'ADD_RELATIONSHIP_FAILED', message: 'Failed to add content relationship' } } as never;
+      return {
+        success: false,
+        error: { code: 'ADD_RELATIONSHIP_FAILED', message: 'Failed to add content relationship' },
+      } as never;
     }
   }
 
@@ -113,7 +138,13 @@ export class ContentRelationshipService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to remove content relationship: ${error}`);
-      return { success: false, error: { code: 'REMOVE_RELATIONSHIP_FAILED', message: 'Failed to remove content relationship' } };
+      return {
+        success: false,
+        error: {
+          code: 'REMOVE_RELATIONSHIP_FAILED',
+          message: 'Failed to remove content relationship',
+        },
+      } as never;
     }
   }
 
@@ -141,7 +172,13 @@ export class ContentRelationshipService {
       };
     } catch (error) {
       this.logger.error(`Failed to get content relationships: ${error}`);
-      return { success: false, error: { code: 'GET_RELATIONSHIPS_FAILED', message: 'Failed to retrieve content relationships' } };
+      return {
+        success: false,
+        error: {
+          code: 'GET_RELATIONSHIPS_FAILED',
+          message: 'Failed to retrieve content relationships',
+        },
+      } as never;
     }
   }
 
@@ -150,7 +187,7 @@ export class ContentRelationshipService {
     relationshipType?: string
   ): Promise<{ success: boolean; data: ContentWithUniverseMediaAsset[] }> {
     try {
-      const where: Prisma.ContentRelationshipWhereInput = {
+      const where: Record<string, unknown> = {
         contentId,
       };
 
@@ -178,7 +215,13 @@ export class ContentRelationshipService {
       };
     } catch (error) {
       this.logger.error(`Failed to get content by relationship: ${error}`);
-      return { success: false, error: { code: 'GET_CONTENT_BY_RELATIONSHIP_FAILED', message: 'Failed to retrieve content by relationship' } };
+      return {
+        success: false,
+        error: {
+          code: 'GET_CONTENT_BY_RELATIONSHIP_FAILED',
+          message: 'Failed to retrieve content by relationship',
+        },
+      } as never;
     }
   }
 }

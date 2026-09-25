@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Inject, Controller, Get, Param, Query } from '@nestjs/common';
 import { AuditLogService } from './audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -7,9 +7,9 @@ import { UseGuards } from '@nestjs/common';
 
 @Controller('admin/audit')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class AuditController {
-  constructor(private readonly auditService: AuditLogService) {}
+  constructor(@Inject(AuditLogService) private readonly auditService: AuditLogService) {}
 
   @Get()
   async getLogs(
@@ -22,11 +22,19 @@ export class AuditController {
     @Query('page') page = 1,
     @Query('limit') limit = 50
   ): Promise<{ logs: unknown[]; total: number; page: number; limit: number; totalPages: number }> {
+    // A comma-separated targetType (e.g. `content,category,tag`) becomes a
+    // group filter — the admin UI's group chips rely on this.
+    const targetTypes = targetType?.includes(',')
+      ? targetType
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : targetType;
     return this.auditService.getLogs(
       {
         actorId,
         action,
-        targetType,
+        targetType: targetTypes,
         targetId,
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,

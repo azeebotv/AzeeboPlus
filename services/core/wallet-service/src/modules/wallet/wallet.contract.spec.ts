@@ -2,12 +2,26 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
-import { WalletController } from './wallet.controller';
-import { WalletService } from './wallet.service';
-import { PrismaService } from '../database/prisma.service';
-import { CacheService, CacheInterceptor } from '../../cache';
-import { RateLimitGuard, AdminGuard, ServiceAuthGuard } from '@azeebo/security';
+import { WalletController } from './wallet.controller.js';
+import { WalletService } from './wallet.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { CacheService, CacheInterceptor } from '../../cache/index.js';
+import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
+
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagGuard: jest.fn().mockImplementation(() => ({
+    canActivate: jest.fn().mockReturnValue(true),
+  })),
+  FeatureFlag: () => () => {},
+  walletFlags: {
+    withdrawalsEnabled: 'wallet_withdrawals_enabled',
+    redeemRewards: 'wallet_redeem_rewards',
+    transfersEnabled: 'wallet_transfers_enabled',
+    bonusCredit: 'wallet_bonus_credit',
+    promoCredit: 'wallet_promo_credit',
+  },
+}));
 
 class MockAuthGuard {
   canActivate(context: ExecutionContext) {
@@ -30,6 +44,7 @@ class MockAdminGuard {
 }
 
 const mockWalletService = {
+  getWalletIdByUserId: jest.fn().mockResolvedValue('wallet-123'),
   getBalance: jest.fn().mockResolvedValue({
     success: true,
     data: {
@@ -92,6 +107,7 @@ const mockWalletService = {
 
 describe('Wallet Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   beforeAll(async () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
@@ -100,39 +116,46 @@ describe('Wallet Controller Contract Tests', () => {
       controllers: [WalletController],
       providers: [
         { provide: WalletService, useValue: mockWalletService },
-        { provide: PrismaService, useValue: {
-          wallet: {
-            findUnique: jest.fn().mockResolvedValue({
-              id: 'wallet-123',
-              userId: 'user-123',
-              balance: '100000',
-              bonusBalance: '5000',
-              promoBalance: '0',
-              currency: 'NGN',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }),
+        {
+          provide: PrismaService,
+          useValue: {
+            wallet: {
+              findUnique: jest.fn().mockResolvedValue({
+                id: 'wallet-123',
+                userId: 'user-123',
+                balance: '100000',
+                bonusBalance: '5000',
+                promoBalance: '0',
+                currency: 'NGN',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              }),
+            },
           },
-        }},
+        },
         { provide: CacheService, useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() } },
-        { provide: ConfigService, useValue: { get: jest.fn((k: string, d?: unknown) => d) } },
-        { provide: APP_GUARD, useClass: ServiceAuthGuard },
+        { provide: ConfigService, useValue: { get: jest.fn((_k: string, d?: unknown) => d) } },
+        { provide: APP_GUARD, useValue: new MockAuthGuard() },
       ],
     })
-      .overrideGuard(ServiceAuthGuard)
-      .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useClass(MockRateLimitGuard)
       .overrideGuard(AdminGuard)
       .useClass(MockAdminGuard)
       .overrideInterceptor(CacheInterceptor)
-      .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
+      .useValue({
+        intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalInterceptors({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() } as NestInterceptor);
+    app.useGlobalInterceptors({
+      intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+    } as NestInterceptor);
     app.setGlobalPrefix('v1');
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -143,7 +166,7 @@ describe('Wallet Controller Contract Tests', () => {
 
   describe('GET /v1/wallet', () => {
     it('should return current user wallet', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/wallet')
         .set('Authorization', 'Bearer valid-token');
 
@@ -158,7 +181,7 @@ describe('Wallet Controller Contract Tests', () => {
 
   describe('GET /v1/wallet/summary', () => {
     it('should return wallet summary', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/wallet/summary')
         .set('Authorization', 'Bearer valid-token');
 
@@ -173,7 +196,7 @@ describe('Wallet Controller Contract Tests', () => {
 
   describe('POST /v1/wallet/fund', () => {
     it('should fund wallet', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/wallet/fund')
         .set('Authorization', 'Bearer valid-token')
         .send({ amount: 50000, reference: 'pay-ref-123' });
@@ -189,7 +212,7 @@ describe('Wallet Controller Contract Tests', () => {
 
   describe('GET /v1/wallet/transactions', () => {
     it('should return transaction history', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/wallet/transactions')
         .set('Authorization', 'Bearer valid-token');
 
@@ -204,7 +227,7 @@ describe('Wallet Controller Contract Tests', () => {
 
   describe('GET /v1/wallet/audit-trail', () => {
     it('should return audit trail', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/wallet/audit-trail')
         .set('Authorization', 'Bearer valid-token');
 

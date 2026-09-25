@@ -1,28 +1,33 @@
-import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
+import { Inject, Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import {
   AnalyticsInstrumentationService,
   AnalyticsEvent,
   EVENT_NAMES,
-} from './analytics-instrumentation.service';
+} from './analytics-instrumentation.service.js';
 
 interface AuthenticatedRequest extends Request {
-  user: { sub: string };
+  user: { sub: string; id: string };
 }
 
 @ApiTags('Analytics Instrumentation')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'), RateLimitGuard)
+@UseGuards(RateLimitGuard)
 @Controller('instrumentation')
 export class AnalyticsInstrumentationController {
-  constructor(private readonly analyticsInstrumentationService: AnalyticsInstrumentationService) {}
+  constructor(
+    @Inject(AnalyticsInstrumentationService)
+    private readonly analyticsInstrumentationService: AnalyticsInstrumentationService
+  ) {}
 
   @Post('track')
   @ApiOperation({ summary: 'Track a single event' })
   @RateLimit(100, 60000)
-  async track(@Body() event: AnalyticsEvent, @Req() req: AuthenticatedRequest): Promise<{ id: string }> {
+  async track(
+    @Body() event: AnalyticsEvent,
+    @Req() req: AuthenticatedRequest
+  ): Promise<{ id: string }> {
     return this.analyticsInstrumentationService.track({
       ...event,
       userId: req.user?.sub ?? event.userId,
@@ -32,11 +37,12 @@ export class AnalyticsInstrumentationController {
   @Post('track-batch')
   @ApiOperation({ summary: 'Track multiple events' })
   @RateLimit(100, 60000)
-  async trackBatch(@Body() events: AnalyticsEvent[], @Req() req: AuthenticatedRequest): Promise<{ ingested: number }> {
+  async trackBatch(
+    @Body() events: AnalyticsEvent[],
+    @Req() req: AuthenticatedRequest
+  ): Promise<{ ingested: number }> {
     const userId = req.user?.sub;
-    const sanitized = userId
-      ? events.map((e) => ({ ...e, userId }))
-      : events;
+    const sanitized = userId ? events.map((e) => ({ ...e, userId })) : events;
     return this.analyticsInstrumentationService.trackBatch(sanitized);
   }
 

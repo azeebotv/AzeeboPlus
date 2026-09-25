@@ -1,5 +1,8 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../database/prisma.service.js';
+import axios from 'axios';
 
 interface CinemaPass {
   id: string;
@@ -39,8 +42,35 @@ interface CinemaPassResponse {
 @Injectable()
 export class CinemaPassService {
   private readonly logger = new Logger(CinemaPassService.name);
+  private readonly walletServiceBaseUrl: string;
+  private readonly analyticsServiceBaseUrl: string;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
+  ) {
+    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/v1/analytics/events`,
+        { type: eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
+  }
 
   async getPasses(): Promise<CinemaPassResponse> {
     try {
@@ -116,15 +146,7 @@ export class CinemaPassService {
         throw new NotFoundException(`Pass not found: ${passId}`);
       }
 
-      const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
-      if (!wallet) {
-        throw new NotFoundException('Wallet not found');
-      }
-
       const passPrice = Number(pass.price);
-      if (passPrice > 0 && Number(wallet.balance) < passPrice) {
-        throw new BadRequestException('Insufficient balance');
-      }
 
       const now = new Date();
       const endDate = new Date();
@@ -134,43 +156,71 @@ export class CinemaPassService {
         endDate.setFullYear(endDate.getFullYear() + 1);
       }
 
-      const subscription = await this.prisma.$transaction(async (tx) => {
-        if (passPrice > 0) {
-          await tx.wallet.update({
-            where: { userId },
-            data: { balance: { decrement: passPrice } },
-          });
+      const idempotencyKey = `${userId}-${passId}-${now.getTime()}`;
 
-          await tx.walletTransaction.create({
-            data: {
-              walletId: wallet.id,
-              type: 'debit',
-              amount: passPrice,
-              status: 'completed',
-              description: `Cinema pass subscription: ${pass.name}`,
-            },
-          });
+      if (passPrice > 0) {
+        let walletId: string;
+        try {
+          const walletResponse = await axios.get(
+            `${this.walletServiceBaseUrl}/wallet/user/${userId}`,
+            { timeout: 10000 }
+          );
+          const wallet = walletResponse.data?.data;
+          if (!wallet) {
+            throw new NotFoundException('Wallet not found');
+          }
+          walletId = wallet.id;
+          if (Number(wallet.balance) < passPrice) {
+            throw new BadRequestException('Insufficient balance');
+          }
+        } catch (error) {
+          mapAndThrow(error, 'looking up wallet for cinema pass');
         }
 
-        return tx.cinemaPassSubscription.upsert({
-          where: { userId_passId: { userId, passId } },
-          create: {
-            userId,
-            passId,
-            status: 'active',
-            startDate: now,
-            endDate,
-            autoRenew,
-          },
-          update: {
-            status: 'active',
-            startDate: now,
-            endDate,
-            autoRenew,
-          },
-          include: { pass: true },
-        });
+        try {
+          await axios.post(
+            `${this.walletServiceBaseUrl}/wallet/debit`,
+            {
+              walletId,
+              amount: passPrice,
+              description: `Cinema pass subscription: ${pass.name}`,
+              idempotencyKey,
+            },
+            { timeout: 10000 }
+          );
+        } catch (error) {
+          mapAndThrow(error, 'charging cinema pass');
+        }
+      }
+
+      const subscription = await this.prisma.cinemaPassSubscription.upsert({
+        where: { userId_passId: { userId, passId } },
+        create: {
+          userId,
+          passId,
+          status: 'active',
+          startDate: now,
+          endDate,
+          autoRenew,
+        },
+        update: {
+          status: 'active',
+          startDate: now,
+          endDate,
+          autoRenew,
+        },
+        include: { pass: true },
       });
+
+      if (passPrice > 0) {
+        await this.trackEvent('payment_success', userId, {
+          passId,
+          passName: pass.name,
+          amount: passPrice,
+          type: 'cinema_pass',
+          subscriptionId: subscription.id,
+        });
+      }
 
       return {
         success: true,

@@ -19,14 +19,21 @@ FROM node:22.16.0-bookworm-slim AS builder
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
+RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
+    apt-get update && apt-get install -y --no-install-recommends openssl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# .npmrc MUST be present: shamefully-hoist=true puts @prisma/client and
+# transitive deps at the root node_modules — scripts/generate-prisma-clients.sh
+# verifies `require('@prisma/client')` from the root, and services rely on
+# hoisted transitive deps. Without it the install is isolated and T-1 fails.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/web/package.json apps/web/
 COPY apps/admin/package.json apps/admin/
-COPY apps/creator-portal/package.json apps/creator-portal/
+COPY apps/creator/package.json apps/creator/
+COPY apps/mobile/package.json apps/mobile/
 COPY packages/api-client/package.json packages/api-client/
 COPY packages/error-handling/package.json packages/error-handling/
 COPY packages/logger/package.json packages/logger/
@@ -39,6 +46,9 @@ COPY packages/shared-services/package.json packages/shared-services/
 COPY packages/auth/package.json packages/auth/
 COPY packages/observability/package.json packages/observability/
 COPY packages/feature-flags/package.json packages/feature-flags/
+COPY packages/flag-metrics/package.json packages/flag-metrics/
+COPY packages/model-cost-tracker/package.json packages/model-cost-tracker/
+COPY packages/queue-policy/package.json packages/queue-policy/
 COPY packages/analytics-sdk/package.json packages/analytics-sdk/
 COPY packages/internal-clients/package.json packages/internal-clients/
 COPY packages/test-utils/package.json packages/test-utils/
@@ -47,7 +57,6 @@ COPY packages/ui/package.json packages/ui/
 COPY packages/http-client/package.json packages/http-client/
 COPY packages/event-bus/package.json packages/event-bus/
 COPY packages/opentelemetry/package.json packages/opentelemetry/
-COPY packages/shared-queue/package.json packages/shared-queue/
 COPY services/core/auth-service/package.json services/core/auth-service/
 COPY services/core/user-service/package.json services/core/user-service/
 COPY services/core/wallet-service/package.json services/core/wallet-service/
@@ -55,6 +64,7 @@ COPY services/core/payment-service/package.json services/core/payment-service/
 COPY services/core/content-service/package.json services/core/content-service/
 COPY services/core/search-service/package.json services/core/search-service/
 COPY services/core/media-service/package.json services/core/media-service/
+COPY services/core/knowledge-service/package.json services/core/knowledge-service/
 COPY services/engagement/notification-service/package.json services/engagement/notification-service/
 COPY services/engagement/reward-service/package.json services/engagement/reward-service/
 COPY services/engagement/engagement-service/package.json services/engagement/engagement-service/
@@ -67,6 +77,7 @@ COPY services/universes/reality-service/package.json services/universes/reality-
 COPY services/universes/movie-service/package.json services/universes/movie-service/
 COPY services/universes/comedy-service/package.json services/universes/comedy-service/
 COPY services/universes/games-service/package.json services/universes/games-service/
+COPY services/universes/live-event-service/package.json services/universes/live-event-service/
 COPY services/universes/sports-service/package.json services/universes/sports-service/
 COPY services/universes/lifestyle-service/package.json services/universes/lifestyle-service/
 COPY services/universes/vertical-service/package.json services/universes/vertical-service/
@@ -103,51 +114,134 @@ ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
 # Cache-bust: set to a unique value (e.g. git hash or timestamp) to force rebuild
 ARG CACHEBUST
 
-# Build shared packages, then all services, then apps — single merged layer
+# Build order by CRITICALITY — most important first to minimise downtime.
+# If the build fails partway, at least the critical services are already in the image.
+#
+# Priority tiers (each is a separate RUN for cache + diagnostics):
+#   T0: Shared packages (dependencies for everything)
+#   T1: Web + Gateway + Auth + User (frontend, routing, login)
+#   T2: Core business (media, content, wallet, payment, search)
+#   T3: Apps (admin, creator)
+#   T4: Engagement (notification, reward, messaging, etc.)
+#   T5: Intelligence (analytics, recommendation)
+#   T6: Universe services (reality, movie, comedy, etc.)
+#   T7: Operations (queue, support, moderation) + post-processing
+SHELL ["/bin/bash", "-eo", "pipefail", "-c"]
+
+# ---- T-1: Generate all Prisma clients (single repo-wide pass) ----
+# scripts/generate-prisma-clients.sh generates every canonical schema and
+# verifies the shared @prisma/client, replacing the old inline per-service
+# `prisma:generate && bash scripts/patch-prisma-client.sh` chain that used to
+# be repeated in every tier below. patch-prisma-client.sh is repo-wide and
+# idempotent, so running it once right after generation is equivalent to
+# running it after every service.
+RUN --mount=type=cache,target=/root/.cache/prisma \
+    echo "==> [T-1] Generating Prisma clients for all schemas..." && \
+    bash scripts/generate-prisma-clients.sh && \
+    bash scripts/patch-prisma-client.sh && \
+    echo "==> [T-1] Complete"
+
+# ---- T0: Shared packages (deps for everything) ----
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    echo "Cache bust: $CACHEBUST" && \
-    pnpm --filter @azeebo/utils run build && \
+    echo "==> [T0] Building shared packages..." && \
     pnpm --filter @azeebo/shared-types run build && \
+    pnpm --filter @azeebo/http-client run build && \
+    pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/validation run build && \
     pnpm --filter @azeebo/error-handling run build && \
     pnpm --filter @azeebo/logger run build && \
     pnpm --filter @azeebo/api-client run build && \
     pnpm --filter @azeebo/design-tokens run build && \
-    pnpm --filter @azeebo/shared-services prisma:generate && pnpm --filter @azeebo/shared-services run build && \
+    pnpm --filter @azeebo/analytics-sdk run build && \
+    pnpm --filter @azeebo/feature-flags run build && \
+    pnpm --filter @azeebo/shared-services run build && \
     pnpm --filter @azeebo/security run build && \
+    pnpm --filter @azeebo/flag-metrics run build && \
+    pnpm --filter @azeebo/queue-policy run build && \
     pnpm --filter @azeebo/ui run build && \
-    pnpm --filter @azeebo/auth-service prisma:generate && pnpm --filter @azeebo/auth-service run build && \
-    pnpm --filter @azeebo/user-service prisma:generate && pnpm --filter @azeebo/user-service run build && \
-    pnpm --filter @azeebo/wallet-service prisma:generate && pnpm --filter @azeebo/wallet-service run build && \
-    pnpm --filter @azeebo/payment-service prisma:generate && pnpm --filter @azeebo/payment-service run build && \
-    pnpm --filter @azeebo/search-service prisma:generate && pnpm --filter @azeebo/search-service run build && \
-    pnpm --filter @azeebo/media-service run build && \
-    pnpm --filter @azeebo/notification-service prisma:generate && pnpm --filter @azeebo/notification-service run build && \
-    pnpm --filter @azeebo/reward-service prisma:generate && pnpm --filter @azeebo/reward-service run build && \
-    pnpm --filter @azeebo/engagement-service prisma:generate && pnpm --filter @azeebo/engagement-service run build && \
-    pnpm --filter @azeebo/messaging-service prisma:generate && pnpm --filter @azeebo/messaging-service run build && \
-    pnpm --filter @azeebo/referral-service prisma:generate && pnpm --filter @azeebo/referral-service run build && \
-    pnpm --filter @azeebo/subscription-service prisma:generate && pnpm --filter @azeebo/subscription-service run build && \
-    pnpm --filter @azeebo/analytics-service prisma:generate && pnpm --filter @azeebo/analytics-service run build && \
-    pnpm --filter @azeebo/recommendation-service prisma:generate && pnpm --filter @azeebo/recommendation-service run build && \
-    pnpm --filter @azeebo/reality-service prisma:generate && pnpm --filter @azeebo/reality-service run build && \
-    pnpm --filter @azeebo/movie-service prisma:generate && pnpm --filter @azeebo/movie-service run build && \
-    pnpm --filter @azeebo/comedy-service prisma:generate && pnpm --filter @azeebo/comedy-service run build && \
-    pnpm --filter @azeebo/games-service prisma:generate && pnpm --filter @azeebo/games-service run build && \
-    pnpm --filter @azeebo/sports-service prisma:generate && pnpm --filter @azeebo/sports-service run build && \
-    pnpm --filter @azeebo/lifestyle-service prisma:generate && pnpm --filter @azeebo/lifestyle-service run build && \
-    pnpm --filter @azeebo/vertical-service prisma:generate && pnpm --filter @azeebo/vertical-service run build && \
-    pnpm --filter @azeebo/creator-service prisma:generate && pnpm --filter @azeebo/creator-service run build && \
-    pnpm --filter @azeebo/queue-service prisma:generate && pnpm --filter @azeebo/queue-service run build && \
-    pnpm --filter @azeebo/support-service prisma:generate && pnpm --filter @azeebo/support-service run build && \
-    pnpm --filter @azeebo/moderation-service prisma:generate && pnpm --filter @azeebo/moderation-service run build && \
-    pnpm --filter @azeebo/content-service prisma:generate && pnpm --filter @azeebo/content-service run build && \
+    pnpm --filter @azeebo/observability run build && \
+    pnpm --filter @azeebo/opentelemetry run build && \
+    pnpm --filter @azeebo/event-bus run build && \
+    pnpm --filter @azeebo/internal-clients run build && \
+    echo "==> [T0] Complete"
+
+# ---- T1: Critical path (web, gateway, auth, user) ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "==> [T1] Building critical path (web, gateway, auth, user)..." && \
+    pnpm --filter @azeebo/web run build && \
+    echo "==> Web build complete. Checking standalone output..." && \
+    (ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "  OK: standalone at nested path") ; \
+    if [ ! -f apps/web/.next/standalone/apps/web/server.js ]; then \
+      (ls -la apps/web/.next/standalone/server.js 2>/dev/null && echo "  OK: standalone at direct path") ; \
+    fi ; \
+    if [ ! -f apps/web/.next/standalone/apps/web/server.js ] && [ ! -f apps/web/.next/standalone/server.js ]; then \
+      echo "  WARN: standalone server.js not found, checking directory..." && ls -la apps/web/.next/standalone/ 2>&1 ; \
+    fi ; true && \
     pnpm --filter @azeebo/api-gateway run build && \
-    pnpm --filter @azeebo/admin prisma:generate && pnpm --filter @azeebo/admin run build && \
-    pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
-    mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma && \
-    mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma && \
-    echo "=== Flattening nested dist directories ===" && \
+    pnpm --filter @azeebo/auth-service run build && \
+    pnpm --filter @azeebo/user-service run build && \
+    echo "==> [T1] Complete"
+
+# ---- T2: Core business services ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "==> [T2] Building core business services..." && \
+    pnpm --filter @azeebo/media-service run build && \
+    pnpm --filter @azeebo/content-service run build && \
+    pnpm --filter @azeebo/knowledge-service run build && \
+    pnpm --filter @azeebo/wallet-service run build && \
+    pnpm --filter @azeebo/payment-service run build && \
+    pnpm --filter @azeebo/search-service run build && \
+    echo "==> [T2] Complete"
+
+# ---- T3: Apps (admin, creator) ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "==> [T3] Building admin and creator apps..." && \
+    pnpm --filter @azeebo/admin run build && \
+    pnpm --filter @azeebo/creator run build && \
+    (test -d apps/admin/src/generated/prisma && mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma) || true && \
+    (test -d apps/creator/src/generated/prisma && mkdir -p apps/creator/dist/generated && cp -r apps/creator/src/generated/prisma apps/creator/dist/generated/prisma) || true && \
+    echo "==> [T3] Complete"
+
+# ---- T4: Engagement services ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "==> [T4] Building engagement services..." && \
+    pnpm --filter @azeebo/notification-service run build && \
+    pnpm --filter @azeebo/reward-service run build && \
+    pnpm --filter @azeebo/engagement-service run build && \
+    pnpm --filter @azeebo/messaging-service run build && \
+    pnpm --filter @azeebo/referral-service run build && \
+    pnpm --filter @azeebo/subscription-service run build && \
+    echo "==> [T4] Complete"
+
+# ---- T5: Intelligence services ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "==> [T5] Building intelligence services..." && \
+    pnpm --filter @azeebo/analytics-service run build && \
+    pnpm --filter @azeebo/recommendation-service run build && \
+    echo "==> [T5] Complete"
+
+# ---- T6: Universe services ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "==> [T6] Building universe services..." && \
+    pnpm --filter @azeebo/reality-service run build && \
+    pnpm --filter @azeebo/movie-service run build && \
+    pnpm --filter @azeebo/comedy-service run build && \
+    pnpm --filter @azeebo/games-service run build && \
+    pnpm --filter @azeebo/sports-service run build && \
+    pnpm --filter @azeebo/lifestyle-service run build && \
+    pnpm --filter @azeebo/vertical-service run build && \
+    pnpm --filter @azeebo/creator-service run build && \
+    pnpm --filter @azeebo/live-event-service run build && \
+    echo "==> [T6] Complete"
+
+# ---- T7: Operations + post-processing ----
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "==> [T7] Building operations services..." && \
+    pnpm --filter @azeebo/queue-service run build && \
+    pnpm --filter @azeebo/support-service run build && \
+    pnpm --filter @azeebo/moderation-service run build && \
+    echo "==> [T7] Complete" && \
+    echo "==> Flattening nested dist directories..." && \
     for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do \
       dist="$svc_dir/dist"; \
       [ -d "$dist" ] || continue; \
@@ -156,20 +250,73 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
         nested_src=$(echo "$nested_main" | sed 's|/src/.*||'); \
         echo "Flattening: $nested_src/src/ -> $dist/"; \
         find "$nested_src/src" -maxdepth 1 -type f \( -name "*.js" -o -name "*.d.ts" \) -exec cp {} "$dist/" \; 2>/dev/null; \
-        find "$nested_src/src" -mindepth 2 -type f \( -name "*.js" -o -name "*.d.ts" \) | while read f; do \
-          rel="${f#$nested_src/src/}"; \
+        find "$nested_src/src" -mindepth 2 -type f \( -name "*.js" -o -name "*.d.ts" \) | while read -r f; do \
+          rel="${f#"$nested_src/src/"}"; \
           mkdir -p "$dist/$(dirname "$rel")" && cp "$f" "$dist/$rel"; \
         done 2>/dev/null; \
         rm -rf "$nested_src" 2>/dev/null; \
       fi; \
     done && \
-    echo "=== Flattened dist inventory ===" && \
+    echo "==> Copying Prisma clients to dist/prisma/client/ for compiled imports..." && \
+    for schema in $(find services apps -maxdepth 5 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/prisma/client/*" -not -path "*/src/prisma/*" -not -path "*/generated/*" 2>/dev/null | sort); do \
+      proj_root=$(dirname "$schema"); \
+      svc_root=$(dirname "$proj_root"); \
+      svc_name=$(basename "$svc_root"); \
+      custom_output=$(grep -m1 'output\s*=' "$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/' || true); \
+      if [ -n "$custom_output" ] && [ -d "$svc_root/dist" ]; then \
+        full_output="$proj_root/$custom_output"; \
+        dist_prisma="$svc_root/dist/prisma/client"; \
+        if [ -d "$full_output" ] && [ ! -d "$dist_prisma" ]; then \
+          mkdir -p "$dist_prisma" && cp -r "$full_output/." "$dist_prisma/"; \
+          echo "  [$svc_name] Copied to dist/prisma/client/"; \
+        elif [ -d "$svc_root/prisma/client" ] && [ ! -d "$dist_prisma" ]; then \
+          mkdir -p "$dist_prisma" && cp -r "$svc_root/prisma/client/." "$dist_prisma/"; \
+          echo "  [$svc_name] Copied to dist/prisma/client/"; \
+        fi; \
+      fi; \
+    done && \
+    echo "==> Flattened dist inventory:" && \
     find services -name "main.js" -path "*/dist/*" | sort && \
-    pnpm --filter @azeebo/web run build; \
-    echo "=== Web .next/ contents ===" && ls -la apps/web/.next/ 2>&1 | head -20; \
-    echo "=== .next/standalone check ===" && ls -la apps/web/.next/standalone/ 2>&1 | head -10; \
-    echo "=== .next/standalone/apps/web check ===" && ls -la apps/web/.next/standalone/apps/web/ 2>&1 | head -10; \
-    true
+    echo "==> Packaging workspace package dists for runtime" && \
+    find packages -maxdepth 2 -name "dist" -type d -o -path "*/src/prisma/client" -type d 2>/dev/null | \
+      tar czf /tmp/pkg-dist.tar.gz -C /app -T - 2>/dev/null || true
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# ---- Verify ALL outputs exist — crash if anything is missing ----
+RUN echo "==> Verifying build outputs..." && \
+    set -e && \
+    echo "==> [T8] Asserting generated Prisma clients are fresh (schema vs embedded copy)..." && \
+    node scripts/check-prisma-client-stale.mjs && \
+    MISSING=0 && \
+    for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do \
+      name=$(basename "$svc_dir"); \
+      if [ -f "$svc_dir/package.json" ] && grep -q '"@azeebo/' "$svc_dir/package.json"; then \
+        if [ ! -f "$svc_dir/dist/main.js" ]; then \
+          echo "  FATAL: MISSING $name/dist/main.js"; MISSING=$((MISSING+1)); \
+        else \
+          echo "  OK: $name/dist/main.js"; \
+        fi; \
+      fi; \
+    done && \
+    for app in apps/admin apps/creator; do \
+      if [ ! -f "$app/dist/main.js" ]; then echo "  FATAL: MISSING $app/dist/main.js"; MISSING=$((MISSING+1)); \
+      else echo "  OK: $app/dist/main.js"; fi; \
+    done && \
+    if [ -f "apps/web/.next/standalone/apps/web/server.js" ]; then \
+      echo "  OK: apps/web/.next/standalone/apps/web/server.js (nested)"; \
+    elif [ -f "apps/web/.next/standalone/server.js" ]; then \
+      echo "  OK: apps/web/.next/standalone/server.js (direct)"; \
+    else \
+      echo "  FATAL: MISSING apps/web/.next/standalone/server.js"; \
+      echo "  Contents of apps/web/.next/standalone/:"; \
+      ls -la apps/web/.next/standalone/ 2>&1; \
+      MISSING=$((MISSING+1)); \
+    fi && \
+    if [ "$MISSING" -ne 0 ]; then \
+      echo "=== BUILD FAILED: $MISSING critical output(s) missing ==="; \
+      exit 1; \
+    fi && \
+    echo "=== ALL BUILDS PASSED ==="
 
 # Create /runtime with only what the container needs at runtime.
 # Each copy section is independent (;) so a failure in one section does NOT
@@ -182,10 +329,10 @@ RUN echo "Cache bust: $CACHEBUST" && \
       -not -path "*/dist/*" \
       -not -path "*/.next/*" \
       -not -path "*/.prisma/*" \
-      | while read f; do \
+      | while read -r f; do \
         mkdir -p "/runtime/$(dirname "$f")" && cp "$f" "/runtime/$f"; \
       done; \
-    find services -maxdepth 2 -mindepth 2 -type d | while read svc; do \
+    find services -maxdepth 2 -mindepth 2 -type d | while read -r svc; do \
       if [ -d "$svc/dist" ]; then \
         mkdir -p "/runtime/$svc/dist" && cp -r "$svc/dist/." "/runtime/$svc/dist/"; \
       fi; \
@@ -193,15 +340,25 @@ RUN echo "Cache bust: $CACHEBUST" && \
         mkdir -p "/runtime/$svc/prisma" && cp -r "$svc/prisma/." "/runtime/$svc/prisma/"; \
       fi; \
     done; \
-    find packages -maxdepth 1 -mindepth 1 -type d | while read pkg; do \
+    find packages -maxdepth 1 -mindepth 1 -type d | while read -r pkg; do \
       if [ -d "$pkg/dist" ]; then \
         mkdir -p "/runtime/$pkg/dist" && cp -r "$pkg/dist/." "/runtime/$pkg/dist/"; \
       fi; \
     done; \
-    mkdir -p /runtime/apps/admin/dist && cp -r apps/admin/dist/. /runtime/apps/admin/dist/ && \
-    mkdir -p /runtime/apps/admin/prisma && cp -r apps/admin/prisma/. /runtime/apps/admin/prisma/ 2>/dev/null; \
-    mkdir -p /runtime/apps/creator-portal/dist && cp -r apps/creator-portal/dist/. /runtime/apps/creator-portal/dist/ && \
-    mkdir -p /runtime/apps/creator-portal/prisma && cp -r apps/creator-portal/prisma/. /runtime/apps/creator-portal/prisma/ 2>/dev/null; \
+    if [ -d apps/admin/dist ]; then \
+      mkdir -p /runtime/apps/admin/dist && cp -r apps/admin/dist/. /runtime/apps/admin/dist/; \
+      mkdir -p /runtime/apps/admin/prisma && cp -r apps/admin/prisma/. /runtime/apps/admin/prisma/ 2>/dev/null; \
+      echo "OK: admin dist copied"; \
+    else \
+      echo "WARN: apps/admin/dist not found — admin app will not start"; \
+    fi; \
+    if [ -d apps/creator/dist ]; then \
+      mkdir -p /runtime/apps/creator/dist && cp -r apps/creator/dist/. /runtime/apps/creator/dist/; \
+      mkdir -p /runtime/apps/creator/prisma && cp -r apps/creator/prisma/. /runtime/apps/creator/prisma/ 2>/dev/null; \
+      echo "OK: creator dist copied"; \
+    else \
+      echo "WARN: apps/creator/dist not found — creator will not start"; \
+    fi; \
     mkdir -p /runtime/apps/web/standalone && \
     if [ -d apps/web/.next/standalone/apps/web ]; then \
       cp -r apps/web/.next/standalone/apps/web/. /runtime/apps/web/standalone/ && \
@@ -219,7 +376,8 @@ RUN echo "Cache bust: $CACHEBUST" && \
     echo "=== Builder dist inventory ===" && \
     find services -name "main.js" -path "*/dist/*" | sort && \
     echo "=== Web standalone inventory ===" && \
-    ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "OK: standalone/apps/web/server.js exists in builder" || echo "INFO: standalone at nested path (apps/web/.next/standalone/apps/web/)" && \
+    ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "OK: standalone/apps/web/server.js exists in builder" ; \
+    if [ ! -f apps/web/.next/standalone/apps/web/server.js ]; then echo "INFO: standalone at nested path (apps/web/.next/standalone/apps/web/)"; fi && \
     echo "=== /runtime dist inventory ===" && \
     find /runtime/services -name "main.js" -path "*/dist/*" 2>/dev/null | sort && \
     echo "=== Verifying critical dist files ===" && \
@@ -232,6 +390,10 @@ RUN echo "Cache bust: $CACHEBUST" && \
 # Stage 2: Runtime — lean image with production deps only
 # ============================================================
 FROM node:22.16.0-bookworm-slim
+
+# Stage 2 RUNs pipe find(1) output; keep pipefail semantics identical to the
+# builder stage so a failed find is never silently swallowed under /bin/sh.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -247,6 +409,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
       locales \
       openssl \
       procps \
+      gosu \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
     && useradd -r -s /bin/false pgbouncer || true \
@@ -277,23 +440,42 @@ RUN if [ -d /app/apps/web/standalone/apps/web ] && [ ! -f /app/apps/web/standalo
 
 # Verify critical files exist before proceeding (warn only — entrypoint will retry)
 RUN echo "==> Verifying critical build artifacts..." && \
-    OK=true && \
-    test -f /app/apps/web/standalone/server.js && echo "  OK: web-app standalone server.js" || \
-      (echo "  WARN: web-app standalone server.js not found — will retry in entrypoint" && OK=false) && \
-    test -f /app/services/core/auth-service/dist/main.js && echo "  OK: auth-service" || \
-      (echo "  WARN: auth-service/dist/main.js not found" && OK=false) && \
-    test -f /app/services/gateway/api-gateway/dist/main.js && echo "  OK: api-gateway" || \
-      (echo "  WARN: api-gateway/dist/main.js not found" && OK=false) && \
+    if [ -f /app/apps/web/standalone/server.js ] || [ -f /app/apps/web/standalone/apps/web/server.js ]; then \
+      echo "  OK: web-app standalone server.js"; \
+    else \
+      echo "  WARN: web-app standalone server.js not found — will retry in entrypoint"; \
+    fi && \
+    if [ -f /app/services/core/auth-service/dist/main.js ]; then \
+      echo "  OK: auth-service"; \
+    else \
+      echo "  WARN: auth-service/dist/main.js not found"; \
+    fi && \
+    if [ -f /app/services/gateway/api-gateway/dist/main.js ]; then \
+      echo "  OK: api-gateway"; \
+    else \
+      echo "  WARN: api-gateway/dist/main.js not found"; \
+    fi && \
     echo "  Build artifact check complete (warnings are non-fatal)"
 
 # Fresh production install — only production dependencies, no devDeps
 ENV CI=true
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
+# pnpm install --prod can wipe workspace package dist/ directories.
+# Restore them from the builder stage so workspace package symlinks resolve.
+COPY --from=builder /tmp/pkg-dist.tar.gz /tmp/pkg-dist.tar.gz
+RUN tar xzf /tmp/pkg-dist.tar.gz -C /app 2>/dev/null && \
+    rm -f /tmp/pkg-dist.tar.gz && \
+    echo "  Restored workspace package dist directories from builder"
+
 # Verify standalone output survived pnpm install (warn only)
-RUN test -f /app/apps/web/standalone/server.js && echo "  OK: server.js after pnpm install" || \
-    (echo "  WARN: server.js MISSING after pnpm install — entrypoint will handle" && \
-     echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1)
+RUN if [ -f /app/apps/web/standalone/server.js ] || [ -f /app/apps/web/standalone/apps/web/server.js ]; then \
+      echo "  OK: server.js after pnpm install"; \
+    else \
+      echo "  WARN: server.js MISSING after pnpm install — entrypoint will handle" && \
+      echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1 && \
+      echo "  Standalone contents:" && ls -la /app/apps/web/standalone/ 2>&1; \
+    fi
 
 # All post-install setup in a single layer:
 #   1. Symlink workspace packages (avoid duplicate node_modules copies)
@@ -303,8 +485,8 @@ RUN test -f /app/apps/web/standalone/server.js && echo "  OK: server.js after pn
 #   5. Copy @prisma/client shim to each service's local node_modules
 #   6. Aggressive cleanup of all caches and temp files
 RUN mkdir -p /app/node_modules/@azeebo && \
-    for pkg_json in $(find packages services apps -maxdepth 3 -name "package.json" \
-      -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.prisma/*"); do \
+    find packages services apps -maxdepth 3 -name "package.json" \
+      -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.prisma/*" | while read -r pkg_json; do \
       name=$(node -e "process.stdout.write(require('./$pkg_json').name||'')" 2>/dev/null); \
       if [ -n "$name" ]; then \
         target=$(realpath "$(dirname "$pkg_json")"); \
@@ -313,6 +495,8 @@ RUN mkdir -p /app/node_modules/@azeebo && \
       fi; \
     done && \
     find /app/node_modules/.pnpm -maxdepth 1 -type d -name "*@azeebo*" -exec rm -rf {} + 2>/dev/null; \
+    find /app/services /app/apps -path "*/node_modules/@azeebo" -type d -exec rm -rf {} + 2>/dev/null; \
+    find /app/services /app/apps -path "*/node_modules/.pnpm" -type d -exec rm -rf {} + 2>/dev/null; \
     rm -rf /root/.local/share/pnpm 2>/dev/null; \
     npm install -g prisma@6.19.3 && npm cache clean --force 2>/dev/null; \
     true
@@ -339,61 +523,54 @@ RUN mkdir -p /app/node_modules/@azeebo && \
 # the custom output dir (e.g., src/prisma/client/).
 #
 # DATABASE_URL is required by prisma generate (schema validation) even though no connection is made.
-RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" && \
-    export DATABASE_URL && \
-    SHARED_CLIENT_DIR=$(cd /app/services/core/auth-service && node -e "console.log(require('path').dirname(require.resolve('@prisma/client')))" 2>/dev/null) && \
-    echo "  Shared @prisma/client: $SHARED_CLIENT_DIR" && \
-    for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
+RUN echo "==> Installing per-service Prisma clients from builder stage..." && \
+    for schema in $(find services apps -maxdepth 5 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/prisma/client/*" -not -path "*/src/prisma/*" -not -path "*/generated/*" | sort); do \
       proj_root=$(dirname "$schema"); \
       svc_root=$(dirname "$proj_root"); \
-      echo "  Generating Prisma client for $svc_root..."; \
+      svc_name=$(basename "$svc_root"); \
       SVC_NM="/app/$svc_root/node_modules"; \
-      rm -rf "$SVC_NM/@prisma/client"; \
-      mkdir -p "$SVC_NM/@prisma/client"; \
-      cp -r "$SHARED_CLIENT_DIR/." "$SVC_NM/@prisma/client/"; \
-      rm -rf "$SVC_NM/@prisma/client/node_modules"; \
-      CUSTOM_OUTPUT=$(grep -m1 'output\s*=' "/app/$schema" | sed 's/.*"\(.*\)".*/\1/'); \
-      if [ -n "$CUSTOM_OUTPUT" ]; then \
-        FULL_OUTPUT="/app/$proj_root/$CUSTOM_OUTPUT"; \
-        (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
-          echo "  WARNING: prisma generate failed for $proj_root"; \
-        if [ -d "$FULL_OUTPUT" ]; then \
-          echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/index.js"; \
-          echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/default.js"; \
-        else \
-          echo "  WARNING: Custom output $FULL_OUTPUT not found for $svc_root"; \
-        fi; \
+      CUSTOM_OUTPUT=$(grep -m1 'output\s*=' "/app/$schema" 2>/dev/null | sed 's/.*"\(.*\)".*/\1/'); \
+      PRISMA_CLIENT_DIR="/app/$svc_root/prisma/client"; \
+      DIST_PRISMA_DIR="/app/$svc_root/dist/prisma/client"; \
+      FULL_OUTPUT="/app/$proj_root/$CUSTOM_OUTPUT"; \
+      if [ -d "$PRISMA_CLIENT_DIR" ]; then \
+        mkdir -p "$SVC_NM/@prisma/client" 2>/dev/null; \
+        rm -rf "$SVC_NM/@prisma/client"; \
+        mkdir -p "$SVC_NM/@prisma/client"; \
+        cp -r "$PRISMA_CLIENT_DIR/." "$SVC_NM/@prisma/client/"; \
+        mkdir -p "$DIST_PRISMA_DIR" && cp -r "$PRISMA_CLIENT_DIR/." "$DIST_PRISMA_DIR/"; \
+        echo "  [$svc_name] OK: installed from prisma/client/"; \
+      elif [ -d "$FULL_OUTPUT" ]; then \
+        mkdir -p "$SVC_NM/@prisma/client" 2>/dev/null; \
+        rm -rf "$SVC_NM/@prisma/client"; \
+        mkdir -p "$SVC_NM/@prisma/client"; \
+        cp -r "$FULL_OUTPUT/." "$SVC_NM/@prisma/client/"; \
+        mkdir -p "$PRISMA_CLIENT_DIR" && cp -r "$FULL_OUTPUT/." "$PRISMA_CLIENT_DIR/"; \
+        mkdir -p "$DIST_PRISMA_DIR" && cp -r "$FULL_OUTPUT/." "$DIST_PRISMA_DIR/"; \
+        echo "  [$svc_name] OK: installed from custom output"; \
       else \
-        (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
-          echo "  WARNING: prisma generate failed for $proj_root"; \
-        if [ -d "$SVC_NM/.prisma/client" ]; then \
-          echo "  Generated Prisma client for $svc_root at $SVC_NM/.prisma/client"; \
-        else \
-          echo "  WARNING: No .prisma/client found for $svc_root after generate!"; \
-        fi; \
+        echo "  [$svc_name] WARNING: no Prisma client source found"; \
       fi; \
-      cd /app; \
     done && \
-    SHARED_ENGINE=""; \
-    for engine in $(find /app/services /app/apps -path "*/.prisma/client/libquery_engine-*.node" -type f 2>/dev/null); do \
-      if [ -z "$SHARED_ENGINE" ]; then \
-        SHARED_ENGINE="$engine"; \
-      else \
-        rm -f "$engine" && ln -sfn "$SHARED_ENGINE" "$engine"; \
-      fi; \
-    done; \
-    npm cache clean --force 2>/dev/null; \
-    rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /root/.local 2>/dev/null; \
-    find /app/node_modules -name "*.md" -o -name "*.txt" -o -name "*.map" -o -name "LICENSE*" -o -name "CHANGELOG*" | xargs rm -f 2>/dev/null; \
+    echo "==> Prisma clients installation complete" && \
+    echo "==> Pruning unused Prisma query engine binaries (keeping linux-glibc only)..." && \
+    find /app -path '*/node_modules/.prisma/client' -type d 2>/dev/null | while read -r d; do \
+      find "$d" -maxdepth 1 -name 'libquery_engine-*' ! -name '*linux-glibc*' -exec rm -f {} + 2>/dev/null; \
+    done && \
+    find /app -path '*/node_modules/@prisma/client' -type d 2>/dev/null | while read -r d; do \
+      find "$d" -maxdepth 1 -name 'libquery_engine-*' ! -name '*linux-glibc*' -exec rm -f {} + 2>/dev/null; \
+    done && \
+    rm -rf /root/.npm /root/.cache /root/.local 2>/dev/null; \
+    find /app/node_modules \( -name "*.md" -o -name "*.txt" -o -name "*.map" -o -name "LICENSE*" -o -name "CHANGELOG*" \) -exec rm -f {} + 2>/dev/null; \
     find /app/node_modules -name "__tests__" -type d -exec rm -rf {} + 2>/dev/null; \
     find /app/node_modules -name "test" -type d -exec rm -rf {} + 2>/dev/null; \
     find /app/node_modules -name "docs" -type d -exec rm -rf {} + 2>/dev/null; \
     true
 
 # Copy config files (single layer with final cleanup)
-COPY supervisord.conf /etc/supervisord.conf
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY entrypoint.sh /entrypoint.sh
+COPY deploy/supervisord.conf /etc/supervisord.conf
+COPY deploy/nginx.conf /etc/nginx/nginx.conf
+COPY deploy/entrypoint.sh /entrypoint.sh
 COPY scripts/demo-content /app/scripts/demo-content
 RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh && \
     chmod +x /app/scripts/demo-content/*.sh && \
@@ -402,13 +579,12 @@ RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh && \
     rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN useradd -r -s /bin/false -u 65532 nodejs && \
-    chown -R nodejs:nodejs /app
+    chown -R nodejs:nodejs /app && \
+    gosu nodejs true
 
 EXPOSE 80 443 3013 4000 4014 4016
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=5 --start-period=300s \
-  CMD curl -f http://localhost:80/health || exit 1
-
-USER nodejs
+  CMD ["curl", "-f", "http://localhost:80/health"]
 
 ENTRYPOINT ["/entrypoint.sh"]

@@ -65,13 +65,13 @@ describe('RateLimitService', () => {
       expect(redis.expire).toHaveBeenCalledWith('test-key', 60);
     });
 
-    it('should return allowed=true on Redis error', async () => {
+    it('should return allowed=false on Redis error (fail closed)', async () => {
       redis.incr.mockRejectedValue(new Error('Redis error'));
 
       const result = await service.checkRateLimit('test-key', { limit: 10, windowMs: 60000 });
 
-      expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(10);
+      expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
     });
   });
 
@@ -94,12 +94,12 @@ describe('RateLimitService', () => {
         expect(result).toBe(false);
       });
 
-      it('should return false on Redis error', async () => {
+      it('should return true on Redis error (fail closed)', async () => {
         redis.get.mockRejectedValue(new Error('Redis error'));
 
         const result = await service.isBlocked('192.168.1.1');
 
-        expect(result).toBe(false);
+        expect(result).toBe(true);
       });
     });
 
@@ -222,12 +222,12 @@ describe('RateLimitService', () => {
       expect(result.limit).toBe(10);
     });
 
-    it('should return allowed=true on Redis error', async () => {
+    it('should return allowed=false on Redis error (fail closed)', async () => {
       redis.get.mockRejectedValue(new Error('Redis error'));
 
       const result = await service.getRateLimitStatus('test-key', { limit: 10, windowMs: 60000 });
 
-      expect(result.allowed).toBe(true);
+      expect(result.allowed).toBe(false);
     });
   });
 });

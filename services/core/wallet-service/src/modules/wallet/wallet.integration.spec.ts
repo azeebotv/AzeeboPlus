@@ -1,11 +1,41 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WalletService } from './wallet.service';
-import { PrismaService } from '../database/prisma.service';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { Wallet, WalletTransaction, Prisma } from '@prisma/client';
+import { WalletService } from './wallet.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { ConfigModule } from '@nestjs/config';
+import { CacheService, RedisService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
+import { EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 
 jest.mock('../database/prisma.service');
+
+interface Wallet {
+  id: string;
+  userId: string;
+  balance: Prisma.Decimal;
+  bonusBalance: Prisma.Decimal;
+  promoBalance: Prisma.Decimal;
+  currency: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface WalletTransaction {
+  id: string;
+  walletId: string;
+  type: string;
+  amount: Prisma.Decimal;
+  status: string;
+  description: string;
+  reference: string | null;
+  metadata: unknown;
+  idempotencyKey: string | null;
+  provider: string | null;
+  providerRef: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 describe('WalletService Integration', () => {
   let service: WalletService;
@@ -56,6 +86,7 @@ describe('WalletService Integration', () => {
               create: jest.fn(),
               findMany: jest.fn(),
             },
+            $queryRaw: jest.fn().mockResolvedValue([{ id: 'wallet-123', balance: 500 }]),
             $transaction: jest.fn((callback) => {
               const mockTx = {
                 walletTransaction: { create: jest.fn().mockResolvedValue(mockTransaction) },
@@ -64,9 +95,40 @@ describe('WalletService Integration', () => {
                     .fn()
                     .mockResolvedValue({ ...mockWallet, bonusBalance: new Prisma.Decimal(200) }),
                 },
+                $queryRaw: jest.fn().mockResolvedValue([{ id: 'wallet-123', balance: 500 }]),
               };
               return callback(mockTx);
             }),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            deleteByPattern: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            setIfNotExists: jest.fn().mockResolvedValue(true),
+            del: jest.fn().mockResolvedValue(1),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn().mockResolvedValue(false),
+          },
+        },
+        {
+          provide: EVENT_BUS_SERVICE,
+          useValue: {
+            emit: jest.fn(),
+            publish: jest.fn(),
           },
         },
       ],

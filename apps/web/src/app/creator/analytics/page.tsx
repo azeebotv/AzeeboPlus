@@ -1,12 +1,25 @@
 'use client';
+
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import {
+  Eye,
+  Heart,
+  Users,
+  DollarSign,
+  Clock,
+  CheckCircle2,
+  Share2,
+  MessageSquare,
+  Sparkles,
+  BarChart2,
+} from 'lucide-react';
 
 interface AnalyticsData {
   totalViews: number;
@@ -31,267 +44,253 @@ interface AnalyticsData {
 }
 
 export default function CreatorAnalyticsPage(): React.JSX.Element {
-  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
-  const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  const { data: analytics, isLoading, error } = useQuery({
+  const {
+    data: analytics,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['creator', 'analytics', timeRange],
     queryFn: async () => {
-      const result = await apiFetch<{ success: boolean; data: Record<string, unknown> }>(`/v1/creators/analytics?range=${timeRange}`);
-      if (result.success && result.data) {
-        const d = result.data;
-        return {
-          totalViews: Number(d.views ?? d.totalViews ?? 0),
-          totalLikes: Number(d.likes ?? d.totalLikes ?? 0),
-          totalFollowers: Number(d.followers ?? d.totalFollowers ?? 0),
-          totalEarnings: Number(d.earnings ?? d.totalEarnings ?? 0),
-          viewsGrowth: Number(d.viewsGrowth ?? 0),
-          followersGrowth: Number(d.followersGrowth ?? 0),
-          earningsGrowth: Number(d.earningsGrowth ?? 0),
-          topContent: Array.isArray(d.topContent)
-            ? d.topContent.map((c: Record<string, unknown>) => ({
-                id: String(c.id),
-                title: String(c.title || ''),
-                views: Number(c.views ?? c.viewCount ?? 0),
-                thumbnail: String(c.thumbnail || ''),
-              }))
-            : [],
-          demographics: d.demographics || {
-            ageGroups: [],
-            topCountries: [],
-            genderSplit: { male: 0, female: 0, other: 0 },
-          },
-          engagementMetrics: d.engagementMetrics ||
-            d.analytics || { avgWatchTime: 0, completionRate: 0, shareRate: 0, commentRate: 0 },
-        } as AnalyticsData;
-      }
+      const res = await apiFetch<AnalyticsData>(`/v1/creators/analytics?range=${timeRange}`);
+      if (res.success && res.data) return res.data;
       return null;
     },
-    enabled: isEnabled,
   });
 
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
-
-  if (isLoading) {
+  if (error) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-        <AppHeader />
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <Skeleton width="120px" height="20px" className="mb-4" />
-            <Skeleton width="200px" height="32px" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="az-glass p-6">
-                <Skeleton width="60%" height="32px" className="mb-2" />
-                <Skeleton width="40%" height="16px" />
-              </div>
-            ))}
-          </div>
+      <PageShell glowColor="rgba(232,66,10,0.12)">
+        <div className="max-w-xl mx-auto py-20 px-4">
+          <ErrorState
+            title="Failed to load analytics"
+            description="Unable to sync streaming telemetry for your studio."
+            onButtonPress={() => refetch()}
+          />
         </div>
-      </div>
+      </PageShell>
     );
   }
-
-  if (error || !analytics) {
-    return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-        <AppHeader />
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <ErrorState title="Failed to load analytics" description="Please try again later" onButtonPress={() => router.refresh()} />
-        </div>
-      </div>
-    );
-  }
-
-  const statCards = [
-    {
-      label: 'Total Views',
-      value: formatNumber(analytics.totalViews),
-      growth: analytics.viewsGrowth,
-    },
-    {
-      label: 'Followers',
-      value: formatNumber(analytics.totalFollowers),
-      growth: analytics.followersGrowth,
-    },
-    {
-      label: 'Earnings',
-      value: `₦${formatNumber(analytics.totalEarnings)}`,
-      growth: analytics.earningsGrowth,
-    },
-    { label: 'Likes', value: formatNumber(analytics.totalLikes), growth: null },
-  ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-      <AppHeader />
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-white/50 hover:text-white mb-2 flex items-center gap-2 transition-colors"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>{' '}
-            Back
-          </button>
-          <h1 className="text-3xl font-bold text-white">Creator Analytics</h1>
-        </div>
+    <PageShell glowColor="rgba(232,66,10,0.14)">
+      <PageHero
+        badge="Audience Telemetry"
+        title="Studio Analytics"
+        description="Granular performance insights, audience demographics, and playback retention metrics."
+      />
 
-        <div className="flex gap-2 mb-8" role="listbox" aria-label="Time range">
-          {(['7d', '30d', '90d', 'all'] as const).map((range) => (
-            <button
-              key={range}
-              onClick={() => setTimeRange(range)}
-              role="option"
-              aria-selected={timeRange === range}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${timeRange === range ? 'az-btn-primary' : ''}`}
-              style={
-                timeRange !== range
-                  ? {
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      backgroundColor: 'rgba(255,255,255,0.08)',
-                      color: '#fff',
-                    }
-                  : undefined
-              }
-            >
-              {range === '7d'
-                ? '7 Days'
-                : range === '30d'
-                  ? '30 Days'
-                  : range === '90d'
-                    ? '90 Days'
-                    : 'All Time'}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statCards.map((stat) => (
-            <div key={stat.label} className="az-glass p-6">
-              <p className="text-3xl font-bold text-white">{stat.value}</p>
-              <p className="text-sm text-white/50 mt-1">{stat.label}</p>
-              {stat.growth !== null && (
-                <p
-                  className={`text-sm font-medium mt-2`}
-                  style={{ color: stat.growth >= 0 ? '#22C55E' : '#EF4444' }}
+      <div className="max-w-5xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Time Horizon Selector */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-mono uppercase tracking-wider text-white/50">
+            Observation Interval
+          </span>
+          <div className="flex items-center gap-1.5 p-1 rounded-full az-glass border border-white/10">
+            {(['7d', '30d', '90d', 'all'] as const).map((range) => {
+              const isActive = timeRange === range;
+              return (
+                <button
+                  key={range}
+                  type="button"
+                  onClick={() => setTimeRange(range)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-[var(--brand-orange)] text-white shadow-lg'
+                      : 'text-white/60 hover:text-white'
+                  }`}
                 >
-                  {stat.growth >= 0 ? '↑' : '↓'} {Math.abs(stat.growth)}%
-                </p>
-              )}
-            </div>
-          ))}
+                  {range.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="az-glass p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Engagement Metrics</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: 'Avg Watch Time', value: `${analytics.engagementMetrics.avgWatchTime}m` },
-                {
-                  label: 'Completion Rate',
-                  value: `${analytics.engagementMetrics.completionRate}%`,
-                },
-                { label: 'Share Rate', value: `${analytics.engagementMetrics.shareRate}%` },
-                { label: 'Comment Rate', value: `${analytics.engagementMetrics.commentRate}%` },
-              ].map((metric) => (
+        {/* Primary Metrics Grid */}
+        <ScrollReveal>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              {
+                label: 'Total Views',
+                value: analytics?.totalViews.toLocaleString() || '0',
+                icon: Eye,
+                color: 'text-[var(--brand-orange)]',
+              },
+              {
+                label: 'Reactions / Likes',
+                value: analytics?.totalLikes.toLocaleString() || '0',
+                icon: Heart,
+                color: 'text-pink-400',
+              },
+              {
+                label: 'Audience Reach',
+                value: analytics?.totalFollowers.toLocaleString() || '0',
+                icon: Users,
+                color: 'text-purple-400',
+              },
+              {
+                label: 'Revenue Accrued',
+                value: `₦${analytics?.totalEarnings.toLocaleString() || '0'}`,
+                icon: DollarSign,
+                color: 'text-emerald-400',
+              },
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
                 <div
-                  key={metric.label}
-                  className="text-center p-4"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '0.75rem' }}
+                  key={stat.label}
+                  className="az-glass p-5 sm:p-6 rounded-2xl border border-white/10 hover:border-white/20 transition-all"
                 >
-                  <p className="text-2xl font-bold" style={{ color: '#E8420A' }}>
-                    {metric.value}
-                  </p>
-                  <p className="text-sm text-white/50 mt-1">{metric.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="az-glass p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Top Performing Content</h2>
-            <div className="space-y-3">
-              {analytics.topContent.slice(0, 5).map((content, index) => (
-                <div key={content.id} className="flex items-center gap-3">
-                  <span className="text-lg font-bold w-8" style={{ color: '#E8420A' }}>
-                    #{index + 1}
-                  </span>
-                  <div className="flex-1">
-                    <p className="font-medium text-white truncate">{content.title}</p>
-                    <p className="text-sm text-white/50">{formatNumber(content.views)} views</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="az-glass p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Audience Demographics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Age Groups</h3>
-              <div className="space-y-3">
-                {analytics.demographics.ageGroups.map((age) => (
-                  <div key={age.range} className="flex items-center gap-3">
-                    <span className="text-sm text-white w-16">{age.range}</span>
-                    <div
-                      className="flex-1 h-2 rounded-full"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                    >
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${age.percentage}%`, backgroundColor: '#E8420A' }}
-                      />
-                    </div>
-                    <span className="text-sm text-white w-12 text-right">{age.percentage}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Top Countries</h3>
-              <div className="space-y-3">
-                {analytics.demographics.topCountries.map((country) => (
-                  <div key={country.country} className="flex items-center gap-3">
-                    <span className="text-sm text-white w-24">{country.country}</span>
-                    <div
-                      className="flex-1 h-2 rounded-full"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                    >
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${country.percentage}%`, backgroundColor: '#0D3B2E' }}
-                      />
-                    </div>
-                    <span className="text-sm text-white w-12 text-right">
-                      {country.percentage}%
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-white/40">
+                      {stat.label}
                     </span>
+                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                      <Icon className={`w-4 h-4 ${stat.color}`} />
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <p className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                      {stat.value}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </div>
+        </ScrollReveal>
+
+        {analytics ? (
+          <>
+            {/* Top Performing Releases */}
+            <ScrollReveal delay={0.1}>
+              <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[var(--brand-orange)]" />
+                  Top Performing Releases
+                </h2>
+                <div className="space-y-3">
+                  {analytics.topContent.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 flex items-center gap-4 transition-all"
+                    >
+                      {item.thumbnail && (
+                        <div className="w-14 h-14 rounded-lg overflow-hidden relative flex-shrink-0 bg-white/5 border border-white/10">
+                          <OptimizedImage
+                            src={item.thumbnail}
+                            alt={item.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-white truncate">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-white/50 mt-0.5">
+                          {item.views.toLocaleString()} verified streams
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* Engagement Metrics & Demographics */}
+            <ScrollReveal delay={0.2}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Engagement Breakdown */}
+                <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+                  <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                    <BarChart2 className="w-5 h-5 text-blue-400" />
+                    Playback Dynamics
+                  </h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-white/40">Watch Time</span>
+                        <Clock className="w-3.5 h-3.5 text-white/40" />
+                      </div>
+                      <p className="text-xl font-bold text-white">
+                        {analytics.engagementMetrics.avgWatchTime.toFixed(1)}s
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-white/40">Completion</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      </div>
+                      <p className="text-xl font-bold text-white">
+                        {analytics.engagementMetrics.completionRate.toFixed(1)}%
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-white/40">Virality / Share</span>
+                        <Share2 className="w-3.5 h-3.5 text-blue-400" />
+                      </div>
+                      <p className="text-xl font-bold text-white">
+                        {analytics.engagementMetrics.shareRate.toFixed(1)}%
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-white/40">Comments</span>
+                        <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+                      </div>
+                      <p className="text-xl font-bold text-white">
+                        {analytics.engagementMetrics.commentRate.toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Audience Age Groups */}
+                <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+                  <h2 className="text-lg font-bold text-white mb-6">
+                    Audience Demographics
+                  </h2>
+                  <div className="space-y-4">
+                    {analytics.demographics.ageGroups.map((group) => (
+                      <div key={group.range} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-white/60 font-medium">{group.range} years</span>
+                          <span className="text-white font-mono font-bold">{group.percentage}%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[var(--brand-orange)] to-amber-500 rounded-full"
+                            style={{ width: `${group.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+          </>
+        ) : (
+          <div className="az-glass p-12 text-center rounded-3xl border border-white/10">
+            <BarChart2 className="w-12 h-12 text-white/30 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-2">No Analytics Collected</h3>
+            <p className="text-xs text-white/50 max-w-sm mx-auto">
+              Audience streams and playback engagement data will populate once your content premieres.
+            </p>
+          </div>
+        )}
       </div>
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

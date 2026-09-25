@@ -1,7 +1,11 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { AnalyticsResponse } from './interfaces/analytics-response.interface';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Prisma } from '../../prisma/client/index.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { FeatureFlagService, analyticsFlags } from '@azeebo/feature-flags';
+import axios from 'axios';
 
 interface Event {
   type: string;
@@ -31,10 +35,12 @@ const ALLOWED_EVENT_NAMES = [
   'payment_success',
   'payment_failed',
   'payment_initiated',
+  'payment_provider_failover',
   'refund_initiated',
   'refund_completed',
   'reward_earned',
   'reward_redeemed',
+  'media_upload',
   'creator_follow',
   'creator_followed',
   'creator_tip_sent',
@@ -67,6 +73,9 @@ const ALLOWED_EVENT_NAMES = [
   'tip_received',
   'verification_approved',
   'verification_submitted',
+  'content_search_correction_shown',
+  'content_search_correction_accepted',
+  'flag_stale_enabled',
 ];
 
 const REQUIRED_METADATA_FIELDS = ['session_id', 'platform', 'timestamp'];
@@ -74,10 +83,134 @@ const REQUIRED_METADATA_FIELDS = ['session_id', 'platform', 'timestamp'];
 @Injectable()
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
+  private readonly userServiceUrl: string;
+  private readonly contentServiceUrl: string;
+
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly cache: CacheService
-  ) {}
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+  ) {
+    this.userServiceUrl = this.configService.get<string>(
+      'USER_SERVICE_URL',
+      'http://user-service:3001'
+    );
+    this.contentServiceUrl = this.configService.get<string>(
+      'CONTENT_SERVICE_URL',
+      'http://content-service:3004'
+    );
+  }
+
+  /**
+   * Resolves the effective sampling rate (0–100) from `analytics_sampling_rate`.
+   * 100 (default) means every event is kept; lower values drop events.
+   */
+  private async getSamplingRate(): Promise<number> {
+    const value = await this.featureFlagService.getValue(analyticsFlags.samplingRate);
+    if (typeof value !== 'number' || Number.isNaN(value)) return 100;
+    return Math.min(100, Math.max(0, Math.round(value)));
+  }
+
+  /** Deterministic per-entity sampling so a user/entity is fully kept or fully dropped. */
+  private isSampled(entity: string | undefined, rate: number): boolean {
+    if (rate >= 100) return true;
+    if (rate <= 0) return false;
+    const seed = entity ?? 'anonymous';
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+    }
+    return hash % 100 < rate;
+  }
+
+  /**
+   * Client-side sampling config for the analytics-sdk: when the
+   * `analytics_client_sampling` flag is on, clients pre-sample events using the
+   * same rate before shipping them, cutting server-side dropped traffic.
+   */
+  async getClientSamplingConfig(): Promise<{
+    enabled: boolean;
+    samplingRate: number;
+  }> {
+    const enabled = await this.featureFlagService.isEnabled(analyticsFlags.clientSampling);
+    const samplingRate = await this.getSamplingRate();
+    return { enabled, samplingRate };
+  }
+
+  /** Shared ingest write path: batch (createMany) or per-event writes. */
+  private async writeEvents(rows: Array<Record<string, unknown>>): Promise<void> {
+    if (rows.length === 0) return; // everything was sampled out
+    const batchIngest = await this.featureFlagService.isEnabled(analyticsFlags.batchIngest);
+    if (batchIngest) {
+      await this.prisma.productEvent.createMany({
+        data: rows as Prisma.ProductEventCreateManyInput[],
+      });
+    } else {
+      // Batch with $transaction for atomicity (fixes N+1)
+      await this.prisma.$transaction(
+        rows.map((row) =>
+          this.prisma.productEvent.create({ data: row as Prisma.ProductEventCreateInput })
+        )
+      );
+    }
+  }
+
+  private async getUserCount(): Promise<number> {
+    try {
+      const res = await axios.get<{ data?: { total?: number }; total?: number }>(
+        `${this.userServiceUrl}/users`,
+        {
+          params: { limit: 1 },
+          timeout: 5000,
+          headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+        }
+      );
+      return res.data?.total ?? res.data?.data?.total ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private async getContentCount(): Promise<number> {
+    try {
+      const res = await axios.get<{ data?: { total?: number }; total?: number }>(
+        `${this.contentServiceUrl}/content`,
+        {
+          params: { limit: 1 },
+          timeout: 5000,
+          headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+        }
+      );
+      return res.data?.total ?? res.data?.data?.total ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private async getSubscriptionCount(userId: string): Promise<number> {
+    try {
+      const baseUrl = this.configService.get<string>('SUBSCRIPTION_SERVICE_URL');
+      if (!baseUrl) return 0;
+      const params: Record<string, string | number> = { limit: 1 };
+      if (userId) {
+        params.userId = userId;
+      }
+      const res = await axios.get<{ pagination?: { total?: number } }>(
+        `${baseUrl}/v1/subscription/history`,
+        {
+          params,
+          timeout: 5000,
+          headers: {
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
+          },
+        }
+      );
+      return res.data?.pagination?.total ?? 0;
+    } catch {
+      return 0;
+    }
+  }
 
   private validateEventEnvelope(event: Event): { valid: boolean; error?: string } {
     if (!event.type || typeof event.type !== 'string') {
@@ -140,29 +273,38 @@ export class AnalyticsService {
     }
 
     try {
-      await this.prisma.productEvent.createMany({
-        data: validEvents.map((event) => ({
+      const samplingRate = await this.getSamplingRate();
+      const sampled = validEvents.filter((event) =>
+        this.isSampled(event.userId ?? event.sessionId, samplingRate)
+      );
+
+      await this.writeEvents(
+        sampled.map((event) => ({
           eventName: event.type,
           userId: event.userId,
           sessionId: event.sessionId,
-          metadata: event.metadata || undefined,
+          metadata: (event.metadata || undefined) as Prisma.InputJsonValue,
           timestamp: event.timestamp ? new Date(event.timestamp) : new Date(),
-        })),
-      });
+        }))
+      );
 
       await this.cache.invalidate('analytics:*');
 
       return {
         success: true,
         data: {
-          ingested: validEvents.length,
+          ingested: sampled.length,
+          sampled: validEvents.length - sampled.length,
           rejected: validationErrors.length,
           validationErrors: validationErrors.length > 0 ? validationErrors : undefined,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`ingestEvents failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -191,9 +333,15 @@ export class AnalyticsService {
           recentActivity,
         },
       };
-    } catch (_err) {
-      this.logger.error(`getUserSummary failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    } catch (error) {
+      this.logger.error(
+        `getUserSummary failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -203,8 +351,8 @@ export class AnalyticsService {
       const cached = await this.cache.get<AnalyticsResponse>(cacheK);
       if (cached) return cached;
 
-      const totalUsers = await this.prisma.user.count();
-      const totalContent = await this.prisma.contentItem.count();
+      const totalUsers = await this.getUserCount();
+      const totalContent = await this.getContentCount();
       const totalViews = await this.prisma.productEvent.count({
         where: { eventName: 'content_view' },
       });
@@ -241,13 +389,21 @@ export class AnalyticsService {
 
       await this.cache.set(cacheK, result, 300);
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getDashboard failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
   async getFunnels(name?: string): Promise<AnalyticsResponse> {
+    // Cache funnel results for 5 minutes to avoid sequential queries
+    const cacheK = cacheKey('analytics', `funnels:${name || 'all'}`);
+    const cached = await this.cache.get<AnalyticsResponse>(cacheK);
+    if (cached) return cached;
+
     const funnelDefinitions = {
       signup: {
         steps: ['screen_view', 'signup_started', 'signup_completed'],
@@ -283,8 +439,10 @@ export class AnalyticsService {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const funnelResults: Record<string, { step: string; users: number; conversionRate: number }[]> =
-        {};
+      const funnelResults: Record<
+        string,
+        { step: string; users: number; conversionRate: number }[]
+      > = {};
 
       for (const [funnelName, config] of Object.entries(selectedFunnels)) {
         const steps = config.steps;
@@ -314,13 +472,19 @@ export class AnalyticsService {
         funnelResults[funnelName] = stepMetrics;
       }
 
-      return {
+      const result = {
         success: true,
         data: { funnels: funnelResults },
       };
-    } catch (_err) {
+
+      await this.cache.set(cacheK, result, 300);
+      return result;
+    } catch (error) {
       this.logger.error(`getFunnels failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -365,9 +529,12 @@ export class AnalyticsService {
           period,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getCohorts failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -380,11 +547,17 @@ export class AnalyticsService {
       throw new BadRequestException(`Invalid event name: ${type}`);
     }
     try {
+      // Sampling: drop the event before write when the effective rate excludes it.
+      const samplingRate = await this.getSamplingRate();
+      if (!this.isSampled(userId, samplingRate)) {
+        return { success: true, data: { sampled: true } };
+      }
+
       const result = await this.prisma.productEvent.create({
         data: {
           eventName: type,
           userId,
-          metadata: metadata || undefined,
+          metadata: (metadata || undefined) as Prisma.InputJsonValue,
           timestamp: new Date(),
         },
       });
@@ -392,15 +565,22 @@ export class AnalyticsService {
       await this.cache.invalidate('analytics:*');
 
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`trackEvent failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
   async trackBatch(
     events: Array<{ type: string; userId?: string; metadata?: Record<string, unknown> }>
   ): Promise<{ success: boolean }> {
+    if (events.length > 1000) {
+      throw new BadRequestException('Maximum 1000 events per batch');
+    }
+
     const invalidEvents = events.filter(
       (e) => !ALLOWED_EVENT_NAMES.includes(e.type) && !e.type.startsWith('custom_')
     );
@@ -410,19 +590,22 @@ export class AnalyticsService {
       );
     }
     try {
-      await this.prisma.productEvent.createMany({
-        data: events.map((event) => ({
+      const samplingRate = await this.getSamplingRate();
+      const sampled = events.filter((event) => this.isSampled(event.userId, samplingRate));
+
+      await this.writeEvents(
+        sampled.map((event) => ({
           eventName: event.type,
           userId: event.userId,
-          metadata: event.metadata || undefined,
+          metadata: (event.metadata || undefined) as Prisma.InputJsonValue,
           timestamp: new Date(),
-        })),
-      });
+        }))
+      );
 
       await this.cache.invalidate('analytics:*');
 
       return { success: true };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`trackBatch failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false };
     }
@@ -436,7 +619,7 @@ export class AnalyticsService {
     endOfDay.setDate(endOfDay.getDate() + 1);
 
     try {
-      const totalUsers = await this.prisma.user.count();
+      const totalUsers = await this.getUserCount();
 
       const dailyViews = await this.prisma.productEvent.count({
         where: {
@@ -470,9 +653,94 @@ export class AnalyticsService {
           activeUsers: activeUsers.length,
         },
       };
-    } catch (_err) {
-      this.logger.error(`getDailyStats failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    } catch (error) {
+      this.logger.error(
+        `getDailyStats failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
+    }
+  }
+
+  /**
+   * Search correction acceptance: daily counts of 'did you mean' suggestions
+   * shown vs accepted, plus the acceptance rate — the raw material for the
+   * admin Search Analytics panel. `days` is clamped to [1, 90] server-side.
+   */
+  async getSearchCorrections(days = 30): Promise<AnalyticsResponse> {
+    const safeDays = Math.min(Math.max(1, Math.floor(days)), 90);
+    const startDate = new Date();
+    startDate.setUTCHours(0, 0, 0, 0);
+    startDate.setUTCDate(startDate.getUTCDate() - (safeDays - 1));
+
+    try {
+      const rows = (await this.prisma.$queryRaw`
+        SELECT
+          DATE_TRUNC('day', pe."timestamp")::date AS day,
+          COUNT(*) FILTER (WHERE pe."eventName" = 'content_search_correction_shown') AS shown,
+          COUNT(*) FILTER (WHERE pe."eventName" = 'content_search_correction_accepted') AS accepted
+        FROM "product_events" pe
+        WHERE pe."eventName" IN (
+          'content_search_correction_shown',
+          'content_search_correction_accepted'
+        )
+          AND pe."timestamp" >= ${startDate}
+        GROUP BY 1
+        ORDER BY 1
+      `) as { day: Date; shown: bigint | number; accepted: bigint | number }[];
+
+      const byDay = new Map<string, { shown: number; accepted: number }>();
+      for (const row of rows) {
+        const key = new Date(row.day).toISOString().slice(0, 10);
+        byDay.set(key, {
+          shown: Number(row.shown ?? 0),
+          accepted: Number(row.accepted ?? 0),
+        });
+      }
+
+      // Fill the contiguous range so the chart never has holes.
+      const series: { date: string; shown: number; accepted: number; rate: number }[] = [];
+      let totalShown = 0;
+      let totalAccepted = 0;
+      const cursor = new Date(startDate);
+      for (let i = 0; i < safeDays; i++) {
+        const key = cursor.toISOString().slice(0, 10);
+        const day = byDay.get(key) || { shown: 0, accepted: 0 };
+        totalShown += day.shown;
+        totalAccepted += day.accepted;
+        series.push({
+          date: key,
+          shown: day.shown,
+          accepted: day.accepted,
+          rate: day.shown > 0 ? day.accepted / day.shown : 0,
+        });
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
+      }
+
+      return {
+        success: true,
+        data: {
+          days: safeDays,
+          overall: {
+            shown: totalShown,
+            accepted: totalAccepted,
+            rate: totalShown > 0 ? totalAccepted / totalShown : 0,
+          },
+          series,
+        },
+      };
+    } catch (error) {
+      this.logger.error(
+        `getSearchCorrections failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -547,9 +815,15 @@ export class AnalyticsService {
           period: '30d',
         },
       };
-    } catch (_err) {
-      this.logger.error(`getUniverseKpis failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    } catch (error) {
+      this.logger.error(
+        `getUniverseKpis failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -597,9 +871,15 @@ export class AnalyticsService {
           aggregated,
         },
       };
-    } catch (_err) {
-      this.logger.error(`getAllUniverseKpis failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    } catch (error) {
+      this.logger.error(
+        `getAllUniverseKpis failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -609,9 +889,7 @@ export class AnalyticsService {
     periodAgo.setDate(periodAgo.getDate() - days);
 
     try {
-      const newUsers = await this.prisma.user.count({
-        where: { createdAt: { gte: periodAgo } },
-      });
+      const newUsers = await this.getUserCount();
 
       const returningUsers = await this.prisma.$queryRaw`
         SELECT COUNT(DISTINCT pe."userId") as count
@@ -637,9 +915,15 @@ export class AnalyticsService {
           retentionRate,
         },
       };
-    } catch (_err) {
-      this.logger.error(`getRetentionMetrics failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    } catch (error) {
+      this.logger.error(
+        `getRetentionMetrics failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -661,8 +945,7 @@ export class AnalyticsService {
       const avgOrderValue =
         payments > 0 ? Math.round(Number(totalRevenue._sum.amount || 0) / payments) : 0;
 
-      // Subscription model not available in analytics-service schema
-      const subscriptions = 0;
+      const subscriptions = await this.getSubscriptionCount('');
 
       return {
         success: true,
@@ -674,9 +957,15 @@ export class AnalyticsService {
           newSubscriptions: subscriptions,
         },
       };
-    } catch (_err) {
-      this.logger.error(`getRevenueMetrics failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    } catch (error) {
+      this.logger.error(
+        `getRevenueMetrics failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -737,13 +1026,24 @@ export class AnalyticsService {
           engagementRate,
         },
       };
-    } catch (_err) {
-      this.logger.error(`getEngagementMetrics failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    } catch (error) {
+      this.logger.error(
+        `getEngagementMetrics failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
   async getDetailedDashboard(): Promise<AnalyticsResponse> {
+    // Cache detailed dashboard for 5 minutes
+    const cacheK = cacheKey('analytics', 'detailed-dashboard');
+    const cached = await this.cache.get<AnalyticsResponse>(cacheK);
+    if (cached) return cached;
+
     try {
       const [dailyStats, weeklyRetention, monthlyRevenue, engagement, universeKpis] =
         await Promise.all([
@@ -754,7 +1054,7 @@ export class AnalyticsService {
           this.getAllUniverseKpis(),
         ]);
 
-      return {
+      const result = {
         success: true,
         data: {
           today: dailyStats.data,
@@ -764,9 +1064,18 @@ export class AnalyticsService {
           universes: universeKpis.data,
         },
       };
-    } catch (_err) {
-      this.logger.error(`getDetailedDashboard failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+
+      await this.cache.set(cacheK, result, 300);
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `getDetailedDashboard failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -780,7 +1089,7 @@ export class AnalyticsService {
       const cached = await this.cache.get<AnalyticsResponse>(cacheK);
       if (cached) return cached;
 
-      const [totalEvents, uniqueUsers, totalSessions, avgEventsPerUser] = await Promise.all([
+      const results = await Promise.all([
         this.prisma.productEvent.count({ where: { timestamp: { gte: startDate } } }),
         this.prisma.productEvent.groupBy({
           by: ['userId'],
@@ -792,12 +1101,8 @@ export class AnalyticsService {
           where: { timestamp: { gte: startDate }, sessionId: { not: null } },
           _count: { id: true },
         }),
-        this.prisma.productEvent.groupBy({
-          by: ['userId'],
-          where: { timestamp: { gte: startDate }, userId: { not: null } },
-          _count: { id: true },
-        }),
       ]);
+      const [totalEvents, uniqueUsers, totalSessions] = results;
 
       const topEvents = await this.prisma.productEvent.groupBy({
         by: ['eventName'],
@@ -825,9 +1130,12 @@ export class AnalyticsService {
 
       await this.cache.set(cacheK, result, 300);
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getKpis failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -878,9 +1186,12 @@ export class AnalyticsService {
           recentEvents,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getRealtime failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
     }
   }
 }

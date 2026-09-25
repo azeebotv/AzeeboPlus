@@ -31,6 +31,14 @@ export class DebitWalletDto {
   description!: string;
 
   /**
+   * Optional reference for the debit (e.g. an external ledger identifier).
+   */
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  reference?: string;
+
+  /**
    * Optional idempotency key to prevent duplicate transactions.
    * If provided, ensures the same transaction is not processed twice.
    */
@@ -73,6 +81,54 @@ export class CreditWalletDto {
    * Optional idempotency key to prevent duplicate transactions.
    * If provided, ensures the same transaction is not processed twice.
    */
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  idempotencyKey?: string;
+}
+
+/**
+ * Debit addressed by user ID — for the internal service-to-service surface
+ * (`POST /internal/wallets/user/:userId/debit`). The wallet is resolved from
+ * the URL path, so the body carries no walletId (which would otherwise be
+ * rejected by the global forbidNonWhitelisted ValidationPipe).
+ */
+export class InternalDebitWalletDto {
+  @ApiProperty()
+  @IsNumber()
+  @Min(0.01)
+  amount!: number;
+
+  @ApiProperty()
+  @IsString()
+  description!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  reference?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  idempotencyKey?: string;
+}
+
+/**
+ * Credit addressed by user ID — for the internal service-to-service surface
+ * (`POST /internal/wallets/user/:userId/credit`). Same rationale as
+ * InternalDebitWalletDto.
+ */
+export class InternalCreditWalletDto {
+  @ApiProperty()
+  @IsNumber()
+  @Min(0.01)
+  amount!: number;
+
+  @ApiProperty()
+  @IsString()
+  description!: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

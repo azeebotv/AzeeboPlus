@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   output   = "../src/prisma/client"
 }
 
@@ -13,12 +14,14 @@ model SubscriptionPlan {
   id                String   @id @default(uuid())
   name              String   @unique
   description       String
-  price             Decimal  @db.Decimal(10, 2)
+  price             Decimal  @db.Decimal(18, 2)
   currency          String   @default("NGN")
   duration          Int      // in days
   features          String[]
   isActive          Boolean  @default(true)
   tier              String   // free, basic, premium, enterprise
+  maxDevices        Int      @default(1)  // Max concurrent devices
+  maxStreams         Int      @default(1)  // Max concurrent streams
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   subscriptions     Subscription[]
@@ -39,29 +42,71 @@ model Subscription {
   lastPaymentDate   DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-  plan              SubscriptionPlan @relation(fields: [planId], references: [id])
+  plan              SubscriptionPlan     @relation(fields: [planId], references: [id], onDelete: Restrict)
+  transactions      SubscriptionTransaction[]
 
   @@index([userId])
   @@index([planId])
   @@index([status])
   @@index([userId, status])
   @@index([endDate])
+  @@index([status, endDate])
   @@map("subscriptions")
 }
 
 model SubscriptionTransaction {
   id                String   @id @default(uuid())
   subscriptionId    String
-  amount            Decimal  @db.Decimal(10, 2)
+  amount            Decimal  @db.Decimal(18, 2)
   currency          String   @default("NGN")
   status            String   @default("completed") // completed, failed, pending, refunded
   paymentProvider   String?
   providerTxId      String?
   description       String?
   createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@index([subscriptionId])
   @@index([status])
   @@index([createdAt])
   @@map("subscription_transactions")
+}
+
+model BundlePass {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  description     String
+  universeIds     String[]
+  price           Decimal  @db.Decimal(18, 2)
+  originalPrice   Decimal  @db.Decimal(18, 2)
+  discountPercent Int
+  duration        Int      // In days
+  isActive        Boolean  @default(true)
+  tier            String   // standard, premium, ultimate
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  subscriptions   BundleSubscription[]
+
+  @@map("bundle_passes")
+}
+
+model BundleSubscription {
+  id            String   @id @default(uuid())
+  userId        String
+  bundleId      String
+  status        String   @default("active") // active, cancelled, expired
+  startDate     DateTime @default(now())
+  endDate       DateTime
+  autoRenew     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  bundle        BundlePass @relation(fields: [bundleId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, bundleId])
+  @@index([userId])
+  @@index([bundleId])
+  @@index([status])
+  @@index([userId, status])
+  @@map("bundle_subscriptions")
 }

@@ -12,13 +12,14 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { realityApi } from '../../src/api/engagement';
-import { walletApi } from '../../src/api/wallet';
-import { apiClient } from '../../src/api/client';
-import { logger } from '../../src/utils/logger';
-import { ApiResponse, Contestant } from '../../src/types/api';
+import { realityApi } from '@azeebo/react-data/api/engagement';
+import { walletApi } from '@azeebo/react-data/api/wallet';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { ApiResponse } from '@azeebo/react-data/types/api';
+import { defaultImages, colors } from '../../src/theme';
 
-const PLACEHOLDER_IMAGE = '';
+const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
 
 interface ShowData {
   id: string;
@@ -70,12 +71,19 @@ export default function RealityShowScreen() {
       const [contestantsRes, walletRes, showRes] = await Promise.all([
         realityApi.getContestants(showId || 'default'),
         walletApi.getBalance(),
-        apiClient.get<ShowData[] | ApiResponse<ShowData[]>>('/v1/reality/shows/current').catch(() => null),
+        apiClient
+          .get<ShowData[] | ApiResponse<ShowData[]>>('/v1/reality/shows/current')
+          .catch(() => null),
       ]);
 
       if (contestantsRes.success && contestantsRes.data) {
-        setContestants(contestantsRes.data);
-        setTotalVotes(contestantsRes.data.reduce((sum: number, c: ShowContestant) => sum + (c.votes || 0), 0));
+        setContestants(contestantsRes.data as unknown as ShowContestant[]);
+        setTotalVotes(
+          contestantsRes.data.reduce(
+            (sum: number, c: { votes?: number }) => sum + (c.votes || 0),
+            0
+          )
+        );
       }
 
       if (walletRes.success && walletRes.data) {
@@ -83,7 +91,11 @@ export default function RealityShowScreen() {
       }
 
       if (showRes) {
-        setShowData(Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes));
+        setShowData(
+          (Array.isArray(showRes)
+            ? showRes[0]
+            : (showRes?.data?.[0] ?? showRes)) as unknown as ShowData
+        );
       }
     } catch (err) {
       logger.error('Failed to load reality show data:', err);
@@ -289,7 +301,10 @@ export default function RealityShowScreen() {
         <TouchableOpacity
           onPress={handleVote}
           disabled={!selectedContestant || walletBalance < voteCost}
-          style={[styles.submitVoteButton, !selectedContestant && { backgroundColor: '#333' }]}
+          style={[
+            styles.submitVoteButton,
+            !selectedContestant && { backgroundColor: colors.bg.tertiary },
+          ]}
         >
           <Text style={styles.submitVoteText}>Confirm Vote</Text>
         </TouchableOpacity>
@@ -445,7 +460,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -530,13 +545,13 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.bg.tertiary,
   },
   walletInfo: {
     flex: 1,
   },
   walletLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
     marginBottom: 4,
   },
@@ -575,14 +590,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.neutral[100],
     alignItems: 'center',
     justifyContent: 'center',
   },
   voteButtonText: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#666',
+    color: colors.text.tertiary,
   },
   voteAmountText: {
     fontSize: 20,
@@ -595,7 +610,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   priceText: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
   },
   priceAmount: {
@@ -626,7 +641,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#ccc',
+    backgroundColor: colors.neutral[300],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -674,13 +689,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.bg.tertiary,
   },
   rank: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: 14,
@@ -705,7 +720,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -744,10 +759,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: colors.neutral[800],
   },
   predictionAvatar: {
     fontSize: 20,
@@ -787,7 +802,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalDetailText: {
-    color: '#aaa',
+    color: colors.neutral[400],
     fontSize: 14,
     marginBottom: 8,
     textAlign: 'center',
@@ -802,7 +817,7 @@ const styles = StyleSheet.create({
   },
   modalCancel: {
     flex: 1,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     padding: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -838,7 +853,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   successMessage: {
-    color: '#aaa',
+    color: colors.neutral[400],
     fontSize: 14,
     textAlign: 'center',
   },

@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
-import { WebhookRetryService } from '../payments/webhook-retry.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
+import { WebhookRetryService } from '../payments/webhook-retry.service.js';
 
 export interface WebhookPayload {
   id: string;
@@ -45,8 +45,8 @@ export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private webhookRetryService: WebhookRetryService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(WebhookRetryService) private webhookRetryService: WebhookRetryService
   ) {}
 
   async handlePaystackWebhook(payload: WebhookPayload): Promise<void> {
@@ -154,20 +154,32 @@ export class WebhookService {
     eventId: string,
     provider: string,
     type: string,
-    result: WebhookProcessingResult,
+    _result: WebhookProcessingResult,
     payload: Prisma.InputJsonValue,
     failureReason?: string
   ): Promise<void> {
-    await this.prisma.webhookEvent.create({
-      data: {
-        eventId,
-        provider,
-        type,
-        payload,
-        processedAt: new Date(),
-        failureReason,
-      },
-    });
+    try {
+      await this.prisma.webhookEvent.create({
+        data: {
+          eventId,
+          provider,
+          type,
+          payload,
+          processedAt: new Date(),
+          failureReason,
+        },
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        'code' in error &&
+        (error as { code: string }).code === 'P2002'
+      ) {
+        this.logger.log(`Webhook event ${eventId} already processed (concurrent write)`);
+        return;
+      }
+      throw error;
+    }
   }
 
   private async handlePaymentCompleted(
@@ -236,7 +248,10 @@ export class WebhookService {
           where: { id: paymentId },
           data: {
             status: 'FAILED',
-            providerReference: reason,
+            metadata: {
+              ...((paymentIntent.metadata as Record<string, unknown>) ?? {}),
+              failureReason: reason,
+            } as Prisma.InputJsonValue,
             updatedAt: new Date(),
           },
         });
@@ -324,8 +339,8 @@ export class WebhookService {
     provider: string,
     data: PaystackWebhookData | FlutterwaveWebhookData,
     status: string
-  ): Prisma.PaymentUpdateInput {
-    const update: Prisma.PaymentUpdateInput = {
+  ): Record<string, unknown> {
+    const update: Record<string, unknown> = {
       status,
       updatedAt: new Date(),
     };

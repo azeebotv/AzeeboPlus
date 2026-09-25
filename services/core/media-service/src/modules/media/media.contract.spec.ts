@@ -1,31 +1,50 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext } from '@nestjs/common';
+import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { UploadModule } from '../upload/upload.module';
 import { UploadService } from '../upload/upload.service';
 import { S3Service } from '../upload/s3.service';
 import { PremiumContentService } from '../upload/premium-content.service';
-import { RedisService } from '../../common/services/redis.service';
+import { CdnInvalidationQueueService } from '../upload/cdn-invalidation-queue.service';
+import { AdminModule } from '../admin/admin.module';
+import { RedisService, CacheService } from '@azeebo/shared-services';
+import { PrismaService } from '../database/prisma.service';
 import { FileValidationService } from '../../common/services/file-validation.service';
-import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { FeatureFlagGuard, FeatureFlagModule, FeatureFlagService } from '@azeebo/feature-flags';
 
-class MockAuthGuard {
-  canActivate(context: ExecutionContext) {
-    const request = context.switchToHttp().getRequest();
-    request.user = { sub: 'user-123' };
+class MockRateLimitGuard implements CanActivate {
+  canActivate(_context: ExecutionContext) {
+    return true;
+  }
+}
+
+class MockAdminGuard implements CanActivate {
+  canActivate(_context: ExecutionContext) {
     return true;
   }
 }
 
 describe('Media Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   beforeAll(async () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [UploadModule],
+      // FeatureFlagModule is registered globally in the real app.module; the
+      // contract spec imports it the same way so child-module providers (e.g.
+      // CdnFlagPurgeQueueService) can resolve FeatureFlagService before the
+      // override below replaces it with the mock.
+      imports: [
+        UploadModule,
+        AdminModule,
+        // Stub redis so the real (soon-overridden) FeatureFlagService never
+        // opens a connection that would keep the test worker alive.
+        FeatureFlagModule.register({ global: true, redis: { quit: jest.fn() } as never }),
+      ],
     })
       .overrideProvider(UploadService)
       .useValue({
@@ -67,24 +86,89 @@ describe('Media Controller Contract Tests', () => {
         del: jest.fn(),
         keys: jest.fn(),
       })
+      .overrideProvider(PrismaService)
+      .useValue({
+        transcodingJob: { findUnique: jest.fn(), update: jest.fn() },
+        mediaUpload: { findMany: jest.fn(), findUnique: jest.fn(), delete: jest.fn() },
+      })
+      .overrideProvider(CacheService)
+      .useValue({
+        get: jest.fn(),
+        set: jest.fn(),
+        delete: jest.fn(),
+      })
       .overrideProvider(FileValidationService)
       .useValue({
         validateFile: jest.fn(),
         validatePresignedUpload: jest.fn(),
       })
-      .overrideGuard(AuthGuard('jwt'))
-      .useClass(MockAuthGuard)
+      .overrideProvider(FeatureFlagService)
+      .useValue({ isEnabled: jest.fn().mockResolvedValue(true) })
+      // The real queue would hit the mocked PrismaService — stub its surface.
+      .overrideProvider(CdnInvalidationQueueService)
+      .useValue({ enqueue: jest.fn().mockResolvedValue({ queued: true }) })
+      .overrideGuard(RateLimitGuard)
+      .useClass(MockRateLimitGuard)
+      .overrideGuard(AdminGuard)
+      .useClass(MockAdminGuard)
+      .overrideGuard(FeatureFlagGuard)
+      .useClass(MockRateLimitGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalInterceptors(new ResponseWrapperInterceptor());
+    // Mock ServiceAuthGuard behavior: set req.user when Authorization header present
+    app.use(
+      (
+        req: { headers: { authorization?: string }; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (
+          req.headers.authorization &&
+          req.headers.authorization.startsWith('Bearer ') &&
+          !req.user
+        ) {
+          req.user = { id: 'user-123', sub: 'user-123', role: 'user' };
+        }
+        next();
+      }
+    );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
     if (app) {
       await app.close();
     }
+  });
+
+  describe('POST /admin/cdn/purge', () => {
+    it('should accept a prefix purge request', async () => {
+      const response = await request(baseUrl)
+        .post('/admin/cdn/purge')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ prefix: 'uploads' });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.prefix).toBe('uploads');
+      // Purges are accepted into the invalidation queue (batched drain), not
+      // executed inline — the response reports queue acceptance.
+      expect(response.body.data).toHaveProperty('queued');
+      expect(response.body.data.queued).toBe(1);
+    });
+
+    it('should reject a purge with no target', async () => {
+      const response = await request(baseUrl)
+        .post('/admin/cdn/purge')
+        .set('Authorization', 'Bearer valid-token')
+        .send({});
+
+      expect(response.status).toBe(400);
+    });
   });
 
   describe('POST /media/upload/image', () => {
@@ -98,14 +182,18 @@ describe('Media Controller Contract Tests', () => {
         filename: 'test.jpg',
         mimetype: 'image/jpeg',
         size: 1024,
+        cacheControl: 'public, max-age=31536000, immutable',
+        cachePolicy: 'immutable',
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/media/upload/image')
         .set('Authorization', 'Bearer valid-token')
         .attach('file', Buffer.from('test'), 'test.jpg');
 
       expect(response.status).toBe(201);
+      // CDN cache-control header comes from media_cdn_edge_cache.
+      expect(response.headers['cache-control']).toBe('public, max-age=31536000, immutable');
       expect(response.body).toEqual({
         success: true,
         data: expect.objectContaining({
@@ -127,7 +215,7 @@ describe('Media Controller Contract Tests', () => {
         metadata: {},
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/media/metadata?key=images/test.jpg')
         .set('Authorization', 'Bearer valid-token');
 
@@ -148,7 +236,7 @@ describe('Media Controller Contract Tests', () => {
 
       jest.spyOn(uploadService, 'deleteFile').mockResolvedValue(undefined);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .delete('/media/images%2Ftest.jpg')
         .set('Authorization', 'Bearer valid-token');
 

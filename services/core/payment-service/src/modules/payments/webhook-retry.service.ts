@@ -1,13 +1,14 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Inject, Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
+import { tryUpdatePaymentIntent } from './payment-intent.optimistic-lock.js';
 
 @Injectable()
 export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(WebhookRetryService.name);
   private retryInterval: ReturnType<typeof setInterval> | null = null;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   onModuleInit() {
     this.startRetryProcessor();
@@ -92,16 +93,22 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async processPendingRetries(): Promise<void> {
-    const pendingRetries = await this.prisma.webhookRetry.findMany({
-      where: {
-        status: 'pending',
-        nextRetryAt: { lte: new Date() },
-      },
-      take: 10,
-    });
+    try {
+      const pendingRetries = await this.prisma.webhookRetry.findMany({
+        where: {
+          status: 'pending',
+          nextRetryAt: { lte: new Date() },
+        },
+        take: 10,
+      });
 
-    for (const retry of pendingRetries) {
-      await this.processRetry(retry);
+      for (const retry of pendingRetries) {
+        await this.processRetry(retry);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `WebhookRetryService skipped: ${error instanceof Error ? error.message : 'unknown error'}`
+      );
     }
   }
 
@@ -206,10 +213,20 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    await this.prisma.paymentIntent.update({
-      where: { id: paymentIntent.id },
-      data: { status: 'completed', completedAt: new Date() },
-    });
+    const marked = await tryUpdatePaymentIntent(
+      this.prisma,
+      paymentIntent.id,
+      paymentIntent.version,
+      {
+        status: 'completed',
+        completedAt: new Date(),
+      }
+    );
+    if (!marked) {
+      this.logger.warn(
+        `Payment intent ${paymentIntent.id} was modified concurrently; skipping retry completed-mark`
+      );
+    }
   }
 
   private async processPaymentFailed(reference: string): Promise<void> {
@@ -218,10 +235,19 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
     });
 
     if (paymentIntent) {
-      await this.prisma.paymentIntent.update({
-        where: { id: paymentIntent.id },
-        data: { status: 'failed' },
-      });
+      const marked = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
+          status: 'failed',
+        }
+      );
+      if (!marked) {
+        this.logger.warn(
+          `Payment intent ${paymentIntent.id} was modified concurrently; skipping retry failed-mark`
+        );
+      }
     }
   }
 

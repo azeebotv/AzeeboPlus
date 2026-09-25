@@ -3,10 +3,10 @@ import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
-import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
+import { configureCors, createHelmetConfig } from '@azeebo/security';
 
-import { AppModule } from './app.module';
+import { AppModule } from './app.module.js';
 
 async function bootstrap() {
   validateEnvironment(process.env);
@@ -15,15 +15,12 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  app.use(helmet());
+  app.use(createHelmetConfig());
   if (!process.env.ALLOWED_ORIGINS) {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
-  app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()),
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    credentials: true,
-  });
+  const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
+  configureCors(app, { allowedOrigins, credentials: true });
 
   app.useGlobalPipes(
     new ValidationPipe({

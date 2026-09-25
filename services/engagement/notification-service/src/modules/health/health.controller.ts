@@ -1,27 +1,29 @@
-import { Controller, Get, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
+import { Inject, Controller, Get, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 
 @Public()
 @ApiTags('Health')
 @Controller('health')
 export class HealthController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
   async check(): Promise<{ status: string; timestamp: string; database: string }> {
-    let database = 'ok';
     try {
       await this.prisma.$queryRaw`SELECT 1`;
     } catch {
-      throw new HttpException({ status: 'error', database: 'disconnected' }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { status: 'error', database: 'disconnected' },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      database,
+      database: 'ok',
     };
   }
 

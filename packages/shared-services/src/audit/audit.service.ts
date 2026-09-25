@@ -18,15 +18,59 @@ export interface AuditEntry {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Persisted shape of an audit log row. Declared locally so this shared package
+ * compiles against any consuming service's generated Prisma client (each service
+ * generates its own client to a different output path).
+ */
+interface AuditLogRecord {
+  id: string;
+  actorId: string;
+  actorType: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  previousValue: string | null;
+  newValue: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: Date;
+  status: string;
+  errorMessage: string | null;
+  metadata: unknown;
+}
+
+/**
+ * Minimal structural contract for the Prisma `auditLog` delegate. The generic
+ * `@prisma/client` `PrismaClient` type that the shared `PrismaService` extends
+ * does not statically expose per-service models, so we type the delegate here.
+ */
+interface AuditLogDelegate {
+  create(args: { data: Record<string, unknown> }): Promise<AuditLogRecord>;
+  findMany(args: {
+    where?: Record<string, unknown>;
+    orderBy?: Record<string, unknown>;
+    take?: number;
+  }): Promise<AuditLogRecord[]>;
+}
+
 @Injectable()
 export class AuditService {
   private readonly logger = new Logger(AuditService.name);
 
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Structural accessor for the `auditLog` model. Casts through `unknown` so the
+   * shared package does not depend on any single service's generated client.
+   */
+  private get auditLog(): AuditLogDelegate {
+    return (this.prisma as unknown as { auditLog: AuditLogDelegate }).auditLog;
+  }
+
   async log(auditData: Omit<AuditEntry, 'id' | 'timestamp'>): Promise<void> {
     try {
-      await this.prisma.auditLog.create({
+      await this.auditLog.create({
         data: {
           actorId: auditData.actorId,
           actorType: auditData.actorType,
@@ -147,7 +191,7 @@ export class AuditService {
   }
 
   async getAuditLogsByActor(actorId: string, limit = 100): Promise<AuditEntry[]> {
-    const logs = await this.prisma.auditLog.findMany({
+    const logs = await this.auditLog.findMany({
       where: { actorId },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -161,7 +205,7 @@ export class AuditService {
     resourceId: string,
     limit = 100
   ): Promise<AuditEntry[]> {
-    const logs = await this.prisma.auditLog.findMany({
+    const logs = await this.auditLog.findMany({
       where: { resourceType, resourceId },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -171,7 +215,7 @@ export class AuditService {
   }
 
   async getAuditLogsByAction(action: string, limit = 100): Promise<AuditEntry[]> {
-    const logs = await this.prisma.auditLog.findMany({
+    const logs = await this.auditLog.findMany({
       where: { action },
       orderBy: { createdAt: 'desc' },
       take: limit,

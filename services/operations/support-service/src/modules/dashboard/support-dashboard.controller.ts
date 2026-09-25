@@ -1,6 +1,5 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { SupportDashboardService } from './support-dashboard.service';
@@ -8,9 +7,11 @@ import { SupportDashboardService } from './support-dashboard.service';
 @ApiTags('Support Dashboard')
 @Controller('support/dashboard')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'), AdminGuard)
+@UseGuards(AdminGuard)
 export class SupportDashboardController {
-  constructor(private readonly dashboardService: SupportDashboardService) {}
+  constructor(
+    @Inject(SupportDashboardService) private readonly dashboardService: SupportDashboardService
+  ) {}
 
   @Get('stats')
   @ApiOperation({ summary: 'Get support dashboard stats (admin)' })

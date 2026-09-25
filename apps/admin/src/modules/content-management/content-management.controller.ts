@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -18,20 +19,22 @@ import { AuditLogService } from '../audit/audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CreateContentDto, UpdateContentDto } from './dto/create-content.dto';
+import { resolveActorId } from '../../common/resolve-actor-id';
 
 interface AuthRequest extends Request {
-  user: { id: string; email: string; role: string };
+  user: { id?: string; sub?: string; email: string; role: string };
 }
 
 @Controller('admin/content')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class ContentManagementController {
   private readonly logger = new Logger(ContentManagementController.name);
 
   constructor(
-    private readonly contentService: ContentManagementService,
-    private readonly auditLogService: AuditLogService
+    @Inject(ContentManagementService) private readonly contentService: ContentManagementService,
+    @Inject(AuditLogService) private readonly auditLogService: AuditLogService
   ) {}
 
   // ─── Content CRUD ──────────────────────────────────────────────────────────
@@ -45,7 +48,7 @@ export class ContentManagementController {
     @Query('creatorId') creatorId?: string,
     @Query('search') search?: string,
     @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
+    @Query('endDate') endDate?: string
   ) {
     return this.contentService.listContent({
       page: Number(page) || 1,
@@ -81,7 +84,7 @@ export class ContentManagementController {
     @Query('action') action?: string,
     @Query('targetId') targetId?: string,
     @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
+    @Query('endDate') endDate?: string
   ) {
     return this.contentService.getAuditLogs({
       page: Number(page) || 1,
@@ -106,11 +109,13 @@ export class ContentManagementController {
   // ─── Content Mutations ─────────────────────────────────────────────────────
 
   @Post()
-  async createContent(@Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
+  async createContent(@Req() req: AuthRequest, @Body() body: CreateContentDto) {
     this.logger.log(`Creating content: ${body.title}`);
-    const result = await this.contentService.createContent(body);
+    const result = await this.contentService.createContent(
+      body as unknown as Record<string, unknown>
+    );
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.created',
       targetType: 'content',
       details: { title: body.title },
@@ -120,11 +125,18 @@ export class ContentManagementController {
   }
 
   @Patch(':id')
-  async updateContent(@Param('id') id: string, @Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
+  async updateContent(
+    @Param('id') id: string,
+    @Req() req: AuthRequest,
+    @Body() body: UpdateContentDto
+  ) {
     this.logger.log(`Updating content: ${id}`);
-    const result = await this.contentService.updateContent(id, body);
+    const result = await this.contentService.updateContent(
+      id,
+      body as unknown as Record<string, unknown>
+    );
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.updated',
       targetType: 'content',
       targetId: id,
@@ -138,7 +150,7 @@ export class ContentManagementController {
     this.logger.log(`Soft-deleting content: ${id}`);
     const result = await this.contentService.deleteContent(id);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.deleted',
       targetType: 'content',
       targetId: id,
@@ -152,7 +164,7 @@ export class ContentManagementController {
     this.logger.log(`Publishing content: ${id}`);
     const result = await this.contentService.publishContent(id);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.published',
       targetType: 'content',
       targetId: id,
@@ -166,7 +178,7 @@ export class ContentManagementController {
     this.logger.log(`Unpublishing content: ${id}`);
     const result = await this.contentService.unpublishContent(id);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.unpublished',
       targetType: 'content',
       targetId: id,
@@ -182,7 +194,7 @@ export class ContentManagementController {
     this.logger.log(`Bulk updating status for ${body.ids.length} items`);
     const result = await this.contentService.bulkUpdateStatus(body.ids, body.status);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.bulk_status_updated',
       targetType: 'content',
       details: { count: body.ids.length, status: body.status },
@@ -192,11 +204,12 @@ export class ContentManagementController {
   }
 
   @Post('bulk/delete')
+  @Roles('superadmin')
   async bulkDelete(@Req() req: AuthRequest, @Body() body: { ids: string[] }) {
     this.logger.log(`Bulk soft-deleting ${body.ids.length} items`);
     const result = await this.contentService.bulkDelete(body.ids);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.bulk_deleted',
       targetType: 'content',
       details: { count: body.ids.length },
@@ -212,7 +225,7 @@ export class ContentManagementController {
     this.logger.log(`Creating category: ${body.name}`);
     const result = await this.contentService.createCategory(body);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.category.created',
       targetType: 'category',
       details: { name: body.name },
@@ -222,11 +235,15 @@ export class ContentManagementController {
   }
 
   @Put('categories/:id')
-  async updateCategory(@Param('id') id: string, @Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
+  async updateCategory(
+    @Param('id') id: string,
+    @Req() req: AuthRequest,
+    @Body() body: Record<string, unknown>
+  ) {
     this.logger.log(`Updating category: ${id}`);
     const result = await this.contentService.updateCategory(id, body);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.category.updated',
       targetType: 'category',
       targetId: id,
@@ -240,7 +257,7 @@ export class ContentManagementController {
     this.logger.log(`Deleting category: ${id}`);
     const result = await this.contentService.deleteCategory(id);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.category.deleted',
       targetType: 'category',
       targetId: id,
@@ -256,7 +273,7 @@ export class ContentManagementController {
     this.logger.log(`Creating tag: ${body.name}`);
     const result = await this.contentService.createTag(body);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.tag.created',
       targetType: 'tag',
       details: { name: body.name },
@@ -270,7 +287,7 @@ export class ContentManagementController {
     this.logger.log(`Deleting tag: ${id}`);
     const result = await this.contentService.deleteTag(id);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'content.tag.deleted',
       targetType: 'tag',
       targetId: id,

@@ -1,14 +1,42 @@
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: class {
+    get = jest.fn().mockResolvedValue(null);
+    set = jest.fn().mockResolvedValue(undefined);
+    invalidate = jest.fn().mockResolvedValue(undefined);
+  },
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+  JwtConfigModule: class {},
+}));
+
+jest.mock('axios', () => ({
+  get: jest.fn(),
+  default: {
+    get: jest.fn(),
+  },
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { AnalyticsService } from './analytics.service';
-import { PrismaService } from '../database/prisma.service';
+import { AnalyticsService } from './analytics.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
+import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
+
+/** Flag mock matching registered defaults: sampling 100, others off. */
+class MockFeatureFlagService {
+  isEnabled = jest.fn().mockResolvedValue(false);
+  getValue = jest.fn().mockResolvedValue(100);
+}
 
 describe('AnalyticsService', () => {
   let service: AnalyticsService;
+  let flags: MockFeatureFlagService;
 
   const mockPrismaService = {
     productEvent: {
       create: jest.fn(),
+      createMany: jest.fn(),
       count: jest.fn(),
       findMany: jest.fn(),
       groupBy: jest.fn(),
@@ -44,8 +72,27 @@ describe('AnalyticsService', () => {
   };
 
   beforeEach(async () => {
+    flags = new MockFeatureFlagService();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AnalyticsService, { provide: PrismaService, useValue: mockPrismaService }],
+      providers: [
+        AnalyticsService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        { provide: FeatureFlagService, useValue: flags },
+      ],
     }).compile();
 
     service = module.get<AnalyticsService>(AnalyticsService);
@@ -72,7 +119,7 @@ describe('AnalyticsService', () => {
         },
       ];
 
-      mockPrismaService.productEvent.create.mockResolvedValue({ id: 'event-1' });
+      mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 1 });
 
       const result = await service.ingestEvents(events);
 
@@ -105,12 +152,57 @@ describe('AnalyticsService', () => {
         },
       ];
 
-      mockPrismaService.productEvent.create.mockResolvedValue({ id: 'event-1' });
+      mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 1 });
 
       const result = await service.ingestEvents(events);
 
       expect(result.success).toBe(true);
       expect(result.data!.ingested).toBe(1);
+    });
+
+    it('should accept search correction events (shown + accepted)', async () => {
+      const events = [
+        {
+          type: 'content_search_correction_shown',
+          metadata: { session_id: 's1', platform: 'web', timestamp: '2026-01-01T00:00:00Z' },
+        },
+        {
+          type: 'content_search_correction_accepted',
+          metadata: { session_id: 's1', platform: 'web', timestamp: '2026-01-01T00:00:00Z' },
+        },
+      ];
+
+      mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 2 });
+
+      const result = await service.ingestEvents(events);
+
+      expect(result.success).toBe(true);
+      expect(result.data!.ingested).toBe(2);
+      expect(result.data!.rejected).toBe(0);
+    });
+
+    it('should accept flag_stale_enabled events (payment-style stale-flag analytics)', async () => {
+      const events = [
+        {
+          type: 'flag_stale_enabled',
+          metadata: {
+            key: 'search_suggestions_ai',
+            service: 'search-service',
+            staleAfter: '2026-01-01T00:00:00Z',
+            session_id: 's1',
+            platform: 'web',
+            timestamp: '2026-01-01T00:00:00Z',
+          },
+        },
+      ];
+
+      mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.ingestEvents(events);
+
+      expect(result.success).toBe(true);
+      expect(result.data!.ingested).toBe(1);
+      expect(result.data!.rejected).toBe(0);
     });
 
     it('should reject events with missing required metadata fields', async () => {
@@ -148,8 +240,10 @@ describe('AnalyticsService', () => {
 
   describe('getDashboard', () => {
     it('should return dashboard metrics', async () => {
-      mockPrismaService.user.count.mockResolvedValue(1000);
-      mockPrismaService.contentItem.count.mockResolvedValue(500);
+      const axios = require('axios');
+      axios.get
+        .mockResolvedValueOnce({ data: { total: 1000 } })
+        .mockResolvedValueOnce({ data: { total: 500 } });
       mockPrismaService.productEvent.count.mockResolvedValue(10000);
       mockPrismaService.productEvent.groupBy.mockResolvedValue([{ userId: 'u1' }]);
 
@@ -202,6 +296,54 @@ describe('AnalyticsService', () => {
     });
   });
 
+  describe('getSearchCorrections', () => {
+    it('should aggregate correction events into a daily series', async () => {
+      mockPrismaService.$queryRaw.mockResolvedValue([
+        {
+          day: new Date(),
+          shown: 10,
+          accepted: 4,
+        },
+      ]);
+
+      const result = await service.getSearchCorrections(7);
+      const data = result.data as {
+        days: number;
+        overall: { shown: number; accepted: number; rate: number };
+        series: { date: string; shown: number; accepted: number; rate: number }[];
+      };
+
+      expect(result.success).toBe(true);
+      expect(data.days).toBe(7);
+      expect(data.series).toHaveLength(7);
+      expect(data.overall.shown).toBe(10);
+      expect(data.overall.accepted).toBe(4);
+      expect(data.overall.rate).toBeCloseTo(0.4);
+      // The single mock row lands on today — the last day of the series.
+      const last = data.series[data.series.length - 1];
+      expect(last.shown).toBe(10);
+      expect(last.accepted).toBe(4);
+      expect(last.rate).toBeCloseTo(0.4);
+    });
+
+    it('should fill zero days and clamp the range to 90', async () => {
+      mockPrismaService.$queryRaw.mockResolvedValue([]);
+
+      const result = await service.getSearchCorrections(200);
+      const data = result.data as {
+        days: number;
+        overall: { shown: number; accepted: number; rate: number };
+        series: { date: string; shown: number; accepted: number; rate: number }[];
+      };
+
+      expect(result.success).toBe(true);
+      expect(data.days).toBe(90);
+      expect(data.series).toHaveLength(90);
+      expect(data.series.every((d) => d.shown === 0)).toBe(true);
+      expect(data.overall.rate).toBe(0);
+    });
+  });
+
   describe('trackEvent', () => {
     it('should track a single event', async () => {
       mockPrismaService.productEvent.create.mockResolvedValue({ id: 'event-1' });
@@ -215,7 +357,7 @@ describe('AnalyticsService', () => {
 
   describe('trackBatch', () => {
     it('should track multiple events', async () => {
-      mockPrismaService.$transaction.mockResolvedValue([{ id: 'e1' }, { id: 'e2' }]);
+      mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 2 });
 
       const events = [
         { type: 'content_view', userId: 'user-1' },
@@ -230,7 +372,8 @@ describe('AnalyticsService', () => {
 
   describe('getDailyStats', () => {
     it('should return daily statistics', async () => {
-      mockPrismaService.user.count.mockResolvedValue(1000);
+      const axios = require('axios');
+      axios.get.mockResolvedValue({ data: { total: 1000 } });
       mockPrismaService.productEvent.count.mockResolvedValue(500);
       mockPrismaService.productEvent.groupBy.mockResolvedValue([{ userId: 'u1' }]);
 
@@ -261,7 +404,9 @@ describe('AnalyticsService', () => {
     it('should reject unknown universe', async () => {
       mockPrismaService.universe.findUnique.mockResolvedValue(null);
 
-      await expect(service.getUniverseKpis('unknown')).rejects.toThrow(BadRequestException);
+      const result = await service.getUniverseKpis('unknown');
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 
@@ -290,7 +435,8 @@ describe('AnalyticsService', () => {
 
   describe('getRetentionMetrics', () => {
     it('should return retention metrics', async () => {
-      mockPrismaService.user.count.mockResolvedValue(100);
+      const axios = require('axios');
+      axios.get.mockResolvedValue({ data: { total: 100 } });
       mockPrismaService.$queryRaw.mockResolvedValue([{ count: 50 }]);
 
       const result = await service.getRetentionMetrics('30d');

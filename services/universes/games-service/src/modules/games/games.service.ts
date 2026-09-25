@@ -1,31 +1,29 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { GameResponse } from './interfaces/game-response.interface';
+import { PrismaService } from '../database/prisma.service.js';
+import { GameResponse } from './interfaces/game-response.interface.js';
 import axios from 'axios';
 
 @Injectable()
 export class GamesService {
   private readonly logger = new Logger(GamesService.name);
   private readonly analyticsServiceBaseUrl: string;
-  private readonly walletServiceBaseUrl: string;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
-    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
   }
 
-  private async trackAnalyticsEvent(
+  private async trackEvent(
     eventName: string,
     userId: string,
-    metadata: Record<string, unknown>
+    metadata: Record<string, unknown> = {}
   ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, {
-        eventName,
+      await axios.post(`${this.analyticsServiceBaseUrl}/v1/analytics/events`, {
+        type: eventName,
         userId,
         universe: 'games',
         metadata,
@@ -37,24 +35,25 @@ export class GamesService {
   }
 
   async getHome(): Promise<GameResponse> {
-    const dailyChallenge = await this.prisma.challenge.findFirst({
-      where: { type: 'daily' },
-      include: {
-        questions: true,
-      },
-    });
-
-    const tournaments = await this.prisma.tournament.findMany({
-      where: { status: 'active' },
-      orderBy: { startsAt: 'asc' },
-      take: 5,
-    });
-
-    const topPlayers = await this.prisma.scoreEntry.findMany({
-      orderBy: { score: 'desc' },
-      take: 10,
-      include: { user: true },
-    });
+    // Parallel fetch all independent data (fixes sequential queries)
+    const [dailyChallenge, tournaments, topPlayers] = await Promise.all([
+      this.prisma.challenge.findFirst({
+        where: { type: 'daily' },
+        include: { questions: { select: { id: true } } },
+      }),
+      this.prisma.tournament.findMany({
+        where: { status: 'active' },
+        include: {
+          _count: { select: { entries: true, prizes: true } },
+        },
+        orderBy: { startsAt: 'asc' },
+        take: 5,
+      }),
+      this.prisma.scoreEntry.findMany({
+        orderBy: { score: 'desc' },
+        take: 10,
+      }),
+    ]);
 
     return {
       success: true,
@@ -69,9 +68,6 @@ export class GamesService {
   async getDailyChallenge(userId?: string): Promise<GameResponse> {
     const challenge = await this.prisma.challenge.findFirst({
       where: { type: 'daily' },
-      include: {
-        questions: true,
-      },
     });
 
     if (!challenge) {
@@ -99,7 +95,6 @@ export class GamesService {
   async submitDailyChallenge(userId: string, answer: string): Promise<GameResponse> {
     const challenge = await this.prisma.challenge.findFirst({
       where: { type: 'daily' },
-      include: { questions: true },
     });
 
     if (!challenge) {
@@ -115,7 +110,11 @@ export class GamesService {
       throw new BadRequestException('Daily challenge already completed');
     }
 
-    const firstQuestion = challenge.questions?.[0] as Record<string, unknown> | undefined;
+    const challengeQuestions = await this.prisma.question.findMany({
+      where: { challengeId: challenge.id },
+      orderBy: { order: 'asc' },
+    });
+    const firstQuestion = challengeQuestions[0] as Record<string, unknown> | undefined;
     const correctAnswer =
       (firstQuestion?.correctAnswer as string) || (firstQuestion?.answer as string);
     const isCorrect = answer === correctAnswer;
@@ -129,7 +128,7 @@ export class GamesService {
       },
     });
 
-    await this.trackAnalyticsEvent('daily_challenge_submitted', userId, {
+    await this.trackEvent('daily_challenge_submitted', userId, {
       challengeId: challenge.id,
       isCorrect,
     });
@@ -161,7 +160,7 @@ export class GamesService {
       },
     });
 
-    await this.trackAnalyticsEvent('game_started', userId, {
+    await this.trackEvent('game_started', userId, {
       sessionId: session.id,
       challengeId,
     });
@@ -228,7 +227,7 @@ export class GamesService {
         },
       });
 
-      await this.trackAnalyticsEvent('game_completed', userId, {
+      await this.trackEvent('game_completed', userId, {
         sessionId,
         challengeId: session.challengeId,
         score: question.points,
@@ -250,7 +249,6 @@ export class GamesService {
     const leaderboard = await this.prisma.scoreEntry.findMany({
       orderBy: { score: 'desc' },
       take: 100,
-      include: { user: true },
     });
 
     return {
@@ -264,9 +262,7 @@ export class GamesService {
       where: { status: 'active' },
       include: {
         prizes: true,
-        _count: {
-          select: { entries: true },
-        },
+        _count: { select: { entries: true, matches: true } },
       },
       orderBy: { startsAt: 'asc' },
     });
@@ -297,48 +293,25 @@ export class GamesService {
     });
 
     if (existingEntry) {
-      throw new BadRequestException('Already entered tournament');
-    }
-
-    if (tournament.entryFee && Number(tournament.entryFee) > 0) {
-      const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
-      if (!wallet) {
-        throw new NotFoundException('Wallet not found');
-      }
-
-      if (Number(wallet.balance) < Number(tournament.entryFee)) {
-        throw new BadRequestException('Insufficient balance for tournament entry fee');
-      }
-
-      await axios
-        .post(
-          `${this.walletServiceBaseUrl}/v1/wallet/debit`,
-          {
-            walletId: wallet.id,
-            amount: Number(tournament.entryFee),
-            description: `Tournament entry fee: ${tournamentId}`,
-          },
-          { timeout: 10000 }
-        )
-        .catch((error: unknown) => {
-          const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
-          throw new BadRequestException(errorMessage);
-        });
+      throw new BadRequestException('Already entered this tournament');
     }
 
     const entry = await this.prisma.tournamentEntry.create({
       data: {
         userId,
         tournamentId,
+        score: 0,
       },
+    });
+
+    await this.trackEvent('tournament_entered', userId, {
+      tournamentId,
+      tournamentName: tournament.title,
     });
 
     return {
       success: true,
-      data: {
-        entryId: entry.id,
-        message: 'Entered tournament',
-      },
+      data: { entry },
     };
   }
 }

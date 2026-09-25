@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
@@ -40,7 +40,7 @@ export default function ForgotPasswordPage(): React.JSX.Element {
   return (
     <div
       className="relative min-h-screen w-full flex overflow-hidden"
-      style={{ backgroundColor: '#1A0A0A' }}
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
     >
       {/* Logo top-left */}
       <div className="absolute top-0 left-0 p-8 z-20">
@@ -76,7 +76,7 @@ export default function ForgotPasswordPage(): React.JSX.Element {
               height: 110,
               borderRadius: '55px 55px 0 0',
               border: '18px solid',
-              borderColor: '#E8420A transparent transparent transparent',
+              borderColor: 'var(--brand-orange) transparent transparent transparent',
               boxShadow: '0 0 25px rgba(232,66,10,0.6)',
             }}
           />
@@ -87,7 +87,7 @@ export default function ForgotPasswordPage(): React.JSX.Element {
               top: 95,
               width: 180,
               height: 160,
-              background: 'linear-gradient(160deg, #3a1a0a, #1A0A0A)',
+              background: 'var(--auth-warm-gradient)',
               border: '2px solid rgba(232,66,10,0.5)',
               boxShadow: '0 0 40px rgba(204,28,28,0.4)',
             }}

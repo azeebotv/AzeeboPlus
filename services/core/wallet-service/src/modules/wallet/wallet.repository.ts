@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
 export class WalletRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findByUserId(userId: string) {
     return this.prisma.wallet.findUnique({ where: { userId } });
@@ -25,32 +25,47 @@ export class WalletRepository {
     if (!wallet) {
       throw new Error('Wallet not found');
     }
-    return this.prisma.walletTransaction.create({
-      data: {
-        walletId: wallet.id,
-        type: 'credit',
-        amount,
-        description: 'Wallet funding',
-        status: 'pending',
-        reference: paymentReference,
-      },
-    });
+    return this.prisma.$transaction([
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'credit',
+          amount,
+          description: 'Wallet funding',
+          status: 'pending',
+          reference: paymentReference,
+        },
+      }),
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { increment: amount } },
+      }),
+    ]);
   }
 
-  async withdraw(userId: string, amount: number, bankAccount: string) {
+  async withdraw(userId: string, amount: number, _bankAccount: string) {
     const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
     if (!wallet) {
       throw new Error('Wallet not found');
     }
-    return this.prisma.walletTransaction.create({
-      data: {
-        walletId: wallet.id,
-        type: 'debit',
-        amount,
-        description: 'Withdrawal',
-        status: 'pending',
-      },
-    });
+    if (Number(wallet.balance) < amount) {
+      throw new Error('Insufficient balance');
+    }
+    return this.prisma.$transaction([
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'debit',
+          amount,
+          description: 'Withdrawal',
+          status: 'pending',
+        },
+      }),
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { decrement: amount } },
+      }),
+    ]);
   }
 
   async transfer(fromUserId: string, toUserId: string, amount: number) {
@@ -58,6 +73,9 @@ export class WalletRepository {
     const toWallet = await this.prisma.wallet.findUnique({ where: { userId: toUserId } });
     if (!fromWallet || !toWallet) {
       throw new Error('Wallet not found');
+    }
+    if (Number(fromWallet.balance) < amount) {
+      throw new Error('Insufficient balance');
     }
     return this.prisma.$transaction([
       this.prisma.walletTransaction.create({
@@ -77,6 +95,14 @@ export class WalletRepository {
           description: `Transfer from ${fromUserId}`,
           status: 'completed',
         },
+      }),
+      this.prisma.wallet.update({
+        where: { id: fromWallet.id },
+        data: { balance: { decrement: amount } },
+      }),
+      this.prisma.wallet.update({
+        where: { id: toWallet.id },
+        data: { balance: { increment: amount } },
       }),
     ]);
   }
@@ -155,15 +181,24 @@ export class WalletRepository {
     if (!wallet) {
       throw new Error('Wallet not found');
     }
-    return this.prisma.walletTransaction.create({
-      data: {
-        walletId: wallet.id,
-        type: 'debit',
-        amount,
-        description,
-        status: 'completed',
-      },
-    });
+    if (Number(wallet.balance) < amount) {
+      throw new Error('Insufficient balance');
+    }
+    return this.prisma.$transaction([
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'debit',
+          amount,
+          description,
+          status: 'completed',
+        },
+      }),
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { decrement: amount } },
+      }),
+    ]);
   }
 
   async credit(userId: string, amount: number, description: string) {
@@ -171,15 +206,21 @@ export class WalletRepository {
     if (!wallet) {
       throw new Error('Wallet not found');
     }
-    return this.prisma.walletTransaction.create({
-      data: {
-        walletId: wallet.id,
-        type: 'credit',
-        amount,
-        description,
-        status: 'completed',
-      },
-    });
+    return this.prisma.$transaction([
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'credit',
+          amount,
+          description,
+          status: 'completed',
+        },
+      }),
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { increment: amount } },
+      }),
+    ]);
   }
 
   async redeemReward(userId: string, points: number) {
@@ -187,15 +228,22 @@ export class WalletRepository {
     if (!wallet) {
       throw new Error('Wallet not found');
     }
-    return this.prisma.walletTransaction.create({
-      data: {
-        walletId: wallet.id,
-        type: 'bonus',
-        amount: points / 100,
-        description: `Reward redemption: ${points} points`,
-        status: 'completed',
-      },
-    });
+    const creditAmount = points / 100;
+    return this.prisma.$transaction([
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'bonus',
+          amount: creditAmount,
+          description: `Reward redemption: ${points} points`,
+          status: 'completed',
+        },
+      }),
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { bonusBalance: { increment: creditAmount } },
+      }),
+    ]);
   }
 
   async addBonusCredit(userId: string, amount: number, reason: string) {
@@ -203,15 +251,21 @@ export class WalletRepository {
     if (!wallet) {
       throw new Error('Wallet not found');
     }
-    return this.prisma.walletTransaction.create({
-      data: {
-        walletId: wallet.id,
-        type: 'bonus',
-        amount,
-        description: `Bonus credit: ${reason}`,
-        status: 'completed',
-      },
-    });
+    return this.prisma.$transaction([
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'bonus',
+          amount,
+          description: `Bonus credit: ${reason}`,
+          status: 'completed',
+        },
+      }),
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { bonusBalance: { increment: amount } },
+      }),
+    ]);
   }
 
   async addPromoCredit(userId: string, amount: number, promoCode: string, expiresAt: Date) {
@@ -219,18 +273,24 @@ export class WalletRepository {
     if (!wallet) {
       throw new Error('Wallet not found');
     }
-    return this.prisma.walletTransaction.create({
-      data: {
-        walletId: wallet.id,
-        type: 'promo',
-        amount,
-        description: `Promo credit: ${promoCode}`,
-        status: 'completed',
-        metadata: {
-          promoCode,
-          expiresAt: expiresAt.toISOString(),
+    return this.prisma.$transaction([
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'promo',
+          amount,
+          description: `Promo credit: ${promoCode}`,
+          status: 'completed',
+          metadata: {
+            promoCode,
+            expiresAt: expiresAt.toISOString(),
+          },
         },
-      },
-    });
+      }),
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { promoBalance: { increment: amount } },
+      }),
+    ]);
   }
 }

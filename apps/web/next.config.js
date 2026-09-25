@@ -1,10 +1,24 @@
-const path = require('path')
+const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  // Pin the tracing root to the monorepo root so standalone output is
+  // deterministic (avoids Next.js picking up stray parent-directory
+  // lockfiles and emitting a wrong standalone layout).
+  outputFileTracingRoot: path.resolve(__dirname, '../../'),
   reactStrictMode: true,
-  transpilePackages: ['@azeebo/ui', '@azeebo/design-tokens', '@azeebo/utils', '@azeebo/api-client', '@azeebo/shared-types', '@azeebo/validation', '@azeebo/error-handling', '@azeebo/logger'],
+  transpilePackages: [
+    '@azeebo/ui',
+    '@azeebo/design-tokens',
+    '@azeebo/utils',
+    '@azeebo/api-client',
+    '@azeebo/http-client',
+    '@azeebo/shared-types',
+    '@azeebo/validation',
+    '@azeebo/error-handling',
+    '@azeebo/logger',
+  ],
   eslint: {
     ignoreDuringBuilds: false,
   },
@@ -12,55 +26,125 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'api.azeeboplus.com',
+        hostname: 'placehold.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+      {
+        // Seed data (scripts/seeders/lifestyle-seeder.ts) emits cover URLs on
+        // this host; ContentCard/OptimizedImage render them via next/image.
+        protocol: 'https',
+        hostname: 'cdn.azeebo.test',
+      },
+      {
+        // Seed data (scripts/seed-creators.ts) emits thumbnailUrl on this host.
+        protocol: 'https',
+        hostname: 'storage.azeebo.com',
+      },
+      {
+        // Platform CDN wildcards: any subdomain of the production and TV
+        // properties (media/api/tenant hosts) may serve next/image sources.
+        // '*' matches one subdomain level; use '**' if deeper nesting lands.
+        protocol: 'https',
+        hostname: '*.azeeboplus.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.azeeboplus.tv',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'azeebo-media-dev.s3.us-east-1.amazonaws.com',
       },
       {
         protocol: 'http',
         hostname: 'localhost',
       },
     ],
-    qualities: [85],
+    qualities: [80, 85],
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   async headers() {
+    const isProd = process.env.NODE_ENV === 'production';
+    const securityHeaders = [
+      {
+        key: 'X-DNS-Prefetch-Control',
+        value: 'on',
+      },
+      {
+        key: 'X-Frame-Options',
+        value: 'DENY',
+      },
+      {
+        key: 'X-Content-Type-Options',
+        value: 'nosniff',
+      },
+      {
+        key: 'Referrer-Policy',
+        value: 'strict-origin-when-cross-origin',
+      },
+      {
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(), geolocation=()',
+      },
+      {
+        key: 'Content-Security-Policy',
+        value:
+          "default-src 'self'; script-src 'self' 'unsafe-eval' https://www.youtube.com https://www.youtube-nocookie.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' http://localhost:* https: ws://localhost:* ws: wss:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; media-src 'self' https: blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
+      },
+    ];
+
+    if (isProd) {
+      securityHeaders.push({
+        key: 'Strict-Transport-Security',
+        value: 'max-age=63072000; includeSubDomains; preload',
+      });
+    }
+
     return [
       {
-        source: '/:path*',
+        source: '/sw.js',
         headers: [
           {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on',
+            key: 'Content-Type',
+            value: 'application/javascript; charset=utf-8',
           },
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
           },
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' http://localhost:* https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
+            key: 'Service-Worker-Allowed',
+            value: '/',
           },
         ],
       },
-    ]
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: '/reality/episode/:path*',
+        destination: '/reality/episodes/:path*',
+        permanent: false,
+      },
+    ];
   },
   async rewrites() {
     const apiGatewayUrl = process.env.API_GATEWAY_URL || 'http://localhost:3013';
@@ -73,8 +157,16 @@ const nextConfig = {
         source: '/auth/:path*',
         destination: `${apiGatewayUrl}/api/v1/auth/:path*`,
       },
-    ]
+      {
+        source: '/feature-flags/:path*',
+        destination: `${apiGatewayUrl}/feature-flags/:path*`,
+      },
+      {
+        source: '/metrics',
+        destination: `${apiGatewayUrl}/metrics`,
+      },
+    ];
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

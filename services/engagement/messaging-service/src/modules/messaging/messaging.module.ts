@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
-import { MessagingController } from './messaging.controller';
-import { MessagingService } from './messaging.service';
-import { DatabaseModule } from '../database/database.module';
+import { JwtConfigModule } from '@azeebo/shared-services';
+import { MessagingController } from './messaging.controller.js';
+import { MessagingService } from './messaging.service.js';
+import { MessagingGateway } from './messaging.gateway.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, JwtConfigModule],
   controllers: [MessagingController],
-  providers: [MessagingService],
+  providers: [MessagingService, MessagingGateway],
   exports: [MessagingService],
 })
 export class MessagingModule {}

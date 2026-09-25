@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PaymentsService } from './payments.service';
-import { PrismaService } from '../database/prisma.service';
-import { PaystackProvider } from './providers/paystack.provider';
-import { FlutterwaveProvider } from './providers/flutterwave.provider';
-import { WebhookRetryService } from './webhook-retry.service';
+import { PaymentsService } from './payments.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { PaystackProvider } from './providers/paystack.provider.js';
+import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
+import { WebhookRetryService } from './webhook-retry.service.js';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService, CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 jest.mock('../database/prisma.service');
 jest.mock('./providers/paystack.provider');
@@ -64,6 +65,10 @@ describe('PaymentsService E2E Tests', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentsService,
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+        },
         {
           provide: PrismaService,
           useValue: {
@@ -149,6 +154,15 @@ describe('PaymentsService E2E Tests', () => {
             get: jest.fn().mockResolvedValue(null),
             set: jest.fn().mockResolvedValue(undefined),
             exists: jest.fn().mockResolvedValue(false),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -340,7 +354,10 @@ describe('PaymentsService E2E Tests', () => {
 
       expect(result.success).toBe(true);
       expect(prisma.paymentIntent.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 'pi-123' }, data: { status: 'failed' } })
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 'pi-123' }),
+          data: expect.objectContaining({ status: 'failed', version: { increment: 1 } }),
+        })
       );
     });
   });

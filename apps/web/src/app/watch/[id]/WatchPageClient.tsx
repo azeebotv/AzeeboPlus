@@ -1,8 +1,11 @@
 'use client';
-import React from 'react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { useFlags } from '../../../context/FlagsContext';
 import { apiFetch } from '../../../lib/api';
+import { shouldAutoPlay } from '../../../lib/low-data';
+import { useVideoPlayer } from '../../../hooks/useVideoPlayer';
+import { detectMediaType } from '../../../lib/media-url';
 import { announceToScreenReader } from '../../../lib/keyboard';
 import AppHeader from '../../../components/layout/AppHeader';
 import AppFooter from '../../../components/layout/AppFooter';
@@ -17,6 +20,7 @@ interface Content {
   universe?: { id: string; name: string };
   creator?: { id: string; name: string; avatar?: string };
   rating?: number;
+  mediaUrl?: string;
 }
 
 interface Comment {
@@ -42,29 +46,22 @@ interface RawComment {
 
 export default function WatchPageClient({ id }: { id: string }): React.JSX.Element {
   const { user } = useAuth();
+  const { isEnabled } = useFlags();
   const [content, setContent] = useState<Content | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [volume, setVolume] = useState<number>(0.7);
-  const [progress, setProgress] = useState<number>(0);
-  const [duration, setDuration] = useState<number>(0);
-  const [showControls, setShowControls] = useState<boolean>(true);
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [isDisliked, setIsDisliked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(0);
-  const [_dislikeCount, setDislikeCount] = useState<number>(0);
+  const [, setDislikeCount] = useState<number>(0);
   const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
   const [subscriberCount, setSubscriberCount] = useState<number>(0);
   const [showDescription, setShowDescription] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [_isPiP, setIsPiP] = useState<boolean>(false);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [isBuffering, _setIsBuffering] = useState<boolean>(false);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
   const [showReportModal, setShowReportModal] = useState<boolean>(false);
   const [isReporting, setIsReporting] = useState<boolean>(false);
@@ -75,10 +72,42 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     setRetryCount((c) => c + 1);
   }, []);
 
-  const videoRef = useRef<HTMLDivElement>(null);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const commentsRef = useRef<HTMLDivElement>(null);
   const focusTrapRef = useRef<HTMLDivElement>(null);
+
+  const handleVideoEnded = useCallback(() => {
+    announceToScreenReader('Video finished');
+  }, []);
+
+  const mediaUrlRef = useRef(content?.mediaUrl);
+  mediaUrlRef.current = content?.mediaUrl;
+
+  const handleVideoError = useCallback((errorMsg: string) => {
+    // Ignore errors from useVideoPlayer for embedded media (YouTube/iframe/FTP)
+    const mediaInfo = detectMediaType(mediaUrlRef.current || '');
+    if (['youtube', 'iframe', 'ftp'].includes(mediaInfo.type)) return;
+    setError(errorMsg);
+  }, []);
+
+  const {
+    state: playerState,
+    signedUrl,
+    videoRef,
+    play: playerPlay,
+    pause: playerPause,
+    seek: playerSeek,
+    setVolume: playerSetVolume,
+    toggleMute: playerToggleMute,
+  } = useVideoPlayer({
+    contentId: id,
+    mediaUrl: content?.mediaUrl,
+    // Autoplay is gated by the web_autoplay server flag (and low-data mode).
+    autoPlay: shouldAutoPlay(isEnabled),
+    onEnded: handleVideoEnded,
+    onError: handleVideoError,
+  });
 
   const formatTime = useCallback((seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -91,7 +120,15 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       try {
         setIsLoading(true);
         setError(null);
-        const response = await apiFetch<Content & { creatorId?: string; creatorName?: string; creatorAvatar?: string; likeCount?: number; dislikeCount?: number }>(`/content/${id}`);
+        const response = await apiFetch<
+          Content & {
+            creatorId?: string;
+            creatorName?: string;
+            creatorAvatar?: string;
+            likeCount?: number;
+            dislikeCount?: number;
+          }
+        >(`/content/${id}`, {}, { maxRetries: 2, timeoutMs: 10000 });
         if (response.success && response.data) {
           const data = response.data;
           const creatorId = data.creatorId || data.creator?.id || 'unknown';
@@ -100,6 +137,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             title: data.title || 'Untitled Content',
             description: data.description || 'No description available.',
             thumbnail: data.thumbnail || '/images/default-thumbnail.jpg',
+            mediaUrl: data.mediaUrl || '',
             duration: data.duration || 0,
             category: data.category || 'General',
             universe: data.universe || { id: 'unknown', name: 'General' },
@@ -110,14 +148,18 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             },
             rating: data.rating || 0,
           });
-          if (data.duration) {
-            setDuration(data.duration);
-          }
           setLikeCount(data.likeCount || 0);
           setDislikeCount(data.dislikeCount || 0);
           if (creatorId && creatorId !== 'unknown') {
             try {
-              const creatorResponse = await apiFetch<{ subscriberCount?: number; isSubscribed?: boolean; displayName?: string; name?: string; avatarUrl?: string; avatar?: string }>(`/creators/${creatorId}`);
+              const creatorResponse = await apiFetch<{
+                subscriberCount?: number;
+                isSubscribed?: boolean;
+                displayName?: string;
+                name?: string;
+                avatarUrl?: string;
+                avatar?: string;
+              }>(`/creators/${creatorId}`, {}, { maxRetries: 1, timeoutMs: 8000 });
               if (creatorResponse.success && creatorResponse.data) {
                 const creatorData = creatorResponse.data;
                 setSubscriberCount(creatorData.subscriberCount || 0);
@@ -150,7 +192,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
         } else {
           setError('Content not found');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load content. Please try again later.');
       } finally {
         setIsLoading(false);
@@ -163,7 +205,11 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   useEffect(() => {
     const loadComments = async (): Promise<void> => {
       try {
-        const response = await apiFetch<RawComment[]>(`/content/${id}/comments`);
+        const response = await apiFetch<RawComment[]>(
+          `/content/${id}/comments`,
+          {},
+          { maxRetries: 1, timeoutMs: 8000 }
+        );
         if (response.success && response.data) {
           const commentsData = Array.isArray(response.data) ? response.data : [];
           setComments(
@@ -185,55 +231,49 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     if (id) loadComments();
   }, [id]);
 
-  const play = useCallback((): void => {
-    if (!videoRef.current) return;
-    setIsPlaying(true);
-    videoRef.current.style.backgroundImage = `url(${content?.thumbnail || ''})`;
-    videoRef.current.style.backgroundSize = 'cover';
-    videoRef.current.style.backgroundPosition = 'center';
-    announceToScreenReader('Video playing');
-  }, [content?.thumbnail]);
-
-  const pause = useCallback((): void => {
-    setIsPlaying(false);
-    announceToScreenReader('Video paused');
-  }, []);
-
   const togglePlay = useCallback((): void => {
-    isPlaying ? pause() : play();
-  }, [isPlaying, pause, play]);
+    if (playerState.isPlaying) {
+      playerPause();
+      announceToScreenReader('Video paused');
+    } else {
+      playerPlay();
+      announceToScreenReader('Video playing');
+    }
+  }, [playerState.isPlaying, playerPlay, playerPause]);
 
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    setIsMuted(newVolume === 0);
-    announceToScreenReader(`Volume: ${Math.round(newVolume * 100)}%`);
-  }, []);
+  const handleVolumeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
+      const newVolume = parseFloat(e.target.value);
+      playerSetVolume(newVolume);
+      announceToScreenReader(`Volume: ${Math.round(newVolume * 100)}%`);
+    },
+    [playerSetVolume]
+  );
 
   const toggleMute = useCallback((): void => {
-    setIsMuted(!isMuted);
-    announceToScreenReader(isMuted ? 'Volume unmuted' : 'Volume muted');
-  }, [isMuted]);
+    playerToggleMute();
+    announceToScreenReader(playerState.isMuted ? 'Volume unmuted' : 'Volume muted');
+  }, [playerToggleMute, playerState.isMuted]);
 
   const handleProgressChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>): void => {
-      const newProgress = parseFloat(e.target.value);
-      setProgress(newProgress);
-      announceToScreenReader(`Progress: ${formatTime(newProgress)}`);
+      const newTime = parseFloat(e.target.value);
+      playerSeek(newTime);
+      announceToScreenReader(`Progress: ${formatTime(newTime)}`);
     },
-    [formatTime]
+    [playerSeek, formatTime]
   );
 
   const toggleFullscreen = useCallback(async (): Promise<void> => {
     try {
       if (!document.fullscreenElement) {
-        await videoRef.current?.requestFullscreen();
+        await videoContainerRef.current?.requestFullscreen();
         setIsFullscreen(true);
       } else {
         await document.exitFullscreen();
         setIsFullscreen(false);
       }
-    } catch (err) {
+    } catch {
       /* intentionally minimal */
     }
   }, []);
@@ -242,15 +282,13 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     try {
       if (document.pictureInPictureElement) {
         await document.exitPictureInPicture();
-        setIsPiP(false);
       } else if (videoRef.current) {
-        await (videoRef.current as unknown as HTMLVideoElement).requestPictureInPicture();
-        setIsPiP(true);
+        await videoRef.current.requestPictureInPicture();
       }
-    } catch (err) {
+    } catch {
       /* intentionally minimal */
     }
-  }, []);
+  }, [videoRef]);
 
   const changePlaybackRate = useCallback((rate: number): void => {
     setPlaybackRate(rate);
@@ -283,15 +321,18 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const toggleSubscribe = useCallback(async (): Promise<void> => {
     try {
       if (!user || !content?.creator?.id) return;
-      const response = await apiFetch<{ subscribed: boolean }>(`/creators/subscribe/${content.creator.id}`, {
-        method: 'POST',
-      });
+      const response = await apiFetch<{ subscribed: boolean }>(
+        `/creators/subscribe/${content.creator.id}`,
+        {
+          method: 'POST',
+        }
+      );
       if (response.success) {
         setIsSubscribed(!isSubscribed);
         setSubscriberCount((prev) => (isSubscribed ? prev - 1 : prev + 1));
         announceToScreenReader(isSubscribed ? 'Unsubscribed' : 'Subscribed');
       }
-    } catch (err) {
+    } catch {
       /* intentionally minimal */
     }
   }, [content?.creator?.id, isSubscribed, user]);
@@ -322,7 +363,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
         }
         announceToScreenReader('Comment added');
       }
-    } catch (err) {
+    } catch {
       /* intentionally minimal */
     }
   }, [id, newComment, user]);
@@ -366,7 +407,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
           setShowReportModal(false);
           announceToScreenReader('Report submitted successfully');
         }
-      } catch (err) {
+      } catch {
         /* intentionally minimal */
       } finally {
         setIsReporting(false);
@@ -393,19 +434,19 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
           break;
         case 'ArrowLeft':
           e.preventDefault();
-          setProgress(Math.max(0, progress - 10));
+          playerSeek(Math.max(0, playerState.currentTime - 10));
           break;
         case 'ArrowRight':
           e.preventDefault();
-          setProgress(Math.min(duration, progress + 10));
+          playerSeek(Math.min(playerState.duration, playerState.currentTime + 10));
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setVolume(Math.min(1, volume + 0.1));
+          playerSetVolume(Math.min(1, playerState.volume + 0.1));
           break;
         case 'ArrowDown':
           e.preventDefault();
-          setVolume(Math.max(0, volume - 0.1));
+          playerSetVolume(Math.max(0, playerState.volume - 0.1));
           break;
         case 'Escape':
           if (showShareModal) setShowShareModal(false);
@@ -417,9 +458,11 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       togglePlay,
       toggleFullscreen,
       toggleMute,
-      progress,
-      duration,
-      volume,
+      playerSeek,
+      playerSetVolume,
+      playerState.currentTime,
+      playerState.duration,
+      playerState.volume,
       showShareModal,
       showReportModal,
     ]
@@ -438,25 +481,29 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   }, []);
 
   const showControlsTemporarily = useCallback((): void => {
-    setShowControls(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     controlsTimeoutRef.current = setTimeout(() => {
-      if (isPlaying) setShowControls(false);
+      // Auto-hide controls
     }, 3000);
-  }, [isPlaying]);
+  }, []);
 
   const handleMouseMove = useCallback((): void => {
     showControlsTemporarily();
   }, [showControlsTemporarily]);
 
+  const handleVideoClick = useCallback((): void => {
+    togglePlay();
+  }, [togglePlay]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen relative flex flex-col justify-between" style={{ backgroundColor: 'var(--hp-bg, #0b090e)' }}>
         <AppHeader />
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-white/10 border-t-[#E8420A] rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white/60">Loading content...</p>
+          <div className="az-glass p-8 rounded-3xl border border-white/10 text-center max-w-sm mx-auto shadow-2xl">
+            <div className="w-12 h-12 border-4 border-white/10 border-t-[var(--brand-orange)] rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-white font-bold text-sm tracking-tight mb-1">Preparing Theater Stream</p>
+            <p className="text-xs text-white/40">Buffering high-bitrate media feed...</p>
           </div>
         </div>
         <AppFooter />
@@ -466,19 +513,32 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
 
   if (error || !content) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen relative flex flex-col justify-between" style={{ backgroundColor: 'var(--hp-bg, #0b090e)' }}>
         <AppHeader />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="az-glass p-8 text-center max-w-md">
-            <span className="text-4xl mb-4 block">&#x26A0;&#xFE0F;</span>
-            <h2 className="text-xl font-bold text-white mb-2">Error Loading Content</h2>
-            <p className="text-white/50">{error || 'Content not found'}</p>
+        <div className="flex items-center justify-center min-h-[60vh] px-4">
+          <div className="az-glass p-8 sm:p-10 text-center max-w-md w-full rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+              <svg
+                className="w-7 h-7"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.8}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-xl font-extrabold text-white mb-2 tracking-tight">Stream Error</h2>
+            <p className="text-white/60 text-xs mb-6 leading-relaxed">{error || 'Content not found'}</p>
             <button
               onClick={handleRetry}
-              className="az-btn-primary mt-6"
-              style={{ width: 'auto', paddingInline: '2rem' }}
+              className="az-btn-primary w-full py-3 rounded-full text-xs font-bold tracking-wide shadow-lg"
             >
-              Try Again
+              Retry Connection
             </button>
           </div>
         </div>
@@ -488,228 +548,311 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: 'var(--hp-bg, #0b090e)' }}>
+      {/* Theater Ambient Glow */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-96 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse at 50% 15%, rgba(232, 66, 10, 0.16) 0%, rgba(204, 28, 28, 0.05) 50%, transparent 75%)',
+        }}
+      />
       <AppHeader />
       <div
         ref={focusTrapRef}
         role="main"
         aria-label={`Watch ${content.title}`}
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10"
       >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Video Player Section */}
           <div className="lg:col-span-2">
             {/* Video Container */}
             <div
-              ref={videoRef}
-              className="relative w-full bg-black rounded-xl overflow-hidden"
+              ref={videoContainerRef}
+              className="relative w-full bg-black rounded-2xl overflow-hidden border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.85)]"
               style={{ aspectRatio: '16/9' }}
               onMouseMove={handleMouseMove}
-              onMouseLeave={() => isPlaying && setShowControls(false)}
-              onClick={togglePlay}
+              onMouseLeave={() => playerState.isPlaying && null}
+              onClick={(() => {
+                const mediaInfo = detectMediaType(content?.mediaUrl || '');
+                if (mediaInfo.type === 'youtube' || mediaInfo.type === 'iframe') return undefined;
+                return handleVideoClick;
+              })()}
               role="region"
               aria-label="Video player"
               tabIndex={0}
             >
-              {content.thumbnail && (
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${content.thumbnail})` }}
-                >
-                  <div className="absolute inset-0 bg-black/40" />
-                </div>
-              )}
-
-              {/* Play Button Overlay */}
-              {!isPlaying && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    play();
-                  }}
-                  className="absolute inset-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#E8420A] focus:ring-offset-2 focus:ring-offset-black"
-                  aria-label="Play video"
-                >
+              {(() => {
+                const mediaInfo = detectMediaType(content.mediaUrl || '');
+                if (mediaInfo.type === 'youtube' && mediaInfo.videoId) {
+                  return (
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      src={`https://www.youtube.com/embed/${mediaInfo.videoId}`}
+                      title={content.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="w-full h-full"
+                      style={{ aspectRatio: '16/9', borderRadius: '12px' }}
+                    />
+                  );
+                }
+                if (mediaInfo.type === 'iframe') {
+                  return (
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      src={mediaInfo.url}
+                      title={content.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="w-full h-full"
+                      style={{ aspectRatio: '16/9', borderRadius: '12px' }}
+                    />
+                  );
+                }
+                if (mediaInfo.type === 'ftp') {
+                  return (
+                    <div className="flex items-center justify-center h-full bg-gray-800 rounded-lg">
+                      <div className="text-center p-8">
+                        <p className="text-white text-lg mb-4">This content is available via FTP</p>
+                        <a
+                          href={mediaInfo.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[var(--brand-orange)] hover:text-[#FF6B35] underline text-lg"
+                        >
+                          Download via FTP
+                        </a>
+                      </div>
+                    </div>
+                  );
+                }
+                if (signedUrl) {
+                  return (
+                    <video
+                      ref={videoRef}
+                      src={signedUrl}
+                      className="w-full h-full object-contain"
+                      style={{ aspectRatio: '16/9' }}
+                      playsInline
+                      preload="metadata"
+                    />
+                  );
+                }
+                return content.thumbnail ? (
                   <div
-                    className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-                    style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${content.thumbnail})` }}
                   >
-                    <svg
-                      className="w-10 h-10 text-white ml-1"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
+                    <div className="absolute inset-0 bg-black/40" />
                   </div>
-                </button>
-              )}
+                ) : null;
+              })()}
+              {(() => {
+                const mediaInfo = detectMediaType(content?.mediaUrl || '');
+                const isEmbedded =
+                  mediaInfo.type === 'youtube' ||
+                  mediaInfo.type === 'iframe' ||
+                  mediaInfo.type === 'ftp';
+                return (
+                  !isEmbedded &&
+                  !playerState.isPlaying &&
+                  !playerState.isLoading && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePlay();
+                      }}
+                      className="absolute inset-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)] focus:ring-offset-2 focus:ring-offset-black"
+                      aria-label="Play video"
+                    >
+                      <div
+                        className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                        style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+                      >
+                        <svg
+                          className="w-10 h-10 text-white ml-1"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </button>
+                  )
+                );
+              })()}
 
               {/* Buffering Indicator */}
-              {isBuffering && (
+              {playerState.isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <div className="w-16 h-16 border-4 border-white/20 border-t-[#E8420A] rounded-full animate-spin"></div>
+                  <div className="w-16 h-16 border-4 border-white/20 border-t-[var(--brand-orange)] rounded-full animate-spin"></div>
                 </div>
               )}
 
-              {/* Video Controls */}
-              <div
-                className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
-              >
-                <div className="p-4">
-                  {/* Progress Bar */}
-                  <div className="mb-3">
-                    <input
-                      type="range"
-                      min="0"
-                      max={duration || 100}
-                      value={progress}
-                      onChange={handleProgressChange}
-                      className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
-                      aria-label="Video progress"
-                    />
-                    <div className="flex justify-between text-xs text-white/60 mt-1">
-                      <span>{formatTime(progress)}</span>
-                      <span>{formatTime(duration || 100)}</span>
+              {/* Video Controls - hidden for embedded media (YouTube/iframe has own controls) */}
+              {!detectMediaType(content?.mediaUrl || '').type.match(/^(youtube|iframe)$/) && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300">
+                  <div className="p-4">
+                    {/* Progress Bar */}
+                    <div className="mb-3">
+                      <input
+                        type="range"
+                        min="0"
+                        max={playerState.duration || 100}
+                        value={playerState.currentTime}
+                        onChange={handleProgressChange}
+                        className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--brand-orange)]"
+                        aria-label="Video progress"
+                      />
+                      <div className="flex justify-between text-xs text-white/60 mt-1">
+                        <span>{formatTime(playerState.currentTime)}</span>
+                        <span>{formatTime(playerState.duration || 100)}</span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Control Buttons */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          togglePlay();
-                        }}
-                        className="text-white hover:text-[#E8420A] transition-colors"
-                        aria-label={isPlaying ? 'Pause' : 'Play'}
-                      >
-                        {isPlaying ? (
-                          <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                          </svg>
-                        ) : (
-                          <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        )}
-                      </button>
-                      <div className="flex items-center gap-2">
+                    {/* Control Buttons */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleMute();
+                            togglePlay();
                           }}
-                          className="text-white hover:text-[#E8420A] transition-colors"
-                          aria-label={isMuted ? 'Unmute' : 'Mute'}
+                          className="text-white hover:text-[var(--brand-orange)] transition-colors"
+                          aria-label={playerState.isPlaying ? 'Pause' : 'Play'}
                         >
-                          {isMuted || volume === 0 ? (
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
+                          {playerState.isPlaying ? (
+                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                             </svg>
                           ) : (
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
                             </svg>
                           )}
                         </button>
-                        <input
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.01"
-                          value={isMuted ? 0 : volume}
-                          onChange={handleVolumeChange}
-                          className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
-                          aria-label="Volume"
-                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleMute();
+                            }}
+                            className="text-white hover:text-[var(--brand-orange)] transition-colors"
+                            aria-label={playerState.isMuted ? 'Unmute' : 'Mute'}
+                          >
+                            {playerState.isMuted || playerState.volume === 0 ? (
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
+                              </svg>
+                            ) : (
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                              </svg>
+                            )}
+                          </button>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value={playerState.isMuted ? 0 : playerState.volume}
+                            onChange={handleVolumeChange}
+                            className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--brand-orange)]"
+                            aria-label="Volume"
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          changePlaybackRate(
-                            playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1
-                          );
-                        }}
-                        className="text-white text-sm font-medium hover:text-[#E8420A] transition-colors px-2 py-1 rounded"
-                        aria-label={`Playback speed: ${playbackRate}x`}
-                      >
-                        {playbackRate}x
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          togglePiP();
-                        }}
-                        className="text-white hover:text-[#E8420A] transition-colors"
-                        aria-label="Picture in Picture"
-                      >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFullscreen();
-                        }}
-                        className="text-white hover:text-[#E8420A] transition-colors"
-                        aria-label="Toggle fullscreen"
-                      >
-                        {isFullscreen ? (
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
-                          </svg>
-                        )}
-                      </button>
-                      <div className="relative">
+                      <div className="flex items-center gap-3">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setShowSettings(!showSettings);
+                            changePlaybackRate(
+                              playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1
+                            );
                           }}
-                          className="text-white hover:text-[#E8420A] transition-colors"
-                          aria-label="Settings"
+                          className="text-white text-sm font-medium hover:text-[var(--brand-orange)] transition-colors px-2 py-1 rounded"
+                          aria-label={`Playback speed: ${playbackRate}x`}
+                        >
+                          {playbackRate}x
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            togglePiP();
+                          }}
+                          className="text-white hover:text-[var(--brand-orange)] transition-colors"
+                          aria-label="Picture in Picture"
                         >
                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+                            <path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z" />
                           </svg>
                         </button>
-                        {showSettings && (
-                          <div
-                            className="absolute bottom-10 right-0 az-glass p-3 min-w-[160px]"
-                            onClick={(e) => e.stopPropagation()}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFullscreen();
+                          }}
+                          className="text-white hover:text-[var(--brand-orange)] transition-colors"
+                          aria-label="Toggle fullscreen"
+                        >
+                          {isFullscreen ? (
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z" />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+                            </svg>
+                          )}
+                        </button>
+                        <div className="relative">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowSettings(!showSettings);
+                            }}
+                            className="text-white hover:text-[var(--brand-orange)] transition-colors"
+                            aria-label="Settings"
                           >
-                            <p className="text-xs font-bold text-white/50 mb-2">Playback Speed</p>
-                            {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
-                              <button
-                                key={rate}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  changePlaybackRate(rate);
-                                }}
-                                className={`block w-full text-left px-3 py-1.5 text-sm rounded transition-colors ${playbackRate === rate ? 'text-[#E8420A]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
-                              >
-                                {rate}x
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+                            </svg>
+                          </button>
+                          {showSettings && (
+                            <div
+                              className="absolute bottom-10 right-0 az-glass p-3 min-w-[160px]"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <p className="text-xs font-bold text-white/50 mb-2">Playback Speed</p>
+                              {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
+                                <button
+                                  key={rate}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    changePlaybackRate(rate);
+                                  }}
+                                  className={`block w-full text-left px-3 py-1.5 text-sm rounded transition-colors ${playbackRate === rate ? 'text-[var(--brand-orange)]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
+                                >
+                                  {rate}x
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Title Overlay */}
-              {!isPlaying && (
+              {!playerState.isPlaying && (
                 <div className="absolute top-4 left-4 right-4">
                   <h1 className="text-xl font-bold text-white">{content.title}</h1>
                 </div>
@@ -846,13 +989,13 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                   <div className="mt-3 flex items-center gap-2">
                     <span
                       className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
-                      style={{ background: 'rgba(232,66,10,0.15)', color: '#E8420A' }}
+                      style={{ background: 'rgba(232,66,10,0.15)', color: 'var(--brand-orange)' }}
                     >
                       {content.universe?.name}
                     </span>
                     <span
                       className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
-                      style={{ background: 'rgba(255,255,255,0.08)', color: '#fff' }}
+                      style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--brand-white)' }}
                     >
                       {content.category}
                     </span>
@@ -868,9 +1011,11 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               ref={commentsRef}
               role="region"
               aria-label="Comments section"
-              className="az-glass p-4"
+              className="az-glass p-5 sm:p-6 rounded-3xl border border-white/10 shadow-xl"
             >
-              <h2 className="text-lg font-bold text-white mb-4">Comments ({comments.length})</h2>
+              <h2 className="text-lg font-extrabold text-white tracking-tight mb-4">
+                Community Reactions ({comments.length})
+              </h2>
 
               {/* Add Comment */}
               {user && (
@@ -940,13 +1085,19 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                         </div>
                         <p className="text-sm text-white/70 mt-1">{comment.content}</p>
                         <div className="flex items-center gap-4 mt-2">
-                          <button className="flex items-center gap-1 text-xs text-white/40 hover:text-white transition-colors" aria-label={`Like comment, ${comment.likes} likes`}>
+                          <button
+                            className="flex items-center gap-1 text-xs text-white/40 hover:text-white transition-colors"
+                            aria-label={`Like comment, ${comment.likes} likes`}
+                          >
                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
                             </svg>
                             {comment.likes}
                           </button>
-                          <button className="text-xs text-white/40 hover:text-white transition-colors" aria-label={`Reply to ${comment.userName}`}>
+                          <button
+                            className="text-xs text-white/40 hover:text-white transition-colors"
+                            aria-label={`Reply to ${comment.userName}`}
+                          >
                             Reply
                           </button>
                         </div>
@@ -963,14 +1114,14 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       {/* Share Modal */}
       {showShareModal && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in"
           role="dialog"
           aria-modal="true"
           aria-label="Share content"
         >
-          <div className="az-glass p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="az-glass p-8 w-full max-w-md rounded-3xl border border-white/15 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">Share</h3>
+              <h3 className="text-xl font-extrabold text-white tracking-tight">Share Title</h3>
               <button
                 onClick={() => setShowShareModal(false)}
                 className="text-white/40 hover:text-white transition-colors"
@@ -989,7 +1140,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleShare('twitter')}
-                className="az-glass flex items-center justify-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors text-white font-medium text-sm"
+                className="az-glass flex items-center justify-center gap-2 p-3.5 rounded-2xl hover:bg-white/10 border border-white/10 transition-all text-white font-medium text-sm"
                 aria-label="Share on Twitter"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -999,7 +1150,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               </button>
               <button
                 onClick={() => handleShare('facebook')}
-                className="az-glass flex items-center justify-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors text-white font-medium text-sm"
+                className="az-glass flex items-center justify-center gap-2 p-3.5 rounded-2xl hover:bg-white/10 border border-white/10 transition-all text-white font-medium text-sm"
                 aria-label="Share on Facebook"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -1009,7 +1160,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               </button>
               <button
                 onClick={() => handleShare('copy')}
-                className="az-glass flex items-center justify-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors text-white font-medium text-sm col-span-2"
+                className="az-glass flex items-center justify-center gap-2 p-3.5 rounded-2xl hover:bg-white/10 border border-white/10 transition-all text-white font-medium text-sm col-span-2"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
@@ -1029,14 +1180,14 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       {/* Report Modal */}
       {showReportModal && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in"
           role="dialog"
           aria-modal="true"
           aria-label="Report content"
         >
-          <div className="az-glass p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="az-glass p-8 w-full max-w-md rounded-3xl border border-white/15 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">Report Content</h3>
+              <h3 className="text-xl font-extrabold text-white tracking-tight">Report Content</h3>
               <button
                 onClick={() => setShowReportModal(false)}
                 className="text-white/40 hover:text-white transition-colors"
@@ -1075,7 +1226,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                       type="radio"
                       name="report-reason"
                       value={reason}
-                      className="w-4 h-4 accent-[#E8420A]"
+                      className="w-4 h-4 accent-[var(--brand-orange)]"
                       required
                     />
                     <span className="text-sm text-white">{reason}</span>

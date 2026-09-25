@@ -1,31 +1,39 @@
 'use client';
-import React from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
+import analytics from '@/lib/analytics';
 
-export default function GamesPage(): React.JSX.Element {
+function GamesPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('games');
+  }, []);
+
+  const universesQuery = useUniversesQuery();
+
+  const gamesUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'games');
+
   const {
     data: games = [],
     isLoading,
     error,
     refetch,
   } = useQuery<ContentItem[], Error>({
-    queryKey: ['games-content'],
+    queryKey: ['games-content', gamesUniverse?.id],
     queryFn: async () => {
-      const result = await api.content.getContentByUniverse(
-        'u0000001-0000-0000-0000-000000000008',
-        1,
-        20
-      );
+      if (!gamesUniverse?.id) throw new Error('Games universe not found');
+      const result = await api.content.getContentByUniverse(gamesUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
@@ -59,15 +67,21 @@ export default function GamesPage(): React.JSX.Element {
           </div>
         ) : games.length > 0 ? (
           <div className="relative h-[400px] sm:h-[500px]">
-            <motion.img
-              src={games[0].thumbnail}
-              alt={games[0].title}
-              className="w-full h-full object-cover"
+            <motion.div
+              className="absolute inset-0"
               initial={{ scale: 1.1, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
+            >
+              <OptimizedImage
+                src={games[0].thumbnail}
+                alt={games[0].title}
+                fill
+                className="object-cover"
+                priority
+              />
+            </motion.div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/50 to-transparent" />
             <AmbientGlow color="rgba(59,130,246,0.25)" size={500} className="bottom-0 right-0" />
 
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
@@ -79,13 +93,16 @@ export default function GamesPage(): React.JSX.Element {
               >
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                 >
                   Premium
                 </span>
                 <span
                   className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: 'rgba(59,130,246,0.2)', color: '#60A5FA' }}
+                  style={{
+                    backgroundColor: 'rgba(59,130,246,0.2)',
+                    color: 'var(--color-secondary-400)',
+                  }}
                 >
                   {games[0].contentType || 'Game'}
                 </span>
@@ -123,18 +140,20 @@ export default function GamesPage(): React.JSX.Element {
                     Play Now
                   </motion.button>
                 </Link>
-                <motion.button
-                  type="button"
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    backgroundColor: 'rgba(255,255,255,0.08)',
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Leaderboard
-                </motion.button>
+                <Link href="/rankings">
+                  <motion.button
+                    type="button"
+                    className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      backgroundColor: 'rgba(255,255,255,0.08)',
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Leaderboard
+                  </motion.button>
+                </Link>
               </motion.div>
             </div>
           </div>
@@ -159,7 +178,7 @@ export default function GamesPage(): React.JSX.Element {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass overflow-hidden">
+              <div key={`game-skeleton-${i}`} className="az-glass overflow-hidden">
                 <Skeleton height="208px" className="sm:h-[240px]" borderRadius="0px" />
                 <div className="p-4 space-y-3">
                   <Skeleton height="20px" width="75%" />
@@ -174,22 +193,30 @@ export default function GamesPage(): React.JSX.Element {
               <Link key={game.id} href={`/watch/${game.id}`}>
                 <GlowCard universe="games" className="overflow-hidden">
                   <div className="relative">
-                    <img
+                    <OptimizedImage
                       src={game.thumbnail}
                       alt={game.title}
+                      width={400}
+                      height={192}
                       className="w-full h-44 sm:h-48 object-cover"
                     />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                      style={{
+                        backgroundColor: 'var(--brand-orange)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       Premium
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(59,130,246,0.2)', color: '#60A5FA' }}
+                        style={{
+                          backgroundColor: 'rgba(59,130,246,0.2)',
+                          color: 'var(--color-secondary-400)',
+                        }}
                       >
                         {game.contentType || 'Game'}
                       </span>
@@ -220,5 +247,21 @@ export default function GamesPage(): React.JSX.Element {
 
       <AppFooter />
     </div>
+  );
+}
+
+const LazyGamesPage = lazy(() => Promise.resolve({ default: GamesPageContent }));
+
+export default function GamesPage(): React.JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
+      <LazyGamesPage />
+    </Suspense>
   );
 }

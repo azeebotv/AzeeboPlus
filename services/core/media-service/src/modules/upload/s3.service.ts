@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  BadRequestException,
+  ServiceUnavailableException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -10,9 +16,13 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
+import { execFile } from 'child_process';
+import { writeFile, unlink } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
 
-interface FileMetadata {
+export interface FileMetadata {
   contentType: string | undefined;
   contentLength: number | undefined;
   lastModified: Date | undefined;
@@ -54,17 +64,25 @@ export class S3Service {
     'application/pdf': ['.pdf'],
   };
 
-  constructor(private configService: ConfigService) {
+  constructor(@Inject(ConfigService) private configService: ConfigService) {
     this.region = this.configService.get<string>('AWS_REGION') || 'us-east-1';
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET') || 'azeebo-media';
     this.cdnUrl = this.configService.get<string>('CDN_URL') || '';
 
+    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
+
     this.s3Client = new S3Client({
       region: this.region,
-      credentials: {
-        accessKeyId: this.configService.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.getOrThrow<string>('AWS_SECRET_ACCESS_KEY'),
-      },
+      ...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
+      // S3_ENDPOINT targets S3-compatible blob stores (MinIO, R2, LocalStack);
+      // forcePathStyle is required for bucket-in-path addressing outside AWS.
+      ...(this.configService.get<string>('S3_ENDPOINT')
+        ? {
+            endpoint: this.configService.get<string>('S3_ENDPOINT'),
+            forcePathStyle: true,
+          }
+        : {}),
     });
 
     this.circuitBreaker = new CircuitBreaker({
@@ -133,12 +151,18 @@ export class S3Service {
       });
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`S3 circuit breaker open: ${error.message}`);
-        throw new BadRequestException(
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`S3 circuit breaker open: ${err.message}`);
+        // Circuit-open is S3 unreachability, not a bad request — the honest
+        // 503 preserves the retry signal the message describes. (An honest 5xx
+        // in a catch is legitimate; no mapAndThrow/marker needed here.)
+        throw new ServiceUnavailableException(
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error uploading file to S3: ${error.message}`);
+      this.logger.error(
+        `Error uploading file to S3: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
 
@@ -151,7 +175,7 @@ export class S3Service {
     }
 
     const maxDuration = this.getMaxDuration(validatedType);
-    if (duration && duration > maxDuration) {
+    if (duration && duration > 0 && duration > maxDuration) {
       await this.deleteFile(key);
       throw new BadRequestException(
         `File duration ${duration} seconds exceeds maximum allowed duration of ${maxDuration} seconds`
@@ -167,7 +191,9 @@ export class S3Service {
       const result = await fileTypeFromBuffer(buffer);
       return result?.mime;
     } catch (error: unknown) {
-      this.logger.warn(`Failed to sniff MIME type: ${error.message}`);
+      this.logger.warn(
+        `Failed to sniff MIME type: ${error instanceof Error ? error.message : String(error)}`
+      );
       return undefined;
     }
   }
@@ -205,17 +231,81 @@ export class S3Service {
         return await this.extractAudioDuration(buffer);
       }
     } catch (error: unknown) {
-      this.logger.warn(`Failed to extract duration: ${error.message}`);
+      this.logger.warn(
+        `Failed to extract duration: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
     return undefined;
   }
 
-  private async extractVideoDuration(_buffer: Buffer): Promise<number> {
-    return 120; // Mock: 2 minutes default
+  private async extractVideoDuration(buffer: Buffer): Promise<number> {
+    return this.extractDurationWithFfprobe(buffer);
   }
 
-  private async extractAudioDuration(_buffer: Buffer): Promise<number> {
-    return 300; // Mock: 5 minutes default
+  private async extractAudioDuration(buffer: Buffer): Promise<number> {
+    return this.extractDurationWithFfprobe(buffer);
+  }
+
+  private async extractDurationWithFfprobe(buffer: Buffer): Promise<number> {
+    const tmpFile = join(tmpdir(), `media-${randomUUID()}`);
+    try {
+      await writeFile(tmpFile, buffer);
+      const duration = await new Promise<number>((resolve, reject) => {
+        execFile(
+          'ffprobe',
+          ['-v', 'quiet', '-show_entries', 'format=duration', '-of', 'csv=p=0', tmpFile],
+          { timeout: 30000 },
+          (error, stdout) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            const parsed = parseFloat(stdout.trim());
+            resolve(Number.isFinite(parsed) ? parsed : 0);
+          }
+        );
+      });
+      return Math.round(duration);
+    } catch (error: unknown) {
+      this.logger.warn(
+        `ffprobe not available or failed: ${error instanceof Error ? error.message : String(error)}. Duration validation skipped.`
+      );
+      return 0;
+    } finally {
+      await unlink(tmpFile).catch(() => {
+        /* temp file may already be deleted */
+      });
+    }
+  }
+
+  /**
+   * Writes a raw buffer to an arbitrary key (chunk staging). No sniffing or
+   * extension validation — callers stage untrusted bytes here and validate at
+   * assembly time via uploadFile().
+   */
+  async putBuffer(key: string, buffer: Buffer, contentType?: string): Promise<void> {
+    await this.circuitBreaker.execute(async () => {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType || 'application/octet-stream',
+        })
+      );
+    });
+  }
+
+  /** Downloads an object's bytes (used to reassemble staged chunks). */
+  async getObjectBuffer(key: string): Promise<Buffer> {
+    const response = await this.s3Client.send(
+      new GetObjectCommand({ Bucket: this.bucketName, Key: key })
+    );
+    if (!response.Body) {
+      throw new Error(`Object ${key} has no body`);
+    }
+    const bytes = await response.Body.transformToByteArray();
+    return Buffer.from(bytes);
   }
 
   async getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
@@ -232,12 +322,16 @@ export class S3Service {
       return url;
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`S3 circuit breaker open: ${error.message}`);
-        throw new BadRequestException(
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`S3 circuit breaker open: ${err.message}`);
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File download service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting signed download URL: ${error.message}`);
+      this.logger.error(
+        `Error getting signed download URL: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -265,12 +359,16 @@ export class S3Service {
       return { uploadUrl, key };
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`S3 circuit breaker open: ${error.message}`);
-        throw new BadRequestException(
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`S3 circuit breaker open: ${err.message}`);
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting signed upload URL: ${error.message}`);
+      this.logger.error(
+        `Error getting signed upload URL: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -287,12 +385,16 @@ export class S3Service {
       });
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`S3 circuit breaker open: ${error.message}`);
-        throw new BadRequestException(
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`S3 circuit breaker open: ${err.message}`);
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File deletion service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error deleting file from S3: ${error.message}`);
+      this.logger.error(
+        `Error deleting file from S3: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -316,14 +418,46 @@ export class S3Service {
       };
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`S3 circuit breaker open: ${error.message}`);
-        throw new BadRequestException(
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`S3 circuit breaker open: ${err.message}`);
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File metadata service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting file metadata from S3: ${error.message}`);
+      this.logger.error(
+        `Error getting file metadata from S3: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
+  }
+
+  /**
+   * List every object in the bucket (paginated). Used by the reconcile pass
+   * to inventory the bucket before matching against media_uploads rows.
+   * Objects carry Key, Size and LastModified — everything reconcile needs to
+   * backfill rows without a second HEAD per object.
+   */
+  async listAllObjects(prefix?: string): Promise<{ Key?: string; Size?: number; LastModified?: Date }[]> {
+    const objects: { Key?: string; Size?: number; LastModified?: Date }[] = [];
+    let continuationToken: string | undefined;
+
+    do {
+      const response = await this.circuitBreaker.execute(async () => {
+        return this.s3Client.send(
+          new ListObjectsV2Command({
+            Bucket: this.bucketName,
+            ...(prefix ? { Prefix: prefix } : {}),
+            ContinuationToken: continuationToken,
+          })
+        );
+      });
+
+      objects.push(...(response.Contents ?? []));
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
+
+    return objects;
   }
 
   async cleanupOrphanedFiles(prefix: string, olderThanDays: number): Promise<number> {
@@ -349,7 +483,7 @@ export class S3Service {
             deletedCount++;
           } catch (error: unknown) {
             this.logger.error(
-              `Failed to delete orphaned file ${item.Key}: ${error.message}`
+              `Failed to delete orphaned file ${item.Key}: ${error instanceof Error ? error.message : String(error)}`
             );
           }
         }

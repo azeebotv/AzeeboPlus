@@ -1,22 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { AuthGuard } from '@nestjs/passport';
-import { ModerationController } from './moderation.controller';
-import { ModerationService } from './moderation.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
+import { ModerationController } from './moderation.controller.js';
+import { ModerationService } from './moderation.service.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Reflector } from '@nestjs/core';
 
-class MockAuthGuard implements CanActivate {
-  canActivate(context: ExecutionContext) {
-    const req = context.switchToHttp().getRequest();
-    req.user = { userId: 'user-1', role: 'admin' };
+class MockRolesGuard implements CanActivate {
+  canActivate(_context: ExecutionContext) {
     return true;
   }
 }
 
 describe('Moderation Validation Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockModerationService = {
     scanContent: jest.fn().mockResolvedValue({ success: true }),
@@ -30,7 +28,7 @@ describe('Moderation Validation Tests', () => {
     getModerationStats: jest.fn().mockResolvedValue({ success: true }),
   };
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [ModerationController],
       providers: [
@@ -41,25 +39,36 @@ describe('Moderation Validation Tests', () => {
         Reflector,
       ],
     })
-      .overrideGuard(AuthGuard('jwt'))
-      .useClass(MockAuthGuard)
       .overrideGuard(RolesGuard)
-      .useClass(RolesGuard)
+      .useClass(MockRolesGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+    // Mock ServiceAuthGuard behavior
+    app.use((req: { user?: unknown }, _res: unknown, next: () => void) => {
+      if (!req.user) {
+        req.user = { id: 'user-1', sub: 'user-1', role: 'admin' };
+      }
+      next();
+    });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await app.close();
   });
 
-  describe('POST /v1/moderation/cases - Validation', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('POST /moderation/cases - Validation', () => {
     it('should create a case with valid data', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/v1/moderation/cases')
+      const response = await request(baseUrl)
+        .post('/moderation/cases')
         .send({
           contentId: 'content-1',
           type: 'content',
@@ -74,8 +83,8 @@ describe('Moderation Validation Tests', () => {
     });
 
     it('should create a case even without optional fields', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/v1/moderation/cases')
+      const response = await request(baseUrl)
+        .post('/moderation/cases')
         .send({
           type: 'content',
           severity: 'medium',
@@ -89,10 +98,10 @@ describe('Moderation Validation Tests', () => {
     });
   });
 
-  describe('PATCH /v1/moderation/cases/:id/resolve - Validation', () => {
+  describe('PATCH /moderation/cases/:id/resolve - Validation', () => {
     it('should return 400 for missing resolution', async () => {
-      const response = await request(app.getHttpServer())
-        .patch('/v1/moderation/cases/case-1/resolve')
+      const response = await request(baseUrl)
+        .patch('/moderation/cases/case-1/resolve')
         .send({ notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
 
@@ -100,8 +109,8 @@ describe('Moderation Validation Tests', () => {
     });
 
     it('should accept any resolution value', async () => {
-      const response = await request(app.getHttpServer())
-        .patch('/v1/moderation/cases/case-1/resolve')
+      const response = await request(baseUrl)
+        .patch('/moderation/cases/case-1/resolve')
         .send({ resolution: 'invalid', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
 
@@ -109,8 +118,8 @@ describe('Moderation Validation Tests', () => {
     });
 
     it('should resolve a case with valid data', async () => {
-      const response = await request(app.getHttpServer())
-        .patch('/v1/moderation/cases/case-1/resolve')
+      const response = await request(baseUrl)
+        .patch('/moderation/cases/case-1/resolve')
         .send({ resolution: 'resolved', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
 
@@ -118,10 +127,10 @@ describe('Moderation Validation Tests', () => {
     });
   });
 
-  describe('POST /v1/moderation/scan/:contentId - Validation', () => {
+  describe('POST /moderation/scan/:contentId - Validation', () => {
     it('should scan content with valid type', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/v1/moderation/scan/content-1')
+      const response = await request(baseUrl)
+        .post('/moderation/scan/content-1')
         .send({ type: 'nsfw' })
         .set('Authorization', 'Bearer valid-token');
 
@@ -129,8 +138,8 @@ describe('Moderation Validation Tests', () => {
     });
 
     it('should return 404 for empty contentId', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/v1/moderation/scan/')
+      const response = await request(baseUrl)
+        .post('/moderation/scan/')
         .send({ type: 'nsfw' })
         .set('Authorization', 'Bearer valid-token');
 

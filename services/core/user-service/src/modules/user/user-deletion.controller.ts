@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Delete,
   Get,
@@ -6,34 +7,35 @@ import {
   Post,
   Body,
   Req,
-  UseGuards,
   ForbiddenException,
+  UseGuards,
+  Logger,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../users/users.service.js';
 import { Request } from 'express';
-import { createLogger } from '@azeebo/logger';
-import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, userFlags } from '@azeebo/feature-flags';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('Privacy & Data Deletion')
 @Controller('privacy')
-@UseGuards(AuthGuard('jwt'))
 export class UserDeletionController {
-  private readonly logger = createLogger('user-deletion');
+  private readonly logger = new Logger('user-deletion');
 
-  constructor(private readonly userService: UsersService) {}
+  constructor(@Inject(UsersService) private readonly userService: UsersService) {}
 
   @Post('deletion-request')
   @ApiBearerAuth()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(userFlags.deletionSoft)
+  @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Request data deletion' })
   @ApiResponse({ status: 201, description: 'Deletion request scheduled' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async requestDataDeletion(
     @Body() body: { reason?: string },
-    @Req() req: Request & { user: { sub: string; role: string; email: string } }
+    @Req() req: Request & { user: { id: string; role: string; email: string } }
   ) {
     this.logger.log('Data deletion requested', {
       userId: req.user.id,
@@ -51,14 +53,16 @@ export class UserDeletionController {
 
   @Delete('data/:userId')
   @ApiBearerAuth()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(userFlags.deletionSoft)
+  @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Delete user data' })
   @ApiResponse({ status: 200, description: 'Data deletion initiated' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteUserData(
     @Param('userId') userId: string,
-    @Req() req: Request & { user: { sub: string; role: string; email: string } }
+    @Req() req: Request & { user: { id: string; role: string; email: string } }
   ) {
     if (req.user.id !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only delete your own data');
@@ -78,14 +82,15 @@ export class UserDeletionController {
 
   @Get('data/:userId/export')
   @ApiBearerAuth()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Export user data' })
   @ApiResponse({ status: 200, description: 'Data exported successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async exportUserData(
     @Param('userId') userId: string,
-    @Req() req: Request & { user: { sub: string; role: string; email: string } }
+    @Req() req: Request & { user: { id: string; role: string; email: string } }
   ) {
     if (req.user.id !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only export your own data');
@@ -105,14 +110,15 @@ export class UserDeletionController {
 
   @Get('deletion-status/:userId')
   @ApiBearerAuth()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Check deletion status' })
   @ApiResponse({ status: 200, description: 'Status retrieved successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getDeletionStatus(
     @Param('userId') userId: string,
-    @Req() req: Request & { user: { sub: string; role: string; email: string } }
+    @Req() req: Request & { user: { id: string; role: string; email: string } }
   ) {
     if (req.user.id !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only check your own deletion status');

@@ -1,8 +1,9 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule } from './app.module';
-import helmet from 'helmet';
+import { AppModule } from './app.module.js';
+import { createHelmetConfig, configureCors } from '@azeebo/security';
+
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { validateEnvironment } from '@azeebo/shared-types';
@@ -11,29 +12,16 @@ async function bootstrap(): Promise<void> {
   try {
     validateEnvironment(process.env);
     Logger.log('Environment variables validated successfully');
-  } catch (_err) {
+  } catch (error) {
     const errorMessage = error instanceof Error ? (error as Error).message : 'Unknown error';
     Logger.error('Environment validation failed:', errorMessage);
     process.exit(1);
   }
 
   const app = await NestFactory.create(AppModule);
+  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-        },
-      },
-      hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-      },
-    })
-  );
+  app.use(createHelmetConfig());
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 
@@ -51,24 +39,7 @@ async function bootstrap(): Promise<void> {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
   const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
-
-  app.enableCors({
-    origin: (
-      origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void
-    ) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Content-Disposition'],
-    maxAge: 86400,
-  });
+  configureCors(app, { allowedOrigins, credentials: true });
 
   if (process.env.NODE_ENV !== 'production') {
     const swaggerConfig = new DocumentBuilder()
@@ -77,7 +48,7 @@ async function bootstrap(): Promise<void> {
       .setVersion('1.0')
       .addTag('creators', 'Creator operations')
       .addBearerAuth()
-      .addServer('http://localhost:3013', 'API Gateway')
+      .addServer(process.env.API_GATEWAY_URL || 'http://localhost:3013', 'API Gateway')
       .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);

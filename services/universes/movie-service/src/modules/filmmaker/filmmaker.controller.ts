@@ -1,12 +1,24 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { FilmmakerService } from './filmmaker.service';
+import { ServiceAuthGuard } from '@azeebo/security';
+import { FilmmakerService } from './filmmaker.service.js';
 
 @ApiTags('Filmmaker')
-@Controller('v1/movies/filmmakers')
+@UseGuards(ServiceAuthGuard)
+@Controller('movies/filmmakers')
 export class FilmmakerController {
-  constructor(private readonly filmmakerService: FilmmakerService) {}
+  constructor(@Inject(FilmmakerService) private readonly filmmakerService: FilmmakerService) {}
 
   @Get('projects')
   @ApiOperation({ summary: 'Get filmmaker projects' })
@@ -28,7 +40,6 @@ export class FilmmakerController {
   }
 
   @Post('projects')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create project' })
   @ApiResponse({ status: 201, description: 'Project created' })
   async createProject(
@@ -46,7 +57,6 @@ export class FilmmakerController {
   }
 
   @Patch('projects/:id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update project' })
   @ApiResponse({ status: 200, description: 'Project updated' })
   async updateProject(
@@ -66,7 +76,6 @@ export class FilmmakerController {
   }
 
   @Post('projects/:id/updates')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Add project update' })
   @ApiResponse({ status: 201, description: 'Update added' })
   async addUpdate(
@@ -78,7 +87,6 @@ export class FilmmakerController {
   }
 
   @Post('back')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Back a project' })
   @ApiResponse({ status: 201, description: 'Backed' })
   async backProject(

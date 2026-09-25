@@ -1,35 +1,82 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
 import * as Updates from 'expo-updates';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { api } from '@/api';
-import type { ContentItem } from '@/api';
+import { api } from '@azeebo/react-data';
+import type { ContentItem } from '@azeebo/react-data';
 import { colors, universeColors } from '@/theme';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { BrandButton } from '@/components/ui/BrandButton';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
-import { logger } from '@/utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 import HeroCarousel from './HeroCarousel';
 import ContentRow from './ContentRow';
 
 const CATEGORY_CARDS = [
-  { category: 'Reality', sub: 'The real you wants to play', emoji: '\u{1F4FA}', color: colors.primary[500] },
-  { category: 'Vertical', sub: "Dive into what's trending", emoji: '\u{1F4F1}', color: colors.red },
-  { category: 'Movie', sub: 'Nollywood & Beyond', emoji: '\u{1F3AC}', color: colors.primary[500] },
-  { category: 'Creator', sub: 'Watch. Follow. Repeat.', emoji: '\u{1F4E1}', color: colors.bg.tertiary },
-  { category: 'Cinemaxis', sub: 'Explore Cinemaxis', emoji: '\u{1F3A5}', color: colors.bg.secondary },
-  { category: 'Comedy', sub: 'Laugh Out Loud', emoji: '\u{1F602}', color: colors.bg.tertiary },
-  { category: 'Sports', sub: 'Live & Loud', emoji: '\u26BD', color: colors.bg.secondary },
-  { category: 'Lifestyle', sub: 'Elevate your lifestyle', emoji: '\u{1F3A8}', color: universeColors.lifestyle },
-  { category: 'Games', sub: 'Play & Win', emoji: '\u{1F3AE}', color: universeColors.games },
+  {
+    category: 'Reality',
+    sub: 'The real you wants to play',
+    iconName: 'tv-outline' as const,
+    color: colors.primary[500],
+  },
+  {
+    category: 'Vertical',
+    sub: "Dive into what's trending",
+    iconName: 'phone-portrait-outline' as const,
+    color: colors.red,
+  },
+  {
+    category: 'Movie',
+    sub: 'Nollywood & Beyond',
+    iconName: 'film-outline' as const,
+    color: colors.primary[500],
+  },
+  {
+    category: 'Creator',
+    sub: 'Watch. Follow. Repeat.',
+    iconName: 'videocam-outline' as const,
+    color: colors.bg.tertiary,
+  },
+  {
+    category: 'Cinemaxis',
+    sub: 'Explore Cinemaxis',
+    iconName: 'sparkles-outline' as const,
+    color: colors.bg.secondary,
+  },
+  {
+    category: 'Comedy',
+    sub: 'Laugh Out Loud',
+    iconName: 'happy-outline' as const,
+    color: colors.bg.tertiary,
+  },
+  {
+    category: 'Sports',
+    sub: 'Live & Loud',
+    iconName: 'football-outline' as const,
+    color: colors.bg.secondary,
+  },
+  {
+    category: 'Lifestyle',
+    sub: 'Elevate your lifestyle',
+    iconName: 'color-palette-outline' as const,
+    color: universeColors.lifestyle,
+  },
+  {
+    category: 'Games',
+    sub: 'Play & Win',
+    iconName: 'game-controller-outline' as const,
+    color: universeColors.games,
+  },
 ];
 
 export default function GuestHomepage() {
+  const { universeEnabled } = useFlags();
   const router = useRouter();
   const { t } = useTranslation();
   const [featuredContent, setFeaturedContent] = useState<ContentItem[]>([]);
@@ -41,7 +88,10 @@ export default function GuestHomepage() {
 
     const checkForOTAUpdate = async () => {
       try {
-        if (!Updates.channel || !__DEV__) return;
+        // Skip in dev builds (updates are embedded, not fetched) and when no
+        // updates channel is configured. The previous condition was inverted
+        // (`!__DEV__`), so production installs never checked.
+        if (__DEV__ || !Updates.channel) return;
         const update = await Updates.checkForUpdateAsync();
         if (!cancelled && update.isAvailable) setHasOTAUpdate(true);
       } catch (error) {
@@ -69,7 +119,9 @@ export default function GuestHomepage() {
 
     checkForOTAUpdate();
     loadGuestContent();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -78,11 +130,16 @@ export default function GuestHomepage() {
       {hasOTAUpdate ? (
         <Pressable
           style={styles.updateBanner}
-          onPress={() => Updates.reloadAsync()}
+          onPress={() =>
+            Alert.alert('Install update?', 'The app will reload to apply the update.', [
+              { text: 'Later', style: 'cancel' },
+              { text: 'Install', onPress: () => void Updates.reloadAsync() },
+            ])
+          }
           accessibilityLabel={t('home.installNow')}
           accessibilityRole="button"
         >
-          <Ionicons name="arrow-up-circle" size={18} color="#1A0A0A" />
+          <Ionicons name="arrow-up-circle" size={18} color={colors.bg.primary} />
           <Text style={styles.updateBannerText}>{t('home.newUpdate')}</Text>
           <Text style={styles.updateBannerLink}>{t('home.installNow')}</Text>
         </Pressable>
@@ -94,7 +151,7 @@ export default function GuestHomepage() {
       ) : (
         /* Fallback hero for guests */
         <View style={styles.hero}>
-          <AmbientGlow color="rgba(13,90,60,0.5)" size={300} />
+          <AmbientGlow color="rgba(232,66,10,0.25)" size={300} />
 
           {/* Center content */}
           <View style={styles.heroContent}>
@@ -128,7 +185,11 @@ export default function GuestHomepage() {
               >
                 <GlassCard style={styles.categoryCard}>
                   <View style={[styles.categoryIcon, { backgroundColor: `${card.color}22` }]}>
-                    <Text style={styles.categoryEmoji}>{card.emoji}</Text>
+                    <Ionicons
+                      name={card.iconName}
+                      size={22}
+                      color={card.color || colors.primary[500]}
+                    />
                   </View>
                   <Text style={styles.categoryTitle}>{card.category}</Text>
                   <Text style={styles.categorySub}>{card.sub}</Text>
@@ -182,29 +243,96 @@ export default function GuestHomepage() {
             <Text style={styles.sectionTitle}>{t('home.exploreByUniverse')}</Text>
             <View style={styles.universeGrid}>
               {[
-                { name: 'Movie', icon: '\u{1F3AC}', href: '/movies', color: colors.primary[500] },
-                { name: 'Comedy', icon: '\u{1F602}', href: '/comedy', color: universeColors.comedy },
-                { name: 'Sports', icon: '\u26BD', href: '/sports', color: universeColors.sports },
-                { name: 'Reality', icon: '\u{1F4FA}', href: '/reality', color: universeColors.reality },
-                { name: 'Lifestyle', icon: '\u{1F3A8}', href: '/lifestyle', color: universeColors.lifestyle },
-                { name: 'Vertical', icon: '\u{1F4F1}', href: '/vertical', color: universeColors.vertical },
-                { name: 'Games', icon: '\u{1F3AE}', href: '/games', color: universeColors.games },
-                { name: 'Creator', icon: '\u{1F4E1}', href: '/creators', color: universeColors.creators },
-                { name: 'Cinemaxis', icon: '\u{1F3A6}', href: '/cinemaxis', color: universeColors.comedy },
-              ].map((u) => (
-                <Pressable
-                  key={u.name}
-                  style={styles.universeCard}
-                  onPress={() => router.push(u.href as string)}
-                  accessibilityLabel={`${t('home.explore')} ${u.name}`}
-                  accessibilityRole="button"
-                >
-                  <View style={[styles.universeIcon, { backgroundColor: `${u.color}22` }]}>
-                    <Text style={styles.universeEmoji}>{u.icon}</Text>
-                  </View>
-                  <Text style={styles.universeName}>{u.name}</Text>
-                </Pressable>
-              ))}
+                {
+                  name: 'Movie',
+                  iconName: 'film-outline' as const,
+                  href: '/movies',
+                  color: colors.primary[500],
+                  flag: 'movie',
+                },
+                {
+                  name: 'Comedy',
+                  iconName: 'happy-outline' as const,
+                  href: '/comedy',
+                  color: universeColors.comedy,
+                  flag: 'comedy',
+                },
+                {
+                  name: 'Sports',
+                  iconName: 'football-outline' as const,
+                  href: '/sports',
+                  color: universeColors.sports,
+                  flag: 'sports',
+                },
+                {
+                  name: 'Music',
+                  iconName: 'musical-notes-outline' as const,
+                  href: '/music',
+                  color: universeColors.music,
+                  flag: 'music',
+                },
+                {
+                  name: 'Reality',
+                  iconName: 'tv-outline' as const,
+                  href: '/reality',
+                  color: universeColors.reality,
+                  flag: 'reality',
+                },
+                {
+                  name: 'Lifestyle',
+                  iconName: 'color-palette-outline' as const,
+                  href: '/lifestyle',
+                  color: universeColors.lifestyle,
+                  flag: 'lifestyle',
+                },
+                {
+                  name: 'Vertical',
+                  iconName: 'phone-portrait-outline' as const,
+                  href: '/vertical',
+                  color: universeColors.vertical,
+                  flag: 'vertical',
+                },
+                {
+                  name: 'Games',
+                  iconName: 'game-controller-outline' as const,
+                  href: '/games',
+                  color: universeColors.games,
+                  flag: 'games',
+                },
+                {
+                  name: 'Creator',
+                  iconName: 'videocam-outline' as const,
+                  href: '/creators',
+                  color: universeColors.creators,
+                  flag: 'creator',
+                },
+                {
+                  name: 'Cinemaxis',
+                  iconName: 'sparkles-outline' as const,
+                  href: '/cinemaxis',
+                  color: universeColors.comedy,
+                  flag: 'cinemaxis',
+                },
+              ]
+                .filter((u) => universeEnabled(u.flag))
+                .map((u) => (
+                  <Pressable
+                    key={u.name}
+                    style={styles.universeCard}
+                    onPress={() => router.push(u.href as string)}
+                    accessibilityLabel={`${t('home.explore')} ${u.name}`}
+                    accessibilityRole="button"
+                  >
+                    <View style={[styles.universeIcon, { backgroundColor: `${u.color}22` }]}>
+                      <Ionicons
+                        name={u.iconName}
+                        size={20}
+                        color={u.color || colors.primary[500]}
+                      />
+                    </View>
+                    <Text style={styles.universeName}>{u.name}</Text>
+                  </Pressable>
+                ))}
             </View>
           </View>
         </ScrollReveal>

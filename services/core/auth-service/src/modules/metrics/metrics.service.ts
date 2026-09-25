@@ -1,8 +1,9 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import * as client from 'prom-client';
 
 @Injectable()
 export class MetricsService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(MetricsService.name);
   private register: client.Registry;
   private requestCounter: client.Counter<string>;
   private errorCounter: client.Counter<string>;
@@ -99,6 +100,11 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async getMetrics(): Promise<string> {
-    return this.register.metrics();
+    try {
+      return await this.register.metrics();
+    } catch (error) {
+      this.logger.error('Failed to get auth metrics', (error as Error).stack);
+      throw error;
+    }
   }
 }

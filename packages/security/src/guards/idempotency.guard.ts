@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable, ConflictException, Logger } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
@@ -70,7 +76,13 @@ export class IdempotencyGuard implements CanActivate {
       }
 
       // Reserve the key atomically; NX prevents race conditions between concurrent requests
-      const reserved = await this.redis.set(redisKey, 'processing', 'EX', IDEMPOTENCY_TTL_SECONDS, 'NX');
+      const reserved = await this.redis.set(
+        redisKey,
+        'processing',
+        'EX',
+        IDEMPOTENCY_TTL_SECONDS,
+        'NX'
+      );
       if (!reserved) {
         throw new ConflictException(
           'Request with this Idempotency-Key has already been processed.'
@@ -81,7 +93,11 @@ export class IdempotencyGuard implements CanActivate {
         throw error;
       }
       this.logger.error(`Redis idempotency check failed: ${error}`);
-      // Fail open — let downstream service handle deduplication via DB idempotency key
+      // Fail open — let downstream service handle deduplication via DB idempotency key.
+      // RATIONALE: Idempotency is a data-integrity concern, not a security boundary.
+      // Failing closed would block legitimate requests when Redis is down.
+      // The payment-service and wallet-service both have DB-level idempotency checks
+      // as a second line of defense. RateLimiter fails closed because it IS a security boundary.
     }
 
     // Attach to request for downstream services

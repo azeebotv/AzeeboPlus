@@ -1,19 +1,27 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Inject, Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
 
 type CategoryModel = Prisma.CategoryGetPayload<{}>;
 type TagModel = Prisma.TagGetPayload<{}>;
-type ContentWithUniverseCategories = Prisma.ContentItemGetPayload<{ include: { universe: true; categories: true } }>;
-type ContentWithUniverseTags = Prisma.ContentItemGetPayload<{ include: { universe: true; tags: true } }>;
+type ContentWithUniverseCategories = Prisma.ContentItemGetPayload<{
+  include: { universe: true; categories: true };
+}>;
+type ContentWithUniverseTags = Prisma.ContentItemGetPayload<{
+  include: { universe: true; tags: true };
+}>;
 
 @Injectable()
 export class ContentCategoryService {
   private readonly logger = new Logger(ContentCategoryService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  private canModifyContent(userId: string, userRole: string | undefined, creatorId: string): boolean {
+  private canModifyContent(
+    userId: string,
+    userRole: string | undefined,
+    creatorId: string
+  ): boolean {
     return creatorId === userId || userRole === 'admin' || userRole === 'moderator';
   }
 
@@ -41,7 +49,10 @@ export class ContentCategoryService {
       };
     } catch (error) {
       this.logger.error(`Failed to create category: ${error}`);
-      return { success: false, error: { code: 'CREATE_CATEGORY_FAILED', message: 'Failed to create category' } } as never;
+      return {
+        success: false,
+        error: { code: 'CREATE_CATEGORY_FAILED', message: 'Failed to create category' },
+      } as never;
     }
   }
 
@@ -81,7 +92,10 @@ export class ContentCategoryService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to update category: ${error}`);
-      return { success: false, error: { code: 'UPDATE_CATEGORY_FAILED', message: 'Failed to update category' } } as never;
+      return {
+        success: false,
+        error: { code: 'UPDATE_CATEGORY_FAILED', message: 'Failed to update category' },
+      } as never;
     }
   }
 
@@ -106,13 +120,20 @@ export class ContentCategoryService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to delete category: ${error}`);
-      return { success: false, error: { code: 'DELETE_CATEGORY_FAILED', message: 'Failed to delete category' } };
+      return {
+        success: false,
+        error: { code: 'DELETE_CATEGORY_FAILED', message: 'Failed to delete category' },
+      } as never;
     }
   }
 
-  async getCategories(): Promise<{ success: boolean; data: CategoryModel[] }> {
+  async getCategories(page = 1, limit = 50): Promise<{ success: boolean; data: CategoryModel[] }> {
     try {
-      const categories = await this.prisma.category.findMany();
+      const skip = (page - 1) * limit;
+      const categories = await this.prisma.category.findMany({
+        skip,
+        take: limit,
+      });
 
       return {
         success: true,
@@ -120,11 +141,17 @@ export class ContentCategoryService {
       };
     } catch (error) {
       this.logger.error(`Failed to get categories: ${error}`);
-      return { success: false, error: { code: 'GET_CATEGORIES_FAILED', message: 'Failed to retrieve categories' } };
+      return {
+        success: false,
+        error: { code: 'GET_CATEGORIES_FAILED', message: 'Failed to retrieve categories' },
+      } as never;
     }
   }
 
-  async createTag(name: string, description?: string): Promise<{ success: boolean; data: TagModel }> {
+  async createTag(
+    name: string,
+    description?: string
+  ): Promise<{ success: boolean; data: TagModel }> {
     try {
       const tag = await this.prisma.tag.create({
         data: {
@@ -139,7 +166,10 @@ export class ContentCategoryService {
       };
     } catch (error) {
       this.logger.error(`Failed to create tag: ${error}`);
-      return { success: false, error: { code: 'CREATE_TAG_FAILED', message: 'Failed to create tag' } } as never;
+      return {
+        success: false,
+        error: { code: 'CREATE_TAG_FAILED', message: 'Failed to create tag' },
+      } as never;
     }
   }
 
@@ -173,7 +203,10 @@ export class ContentCategoryService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to update tag: ${error}`);
-      return { success: false, error: { code: 'UPDATE_TAG_FAILED', message: 'Failed to update tag' } } as never;
+      return {
+        success: false,
+        error: { code: 'UPDATE_TAG_FAILED', message: 'Failed to update tag' },
+      } as never;
     }
   }
 
@@ -198,13 +231,20 @@ export class ContentCategoryService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to delete tag: ${error}`);
-      return { success: false, error: { code: 'DELETE_TAG_FAILED', message: 'Failed to delete tag' } };
+      return {
+        success: false,
+        error: { code: 'DELETE_TAG_FAILED', message: 'Failed to delete tag' },
+      } as never;
     }
   }
 
-  async getTags(): Promise<{ success: boolean; data: TagModel[] }> {
+  async getTags(page = 1, limit = 50): Promise<{ success: boolean; data: TagModel[] }> {
     try {
-      const tags = await this.prisma.tag.findMany();
+      const skip = (page - 1) * limit;
+      const tags = await this.prisma.tag.findMany({
+        skip,
+        take: limit,
+      });
 
       return {
         success: true,
@@ -212,7 +252,10 @@ export class ContentCategoryService {
       };
     } catch (error) {
       this.logger.error(`Failed to get tags: ${error}`);
-      return { success: false, error: { code: 'GET_TAGS_FAILED', message: 'Failed to retrieve tags' } };
+      return {
+        success: false,
+        error: { code: 'GET_TAGS_FAILED', message: 'Failed to retrieve tags' },
+      } as never;
     }
   }
 
@@ -259,7 +302,13 @@ export class ContentCategoryService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to add category to content: ${error}`);
-      return { success: false, error: { code: 'ADD_CATEGORY_TO_CONTENT_FAILED', message: 'Failed to add category to content' } };
+      return {
+        success: false,
+        error: {
+          code: 'ADD_CATEGORY_TO_CONTENT_FAILED',
+          message: 'Failed to add category to content',
+        },
+      } as never;
     }
   }
 
@@ -298,7 +347,13 @@ export class ContentCategoryService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to remove category from content: ${error}`);
-      return { success: false, error: { code: 'REMOVE_CATEGORY_FROM_CONTENT_FAILED', message: 'Failed to remove category from content' } };
+      return {
+        success: false,
+        error: {
+          code: 'REMOVE_CATEGORY_FROM_CONTENT_FAILED',
+          message: 'Failed to remove category from content',
+        },
+      } as never;
     }
   }
 
@@ -345,7 +400,10 @@ export class ContentCategoryService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to add tag to content: ${error}`);
-      return { success: false, error: { code: 'ADD_TAG_TO_CONTENT_FAILED', message: 'Failed to add tag to content' } };
+      return {
+        success: false,
+        error: { code: 'ADD_TAG_TO_CONTENT_FAILED', message: 'Failed to add tag to content' },
+      } as never;
     }
   }
 
@@ -384,11 +442,19 @@ export class ContentCategoryService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to remove tag from content: ${error}`);
-      return { success: false, error: { code: 'REMOVE_TAG_FROM_CONTENT_FAILED', message: 'Failed to remove tag from content' } };
+      return {
+        success: false,
+        error: {
+          code: 'REMOVE_TAG_FROM_CONTENT_FAILED',
+          message: 'Failed to remove tag from content',
+        },
+      } as never;
     }
   }
 
-  async getContentByCategory(categoryId: string): Promise<{ success: boolean; data: ContentWithUniverseCategories[] }> {
+  async getContentByCategory(
+    categoryId: string
+  ): Promise<{ success: boolean; data: ContentWithUniverseCategories[] }> {
     try {
       const content = await this.prisma.contentItem.findMany({
         where: {
@@ -408,11 +474,19 @@ export class ContentCategoryService {
       };
     } catch (error) {
       this.logger.error(`Failed to get content by category: ${error}`);
-      return { success: false, error: { code: 'GET_CONTENT_BY_CATEGORY_FAILED', message: 'Failed to retrieve content by category' } };
+      return {
+        success: false,
+        error: {
+          code: 'GET_CONTENT_BY_CATEGORY_FAILED',
+          message: 'Failed to retrieve content by category',
+        },
+      } as never;
     }
   }
 
-  async getContentByTag(tagId: string): Promise<{ success: boolean; data: ContentWithUniverseTags[] }> {
+  async getContentByTag(
+    tagId: string
+  ): Promise<{ success: boolean; data: ContentWithUniverseTags[] }> {
     try {
       const content = await this.prisma.contentItem.findMany({
         where: {
@@ -432,7 +506,10 @@ export class ContentCategoryService {
       };
     } catch (error) {
       this.logger.error(`Failed to get content by tag: ${error}`);
-      return { success: false, error: { code: 'GET_CONTENT_BY_TAG_FAILED', message: 'Failed to retrieve content by tag' } };
+      return {
+        success: false,
+        error: { code: 'GET_CONTENT_BY_TAG_FAILED', message: 'Failed to retrieve content by tag' },
+      } as never;
     }
   }
 }

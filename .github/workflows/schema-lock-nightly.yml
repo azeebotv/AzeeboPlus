@@ -1,0 +1,336 @@
+name: Schema Lock Nightly (Live DBs)
+
+# ── Purpose ────────────────────────────────────────────────────────────────
+# Nightly schema-lock REPORT against every live service database, per
+# environment. Complements the PR-time gates:
+#
+#   • check-prisma-migrations.mjs (PR)   — migration folder ↔ schema shape
+#   • check-deployed-schema.mjs (PR)     — fresh `migrate deploy` ≠ schema
+#     fails the build (the deploy-then-diff schema lock)
+#   • THIS workflow (nightly)            — does each REAL environment still
+#     satisfy the lock right now? Catches hand-run ALTERs, `db push`,
+#     resolve-marked unapplied migrations, and edited-after-apply migrations
+#     as they appear in the wild — reported per environment, never blocking
+#     a PR or the build.
+#
+# Uses scripts/check-live-schema-lock.mjs, which is strictly READ-ONLY
+# (SELECTs + `prisma migrate diff`); it never writes to the live databases.
+#
+# Reporting, per environment (staging + production):
+#   • Step summary table: service × status (clean / drift class / ledger
+#     state), with drift counts (+additive / ~review / -destructive).
+#   • Artifacts: per-service diff SQL + machine-readable report-<env>.json,
+#     under .check-live-schema-lock-out/<env>/.
+#   • One GitHub check-run annotation per affected service, so drift is
+#     visible on the run without opening logs.
+#   • The job FAILS only when real drift or a broken ledger is found, so the
+#     run is red in the Actions list. UNREACHABLE environments are reported
+#     but do NOT fail (ops visibility, not a code problem).
+#
+# Secrets: same DB credentials database-backup.yml already uses, configured
+# per GitHub environment. Legs whose environment/secrets are missing are
+# skipped gracefully with a visible notice, so this workflow is safe to merge
+# before credentials exist. Manual runs can restrict the environment set via
+# the `environments` input (comma-separated subset of the matrix).
+# ===========================================================================
+
+on:
+  schedule:
+    # Nightly at 04:30 UTC — after the 02:00 database backup, before the
+    # working day; leaves room to triage before deploys.
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+    inputs:
+      environments:
+        description: 'Environments to report on (comma-separated subset of the matrix below; empty = all)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22.16.0'
+  PNPM_VERSION: '10.33.2'
+
+jobs:
+  # Resolve the environment matrix: all entries by default, filtered to the
+  # `environments` input on manual dispatch.
+  matrix:
+    name: Resolve environments
+    runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.set.outputs.environments }}
+    steps:
+      - id: set
+        run: |
+          all='["staging","production"]'
+          requested='${{ github.event.inputs.environments }}'
+          if [ -z "$requested" ]; then
+            echo "environments=$all" >> "$GITHUB_OUTPUT"
+          else
+            echo "environments=$(printf '%s' "$requested" | jq -c 'split(",") | map(gsub("^ +| +$";"")) | map(select(length > 0))')" >> "$GITHUB_OUTPUT"
+          fi
+
+  live-schema-lock:
+    name: Schema lock — ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [matrix]
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(needs.matrix.outputs.environments) }}
+    environment: ${{ matrix.environment }}
+    # issues: write exists solely for the production-drift tracking issue
+    # (update-drift-tracking-issue.mjs) — but the issue is created/updated
+    # under the azeebo-drift-bot App token, NOT this token (App-owned issues
+    # don't retrigger workflows). This token only reads databases + uploads
+    # artifacts.
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Check DB credentials for this environment
+        id: creds
+        run: |
+          missing=0
+          for v in DB_HOST DB_PORT DB_USER DB_PASSWORD; do
+            if [ -z "${!v+x}" ] || [ -z "${!v}" ]; then
+              echo "missing-cred: $v"
+              missing=1
+            fi
+          done
+          if [ "$missing" = "1" ]; then
+            echo "## Schema lock — ${{ matrix.environment }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "_Skipped: DB_HOST / DB_PORT / DB_USER / DB_PASSWORD are not configured for the \`${{ matrix.environment }}\` GitHub environment. Configure them (same secrets database-backup.yml uses) to enable nightly live reporting._" >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Skipped — DB credentials not configured for ${{ matrix.environment }}"
+          fi
+          echo "have-creds=$([ $missing -eq 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      # Identity for the tracking-issue bot (production leg only): mint a
+      # short-lived azeebo-drift-bot App token. Skipped when the App isn't
+      # configured — the tracker then skip-loudly's and the report still
+      # ships. always() so a drift-failed leg still updates the tracker —
+      # drift present is exactly when the tracker must act.
+      # secrets.* is FORBIDDEN in if: conditionals (GitHub rejects the whole
+      # workflow file — zero jobs), so the key guard evaluates into an env
+      # var here and the token step branches on it.
+      - name: Check drift bot configured
+        id: drift-bot-config
+        if: always() && matrix.environment == 'production' && steps.creds.outputs.have-creds == 'true' && vars.DRIFT_BOT_APP_ID != ''
+        env:
+          DRIFT_BOT_KEY_SET: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY != '' }}
+        run: echo "configured=${{ env.DRIFT_BOT_KEY_SET == 'true' }}" >> "$GITHUB_OUTPUT"
+      - name: Mint azeebo-drift-bot App token
+        id: app-token
+        if: ${{ always() && steps.drift-bot-config.outputs.configured == 'true' }}
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.DRIFT_BOT_APP_ID }}
+          private-key: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - uses: actions/checkout@v4
+        if: steps.creds.outputs.have-creds == 'true'
+
+      - uses: pnpm/action-setup@v4
+        if: steps.creds.outputs.have-creds == 'true'
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        if: steps.creds.outputs.have-creds == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - name: Install dependencies
+        if: steps.creds.outputs.have-creds == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Schema-lock report against live databases
+        if: steps.creds.outputs.have-creds == 'true'
+        id: sweep
+        env:
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+        run: |
+          mkdir -p .check-live-schema-lock-out
+          set +e
+          node scripts/check-live-schema-lock.mjs --env "${{ matrix.environment }}" > .check-live-schema-lock-out/stdout-${{ matrix.environment }}.log 2>&1
+          status=$?
+          set -e
+          cat .check-live-schema-lock-out/stdout-${{ matrix.environment }}.log
+          echo "exit=$status" >> "$GITHUB_OUTPUT"
+          # 0 = no real drift · 1 = drift/broken ledger (failed in "Fail" step below)
+          exit 0
+
+      # ── Pool-actuals recording ────────────────────────────────────────────
+      # Records ACTUAL per-database connection counts (pg_stat_activity,
+      # probe excluded) into a per-environment JSONL history and uploads it as
+      # `pool-actuals-<env>-<run_id>`. The pool-budget gate's PR comment
+      # (connection-forecast.mjs --forecast) walks these artifacts nightly-
+      # fresh and forecasts when the 80% margin is crossed at the current
+      # trend. Observability only — recording problems never fail this job;
+      # the gate itself (pr-checks.yml → pool-budget-pr) stays the blocking
+      # authority. Reuses this job's env secrets (DB_HOST/…) and the step
+      # summary conventions of the schema-lock report above.
+      - name: Record pool actuals (pg_stat_activity snapshot)
+        if: steps.creds.outputs.have-creds == 'true'
+        env:
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+          POOL_FORECAST_ENV: ${{ matrix.environment }}
+        run: node scripts/database/connection-forecast.mjs --record
+
+      - name: Upload pool-actuals history
+        if: always() && steps.creds.outputs.have-creds == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pool-actuals-${{ matrix.environment }}-${{ github.run_id }}
+          path: .pool-forecast-out/
+          retention-days: 90
+
+      - name: Build step summary (per-env table + annotations)
+        if: steps.creds.outputs.have-creds == 'true'
+        env:
+          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const env = process.env.ENVIRONMENT;
+            const reportPath = `.check-live-schema-lock-out/${env}/report-${env}.json`;
+            if (!fs.existsSync(reportPath)) {
+              fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Schema lock — \`${env}\`\n\n_Report missing (run interrupted before the report was written)._\n`);
+              process.exit(0);
+            }
+            const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+            const lines = [];
+            lines.push(`## Schema lock — live databases (\`${env}\`)`);
+            lines.push("");
+            lines.push(`Host: \`${report.host}\` · ${report.summary.total} service(s) · generated ${report.generatedAt}`);
+            lines.push("");
+            lines.push("| Service | Status | Detail |");
+            lines.push("|---|---|---|");
+            for (const s of report.services) {
+              const detail = (s.detail || "").replaceAll("|", "\\|");
+              lines.push(`| ${s.service} | ${s.status} | ${detail} |`);
+            }
+            lines.push("");
+            lines.push(`**Summary:** ${report.summary.total} checked · ${report.summary.clean} clean · ${report.summary.noDb} no-db · ${report.summary.additiveOnly} additive-only · ${report.summary.review} review · ${report.summary.destructive} destructive · ${report.summary.ledgerMismatch} ledger-mismatch · ${report.summary.blockedLedger} blocked-ledger · ${report.summary.error} error · ${report.summary.unreachable} unreachable`);
+            lines.push("");
+            lines.push("_Read-only report: no live database was written to. Diff SQL per service is in the workflow artifacts._");
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+            const annotated = report.services.filter((s) =>
+              ["LEDGER-MISMATCH", "BLOCKED-LEDGER", "DRIFT-DESTRUCTIVE", "DRIFT-REVIEW", "ERROR"].includes(s.status));
+            if (annotated.length > 50) annotated.length = 50; // GH annotation cap
+            for (const s of annotated) {
+              console.log(`::error title=Schema lock ${s.status} — ${s.service}::${(s.detail || s.status).slice(0, 200)}`);
+            }
+          '
+
+      - name: Fail on real drift or broken ledger
+        if: steps.creds.outputs.have-creds == 'true' && steps.sweep.outputs.exit == '1'
+        run: |
+          echo "::error title=Schema lock violated — ${{ matrix.environment }}::Live databases do not satisfy the schema lock. See the step summary and artifacts; fixes go through migrations, never hand-ALTERs."
+          exit 1
+
+      - name: Upload per-env report artifacts
+        if: always() && steps.creds.outputs.have-creds == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-lock-report-${{ matrix.environment }}-${{ github.run_id }}
+          path: .check-live-schema-lock-out/
+          retention-days: 30
+
+      # Persistent home for production world-drift: creates/updates/closes ONE
+      # tracking issue (found by marker) under the azeebo-drift-bot App —
+      # created when drift appears, updated only when the violating-service
+      # set changes, closed when production is clean, reopened if it returns.
+      # No App configured → skips loudly; the report above is unaffected.
+      - name: Update production drift tracking issue
+        if: ${{ always() && matrix.environment == 'production' && steps.creds.outputs.have-creds == 'true' && steps.app-token.outputs.token != '' }}
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          # Read the report THIS run just wrote — the freshest artifact on the
+          # Actions API would still be yesterday's run at this point.
+          DRIFT_LOCAL_REPORT: .check-live-schema-lock-out/production/report-production.json
+        run: node scripts/update-drift-tracking-issue.mjs
+
+      # ── Pool saturation gate ──────────────────────────────────────────────
+      # Fails the nightly run when the pool-audit job_runs ledger shows
+      # SUSTAINED critical saturation: ≥3 consecutive error passes spanning
+      # ≥2h (single blips and recovered excursions pass; sustained distress
+      # and an unreachable pgbouncer console fail). WARN/degraded history is
+      # summarized but never blocks — degraded is capacity planning, critical
+      # is an incident. Read-only over the ledger; thresholds tunable via
+      # POOL_GATE_HOURS / POOL_GATE_MIN_ERROR / POOL_GATE_MIN_SPAN_H. Runs
+      # last so its failure can never starve the report, artifact uploads, or
+      # the drift tracker above. Locally: POOL_GATE_HOURS=24 node
+      # scripts/database/pool-saturation-gate.mjs
+      - name: Fail on sustained pooler saturation
+        if: steps.creds.outputs.have-creds == 'true'
+        env:
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+        run: node scripts/database/pool-saturation-gate.mjs
+      # Matching gate for the bypass detector: a repo process holding direct
+      # :5432 connections across the whole window fails the nightly. Parses
+      # the bypass segment from pass detail (repeat suppression logs
+      # persisting bypasses as ok rows with full detail). Runs last for the
+      # same reason as the saturation gate above. Locally:
+      # POOL_BYPASS_GATE_HOURS=30 node scripts/database/pool-bypass-gate.mjs
+      - name: Fail on sustained pooler bypasses
+        if: steps.creds.outputs.have-creds == 'true'
+        env:
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+        run: node scripts/database/pool-bypass-gate.mjs
+
+      # ── Scheduled-job health gate ─────────────────────────────────────────
+      # Fails the nightly when ANY known scheduled job (freshness, drill,
+      # audit-retention, data-retention, pool-audit) goes error-heavy in its
+      # own ledger: hourly jobs need a sustained streak (≥3 consecutive error
+      # passes spanning ≥2h, mirroring the saturation gate), nightly/weekly
+      # jobs fail on 2 consecutive error passes. Runs are broken by ledger
+      # gaps > cadence × 1.5 so a job that stopped recording isn't read as a
+      # health streak (the cadence watchdog covers silence). Read-only over
+      # the ledger; thresholds tunable via JOB_HEALTH_* env. Locally:
+      # JOB_HEALTH_HOURS=56 node scripts/database/job-health-gate.mjs
+      - name: Fail on error-heavy scheduled jobs
+        if: steps.creds.outputs.have-creds == 'true'
+        env:
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+          # Approved foreign dialers (repo VARIABLE, comma-separated exact
+          # paths) waive the new-foreign alert — the same list the pool
+          # tracker and bypass gate honor. Absent variable → no approvals.
+          POOL_FOREIGN_ALLOWLIST: ${{ vars.POOL_FOREIGN_ALLOWLIST }}
+        run: node scripts/database/job-health-gate.mjs
+
+      # ── Transport drill (service prober) ──────────────────────────────────
+      # Fails the nightly when the Ops Health service prober's contract
+      # breaks: it compiles the REAL service-probe.ts with the workspace
+      # tsc, binds a REAL v4-only listener on a spare port, probes it with
+      # the real probeAcrossTransports + real fetch (a family-narrow bind
+      # must NEVER read as down — the exact bug the prober was written to
+      # fix), and drives the real mergeTransportHistory core through a
+      # re-bind and a crossing-family flip (the banner's data path). No DB
+      # or services needed — sockets + tsc only — but runs inside the
+      # creds-gated leg so the drill only fires where the fleet legs run.
+      # Locally: node scripts/ops/transport-drill.mjs
+      - name: Transport drill (service prober contract)
+        if: steps.creds.outputs.have-creds == 'true'
+        run: node scripts/ops/transport-drill.mjs
+
+      # Persistent home for pool-health violations: creates/updates/closes ONE
+      # tracking issue (found by marker) under the azeebo-drift-bot App —
+      # the same lifecycle as the production-drift tracker below. The bot
+      # RE-EVALUATES both pool gates against the ledger rather than reading
+      # gate step exits (gate exits are CI plumbing; the ledger is the one
+      # source of truth). always() so a gate failure still updates the
+      # tracker — a trip is exactly when it must act. Production leg only,
+      # like the drift tracker; the gates above still block per-environment.
+      # Locally: LIVE_DB_URL_BASE=… node scripts/pool-issue-tracker.mjs --dry-run
+      - name: Update pool-health tracking issue
+        if: ${{ always() && matrix.environment == 'production' && steps.creds.outputs.have-creds == 'true' && steps.app-token.outputs.token != '' }}
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+          # Approved foreign dialers (repo VARIABLE) — never tracked.
+          POOL_FOREIGN_ALLOWLIST: ${{ vars.POOL_FOREIGN_ALLOWLIST }}
+        run: node scripts/pool-issue-tracker.mjs

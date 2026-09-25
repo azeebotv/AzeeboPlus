@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
-import { EngagementController } from './engagement.controller';
-import { EngagementService } from './engagement.service';
+import { EngagementController } from './engagement.controller.js';
+import { EngagementService } from './engagement.service.js';
 import { RateLimitService } from '@azeebo/security';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('EngagementController', () => {
   let controller: EngagementController;
@@ -23,6 +24,10 @@ describe('EngagementController', () => {
         {
           provide: EngagementService,
           useValue: mockEngagementService,
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
         {
           provide: RateLimitService,
@@ -87,6 +92,7 @@ describe('EngagementController', () => {
 
   describe('getPredictionResults', () => {
     it('should call engagementService.getPredictionResults with userId and contentId', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { id: 'user-1' } } as any;
       const mockResult = {
         success: true,
@@ -103,6 +109,7 @@ describe('EngagementController', () => {
 
   describe('submitPrediction', () => {
     it('should call engagementService.submitPrediction with correct params', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { id: 'user-1' } } as any;
       const body = { contentId: 'content-1', prediction: 'yes', points: 100 };
       const mockResult = {
@@ -113,7 +120,7 @@ describe('EngagementController', () => {
 
       const result = await controller.submitPrediction(mockReq, body);
 
-      expect(service.submitPrediction).toHaveBeenCalledWith('user-1', 'content-1', 'yes', 100);
+      expect(service.submitPrediction).toHaveBeenCalledWith('user-1', 'content-1', 'yes');
       expect(result).toEqual(mockResult);
     });
   });

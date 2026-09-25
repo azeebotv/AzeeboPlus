@@ -1,5 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagService, contentFlags } from '@azeebo/feature-flags';
+import axios from 'axios';
 
 export interface AccessCheckResult {
   hasAccess: boolean;
@@ -12,9 +15,42 @@ export interface AccessCheckResult {
 export class AccessControlService {
   private readonly logger = new Logger(AccessControlService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+  ) {}
 
-  async checkContentAccess(userId: string, contentId: string): Promise<AccessCheckResult> {
+  async checkGeoAccess(
+    contentId: string,
+    userCountry?: string
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    if (!userCountry) return { allowed: true };
+
+    const content = await this.prisma.contentItem.findUnique({
+      where: { id: contentId },
+      select: { allowedCountries: true, blockedCountries: true },
+    });
+
+    if (!content) return { allowed: true };
+
+    if (content.blockedCountries.length > 0 && content.blockedCountries.includes(userCountry)) {
+      return { allowed: false, reason: 'Content is not available in your region' };
+    }
+
+    if (content.allowedCountries.length > 0 && !content.allowedCountries.includes(userCountry)) {
+      return { allowed: false, reason: 'Content is not available in your region' };
+    }
+
+    return { allowed: true };
+  }
+
+  async checkContentAccess(
+    userId: string,
+    contentId: string,
+    userCountry?: string,
+    userAge?: number
+  ): Promise<AccessCheckResult> {
     try {
       const content = await this.prisma.contentItem.findUnique({
         where: { id: contentId },
@@ -29,6 +65,33 @@ export class AccessControlService {
         return {
           hasAccess: false,
           reason: 'Content is not published',
+        };
+      }
+
+      // Geo restriction check (service-level enforcement)
+      const geoCheck = await this.checkGeoAccess(contentId, userCountry);
+      if (!geoCheck.allowed) {
+        return {
+          hasAccess: false,
+          reason: geoCheck.reason,
+        };
+      }
+
+      // Content rating enforcement
+      if (content.minAge && userAge !== undefined && userAge < content.minAge) {
+        return {
+          hasAccess: false,
+          reason: `Content requires age ${content.minAge}+`,
+        };
+      }
+
+      // content_premium_gate: while the flag is off the entitlement checks
+      // below are bypassed and all published content is unlocked (promo/free
+      // mode). Flipping it on starts enforcing rental/pass/premium gating.
+      if (!(await this.featureFlagService.isEnabled(contentFlags.premiumGate))) {
+        return {
+          hasAccess: true,
+          accessType: content.windowType === 'basic' ? 'free' : 'unlocked',
         };
       }
 
@@ -386,6 +449,36 @@ export class AccessControlService {
         };
       }
 
+      const mediaServiceUrl = this.configService.get<string>('MEDIA_SERVICE_URL');
+      if (mediaServiceUrl && mediaAsset.originalUrl) {
+        try {
+          // Extract storage key from the original URL (S3 path)
+          const url = new URL(mediaAsset.originalUrl);
+          const storageKey = url.pathname.substring(1); // Remove leading /
+          const response = await axios.get(
+            `${mediaServiceUrl}/v1/upload/signed-url/${encodeURIComponent(storageKey)}`,
+            {
+              timeout: 5000,
+              headers: {
+                'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
+              },
+            }
+          );
+          const signedUrl = response.data?.data?.url || response.data?.url;
+          if (signedUrl) {
+            return {
+              canPlay: true,
+              signedUrl,
+              expiresIn: 3600,
+            };
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Failed to get signed URL from media-service: ${(error as Error).message}`
+          );
+        }
+      }
+
       return {
         canPlay: true,
         expiresIn: 3600,
@@ -410,40 +503,43 @@ export class AccessControlService {
       const skip = (page - 1) * limit;
       const now = new Date();
 
-      const freeContent = await this.prisma.contentItem.findMany({
-        where: {
-          status: 'published',
-          windowType: 'basic',
-          ...(universeId ? { universeId } : {}),
-        },
-        include: { universe: true },
-        skip,
-        take: limit,
-      });
+      // Parallel fetch free content + user access data (fixes sequential queries)
+      const [freeContent, userRentals, userPasses] = await Promise.all([
+        this.prisma.contentItem.findMany({
+          where: {
+            status: 'published',
+            windowType: 'basic',
+            ...(universeId ? { universeId } : {}),
+          },
+          include: { universe: true },
+          skip,
+          take: limit,
+        }),
+        this.prisma.rental.findMany({
+          where: {
+            userId,
+            status: 'active',
+            endTime: { gt: now },
+          },
+          select: { contentId: true },
+        }),
+        this.prisma.pass.findMany({
+          where: {
+            userId,
+            status: 'active',
+            endTime: { gt: now },
+            ...(universeId ? { universeId } : {}),
+          },
+        }),
+      ]);
 
       const accessibleContentIds: string[] = [];
-
-      const userRentals = await this.prisma.rental.findMany({
-        where: {
-          userId,
-          status: 'active',
-          endTime: { gt: now },
-        },
-        select: { contentId: true },
-      });
       accessibleContentIds.push(...userRentals.map((r) => r.contentId));
 
-      const userPasses = await this.prisma.pass.findMany({
-        where: {
-          userId,
-          status: 'active',
-          endTime: { gt: now },
-          ...(universeId ? { universeId } : {}),
-        },
-      });
-
       if (userPasses.length > 0) {
-        const universeIds = userPasses.filter((p) => p.universeId).map((p) => p.universeId as string);
+        const universeIds = userPasses
+          .filter((p) => p.universeId)
+          .map((p) => p.universeId as string);
 
         const passAccessibleContent = await this.prisma.contentItem.findMany({
           where: {
@@ -476,7 +572,13 @@ export class AccessControlService {
       };
     } catch (error) {
       this.logger.error(`Failed to get accessible content: ${error}`);
-      return { success: false, error: { code: 'GET_ACCESSIBLE_CONTENT_FAILED', message: 'Failed to retrieve accessible content' } };
+      return {
+        success: false,
+        error: {
+          code: 'GET_ACCESSIBLE_CONTENT_FAILED',
+          message: 'Failed to retrieve accessible content',
+        },
+      };
     }
   }
 }

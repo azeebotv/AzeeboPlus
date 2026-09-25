@@ -1,7 +1,9 @@
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { colors } from '../../src/theme';
 
 export default function OnboardingWelcomeScreen() {
   const colorScheme = useColorScheme();
@@ -118,7 +120,7 @@ const styles = StyleSheet.create({
     bottom: '10%',
     borderRadius: 100,
     borderWidth: 2,
-    borderColor: '#6366F1',
+    borderColor: colors.category.indigo,
     opacity: 0.2,
   },
   ring3: {
@@ -147,7 +149,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: '#888',
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 1.6,
     marginBottom: 32,

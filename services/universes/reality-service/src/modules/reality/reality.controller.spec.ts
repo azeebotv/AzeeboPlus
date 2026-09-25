@@ -1,13 +1,46 @@
+jest.mock('libphonenumber-js/max', () => ({}));
+jest.mock('@nestjs/swagger', () => ({
+  ApiTags: () => () => {},
+  ApiOperation: () => () => {},
+  ApiResponse: () => () => {},
+  ApiBearerAuth: () => () => {},
+  ApiProperty: () => () => {},
+  ApiPropertyOptional: () => () => {},
+  PartialType: (t: unknown) => t,
+}));
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { RealityController } from './reality.controller';
-import { RealityService } from './reality.service';
+import { RealityController } from './reality.controller.js';
+import { RealityService } from './reality.service.js';
+import { VoteFraudDetectionService } from './vote-fraud-detection.service.js';
+import { RealityGateway } from './reality.gateway.js';
 import { RateLimitService } from '@azeebo/security';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn(),
+  RateLimit: () => () => {},
+  AdminGuard: jest.fn(),
+  RateLimitService: jest.fn(),
+}));
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagService: jest.fn(),
+  FeatureFlagGuard: jest.fn(),
+  FeatureFlag: () => () => {},
+  realityFlags: {
+    votingEnabled: 'reality_voting_enabled',
+    predictionsEnabled: 'reality_predictions_enabled',
+    liveVoting: 'reality_live_voting',
+    autoElimination: 'reality_auto_elimination',
+  },
+}));
 
 describe('RealityController', () => {
   let controller: RealityController;
-  let service: RealityService;
 
   const mockRealityService = {
     listShows: jest.fn(),
@@ -45,7 +78,9 @@ describe('RealityController', () => {
   };
 
   const mockRateLimitService = {
-    checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 10, resetAt: Date.now() + 60000, limit: 10 }),
+    checkRateLimit: jest
+      .fn()
+      .mockResolvedValue({ allowed: true, remaining: 10, resetAt: Date.now() + 60000, limit: 10 }),
     resetRateLimit: jest.fn(),
     getRateLimitStatus: jest.fn(),
   };
@@ -57,6 +92,21 @@ describe('RealityController', () => {
         {
           provide: RealityService,
           useValue: mockRealityService,
+        },
+        {
+          provide: RealityGateway,
+          useValue: {
+            getViewerCount: jest.fn().mockResolvedValue(0),
+          },
+        },
+        {
+          provide: VoteFraudDetectionService,
+          useValue: {
+            checkVote: jest
+              .fn()
+              .mockResolvedValue({ passed: true, flags: [], riskScore: 0, action: 'allow' }),
+            getVoteAuditTrail: jest.fn(),
+          },
         },
         {
           provide: RateLimitService,
@@ -74,7 +124,6 @@ describe('RealityController', () => {
     }).compile();
 
     controller = module.get<RealityController>(RealityController);
-    service = module.get<RealityService>(RealityService);
   });
 
   afterEach(() => {
@@ -116,7 +165,10 @@ describe('RealityController', () => {
   describe('createShow', () => {
     it('should create a reality show', async () => {
       const body = { title: 'New Show', thumbnail: 'thumb.jpg', universeId: 'universe-1' };
-      const result = { success: true, data: { show: { id: 'show-1' }, message: 'Show created successfully' } };
+      const result = {
+        success: true,
+        data: { show: { id: 'show-1' }, message: 'Show created successfully' },
+      };
       mockRealityService.createShow.mockResolvedValue(result);
 
       expect(await controller.createShow(body)).toEqual(result);
@@ -127,7 +179,10 @@ describe('RealityController', () => {
   describe('updateShow', () => {
     it('should update a reality show', async () => {
       const body = { title: 'Updated Show' };
-      const result = { success: true, data: { show: { id: 'show-1' }, message: 'Show updated successfully' } };
+      const result = {
+        success: true,
+        data: { show: { id: 'show-1' }, message: 'Show updated successfully' },
+      };
       mockRealityService.updateShow.mockResolvedValue(result);
 
       expect(await controller.updateShow('show-1', body)).toEqual(result);
@@ -139,7 +194,9 @@ describe('RealityController', () => {
         new (require('@nestjs/common').NotFoundException)('Show not found')
       );
 
-      await expect(controller.updateShow('nonexistent', { title: 'x' })).rejects.toThrow('Show not found');
+      await expect(controller.updateShow('nonexistent', { title: 'x' })).rejects.toThrow(
+        'Show not found'
+      );
     });
   });
 
@@ -174,7 +231,10 @@ describe('RealityController', () => {
   describe('createEpisode', () => {
     it('should create an episode', async () => {
       const body = { title: 'Episode 1', number: 1 };
-      const result = { success: true, data: { episode: { id: 'ep-1' }, message: 'Episode created successfully' } };
+      const result = {
+        success: true,
+        data: { episode: { id: 'ep-1' }, message: 'Episode created successfully' },
+      };
       mockRealityService.createEpisode.mockResolvedValue(result);
 
       expect(await controller.createEpisode('show-1', body)).toEqual(result);
@@ -185,7 +245,10 @@ describe('RealityController', () => {
   describe('updateEpisode', () => {
     it('should update an episode', async () => {
       const body = { title: 'Updated Episode' };
-      const result = { success: true, data: { episode: { id: 'ep-1' }, message: 'Episode updated successfully' } };
+      const result = {
+        success: true,
+        data: { episode: { id: 'ep-1' }, message: 'Episode updated successfully' },
+      };
       mockRealityService.updateEpisode.mockResolvedValue(result);
 
       expect(await controller.updateEpisode('ep-1', body)).toEqual(result);
@@ -197,7 +260,9 @@ describe('RealityController', () => {
         new (require('@nestjs/common').NotFoundException)('Episode not found')
       );
 
-      await expect(controller.updateEpisode('nonexistent', { title: 'x' })).rejects.toThrow('Episode not found');
+      await expect(controller.updateEpisode('nonexistent', { title: 'x' })).rejects.toThrow(
+        'Episode not found'
+      );
     });
   });
 
@@ -222,7 +287,10 @@ describe('RealityController', () => {
   describe('createSeason', () => {
     it('should create a season', async () => {
       const body = { title: 'Season 1', number: 1 };
-      const result = { success: true, data: { season: { id: 'season-1' }, message: 'Season created successfully' } };
+      const result = {
+        success: true,
+        data: { season: { id: 'season-1' }, message: 'Season created successfully' },
+      };
       mockRealityService.createSeason.mockResolvedValue(result);
 
       expect(await controller.createSeason('show-1', body)).toEqual(result);
@@ -243,7 +311,10 @@ describe('RealityController', () => {
   describe('createContestant', () => {
     it('should create a contestant', async () => {
       const body = { name: 'Contestant 1' };
-      const result = { success: true, data: { contestant: { id: 'c-1' }, message: 'Contestant created successfully' } };
+      const result = {
+        success: true,
+        data: { contestant: { id: 'c-1' }, message: 'Contestant created successfully' },
+      };
       mockRealityService.createContestant.mockResolvedValue(result);
 
       expect(await controller.createContestant('show-1', body)).toEqual(result);
@@ -254,7 +325,10 @@ describe('RealityController', () => {
   describe('updateContestant', () => {
     it('should update a contestant', async () => {
       const body = { name: 'Updated Contestant' };
-      const result = { success: true, data: { contestant: { id: 'c-1' }, message: 'Contestant updated successfully' } };
+      const result = {
+        success: true,
+        data: { contestant: { id: 'c-1' }, message: 'Contestant updated successfully' },
+      };
       mockRealityService.updateContestant.mockResolvedValue(result);
 
       expect(await controller.updateContestant('c-1', body)).toEqual(result);
@@ -266,7 +340,9 @@ describe('RealityController', () => {
         new (require('@nestjs/common').NotFoundException)('Contestant not found')
       );
 
-      await expect(controller.updateContestant('nonexistent', { name: 'x' })).rejects.toThrow('Contestant not found');
+      await expect(controller.updateContestant('nonexistent', { name: 'x' })).rejects.toThrow(
+        'Contestant not found'
+      );
     });
   });
 
@@ -284,7 +360,9 @@ describe('RealityController', () => {
         new (require('@nestjs/common').NotFoundException)('Contestant not found')
       );
 
-      await expect(controller.deleteContestant('nonexistent')).rejects.toThrow('Contestant not found');
+      await expect(controller.deleteContestant('nonexistent')).rejects.toThrow(
+        'Contestant not found'
+      );
     });
   });
 
@@ -318,21 +396,30 @@ describe('RealityController', () => {
 
   describe('voteForContestant', () => {
     it('should submit vote via show alias', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1' };
-      const result = { success: true, data: { voteId: 'vote-1', message: 'Vote submitted successfully' } };
+      const result = {
+        success: true,
+        data: { voteId: 'vote-1', message: 'Vote submitted successfully' },
+      };
       mockRealityService.submitVote.mockResolvedValue(result);
 
       expect(await controller.voteForContestant(req, 'show-1', body)).toEqual(result);
-      expect(mockRealityService.submitVote).toHaveBeenCalledWith('user-123', { contestantId: 'c-1', showId: 'show-1' });
+      expect(mockRealityService.submitVote).toHaveBeenCalledWith('user-123', {
+        contestantId: 'c-1',
+        showId: 'show-1',
+      });
     });
   });
 
   describe('submitVote', () => {
     it('should submit a vote', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1' };
-      const result = { success: true, data: { voteId: 'vote-1', message: 'Vote submitted successfully' } };
+      const result = {
+        success: true,
+        data: { voteId: 'vote-1', message: 'Vote submitted successfully' },
+      };
       mockRealityService.submitVote.mockResolvedValue(result);
 
       expect(await controller.submitVote(req, body)).toEqual(result);
@@ -340,21 +427,28 @@ describe('RealityController', () => {
     });
 
     it('should throw ConflictException when user already voted', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1' };
       mockRealityService.submitVote.mockRejectedValue(
-        new (require('@nestjs/common').ConflictException)('User has already voted for this contestant')
+        new (require('@nestjs/common').ConflictException)(
+          'User has already voted for this contestant'
+        )
       );
 
-      await expect(controller.submitVote(req, body)).rejects.toThrow('User has already voted for this contestant');
+      await expect(controller.submitVote(req, body)).rejects.toThrow(
+        'User has already voted for this contestant'
+      );
     });
   });
 
   describe('submitVotesWithQuantity', () => {
     it('should submit multiple votes', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1', quantity: 5 };
-      const result = { success: true, data: { voteIds: [], quantity: 5, totalCost: 5, message: '5 votes submitted successfully' } };
+      const result = {
+        success: true,
+        data: { voteIds: [], quantity: 5, totalCost: 5, message: '5 votes submitted successfully' },
+      };
       mockRealityService.submitVotesWithQuantity.mockResolvedValue(result);
 
       expect(await controller.submitVotesWithQuantity(req, body)).toEqual(result);
@@ -362,21 +456,28 @@ describe('RealityController', () => {
     });
 
     it('should throw BadRequestException when quantity is invalid', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1', quantity: 0 };
       mockRealityService.submitVotesWithQuantity.mockRejectedValue(
-        new (require('@nestjs/common').BadRequestException)('Vote quantity must be between 1 and 10')
+        new (require('@nestjs/common').BadRequestException)(
+          'Vote quantity must be between 1 and 10'
+        )
       );
 
-      await expect(controller.submitVotesWithQuantity(req, body)).rejects.toThrow('Vote quantity must be between 1 and 10');
+      await expect(controller.submitVotesWithQuantity(req, body)).rejects.toThrow(
+        'Vote quantity must be between 1 and 10'
+      );
     });
   });
 
   describe('submitSupervote', () => {
     it('should submit a supervote', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1' };
-      const result = { success: true, data: { supervoteId: 'sv-1', message: 'Supervote submitted successfully' } };
+      const result = {
+        success: true,
+        data: { supervoteId: 'sv-1', message: 'Supervote submitted successfully' },
+      };
       mockRealityService.submitSupervote.mockResolvedValue(result);
 
       expect(await controller.submitSupervote(req, body)).toEqual(result);
@@ -384,21 +485,28 @@ describe('RealityController', () => {
     });
 
     it('should throw ConflictException when user already supervoted', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { contestantId: 'c-1', showId: 'show-1' };
       mockRealityService.submitSupervote.mockRejectedValue(
-        new (require('@nestjs/common').ConflictException)('User has already supervoted for this contestant')
+        new (require('@nestjs/common').ConflictException)(
+          'User has already supervoted for this contestant'
+        )
       );
 
-      await expect(controller.submitSupervote(req, body)).rejects.toThrow('User has already supervoted for this contestant');
+      await expect(controller.submitSupervote(req, body)).rejects.toThrow(
+        'User has already supervoted for this contestant'
+      );
     });
   });
 
   describe('submitPrediction', () => {
     it('should submit a prediction', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const body = { showId: 'show-1', prediction: { winner: 'c-1' } };
-      const result = { success: true, data: { predictionId: 'pred-1', message: 'Prediction submitted successfully' } };
+      const result = {
+        success: true,
+        data: { predictionId: 'pred-1', message: 'Prediction submitted successfully' },
+      };
       mockRealityService.submitPrediction.mockResolvedValue(result);
 
       expect(await controller.submitPrediction(req, body)).toEqual(result);
@@ -408,7 +516,7 @@ describe('RealityController', () => {
 
   describe('getPredictionDashboard', () => {
     it('should return prediction dashboard', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const result = { success: true, data: { predictions: [], userPrediction: null } };
       mockRealityService.getPredictionDashboard.mockResolvedValue(result);
 
@@ -437,7 +545,7 @@ describe('RealityController', () => {
 
   describe('getWalletBalance', () => {
     it('should return wallet balance', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       const result = { success: true, data: { balance: 1000 } };
       mockRealityService.getWalletBalance.mockResolvedValue(result);
 
@@ -446,7 +554,7 @@ describe('RealityController', () => {
     });
 
     it('should throw NotFoundException when wallet not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockRealityService.getWalletBalance.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Wallet not found')
       );
@@ -477,8 +585,11 @@ describe('RealityController', () => {
 
   describe('purchasePremiumExtra', () => {
     it('should purchase a premium extra', async () => {
-      const req = { user: { sub: 'user-123' } };
-      const result = { success: true, data: { purchaseId: 'p-1', message: 'Successfully purchased Early Voting' } };
+      const req = { user: { id: 'user-123' } };
+      const result = {
+        success: true,
+        data: { purchaseId: 'p-1', message: 'Successfully purchased Early Voting' },
+      };
       mockRealityService.purchasePremiumExtra.mockResolvedValue(result);
 
       expect(await controller.purchasePremiumExtra(req, '1')).toEqual(result);
@@ -486,19 +597,24 @@ describe('RealityController', () => {
     });
 
     it('should throw NotFoundException when extra not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockRealityService.purchasePremiumExtra.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Premium extra not found')
       );
 
-      await expect(controller.purchasePremiumExtra(req, 'nonexistent')).rejects.toThrow('Premium extra not found');
+      await expect(controller.purchasePremiumExtra(req, 'nonexistent')).rejects.toThrow(
+        'Premium extra not found'
+      );
     });
   });
 
   describe('confirmReward', () => {
     it('should confirm reward for show participation', async () => {
-      const req = { user: { sub: 'user-123' } };
-      const result = { success: true, data: { pointsEarned: 10, message: 'Reward confirmed! You earned 10 points' } };
+      const req = { user: { id: 'user-123' } };
+      const result = {
+        success: true,
+        data: { pointsEarned: 10, message: 'Reward confirmed! You earned 10 points' },
+      };
       mockRealityService.confirmReward.mockResolvedValue(result);
 
       expect(await controller.confirmReward(req, 'show-1')).toEqual(result);
@@ -506,12 +622,14 @@ describe('RealityController', () => {
     });
 
     it('should throw NotFoundException when reward account not found', async () => {
-      const req = { user: { sub: 'user-123' } };
+      const req = { user: { id: 'user-123' } };
       mockRealityService.confirmReward.mockRejectedValue(
         new (require('@nestjs/common').NotFoundException)('Reward account not found')
       );
 
-      await expect(controller.confirmReward(req, 'show-1')).rejects.toThrow('Reward account not found');
+      await expect(controller.confirmReward(req, 'show-1')).rejects.toThrow(
+        'Reward account not found'
+      );
     });
   });
 

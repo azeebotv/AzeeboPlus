@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import type { UserRole } from '../../generated/prisma';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -23,15 +24,15 @@ export interface UserWithStats {
 @Injectable()
 export class UserManagementService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly auditService: AuditLogService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(AuditLogService) private readonly auditService: AuditLogService
   ) {}
 
   async getUsers(page = 1, limit = 20, role?: string, search?: string): Promise<unknown> {
     const where: Prisma.UserWhereInput = {};
 
     if (role && role !== 'all') {
-      where.role = role;
+      where.role = role as Prisma.EnumUserRoleFilter<'User'>;
     }
 
     if (search) {
@@ -49,6 +50,7 @@ export class UserManagementService {
         orderBy: { createdAt: 'desc' },
         include: {
           wallet: true,
+          creatorProfile: true,
           _count: { select: { contentItems: true } },
         },
       }),
@@ -62,6 +64,11 @@ export class UserManagementService {
         displayName: u.displayName,
         role: u.role,
         createdAt: u.createdAt,
+        isActive: !u.isSuspended,
+        suspensionStatus: u.isSuspended ? 'suspended' : 'active',
+        // Creator verification state (null for non-creators) so the directory
+        // can render a correct Verify/Unverify toggle without a detail fetch.
+        isVerified: u.creatorProfile?.verified ?? null,
         walletBalance: u.wallet?.balance || 0,
         contentCount: u._count.contentItems,
       })),
@@ -93,6 +100,9 @@ export class UserManagementService {
       displayName: user.displayName,
       role: user.role,
       avatar: user.avatar,
+      isSuspended: user.isSuspended,
+      suspensionReason: user.suspensionReason,
+      isVerified: user.creatorProfile?.verified ?? false,
       createdAt: user.createdAt,
       wallet: user.wallet,
       creatorProfile: user.creatorProfile,
@@ -102,9 +112,15 @@ export class UserManagementService {
     };
   }
 
-  async updateUserRole(userId: string, newRole: string, actorId?: string, ipAddress?: string, userAgent?: string): Promise<unknown> {
-    const allowedRoles = ['user', 'creator', 'admin', 'superadmin'];
-    if (!allowedRoles.includes(newRole)) {
+  async updateUserRole(
+    userId: string,
+    newRole: string,
+    actorId?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<unknown> {
+    const allowedRoles: UserRole[] = ['user', 'creator', 'moderator', 'admin', 'super_admin'];
+    if (!allowedRoles.includes(newRole as UserRole)) {
       throw new BadRequestException('Invalid role');
     }
 
@@ -119,7 +135,7 @@ export class UserManagementService {
     const oldRole = user.role;
     const updated = await this.prisma.user.update({
       where: { id: userId },
-      data: { role: newRole },
+      data: { role: newRole as UserRole },
     });
 
     await this.auditService.log({
@@ -212,7 +228,35 @@ export class UserManagementService {
     };
   }
 
-  async revokeSuspension(userId: string, revokedBy: string, reason: string, ipAddress?: string, userAgent?: string): Promise<unknown> {
+  async bulkSuspend(
+    userIds: string[],
+    reason: string,
+    suspendedBy: string,
+    durationDays?: number,
+    ipAddress?: string
+  ): Promise<{ suspended: number; failed: number }> {
+    let suspended = 0;
+    let failed = 0;
+
+    for (const id of userIds) {
+      try {
+        await this.suspendUser(id, reason, suspendedBy, durationDays, ipAddress);
+        suspended++;
+      } catch (err) {
+        failed++;
+      }
+    }
+
+    return { suspended, failed };
+  }
+
+  async revokeSuspension(
+    userId: string,
+    revokedBy: string,
+    reason: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<unknown> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -285,6 +329,54 @@ export class UserManagementService {
     };
   }
 
+  /** Verify/unverify a creator (the Creators page's verify buttons). */
+  async setCreatorVerified(
+    userId: string,
+    verified: boolean,
+    actorId?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<unknown> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.role !== 'creator') {
+      throw new BadRequestException('User is not a creator');
+    }
+
+    // creator_profiles is a postgres_fdw FOREIGN table here — ON CONFLICT
+    // (Prisma upsert) is not supported through FDW, so find-then-write.
+    const existing = await this.prisma.creatorProfile.findUnique({ where: { userId } });
+    const profile = existing
+      ? await this.prisma.creatorProfile.update({ where: { userId }, data: { verified } })
+      : await this.prisma.creatorProfile.create({ data: { userId, verified } });
+
+    await this.auditService.log({
+      actorId,
+      action: verified ? 'verify_creator' : 'unverify_creator',
+      targetType: 'user',
+      targetId: userId,
+      details: { email: user.email, displayName: user.displayName },
+      ipAddress,
+      userAgent,
+    });
+
+    return {
+      success: true,
+      data: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+        isVerified: profile.verified,
+      },
+    };
+  }
+
   async getUserStats(): Promise<UserStats> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -310,7 +402,12 @@ export class UserManagementService {
     };
   }
 
-  async deleteUser(userId: string, actorId?: string, ipAddress?: string, userAgent?: string): Promise<unknown> {
+  async deleteUser(
+    userId: string,
+    actorId?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<unknown> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -319,9 +416,8 @@ export class UserManagementService {
       throw new NotFoundException('User not found');
     }
 
-    await this.prisma.user.update({
+    await this.prisma.user.delete({
       where: { id: userId },
-      data: { isDeleted: true, deletedAt: new Date() },
     });
 
     await this.auditService.log({

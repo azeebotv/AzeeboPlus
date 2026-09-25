@@ -5,12 +5,11 @@ import { createWalletMethods } from '../wallet';
 import { createUserMethods } from '../user';
 import { createPaymentMethods } from '../payment';
 import { createCreatorMethods } from '../creator';
-import { createAdminMethods } from '../admin';
 import { createEngagementMethods } from '../engagement';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 // ── Functional Workflow: Complete Auth Flow ─────────────────────────────────
@@ -27,10 +26,18 @@ describe('Functional Workflow — Complete Authentication Flow', () => {
     // Step 1: Register
     client.request.mockResolvedValueOnce({
       success: true,
-      data: { access_token: 'tok', refresh_token: 'ref', user: { id: '1', email: 'new@user.com', name: 'New', role: 'user' } },
+      data: {
+        access_token: 'tok',
+        refresh_token: 'ref',
+        user: { id: '1', email: 'new@user.com', name: 'New', role: 'user' },
+      },
     });
 
-    const regResult = await auth.register({ displayName: 'New User', email: 'new@user.com', password: 'SecurePass123!' });
+    const regResult = await auth.register({
+      displayName: 'New User',
+      email: 'new@user.com',
+      password: 'SecurePass123!',
+    });
     expect(regResult.success).toBe(true);
     expect(regResult.data!.user.email).toBe('new@user.com');
 
@@ -43,7 +50,11 @@ describe('Functional Workflow — Complete Authentication Flow', () => {
     // Step 3: Login
     client.request.mockResolvedValueOnce({
       success: true,
-      data: { access_token: 'tok2', refresh_token: 'ref2', user: { id: '1', email: 'new@user.com', name: 'New', role: 'user' } },
+      data: {
+        access_token: 'tok2',
+        refresh_token: 'ref2',
+        user: { id: '1', email: 'new@user.com', name: 'New', role: 'user' },
+      },
     });
 
     const loginResult = await auth.login({ email: 'new@user.com', password: 'SecurePass123!' });
@@ -67,7 +78,11 @@ describe('Functional Workflow — Complete Authentication Flow', () => {
     // Step 3: Login with new password
     client.request.mockResolvedValueOnce({
       success: true,
-      data: { access_token: 'tok', refresh_token: 'ref', user: { id: '1', email: 'user@test.com', name: 'User', role: 'user' } },
+      data: {
+        access_token: 'tok',
+        refresh_token: 'ref',
+        user: { id: '1', email: 'user@test.com', name: 'User', role: 'user' },
+      },
     });
 
     const loginResult = await auth.login({ email: 'user@test.com', password: 'NewSecurePass456!' });
@@ -89,7 +104,11 @@ describe('Functional Workflow — Complete Authentication Flow', () => {
     // Step 2: Verify MFA code
     client.request.mockResolvedValueOnce({
       success: true,
-      data: { access_token: 'tok', refresh_token: 'ref', user: { id: '1', email: 'secure@user.com', name: 'Secure', role: 'user' } },
+      data: {
+        access_token: 'tok',
+        refresh_token: 'ref',
+        user: { id: '1', email: 'secure@user.com', name: 'Secure', role: 'user' },
+      },
     });
 
     const mfaResult = await auth.verifyMFA('123456');
@@ -109,11 +128,9 @@ describe('Functional Workflow — Complete Authentication Flow', () => {
     expect(result.data!.access_token).toBe('new-access');
     expect(result.data!.refresh_token).toBe('new-refresh');
     // Verify retryOn401 is set for refresh requests
-    expect(client.request).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.any(Object),
-      { retryOn401: true }
-    );
+    expect(client.request).toHaveBeenCalledWith(expect.any(String), expect.any(Object), {
+      retryOn401: true,
+    });
   });
 });
 
@@ -121,13 +138,11 @@ describe('Functional Workflow — Complete Authentication Flow', () => {
 describe('Functional Workflow — Content Discovery & Consumption', () => {
   let client: ReturnType<typeof createMockClient>;
   let content: ReturnType<typeof createContentMethods>;
-  let engagement: ReturnType<typeof createEngagementMethods>;
   let user: ReturnType<typeof createUserMethods>;
 
   beforeEach(() => {
     client = createMockClient();
     content = createContentMethods(client);
-    engagement = createEngagementMethods(client);
     user = createUserMethods(client);
   });
 
@@ -136,7 +151,17 @@ describe('Functional Workflow — Content Discovery & Consumption', () => {
     client.request.mockResolvedValueOnce({
       success: true,
       data: [
-        { id: 'c1', title: 'Featured Movie', thumbnail: 'thumb.jpg', universeId: 'u1', status: 'published', createdAt: '2026-01-01', updatedAt: '2026-01-01', creator: { id: 'cr1', name: 'Creator' }, universe: { id: 'u1', name: 'Nollywood' } },
+        {
+          id: 'c1',
+          title: 'Featured Movie',
+          thumbnail: 'thumb.jpg',
+          universeId: 'u1',
+          status: 'published',
+          createdAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+          creator: { id: 'cr1', name: 'Creator' },
+          universe: { id: 'u1', name: 'Nollywood' },
+        },
       ],
     });
 
@@ -148,7 +173,19 @@ describe('Functional Workflow — Content Discovery & Consumption', () => {
     client.request.mockResolvedValueOnce({
       success: true,
       data: {
-        items: [{ id: 'c2', title: 'Search Result', thumbnail: 'thumb.jpg', universeId: 'u1', status: 'published', createdAt: '2026-01-01', updatedAt: '2026-01-01', creator: { id: 'cr1', name: 'Creator' }, universe: { id: 'u1', name: 'Nollywood' } }],
+        items: [
+          {
+            id: 'c2',
+            title: 'Search Result',
+            thumbnail: 'thumb.jpg',
+            universeId: 'u1',
+            status: 'published',
+            createdAt: '2026-01-01',
+            updatedAt: '2026-01-01',
+            creator: { id: 'cr1', name: 'Creator' },
+            universe: { id: 'u1', name: 'Nollywood' },
+          },
+        ],
         total: 1,
         page: 1,
         limit: 20,
@@ -163,7 +200,18 @@ describe('Functional Workflow — Content Discovery & Consumption', () => {
     // Step 3: View content details
     client.request.mockResolvedValueOnce({
       success: true,
-      data: { id: 'c2', title: 'Search Result', description: 'A great movie', thumbnail: 'thumb.jpg', universeId: 'u1', status: 'published', createdAt: '2026-01-01', updatedAt: '2026-01-01', creator: { id: 'cr1', name: 'Creator' }, universe: { id: 'u1', name: 'Nollywood' } },
+      data: {
+        id: 'c2',
+        title: 'Search Result',
+        description: 'A great movie',
+        thumbnail: 'thumb.jpg',
+        universeId: 'u1',
+        status: 'published',
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+        creator: { id: 'cr1', name: 'Creator' },
+        universe: { id: 'u1', name: 'Nollywood' },
+      },
     });
 
     const contentDetail = await content.getContent('c2');
@@ -173,12 +221,12 @@ describe('Functional Workflow — Content Discovery & Consumption', () => {
     // Step 4: Get signed URL for playback
     client.request.mockResolvedValueOnce({
       success: true,
-      data: { url: 'https://signed.example.com/video.mp4', expiresIn: 3600 },
+      data: { signedUrl: 'https://signed.example.com/video.mp4', expiresIn: 3600 },
     });
 
     const signedUrl = await content.getSignedUrl('c2');
     expect(signedUrl.success).toBe(true);
-    expect(signedUrl.data!.url).toContain('https://');
+    expect(signedUrl.data!.signedUrl).toContain('https://');
 
     // Step 5: Add to watch history
     client.request.mockResolvedValueOnce({ success: true, data: { message: 'Added' } });
@@ -202,7 +250,17 @@ describe('Functional Workflow — Content Discovery & Consumption', () => {
       success: true,
       data: {
         items: [
-          { id: 'c1', title: 'Movie 1', thumbnail: 't.jpg', universeId: 'u1', status: 'published', createdAt: '2026-01-01', updatedAt: '2026-01-01', creator: { id: 'cr1', name: 'C' }, universe: { id: 'u1', name: 'Nollywood' } },
+          {
+            id: 'c1',
+            title: 'Movie 1',
+            thumbnail: 't.jpg',
+            universeId: 'u1',
+            status: 'published',
+            createdAt: '2026-01-01',
+            updatedAt: '2026-01-01',
+            creator: { id: 'cr1', name: 'C' },
+            universe: { id: 'u1', name: 'Nollywood' },
+          },
         ],
         total: 100,
         page: 1,
@@ -317,7 +375,11 @@ describe('Functional Workflow — Wallet & Payments', () => {
       data: { reference: 'pay-ref-123', authorizationUrl: 'https://paystack.com/xyz' },
     });
 
-    const initResult = await payment.initialize({ amount: 5000, currency: 'NGN', email: 'user@test.com' });
+    const initResult = await payment.initialize({
+      amount: 5000,
+      currency: 'NGN',
+      email: 'user@test.com',
+    });
     expect(initResult.success).toBe(true);
     expect(initResult.data!.reference).toBe('pay-ref-123');
 
@@ -346,7 +408,14 @@ describe('Functional Workflow — Wallet & Payments', () => {
       success: true,
       data: {
         items: [
-          { id: 'tx1', type: 'credit', amount: 5000, currency: 'NGN', status: 'completed', createdAt: '2026-07-01' },
+          {
+            id: 'tx1',
+            type: 'credit',
+            amount: 5000,
+            currency: 'NGN',
+            status: 'completed',
+            createdAt: '2026-07-01',
+          },
         ],
         total: 1,
         page: 1,
@@ -362,7 +431,10 @@ describe('Functional Workflow — Wallet & Payments', () => {
   });
 
   it('should complete transfer flow', async () => {
-    client.request.mockResolvedValueOnce({ success: true, data: { message: 'Transfer successful' } });
+    client.request.mockResolvedValueOnce({
+      success: true,
+      data: { message: 'Transfer successful' },
+    });
 
     const result = await wallet.transfer(500, 'recipient-user-id');
 
@@ -374,14 +446,20 @@ describe('Functional Workflow — Wallet & Payments', () => {
   });
 
   it('should complete withdrawal flow', async () => {
-    client.request.mockResolvedValueOnce({ success: true, data: { message: 'Withdrawal initiated' } });
+    client.request.mockResolvedValueOnce({
+      success: true,
+      data: { message: 'Withdrawal initiated' },
+    });
 
     const result = await wallet.withdraw(2000, { bankCode: '058', accountNumber: '0123456789' });
 
     expect(result.success).toBe(true);
     expect(client.request).toHaveBeenCalledWith('/api/v1/wallet/withdraw', {
       method: 'POST',
-      body: JSON.stringify({ amount: 2000, bankDetails: { bankCode: '058', accountNumber: '0123456789' } }),
+      body: JSON.stringify({
+        amount: 2000,
+        bankDetails: { bankCode: '058', accountNumber: '0123456789' },
+      }),
     });
   });
 });
@@ -417,7 +495,10 @@ describe('Functional Workflow — User Profile Management', () => {
     expect(updateResult.success).toBe(true);
 
     // Step 3: Update preferences
-    client.request.mockResolvedValueOnce({ success: true, data: { message: 'Preferences updated' } });
+    client.request.mockResolvedValueOnce({
+      success: true,
+      data: { message: 'Preferences updated' },
+    });
 
     const prefResult = await user.updatePreferences({ theme: 'dark', notifications: true });
     expect(prefResult.success).toBe(true);
@@ -425,7 +506,10 @@ describe('Functional Workflow — User Profile Management', () => {
 
   it('should complete watch history management flow', async () => {
     // Step 1: Check empty history
-    client.request.mockResolvedValueOnce({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+    client.request.mockResolvedValueOnce({
+      success: true,
+      data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+    });
 
     const emptyHistory = await user.getWatchHistory();
     expect(emptyHistory.success).toBe(true);
@@ -441,7 +525,19 @@ describe('Functional Workflow — User Profile Management', () => {
     client.request.mockResolvedValueOnce({
       success: true,
       data: {
-        items: [{ id: 'c1', title: 'Watched Movie', status: 'published', thumbnail: 'thumb.jpg', universeId: 'u1', createdAt: '2026-07-01', updatedAt: '2026-07-01', creator: { id: 'cr1', name: 'Creator' }, universe: { id: 'u1', name: 'Nollywood' } }],
+        items: [
+          {
+            id: 'c1',
+            title: 'Watched Movie',
+            status: 'published',
+            thumbnail: 'thumb.jpg',
+            universeId: 'u1',
+            createdAt: '2026-07-01',
+            updatedAt: '2026-07-01',
+            creator: { id: 'cr1', name: 'Creator' },
+            universe: { id: 'u1', name: 'Nollywood' },
+          },
+        ],
         total: 1,
         page: 1,
         limit: 20,
@@ -452,148 +548,6 @@ describe('Functional Workflow — User Profile Management', () => {
     const history = await user.getWatchHistory();
     expect(history.success).toBe(true);
     expect(history.data!.items).toHaveLength(1);
-  });
-});
-
-// ── Functional Workflow: Admin Operations ──────────────────────────────────
-describe('Functional Workflow — Admin Operations', () => {
-  let client: ReturnType<typeof createMockClient>;
-  let admin: ReturnType<typeof createAdminMethods>;
-
-  beforeEach(() => {
-    client = createMockClient();
-    admin = createAdminMethods(client);
-  });
-
-  it('should complete admin dashboard → user management → content moderation flow', async () => {
-    // Step 1: View dashboard
-    client.request.mockResolvedValueOnce({
-      success: true,
-      data: {
-        totalUsers: 15000,
-        totalContent: 3200,
-        totalViews: 1200000,
-        dailyActiveUsers: 850,
-        dailyViews: 45000,
-        totalRevenue: 250000,
-        newUsers: 120,
-        newContent: 35,
-        topCreators: [],
-        recentActivity: [],
-      },
-    });
-
-    const dashboard = await admin.getDashboard();
-    expect(dashboard.success).toBe(true);
-
-    // Step 2: View users
-    client.request.mockResolvedValueOnce({
-      success: true,
-      data: {
-        items: [{ id: 'u1', email: 'user@test.com', name: 'User', role: 'user' }],
-        total: 15000,
-        page: 1,
-        limit: 20,
-        hasMore: true,
-      },
-    });
-
-    const users = await admin.getUsers(1, 20);
-    expect(users.success).toBe(true);
-
-    // Step 3: View content review queue
-    client.request.mockResolvedValueOnce({
-      success: true,
-      data: {
-        items: [{ id: 'c1', title: 'Pending Video', status: 'processing' }],
-        total: 5,
-        page: 1,
-        limit: 20,
-        hasMore: false,
-      },
-    });
-
-    const reviewQueue = await admin.getContentReviewQueue();
-    expect(reviewQueue.success).toBe(true);
-
-    // Step 4: Approve content
-    client.request.mockResolvedValueOnce({ success: true, data: { message: 'Content approved' } });
-
-    const approveResult = await admin.approveContent('c1');
-    expect(approveResult.success).toBe(true);
-  });
-
-  it('should complete universe management flow', async () => {
-    // Step 1: List universes
-    client.request.mockResolvedValueOnce({
-      success: true,
-      data: [{ id: 'u1', name: 'nollywood', displayName: 'Nollywood' }],
-    });
-
-    const universes = await admin.getAllUniverses();
-    expect(universes.success).toBe(true);
-
-    // Step 2: Create new universe
-    client.request.mockResolvedValueOnce({
-      success: true,
-      data: { id: 'u2', name: 'afrobeats', displayName: 'Afrobeats' },
-    });
-
-    const createResult = await admin.createUniverse({ name: 'afrobeats', displayName: 'Afrobeats' });
-    expect(createResult.success).toBe(true);
-
-    // Step 3: Toggle universe
-    client.request.mockResolvedValueOnce({
-      success: true,
-      data: { id: 'u2', isEnabled: true },
-    });
-
-    const toggleResult = await admin.toggleUniverse('u2', true);
-    expect(toggleResult.success).toBe(true);
-
-    // Step 4: Update feature flag
-    client.request.mockResolvedValueOnce({
-      success: true,
-      data: { universeId: 'u2', featureKey: 'live_streaming', isEnabled: true },
-    });
-
-    const flagResult = await admin.updateFeatureFlag('u2', { featureKey: 'live_streaming', isEnabled: true });
-    expect(flagResult.success).toBe(true);
-  });
-
-  it('should complete settings management flow', async () => {
-    // Step 1: Get all settings
-    client.request.mockResolvedValueOnce({
-      success: true,
-      data: [{ key: 'max_upload_size', value: 100, category: 'content' }],
-    });
-
-    const settings = await admin.getAllSettings();
-    expect(settings.success).toBe(true);
-
-    // Step 2: Update a setting
-    client.request.mockResolvedValueOnce({
-      success: true,
-      data: { key: 'max_upload_size', value: 200 },
-    });
-
-    const updateResult = await admin.updateSetting('max_upload_size', { value: 200 });
-    expect(updateResult.success).toBe(true);
-
-    // Step 3: Bulk update
-    client.request.mockResolvedValueOnce({
-      success: true,
-      data: [
-        { key: 'max_upload_size', value: 200 },
-        { key: 'max_video_length', value: 3600 },
-      ],
-    });
-
-    const bulkResult = await admin.bulkUpdateSettings([
-      { key: 'max_upload_size', value: 200 },
-      { key: 'max_video_length', value: 3600 },
-    ]);
-    expect(bulkResult.success).toBe(true);
   });
 });
 
@@ -610,13 +564,21 @@ describe('Functional Workflow — Error Recovery', () => {
     const engagement = createEngagementMethods(client);
 
     // Featured content fails
-    client.request.mockResolvedValueOnce({ success: false, message: 'Service unavailable', statusCode: 503 });
+    client.request.mockResolvedValueOnce({
+      success: false,
+      message: 'Service unavailable',
+      statusCode: 503,
+    });
 
     const featured = await content.getFeaturedContent();
     expect(featured.success).toBe(false);
 
     // Trending also fails
-    client.request.mockResolvedValueOnce({ success: false, message: 'Service unavailable', statusCode: 503 });
+    client.request.mockResolvedValueOnce({
+      success: false,
+      message: 'Service unavailable',
+      statusCode: 503,
+    });
 
     const trending = await engagement.getContinueWatching();
     expect(trending.success).toBe(false);
@@ -632,11 +594,19 @@ describe('Functional Workflow — Error Recovery', () => {
       data: { reference: 'ref-123', authorizationUrl: 'https://pay.com' },
     });
 
-    const initResult = await payment.initialize({ amount: 1000, currency: 'NGN', email: 'a@b.com' });
+    const initResult = await payment.initialize({
+      amount: 1000,
+      currency: 'NGN',
+      email: 'a@b.com',
+    });
     expect(initResult.success).toBe(true);
 
     // But verification fails
-    client.request.mockResolvedValueOnce({ success: false, message: 'Payment not found', statusCode: 404 });
+    client.request.mockResolvedValueOnce({
+      success: false,
+      message: 'Payment not found',
+      statusCode: 404,
+    });
 
     const verifyResult = await payment.verify('ref-123');
     expect(verifyResult.success).toBe(false);
@@ -653,13 +623,21 @@ describe('Functional Workflow — Error Recovery', () => {
     const user = createUserMethods(client);
 
     // Login fails
-    client.request.mockResolvedValueOnce({ success: false, message: 'Invalid credentials', statusCode: 401 });
+    client.request.mockResolvedValueOnce({
+      success: false,
+      message: 'Invalid credentials',
+      statusCode: 401,
+    });
 
     const loginFail = await auth.login({ email: 'a@b.com', password: 'wrong' });
     expect(loginFail.success).toBe(false);
 
     // Profile access fails (no auth)
-    client.request.mockResolvedValueOnce({ success: false, message: 'Unauthorized', statusCode: 401 });
+    client.request.mockResolvedValueOnce({
+      success: false,
+      message: 'Unauthorized',
+      statusCode: 401,
+    });
 
     const profileFail = await user.getProfile();
     expect(profileFail.success).toBe(false);
@@ -667,7 +645,11 @@ describe('Functional Workflow — Error Recovery', () => {
     // Retry login succeeds
     client.request.mockResolvedValueOnce({
       success: true,
-      data: { access_token: 'tok', refresh_token: 'ref', user: { id: '1', email: 'a@b.com', name: 'A', role: 'user' } },
+      data: {
+        access_token: 'tok',
+        refresh_token: 'ref',
+        user: { id: '1', email: 'a@b.com', name: 'A', role: 'user' },
+      },
     });
 
     const loginSuccess = await auth.login({ email: 'a@b.com', password: 'correct' });

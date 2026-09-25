@@ -29,6 +29,7 @@ describe('Admin Authorization Tests', () => {
     jwtService = module.get<JwtService>(JwtService);
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createMockContext = (authHeader?: string, user?: any): ExecutionContext => {
     const mockReq = {
       headers: { authorization: authHeader },

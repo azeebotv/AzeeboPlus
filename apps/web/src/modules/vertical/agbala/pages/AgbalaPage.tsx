@@ -3,19 +3,41 @@
 import Link from 'next/link';
 
 const PATHS = [
-  { id: 'warrior', name: 'Warrior', description: 'Strength, honor, and combat mastery', color: '#C41E3A' },
-  { id: 'sage', name: 'Sage', description: 'Wisdom, knowledge, and ancient truths', color: '#1E90FF' },
-  { id: 'trickster', name: 'Trickster', description: 'Cunning, deception, and survival', color: '#FFD700' },
-  { id: 'healer', name: 'Healer', description: 'Compassion, restoration, and balance', color: '#32CD32' },
+  {
+    id: 'warrior',
+    name: 'Warrior',
+    description: 'Strength, honor, and combat mastery',
+    color: 'var(--brand-crimson)',
+  },
+  {
+    id: 'sage',
+    name: 'Sage',
+    description: 'Wisdom, knowledge, and ancient truths',
+    color: 'var(--brand-sky)',
+  },
+  {
+    id: 'trickster',
+    name: 'Trickster',
+    description: 'Cunning, deception, and survival',
+    color: 'var(--brand-gold)',
+  },
+  {
+    id: 'healer',
+    name: 'Healer',
+    description: 'Compassion, restoration, and balance',
+    color: 'var(--brand-light-green)',
+  },
 ];
 
 export default function AgbalaPage() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-[var(--brand-near-black)] text-[var(--brand-white)]">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <header className="text-center mb-16">
-          <h1 className="text-4xl font-bold mb-4" role="heading">Agbala</h1>
-          <p className="text-xl text-gray-400">Choose your path. Shape your destiny.</p>
+          <h1 className="text-4xl font-bold mb-4">Agbala</h1>
+          <p className="text-xl text-[var(--brand-white)]/50">
+            Choose your path. Shape your destiny.
+          </p>
         </header>
 
         <section className="mb-16">

@@ -5,7 +5,11 @@ echo "========================================="
 echo "Docker Smoke Tests"
 echo "========================================="
 
-BASE_URL="${1:-http://localhost:3000}"
+# Base URL defaults to the all-in-one container's nginx front door (port 80):
+# /health and /api/ are proxied to the api-gateway (3013), which forwards
+# /api/v1/<service>/health to each service. Point this at the gateway
+# directly (http://localhost:3013) to bypass nginx.
+BASE_URL="${1:-http://localhost:80}"
 TIMEOUT=30
 PASS_COUNT=0
 FAIL_COUNT=0
@@ -93,12 +97,8 @@ check_security_headers() {
   
   local headers=$(curl -sI --max-time "$TIMEOUT" "$url" 2>/dev/null || echo "")
   
-  if echo "$headers" | grep -qi "strict-transport-security"; then
-    pass "$service HSTS header"
-  else
-    fail "$service HSTS header" "Missing Strict-Transport-Security"
-  fi
-  
+  # HSTS is intentionally not checked here: nginx adds it only on the 443
+  # server block (deploy/nginx.conf), and the smoke run is plain HTTP.
   if echo "$headers" | grep -qi "x-content-type-options"; then
     pass "$service X-Content-Type-Options header"
   else
@@ -117,11 +117,11 @@ echo "Testing base URL: $BASE_URL"
 echo ""
 
 echo "--- Health Checks ---"
-check_health "/api/v1/health" "API Gateway"
+check_health "/health" "API Gateway"
 check_health "/api/v1/auth/health" "Auth Service"
 check_health "/api/v1/users/health" "User Service"
 check_health "/api/v1/wallet/health" "Wallet Service"
-check_health "/api/v1/payment/health" "Payment Service"
+check_health "/api/v1/payments/health" "Payment Service"
 check_health "/api/v1/content/health" "Content Service"
 check_health "/api/v1/media/health" "Media Service"
 check_health "/api/v1/analytics/health" "Analytics Service"
@@ -139,17 +139,17 @@ check_health "/api/v1/notifications/health" "Notification Service"
 check_health "/api/v1/queue/health" "Queue Service"
 check_health "/api/v1/rewards/health" "Reward Service"
 check_health "/api/v1/search/health" "Search Service"
-check_health "/api/v1/verticals/health" "Vertical Service"
+check_health "/api/v1/vertical/health" "Vertical Service"
 
 echo ""
 echo "--- Response Time Checks ---"
-check_response_time "/api/v1/health" "API Gateway" 1000
+check_response_time "/health" "API Gateway" 1000
 check_response_time "/api/v1/auth/health" "Auth Service" 1500
 check_response_time "/api/v1/content/health" "Content Service" 1500
 
 echo ""
 echo "--- Content-Type Checks ---"
-check_content_type "/api/v1/health" "API Gateway" "application/json"
+check_content_type "/health" "API Gateway" "application/json"
 
 echo ""
 echo "--- Security Headers ---"

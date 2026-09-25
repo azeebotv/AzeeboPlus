@@ -1,32 +1,17 @@
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CacheModule } from '@azeebo/shared-services';
+import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
 
-import { SearchController } from './search.controller';
-import { SearchService } from './search.service';
-import { SearchRepository } from './search.repository';
-import { DatabaseModule } from '../database/database.module';
+import { SearchController } from './search.controller.js';
+import { SearchService } from './search.service.js';
+import { SearchRepository } from './search.repository.js';
+import { SearchIntelligenceService } from './search-intelligence.service.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { MetricsModule } from '../metrics/metrics.module.js';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    PassportModule,
-    CacheModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
-        },
-      }),
-      inject: [ConfigService],
-    }),
-  ],
+  imports: [DatabaseModule, CacheModule, JwtConfigModule, MetricsModule],
   controllers: [SearchController],
-  providers: [SearchService, SearchRepository],
-  exports: [SearchService, SearchRepository, DatabaseModule],
+  providers: [SearchService, SearchRepository, SearchIntelligenceService],
+  exports: [SearchService, SearchRepository, SearchIntelligenceService, DatabaseModule],
 })
 export class SearchModule {}

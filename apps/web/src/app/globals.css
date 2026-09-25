@@ -1,28 +1,47 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ============================================================
    Azeebo+ Brand Design System (v2 — Nigerian Entertainment)
    ============================================================ */
 :root {
-  /* Brand Core */
-  --brand-orange: #E8420A;      /* Azeebo Orange — primary CTA, logo accent, highlights */
-  --brand-red: #CC1C1C;         /* Deep Red — buttons, active states, glow */
-  --brand-near-black: #1A0A0A;  /* Near-Black — auth/utility backgrounds */
-  --brand-forest: #0D3B2E;      /* Forest Dark Green — marketing/hero background */
-  --brand-white: #FFFFFF;       /* White — primary text */
-  --brand-surface: #2A2A2A;     /* Surface Dark — card backgrounds, inputs */
-  --brand-surface-input: #1E1E1E; /* Input field fill */
+  /* Brand Core — Luxury Cinema Dark Theme */
+  --brand-orange: #e8420a; /* Azeebo Orange — primary CTA, logo accent, highlights */
+  --brand-red: #cc1c1c; /* Deep Red — buttons, active states, glow */
+  --brand-near-black: #0b090e; /* Near-Black — page root & auth surfaces (matching --hp-bg) */
+  --brand-forest: #0d3b2e; /* Forest Dark Green — legacy compatibility */
+  --brand-green: #22c55e; /* Green — success states */
+  --brand-white: #ffffff; /* White — primary text */
+  --brand-surface: #18151e; /* Surface Dark — card backgrounds, inputs (--hp-card-bg) */
+  --brand-surface-input: #14121a; /* Input field fill */
+  --brand-mid-brown: #9a8a7a; /* Mid Brown — secondary text */
+  --brand-gold: #ffd700; /* Gold — rewards, badges */
+  --brand-purple: #8b5cf6; /* Purple — premium, highlights */
+  --brand-blue: #3b82f6; /* Blue — links, info */
+  --brand-sky: #1e90ff; /* Sky Blue — secondary links */
+  --brand-emerald: #10b981; /* Emerald — success, online */
+  --brand-amber: #f59e0b; /* Amber — warnings, ratings */
+  --brand-crimson: #c41e3a; /* Crimson — alerts, live */
+  --brand-silver: #c0c0c0; /* Silver — inactive, disabled */
+  --brand-grey: #9ca3af; /* Grey — muted text (WCAG 2.2 AA compliant >= 4.5:1) */
+  --brand-copper: #cd7f32; /* Copper — metallic accents */
+  --brand-light-green: #32cd32; /* Light Green — online, active */
 
-  /* Glass panel */
-  --glass-bg: rgba(15, 5, 5, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.2);
+  /* Vertical identity accents (fixed, not theme-aware — like the --hp- art
+     palette below): gradient endpoints for vertical landing headers. */
+  --music-purple: #4C0A5E; /* Music vertical — gradient headers */
+  --live-gradient: linear-gradient(135deg, #E8420A 0%, #7c2d12 100%); /* Live page header art */
+  --auth-warm-gradient: linear-gradient(160deg, #3a1a0a, #0b090e); /* Auth pages decorative bg */
+
+  /* Glass panel — Frosted luxury dark panels */
+  --glass-bg: rgba(24, 21, 30, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: 18px;
-  --glass-glow: 0 0 30px rgba(255, 255, 255, 0.15), 0 0 60px rgba(200, 20, 20, 0.1);
-  --glass-glow-strong: 0 0 20px rgba(255, 255, 255, 0.3);
+  --glass-glow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --glass-glow-strong: 0 0 25px rgba(232, 66, 10, 0.25);
 
   /* Ambient glow */
-  --glow-red: 0 4px 20px rgba(204, 28, 28, 0.5);
-  --glow-red-ambient: radial-gradient(circle at 50% 100%, rgba(204, 28, 28, 0.35), transparent 70%);
+  --glow-red: 0 4px 20px rgba(232, 66, 10, 0.4);
+  --glow-red-ambient: radial-gradient(circle at 50% 100%, rgba(232, 66, 10, 0.25), transparent 70%);
 
   /* Typography */
   --font-display: var(--font-display-base), 'Montserrat', var(--font-sans), sans-serif;
@@ -33,7 +52,7 @@
   --color-primary-200: #fed7aa;
   --color-primary-300: #fdba74;
   --color-primary-400: #fb923c;
-  --color-primary-500: #E8420A;
+  --color-primary-500: #e8420a;
   --color-primary-600: #c2410c;
   --color-primary-700: #9a3412;
   --color-primary-800: #7c2d12;
@@ -90,7 +109,7 @@
   --color-error-800: #991b1b;
   --color-error-900: #7f1d1d;
 
-  --color-info: #3B82F6;
+  --color-info: #3b82f6;
 
   /* Dark Scale */
   --color-dark-900: #0a0a0a;
@@ -115,22 +134,29 @@
   --color-light-800: #525252;
   --color-light-900: #262626;
 
+  /* Semantic Tokens for Tailwind v4 / standard utilities */
+  --color-primary: var(--brand-orange);
+  --color-primary-foreground: #ffffff;
+  --color-muted-foreground: var(--text-secondary);
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
+
   /* Text Colors */
-  --text-primary: #F3F4F6;
-  --text-secondary: #9CA3AF;
-  --text-tertiary: #6B7280;
-  --text-inverse: #1A0A0A;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-tertiary: #9ca3af; /* Upgraded from #6b7280 for WCAG 2.2 AA (>= 4.5:1 on dark) */
+  --text-inverse: #1a0a0a;
 
   /* Backgrounds */
-  --bg-primary: #1A0A0A;
-  --bg-secondary: #2A1A1A;
-  --bg-tertiary: #3A2A2A;
-  --bg-hover: #4B5563;
+  --bg-primary: #0b090e;
+  --bg-secondary: #100e14;
+  --bg-tertiary: #18151e;
+  --bg-hover: #262130;
 
   /* Borders & Dividers */
-  --border-default: #4B5563;
+  --border-default: #4b5563;
   --border-light: #374151;
-  --border-focus: #E8420A;
+  --border-focus: #e8420a;
 
   /* Spacing Scale */
   --spacing-xs: 4px;
@@ -205,17 +231,165 @@
   --z-tooltip: 800;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%);
-  --gradient-brand: linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%);
-  --gradient-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  --gradient-success: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+  --gradient-primary: linear-gradient(135deg, #e8420a 0%, #cc1c1c 100%);
+  --gradient-brand: linear-gradient(135deg, #e8420a 0%, #cc1c1c 100%);
+  --gradient-gold: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+  --gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   --gradient-dark: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+
+  /* ============================================================
+     Homepage (Guest Landing) — Section Design Tokens
+     Extracted from the Azeebo+ UI/UX mockup. All values are
+     derived from the visual design; no raw hex in components.
+     ============================================================ */
+
+  /* ── Backgrounds ── */
+  --hp-bg:              #0b090e; /* Page root: near-black with warm purple tint */
+  --hp-bg-alt:          #100e14; /* Alternating section bg (slightly lighter) */
+  --hp-card-bg:         #18151e; /* Default card/panel background */
+  --hp-card-border:     rgba(255, 255, 255, 0.07); /* Subtle card border */
+  --hp-divider:         rgba(255, 255, 255, 0.05); /* Section divider lines */
+
+  /* ── Hero ── */
+  --hp-hero-bg-start:   #0b0910; /* Hero gradient start (top-left) */
+  --hp-hero-bg-mid:     #130a1a; /* Hero gradient mid */
+  --hp-hero-bg-end:     #0e0c08; /* Hero gradient end (bottom-right, warm) */
+  --hp-hero-badge-bg:   rgba(232, 66, 10, 0.15); /* Orange badge background */
+  --hp-hero-badge-text: var(--brand-orange);
+  --hp-hero-badge-border: rgba(232, 66, 10, 0.30);
+  --hp-hero-overlay:    rgba(11, 9, 14, 0.55); /* Grid overlay fade */
+  --hp-stat-divider:    rgba(255, 255, 255, 0.10);
+
+  /* ── Thumbnail grid — universe preview tiles ── */
+  --hp-tile-reality:    linear-gradient(150deg, #5b21b6 0%, #1e1040 100%);
+  --hp-tile-comedy:     linear-gradient(150deg, #c2410c 0%, #7c1d0a 100%);
+  --hp-tile-sports:     linear-gradient(150deg, #166534 0%, #052e16 100%);
+  --hp-tile-movies:     linear-gradient(150deg, #92400e 0%, #451a01 100%);
+  --hp-tile-lifestyle:  linear-gradient(150deg, #9d174d 0%, #500727 100%);
+  /* GuestHomepage fixed art pieces (the homepage is hard-coded dark marketing
+     art — var(--hp-card-bg) classes and text-white — so its one-off surfaces
+     live here rather than in the themed --bg-* family). */
+  --hp-logo-gradient:   linear-gradient(145deg, #E5251C 0%, #F3501A 45%, #FF6B00 100%); /* Hero logo card */
+  --hp-appwindow-bg:    #0D0B12; /* Inset dark app window */
+  --hp-cta-bg:          #120E17; /* Bottom CTA panel */
+  --hp-poster-bg:       #1F2937; /* Poster image placeholder */
+  --hp-actionbar-bg:    #FF6B00; /* Mock-UI highlighted action bar */
+  --hp-tile-creator:    linear-gradient(150deg, #c2410c 0%, #7c1d0a 100%);
+  --hp-tile-vertical:   linear-gradient(150deg, #1e40af 0%, #0f1f5c 100%);
+  --hp-tile-games:      linear-gradient(150deg, #6d28d9 0%, #2e1065 100%);
+  --hp-tile-live:       linear-gradient(150deg, #991b1b 0%, #450a0a 100%);
+  --hp-tile-music:      linear-gradient(150deg, #854d0e 0%, #3b1f00 100%);
+  --hp-tile-drama:      linear-gradient(150deg, #1e3a8a 0%, #0c1445 100%);
+  --hp-tile-culture:    linear-gradient(150deg, #065f46 0%, #022c22 100%);
+
+  /* ── Devices section ── */
+  --hp-devices-icon-bg:     rgba(232, 66, 10, 0.12);
+  --hp-devices-icon-border: rgba(232, 66, 10, 0.22);
+  --hp-devices-card-bg:     rgba(255, 255, 255, 0.03);
+  --hp-devices-card-border: rgba(255, 255, 255, 0.06);
+
+  /* ── Why Azeebo+ — orange app mockup panel ── */
+  --hp-why-panel-bg:    linear-gradient(160deg, var(--brand-orange) 0%, var(--brand-red) 100%);
+  --hp-why-panel-glow:  0 0 60px rgba(232, 66, 10, 0.35), 0 30px 60px rgba(0, 0, 0, 0.6);
+  --hp-why-bar-bg:      rgba(255, 255, 255, 0.25);
+  --hp-why-bar-fill:    rgba(255, 255, 255, 0.85);
+  --hp-why-row-bg:      rgba(255, 255, 255, 0.10);
+  --hp-why-icon-bg:     rgba(232, 66, 10, 0.15);
+  --hp-why-icon-border: rgba(232, 66, 10, 0.25);
+  --hp-why-badge-bg:    linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(232, 66, 10, 0.2));
+  --hp-why-badge-border: rgba(251, 191, 36, 0.30);
+
+  /* ── Categories / Universes grid ── */
+  --hp-cat-card-bg-alpha: 0.12;   /* Opacity of category tile tint */
+  --hp-cat-hover-bg:    rgba(255, 255, 255, 0.05);
+  --hp-cat-browse-btn:  var(--brand-orange);
+
+  /* ── Featured carousel cards ── */
+  /* Card 1 — dark purple/blue (person under dramatic light) */
+  --hp-card1-start:     #1a0e2e;
+  --hp-card1-end:       #0b0918;
+  --hp-card1-accent:    #6d28d9;
+  /* Card 2 — deep orange/red (car) */
+  --hp-card2-start:     #2a0f00;
+  --hp-card2-end:       #0d0600;
+  --hp-card2-accent:    var(--brand-orange);
+  /* Card 3 — magenta/pink (woman portrait) */
+  --hp-card3-start:     #35001e;
+  --hp-card3-end:       #0d0008;
+  --hp-card3-accent:    #be185d;
+  /* Card 4 — teal/cyan (sport) */
+  --hp-card4-start:     #064e3b;
+  --hp-card4-end:       #022c22;
+  --hp-card4-accent:    #10b981;
+  /* Card 5 — amber/gold (lifestyle) */
+  --hp-card5-start:     #451a00;
+  --hp-card5-end:       #1c0a00;
+  --hp-card5-accent:    #f59e0b;
+  --hp-card-badge-bg:   rgba(0, 0, 0, 0.55);
+  --hp-card-scrim:      linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0) 55%);
+
+  /* ── FAQ ── */
+  --hp-faq-item-bg:     rgba(255, 255, 255, 0.04);
+  --hp-faq-item-border: rgba(255, 255, 255, 0.08);
+  --hp-faq-open-icon:   var(--brand-orange);
+  --hp-faq-closed-icon: rgba(255, 255, 255, 0.45);
+  --hp-faq-support-link: var(--brand-orange);
+  --hp-faq-stat-bg:     rgba(255, 255, 255, 0.04);
+  --hp-faq-stat-border: rgba(255, 255, 255, 0.07);
+
+  /* ── Phone CTA ── */
+  --hp-cta-phone-body:    linear-gradient(160deg, #1a0a0a 0%, #000000 100%);
+  --hp-cta-phone-border:  rgba(255, 255, 255, 0.12);
+  --hp-cta-phone-glow:    0 0 60px rgba(109, 40, 217, 0.30), 0 40px 80px rgba(0, 0, 0, 0.70);
+  --hp-cta-screen-bg:     linear-gradient(160deg, rgba(109, 40, 217, 0.45) 0%, rgba(13, 59, 46, 0.40) 60%, rgba(26, 10, 10, 0.95) 100%);
+  --hp-cta-notch:         #000000;
+  --hp-cta-nav-bg:        rgba(0, 0, 0, 0.50);
+  --hp-cta-nav-border:    rgba(255, 255, 255, 0.07);
+  --hp-cta-store-bg:      rgba(255, 255, 255, 0.05);
+  --hp-cta-store-border:  rgba(255, 255, 255, 0.11);
+  --hp-cta-badge-bg:      var(--brand-purple);
+  --hp-cta-badge-glow:    0 8px 24px rgba(139, 92, 246, 0.40);
+  --hp-ambient-purple:    rgba(109, 40, 217, 0.18);
+  --hp-ambient-orange:    rgba(232, 66, 10, 0.13);
+
+  /* ── Testimonials ── */
+  --hp-testi-card-bg:     rgba(255, 255, 255, 0.04);
+  --hp-testi-card-border: rgba(255, 255, 255, 0.07);
+  --hp-testi-star-filled: #fbbf24;
+  --hp-testi-star-empty:  #374151;
+  --hp-testi-avatar-bg:   rgba(255, 255, 255, 0.07);
+  --hp-testi-partner-col: rgba(255, 255, 255, 0.30);
+
+  /* ── Newsletter ── */
+  --hp-nl-bg-start:       #100e14;  /* Section background */
+  --hp-nl-blob-color:     rgba(204, 28, 28, 0.55); /* Red-orange blob */
+  --hp-nl-badge-bg:       rgba(232, 66, 10, 0.18);
+  --hp-nl-badge-text:     var(--brand-orange);
+  --hp-nl-input-bg:       rgba(255, 255, 255, 0.07);
+  --hp-nl-input-border:   rgba(255, 255, 255, 0.11);
+  --hp-nl-input-invalid:  rgba(239, 68, 68, 0.70);
+  --hp-nl-success-bg:     rgba(34, 197, 94, 0.14);
+  --hp-nl-success-border: rgba(34, 197, 94, 0.28);
+  --hp-nl-fine-print:     rgba(255, 255, 255, 0.35);
+
+  /* ── PWA / Install Toast ── */
+  --hp-toast-later-col:   rgba(255, 255, 255, 0.55);
+
+  /* ── Offline Banner ── */
+  --hp-offline-bg:        var(--brand-gold);
+  --hp-offline-text:      var(--brand-near-black);
 }
+
 
 /* Base Reset & Dark Theme */
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -224,67 +398,151 @@ body {
 
 /* Custom Utilities */
 .text-gradient-brand {
-  background: linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%);
+  background: linear-gradient(135deg, #e8420a 0%, #cc1c1c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.az-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 25s linear infinite;
+}
+
+.az-marquee:hover {
+  animation-play-state: paused;
+}
+
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInLeft {
-  from { transform: translateX(-100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInDown {
-  from { transform: translateY(-100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
-.animate-fade-in { animation: fadeIn var(--transition-normal); }
-.animate-fade-out { animation: fadeOut var(--transition-normal); }
-.animate-slide-in-right { animation: slideInRight var(--transition-normal); }
-.animate-slide-in-left { animation: slideInLeft var(--transition-normal); }
-.animate-slide-in-up { animation: slideInUp var(--transition-normal); }
-.animate-slide-in-down { animation: slideInDown var(--transition-normal); }
-.animate-scale-in { animation: scaleIn var(--transition-normal); }
-.animate-spin { animation: spin 1s linear infinite; }
-.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.animate-fade-in {
+  animation: fadeIn var(--transition-normal);
+}
+.animate-fade-out {
+  animation: fadeOut var(--transition-normal);
+}
+.animate-slide-in-right {
+  animation: slideInRight var(--transition-normal);
+}
+.animate-slide-in-left {
+  animation: slideInLeft var(--transition-normal);
+}
+.animate-slide-in-up {
+  animation: slideInUp var(--transition-normal);
+}
+.animate-slide-in-down {
+  animation: slideInDown var(--transition-normal);
+}
+.animate-scale-in {
+  animation: scaleIn var(--transition-normal);
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 
 /* ============================================================
    Azeebo Pulse — Signature Motion System
@@ -292,11 +550,16 @@ body {
 
 /* Glass breathing effect — subtle ambient pulse on glass panels */
 @keyframes glassBreath {
-  0%, 100% {
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.15), 0 0 60px rgba(200, 20, 20, 0.1);
+  0%,
+  100% {
+    box-shadow:
+      0 0 30px rgba(255, 255, 255, 0.15),
+      0 0 60px rgba(200, 20, 20, 0.1);
   }
   50% {
-    box-shadow: 0 0 40px rgba(255, 255, 255, 0.2), 0 0 80px rgba(200, 20, 20, 0.18);
+    box-shadow:
+      0 0 40px rgba(255, 255, 255, 0.2),
+      0 0 80px rgba(200, 20, 20, 0.18);
   }
 }
 
@@ -306,9 +569,19 @@ body {
 
 /* Ambient glow drift — slow background orb movement */
 @keyframes glowDrift {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
-  33% { transform: translate(12px, -18px) scale(1.1); opacity: 0.5; }
-  66% { transform: translate(-10px, 12px) scale(0.92); opacity: 0.3; }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.35;
+  }
+  33% {
+    transform: translate(12px, -18px) scale(1.1);
+    opacity: 0.5;
+  }
+  66% {
+    transform: translate(-10px, 12px) scale(0.92);
+    opacity: 0.3;
+  }
 }
 
 .az-glow-drift {
@@ -317,18 +590,23 @@ body {
 
 /* Nollywood gradient — living, shifting dark background */
 @keyframes nollywoodShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .az-nollywood-bg {
   background: linear-gradient(
     135deg,
-    #0A0A0A 0%,
-    #1A0A0A 25%,
-    #2A1A1A 50%,
-    #1A0A0A 75%,
-    #0A0A0A 100%
+    #0b090e 0%,
+    #100e14 25%,
+    #18151e 50%,
+    #100e14 75%,
+    #0b090e 100%
   );
   background-size: 400% 400%;
   animation: nollywoodShift 20s ease infinite;
@@ -336,8 +614,12 @@ body {
 
 /* Shimmer sweep — loading skeleton enhancement */
 @keyframes shimmerSweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .az-shimmer {
@@ -359,8 +641,14 @@ body {
 
 /* Ripple effect for buttons */
 @keyframes ripple {
-  0% { transform: scale(0); opacity: 0.6; }
-  100% { transform: scale(4); opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
 }
 
 .az-ripple {
@@ -383,8 +671,14 @@ body {
 
 /* Pulse ring — for live indicators and notifications */
 @keyframes pulseRing {
-  0% { transform: scale(0.8); opacity: 1; }
-  100% { transform: scale(2.2); opacity: 0; }
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
 }
 
 .az-pulse-ring {
@@ -420,20 +714,42 @@ body {
   opacity: 0;
   animation: pageEnter 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
-.az-stagger > *:nth-child(1) { animation-delay: 0ms; }
-.az-stagger > *:nth-child(2) { animation-delay: 60ms; }
-.az-stagger > *:nth-child(3) { animation-delay: 120ms; }
-.az-stagger > *:nth-child(4) { animation-delay: 180ms; }
-.az-stagger > *:nth-child(5) { animation-delay: 240ms; }
-.az-stagger > *:nth-child(6) { animation-delay: 300ms; }
-.az-stagger > *:nth-child(7) { animation-delay: 360ms; }
-.az-stagger > *:nth-child(8) { animation-delay: 420ms; }
-.az-stagger > *:nth-child(9) { animation-delay: 480ms; }
+.az-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.az-stagger > *:nth-child(2) {
+  animation-delay: 60ms;
+}
+.az-stagger > *:nth-child(3) {
+  animation-delay: 120ms;
+}
+.az-stagger > *:nth-child(4) {
+  animation-delay: 180ms;
+}
+.az-stagger > *:nth-child(5) {
+  animation-delay: 240ms;
+}
+.az-stagger > *:nth-child(6) {
+  animation-delay: 300ms;
+}
+.az-stagger > *:nth-child(7) {
+  animation-delay: 360ms;
+}
+.az-stagger > *:nth-child(8) {
+  animation-delay: 420ms;
+}
+.az-stagger > *:nth-child(9) {
+  animation-delay: 480ms;
+}
 
 /* Tab underline sliding indicator */
 @keyframes tabSlide {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .az-tab-indicator {
@@ -446,7 +762,7 @@ body {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, #E8420A, #CC1C1C);
+  background: linear-gradient(90deg, #e8420a, #cc1c1c);
   border-radius: 1px;
   transform-origin: left;
   animation: tabSlide 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
@@ -470,7 +786,7 @@ body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.35) 100%);
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.35) 100%);
   pointer-events: none;
   z-index: 9998;
 }
@@ -491,9 +807,58 @@ body::after {
   }
 }
 
-/* Focus Visible - Accessibility */
+/* Focus Visible - Accessibility (WCAG 2.2 AA) */
 :focus-visible {
   outline: 2px solid var(--brand-orange);
+  outline-offset: 2px;
+}
+
+/* Enhanced focus states for interactive elements */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[role="menuitem"]:focus-visible {
+  outline: 2px solid var(--brand-orange);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--brand-orange);
+  outline-offset: 0;
+  border-color: var(--brand-orange);
+  box-shadow: 0 0 0 3px rgba(232, 66, 10, 0.25);
+}
+
+/* Ensure mouse clicks do not retain harsh outlines */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip link - Accessibility */
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 16px;
+  z-index: 10000;
+  background: var(--brand-orange);
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(232, 66, 10, 0.5);
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 16px;
+  outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
 
@@ -524,10 +889,13 @@ body::after {
   border-radius: 999px;
   border: none;
   width: 100%;
-  padding: 0.85rem 1.25rem;
+  padding: 1rem 1.25rem;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: box-shadow var(--transition-fast), transform var(--transition-fast), background var(--transition-fast);
+  transition:
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast),
+    background var(--transition-fast);
 }
 .az-btn-primary:hover:not(:disabled) {
   box-shadow: var(--glow-red);
@@ -552,33 +920,43 @@ body::after {
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
 }
 .az-btn-social--light {
   background: var(--brand-white);
   color: #1a1a1a;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
-.az-btn-social--light:hover { background: #f3f3f3; }
+.az-btn-social--light:hover {
+  background: #f3f3f3;
+}
 .az-btn-social--dark {
   background: var(--brand-surface);
   color: var(--brand-white);
   border: 1px solid var(--glass-border);
 }
-.az-btn-social--dark:hover { background: #383838; }
+.az-btn-social--dark:hover {
+  background: #383838;
+}
 
 /* Brand input field */
 .az-input {
   width: 100%;
   background: var(--brand-surface-input);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   padding: 0.8rem 1rem;
   color: var(--brand-white);
   font-size: 0.95rem;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
-.az-input::placeholder { color: rgba(255,255,255,0.4); }
+.az-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
 .az-input:focus {
   outline: none;
   border-color: var(--brand-red);
@@ -592,7 +970,7 @@ body::after {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.55);
   margin-bottom: 0.4rem;
 }
 
@@ -601,7 +979,7 @@ body::after {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -612,14 +990,14 @@ body::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Ambient red glow layer (atmospheric depth) */
 .az-ambient-red {
   position: absolute;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(204,28,28,0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(204, 28, 28, 0.4) 0%, transparent 70%);
   filter: blur(40px);
   z-index: 0;
 }
@@ -643,22 +1021,6 @@ body::after {
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.02em;
-}
-
-/* Skip Link - Accessibility */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: var(--color-primary-500);
-  color: white;
-  padding: 8px 16px;
-  z-index: var(--z-tooltip);
-  transition: top var(--transition-fast);
-}
-
-.skip-link:focus {
-  top: 0;
 }
 
 /* Light Theme (overrides when .dark class is not present) */
@@ -696,7 +1058,7 @@ html:not(.dark) {
 
   --border-default: #d1d5db;
   --border-light: #e5e7eb;
-  --border-focus: #E8420A;
+  --border-focus: #e8420a;
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -729,9 +1091,9 @@ html:not(.dark) {
     text-decoration: underline !important;
   }
 
-  a[href^="http"]::after,
-  a[href^="ftp"]::after {
-    content: " (" attr(href) ")";
+  a[href^='http']::after,
+  a[href^='ftp']::after {
+    content: ' (' attr(href) ')';
     font-size: 90%;
     opacity: 0.8;
   }
@@ -834,4 +1196,15 @@ html:not(.dark) {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* ============================================================
+   Content Row Scrollbar Hiding
+   ============================================================ */
+.content-row-scroll::-webkit-scrollbar {
+  display: none;
+}
+.content-row-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

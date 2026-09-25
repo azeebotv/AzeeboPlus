@@ -1,11 +1,39 @@
+jest.mock('libphonenumber-js/max', () => ({
+  parsePhoneNumber: jest.fn(),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext } from '@nestjs/common';
+import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
-import { PredictionMarketsModule } from './prediction-markets.module';
-import { PredictionMarketsService } from './prediction-markets.service';
-import { PrismaService } from '../database/prisma.service';
+import { PredictionMarketsModule } from './prediction-markets.module.js';
+import { PredictionMarketsService } from './prediction-markets.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
+import { FeatureFlagGuard } from '@azeebo/feature-flags';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+  RolesGuard: jest.fn(),
+  Roles: () => () => {},
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn(),
+  RateLimit: () => () => {},
+  AdminGuard: jest.fn(),
+  RateLimitService: jest.fn(),
+  ServiceAuthGuard: jest.fn().mockImplementation(() => ({
+    canActivate: (context: {
+      switchToHttp: () => { getRequest: () => { user?: Record<string, string> } };
+    }) => {
+      const req = context.switchToHttp().getRequest();
+      req.user = { sub: 'user-123', role: 'ADMIN' };
+      return true;
+    },
+  })),
+}));
 
 const mockAuthGuard = {
   canActivate: (context: ExecutionContext) => {
@@ -20,6 +48,7 @@ const mockAuthGuard = {
 
 describe('Prediction Markets Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let predictionMarketsService: PredictionMarketsService;
 
   beforeAll(async () => {
@@ -28,6 +57,18 @@ describe('Prediction Markets Controller Contract Tests', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [PredictionMarketsModule],
+      providers: [
+        {
+          provide: APP_GUARD,
+          useFactory: () => ({
+            canActivate: (context: ExecutionContext) => {
+              const req = context.switchToHttp().getRequest();
+              req.user = { sub: 'user-123', role: 'ADMIN' };
+              return true;
+            },
+          }),
+        },
+      ],
     })
       .overrideProvider(PredictionMarketsService)
       .useValue({
@@ -46,13 +87,18 @@ describe('Prediction Markets Controller Contract Tests', () => {
       })
       .overrideGuard(RateLimitGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(FeatureFlagGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .overrideGuard(AuthGuard('jwt'))
       .useValue(mockAuthGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     predictionMarketsService = moduleFixture.get(PredictionMarketsService);
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -84,7 +130,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/predictions');
+      const response = await request(baseUrl).get('/v1/sports/predictions');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -120,7 +166,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/predictions/market-1');
+      const response = await request(baseUrl).get('/v1/sports/predictions/market-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -139,9 +185,10 @@ describe('Prediction Markets Controller Contract Tests', () => {
           code: 'MARKET_NOT_FOUND',
           message: 'Market not found',
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/predictions/nonexistent');
+      const response = await request(baseUrl).get('/v1/sports/predictions/nonexistent');
 
       expect([404, 200]).toContain(response.status);
       expect(response.body).toEqual({
@@ -165,15 +212,14 @@ describe('Prediction Markets Controller Contract Tests', () => {
           stake: 100,
           timestamp: new Date(),
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(app.getHttpServer())
-        .post('/v1/sports/predictions/market-1/predict')
-        .send({
-          userId: 'user-123',
-          selectedOption: 'Team A',
-          stake: 100,
-        });
+      const response = await request(baseUrl).post('/v1/sports/predictions/market-1/predict').send({
+        userId: 'user-123',
+        selectedOption: 'Team A',
+        stake: 100,
+      });
 
       expect(response.status).toBe(201);
       expect(response.body).toEqual({
@@ -199,7 +245,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/predictions/leaderboard');
+      const response = await request(baseUrl).get('/v1/sports/predictions/leaderboard');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -230,9 +276,10 @@ describe('Prediction Markets Controller Contract Tests', () => {
           status: 'active',
           createdAt: new Date(),
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/predictions/create')
         .set('Authorization', 'Bearer valid-token')
         .send({

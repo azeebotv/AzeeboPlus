@@ -4,14 +4,14 @@ import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 
-jest.mock('@azeebo/api-client', () => ({
-  createApiClient: jest.fn().mockReturnValue({
+jest.mock('@azeebo/http-client', () => ({
+  ServiceClient: jest.fn().mockImplementation(() => ({
     get: jest.fn(),
     post: jest.fn(),
     put: jest.fn(),
+    patch: jest.fn(),
     delete: jest.fn(),
-  }),
-  noopTokenStorage: {},
+  })),
 }));
 
 describe('AppealService', () => {
@@ -29,6 +29,15 @@ describe('AppealService', () => {
   };
 
   const mockConfigService = {
+    get: jest.fn((key: string, defaultValue?: string) => {
+      const config: Record<string, string> = {
+        CONTENT_SERVICE_URL: 'http://localhost:3004',
+        MODERATION_SERVICE_URL: 'http://localhost:3022',
+        USER_SERVICE_URL: 'http://localhost:3001',
+        INTERNAL_API_KEY: 'test-key',
+      };
+      return config[key] || defaultValue;
+    }),
     getOrThrow: jest.fn().mockReturnValue('http://mock-url'),
   };
 

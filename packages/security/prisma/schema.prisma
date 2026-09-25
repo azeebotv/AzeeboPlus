@@ -1,0 +1,104 @@
+// Security tables for audit log, break-glass sessions, and dual-control requests.
+// These are used by the integration tests and production implementations.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Append-only audit log with hash chain integrity (TAA §56).
+/// No UPDATE or DELETE operations are permitted by the application layer.
+model AuditLog {
+  id             String   @id @default(uuid())
+  sequenceNumber Int      @unique
+  hash           String
+  previousHash   String
+  actorId        String
+  actorRole      String
+  action         String
+  resourceType   String
+  resourceId     String
+  previousState  String?
+  newState       String?
+  reason         String?
+  correlationId  String?
+  ipAddress      String?
+  userAgent      String?
+  timestamp      DateTime @default(now())
+  status         String   // 'success' | 'failure' | 'pending_approval'
+
+  @@index([actorId])
+  @@index([action])
+  @@index([resourceType, resourceId])
+  @@index([timestamp])
+  @@map("audit_log")
+}
+
+/// Break-glass elevated access sessions (TAA §86).
+/// Time-bound (max 60 min) emergency access with full audit trail.
+model BreakGlassSession {
+  id              String   @id @default(uuid())
+  userId          String
+  originalRole    String
+  elevatedRole    String
+  reason          String
+  justification   String
+  activatedAt     DateTime @default(now())
+  expiresAt       DateTime
+  mfaVerified     Boolean
+  reAuthenticated Boolean
+  status          String   // 'active' | 'expired' | 'revoked' | 'reviewed'
+  reviewedBy      String?
+  reviewNotes     String?
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("break_glass_sessions")
+}
+
+/// Dual-control approval workflow (TAA §55).
+/// High-risk admin actions require N approvals before execution.
+model DualControlRequest {
+  id                String   @id @default(uuid())
+  action            String
+  initiatedBy       String
+  resourceType      String
+  resourceId        String
+  details           Json     @default("{}")
+  requiredApprovals Int
+  status            String   // 'pending' | 'approved' | 'rejected' | 'executed' | 'expired'
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime
+  executedAt        DateTime?
+  executedBy        String?
+
+  approvals DualControlApproval[]
+
+  @@index([initiatedBy])
+  @@index([status])
+  @@index([action])
+  @@map("dual_control_requests")
+}
+
+/// Individual approval entries for dual-control requests.
+model DualControlApproval {
+  id          String   @id @default(uuid())
+  requestId   String
+  approverId  String
+  approverRole String
+  approvedAt  DateTime @default(now())
+  notes       String?
+
+  request DualControlRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([approverId])
+  @@map("dual_control_approvals")
+}

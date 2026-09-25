@@ -52,7 +52,7 @@ export class RateLimitService {
     } catch (error) {
       this.logger.error(
         `CRITICAL: Rate limit check failed for key ${key} — Redis unreachable. ` +
-        `Failing closed to protect service. Error: ${error}`
+          `Failing closed to protect service. Error: ${error}`
       );
       return {
         allowed: false,
@@ -84,7 +84,7 @@ export class RateLimitService {
       const resetAt = ttl > 0 ? now + ttl * 1000 : now + windowMs;
 
       return {
-        allowed: count < limit,
+        allowed: count <= limit,
         remaining,
         resetAt,
         limit,
@@ -92,7 +92,7 @@ export class RateLimitService {
     } catch (error) {
       this.logger.error(
         `CRITICAL: Rate limit status check failed for key ${key} — Redis unreachable. ` +
-        `Failing closed. Error: ${error}`
+          `Failing closed. Error: ${error}`
       );
       return {
         allowed: false,
@@ -114,8 +114,10 @@ export class RateLimitService {
       const exists = await this.redis.get(key);
       return !!exists;
     } catch (error) {
-      this.logger.error(`Failed to check block status for IP ${this.maskIp(ip)}: ${error}`);
-      return false;
+      this.logger.error(
+        `Failed to check block status for IP ${this.maskIp(ip)} — failing closed. Error: ${error}`
+      );
+      return true;
     }
   }
 

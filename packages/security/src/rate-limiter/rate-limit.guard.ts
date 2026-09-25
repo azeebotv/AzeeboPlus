@@ -5,6 +5,8 @@ import {
   HttpException,
   HttpStatus,
   SetMetadata,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request, Response } from 'express';
@@ -13,18 +15,60 @@ import { RateLimitService, RateLimitConfig } from './rate-limit.service';
 export const RateLimit = (limit: number, windowMs: number): ReturnType<typeof SetMetadata> =>
   SetMetadata('rateLimit', { limit, windowMs });
 
+export type RateLimitStrictResolver = () => Promise<boolean>;
+
+/**
+ * Loopback/dev bypass: in local development every request arrives from
+ * ::1 or 127.0.0.1, so a single shared-IP block (or the per-IP violation
+ * threshold) locks out the entire stack — gateway, browsers, and test
+ * scripts all share one key. Outside production/test, loopback traffic
+ * skips rate limiting entirely; production always enforces, and jest
+ * (NODE_ENV=test) enforces so specs verifying limiting keep their teeth.
+ */
+export function isDevLoopbackRequest(request: Request): boolean {
+  const env = process.env.NODE_ENV;
+  if (env === 'production' || env === 'test') return false;
+  if (process.env.DISABLE_RATE_LIMITING === 'true') return true;
+  const raw = request.ip || request.socket?.remoteAddress || '';
+  return (
+    raw === '::1' ||
+    raw === '::ffff:127.0.0.1' ||
+    raw.startsWith('127.0.0.1.') || // Node >= 17 normalises IPv4-mapped IPv6
+    raw === '127.0.0.1'
+  );
+}
+
 @Injectable()
 export class RateLimitGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private rateLimitService: RateLimitService
+    private rateLimitService: RateLimitService,
+    @Optional()
+    @Inject('RATE_LIMIT_STRICT_RESOLVER')
+    private strictResolver?: RateLimitStrictResolver
   ) {}
+
+  /**
+   * Progressive tightening (`security_rate_limit_strict`): when the resolver
+   * returns true the effective limit is halved (min 1) across every endpoint
+   * that declares @RateLimit, without touching the decorated values.
+   */
+  private async resolveEffectiveLimit(options: RateLimitConfig): Promise<RateLimitConfig> {
+    if (this.strictResolver && (await this.strictResolver())) {
+      return { ...options, limit: Math.max(1, Math.floor(options.limit / 2)) };
+    }
+    return options;
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
 
     const clientIp = this.getClientIp(request);
+
+    if (isDevLoopbackRequest(request)) {
+      return true;
+    }
 
     // Check if IP is blocked
     const isBlocked = await this.rateLimitService.isBlocked(clientIp);
@@ -46,9 +90,11 @@ export class RateLimitGuard implements CanActivate {
       return true;
     }
 
+    const effectiveOptions = await this.resolveEffectiveLimit(rateLimitOptions);
+
     const key = this.generateKey(clientIp, request.path);
 
-    const result = await this.rateLimitService.checkRateLimit(key, rateLimitOptions);
+    const result = await this.rateLimitService.checkRateLimit(key, effectiveOptions);
 
     this.setRateLimitHeaders(response, result);
 
@@ -81,7 +127,9 @@ export class RateLimitGuard implements CanActivate {
       const realIp = request.headers['x-real-ip'];
       const realIpString = typeof realIp === 'string' ? realIp : undefined;
 
-      return forwardedForIp || realIpString || request.ip || request.socket.remoteAddress || 'unknown';
+      return (
+        forwardedForIp || realIpString || request.ip || request.socket.remoteAddress || 'unknown'
+      );
     }
 
     return request.ip || request.socket.remoteAddress || 'unknown';

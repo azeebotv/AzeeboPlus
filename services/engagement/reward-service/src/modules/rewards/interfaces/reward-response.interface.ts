@@ -37,12 +37,14 @@ export interface MissionData {
   isCompleted: boolean;
 }
 
-export interface RewardData {
+/** A redeemable reward from the active catalog (GET /rewards/redeem-options). */
+export interface RedeemOptionData {
   id: string;
   name: string;
   description: string | null;
   cost: number;
   type: string;
+  metadata?: unknown;
 }
 
 export interface RewardResponse {
@@ -51,6 +53,7 @@ export interface RewardResponse {
     rewardAccount?: RewardAccountData;
     missions?: MissionData[];
     badges?: BadgeData[];
+    options?: RedeemOptionData[];
     streak?: { current: number; lastCheckInAt: Date | null };
     level?: LevelData;
     message?: string;

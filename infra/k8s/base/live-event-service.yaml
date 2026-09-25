@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: live-event-service
+  namespace: azeebo
+  labels:
+    app: live-event-service
+    app.kubernetes.io/name: live-event-service
+    app.kubernetes.io/part-of: azeebo-plus
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: live-event-service
+  template:
+    metadata:
+      labels:
+        app: live-event-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+      containers:
+        - name: live-event-service
+          image: ghcr.io/azeebotv/azeebo-live-event-service:stable
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 3027
+          env:
+            - name: PORT
+              value: "3027"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: azeebo-secrets
+                  key: live-event-database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: azeebo-secrets
+                  key: redis-url
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3027
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3027
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
+              memory: 256Mi
+              cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: live-event-service
+  namespace: azeebo
+spec:
+  selector:
+    app: live-event-service
+  ports:
+    - port: 80
+      targetPort: 3027
+  type: ClusterIP

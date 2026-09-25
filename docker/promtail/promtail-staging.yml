@@ -1,0 +1,44 @@
+# Promtail — staging log shipper (runs via docker-compose.staging-jobs.yml).
+# Scrapes every azeebo-* container on the shared Docker socket and pushes to
+# Loki (see docker/docker-compose.monitoring.yml). Loki URL comes from the
+# LOKI_URL env var (config.expand-env), defaulting to the monitoring stack's
+# service DNS name.
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: ${LOKI_URL:-http://loki:3100}/loki/api/v1/push
+
+scrape_configs:
+  - job_name: azeebo-containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 15s
+        filters:
+          - name: label
+            values: ["com.docker.compose.project=azeebo-staging"]
+    relabel_configs:
+      # Only ship azeebo-* containers
+      - source_labels: [__meta_docker_container_name]
+        regex: /(azeebo-.+)
+        target_label: container
+      - source_labels: [__meta_docker_container_log_path]
+        target_label: __path__
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+    pipeline_stages:
+      # archive-cleanup emits {"ts":...,"job":"archive-cleanup","event":...}
+      # one JSON object per line; parse it so Loki gets real labels/fields.
+      - json:
+          expressions:
+            event: event
+            mode: mode
+            job: job
+      - labels:
+          job:
+      - output:
+          source: ""

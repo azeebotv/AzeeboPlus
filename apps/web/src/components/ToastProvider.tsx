@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
 interface Toast {
   id: string;
@@ -53,12 +53,13 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
               borderRadius: 12,
               backgroundColor:
                 toast.type === 'error'
-                  ? '#CC1C1C'
+                  ? 'var(--brand-red, #CC1C1C)'
                   : toast.type === 'success'
-                    ? '#0D3B2E'
-                    : '#1A0A0A',
-              border: '1px solid #2A1A1A',
-              color: '#F5F0EB',
+                    ? '#059669'
+                    : 'var(--brand-near-black, #0b090e)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#FFFFFF',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
               fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',

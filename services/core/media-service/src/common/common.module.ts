@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { RedisService } from './services/redis.service';
+import { RedisModule } from '@azeebo/shared-services';
 import { FileValidationService } from './services/file-validation.service';
 
 @Module({
-  providers: [RedisService, FileValidationService],
-  exports: [RedisService, FileValidationService],
+  imports: [RedisModule],
+  providers: [FileValidationService],
+  exports: [FileValidationService, RedisModule],
 })
 export class CommonModule {}

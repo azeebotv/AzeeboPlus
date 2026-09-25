@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isPlaceholderSecret } from './secret-validation.js';
 
 // Preprocess: normalize CORS_ORIGIN into ALLOWED_ORIGINS (used in .env.production)
 function normalizeCorsOrigin(
@@ -29,8 +30,8 @@ export const environmentSchema = z.object({
   REDIS_PORT: z.coerce.number().default(6379),
 
   // JWT
-  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
-  JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
+  JWT_ACCESS_SECRET: z.string().min(64, 'JWT_ACCESS_SECRET must be at least 64 characters'),
+  JWT_REFRESH_SECRET: z.string().min(64, 'JWT_REFRESH_SECRET must be at least 64 characters'),
   JWT_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   JWT_ISSUER: z.string().default('azeebo-auth'),
@@ -82,6 +83,8 @@ export const environmentSchema = z.object({
 
   // Security
   ADMIN_EMAIL: z.string().email().optional(),
+  GATEWAY_SECRET: z.string().min(32, 'GATEWAY_SECRET must be at least 32 characters'),
+  INTERNAL_API_KEY: z.string().min(32, 'INTERNAL_API_KEY must be at least 32 characters'),
 
   // All-in-one mode (disables localhost restrictions for single-container deployments)
   ALL_IN_ONE: z.string().optional(),
@@ -124,6 +127,31 @@ export function validateEnvironment(env: Record<string, string | undefined>): En
     validateProductionEnvironment(result.data);
   }
 
+  // Reject known placeholder secrets in ALL environments
+  const sensitiveKeys = [
+    'JWT_ACCESS_SECRET',
+    'JWT_REFRESH_SECRET',
+    'GATEWAY_SECRET',
+    'INTERNAL_API_KEY',
+    'PAYSTACK_SECRET_KEY',
+    'FLUTTERWAVE_SECRET_KEY',
+    'SENDGRID_API_KEY',
+    'TWILIO_ACCOUNT_SID',
+    'TWILIO_AUTH_TOKEN',
+    'AWS_ACCESS_KEY_ID',
+    'AWS_SECRET_ACCESS_KEY',
+  ];
+  const placeholders = sensitiveKeys.filter((key) => {
+    const value = env[key];
+    return value && isPlaceholderSecret(value);
+  });
+  if (placeholders.length > 0) {
+    throw new Error(
+      `Rejected placeholder secrets (will NOT work in any environment): ${placeholders.join(', ')}. ` +
+        'Generate real secrets with: openssl rand -base64 48'
+    );
+  }
+
   return result.data;
 }
 
@@ -140,8 +168,8 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
     errors.push('JWT_REFRESH_SECRET should be at least 64 characters in production');
   }
 
-  // Check that payment secrets are configured
-  if (!env.PAYSTACK_SECRET_KEY && !env.FLUTTERWAVE_SECRET_KEY) {
+  // Check that payment secrets are configured (skip in all-in-one mode - can be configured later)
+  if (!isAllInOne && !env.PAYSTACK_SECRET_KEY && !env.FLUTTERWAVE_SECRET_KEY) {
     errors.push('At least one payment provider secret must be configured in production');
   }
 

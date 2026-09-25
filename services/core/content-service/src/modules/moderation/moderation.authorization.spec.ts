@@ -1,26 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
+import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { AuthGuard } from '@nestjs/passport';
-import { ModerationController } from './moderation.controller';
-import { ModerationService } from './moderation.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
+import { ModerationController } from './moderation.controller.js';
+import { ModerationService } from './moderation.service.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Reflector } from '@nestjs/core';
 
 describe('Moderation Authorization Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let mockModerationService: Record<string, jest.Mock>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     mockModerationService = {
       scanContent: jest
         .fn()
         .mockResolvedValue({ success: true, data: { contentId: 'content-1', status: 'scanning' } }),
       getRiskAssessment: jest.fn().mockResolvedValue({ success: true, data: { riskScore: 0.2 } }),
       getContentScans: jest.fn().mockResolvedValue({ success: true, data: [] }),
-      createCase: jest
-        .fn()
-        .mockResolvedValue({ success: true, data: { caseId: 'case-1' } }),
+      createCase: jest.fn().mockResolvedValue({ success: true, data: { caseId: 'case-1' } }),
       getCases: jest.fn().mockResolvedValue({ success: true, data: [], pagination: {} }),
       getCaseById: jest.fn().mockResolvedValue({ success: true, data: { id: 'case-1' } }),
       resolveCase: jest
@@ -40,15 +38,6 @@ describe('Moderation Authorization Tests', () => {
         Reflector,
       ],
     })
-      .overrideGuard(AuthGuard('jwt'))
-      .useValue({
-        canActivate: jest.fn((context: ExecutionContext) => {
-          const req = context.switchToHttp().getRequest();
-          const role = req.headers['x-user-role'];
-          req.user = { userId: 'user-1', role: role || 'user' };
-          return true;
-        }),
-      })
       .overrideGuard(RolesGuard)
       .useValue({
         canActivate: jest.fn((context: ExecutionContext) => {
@@ -62,17 +51,37 @@ describe('Moderation Authorization Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    // Mock ServiceAuthGuard behavior: set req.user from X-User-Role header
+    app.use(
+      (
+        req: { headers: Record<string, string | undefined>; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (!req.user) {
+          const role = req.headers['x-user-role'] || 'user';
+          req.user = { id: 'user-1', sub: 'user-1', role };
+        }
+        next();
+      }
+    );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await app.close();
   });
 
-  describe('POST /v1/moderation/cases - Moderator/Admin Only', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('POST /moderation/cases - Moderator/Admin Only', () => {
     it('should allow admin to create moderation case', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/v1/moderation/cases')
+      const response = await request(baseUrl)
+        .post('/moderation/cases')
         .send({
           contentId: 'content-1',
           type: 'content',
@@ -88,8 +97,8 @@ describe('Moderation Authorization Tests', () => {
     });
 
     it('should allow moderator to create moderation case', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/v1/moderation/cases')
+      const response = await request(baseUrl)
+        .post('/moderation/cases')
         .send({
           contentId: 'content-1',
           type: 'content',
@@ -105,8 +114,8 @@ describe('Moderation Authorization Tests', () => {
     });
 
     it('should deny user access to create moderation case', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/v1/moderation/cases')
+      const response = await request(baseUrl)
+        .post('/moderation/cases')
         .send({
           contentId: 'content-1',
           type: 'content',
@@ -121,10 +130,10 @@ describe('Moderation Authorization Tests', () => {
     });
   });
 
-  describe('GET /v1/moderation/cases - Moderator/Admin Only', () => {
+  describe('GET /moderation/cases - Moderator/Admin Only', () => {
     it('should allow admin to list moderation cases', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/v1/moderation/cases')
+      const response = await request(baseUrl)
+        .get('/moderation/cases')
         .set('Authorization', 'Bearer valid-token')
         .set('X-User-Role', 'admin');
 
@@ -132,18 +141,18 @@ describe('Moderation Authorization Tests', () => {
     });
 
     it('should deny user access to list moderation cases', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/v1/moderation/cases')
+      const response = await request(baseUrl)
+        .get('/moderation/cases')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(403);
     });
   });
 
-  describe('PATCH /v1/moderation/cases/:id/resolve - Moderator/Admin Only', () => {
+  describe('PATCH /moderation/cases/:id/resolve - Moderator/Admin Only', () => {
     it('should allow admin to resolve moderation case', async () => {
-      const response = await request(app.getHttpServer())
-        .patch('/v1/moderation/cases/case-1/resolve')
+      const response = await request(baseUrl)
+        .patch('/moderation/cases/case-1/resolve')
         .send({ resolution: 'resolved', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token')
         .set('X-User-Role', 'admin');
@@ -152,8 +161,8 @@ describe('Moderation Authorization Tests', () => {
     });
 
     it('should deny creator access to resolve moderation case', async () => {
-      const response = await request(app.getHttpServer())
-        .patch('/v1/moderation/cases/case-1/resolve')
+      const response = await request(baseUrl)
+        .patch('/moderation/cases/case-1/resolve')
         .send({ resolution: 'resolved', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
 

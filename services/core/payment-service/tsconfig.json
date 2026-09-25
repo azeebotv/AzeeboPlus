@@ -2,15 +2,35 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "types": ["jest", "node", "supertest"],
+    "types": [
+      "jest",
+      "node",
+      "supertest"
+    ],
     "paths": {
-      "@prisma/client": ["./src/prisma/client"],
-      "@azeebo/*": ["../../../packages/*/dist"],
-      "@payment/*": ["./*"]
-    }
+      "@azeebo/*": [
+        "../../../packages/*/dist"
+      ],
+      "@prisma/client": [
+        "./src/prisma/client"
+      ],
+      "@payment/*": [
+        "./*"
+      ]
+    },
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": true,
+    "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

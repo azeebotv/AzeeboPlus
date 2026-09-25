@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 
 export interface DashboardStats {
@@ -7,6 +7,9 @@ export interface DashboardStats {
   totalRevenue: number;
   pendingReports: number;
   activeCreators: number;
+  // Consumed by the admin client dashboard cards (client/src/routes/dashboard.tsx).
+  newUsers: number;
+  totalViews: number;
 }
 
 export interface RevenueData {
@@ -36,6 +39,18 @@ export interface TopCreatorItem {
   totalViews: number;
 }
 
+/** Governance summary card: dual-control + rights-clearance health (TAA §55). */
+export interface GovernanceSummary {
+  /** Requests awaiting any approval action (pending + first_approved). */
+  pendingDualControl: number;
+  /** Requests fully approved but not yet executed — the operator's to-do. */
+  approvedNotExecuted: number;
+  /** Clearances expiring within 30 days — renewal outreach needed. */
+  expiringClearances: number;
+  /** Clearances already past expiry but still not rejected — potential unlicensed use. */
+  expiredClearances: number;
+}
+
 export interface RecentActivityData {
   recentUsers: {
     id: string;
@@ -61,18 +76,24 @@ export interface RecentActivityData {
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getDashboardStats(): Promise<DashboardStats> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [totalUsers, totalContent, pendingReports, activeCreators] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.contentItem.count(),
-      this.prisma.report.count({ where: { status: 'pending' } }),
-      this.prisma.user.count({ where: { role: 'creator' } }),
-    ]);
+    const [totalUsers, totalContent, pendingReports, activeCreators, newUsers, views] =
+      await Promise.all([
+        this.prisma.user.count(),
+        this.prisma.contentItem.count(),
+        this.prisma.report.count({ where: { status: 'pending' } }),
+        this.prisma.user.count({ where: { role: 'creator' } }),
+        // Same-day signups. Honest label: this is NOT daily-active — no
+        // session/DAU event source exists yet (engagement-service would own
+        // that), so the dashboard must not present a signups count as DAU.
+        this.prisma.user.count({ where: { createdAt: { gte: today } } }),
+        this.prisma.contentItem.aggregate({ _sum: { viewCount: true } }),
+      ]);
 
     const totalRevenue = await this.prisma.walletTransaction.aggregate({
       where: { type: 'credit', status: 'completed' },
@@ -85,6 +106,8 @@ export class DashboardService {
       totalRevenue: Number(totalRevenue._sum.amount) || 0,
       pendingReports,
       activeCreators,
+      newUsers,
+      totalViews: views._sum.viewCount || 0,
     };
   }
 
@@ -173,34 +196,40 @@ export class DashboardService {
   }
 
   async getTopCreators(limit = 10): Promise<TopCreatorItem[]> {
-    const creators = await this.prisma.user.findMany({
-      where: { role: 'creator' },
-      include: {
-        _count: { select: { contentItems: true } },
-        contentItems: {
-          where: { status: 'published' },
-          select: { viewCount: true },
-        },
-      },
-      take: limit,
-    });
+    const creators = await this.prisma.$queryRaw<
+      {
+        id: string;
+        displayName: string;
+        avatar: string | null;
+        contentCount: bigint;
+        totalViews: bigint;
+      }[]
+    >`
+      SELECT u.id, u."displayName", u.avatar,
+              COUNT(DISTINCT ci.id) as "contentCount",
+              COALESCE(SUM(ci."viewCount"), 0) as "totalViews"
+       FROM "users" u
+       LEFT JOIN "content_items" ci ON ci."creatorId" = u.id AND ci.status = 'published'
+       WHERE u.role = 'creator'
+       GROUP BY u.id, u."displayName", u.avatar
+       ORDER BY "totalViews" DESC
+       LIMIT ${limit}
+    `;
 
-    return creators
-      .map((c) => ({
-        id: c.id,
-        displayName: c.displayName,
-        avatar: c.avatar,
-        contentCount: c._count.contentItems,
-        totalViews: c.contentItems.reduce((sum, item) => sum + item.viewCount, 0),
-      }))
-      .sort((a, b) => b.totalViews - a.totalViews);
+    return creators.map((c) => ({
+      id: c.id,
+      displayName: c.displayName,
+      avatar: c.avatar,
+      contentCount: Number(c.contentCount),
+      totalViews: Number(c.totalViews),
+    }));
   }
 
-  async getRecentActivity(_limit = 20): Promise<RecentActivityData> {
+  async getRecentActivity(limit = 20): Promise<RecentActivityData> {
     const [recentUsers, recentContent, recentReports] = await Promise.all([
       this.prisma.user.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 5,
+        take: limit,
         select: {
           id: true,
           displayName: true,
@@ -211,7 +240,7 @@ export class DashboardService {
       }),
       this.prisma.contentItem.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 5,
+        take: limit,
         select: {
           id: true,
           title: true,
@@ -223,7 +252,7 @@ export class DashboardService {
       this.prisma.report.findMany({
         where: { status: 'pending' },
         orderBy: { createdAt: 'desc' },
-        take: 5,
+        take: limit,
         select: {
           id: true,
           type: true,
@@ -238,6 +267,32 @@ export class DashboardService {
       recentContent,
       recentReports,
     };
+  }
+
+  /** Feeds the Executive Dashboard governance card. */
+  async getGovernanceSummary(): Promise<GovernanceSummary> {
+    const now = new Date();
+    const in30Days = new Date(now);
+    in30Days.setDate(in30Days.getDate() + 30);
+
+    const [pendingDualControl, approvedNotExecuted, expiringClearances, expiredClearances] =
+      await Promise.all([
+        this.prisma.dualControlRequest.count({
+          where: { status: { in: ['pending', 'first_approved'] } },
+        }),
+        this.prisma.dualControlRequest.count({ where: { status: 'approved' } }),
+        this.prisma.rightsClearance.count({
+          where: {
+            status: { in: ['pending', 'approved'] },
+            expiryDate: { gt: now, lte: in30Days },
+          },
+        }),
+        this.prisma.rightsClearance.count({
+          where: { status: { in: ['pending', 'approved'] }, expiryDate: { lte: now } },
+        }),
+      ]);
+
+    return { pendingDualControl, approvedNotExecuted, expiringClearances, expiredClearances };
   }
 
   async getPlatformOverview() {

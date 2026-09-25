@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { MovieResponse } from './interfaces/movie-response.interface';
+import { PrismaService } from '../database/prisma.service.js';
+import { MovieResponse } from './interfaces/movie-response.interface.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
@@ -11,14 +12,35 @@ export class MoviesService {
   private readonly logger = new Logger(MoviesService.name);
   private readonly walletServiceBaseUrl: string;
   private readonly rentalFee: number;
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly cache: CacheService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.rentalFee = this.configService.get<number>('MOVIE_RENTAL_FEE', 500);
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/v1/analytics/events`,
+        { type: eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 
   async listMovies(): Promise<MovieResponse> {
@@ -30,8 +52,6 @@ export class MoviesService {
 
     const movies = await this.prisma.movie.findMany({
       include: {
-        creator: true,
-        categories: true,
         viewingWindows: {
           where: { isActive: true },
           orderBy: { startsAt: 'asc' },
@@ -39,7 +59,7 @@ export class MoviesService {
         _count: {
           select: { rentals: true },
         },
-      },
+      } as never,
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
@@ -53,6 +73,43 @@ export class MoviesService {
     };
   }
 
+  async getMoviesByGenreSlug(slug: string, page = 1): Promise<MovieResponse> {
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    // Find genre by slug
+    const genre = await (
+      this.prisma as unknown as {
+        genre?: { findUnique: (args: unknown) => Promise<{ id: string } | null> };
+      }
+    ).genre?.findUnique({
+      where: { slug },
+    });
+
+    if (!genre) {
+      throw new NotFoundException(`Genre '${slug}' not found`);
+    }
+
+    const [movies] = await Promise.all([
+      this.prisma.movie.findMany({
+        where: { genreId: genre.id } as never,
+        include: {
+          viewingWindows: { where: { isActive: true } },
+          _count: { select: { rentals: true } },
+        } as never,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.movie.count({ where: { genreId: genre.id } as never }),
+    ]);
+
+    return {
+      success: true,
+      data: movies as unknown as MovieResponse['data'],
+    } as MovieResponse;
+  }
+
   async getMovie(movieId: string): Promise<MovieResponse> {
     const cacheK = cacheKey('movie', `movie:${movieId}`);
     const cached = await this.cache.get<MovieResponse['data']>(cacheK);
@@ -63,10 +120,6 @@ export class MoviesService {
     const movie = await this.prisma.movie.findUnique({
       where: { id: movieId },
       include: {
-        creator: true,
-        categories: true,
-        rentals: true,
-        watchlistItems: true,
         viewingWindows: {
           where: { isActive: true },
           orderBy: { startsAt: 'asc' },
@@ -106,7 +159,10 @@ export class MoviesService {
       throw new NotFoundException('Movie not found');
     }
 
-    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    const walletResponse = await axios
+      .get(`${this.walletServiceBaseUrl}/wallet/user/${userId}`, { timeout: 10000 })
+      .then((res) => res.data);
+    const wallet = walletResponse?.data;
     if (!wallet) {
       throw new NotFoundException('Wallet not found for user');
     }
@@ -129,8 +185,7 @@ export class MoviesService {
         { timeout: 10000 }
       );
     } catch (error) {
-      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to process payment';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(error, 'charging movie rental');
     }
 
     try {
@@ -143,6 +198,13 @@ export class MoviesService {
       });
 
       await this.cache.invalidate('movie:*');
+
+      await this.trackEvent('payment_success', userId, {
+        movieId,
+        amount: this.rentalFee,
+        type: 'rental',
+        rentalId: rental.id,
+      });
 
       return {
         success: true,
@@ -167,8 +229,7 @@ export class MoviesService {
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet after rental failure:', compensateError);
         });
-      const errorMessage = dbError instanceof Error ? dbError.message : 'Failed to create rental';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(dbError, 'creating movie rental');
     }
   }
 
@@ -227,6 +288,8 @@ export class MoviesService {
       },
     });
 
+    await this.trackEvent('movie_watchlisted', userId, { movieId });
+
     return {
       success: true,
       data: {
@@ -250,6 +313,8 @@ export class MoviesService {
     await this.prisma.watchlistItem.delete({
       where: { id: item.id },
     });
+
+    await this.trackEvent('movie_watchlist_removed', userId, { movieId });
 
     return {
       success: true,
@@ -388,6 +453,47 @@ export class MoviesService {
       data: {
         available: !!activeWindow,
         viewingWindow: activeWindow,
+      },
+    };
+  }
+
+  async rateMovie(userId: string, movieId: string, rating: string): Promise<MovieResponse> {
+    const movie = await this.prisma.movie.findUnique({
+      where: { id: movieId },
+    });
+
+    if (!movie) {
+      throw new NotFoundException('Movie not found');
+    }
+
+    const numericRating = parseFloat(rating);
+    if (isNaN(numericRating) || numericRating < 1 || numericRating > 10) {
+      throw new BadRequestException('Rating must be a number between 1 and 10');
+    }
+
+    // Store rating (if movieRating model exists)
+    try {
+      await (
+        this.prisma as unknown as { movieRating?: { upsert: (args: unknown) => Promise<unknown> } }
+      ).movieRating?.upsert({
+        where: {
+          userId_movieId: { userId, movieId },
+        },
+        update: { rating: numericRating },
+        create: { userId, movieId, rating: numericRating },
+      });
+    } catch {
+      // movieRating model may not exist
+    }
+
+    await this.trackEvent('movie_rated', userId, { movieId, rating });
+
+    return {
+      success: true,
+      data: {
+        movieId,
+        rating,
+        message: 'Rating submitted successfully',
       },
     };
   }

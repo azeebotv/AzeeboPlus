@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from './s3.service';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '@azeebo/shared-services';
 import { randomUUID } from 'crypto';
 
 export interface PremiumUrlResponse {
@@ -27,9 +27,9 @@ export class PremiumContentService {
   private readonly cdnUrl: string;
 
   constructor(
-    private readonly s3Service: S3Service,
-    private readonly redisService: RedisService,
-    private readonly configService: ConfigService
+    @Inject(S3Service) private readonly s3Service: S3Service,
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.cdnUrl = this.configService.get<string>('CDN_URL') || '';
     this.defaultExpirySeconds = this.configService.get<number>('DEFAULT_URL_EXPIRY_SECONDS', 300);
@@ -141,7 +141,9 @@ export class PremiumContentService {
         userId: urlData.userId,
       };
     } catch (error: unknown) {
-      this.logger.error(`Error validating URL token: ${error.message}`);
+      this.logger.error(
+        `Error validating URL token: ${error instanceof Error ? error.message : String(error)}`
+      );
       return {
         valid: false,
         error: 'Invalid URL data',
@@ -172,7 +174,9 @@ export class PremiumContentService {
             invalidatedCount++;
           }
         } catch (error: unknown) {
-          this.logger.warn(`Error parsing URL data for key ${key}: ${error.message}`);
+          this.logger.warn(
+            `Error parsing URL data for key ${key}: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
       }
     }
@@ -224,7 +228,27 @@ export class PremiumContentService {
   }
 
   private async resolveContentKey(contentId: string): Promise<string> {
-    return `premium/${contentId}`;
+    // Check Redis cache for previously resolved key
+    const cacheKey = `premium_key:${contentId}`;
+    try {
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) return cached;
+    } catch {
+      // Redis unavailable — use default
+    }
+
+    // Default key pattern: premium/{contentId}/source
+    // Callers can override via content key metadata if needed
+    const key = `premium/${contentId}/source`;
+
+    try {
+      await this.redisService.set(cacheKey, key);
+      await this.redisService.expire(cacheKey, 3600);
+    } catch {
+      // Best effort cache
+    }
+
+    return key;
   }
 
   private buildCdnUrl(s3Key: string, token: string, expiresInSeconds: number): string {

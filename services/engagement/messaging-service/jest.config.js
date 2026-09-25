@@ -6,8 +6,12 @@ module.exports = {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!uuid)',
+    'node_modules/(?!uuid|zod|date-fns)',
   ],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^sanitize-html$': '<rootDir>/__mocks__/sanitize-html.ts',
+  },
   collectCoverageFrom: [
     '**/*.(t|j)s',
     '!main.ts',
@@ -27,5 +31,4 @@ module.exports = {
       statements: 70,
     },
   },
-  passWithNoTests: false,
 };

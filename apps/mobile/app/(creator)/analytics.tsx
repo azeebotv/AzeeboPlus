@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { creatorApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { creatorApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 // Analytics data interface for UI
 interface AnalyticsData {
@@ -46,7 +47,7 @@ export default function CreatorAnalyticsScreen() {
 
   const loadAnalytics = async () => {
     try {
-      const response = await creatorApi.getAnalytics();
+      const response = await creatorApi.getAnalytics(timeRange);
       if (response.success && response.data) {
         // Cast to AnalyticsData since UI expects this format
         // Backend should return consistent type
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   errorContainer: {
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     marginBottom: 16,
   },
@@ -264,13 +265,13 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   timeRangeSelector: {
     flexDirection: 'row',
@@ -283,14 +284,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     marginRight: 8,
   },
   timeRangeButtonActive: {
     backgroundColor: '#E8420A',
   },
   timeRangeText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -316,12 +317,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 8,
   },
   growthText: {
@@ -340,7 +341,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   metricsGrid: {
@@ -350,7 +351,7 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     width: '48%',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -364,13 +365,13 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     textAlign: 'center',
   },
   topContentItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -388,22 +389,22 @@ const styles = StyleSheet.create({
   topContentTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 2,
   },
   topContentViews: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   demographicsCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
   },
   demographicsSubtitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 12,
   },
   demographicRow: {
@@ -413,7 +414,7 @@ const styles = StyleSheet.create({
   },
   demographicLabel: {
     fontSize: 12,
-    color: '#F3F4F6',
+    color: colors.light[100],
     width: 50,
   },
   demographicBar: {
@@ -430,7 +431,7 @@ const styles = StyleSheet.create({
   },
   demographicValue: {
     fontSize: 12,
-    color: '#F3F4F6',
+    color: colors.light[100],
     width: 40,
     textAlign: 'right',
   },

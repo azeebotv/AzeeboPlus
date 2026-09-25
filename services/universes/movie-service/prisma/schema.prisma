@@ -1,11 +1,24 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   output   = "../src/prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// Stub model for cross-service references
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("users")
 }
 
 model Movie {
@@ -20,9 +33,11 @@ model Movie {
   status      String // draft, published, archived
   viewCount   Int      @default(0)
   metadata    Json?
+  genreId     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  genre          Genre?          @relation(fields: [genreId], references: [id])
   rentals        Rental[]
   watchlistItems WatchlistItem[]
   viewingWindows ViewingWindow[]
@@ -32,6 +47,23 @@ model Movie {
   @@index([universeId])
   @@index([creatorId])
   @@index([status])
+  @@index([genreId])
+}
+
+model Genre {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  movies Movie[]
+
+  @@map("genres")
 }
 
 model Rental {
@@ -41,6 +73,7 @@ model Rental {
   status    String    @default("active")
   expiresAt DateTime?
   createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
 
@@ -70,6 +103,7 @@ model WatchlistItem {
   userId    String
   movieId   String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
 
@@ -163,6 +197,7 @@ model FilmmakerUpdate {
   title       String
   content     String
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   project FilmmakerProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -177,6 +212,7 @@ model FilmmakerBacker {
   amount      Decimal   @db.Decimal(18, 2)
   status      String    @default("active") // active, refunded
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   project FilmmakerProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -195,6 +231,7 @@ model CreatorEarning {
   status      String    @default("pending")
   paidAt      DateTime?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@map("creator_earnings")
   @@index([creatorId])

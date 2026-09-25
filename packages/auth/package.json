@@ -9,11 +9,11 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "bash ../../scripts/build-package.sh",
     "test": "jest",
     "test:cov": "jest --coverage",
     "clean": "rm -rf dist",
-    "lint": "eslint src --fix"
+    "lint": "eslint src"
   },
   "peerDependencies": {
     "react": "^18 || ^19",
@@ -21,6 +21,7 @@
     "next": "^14.0.0 || ^15.0.0"
   },
   "dependencies": {
+    "@azeebo/shared-types": "workspace:*",
     "@azeebo/ui": "workspace:*"
   },
   "devDependencies": {

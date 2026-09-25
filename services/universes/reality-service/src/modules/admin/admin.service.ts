@@ -1,10 +1,59 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
+
+  /**
+   * reality_auto_elimination: eliminates the lowest-voted active contestant of
+   * a show. Non-destructive — the verdict is recorded in the show's metadata
+   * (`lastElimination`) so ops can roll back or audit it.
+   */
+  async autoEliminate(showId: string) {
+    const show = await this.prisma.realityShow.findUnique({
+      where: { id: showId },
+      include: { contestants: { include: { votes: { select: { quantity: true } } } } },
+    });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+    if (show.contestants.length < 2) {
+      throw new BadRequestException('A show needs at least 2 contestants to eliminate');
+    }
+
+    const totals = show.contestants.map((c) => ({
+      id: c.id,
+      name: c.name,
+      totalVotes: c.votes.reduce((sum, v) => sum + (v.quantity || 1), 0),
+    }));
+    const lowest = [...totals].sort((a, b) => a.totalVotes - b.totalVotes)[0];
+
+    const metadata = (show.metadata as Record<string, unknown>) || {};
+    const round = ((metadata as { eliminationRound?: number }).eliminationRound ?? 0) + 1;
+    const elimination = {
+      round,
+      contestantId: lowest.id,
+      contestantName: lowest.name,
+      voteCount: lowest.totalVotes,
+      eliminatedAt: new Date().toISOString(),
+    };
+
+    await this.prisma.realityShow.update({
+      where: { id: showId },
+      data: {
+        metadata: {
+          ...metadata,
+          lastElimination: elimination,
+          eliminationRound: round,
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    return { success: true, data: elimination };
+  }
 
   async getAllRealityShows(options?: { page?: number; limit?: number; status?: string }) {
     try {
@@ -34,7 +83,10 @@ export class AdminService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get all reality shows: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get all reality shows: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -58,13 +110,16 @@ export class AdminService {
 
       return show;
     } catch (error) {
-      this.logger.error(`Failed to get reality show by id: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get reality show by id: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: (error as Error).message };
     }
   }
 
-  async updateRealityShowStatus(showId: string, status: string, reason?: string) {
+  async updateRealityShowStatus(showId: string, status: string, _reason?: string) {
     try {
       const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
       if (!show) {
@@ -76,12 +131,12 @@ export class AdminService {
         data: { status },
       });
 
-      // Note: Audit logging would require an auditLog model in the schema
-      // For now, we'll just return the updated show
-
       return updated;
     } catch (error) {
-      this.logger.error(`Failed to update reality show status: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to update reality show status: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: (error as Error).message };
     }

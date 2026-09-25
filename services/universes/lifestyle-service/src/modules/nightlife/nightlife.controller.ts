@@ -1,6 +1,18 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { NightlifeService } from './nightlife.service';
 import { UpdateNightlifeDto } from './dto/update-nightlife.dto';
 
@@ -21,26 +33,13 @@ interface CreateNightlifeData {
   createdById: string;
 }
 
-interface UpdateNightlifeData {
-  name?: string;
-  type?: string;
-  description?: string;
-  coverImage?: string;
-  address?: string;
-  latitude?: number;
-  longitude?: number;
-  hours?: string;
-  dressCode?: string;
-  coverCharge?: number;
-  rating?: number;
-  status?: string;
-}
-
 @ApiTags('Nightlife')
-@UseGuards(AuthGuard('jwt'))
-@Controller('v1/lifestyle/nightlife')
+@UseGuards(ServiceAuthGuard)
+@FeatureFlag(lifestyleFlags.nightlifeBooking)
+@UseGuards(FeatureFlagGuard)
+@Controller('lifestyle/nightlife')
 export class NightlifeController {
-  constructor(private readonly nightlifeService: NightlifeService) {}
+  constructor(@Inject(NightlifeService) private readonly nightlifeService: NightlifeService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get nightlife entries' })
@@ -79,10 +78,7 @@ export class NightlifeController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update nightlife entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
-  async updateEntry(
-    @Param('id') id: string,
-    @Body() body: UpdateNightlifeDto
-  ): Promise<unknown> {
+  async updateEntry(@Param('id') id: string, @Body() body: UpdateNightlifeDto): Promise<unknown> {
     return this.nightlifeService.updateEntry(id, body);
   }
 

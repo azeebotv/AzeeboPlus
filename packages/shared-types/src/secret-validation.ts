@@ -2,9 +2,8 @@ import { validateEnvironment, EnvValidationError } from './env-validation';
 
 const log = (service: string, level: 'info' | 'warn' | 'error', message: string) => {
   const prefix = `[${service}]`;
-  if (level === 'error') console.error(prefix, message);
-  else if (level === 'warn') console.warn(prefix, message);
-  else console.log(prefix, message);
+  if (level === 'error') process.stderr.write(`${prefix} ${message}\n`);
+  else process.stdout.write(`${prefix} ${message}\n`);
 };
 
 /**
@@ -70,10 +69,11 @@ export function isPlaceholderSecret(value: string): boolean {
 
     /^placeholder.*$/i,
     /^dummy.*$/i,
-    /^=secret$/i,
-    /^=password$/i,
-    /^=key$/i,
-    /^=token$/i,
+    /^test[_-].*$/i,
+    /^secret[_-].*$/i,
+    /^password.*$/i,
+    /^key[_-].*$/i,
+    /^token[_-].*$/i,
   ];
 
   return placeholderPatterns.some((pattern) => pattern.test(value));

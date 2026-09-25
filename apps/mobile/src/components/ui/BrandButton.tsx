@@ -1,10 +1,15 @@
-import { StyleSheet, ActivityIndicator, type ViewStyle, type StyleProp, Text } from 'react-native';
+import {
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  type ViewStyle,
+  type StyleProp,
+  Text,
+} from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors, radius, typography, spacing, shadows, spring } from '../../theme';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(
-  require('react-native').TouchableOpacity
-);
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface BrandButtonProps {
   title: string;
@@ -15,6 +20,7 @@ interface BrandButtonProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   fullWidth?: boolean;
+  testID?: string;
   accessibilityLabel?: string;
   accessibilityHint?: string;
 }
@@ -27,6 +33,7 @@ export function BrandButton({
   disabled = false,
   style,
   fullWidth = true,
+  testID,
   accessibilityLabel,
   accessibilityHint,
 }: BrandButtonProps) {
@@ -48,6 +55,7 @@ export function BrandButton({
 
   return (
     <AnimatedTouchable
+      testID={testID}
       style={[
         styles.base,
         styles[variant],

@@ -5,8 +5,8 @@ import { Redis } from 'ioredis';
 export class RedisService implements OnModuleDestroy {
   private redis: Redis;
 
-  constructor(redisUrl?: string) {
-    const url = redisUrl || process.env.REDIS_URL;
+  constructor() {
+    const url = process.env.REDIS_URL;
     if (!url) {
       throw new Error('REDIS_URL environment variable must be set');
     }
@@ -39,6 +39,15 @@ export class RedisService implements OnModuleDestroy {
 
   async del(key: string): Promise<number> {
     return this.redis.del(key);
+  }
+
+  async setIfNotExists(key: string, value: string, ttlSeconds: number): Promise<boolean> {
+    const result = await this.redis.set(key, value, 'EX', ttlSeconds, 'NX');
+    return result === 'OK';
+  }
+
+  async exists(key: string): Promise<number> {
+    return this.redis.exists(key);
   }
 
   async scanKeys(pattern: string, count = 100): Promise<string[]> {

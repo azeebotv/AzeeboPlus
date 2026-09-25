@@ -1,10 +1,11 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { randomInt } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import axios from 'axios';
 
-import { AuthRepository } from '../auth.repository';
+import { AuthRepository } from '../auth.repository.js';
 
 @Injectable()
 export class OtpService {
@@ -13,8 +14,8 @@ export class OtpService {
   private readonly logger = new Logger(OtpService.name);
 
   constructor(
-    private readonly authRepository: AuthRepository,
-    private readonly configService: ConfigService
+    @Inject(AuthRepository) private readonly authRepository: AuthRepository,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.otpExpiry = this.configService.get<number>('OTP_EXPIRY', 300);
     this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
@@ -53,10 +54,7 @@ export class OtpService {
     return true;
   }
 
-  async sendOtpToUser(
-    userId: string,
-    phoneNumber: string
-  ): Promise<{ message: string }> {
+  async sendOtpToUser(userId: string, phoneNumber: string): Promise<{ message: string }> {
     if (!phoneNumber) {
       throw new BadRequestException('Phone number is required for OTP delivery');
     }
@@ -79,7 +77,7 @@ export class OtpService {
       this.logger.log(`OTP sent to ${phoneNumber}`);
     } catch (error) {
       this.logger.error(`Failed to send OTP via notification-service: ${(error as Error).message}`);
-      throw new BadRequestException('Failed to send OTP. Please try again.');
+      mapAndThrow(error, 'sending OTP');
     }
 
     return { message: 'OTP sent successfully' };

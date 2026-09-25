@@ -1,13 +1,13 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AdminService } from './admin.service';
+import { AdminService } from './admin.service.js';
 import { AdminGuard } from '@azeebo/security';
 
 @ApiTags('Admin - Wallet Service')
 @Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
 
   @Get('stats')
   @ApiOperation({ summary: 'Get wallet service statistics (admin)' })
@@ -60,6 +60,10 @@ export class AdminController {
     @Query('type') type?: string
   ) {
     const clampedLimit = Math.min(100, Math.max(1, Number(limit) || 20));
-    return this.adminService.getTransactionsByWalletId(walletId, { page, limit: clampedLimit, type });
+    return this.adminService.getTransactionsByWalletId(walletId, {
+      page,
+      limit: clampedLimit,
+      type,
+    });
   }
 }

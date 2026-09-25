@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { useSavedContent, useRecentContent } from '../../src/hooks/useContentQuery';
+import { useSavedContent, useRecentContent } from '@azeebo/react-data/hooks/useContentQuery';
+import { colors } from '../../src/theme';
 
 const TABS = [
   { id: 'watchlist', label: 'Watchlist', emoji: '📋' },
@@ -15,11 +16,21 @@ const TABS = [
 
 export default function LibraryScreen() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  useAuth();
   const [activeTab, setActiveTab] = useState('watchlist');
 
-  const { data: savedData, isLoading: savedLoading, error: savedError, refetch: refetchSaved } = useSavedContent(1, 50);
-  const { data: historyData, isLoading: historyLoading, error: historyError, refetch: refetchHistory } = useRecentContent(1, 50);
+  const {
+    data: savedData,
+    isLoading: savedLoading,
+    error: savedError,
+    refetch: refetchSaved,
+  } = useSavedContent(1, 50);
+  const {
+    data: historyData,
+    isLoading: historyLoading,
+    error: historyError,
+    refetch: refetchHistory,
+  } = useRecentContent(1, 50);
 
   const isLoading = savedLoading || historyLoading;
   const error = savedError?.message || historyError?.message || null;
@@ -90,7 +101,11 @@ export default function LibraryScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.itemCard}
-            onPress={() => router.push(`/watch/${(item as { contentId?: string; id: string }).contentId || item.id}`)}
+            onPress={() =>
+              router.push(
+                `/watch/${(item as { contentId?: string; id: string }).contentId || item.id}`
+              )
+            }
           >
             <View style={styles.itemThumbnail}>
               <Text style={styles.itemEmoji}>📺</Text>
@@ -209,7 +224,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   tabLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
     fontWeight: '500',
   },
@@ -232,7 +247,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 60,
     borderRadius: 8,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -250,7 +265,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   itemMeta: {
-    color: '#666',
+    color: colors.text.tertiary,
     fontSize: 13,
   },
   playButton: {
@@ -269,7 +284,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
   },
   resumeText: {
     color: '#E8420A',

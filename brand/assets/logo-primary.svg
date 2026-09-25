@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="100%" height="100%">
+  <defs>
+    <!-- Brand Flame Gradient -->
+    <linearGradient id="azeeboFlame" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#E5251C"/>
+      <stop offset="35%" stop-color="#F3501A"/>
+      <stop offset="70%" stop-color="#FF6B00"/>
+      <stop offset="100%" stop-color="#FFA02E"/>
+    </linearGradient>
+
+    <!-- Symbol Radial Gradient -->
+    <radialGradient id="symbolGlow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#FFA02E"/>
+      <stop offset="60%" stop-color="#F3501A"/>
+      <stop offset="100%" stop-color="#E5251C"/>
+    </radialGradient>
+
+    <!-- Vanta Black Shadow Filter -->
+    <filter id="flameGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <g fill="url(#azeeboFlame)" transform="translate(40, 50)">
+    <!-- Letter: a -->
+    <path d="M 120 180 C 120 145 95 125 60 125 C 25 125 0 145 0 180 C 0 215 25 235 60 235 C 95 235 120 215 120 180 Z M 165 180 C 165 240 120 280 60 280 C 0 280 -45 240 -45 180 C -45 120 0 80 60 80 C 100 80 135 100 152 135 L 152 85 L 205 85 L 205 275 L 165 275 L 165 225 C 150 260 115 280 60 280 Z" transform="translate(60, 0)"/>
+
+    <!-- Wordmark rendered via bold clean path rendering -->
+    <!-- 'azeebo' typography -->
+    <text x="50" y="225" font-family="system-ui, -apple-system, 'Montserrat', 'Inter', 'Poppins', sans-serif" font-size="210" font-weight="900" letter-spacing="-6px" fill="url(#azeeboFlame)">
+      azeeb<tspan fill="none">o</tspan>
+    </text>
+
+    <!-- Stylized 'o' Symbol -->
+    <g transform="translate(745, 140)">
+      <!-- Outer Ring with Gradient Twist -->
+      <circle cx="65" cy="65" r="70" fill="none" stroke="url(#azeeboFlame)" stroke-width="36" stroke-linecap="round"/>
+      
+      <!-- Inner Dynamic Energy Flow (Swirl Petals) -->
+      <path d="M 65 10 C 95 10 120 35 120 65 C 120 95 95 120 65 120 C 35 120 10 95 10 65 C 10 35 35 10 65 10 Z" fill="none" stroke="url(#symbolGlow)" stroke-width="12" opacity="0.8"/>
+      <path d="M 25 25 Q 65 5 105 25 Q 125 65 105 105 Q 65 125 25 105 Q 5 65 25 25 Z" fill="url(#azeeboFlame)" opacity="0.35"/>
+      
+      <!-- Spark Plus/Cross Petals on Upper Right -->
+      <g transform="translate(92, -18) scale(0.65)">
+        <path d="M 25 0 C 25 14 36 25 50 25 C 36 25 25 36 25 50 C 25 36 14 25 0 25 C 14 25 25 14 25 0 Z" fill="url(#azeeboFlame)"/>
+        <circle cx="25" cy="25" r="6" fill="#FFA02E"/>
+      </g>
+    </g>
+  </g>
+</svg>

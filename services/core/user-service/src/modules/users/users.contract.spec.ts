@@ -1,14 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext, UnauthorizedException, VersioningType } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import {
+  INestApplication,
+  ExecutionContext,
+  UnauthorizedException,
+  VersioningType,
+} from '@nestjs/common';
 import request from 'supertest';
-import { UsersModule } from './users.module';
+import { UsersController } from './users.controller.js';
+import { InteractionsController } from './interactions.controller.js';
+import { UserDeletionController } from '../user/user-deletion.controller.js';
+import { UsersService } from './users.service.js';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../database/prisma.service.js';
+import { AvatarService } from './avatar.service.js';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
+import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagGuard, FeatureFlagService, userFlags } from '@azeebo/feature-flags';
 
 describe('Users Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockPrismaService = {
     user: {
@@ -20,6 +32,10 @@ describe('Users Controller Contract Tests', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
       create: jest.fn(),
+    },
+    userProfile: {
+      upsert: jest.fn(),
+      findUnique: jest.fn(),
     },
     following: {
       findUnique: jest.fn(),
@@ -56,24 +72,52 @@ describe('Users Controller Contract Tests', () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [UsersModule],
+      controllers: [UsersController, InteractionsController, UserDeletionController],
       providers: [
+        UsersService,
+        { provide: AvatarService, useValue: { uploadAvatar: jest.fn(), deleteAvatar: jest.fn() } },
+        { provide: PrismaService, useValue: mockPrismaService },
         {
-          provide: APP_GUARD,
-          useClass: ServiceAuthGuard,
+          provide: JwtService,
+          useValue: {
+            verify: jest.fn(),
+            sign: jest.fn(),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            deleteByPattern: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((_k: string, d?: unknown) => d),
+            getOrThrow: jest.fn((_k: string) => undefined),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest
+              .fn()
+              .mockImplementation((key: string) => Promise.resolve(key !== userFlags.profileV2)),
+          },
         },
       ],
     })
-      .overrideProvider(PrismaService)
-      .useValue(mockPrismaService)
-      .overrideProvider(JwtService)
-      .useValue({
-        verify: jest.fn(),
-        sign: jest.fn(),
-      })
       .overrideGuard(ServiceAuthGuard)
       .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
+      .useValue({
+        canActivate: jest.fn(() => true),
+      })
+      .overrideGuard(FeatureFlagGuard)
       .useValue({
         canActivate: jest.fn(() => true),
       })
@@ -81,7 +125,26 @@ describe('Users Controller Contract Tests', () => {
 
     app = moduleFixture.createNestApplication();
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+    // Mock ServiceAuthGuard behavior
+    app.use(
+      (
+        req: { headers: { authorization?: string }; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (
+          req.headers.authorization &&
+          req.headers.authorization.startsWith('Bearer ') &&
+          !req.user
+        ) {
+          req.user = { id: 'user-123', sub: 'user-123', role: 'user' };
+        }
+        next();
+      }
+    );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -104,7 +167,7 @@ describe('Users Controller Contract Tests', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me')
         .set('Authorization', 'Bearer valid-token');
 
@@ -120,7 +183,7 @@ describe('Users Controller Contract Tests', () => {
     });
 
     it('should return error for missing authorization', async () => {
-      const response = await request(app.getHttpServer()).get('/v1/users/me');
+      const response = await request(baseUrl).get('/v1/users/me');
 
       expect(response.status).toBe(401);
     });
@@ -144,7 +207,7 @@ describe('Users Controller Contract Tests', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .patch('/v1/users/me')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -172,7 +235,7 @@ describe('Users Controller Contract Tests', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/preferences')
         .set('Authorization', 'Bearer valid-token');
 
@@ -195,7 +258,7 @@ describe('Users Controller Contract Tests', () => {
         createdAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/user-456')
         .set('Authorization', 'Bearer valid-token');
 
@@ -212,7 +275,7 @@ describe('Users Controller Contract Tests', () => {
     it('should return not found for non-existent user', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/nonexistent')
         .set('Authorization', 'Bearer valid-token');
 
@@ -235,8 +298,8 @@ describe('Users Controller Contract Tests', () => {
         createdAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
-        .post('/v1/users/user-456/follow')
+      const response = await request(baseUrl)
+        .post('/v1/users/550e8400-e29b-41d4-a716-446655440000/follow')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(201);
@@ -251,16 +314,16 @@ describe('Users Controller Contract Tests', () => {
     it('should unfollow a user', async () => {
       mockPrismaService.following.findUnique.mockResolvedValue({
         followerId: 'user-123',
-        followingId: 'user-456',
+        followingId: '550e8400-e29b-41d4-a716-446655440000',
       });
 
       mockPrismaService.following.delete.mockResolvedValue({
         followerId: 'user-123',
-        followingId: 'user-456',
+        followingId: '550e8400-e29b-41d4-a716-446655440000',
       });
 
-      const response = await request(app.getHttpServer())
-        .delete('/v1/users/user-456/follow')
+      const response = await request(baseUrl)
+        .delete('/v1/users/550e8400-e29b-41d4-a716-446655440000/follow')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);

@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 interface Story {
@@ -62,7 +62,7 @@ interface WhereClause {
 export class StoriesService {
   private readonly logger = new Logger(StoriesService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getStories(page = 1, limit = 20, category?: string): Promise<StoryResponse> {
     try {
@@ -77,7 +77,7 @@ export class StoriesService {
           where,
           skip: (page - 1) * limit,
           take: limit,
-          include: { category: true, author: true },
+          include: { category: true },
         }),
         this.prisma.cultureStory.count({ where }),
       ]);
@@ -92,7 +92,7 @@ export class StoriesService {
         categoryId: story.categoryId || '',
         categoryName: story.category?.name || '',
         authorId: story.authorId,
-        authorName: story.author.displayName || story.author.username,
+        authorName: '',
         status: story.status,
         viewCount: story.viewCount,
         readTime: story.readTime || Math.ceil(story.content.split(' ').length / 200),
@@ -147,7 +147,7 @@ export class StoriesService {
     try {
       const story = await this.prisma.cultureStory.findUnique({
         where: { slug },
-        include: { category: true, author: true },
+        include: { category: true },
       });
 
       if (!story) {
@@ -164,7 +164,7 @@ export class StoriesService {
         categoryId: story.categoryId || '',
         categoryName: story.category?.name || '',
         authorId: story.authorId,
-        authorName: story.author.displayName || story.author.username,
+        authorName: '',
         status: story.status,
         viewCount: story.viewCount,
         readTime: story.readTime || Math.ceil(story.content.split(' ').length / 200),
@@ -208,7 +208,7 @@ export class StoriesService {
           readTime,
           publishedAt: null,
         },
-        include: { category: true, author: true },
+        include: { category: true },
       });
 
       const formattedStory: Story = {
@@ -221,7 +221,7 @@ export class StoriesService {
         categoryId: story.categoryId || '',
         categoryName: story.category?.name || 'Uncategorized',
         authorId: story.authorId,
-        authorName: story.author.displayName || story.author.username,
+        authorName: '',
         status: story.status,
         viewCount: story.viewCount,
         readTime: story.readTime || readTime,
@@ -275,7 +275,7 @@ export class StoriesService {
       const updatedStory = await this.prisma.cultureStory.update({
         where: { id },
         data: updateData,
-        include: { category: true, author: true },
+        include: { category: true },
       });
 
       const formattedStory: Story = {
@@ -288,7 +288,7 @@ export class StoriesService {
         categoryId: updatedStory.categoryId || '',
         categoryName: updatedStory.category?.name || '',
         authorId: updatedStory.authorId,
-        authorName: updatedStory.author.displayName || updatedStory.author.username,
+        authorName: '',
         status: updatedStory.status,
         viewCount: updatedStory.viewCount,
         readTime: updatedStory.readTime || Math.ceil(updatedStory.content.split(' ').length / 200),
@@ -335,19 +335,17 @@ export class StoriesService {
 
   async incrementViewCount(id: string): Promise<StoryResponse> {
     try {
-      const story = await this.prisma.cultureStory.findUnique({ where: { id } });
-      if (!story) {
-        throw new NotFoundException(`Story not found: ${id}`);
-      }
+      const existing = await this.prisma.cultureStory.findUnique({ where: { id } });
+      if (!existing) throw new NotFoundException(`Story not found: ${id}`);
 
-      const updated = await this.prisma.cultureStory.update({
+      await this.prisma.cultureStory.update({
         where: { id },
-        data: { viewCount: story.viewCount + 1 },
+        data: { viewCount: { increment: 1 } },
       });
 
       return {
         success: true,
-        data: { message: `View count incremented to ${updated.viewCount}` },
+        data: { message: 'View count incremented' },
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

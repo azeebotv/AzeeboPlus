@@ -5,13 +5,14 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ConfigService } from '@nestjs/config';
 
-jest.mock('@azeebo/api-client', () => ({
-  createApiClient: jest.fn().mockReturnValue({
+jest.mock('@azeebo/http-client', () => ({
+  ServiceClient: jest.fn().mockImplementation(() => ({
     get: jest.fn(),
     post: jest.fn(),
     put: jest.fn(),
+    patch: jest.fn(),
     delete: jest.fn(),
-  }),
+  })),
 }));
 
 describe('RefundService', () => {
@@ -31,6 +32,7 @@ describe('RefundService', () => {
 
   beforeEach(async () => {
     const mockConfigService = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       get: jest.fn((key: string, defaultValue?: any) => {
         const config: Record<string, string> = {
           PAYMENT_SERVICE_URL: 'http://localhost:3003',

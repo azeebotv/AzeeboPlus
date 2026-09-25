@@ -10,10 +10,9 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { messagingApi } from '../src/api';
-import { useAuth } from '../src/contexts/AuthContext';
-import { logger } from '../src/utils/logger';
+import { messagingApi } from '@azeebo/react-data';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../src/theme';
 
 interface Conversation {
@@ -36,7 +35,6 @@ interface Message {
 }
 
 export default function MessagesScreen() {
-  
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -120,7 +118,12 @@ export default function MessagesScreen() {
   };
 
   const renderConversation = ({ item }: { item: Conversation }) => (
-    <TouchableOpacity style={styles.conversationItem} onPress={() => openConversation(item)} accessibilityLabel={`Open conversation with ${item.participantName}`} accessibilityRole="button">
+    <TouchableOpacity
+      style={styles.conversationItem}
+      onPress={() => openConversation(item)}
+      accessibilityLabel={`Open conversation with ${item.participantName}`}
+      accessibilityRole="button"
+    >
       <View style={styles.avatarContainer}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{item.participantName.charAt(0)}</Text>
@@ -239,7 +242,12 @@ export default function MessagesScreen() {
     return (
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={loadConversations} accessibilityLabel="Retry loading conversations" accessibilityRole="button">
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={loadConversations}
+          accessibilityLabel="Retry loading conversations"
+          accessibilityRole="button"
+        >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -258,7 +266,11 @@ export default function MessagesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary[500]]} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary[500]]}
+          />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import AuthShell from '@/components/auth/AuthShell';
@@ -59,7 +59,7 @@ export default function ResetPasswordPage(): React.JSX.Element {
 
     setIsLoading(true);
     try {
-      const result = await apiFetch('/auth/reset-password', {
+      const result = await apiFetch('/v1/auth/reset-password', {
         method: 'POST',
         body: JSON.stringify({ token, newPassword }),
       });
@@ -80,12 +80,12 @@ export default function ResetPasswordPage(): React.JSX.Element {
   const strengthBars = [1, 2, 3, 4];
   const strengthColor =
     passwordStrength <= 1
-      ? '#ef4444'
+      ? 'var(--color-error-500)'
       : passwordStrength === 2
-        ? '#f59e0b'
+        ? 'var(--color-warning-500)'
         : passwordStrength === 3
-          ? '#84cc16'
-          : '#22c55e';
+          ? 'var(--color-success-400)'
+          : 'var(--color-success-500)';
   const strengthLabel =
     passwordStrength <= 1
       ? 'Weak'
@@ -99,7 +99,7 @@ export default function ResetPasswordPage(): React.JSX.Element {
     return (
       <div
         className="min-h-screen flex items-center justify-center p-6"
-        style={{ backgroundColor: '#1A0A0A' }}
+        style={{ backgroundColor: 'var(--brand-near-black)' }}
       >
         <div className="text-center max-w-md">
           <div
@@ -133,7 +133,7 @@ export default function ResetPasswordPage(): React.JSX.Element {
   }
 
   return (
-    <AuthShell headlineLines={['Password', 'Reset']} backgroundFallback="#1A0A0A">
+    <AuthShell headlineLines={['Password', 'Reset']} backgroundFallback="#0b090e">
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
           <h2 className="az-headline text-white text-3xl">Reset your password</h2>
@@ -242,7 +242,7 @@ export default function ResetPasswordPage(): React.JSX.Element {
             </button>
           </div>
           {confirmPassword && newPassword !== confirmPassword && (
-            <p className="mt-1 text-xs" style={{ color: '#CC1C1C' }}>
+            <p className="mt-1 text-xs" style={{ color: 'var(--brand-red)' }}>
               Passwords do not match
             </p>
           )}

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 interface AnalyticsEvent {
@@ -20,10 +20,10 @@ export class AgbalaAnalyticsService {
   private readonly logger = new Logger(AgbalaAnalyticsService.name);
   private readonly analyticsServiceUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
     this.analyticsServiceUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3008',
+      'http://analytics-service:3008'
     );
   }
 

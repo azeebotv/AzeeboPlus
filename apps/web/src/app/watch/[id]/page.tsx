@@ -1,4 +1,3 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { resolvedApiUrl } from '../../../lib/api';
 import WatchPageClient from './WatchPageClient';

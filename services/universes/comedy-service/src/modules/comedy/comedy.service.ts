@@ -1,10 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { ComedyResponse } from './interfaces/comedy-response.interface';
+import { PrismaService } from '../database/prisma.service.js';
+import { ComedyResponse } from './interfaces/comedy-response.interface.js';
 import axios from 'axios';
-import { RedisService } from '../../common/services/redis.service';
-import { SubmitChallengeDto } from './dto/submit-challenge.dto';
+import { RedisService } from '@azeebo/shared-services';
+import { SubmitChallengeDto } from './dto/submit-challenge.dto.js';
 
 @Injectable()
 export class ComedyService {
@@ -13,21 +13,21 @@ export class ComedyService {
   private readonly cachePrefix = 'comedy';
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-    private readonly redisService: RedisService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(RedisService) private readonly redisService: RedisService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
   }
 
-  private async trackAnalyticsEvent(
+  private async trackEvent(
     eventName: string,
     userId: string,
-    metadata: Record<string, unknown>
+    metadata: Record<string, unknown> = {}
   ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, {
-        eventName,
+      await axios.post(`${this.analyticsServiceBaseUrl}/v1/analytics/events`, {
+        type: eventName,
         userId,
         universe: 'comedy',
         metadata,
@@ -48,7 +48,6 @@ export class ComedyService {
     const clips = await this.prisma.comedyClip.findMany({
       include: {
         comedian: true,
-        creator: true,
         _count: {
           select: { shares: true, likes: true },
         },
@@ -68,7 +67,6 @@ export class ComedyService {
   async getComedians(): Promise<ComedyResponse> {
     const comedians = await this.prisma.comedianProfile.findMany({
       include: {
-        user: true,
         _count: {
           select: { clips: true },
         },
@@ -132,7 +130,7 @@ export class ComedyService {
       },
     });
 
-    await this.trackAnalyticsEvent('challenge_participated', userId, {
+    await this.trackEvent('challenge_participated', userId, {
       challengeId: body.challengeId,
       entryId: entry.id,
     });
@@ -195,7 +193,6 @@ export class ComedyService {
     const clips = await this.prisma.comedyClip.findMany({
       include: {
         comedian: true,
-        creator: true,
         _count: {
           select: { shares: true, likes: true, comments: true },
         },
@@ -207,6 +204,32 @@ export class ComedyService {
     return {
       success: true,
       data: { clips: clips as unknown[] },
+    };
+  }
+
+  async viewClip(userId: string, clipId: string): Promise<ComedyResponse> {
+    const clip = await this.prisma.comedyClip.findUnique({
+      where: { id: clipId },
+    });
+
+    if (!clip) {
+      throw new NotFoundException('Clip not found');
+    }
+
+    await this.prisma.comedyClip.update({
+      where: { id: clipId },
+      data: { viewCount: { increment: 1 } },
+    });
+
+    await this.trackEvent('content_view', userId, {
+      clipId,
+      comedianId: clip.comedianId,
+      type: 'comedy_clip',
+    });
+
+    return {
+      success: true,
+      data: { message: 'Clip view tracked' },
     };
   }
 }

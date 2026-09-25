@@ -2,6 +2,45 @@
 // All pricing values MUST be provided via environment variables or database.
 // These types define the shape only — no hardcoded prices.
 
+/**
+ * Single source of truth for default price constants (the fallbacks used when
+ * an env var is unset). Every service that prices something reads its default
+ * from here — payment-service's PricingService uses this map for its
+ * `getConfig(key)` fallbacks, so defaults live in one place instead of being
+ * scattered across call sites.
+ */
+export const PRICE_CONFIG: Record<string, string> = {
+  // Movies
+  MOVIE_RENT_PRICE: '500',
+  MOVIE_BUY_PRICE: '1500',
+  MOVIE_PASS_PRICE: '4500',
+  // Vote packages
+  VOTE_STANDARD_10: '100',
+  VOTE_STANDARD_50: '450',
+  VOTE_STANDARD_100: '850',
+  VOTE_STANDARD_500: '4000',
+  VOTE_REALITY_100: '100',
+  VOTE_REALITY_500: '450',
+  VOTE_REALITY_1000: '850',
+  VOTE_REALITY_5000: '4000',
+  SUPER_VOTE_1: '500',
+  SUPER_VOTE_5: '2000',
+  SUPER_VOTE_10: '3500',
+  SUPER_VOTE_25: '8000',
+  // Subscriptions
+  SUB_BASIC_PRICE: '0',
+  SUB_PREMIUM_PRICE: '2000',
+  SUB_VIP_PRICE: '5000',
+  // Wallet limits
+  WALLET_MIN_DEPOSIT: '100',
+  WALLET_MAX_DEPOSIT: '1000000',
+  WALLET_MIN_WITHDRAWAL: '500',
+  // Passes
+  PASS_DAILY_PRICE: '200',
+  PASS_WEEKLY_PRICE: '1500',
+  PASS_MONTHLY_PRICE: '5000',
+};
+
 export interface PricingPlan {
   id: string;
   name: string;
@@ -92,7 +131,9 @@ export function getPricing(env?: Record<string, string | undefined>): {
         price: r('SUBSCRIPTION_BASIC_PRICE', e?.SUBSCRIPTION_BASIC_PRICE),
         currency,
         interval: 'monthly' as const,
-        features: (e?.SUBSCRIPTION_BASIC_FEATURES || 'HD Streaming,Limited Content,1 Device').split(','),
+        features: (e?.SUBSCRIPTION_BASIC_FEATURES || 'HD Streaming,Limited Content,1 Device').split(
+          ','
+        ),
       },
       {
         id: 'premium',
@@ -100,7 +141,9 @@ export function getPricing(env?: Record<string, string | undefined>): {
         price: r('SUBSCRIPTION_PREMIUM_PRICE', e?.SUBSCRIPTION_PREMIUM_PRICE),
         currency,
         interval: 'monthly' as const,
-        features: (e?.SUBSCRIPTION_PREMIUM_FEATURES || '4K Streaming,All Content,3 Devices,Offline Download').split(','),
+        features: (
+          e?.SUBSCRIPTION_PREMIUM_FEATURES || '4K Streaming,All Content,3 Devices,Offline Download'
+        ).split(','),
       },
       {
         id: 'vip',
@@ -108,7 +151,10 @@ export function getPricing(env?: Record<string, string | undefined>): {
         price: r('SUBSCRIPTION_VIP_PRICE', e?.SUBSCRIPTION_VIP_PRICE),
         currency,
         interval: 'monthly' as const,
-        features: (e?.SUBSCRIPTION_VIP_FEATURES || '4K Streaming,All Content,5 Devices,Offline Download,Early Access,Exclusive Content').split(','),
+        features: (
+          e?.SUBSCRIPTION_VIP_FEATURES ||
+          '4K Streaming,All Content,5 Devices,Offline Download,Early Access,Exclusive Content'
+        ).split(','),
       },
     ],
     universePricing: {

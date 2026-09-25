@@ -29,9 +29,9 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE DATABASE azeebo_referral;
     CREATE DATABASE azeebo_subscription;
     CREATE DATABASE azeebo_admin;
-    CREATE DATABASE azeebo_creator_portal;
+    CREATE DATABASE azeebo_creator;
 
-    CREATE USER azeebo WITH PASSWORD '${DB_PASSWORD:-azeebo_dev_2024}';
+    CREATE USER azeebo WITH PASSWORD '${DB_PASSWORD}';
 
     GRANT ALL PRIVILEGES ON DATABASE azeebo_auth TO azeebo;
     GRANT ALL PRIVILEGES ON DATABASE azeebo_user TO azeebo;
@@ -60,5 +60,5 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     GRANT ALL PRIVILEGES ON DATABASE azeebo_referral TO azeebo;
     GRANT ALL PRIVILEGES ON DATABASE azeebo_subscription TO azeebo;
     GRANT ALL PRIVILEGES ON DATABASE azeebo_admin TO azeebo;
-    GRANT ALL PRIVILEGES ON DATABASE azeebo_creator_portal TO azeebo;
+    GRANT ALL PRIVILEGES ON DATABASE azeebo_creator TO azeebo;
 EOSQL

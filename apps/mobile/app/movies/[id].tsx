@@ -11,12 +11,19 @@ import {
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiClient } from '../../src/api';
+import { apiClient } from '@azeebo/react-data';
 import { moviePricing } from '../../src/config/prices';
-import type { Movie, CastMember } from '../../src/types/api';
+import type { Movie, CastMember } from '@azeebo/react-data/types/api';
+import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 const PRICING_OPTIONS = [
-  { id: moviePricing.rent48h.id, type: moviePricing.rent48h.type, price: moviePricing.rent48h.label, features: ['48 hour access', 'HD quality'] },
+  {
+    id: moviePricing.rent48h.id,
+    type: moviePricing.rent48h.type,
+    price: moviePricing.rent48h.label,
+    features: ['48 hour access', 'HD quality'],
+  },
   {
     id: moviePricing.buy.id,
     type: moviePricing.buy.type,
@@ -56,6 +63,7 @@ export default function MovieDetailPage() {
         apiClient.get<Movie[]>(`/movies/${id}/similar`),
       ]);
       setMovie(movieRes);
+      analytics.movieViewed(String(id));
       setCast(castRes || []);
       setSimilarMovies(similarRes || []);
     } catch (err: unknown) {
@@ -165,7 +173,9 @@ export default function MovieDetailPage() {
               renderItem={({ item }) => (
                 <View style={styles.castCard}>
                   <View style={styles.castAvatar}>
-                    <Text style={styles.castEmoji}>{(item as { emoji?: string }).emoji || '🎭'}</Text>
+                    <Text style={styles.castEmoji}>
+                      {(item as { emoji?: string }).emoji || '🎭'}
+                    </Text>
                   </View>
                   <Text style={[styles.castName, { color: isDark ? '#fff' : '#000' }]}>
                     {item.name}
@@ -253,7 +263,7 @@ export default function MovieDetailPage() {
               <Text style={styles.purchaseButtonText}>Pay {selectedOption.price}</Text>
             </TouchableOpacity>
 
-            {selectedOption.id === '3' && (
+            {selectedOption.id === moviePricing.pass.id && (
               <Text style={styles.passNote}>
                 Cancel anytime. Includes access to all movies in the Cinema Plus library.
               </Text>
@@ -321,7 +331,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 60,
     right: 16,
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -352,11 +362,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   heroMetaItem: {
-    color: '#ccc',
+    color: colors.neutral[300],
     fontSize: 14,
   },
   heroDirector: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 13,
   },
   content: {
@@ -372,7 +382,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
     paddingVertical: 14,
     borderRadius: 10,
     gap: 8,
@@ -390,7 +400,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -402,7 +412,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -419,12 +429,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   pricingLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
     marginRight: 8,
   },
   pricingValue: {
-    color: '#FFEAA7',
+    color: colors.category.highlight,
     fontSize: 18,
     fontWeight: '700',
     marginRight: 6,
@@ -435,7 +445,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pricingChevron: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 24,
   },
   section: {
@@ -447,7 +457,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   synopsisText: {
-    color: '#ccc',
+    color: colors.neutral[300],
     fontSize: 15,
     lineHeight: 22,
   },
@@ -463,7 +473,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -478,7 +488,7 @@ const styles = StyleSheet.create({
   },
   castRole: {
     fontSize: 11,
-    color: '#888',
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   similarList: {
@@ -490,7 +500,7 @@ const styles = StyleSheet.create({
   },
   similarThumbnail: {
     height: 150,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -506,7 +516,7 @@ const styles = StyleSheet.create({
   },
   similarGenre: {
     fontSize: 12,
-    color: '#888',
+    color: colors.text.secondary,
   },
   pricingModal: {
     position: 'absolute',
@@ -535,7 +545,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeButton: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 20,
   },
   pricingOptions: {
@@ -544,13 +554,13 @@ const styles = StyleSheet.create({
   },
   pricingOption: {
     padding: 16,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   pricingOptionSelected: {
-    borderColor: '#FFEAA7',
+    borderColor: colors.category.highlight,
   },
   pricingOptionHeader: {
     flexDirection: 'row',
@@ -565,13 +575,13 @@ const styles = StyleSheet.create({
   pricingOptionPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFEAA7',
+    color: colors.category.highlight,
   },
   pricingOptionFeatures: {
     gap: 4,
   },
   pricingOptionFeature: {
-    color: '#ccc',
+    color: colors.neutral[300],
     fontSize: 13,
   },
   selectedCheck: {
@@ -581,7 +591,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -590,7 +600,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   purchaseButton: {
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
     paddingVertical: 16,
     borderRadius: 10,
     alignItems: 'center',
@@ -601,7 +611,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   passNote: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
     textAlign: 'center',
     marginTop: 12,

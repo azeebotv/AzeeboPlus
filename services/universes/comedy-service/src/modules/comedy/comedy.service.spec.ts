@@ -1,10 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ComedyService } from './comedy.service';
-import { PrismaService } from '../database/prisma.service';
+import { ComedyService } from './comedy.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { RedisService } from '@azeebo/shared-services';
 import axios from 'axios';
 
+jest.mock('@azeebo/shared-services', () => ({
+  RedisService: jest.fn(),
+}));
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -32,6 +36,14 @@ describe('ComedyService', () => {
           useValue: {
             get: jest.fn().mockReturnValue('test-value'),
             getOrThrow: jest.fn().mockReturnValue('test-value'),
+          },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue('OK'),
+            del: jest.fn().mockResolvedValue(1),
           },
         },
       ],
@@ -165,6 +177,7 @@ describe('ComedyService', () => {
       const result = await service.getTrending();
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).clips.length).toBe(2);
     });
   });

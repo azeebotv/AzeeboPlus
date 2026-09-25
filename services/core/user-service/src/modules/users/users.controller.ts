@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Patch,
@@ -10,21 +11,24 @@ import {
   Delete,
   Param,
   Query,
-  HttpException,
-  HttpStatus,
   UnauthorizedException,
+  UseInterceptors,
+  UploadedFile,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
-import { UsersService } from './users.service';
-import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
-import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
-import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto';
-import { UpdatePreferencesDto } from './dto/update-preferences.dto';
-import { ContentIdDto } from './dto/content-id.dto';
+import { UsersService } from './users.service.js';
+import { AvatarService } from './avatar.service.js';
+import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto.js';
+import { UpdateUserProfileDto } from './dto/update-user-profile.dto.js';
+import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto.js';
+import { ContentIdDto } from './dto/content-id.dto.js';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { FeatureFlag, FeatureFlagGuard, userFlags } from '@azeebo/feature-flags';
 
 interface AuthenticatedRequest {
   user: {
@@ -38,7 +42,10 @@ interface AuthenticatedRequest {
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    @Inject(UsersService) private readonly usersService: UsersService,
+    @Inject(AvatarService) private readonly avatarService: AvatarService
+  ) {}
 
   private getUserId(req: AuthenticatedRequest): string {
     const userId = req.user?.sub;
@@ -47,6 +54,56 @@ export class UsersController {
     }
     return userId;
   }
+  @Post('me/avatar')
+  @UseInterceptors(FileInterceptor('avatar'))
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 3600000)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Upload avatar image' })
+  @ApiResponse({ status: 200, description: 'Avatar uploaded' })
+  @ApiResponse({ status: 400, description: 'Invalid file' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async uploadAvatar(
+    @Request() req: AuthenticatedRequest,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    if (!file) {
+      throw new UnauthorizedException('No file provided');
+    }
+    const result = await this.avatarService.uploadAvatar(this.getUserId(req), {
+      buffer: file.buffer,
+      mimetype: file.mimetype,
+      size: file.size,
+      originalname: file.originalname,
+    });
+    return { success: true, data: result };
+  }
+
+  @Delete('me/avatar')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 3600000)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete avatar image' })
+  @ApiResponse({ status: 200, description: 'Avatar deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async deleteAvatar(@Request() req: AuthenticatedRequest) {
+    await this.avatarService.deleteAvatar(this.getUserId(req));
+    return { success: true };
+  }
+
+  @Get('me/avatar/upload-url')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 3600000)
+  @ApiOperation({ summary: 'Get pre-signed upload URL for avatar' })
+  @ApiResponse({ status: 200, description: 'Upload URL generated' })
+  async getAvatarUploadUrl(
+    @Request() req: AuthenticatedRequest,
+    @Query('format') format: string = 'image/jpeg'
+  ) {
+    const result = await this.avatarService.getUploadUrl(this.getUserId(req), format);
+    return { success: true, data: result };
+  }
+
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'User profile' })
@@ -66,6 +123,7 @@ export class UsersController {
     return this.usersService.updateProfile(this.getUserId(req), dto);
   }
 
+  // Wildcard GET route MUST come after all static GET routes
   @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
@@ -77,7 +135,8 @@ export class UsersController {
   }
 
   @Post(':id/follow')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(userFlags.followSystem)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Follow a user' })
   @ApiResponse({ status: 201, description: 'User followed' })
@@ -88,7 +147,8 @@ export class UsersController {
   }
 
   @Delete(':id/follow')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(userFlags.followSystem)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Unfollow a user' })
   @ApiResponse({ status: 200, description: 'User unfollowed' })
@@ -98,25 +158,39 @@ export class UsersController {
   }
 
   @Public()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.followSystem)
   @Get(':id/followers')
   @ApiOperation({ summary: 'Get user followers' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'User followers' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getFollowers(@Param('id') id: string, @Query('page') page = 1, @Query('limit') limit = 20) {
-    return this.usersService.getFollowers(id, Number(page), Number(limit));
+  async getFollowers(
+    @Param('id') id: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20
+  ) {
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
+    return this.usersService.getFollowers(id, Number(page), safeLimit);
   }
 
   @Public()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.followSystem)
   @Get(':id/following')
   @ApiOperation({ summary: 'Get users being followed' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Users being followed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getFollowing(@Param('id') id: string, @Query('page') page = 1, @Query('limit') limit = 20) {
-    return this.usersService.getFollowing(id, Number(page), Number(limit));
+  async getFollowing(
+    @Param('id') id: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20
+  ) {
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
+    return this.usersService.getFollowing(id, Number(page), safeLimit);
   }
 
   @Get('me/preferences')
@@ -147,10 +221,11 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getHistory(
     @Request() req: AuthenticatedRequest,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20
   ): Promise<unknown> {
-    return this.usersService.getWatchHistory(this.getUserId(req), Number(page), Number(limit));
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
+    return this.usersService.getWatchHistory(this.getUserId(req), Number(page), safeLimit);
   }
 
   @Get('me/saved')
@@ -161,10 +236,11 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getSavedItems(
     @Request() req: AuthenticatedRequest,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20
   ): Promise<unknown> {
-    return this.usersService.getSavedItems(this.getUserId(req), Number(page), Number(limit));
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
+    return this.usersService.getSavedItems(this.getUserId(req), Number(page), safeLimit);
   }
 
   @Post('me/saved')
@@ -190,6 +266,8 @@ export class UsersController {
   }
 
   @Get('me/universe-affinity')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.universeAffinity)
   @ApiOperation({ summary: 'Get user universe affinity' })
   @ApiResponse({ status: 200, description: 'Universe affinity' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -199,6 +277,8 @@ export class UsersController {
   }
 
   @Patch('me/universe-affinity')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.universeAffinity)
   @ApiOperation({ summary: 'Update user universe affinity' })
   @ApiResponse({ status: 200, description: 'Universe affinity updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -222,7 +302,11 @@ export class UsersController {
     @Request() req: AuthenticatedRequest,
     @Body() dto: CompleteProfileSetupDto
   ) {
-    const result = await this.usersService.completeProfileSetup(this.getUserId(req), dto, req.user.email);
+    const result = await this.usersService.completeProfileSetup(
+      this.getUserId(req),
+      dto,
+      req.user.email
+    );
     return ApiResponseWrapper.success((result as { data: unknown }).data ?? result);
   }
 
@@ -236,15 +320,18 @@ export class UsersController {
   }
 
   @Get('me/continue-watching')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.continueWatching)
   @ApiOperation({ summary: 'Get continue watching list' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Continue watching items' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getContinueWatching(
     @Request() req: AuthenticatedRequest,
-    @Query('limit') limit = 10
+    @Query('limit') limit: number = 10
   ) {
-    const result = await this.usersService.getContinueWatching(this.getUserId(req), Number(limit));
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 10), 50);
+    const result = await this.usersService.getContinueWatching(this.getUserId(req), safeLimit);
     return ApiResponseWrapper.success((result as { data: unknown }).data ?? result);
   }
 
@@ -258,6 +345,8 @@ export class UsersController {
   }
 
   @Put('me/privacy-settings')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.privacySettingsV2)
   @ApiOperation({ summary: 'Update user privacy settings' })
   @ApiResponse({ status: 200, description: 'Privacy settings updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CacheService } from './cache.service';
 import { SanitizationService, SpoilerLevel } from './sanitization.service';
@@ -75,9 +75,9 @@ export class RoomService {
   };
 
   constructor(
-    private prisma: PrismaService,
-    private cache: CacheService,
-    private sanitization: SanitizationService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private cache: CacheService,
+    @Inject(SanitizationService) private sanitization: SanitizationService
   ) {}
 
   private formatRoom(room: Record<string, unknown>): Room {
@@ -113,7 +113,7 @@ export class RoomService {
   async getRooms(page = 1, limit = 20): Promise<RoomResponse> {
     try {
       const cacheKey = `rooms:list:${page}:${limit}`;
-      const cached = this.cache.get<RoomResponse>(cacheKey);
+      const cached = await this.cache.get<RoomResponse>(cacheKey);
       if (cached) return cached;
 
       const pagination = buildOffsetPagination(page, limit);
@@ -138,7 +138,7 @@ export class RoomService {
         },
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       this.logger.error(`Failed to get rooms: ${error}`);
@@ -152,7 +152,7 @@ export class RoomService {
   async getRoomBySlug(slug: string): Promise<RoomResponse> {
     try {
       const cacheKey = `rooms:detail:${slug}`;
-      const cached = this.cache.get<RoomResponse>(cacheKey);
+      const cached = await this.cache.get<RoomResponse>(cacheKey);
       if (cached) return cached;
 
       const room = await this.prisma.room.findUnique({
@@ -168,7 +168,7 @@ export class RoomService {
         data: this.formatRoom(room),
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -183,7 +183,7 @@ export class RoomService {
   async getRoomPosts(roomId: string, page = 1, limit = 20): Promise<RoomResponse> {
     try {
       const cacheKey = `rooms:posts:${roomId}:${page}:${limit}`;
-      const cached = this.cache.get<RoomResponse>(cacheKey);
+      const cached = await this.cache.get<RoomResponse>(cacheKey);
       if (cached) return cached;
 
       const where = { roomId, status: 'published' };
@@ -210,7 +210,7 @@ export class RoomService {
         },
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       this.logger.error(`Failed to get room posts: ${error}`);
@@ -238,7 +238,7 @@ export class RoomService {
         },
       });
 
-      this.cache.invalidate('rooms:');
+      await this.cache.invalidate('rooms:');
       return { success: true, data: this.formatRoom(room) };
     } catch (error) {
       this.logger.error(`Failed to create room: ${error}`);
@@ -272,7 +272,7 @@ export class RoomService {
         data: updateData,
       });
 
-      this.cache.invalidate('rooms:');
+      await this.cache.invalidate('rooms:');
       return { success: true, data: this.formatRoom(updated) };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -317,8 +317,8 @@ export class RoomService {
         },
       });
 
-      this.cache.invalidate(`rooms:posts:${data.roomId}`);
-      this.cache.invalidate('rooms:');
+      await this.cache.invalidate(`rooms:posts:${data.roomId}`);
+      await this.cache.invalidate('rooms:');
       return { success: true, data: this.formatRoomPost(post) };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
@@ -342,7 +342,7 @@ export class RoomService {
       }
 
       await this.prisma.roomPost.delete({ where: { id } });
-      this.cache.invalidate(`rooms:posts:${existing.roomId}`);
+      await this.cache.invalidate(`rooms:posts:${existing.roomId}`);
       return { success: true, data: { message: 'Post deleted' } };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;

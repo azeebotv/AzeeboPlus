@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import type { RouteProp } from '@react-navigation/native';
 import { AgbalaEndCard } from '../components/AgbalaEndCard';
 import { colors, typography, spacing } from '../../../../theme';
-import { apiClient } from '../../../../api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { useRouter } from 'expo-router';
 import { LoadingState, ErrorState } from '../../../../components/StateContainers';
 import type { AgbalaStackParamList } from '../types';
 
@@ -17,9 +18,10 @@ interface PathData {
 
 export default function AgbalaPathScreen({ route }: { route: RouteProps }) {
   const { pathId } = route?.params || {};
+  const router = useRouter();
   const [pathData, setPathData] = useState<Record<string, PathData>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadPathData();
@@ -27,15 +29,43 @@ export default function AgbalaPathScreen({ route }: { route: RouteProps }) {
 
   const loadPathData = async () => {
     try {
-      const response = await apiClient.get<Record<string, PathData>>('/v1/vertical/storyworlds/agbala/paths');
+      const response = await apiClient.get<Record<string, PathData>>(
+        '/v1/vertical/storyworlds/agbala/paths'
+      );
       setPathData(response || {});
     } catch (err) {
       // Fallback to default data if API fails
       setPathData({
-        warrior: { title: 'Path of the Warrior', description: "Embark on the warrior's journey through Agbala.", chapters: ['The Awakening', 'Trial of Strength', 'Battle of Wills', 'The Final Stand'] },
-        sage: { title: 'Path of the Sage', description: 'Seek the wisdom hidden in Agbala.', chapters: ['The First Insight', 'Ancient Knowledge', 'The Test of Truth', 'Enlightenment'] },
-        trickster: { title: 'Path of the Trickster', description: 'Navigate Agbala with cunning and wit.', chapters: ['The First Deception', 'Shadow Games', 'The Double Cross', 'Final Gambit'] },
-        healer: { title: 'Path of the Healer', description: 'Restore balance to Agbala.', chapters: ['The Call to Heal', 'Trials of Compassion', 'The Healing Touch', 'Restoration'] },
+        warrior: {
+          title: 'Path of the Warrior',
+          description: "Embark on the warrior's journey through Agbala.",
+          chapters: ['The Awakening', 'Trial of Strength', 'Battle of Wills', 'The Final Stand'],
+        },
+        sage: {
+          title: 'Path of the Sage',
+          description: 'Seek the wisdom hidden in Agbala.',
+          chapters: [
+            'The First Insight',
+            'Ancient Knowledge',
+            'The Test of Truth',
+            'Enlightenment',
+          ],
+        },
+        trickster: {
+          title: 'Path of the Trickster',
+          description: 'Navigate Agbala with cunning and wit.',
+          chapters: ['The First Deception', 'Shadow Games', 'The Double Cross', 'Final Gambit'],
+        },
+        healer: {
+          title: 'Path of the Healer',
+          description: 'Restore balance to Agbala.',
+          chapters: [
+            'The Call to Heal',
+            'Trials of Compassion',
+            'The Healing Touch',
+            'Restoration',
+          ],
+        },
       });
     } finally {
       setIsLoading(false);
@@ -43,9 +73,11 @@ export default function AgbalaPathScreen({ route }: { route: RouteProps }) {
   };
 
   if (isLoading) return <LoadingState text="Loading path..." />;
-  if (error) return <ErrorState title="Failed to load" description={error} onRetry={loadPathData} />;
+  if (error)
+    return <ErrorState title="Failed to load" description={error} onRetry={loadPathData} />;
 
-  const path = pathData[pathId || 'warrior'] || pathData.warrior || { title: '', description: '', chapters: [] };
+  const path = pathData[pathId || 'warrior'] ||
+    pathData.warrior || { title: '', description: '', chapters: [] };
 
   return (
     <ScrollView style={styles.container}>
@@ -69,7 +101,11 @@ export default function AgbalaPathScreen({ route }: { route: RouteProps }) {
         title="Continue Your Journey"
         description="More chapters will be unlocked as you progress."
         buttonText="Back to Home"
-        onPress={() => {}}
+        onPress={() => {
+          // Storyworld lives outside the tab stack — route back to the
+          // vertical hub so Back behaves predictably from a deep link.
+          router.push('/vertical');
+        }}
       />
     </ScrollView>
   );
@@ -78,7 +114,7 @@ export default function AgbalaPathScreen({ route }: { route: RouteProps }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.primary,
+    backgroundColor: colors.bg.primary,
   },
   header: {
     padding: spacing.xl,

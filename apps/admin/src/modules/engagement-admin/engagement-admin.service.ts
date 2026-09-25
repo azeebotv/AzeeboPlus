@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
 export class EngagementAdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getEngagementMetrics() {
     const today = new Date();
@@ -15,7 +15,13 @@ export class EngagementAdminService {
       await Promise.all([
         this.prisma.contentItem.aggregate({ _sum: { viewCount: true } }),
         this.prisma.contentItem.count({ where: { status: 'published' } }),
-        this.prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
+        this.prisma.walletTransaction
+          .findMany({
+            where: { createdAt: { gte: weekAgo }, status: 'completed' },
+            distinct: ['walletId'],
+            select: { walletId: true },
+          })
+          .then((txns) => txns.length),
         this.prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
         this.prisma.walletTransaction.count({
           where: { createdAt: { gte: today }, status: 'completed' },
@@ -66,7 +72,9 @@ export class EngagementAdminService {
       {} as Record<string, { published: number; drafts: number }>
     );
 
-    const allDates = [...new Set([...Object.keys(userByDate), ...Object.keys(contentByDate)])].sort();
+    const allDates = [
+      ...new Set([...Object.keys(userByDate), ...Object.keys(contentByDate)]),
+    ].sort();
 
     return allDates.map((date) => ({
       date,

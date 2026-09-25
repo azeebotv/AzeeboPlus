@@ -1,13 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
-import { RealityService } from './reality.service';
-import { PrismaService } from '../database/prisma.service';
+import { NotFoundException, ConflictException } from '@nestjs/common';
+import { RealityService } from './reality.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from '../../common/services/redis.service';
+import { CacheService } from '@azeebo/shared-services';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
 
 describe('RealityService', () => {
   let service: RealityService;
-  let prisma: PrismaService;
 
   const mockPrismaService = {
     realityShow: {
@@ -55,18 +59,18 @@ describe('RealityService', () => {
           },
         },
         {
-          provide: RedisService,
+          provide: CacheService,
           useValue: {
             get: jest.fn().mockResolvedValue(null),
             set: jest.fn().mockResolvedValue('OK'),
             del: jest.fn().mockResolvedValue(1),
+            invalidate: jest.fn().mockResolvedValue(1),
           },
         },
       ],
     }).compile();
 
     service = module.get<RealityService>(RealityService);
-    prisma = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
   });
@@ -263,6 +267,7 @@ describe('RealityService', () => {
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
       const data = result.data as { premiumExtras: unknown[] };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const extras = data.premiumExtras as any[];
       extras.forEach((extra) => {
         expect(extra).toHaveProperty('id');
@@ -284,6 +289,7 @@ describe('RealityService', () => {
       };
 
       mockPrismaService.vote.findUnique.mockResolvedValue(null);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (mockPrismaService as any).$transaction = jest.fn(async (cb) => {
         return cb(mockPrismaService);
       });

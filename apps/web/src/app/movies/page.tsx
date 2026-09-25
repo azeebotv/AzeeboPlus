@@ -1,9 +1,11 @@
 'use client';
-import React from 'react';
+import { useEffect } from 'react';
+
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api, ContentItem, Category } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
@@ -12,20 +14,29 @@ import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
+import analytics from '@/lib/analytics';
 
-const MOVIES_UNIVERSE_ID = 'u0000001-0000-0000-0000-000000000004';
+function MoviesPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('movies');
+  }, []);
 
-export default function MoviesPage(): React.JSX.Element {
+  const universesQuery = useUniversesQuery();
+
+  const moviesUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'movies');
+
   const moviesQuery = useQuery({
-    queryKey: ['movies', MOVIES_UNIVERSE_ID],
+    queryKey: ['movies', moviesUniverse?.id],
     queryFn: async () => {
-      const res = await api.content.getContentByUniverse(MOVIES_UNIVERSE_ID, 1, 20);
+      if (!moviesUniverse?.id) throw new Error('Movies universe not found');
+      const res = await api.content.getContentByUniverse(moviesUniverse.id, 1, 20);
       if (res.success && res.data) {
         return Array.isArray(res.data) ? res.data : res.data.items || [];
       }
       throw new Error(res.message || 'Failed to load movies');
     },
     staleTime: 60000,
+    enabled: !!moviesUniverse?.id,
   });
 
   const categoriesQuery = useQuery({
@@ -46,8 +57,11 @@ export default function MoviesPage(): React.JSX.Element {
   const error = moviesQuery.error?.message || null;
 
   return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Movies" />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Movies" logoVariant="light" />
 
       {/* Hero Section */}
       <section className="relative">
@@ -65,12 +79,18 @@ export default function MoviesPage(): React.JSX.Element {
         ) : movies.length > 0 ? (
           <div className="relative h-[400px] sm:h-[500px]">
             <OptimizedImage
-              src={movies[0].thumbnail}
+              src={movies[0].thumbnail || '/images/poster_ember_queen.jpg'}
               alt={movies[0].title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
-            <AmbientGlow color="rgba(245,158,11,0.25)" size={500} className="bottom-0 right-0" />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(11,9,14,1) 0%, rgba(11,9,14,0.6) 40%, rgba(11,9,14,0.3) 100%)',
+              }}
+            />
+            <AmbientGlow color="rgba(232,66,10,0.22)" size={550} className="bottom-0 right-0" />
 
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
               <motion.div
@@ -81,13 +101,13 @@ export default function MoviesPage(): React.JSX.Element {
               >
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                 >
                   Premium
                 </span>
                 <span
                   className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                  style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                 >
                   {movies[0].contentType || 'Movie'}
                 </span>
@@ -125,18 +145,20 @@ export default function MoviesPage(): React.JSX.Element {
                     Play Now
                   </motion.button>
                 </Link>
-                <motion.button
-                  type="button"
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    backgroundColor: 'rgba(255,255,255,0.08)',
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Add to Library
-                </motion.button>
+                <Link href={`/watch/${movies[0].id}`}>
+                  <motion.button
+                    type="button"
+                    className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      backgroundColor: 'rgba(255,255,255,0.08)',
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Add to Library
+                  </motion.button>
+                </Link>
               </motion.div>
             </div>
           </div>
@@ -152,7 +174,7 @@ export default function MoviesPage(): React.JSX.Element {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <motion.div
             className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-hide"
-            role="listbox"
+            role="group"
             aria-label="Movie categories"
             initial="hidden"
             animate="visible"
@@ -165,7 +187,6 @@ export default function MoviesPage(): React.JSX.Element {
               <motion.button
                 key={category.id}
                 type="button"
-                role="option"
                 className="whitespace-nowrap px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium text-white/70 hover:text-white transition-colors flex-shrink-0"
                 style={{
                   border: '1px solid rgba(255,255,255,0.1)',
@@ -200,7 +221,7 @@ export default function MoviesPage(): React.JSX.Element {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass overflow-hidden">
+              <div key={`movie-skeleton-${i}`} className="az-glass overflow-hidden">
                 <Skeleton height="240px" borderRadius="0" className="sm:h-[240px]" />
                 <div className="p-4 space-y-3">
                   <Skeleton height="20px" width="75%" borderRadius="0.25rem" />
@@ -222,15 +243,21 @@ export default function MoviesPage(): React.JSX.Element {
                     />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                      style={{
+                        backgroundColor: 'var(--brand-orange)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       Premium
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                        style={{
+                          backgroundColor: 'rgba(232,66,10,0.2)',
+                          color: 'var(--brand-orange)',
+                        }}
                       >
                         {movie.contentType || 'Movie'}
                       </span>
@@ -259,7 +286,9 @@ export default function MoviesPage(): React.JSX.Element {
         )}
       </section>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }
+
+export default MoviesPageContent;

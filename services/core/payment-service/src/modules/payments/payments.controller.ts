@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Post,
   Body,
@@ -7,7 +8,6 @@ import {
   Request,
   HttpCode,
   HttpStatus,
-  Headers,
   Param,
 } from '@nestjs/common';
 import {
@@ -20,31 +20,29 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
-  ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 
-import { PaymentsService } from './payments.service';
-import { InitializePaymentDto } from './dto/initialize-payment.dto';
-import { VerifyPaymentDto } from './dto/verify-payment.dto';
-import { RequestRefundDto } from './dto/request-refund.dto';
-import { WebhookPayloadDto } from '../webhooks/dto/webhook-payload.dto';
+import { PaymentsService } from './payments.service.js';
+import { InitializePaymentDto } from './dto/initialize-payment.dto.js';
+import { VerifyPaymentDto } from './dto/verify-payment.dto.js';
+import { RequestRefundDto } from './dto/request-refund.dto.js';
 import {
   PaymentResponse,
   InitializePaymentResponse,
   VerifyPaymentResponse,
   TransactionHistoryResponse,
-} from './interfaces/payment-response.interface';
+} from './interfaces/payment-response.interface.js';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlag, paymentFlags } from '@azeebo/feature-flags';
 
 @ApiTags('Payments')
 @ApiBearerAuth()
-@Controller('v1/payments')
+@Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
 
   @Post('initialize')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({
     summary: 'Initialize a payment',
@@ -119,14 +117,58 @@ export class PaymentsController {
     },
   })
   async initializePayment(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string; kycVerified?: boolean } },
     @Body() initializePaymentDto: InitializePaymentDto
   ): Promise<InitializePaymentResponse> {
-    return this.paymentsService.initializePayment(req.user.id, initializePaymentDto);
+    return this.paymentsService.initializePayment(
+      req.user.id,
+      initializePaymentDto,
+      req.user.kycVerified === true
+    );
+  }
+
+  @Post('intent')
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(paymentFlags.intentsApi)
+  @RateLimit(10, 60000)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Create a payment intent (deferred authorization)',
+    description:
+      'Creates a payment intent without calling the payment provider. Confirm the intent to obtain the checkout URL.',
+  })
+  @ApiCreatedResponse({ description: 'Payment intent created' })
+  @ApiBadRequestResponse({ description: 'Invalid input - validation failed' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized - invalid or missing JWT token' })
+  async createIntent(
+    @Request() req: { user: { sub: string; id: string } },
+    @Body() initializePaymentDto: InitializePaymentDto
+  ): Promise<PaymentResponse> {
+    return this.paymentsService.createIntent(req.user.id, initializePaymentDto);
+  }
+
+  @Post('intent/:id/confirm')
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(paymentFlags.intentsApi)
+  @RateLimit(10, 60000)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Confirm a payment intent',
+    description:
+      'Calls the active payment provider to obtain the checkout URL for a created intent.',
+  })
+  @ApiOkResponse({ description: 'Payment intent confirmed' })
+  @ApiBadRequestResponse({ description: 'Invalid intent or provider failure' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized - invalid or missing JWT token' })
+  async confirmIntent(
+    @Request() req: { user: { sub: string; id: string } },
+    @Param('id') id: string
+  ): Promise<PaymentResponse> {
+    return this.paymentsService.confirmIntent(req.user.id, id);
   }
 
   @Post('verify')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(20, 60000)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -181,14 +223,13 @@ export class PaymentsController {
     },
   })
   async verifyPayment(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body() verifyPaymentDto: VerifyPaymentDto
   ): Promise<VerifyPaymentResponse> {
     return this.paymentsService.verifyPayment(req.user.id, verifyPaymentDto.transactionId);
   }
 
   @Get('history')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({
     summary: 'Get payment history',
     description: 'Retrieves the payment transaction history for the authenticated user',
@@ -234,13 +275,13 @@ export class PaymentsController {
     },
   })
   async getPaymentHistory(
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { sub: string; id: string } }
   ): Promise<TransactionHistoryResponse> {
     return this.paymentsService.getPaymentHistory(req.user.id);
   }
 
+  // Wildcard GET route MUST come after all static GET routes
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({
     summary: 'Get payment details',
     description: 'Retrieves details of a specific payment transaction',
@@ -273,42 +314,22 @@ export class PaymentsController {
     },
   })
   async getPayment(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Param('id') id: string
   ): Promise<PaymentResponse> {
     return this.paymentsService.getPayment(req.user.id, id);
   }
 
-  @Post('webhook')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Payment provider webhook' })
-  @ApiResponse({ status: 200, description: 'Webhook processed' })
-  async handleWebhook(
-    @Body() body: WebhookPayloadDto,
-    @Headers('x-paystack-signature') paystackSignature?: string,
-    @Headers('x-flutterwave-signature') flutterwaveSignature?: string
-  ): Promise<PaymentResponse> {
-    const payload = {
-      id: body.data?.id || '',
-      type: body.event,
-      data: body.data || {},
-    };
-
-    if (flutterwaveSignature) {
-      return this.paymentsService.handleWebhook(payload, flutterwaveSignature, 'flutterwave');
-    }
-    return this.paymentsService.handleWebhook(payload, paystackSignature, 'paystack');
-  }
-
   @Post('refund-request')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(paymentFlags.selfServiceRefund)
   @RateLimit(5, 3600000)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Request a refund' })
   @ApiResponse({ status: 201, description: 'Refund requested' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
   async requestRefund(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body() requestRefundDto: RequestRefundDto
   ): Promise<PaymentResponse> {
     return this.paymentsService.requestRefund(

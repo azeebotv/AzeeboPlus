@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { apiClient } from '../../src/api';
-import type { Game, GameLevel, LeaderboardEntry, Achievement } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data';
+import type { Game, GameLevel, LeaderboardEntry, Achievement } from '@azeebo/react-data/types/api';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 export default function GameplayPage() {
   const colorScheme = useColorScheme();
@@ -32,6 +34,7 @@ export default function GameplayPage() {
         apiClient.get<Achievement[]>(`/games/${id}/achievements`),
       ]);
       setGame(gameRes);
+      analytics.gameStarted(String(id), 'session_' + Date.now());
       setLevels(levelsRes || []);
       setLeaderboard(leaderboardRes || []);
       setAchievements(achievementsRes || []);
@@ -293,7 +296,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -309,7 +312,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   gameGenre: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
   },
   content: {
@@ -325,7 +328,7 @@ const styles = StyleSheet.create({
     height: 200,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
   },
   previewEmoji: {
     fontSize: 80,
@@ -334,7 +337,7 @@ const styles = StyleSheet.create({
   playButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.category.purple,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 10,
@@ -359,15 +362,15 @@ const styles = StyleSheet.create({
   },
   scoreDivider: {
     width: 1,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
   },
   scoreLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 13,
     marginBottom: 4,
   },
   scoreValue: {
-    color: '#DDA0DD',
+    color: colors.category.purple,
     fontSize: 20,
     fontWeight: '700',
   },
@@ -406,7 +409,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   levelDifficulty: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   levelStars: {
@@ -427,21 +430,21 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.bg.tertiary,
   },
   leaderboardItemYou: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
   },
   rankBadge: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rankBadgeTop: {
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.category.purple,
   },
   rankText: {
     color: '#fff',
@@ -463,7 +466,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   playerScore: {
-    color: '#DDA0DD',
+    color: colors.category.purple,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -485,7 +488,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -504,7 +507,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   achievementDesc: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   gameContainer: {
@@ -531,7 +534,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   gameHighScore: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   gameArea: {
@@ -558,13 +561,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   scoreButton: {
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.category.purple,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
   },
   scoreButtonSpecial: {
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
   },
   scoreButtonText: {
     color: '#000',
@@ -600,7 +603,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -619,7 +622,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.category.purple,
     alignItems: 'center',
     justifyContent: 'center',
   },

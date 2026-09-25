@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { mapAndThrow } from '@azeebo/security';
 
 interface FlutterwaveInitializeResponse {
   status: string;
@@ -59,9 +60,12 @@ export class FlutterwaveProvider {
   private readonly apiKey: string;
   private readonly baseUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('FLUTTERWAVE_SECRET_KEY') || '';
-    this.baseUrl = this.configService.get<string>('FLUTTERWAVE_API_URL', 'https://api.flutterwave.com/v3');
+    this.baseUrl = this.configService.get<string>(
+      'FLUTTERWAVE_API_URL',
+      'https://api.flutterwave.com/v3'
+    );
     if (!this.apiKey) {
       this.logger.warn(
         'FLUTTERWAVE_SECRET_KEY is not configured — Flutterwave payments will be unavailable'
@@ -86,7 +90,11 @@ export class FlutterwaveProvider {
           currency: currency || 'NGN',
           redirect_url:
             this.configService.get<string>('FLUTTERWAVE_CALLBACK_URL') ||
-            'http://localhost:3003/webhooks/flutterwave',
+            (process.env.NODE_ENV === 'production'
+              ? (() => {
+                  throw new Error('FLUTTERWAVE_CALLBACK_URL must be configured in production');
+                })()
+              : 'http://localhost:3003/webhooks/flutterwave'),
           customer: {
             email: `user-${userId}@azeebo.plus`,
             name: `User ${userId}`,
@@ -113,8 +121,7 @@ export class FlutterwaveProvider {
         authorizationUrl: response.data.data.link,
       };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Flutterwave initialization failed: ${errorMessage}`);
+      mapAndThrow(error, 'initializing Flutterwave payment');
     }
   }
 
@@ -145,8 +152,7 @@ export class FlutterwaveProvider {
         reference: response.data.data.tx_ref,
       };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Flutterwave verification failed: ${errorMessage}`);
+      mapAndThrow(error, `verifying Flutterwave payment ${reference}`);
     }
   }
 
@@ -179,8 +185,7 @@ export class FlutterwaveProvider {
         status: response.data.data.status,
       };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Flutterwave refund failed: ${errorMessage}`);
+      mapAndThrow(error, `processing Flutterwave refund ${transactionReference}`);
     }
   }
 

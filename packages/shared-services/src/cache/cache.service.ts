@@ -163,7 +163,9 @@ export class CacheService {
       }
       return value;
     } catch (error) {
-      this.logger.error(`Cache GET_OR_SET fetcher error for key ${key}: ${(error as Error).message}`);
+      this.logger.error(
+        `Cache GET_OR_SET fetcher error for key ${key}: ${(error as Error).message}`
+      );
       return null;
     }
   }
@@ -219,7 +221,7 @@ export class CacheService {
       const redis = await this.redisService.getClient();
       await redis.ping();
       return { status: 'healthy', stats: this.getStats() };
-    } catch (error) {
+    } catch (_error) {
       return { status: 'unhealthy', stats: this.getStats() };
     }
   }

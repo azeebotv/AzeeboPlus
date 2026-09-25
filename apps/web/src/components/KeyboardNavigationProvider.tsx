@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 
 export function KeyboardNavigationProvider({ children }: { children: React.ReactNode }) {
-  useKeyboardNavigation();
+  useKeyboardNavigation({});
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

@@ -11,9 +11,10 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { authApi, type Device } from '../../src/api';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { logger } from '../../src/utils/logger';
+import { authApi, type Device } from '@azeebo/react-data';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../src/theme';
 
 export default function DeviceManagementScreen() {
   const router = useRouter();
@@ -126,7 +127,7 @@ export default function DeviceManagementScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E8420A" />
+        <ActivityIndicator size="large" color={colors.primary[500]} />
         <Text style={styles.loadingText}>Loading devices...</Text>
       </SafeAreaView>
     );
@@ -184,16 +185,16 @@ export default function DeviceManagementScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A0A0A',
+    backgroundColor: colors.bg.primary,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#1A0A0A',
+    backgroundColor: colors.bg.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9CA3AF',
+    color: colors.accent.silver,
     marginTop: 12,
   },
   header: {
@@ -209,22 +210,22 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#9CA3AF',
+    color: colors.accent.silver,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text.primary,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.accent.silver,
   },
   warningBanner: {
-    backgroundColor: 'rgba(245,158,11,0.1)',
+    backgroundColor: colors.warning[500] + '15',
     borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.2)',
+    borderColor: colors.warning[500] + '33',
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 12,
@@ -232,21 +233,21 @@ const styles = StyleSheet.create({
   },
   warningText: {
     fontSize: 12,
-    color: '#F59E0B',
+    color: colors.warning[500],
   },
   listContent: {
     padding: 16,
   },
   deviceCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.glass,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: colors.bg.glassBorder,
   },
   deviceCardCurrent: {
-    borderColor: '#E8420A',
+    borderColor: colors.primary[500],
   },
   deviceHeader: {
     flexDirection: 'row',
@@ -272,11 +273,11 @@ const styles = StyleSheet.create({
   deviceName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text.primary,
     marginRight: 8,
   },
   currentBadge: {
-    backgroundColor: 'rgba(232,66,10,0.12)',
+    backgroundColor: colors.primary[500] + '12',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 12,
@@ -284,15 +285,15 @@ const styles = StyleSheet.create({
   currentBadgeText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#E8420A',
+    color: colors.primary[500],
   },
   deviceMeta: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.accent.silver,
     marginBottom: 2,
   },
   revokeButton: {
-    backgroundColor: 'rgba(239,68,68,0.12)',
+    backgroundColor: colors.error[500] + '12',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
   revokeButtonText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#EF4444',
+    color: colors.error[500],
   },
   emptyContainer: {
     alignItems: 'center',
@@ -312,11 +313,11 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.accent.silver,
     marginBottom: 4,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.text.tertiary,
   },
 });

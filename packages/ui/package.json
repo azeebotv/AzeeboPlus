@@ -3,24 +3,40 @@
   "version": "0.1.0",
   "private": true,
   "description": "Azeebo+ UI components",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "web": [
+        "src/web-index.ts"
+      ],
+      "mobile": [
+        "src/mobile-index.ts"
+      ]
+    }
+  },
   "react-native": "src/mobile-index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "bash ../../scripts/build-package.sh",
     "watch": "tsc -p tsconfig.json --watch",
     "clean": "rm -rf dist",
     "test": "jest",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build --output-dir storybook-static"
   },
   "exports": {
     ".": {
       "react-native": "./src/mobile-index.ts",
       "default": "./src/index.ts"
     },
-    "./web": "./src/web-index.ts",
-    "./mobile": "./src/mobile-index.ts"
+    "./web": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/web-index.ts"
+    },
+    "./mobile": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/mobile-index.ts"
+    }
   },
   "dependencies": {
     "@azeebo/design-tokens": "workspace:*",

@@ -1,6 +1,7 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { AuthRepository } from '../auth/auth.repository';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { AuthRepository } from '../auth/auth.repository.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { AuditLogService } from '../audit/audit.service.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @Injectable()
@@ -8,8 +9,9 @@ export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
   constructor(
-    private readonly authRepository: AuthRepository,
-    private readonly prisma: PrismaService
+    @Inject(AuthRepository) private readonly authRepository: AuthRepository,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(AuditLogService) private readonly auditLogService: AuditLogService
   ) {}
 
   async getStats() {
@@ -30,7 +32,10 @@ export class AdminService {
       return ApiResponseWrapper.success({ totalUsers, activeUsersToday, signupsToday });
     } catch (error) {
       this.logger.error(`Failed to get auth stats: ${error}`);
-      return { success: false, error: { code: 'GET_STATS_FAILED', message: 'Failed to retrieve auth stats' } };
+      return {
+        success: false,
+        error: { code: 'GET_STATS_FAILED', message: 'Failed to retrieve auth stats' },
+      };
     }
   }
 
@@ -65,7 +70,10 @@ export class AdminService {
       return ApiResponseWrapper.paginated(users, page, limit, total);
     } catch (error) {
       this.logger.error(`Failed to get users: ${error}`);
-      return { success: false, error: { code: 'GET_USERS_FAILED', message: 'Failed to retrieve users' } };
+      return {
+        success: false,
+        error: { code: 'GET_USERS_FAILED', message: 'Failed to retrieve users' },
+      };
     }
   }
 
@@ -75,41 +83,78 @@ export class AdminService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      return ApiResponseWrapper.success(user);
+      const { password: _password, ...userWithoutPassword } = user as unknown as Record<
+        string,
+        unknown
+      >;
+      return ApiResponseWrapper.success(userWithoutPassword);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get user by id: ${error}`);
-      return { success: false, error: { code: 'GET_USER_FAILED', message: 'Failed to retrieve user' } };
+      return {
+        success: false,
+        error: { code: 'GET_USER_FAILED', message: 'Failed to retrieve user' },
+      };
     }
   }
 
-  async suspendUser(id: string) {
+  async suspendUser(id: string, actorId?: string, ipAddress?: string) {
     try {
       const user = await this.authRepository.findById(id);
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const updated = await this.authRepository.update(id, { role: 'suspended' } as never);
+      const previousRole = (user as { role?: string }).role;
+      const updated = await this.authRepository.update(id, { role: 'suspended' });
+
+      this.auditLogService.log({
+        actor: actorId || null,
+        action: `admin.user.suspended:${previousRole}->suspended`,
+        resourceType: 'user',
+        resourceId: id,
+        result: 'success',
+        ipAddress,
+        timestamp: new Date(),
+      });
+
       return ApiResponseWrapper.success(updated);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to suspend user: ${error}`);
-      return { success: false, error: { code: 'SUSPEND_USER_FAILED', message: 'Failed to suspend user' } };
+      return {
+        success: false,
+        error: { code: 'SUSPEND_USER_FAILED', message: 'Failed to suspend user' },
+      };
     }
   }
 
-  async activateUser(id: string) {
+  async activateUser(id: string, actorId?: string, ipAddress?: string) {
     try {
       const user = await this.authRepository.findById(id);
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const updated = await this.authRepository.update(id, { role: 'user' } as never);
+      const previousRole = (user as { role?: string }).role;
+      const updated = await this.authRepository.update(id, { role: 'user' });
+
+      this.auditLogService.log({
+        actor: actorId || null,
+        action: `admin.user.activated:${previousRole}->user`,
+        resourceType: 'user',
+        resourceId: id,
+        result: 'success',
+        ipAddress,
+        timestamp: new Date(),
+      });
+
       return ApiResponseWrapper.success(updated);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to activate user: ${error}`);
-      return { success: false, error: { code: 'ACTIVATE_USER_FAILED', message: 'Failed to activate user' } };
+      return {
+        success: false,
+        error: { code: 'ACTIVATE_USER_FAILED', message: 'Failed to activate user' },
+      };
     }
   }
 }

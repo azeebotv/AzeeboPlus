@@ -1,8 +1,52 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RateLimitGuard } from './rate-limit.guard';
+import { RateLimitGuard, isDevLoopbackRequest } from './rate-limit.guard';
 import { RateLimitService } from './rate-limit.service';
 import { ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+
+describe('isDevLoopbackRequest', () => {
+  const makeReq = (ip: string): Parameters<typeof isDevLoopbackRequest>[0] =>
+    ({ ip, socket: { remoteAddress: ip } }) as unknown as Parameters<
+      typeof isDevLoopbackRequest
+    >[0];
+
+  it.each(['::1', '127.0.0.1', '::ffff:127.0.0.1', '127.0.0.1.'])('bypasses loopback IP %s in development', (ip) => {
+    process.env.NODE_ENV = 'development';
+    delete process.env.DISABLE_RATE_LIMITING;
+    expect(isDevLoopbackRequest(makeReq(ip))).toBe(true);
+  });
+
+  it('does not bypass in NODE_ENV=test so enforcement specs keep their teeth', () => {
+    process.env.NODE_ENV = 'test';
+    delete process.env.DISABLE_RATE_LIMITING;
+    expect(isDevLoopbackRequest(makeReq('::1'))).toBe(false);
+  });
+
+  it.each(['::2', '192.168.1.1', '10.0.0.5', 'unknown', ''])('does not bypass non-loopback IP %s', (ip) => {
+    process.env.NODE_ENV = 'development';
+    delete process.env.DISABLE_RATE_LIMITING;
+    expect(isDevLoopbackRequest(makeReq(ip))).toBe(false);
+  });
+
+  it('never bypasses loopback in production', () => {
+    process.env.NODE_ENV = 'production';
+    try {
+      expect(isDevLoopbackRequest(makeReq('::1'))).toBe(false);
+    } finally {
+      process.env.NODE_ENV = 'test';
+    }
+  });
+
+  it('bypasses any IP when DISABLE_RATE_LIMITING is true', () => {
+    process.env.NODE_ENV = 'development';
+    process.env.DISABLE_RATE_LIMITING = 'true';
+    try {
+      expect(isDevLoopbackRequest(makeReq('203.0.113.9'))).toBe(true);
+    } finally {
+      delete process.env.DISABLE_RATE_LIMITING;
+    }
+  });
+});
 
 describe('RateLimitGuard', () => {
   let guard: RateLimitGuard;
@@ -67,6 +111,24 @@ describe('RateLimitGuard', () => {
   };
 
   describe('canActivate', () => {
+    it('skips rate limiting entirely for loopback requests in development', async () => {
+      const prevEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+      try {
+        const context = createMockExecutionContext('::1');
+        jest.spyOn(reflector, 'get').mockReturnValue({ limit: 1, windowMs: 60000 });
+
+        const result = await guard.canActivate(context);
+
+        expect(result).toBe(true);
+        expect(rateLimitService.isBlocked).not.toHaveBeenCalled();
+        expect(rateLimitService.checkRateLimit).not.toHaveBeenCalled();
+        expect(rateLimitService.recordViolation).not.toHaveBeenCalled();
+      } finally {
+        process.env.NODE_ENV = prevEnv;
+      }
+    });
+
     it('should block request when IP is blocked', async () => {
       const context = createMockExecutionContext('192.168.1.1');
       rateLimitService.isBlocked.mockResolvedValue(true);
@@ -133,6 +195,7 @@ describe('RateLimitGuard', () => {
           getRequest: () => ({
             ip: undefined,
             headers: {
+              'x-gateway-secret': 'valid-secret',
               'x-forwarded-for': '10.0.0.1, 10.0.0.2',
             },
             path: '/api/test',
@@ -155,6 +218,70 @@ describe('RateLimitGuard', () => {
 
       expect(result).toBe(true);
       expect(rateLimitService.isBlocked).toHaveBeenCalledWith('10.0.0.1');
+    });
+
+    it('should halve the effective limit when the strict-mode resolver is on', async () => {
+      const strictGuard = new RateLimitGuard(reflector, rateLimitService, async () => true);
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            ip: '192.168.1.1',
+            headers: {},
+            path: '/api/test',
+            socket: { remoteAddress: '192.168.1.1' },
+          }),
+          getResponse: () => ({ setHeader: jest.fn() }),
+        }),
+        getHandler: () => jest.fn(),
+        getClass: () => jest.fn(),
+      } as unknown as ExecutionContext;
+
+      rateLimitService.isBlocked.mockResolvedValue(false);
+      rateLimitService.checkRateLimit.mockResolvedValue({
+        allowed: true,
+        remaining: 20,
+        resetAt: Date.now() + 60000,
+        limit: 20,
+      });
+      jest.spyOn(reflector, 'get').mockReturnValue({ limit: 40, windowMs: 60000 });
+
+      await strictGuard.canActivate(context);
+      expect(rateLimitService.checkRateLimit).toHaveBeenCalledWith(expect.any(String), {
+        limit: 20,
+        windowMs: 60000,
+      });
+    });
+
+    it('should keep the decorated limit when the strict-mode resolver is off', async () => {
+      const laxGuard = new RateLimitGuard(reflector, rateLimitService, async () => false);
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            ip: '192.168.1.1',
+            headers: {},
+            path: '/api/test',
+            socket: { remoteAddress: '192.168.1.1' },
+          }),
+          getResponse: () => ({ setHeader: jest.fn() }),
+        }),
+        getHandler: () => jest.fn(),
+        getClass: () => jest.fn(),
+      } as unknown as ExecutionContext;
+
+      rateLimitService.isBlocked.mockResolvedValue(false);
+      rateLimitService.checkRateLimit.mockResolvedValue({
+        allowed: true,
+        remaining: 40,
+        resetAt: Date.now() + 60000,
+        limit: 40,
+      });
+      jest.spyOn(reflector, 'get').mockReturnValue({ limit: 40, windowMs: 60000 });
+
+      await laxGuard.canActivate(context);
+      expect(rateLimitService.checkRateLimit).toHaveBeenCalledWith(expect.any(String), {
+        limit: 40,
+        windowMs: 60000,
+      });
     });
   });
 });

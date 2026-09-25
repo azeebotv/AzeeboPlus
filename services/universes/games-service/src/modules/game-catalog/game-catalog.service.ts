@@ -1,5 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
 interface Game {
@@ -37,7 +37,10 @@ interface GameResponse {
 @Injectable()
 export class GameCatalogService {
   private readonly logger = new Logger(GameCatalogService.name);
-  constructor(private prisma: PrismaService, private cache: CacheService) {}
+  constructor(
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private cache: CacheService
+  ) {}
 
   private formatGame(game: Record<string, unknown>): Game {
     return {
@@ -60,7 +63,10 @@ export class GameCatalogService {
     difficulty?: string
   ): Promise<GameResponse> {
     try {
-      const cacheK = cacheKey('games', `list:${page}:${limit}:${category || 'all'}:${difficulty || 'all'}`);
+      const cacheK = cacheKey(
+        'games',
+        `list:${page}:${limit}:${category || 'all'}:${difficulty || 'all'}`
+      );
       const cached = await this.cache.get<GameResponse>(cacheK);
       if (cached) return cached;
 
@@ -71,7 +77,6 @@ export class GameCatalogService {
       const [items, total] = await Promise.all([
         this.prisma.game.findMany({
           where,
-          include: { _count: { select: { questions: true } } },
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { playCount: 'desc' },
@@ -79,10 +84,26 @@ export class GameCatalogService {
         this.prisma.game.count({ where }),
       ]);
 
+      // Count questions per game in a single query
+      const gameIds = items.map((g) => g.id);
+      const questionCountsMap = new Map<string, number>();
+      if (gameIds.length > 0) {
+        const counts = await this.prisma.gameQuestion.groupBy({
+          by: ['gameId'],
+          _count: { id: true },
+          where: { gameId: { in: gameIds } },
+        });
+        for (const c of counts) {
+          questionCountsMap.set(c.gameId, c._count.id);
+        }
+      }
+
       const result: GameResponse = {
         success: true,
         data: {
-          items: items.map((g) => this.formatGame(g)),
+          items: items.map((g) =>
+            this.formatGame({ ...g, _count: { questions: questionCountsMap.get(g.id) || 0 } })
+          ),
           total,
           page,
           limit,
@@ -106,26 +127,30 @@ export class GameCatalogService {
 
       const game = await this.prisma.game.findUnique({
         where: { slug },
-        include: {
-          _count: { select: { questions: true } },
-          questions: { orderBy: { order: 'asc' }, take: 10 },
-        },
       });
 
       if (!game) {
         throw new NotFoundException(`Game not found: ${slug}`);
       }
 
-      await this.prisma.game.update({
-        where: { id: game.id },
-        data: { playCount: { increment: 1 } },
-      });
-
-      const result: GameResponse = { success: true, data: this.formatGame(game) };
+      const [, questionCount] = await Promise.all([
+        this.prisma.game.update({
+          where: { id: game.id },
+          data: { playCount: { increment: 1 } },
+        }),
+        this.prisma.gameQuestion.count({ where: { gameId: game.id } }),
+      ]);
+      const result: GameResponse = {
+        success: true,
+        data: this.formatGame({ ...game, _count: { questions: questionCount } }),
+      };
       await this.cache.set(cacheK, result, 60);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get game by slug: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get game by slug: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: { code: 'GAME_ERROR', message: (error as Error).message } };
     }
@@ -141,7 +166,10 @@ export class GameCatalogService {
 
       return { success: true, data: games.map((g) => g.category) };
     } catch (error) {
-      this.logger.error(`Failed to get categories: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get categories: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, data: [] };
     }
   }
@@ -158,37 +186,57 @@ export class GameCatalogService {
 
       const game = await this.prisma.game.findUnique({
         where: { id: gameId },
-        include: { questions: { orderBy: { order: 'asc' } } },
       });
 
       if (!game) {
         throw new NotFoundException(`Game not found: ${gameId}`);
       }
 
-      const session = await this.prisma.gamePlaySession.create({
-        data: {
-          userId,
-          gameId,
-          status: 'active',
-        },
-      });
+      // Parallel: create session + fetch questions (fixes sequential queries)
+      const [session, gameQuestions] = await Promise.all([
+        this.prisma.gamePlaySession.create({
+          data: {
+            userId,
+            gameId,
+            status: 'active',
+          },
+        }),
+        this.prisma.gameQuestion.findMany({
+          where: { gameId },
+          orderBy: { order: 'asc' },
+        }),
+      ]);
 
-      const questions = game.questions.map((q) => ({
-        id: q.id,
-        question: q.question,
-        options: q.options,
-        points: q.points,
-        timeLimit: q.timeLimit,
-      }));
+      const questions = gameQuestions.map(
+        (q: {
+          id: string;
+          question: string;
+          options: unknown;
+          points: number;
+          timeLimit: number;
+        }) => ({
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          points: q.points,
+          timeLimit: q.timeLimit,
+        })
+      );
 
       return {
         success: true,
         data: { sessionId: session.id, questions, message: 'Game started' },
       };
     } catch (error) {
-      this.logger.error(`Failed to start game: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to start game: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'GAME_START_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'GAME_START_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -251,11 +299,13 @@ export class GameCatalogService {
         data: {
           message: isCorrect ? 'Correct!' : 'Incorrect',
           pointsEarned,
-          correctAnswer: question.answer,
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to submit answer: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to submit answer: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: { code: 'SUBMIT_ERROR', message: (error as Error).message } };
     }
@@ -305,28 +355,31 @@ export class GameCatalogService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to complete game: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to complete game: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'COMPLETE_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'COMPLETE_ERROR', message: (error as Error).message },
+      };
     }
   }
 
   async getUserStats(userId: string): Promise<GameResponse> {
     try {
-      const scoreEntry = await this.prisma.scoreEntry.findUnique({
-        where: { userId },
-      });
-
-      const sessions = await this.prisma.gamePlaySession.findMany({
-        where: { userId, status: 'completed' },
-        select: { score: true, correctCount: true, gameId: true, completedAt: true },
-        orderBy: { completedAt: 'desc' },
-        take: 10,
-      });
-
-      const totalGames = await this.prisma.gamePlaySession.count({
-        where: { userId, status: 'completed' },
-      });
+      // Parallel fetch all independent stats (fixes sequential queries)
+      const [scoreEntry, sessions, totalGames] = await Promise.all([
+        this.prisma.scoreEntry.findUnique({ where: { userId } }),
+        this.prisma.gamePlaySession.findMany({
+          where: { userId, status: 'completed' },
+          select: { score: true, correctCount: true, gameId: true, completedAt: true },
+          orderBy: { completedAt: 'desc' },
+          take: 10,
+        }),
+        this.prisma.gamePlaySession.count({ where: { userId, status: 'completed' } }),
+      ]);
 
       return {
         success: true,
@@ -339,8 +392,14 @@ export class GameCatalogService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get user stats: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'USER_STATS_ERROR', message: (error as Error).message } };
+      this.logger.error(
+        `Failed to get user stats: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'USER_STATS_ERROR', message: (error as Error).message },
+      };
     }
   }
 }

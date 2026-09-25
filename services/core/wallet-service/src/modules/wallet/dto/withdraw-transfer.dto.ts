@@ -1,10 +1,11 @@
-import { IsString, IsNumber, IsOptional, IsPositive } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsPositive, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class WithdrawWalletDto {
   @ApiProperty({ example: 100 })
   @IsNumber()
   @IsPositive()
+  @Min(0.01)
   amount!: number;
 
   @ApiProperty({ example: 'bank-account-123' })
@@ -21,6 +22,7 @@ export class TransferWalletDto {
   @ApiProperty({ example: 50 })
   @IsNumber()
   @IsPositive()
+  @Min(0.01)
   amount!: number;
 
   @ApiProperty({ example: 'user-456' })

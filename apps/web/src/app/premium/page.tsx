@@ -1,35 +1,29 @@
 'use client';
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
 
-interface PremiumPlan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  duration: 'weekly' | 'monthly' | 'yearly';
-  features: string[];
-  isPopular: boolean;
-  discount?: number;
-}
-
-interface PremiumStatus {
-  isPremium: boolean;
-  subscriptionId?: string;
-  planName?: string;
-  expiresAt?: string;
-  autoRenew: boolean;
-}
-
 export default function PremiumAccessPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [confirmPlan, setConfirmPlan] = useState<{
+    id: string;
+    name: string;
+    price: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const plansQuery = useQuery({
     queryKey: ['premium', 'plans'],
@@ -51,7 +45,12 @@ export default function PremiumAccessPage(): React.JSX.Element {
           name: plan.name,
           description: plan.description,
           price: plan.price,
-          duration: plan.duration === 7 ? 'weekly' : plan.duration === 30 ? 'monthly' : 'yearly' as 'weekly' | 'monthly' | 'yearly',
+          duration:
+            plan.duration === 7
+              ? 'weekly'
+              : plan.duration === 30
+                ? 'monthly'
+                : ('yearly' as 'weekly' | 'monthly' | 'yearly'),
           features: plan.features,
           isPopular: plan.tier === 'premium',
         }));
@@ -86,25 +85,52 @@ export default function PremiumAccessPage(): React.JSX.Element {
     staleTime: 60000,
   });
 
+  const walletQuery = useQuery({
+    queryKey: ['wallet', 'balance'],
+    queryFn: async () => {
+      const res = await apiFetch<{
+        balance: number;
+        bonusBalance?: number;
+        promoBalance?: number;
+        totalBalance?: number;
+        currency?: string;
+      }>('/wallet');
+      if (res.success && res.data) {
+        return res.data.balance ?? 0;
+      }
+      return 0;
+    },
+    staleTime: 60000,
+  });
+
   const plans = plansQuery.data ?? [];
   const status = statusQuery.data ?? null;
+  const walletBalance = walletQuery.data ?? 0;
   const isLoading = plansQuery.isLoading || statusQuery.isLoading;
   const error = plansQuery.error?.message || statusQuery.error?.message || null;
 
-  const handleSubscribe = async (planId: string): Promise<void> => {
+  const handleSubscribe = async (
+    planId: string,
+    paymentMethod: 'wallet' | 'external' = 'wallet'
+  ): Promise<void> => {
     setIsPurchasing(true);
+    setConfirmPlan(null);
     try {
       const result = await apiFetch('/v1/subscription/subscribe', {
         method: 'POST',
-        body: JSON.stringify({ planId, autoRenew: true }),
+        body: JSON.stringify({ planId, autoRenew: true, paymentMethod }),
       });
 
       if (result.success) {
         setToast({ message: 'You are now a premium member!', type: 'success' });
         queryClient.invalidateQueries({ queryKey: ['premium'] });
+        queryClient.invalidateQueries({ queryKey: ['wallet'] });
       }
     } catch (error: unknown) {
-      setToast({ message: error instanceof Error ? error.message : 'Failed to subscribe', type: 'error' });
+      setToast({
+        message: error instanceof Error ? error.message : 'Failed to subscribe',
+        type: 'error',
+      });
     } finally {
       setIsPurchasing(false);
     }
@@ -145,7 +171,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -162,7 +188,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -184,7 +210,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <AppHeader />
 
       <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -194,11 +220,21 @@ export default function PremiumAccessPage(): React.JSX.Element {
         </div>
 
         {status?.isPremium && (
-          <div className="az-glass p-6 mb-8" style={{ border: '2px solid rgba(234,179,8,0.5)' }}>
+          <div
+            className="az-glass p-6 mb-8 rounded-2xl"
+            style={{
+              border: '1px solid rgba(234,179,8,0.4)',
+              boxShadow: '0 0 30px rgba(234,179,8,0.1)',
+            }}
+          >
             <div className="flex items-center gap-4 mb-4">
-              <span className="text-4xl">👑</span>
+              <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </div>
               <div>
-                <h2 className="text-xl font-bold" style={{ color: '#EAB308' }}>
+                <h2 className="text-xl font-bold" style={{ color: 'var(--color-warning-400)' }}>
                   Premium Active
                 </h2>
                 <p className="text-white/50">{status.planName}</p>
@@ -211,7 +247,9 @@ export default function PremiumAccessPage(): React.JSX.Element {
               <span className="text-white/50">Auto-renew</span>
               <span
                 className="font-semibold"
-                style={{ color: status.autoRenew ? '#22C55E' : '#EF4444' }}
+                style={{
+                  color: status.autoRenew ? 'var(--color-success-500)' : 'var(--color-error-500)',
+                }}
               >
                 {status.autoRenew ? 'On' : 'Off'}
               </span>
@@ -219,9 +257,10 @@ export default function PremiumAccessPage(): React.JSX.Element {
             {status.autoRenew && (
               <button
                 type="button"
+                aria-label="Cancel subscription"
                 onClick={handleCancel}
                 className="w-full px-4 py-3 rounded-full font-semibold transition-colors"
-                style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
+                style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: 'var(--color-error-500)' }}
               >
                 Cancel Subscription
               </button>
@@ -229,36 +268,61 @@ export default function PremiumAccessPage(): React.JSX.Element {
           </div>
         )}
 
+        <div className="mb-8 p-5 rounded-2xl border border-orange-500/20 bg-orange-500/5 az-glass">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--brand-orange)] block mb-1">
+                Value Pack
+              </span>
+              <h3 className="text-lg font-bold text-white">Bundle Passes</h3>
+              <p className="text-white/50 text-sm">Save up to 40% with multi-universe bundles</p>
+            </div>
+            <Link
+              href="/bundles"
+              className="px-6 py-2.5 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95 text-center"
+              style={{
+                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                color: '#ffffff',
+              }}
+            >
+              View Bundles
+            </Link>
+          </div>
+        </div>
+
         <h2 className="text-xl font-bold text-white mb-6">Choose Your Plan</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`az-glass p-6 relative ${plan.isPopular ? 'ring-2 ring-[#E8420A]' : ''}`}
+              className={`az-glass p-6 relative ${plan.isPopular ? 'ring-2 ring-[var(--brand-orange)]' : ''}`}
               style={plan.isPopular ? { boxShadow: '0 0 30px rgba(232,66,10,0.2)' } : undefined}
             >
               {plan.isPopular && (
                 <span
                   className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-4 py-1 rounded-full text-sm font-medium text-white"
-                  style={{ backgroundColor: '#E8420A' }}
+                  style={{ backgroundColor: 'var(--brand-orange, #E8420A)' }}
                 >
                   Most Popular
                 </span>
               )}
               <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
               <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-3xl font-bold" style={{ color: '#E8420A' }}>
+                <span
+                  className="text-3xl font-bold"
+                  style={{ color: 'var(--brand-orange, #E8420A)' }}
+                >
                   ₦{plan.price.toLocaleString()}
                 </span>
                 <span className="text-white/50">{getDurationLabel(plan.duration)}</span>
               </div>
               <p className="text-white/50 mb-6">{plan.description}</p>
               <ul className="space-y-3 mb-6">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2">
-                    <span className="font-bold" style={{ color: '#22C55E' }}>
-                      ✓
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2">
+                    <span className="font-bold" style={{ color: 'var(--color-success-500)' }}>
+                      Check
                     </span>
                     <span className="text-white text-sm">{feature}</span>
                   </li>
@@ -266,7 +330,8 @@ export default function PremiumAccessPage(): React.JSX.Element {
               </ul>
               <button
                 type="button"
-                onClick={() => handleSubscribe(plan.id)}
+                aria-label={`Subscribe to ${plan.name}`}
+                onClick={() => setConfirmPlan({ id: plan.id, name: plan.name, price: plan.price })}
                 disabled={isPurchasing}
                 className={`w-full py-3 rounded-full font-semibold transition-all ${
                   plan.isPopular ? 'az-btn-primary' : ''
@@ -277,7 +342,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
                     : {
                         border: '1px solid rgba(255,255,255,0.2)',
                         backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: '#fff',
+                        color: 'var(--brand-white)',
                       }
                 }
               >
@@ -290,13 +355,77 @@ export default function PremiumAccessPage(): React.JSX.Element {
 
       <AppFooter />
 
+      {confirmPlan && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+          onClick={() => setConfirmPlan(null)}
+        >
+          <div
+            className="az-glass p-8 rounded-2xl max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-white mb-2">Confirm Subscription</h3>
+            <p className="text-white/50 mb-1">
+              {confirmPlan.name} — ₦{confirmPlan.price.toLocaleString()}
+            </p>
+            <p className="text-white/50 mb-6 text-sm">
+              Wallet balance: ₦{walletBalance.toLocaleString()}
+            </p>
+
+            <div className="flex flex-col gap-3 mb-4">
+              <button
+                type="button"
+                aria-label="Pay from wallet"
+                onClick={() => handleSubscribe(confirmPlan.id, 'wallet')}
+                disabled={isPurchasing || walletBalance < confirmPlan.price}
+                className="w-full py-3 rounded-full font-semibold transition-all"
+                style={{
+                  background:
+                    walletBalance >= confirmPlan?.price
+                      ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
+                      : 'var(--bg-surface, #18151e)',
+                  color: walletBalance >= confirmPlan?.price ? 'white' : 'var(--brand-grey)',
+                  cursor: walletBalance >= confirmPlan?.price ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {isPurchasing
+                  ? 'Processing...'
+                  : walletBalance >= confirmPlan?.price
+                    ? 'Pay from Wallet'
+                    : 'Insufficient Balance'}
+              </button>
+              <button
+                type="button"
+                aria-label="Pay with card or transfer"
+                onClick={() => handleSubscribe(confirmPlan.id, 'external')}
+                disabled={isPurchasing}
+                className="w-full py-3 rounded-full font-semibold transition-all az-btn-primary"
+              >
+                {isPurchasing ? 'Processing...' : 'Pay with Card / Transfer'}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              aria-label="Cancel subscription confirmation"
+              onClick={() => setConfirmPlan(null)}
+              className="w-full py-2 rounded-full text-white/50 border border-white/10 hover:bg-white/5 transition-colors text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div
           className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
           style={{
-            backgroundColor: toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            backgroundColor:
+              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? '#22C55E' : '#EF4444',
+            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
           }}
           role="alert"
         >

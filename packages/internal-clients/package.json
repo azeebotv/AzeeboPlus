@@ -2,20 +2,23 @@
   "name": "@azeebo/internal-clients",
   "version": "1.0.0",
   "private": true,
-  "description": "Typed internal service clients with retries, timeouts, and idempotency",
+  "description": "DEPRECATED: Use @azeebo/http-client instead. This package is maintained for backwards compatibility only.",
+  "deprecated": "Use @azeebo/http-client instead",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "bash ../../scripts/build-package.sh",
     "clean": "rm -rf dist",
     "watch": "tsc --watch",
-    "lint": "eslint src --fix",
+    "lint": "eslint src",
     "test": "jest",
     "test:cov": "jest --coverage"
   },

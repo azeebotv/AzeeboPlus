@@ -1,17 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { Inject, Injectable } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
+import { CreateUserDto } from './dto/create-user.dto.js';
 import {
   UserEntity,
   SessionEntity,
   OtpEntity,
   SocialAccountEntity,
   CreateSessionData,
-} from './interfaces/auth-entity.interface';
+} from './interfaces/auth-entity.interface.js';
 
 @Injectable()
 export class AuthRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findByEmail(email: string): Promise<UserEntity | null> {
     return this.prisma.user.findUnique({
@@ -27,14 +27,14 @@ export class AuthRepository {
 
   async create(data: CreateUserDto): Promise<UserEntity> {
     return this.prisma.user.create({
-      data,
+      data: data as Parameters<typeof this.prisma.user.create>[0]['data'],
     }) as Promise<UserEntity>;
   }
 
   async update(id: string, data: Partial<UserEntity>): Promise<UserEntity> {
     return this.prisma.user.update({
       where: { id },
-      data,
+      data: data as Parameters<typeof this.prisma.user.update>[0]['data'],
     }) as Promise<UserEntity>;
   }
 
@@ -49,6 +49,28 @@ export class AuthRepository {
       where: { userId },
       orderBy: { createdAt: 'desc' },
     }) as Promise<SessionEntity | null>;
+  }
+
+  async countSessionsByUserId(userId: string): Promise<number> {
+    return this.prisma.session.count({
+      where: { userId },
+    });
+  }
+
+  async deleteOldestSessions(userId: string, count: number): Promise<number> {
+    const sessions = await this.prisma.session.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+      take: count,
+      select: { id: true },
+    });
+
+    if (sessions.length === 0) return 0;
+
+    const result = await this.prisma.session.deleteMany({
+      where: { id: { in: sessions.map((s) => s.id) } },
+    });
+    return result.count;
   }
 
   async deleteSessionByUserId(userId: string): Promise<number> {
@@ -138,7 +160,7 @@ export class AuthRepository {
   async updateRole(userId: string, role: string): Promise<UserEntity> {
     return this.prisma.user.update({
       where: { id: userId },
-      data: { role },
+      data: { role: role as Parameters<typeof this.prisma.user.update>[0]['data']['role'] },
     }) as Promise<UserEntity>;
   }
 }

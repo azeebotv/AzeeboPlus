@@ -1,22 +1,34 @@
-import { Controller, Get, Post, Put, Param, Query, Body, UseGuards, Req } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { ModerationService } from './moderation.service';
 import { AuditLogService } from '../audit/audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { resolveActorId } from '../../common/resolve-actor-id';
 
 interface AuthRequest extends Request {
-  user: { id: string; email: string; role: string };
+  user: { id?: string; sub?: string; email: string; role: string };
 }
 
 @Controller('admin/moderation')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class ModerationController {
   constructor(
-    private readonly moderationService: ModerationService,
-    private readonly auditLogService: AuditLogService
+    @Inject(ModerationService) private readonly moderationService: ModerationService,
+    @Inject(AuditLogService) private readonly auditLogService: AuditLogService
   ) {}
 
   @Get('reports')
@@ -50,8 +62,13 @@ export class ModerationController {
     @Req() req: AuthRequest,
     @Body() body: { action: string; reason: string }
   ): Promise<unknown> {
-    const adminId = req.user.id;
-    const result = await this.moderationService.resolveReport(id, body.action, body.reason, adminId);
+    const adminId = resolveActorId(req);
+    const result = await this.moderationService.resolveReport(
+      id,
+      body.action,
+      body.reason,
+      adminId
+    );
     await this.auditLogService.log({
       actorId: adminId,
       action: 'moderation.report.resolved',
@@ -69,7 +86,7 @@ export class ModerationController {
     @Req() req: AuthRequest,
     @Body() body: { reason: string }
   ): Promise<unknown> {
-    const adminId = req.user.id;
+    const adminId = resolveActorId(req);
     const result = await this.moderationService.dismissReport(id, body.reason, adminId);
     await this.auditLogService.log({
       actorId: adminId,
@@ -94,7 +111,7 @@ export class ModerationController {
       duration?: string;
     }
   ): Promise<unknown> {
-    const adminId = req.user.id;
+    const adminId = resolveActorId(req);
     const result = await this.moderationService.takeSafetyAction(
       body.targetId,
       body.targetType,

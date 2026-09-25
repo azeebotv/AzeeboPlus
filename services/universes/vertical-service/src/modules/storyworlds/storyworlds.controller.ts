@@ -1,25 +1,57 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Request,
+  Logger,
+  UseGuards,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, verticalFlags } from '@azeebo/feature-flags';
 import { AgbalaTitlesService as TitlesService } from './agbala/titles.service';
 import { AgbalaCharactersService as CharactersService } from './agbala/characters.service';
 import { TheoryService } from './agbala/theory.service';
 import { RoomService } from './agbala/room.service';
+import { SanitizationService } from './agbala/sanitization.service';
+import { StoryworldMetadataService } from './agbala/storyworld-metadata.service';
 
 @ApiTags('Storyworlds')
-@Controller('v1/vertical/storyworlds')
+@UseGuards(ServiceAuthGuard)
+@FeatureFlag(verticalFlags.storyworldsCreate)
+@UseGuards(FeatureFlagGuard)
+@Controller('vertical/storyworlds')
 export class StoryworldsController {
+  private readonly logger = new Logger(StoryworldsController.name);
+
   constructor(
-    private readonly titlesService: TitlesService,
-    private readonly charactersService: CharactersService,
-    private readonly theoryService: TheoryService,
-    private readonly roomService: RoomService,
+    @Inject(TitlesService) private readonly titlesService: TitlesService,
+    @Inject(CharactersService) private readonly charactersService: CharactersService,
+    @Inject(TheoryService) private readonly theoryService: TheoryService,
+    @Inject(RoomService) private readonly roomService: RoomService,
+    @Inject(SanitizationService) private readonly sanitizationService: SanitizationService,
+    @Inject(StoryworldMetadataService) private readonly metadataService: StoryworldMetadataService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {}
 
   @Get()
   @ApiOperation({ summary: 'List all storyworlds' })
-  async getStoryworlds(): Promise<{ success: boolean; data: unknown[] }> {
-    return { success: true, data: [] };
+  async getStoryworlds() {
+    try {
+      const storyworlds = await this.titlesService.getStoryworlds();
+      return { success: true, data: storyworlds };
+    } catch (error) {
+      this.logger.error(
+        `getStoryworlds failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      throw error;
+    }
   }
 
   @Get(':slug')
@@ -37,12 +69,12 @@ export class StoryworldsController {
   async getTitles(
     @Param('slug') slug: string,
     @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query('limit') limit?: string
   ) {
     return this.titlesService.getTitles(
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 20,
-      slug,
+      slug
     );
   }
 
@@ -51,15 +83,18 @@ export class StoryworldsController {
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
+  @ApiQuery({ name: 'search', required: false, description: 'Case-insensitive name/description filter' })
   async getCharacters(
     @Param('slug') slug: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('search') search?: string
   ) {
     return this.charactersService.getCharacters(
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 20,
       slug,
+      search
     );
   }
 
@@ -71,22 +106,21 @@ export class StoryworldsController {
   async getTheories(
     @Param('slug') _slug: string,
     @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query('limit') limit?: string
   ) {
     return this.theoryService.getTheories(
       page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 20,
+      limit ? parseInt(limit, 10) : 20
     );
   }
 
   @Post(':slug/theories')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Submit a theory' })
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
   async createTheory(
     @Param('slug') _slug: string,
     @Body() body: { title: string; content: string; spoilerLevel?: string },
-    @Request() req: { user: { id: string; displayName: string } },
+    @Request() req: { user: { id: string; displayName: string } }
   ) {
     return this.theoryService.createTheory({
       title: body.title,
@@ -100,47 +134,128 @@ export class StoryworldsController {
   @Get(':slug/realms')
   @ApiOperation({ summary: 'List realms in storyworld' })
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
-  async getRealms(@Param('slug') slug: string) {
-    return this.titlesService.getTitles(1, 100, slug);
+  @ApiQuery({ name: 'page', required: false, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
+  async getRealms(
+    @Param('slug') slug: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
+    const universe = await this.titlesService.getStoryworldBySlug(slug);
+    return this.metadataService.getRealms(
+      universe.id,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20
+    );
   }
 
   @Get(':slug/orisa')
   @ApiOperation({ summary: 'List orisa files in storyworld' })
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
-  async getOrisa(@Param('slug') slug: string) {
-    return this.titlesService.getTitles(1, 100, slug);
+  @ApiQuery({ name: 'page', required: false, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
+  async getOrisa(
+    @Param('slug') slug: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
+    const universe = await this.titlesService.getStoryworldBySlug(slug);
+    return this.metadataService.getOrisaFiles(
+      universe.id,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20
+    );
   }
 
   @Get(':slug/artifacts')
   @ApiOperation({ summary: 'List artifacts in storyworld' })
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
-  async getArtifacts(@Param('slug') slug: string) {
-    return this.titlesService.getTitles(1, 100, slug);
+  @ApiQuery({ name: 'page', required: false, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
+  async getArtifacts(
+    @Param('slug') slug: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
+    const universe = await this.titlesService.getStoryworldBySlug(slug);
+    return this.metadataService.getArtifacts(
+      universe.id,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20
+    );
   }
 
   @Get(':slug/prophecies')
   @ApiOperation({ summary: 'List prophecies in storyworld' })
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
-  async getProphecies(@Param('slug') slug: string) {
-    return this.titlesService.getTitles(1, 100, slug);
+  @ApiQuery({ name: 'page', required: false, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
+  async getProphecies(
+    @Param('slug') slug: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
+    const universe = await this.titlesService.getStoryworldBySlug(slug);
+    return this.metadataService.getProphecies(
+      universe.id,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20
+    );
   }
 
   @Get(':slug/maps')
   @ApiOperation({ summary: 'List maps in storyworld' })
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
-  async getMaps(@Param('slug') slug: string) {
-    return this.titlesService.getTitles(1, 100, slug);
+  @ApiQuery({ name: 'page', required: false, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
+  async getMaps(
+    @Param('slug') slug: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
+    const universe = await this.titlesService.getStoryworldBySlug(slug);
+    return this.metadataService.getWorldMaps(
+      universe.id,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20
+    );
   }
 
   @Post(':slug/unlock')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Validate unlock code' })
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
   async validateUnlock(
     @Param('slug') slug: string,
-    @Body() _body: { code: string },
-    @Request() _req: { user: { id: string } },
+    @Body() body: { code: string },
+    @Request() req: { user: { id: string } }
   ) {
+    if (!body.code || !this.sanitizationService.validateUnlockCode(body.code)) {
+      return {
+        success: false,
+        error: { code: 'INVALID_CODE', message: 'Invalid unlock code format' },
+      };
+    }
+
+    // Check against configured valid codes from environment
+    const validCodes = (this.configService.get<string>('UNLOCK_CODES') || '')
+      .split(',')
+      .filter(Boolean);
+
+    if (validCodes.length === 0) {
+      this.logger.warn('No unlock codes configured — rejecting unlock attempt');
+      return {
+        success: false,
+        error: { code: 'UNLOCK_UNAVAILABLE', message: 'Unlock codes not configured' },
+      };
+    }
+
+    if (!validCodes.includes(body.code.trim())) {
+      return { success: false, error: { code: 'WRONG_CODE', message: 'Invalid unlock code' } };
+    }
+
+    // Log the unlock attempt
+    this.logger.log(`User ${req.user.id} unlocked storyworld: ${slug}`);
+
     return { success: true, data: { unlocked: true, slug } };
   }
 
@@ -152,23 +267,22 @@ export class StoryworldsController {
   async getRooms(
     @Param('slug') _slug: string,
     @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query('limit') limit?: string
   ) {
     return this.roomService.getRooms(
       page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 20,
+      limit ? parseInt(limit, 10) : 20
     );
   }
 
   @Post(':slug/rooms/:roomId/posts')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create a room post' })
   @ApiParam({ name: 'slug', description: 'Storyworld slug' })
   @ApiParam({ name: 'roomId', description: 'Room ID' })
   async createRoomPost(
     @Param('roomId') roomId: string,
     @Body() body: { content: string; spoilerLevel?: string; userAvatar?: string },
-    @Request() req: { user: { id: string; displayName: string } },
+    @Request() req: { user: { id: string; displayName: string } }
   ) {
     return this.roomService.createRoomPost({
       roomId,

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from './auth.guard';
 import { AdminGuard } from '@azeebo/security';
 
@@ -18,6 +19,12 @@ describe('Auth Guard Tests', () => {
             verify: jest.fn(),
           },
         },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
+          },
+        },
       ],
     }).compile();
 
@@ -26,6 +33,7 @@ describe('Auth Guard Tests', () => {
   });
 
   it('should allow authenticated user', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mockReq: { headers: { authorization?: string }; user?: any } = {
       headers: { authorization: 'Bearer valid-token' },
     };
@@ -112,6 +120,12 @@ describe('Admin Guard Tests', () => {
             verify: jest.fn(),
           },
         },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
+          },
+        },
       ],
     }).compile();
 
@@ -120,6 +134,7 @@ describe('Admin Guard Tests', () => {
   });
 
   it('should allow ADMIN role', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mockReq: { headers: { authorization?: string }; user?: any } = {
       headers: { authorization: 'Bearer admin-token' },
     };

@@ -1,0 +1,134 @@
+/* Design tokens for admin app (synchronized with Azeebo+ luxury dark design system) */
+:root {
+  --admin-bg: #0b090e;
+  --admin-bg-alt: #100e14;
+  --admin-dark: #070609;
+  --admin-darker: #100e14;
+  --admin-sidebar-bg: #0e0c12;
+  --admin-surface: #181520;
+  --admin-surface-hover: #221d2d;
+  --admin-surface-active: #2a2438;
+  --admin-card: #14111a;
+  --admin-surface-light: #f5f0eb;
+  --admin-border: rgba(255, 255, 255, 0.07);
+  --admin-border-subtle: rgba(255, 255, 255, 0.04);
+  --admin-border-hover: rgba(255, 255, 255, 0.14);
+  --admin-border-focus: rgba(232, 66, 10, 0.4);
+  --admin-orange: #e8420a;
+  --admin-orange-glow: rgba(232, 66, 10, 0.15);
+  --admin-orange-hover: #ff541e;
+  --admin-red: #cc1c1c;
+  --admin-green: #0d3b2e;
+  --admin-amber: #f59e0b;
+  --admin-emerald: #10b981;
+  --admin-blue: #3b82f6;
+  --admin-purple: #8b5cf6;
+  --admin-grey: #9ca3af;
+  --admin-silver: #c0c0c0;
+  --admin-text: #f5f0eb;
+  --admin-text-muted: #9a8a7a;
+  --admin-text-dim: #6e6256;
+  --admin-red-light: #ff6b6b;
+
+  /* Aliases for modern component styling */
+  --text-primary: var(--admin-text);
+  --text-secondary: var(--admin-text-muted);
+  --border-default: var(--admin-border);
+  --bg-secondary: var(--admin-surface);
+  --bg-primary: var(--admin-bg);
+}
+
+/* Global reset — ensures dark background even if React crashes */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  background-color: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+:focus-visible {
+  outline: 2px solid var(--admin-orange);
+  outline-offset: 2px;
+}
+
+/* Sleek custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

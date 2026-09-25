@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 export interface TimelineEvent {
@@ -32,7 +32,7 @@ interface SingleEventResponse {
 export class TimelineService {
   private readonly logger = new Logger(TimelineService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getTimeline(
     universeSlug?: string,

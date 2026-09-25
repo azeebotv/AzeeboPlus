@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import {
+  AUTH_COOKIE,
+  LEGACY_AUTH_COOKIE,
+  isAuthMarkerValid,
+} from './lib/cookie-names';
 
 /**
  * Middleware: Homepage Routing + Role-Based Access Control + Auth Guard.
@@ -22,7 +27,6 @@ import type { NextRequest } from 'next/server';
 const protectedRoutes = [
   '/dashboard',
   '/rewards',
-  '/creator',
   '/subscriptions',
   '/notifications',
   '/messaging',
@@ -31,12 +35,80 @@ const protectedRoutes = [
   '/wallet',
   '/content',
   '/payment',
+  '/referral',
+  '/library',
+  '/downloads',
 ];
 const adminRoutes = ['/admin'];
-const creatorRoutes = ['/creator-portal'];
+
+// Standalone app hosts (set via env vars in production)
+const ADMIN_HOST = process.env.ADMIN_APP_URL || 'http://localhost:5173';
+const CREATOR_HOST = process.env.CREATOR_APP_URL || 'http://localhost:5174';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  const isProd = process.env.NODE_ENV === 'production';
+
+  // Security headers applied to all responses
+  const securityHeaders: Record<string, string> = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(self)',
+    'X-DNS-Prefetch-Control': 'on',
+  };
+
+  if (isProd) {
+    securityHeaders['Strict-Transport-Security'] = 'max-age=63072000; includeSubDomains; preload';
+  }
+
+  // Content-Security-Policy
+  const cspDirectives = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.youtube.com https://www.youtube-nocookie.com https://www.googletagmanager.com https://www.google-analytics.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https: http://localhost:*",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' http://localhost:* ws://localhost:* ws: wss: https: https://*.azeeboplus.com https://api.stripe.com",
+    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+    "media-src 'self' https: blob: data:",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    ...(isProd ? ['upgrade-insecure-requests'] : []),
+  ].join('; ');
+
+  securityHeaders['Content-Security-Policy'] = cspDirectives;
+
+  // Check if the user is authenticated using the namespaced auth marker
+  // cookie (host-scoped cookie safety — see lib/cookie-names.ts). The bare
+  // `auth` name is shared by every localhost app and foreign tooling has
+  // planted email-valued `auth` cookies that clobbered real sessions.
+  const authCookie = request.cookies.get(AUTH_COOKIE);
+  const isAuthenticated = isAuthMarkerValid(authCookie?.value);
+
+  // A legacy/foreign bare `auth` cookie must never count as a session. When
+  // present alongside an unauthenticated request, sweep it out of the jar on
+  // every response so it stops surviving page loads. Applied inside
+  // addSecurityHeaders because every return path flows through it.
+  const sweepLegacyAuthCookie =
+    request.cookies.has(LEGACY_AUTH_COOKIE) && !isAuthenticated;
+
+  // Helper to add security headers to response
+  const addSecurityHeaders = (response: NextResponse): NextResponse => {
+    for (const [key, value] of Object.entries(securityHeaders)) {
+      response.headers.set(key, value);
+    }
+    if (sweepLegacyAuthCookie) {
+      response.cookies.set(LEGACY_AUTH_COOKIE, '', {
+        maxAge: 0,
+        path: '/',
+      });
+    }
+    return response;
+  };
 
   // Allow public routes
   if (
@@ -45,78 +117,52 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/assets') ||
     pathname === '/manifest.json' ||
+    pathname === '/sw.js' ||
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml' ||
     pathname === '/favicon.ico'
   ) {
-    return NextResponse.next();
+    return addSecurityHeaders(NextResponse.next());
   }
-  // Check if the user is authenticated using the 'auth' cookie.
-  // The cookie contains the user ID set by AuthContext on login.
-  // Validate the cookie has a non-empty value to prevent bypass via empty cookies.
-  const authCookie = request.cookies.get('auth');
-  const isAuthenticated = Boolean(authCookie?.value && authCookie.value.length > 0);
 
   // --- Homepage routing guards ---
   if (pathname === '/') {
     // Authenticated users should see the redesigned homepage
     if (isAuthenticated) {
-      return NextResponse.redirect(new URL('/home', request.url));
+      return addSecurityHeaders(NextResponse.redirect(new URL('/home', request.url)));
     }
     // Guest users see the legacy homepage — no redirect
-    return NextResponse.next();
+    return addSecurityHeaders(NextResponse.next());
   }
 
   if (pathname === '/home') {
     // Unauthenticated users should see the legacy homepage
     if (!isAuthenticated) {
-      return NextResponse.redirect(new URL('/', request.url));
+      return addSecurityHeaders(NextResponse.redirect(new URL('/', request.url)));
     }
     // Authenticated users see the redesigned homepage — no redirect
-    return NextResponse.next();
+    return addSecurityHeaders(NextResponse.next());
   }
 
-  // --- Admin route guards ---
-  // Decode JWT payload to check role (not signature-verified — defense-in-depth
-  // until server-side session validation is implemented).
+  // --- Admin route redirect to standalone app ---
+  // Redirect admin pages to the standalone admin portal
   if (adminRoutes.some((route) => pathname.startsWith(route))) {
-    if (!isAuthenticated) {
-      const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    const accessToken = request.cookies.get('azeebo_access_token')?.value;
-    if (accessToken) {
-      try {
-        const payload = JSON.parse(atob(accessToken.split('.')[1]));
-        if (payload.role !== 'admin' && payload.role !== 'superadmin') {
-          return NextResponse.redirect(new URL('/', request.url));
-        }
-      } catch {
-        // Invalid JWT — allow through (server-side will reject unauthorized requests)
-      }
-    }
+    // Preserve the path when redirecting to the standalone admin app
+    const adminUrl = new URL(pathname, ADMIN_HOST);
+    return addSecurityHeaders(NextResponse.redirect(adminUrl));
   }
 
-  // --- Creator portal route guards ---
-  if (creatorRoutes.some((route) => pathname.startsWith(route))) {
-    if (!isAuthenticated) {
-      const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    const accessToken = request.cookies.get('azeebo_access_token')?.value;
-    if (accessToken) {
-      try {
-        const payload = JSON.parse(atob(accessToken.split('.')[1]));
-        const role = payload.role;
-        if (role !== 'creator' && role !== 'admin' && role !== 'superadmin') {
-          return NextResponse.redirect(new URL('/', request.url));
-        }
-      } catch {
-        // Invalid JWT — allow through (server-side will reject unauthorized requests)
-      }
-    }
+  // --- Creator portal redirect to standalone app ---
+  // Redirect creator portal pages (/creator or /creators/dashboard) to standalone app,
+  // while preserving public /creators discovery directory in web app.
+  if (
+    pathname === '/creator' ||
+    pathname.startsWith('/creator/') ||
+    pathname.startsWith('/creators/dashboard')
+  ) {
+    // Preserve the path when redirecting to the standalone creator app
+    const creatorUrl = new URL(pathname, CREATOR_HOST);
+    return addSecurityHeaders(NextResponse.redirect(creatorUrl));
   }
 
   // --- Protected route guards ---
@@ -124,10 +170,10 @@ export function middleware(request: NextRequest) {
     if (protectedRoutes.some((route) => pathname.startsWith(route))) {
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
+      return addSecurityHeaders(NextResponse.redirect(loginUrl));
     }
   }
-  return NextResponse.next();
+  return addSecurityHeaders(NextResponse.next());
 }
 
 export const config = {
@@ -139,6 +185,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public files (public directory)
      */
-    '/((?!_next/static|_next/image|favicon.ico|assets).*)',
+    '/((?!_next/static|_next/image|favicon.ico|assets|sw.js).*)',
   ],
 };

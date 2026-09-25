@@ -2,9 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, HttpException, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { Reflector } from '@nestjs/core';
-import { RateLimitGuard } from '@azeebo/security';
-import { SearchController } from './search.controller';
-import { SearchService } from './search.service';
+import { RateLimitGuard, ServiceAuthGuard, AdminGuard } from '@azeebo/security';
+import { SearchController } from './search.controller.js';
+import { SearchService } from './search.service.js';
+import { SearchIntelligenceService } from './search-intelligence.service.js';
 
 const mockRateLimitGuard = {
   canActivate: jest.fn().mockImplementation(() => {
@@ -21,6 +22,7 @@ const mockRateLimitGuard = {
 
 describe('Search Service Rate Limiting Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockSearchService = {
     search: jest.fn().mockResolvedValue({
@@ -45,15 +47,29 @@ describe('Search Service Rate Limiting Tests', () => {
           provide: SearchService,
           useValue: mockSearchService,
         },
+        {
+          provide: SearchIntelligenceService,
+          useValue: {
+            filterByAvailability: jest.fn(),
+            trackZeroResult: jest.fn(),
+            getSearchQualityMetrics: jest.fn(),
+          },
+        },
         Reflector,
       ],
     })
       .overrideGuard(RateLimitGuard)
       .useValue(mockRateLimitGuard)
+      .overrideGuard(ServiceAuthGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(AdminGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -69,7 +85,7 @@ describe('Search Service Rate Limiting Tests', () => {
     it('should allow requests within rate limit', async () => {
       mockRateLimitGuard.canActivate.mockImplementation(() => true);
 
-      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
+      const response = await request(baseUrl).get('/search?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -87,14 +103,14 @@ describe('Search Service Rate Limiting Tests', () => {
         );
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
+      const response = await request(baseUrl).get('/search?q=test');
 
       expect(response.status).toBe(429);
       expect(response.body.message).toContain('Too many requests');
     });
 
     it('should include rate limit headers in response', async () => {
-      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
+      const response = await request(baseUrl).get('/search?q=test');
 
       expect(response.headers).toBeDefined();
     });
@@ -102,12 +118,12 @@ describe('Search Service Rate Limiting Tests', () => {
     it('should apply rate limit per IP address', async () => {
       mockRateLimitGuard.canActivate.mockImplementation(() => true);
 
-      const response1 = await request(app.getHttpServer())
-        .get('/v1/search?q=test')
+      const response1 = await request(baseUrl)
+        .get('/search?q=test')
         .set('X-Forwarded-For', '192.168.1.1');
 
-      const response2 = await request(app.getHttpServer())
-        .get('/v1/search?q=test')
+      const response2 = await request(baseUrl)
+        .get('/search?q=test')
         .set('X-Forwarded-For', '192.168.1.2');
 
       expect(response1.status).toBe(200);
@@ -119,7 +135,7 @@ describe('Search Service Rate Limiting Tests', () => {
     it('should allow requests within rate limit', async () => {
       mockRateLimitGuard.canActivate.mockImplementation(() => true);
 
-      const response = await request(app.getHttpServer()).get('/v1/search/suggestions?q=test');
+      const response = await request(baseUrl).get('/search/suggestions?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -137,7 +153,7 @@ describe('Search Service Rate Limiting Tests', () => {
         );
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/search/suggestions?q=test');
+      const response = await request(baseUrl).get('/search/suggestions?q=test');
 
       expect(response.status).toBe(429);
     });
@@ -147,7 +163,7 @@ describe('Search Service Rate Limiting Tests', () => {
     it('should allow requests within rate limit', async () => {
       mockRateLimitGuard.canActivate.mockImplementation(() => true);
 
-      const response = await request(app.getHttpServer()).get('/v1/search/trending');
+      const response = await request(baseUrl).get('/search/trending');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -165,7 +181,7 @@ describe('Search Service Rate Limiting Tests', () => {
         );
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/search/trending');
+      const response = await request(baseUrl).get('/search/trending');
 
       expect(response.status).toBe(429);
     });

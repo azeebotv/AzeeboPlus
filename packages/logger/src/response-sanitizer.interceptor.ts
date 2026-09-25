@@ -29,6 +29,11 @@ export class ResponseSanitizationInterceptor implements NestInterceptor {
         if (!response || typeof response !== 'object') {
           return response;
         }
+        // Class instances (Date, Map, Buffer, …) pass through untouched —
+        // spreading them produces `{}` and silently destroys their data.
+        if (!Array.isArray(response) && !this.isPlainObject(response)) {
+          return response;
+        }
 
         return this.sanitizeObject(response as Record<string, unknown>);
       })
@@ -39,9 +44,7 @@ export class ResponseSanitizationInterceptor implements NestInterceptor {
     // Handle arrays: sanitize each element and return as-is
     if (Array.isArray(obj)) {
       return obj.map((item) =>
-        typeof item === 'object' && item !== null
-          ? this.sanitizeObject(item as Record<string, unknown>)
-          : item
+        this.isSanitizable(item) ? this.sanitizeObject(item as Record<string, unknown>) : item
       ) as unknown as Record<string, unknown>;
     }
 
@@ -52,12 +55,27 @@ export class ResponseSanitizationInterceptor implements NestInterceptor {
         delete sanitized[key];
       } else if (this.maskFields.includes(key) && typeof sanitized[key] === 'string') {
         sanitized[key] = this.maskValue(sanitized[key] as string);
-      } else if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
+      } else if (this.isSanitizable(sanitized[key])) {
         sanitized[key] = this.sanitizeObject(sanitized[key] as Record<string, unknown>);
       }
     }
 
     return sanitized;
+  }
+
+  private isSanitizable(value: unknown): boolean {
+    return Array.isArray(value) || this.isPlainObject(value);
+  }
+
+  // Only plain objects are copied/sanitized. Class instances keep their
+  // prototype: `{ ...someDate }` yields `{}` (no own enumerable properties),
+  // which previously wiped every Date field out of API responses.
+  private isPlainObject(value: unknown): boolean {
+    if (value === null || typeof value !== 'object') {
+      return false;
+    }
+    const proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
   }
 
   private maskValue(value: string): string {

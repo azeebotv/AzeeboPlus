@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import ContentCard from './ContentCard';
+import { Skeleton } from '@/components/Skeleton';
+import { useTranslation } from 'react-i18next';
 import type { ContentItem } from '@/lib/api';
 import analytics from '@/lib/analytics';
 
@@ -36,6 +38,7 @@ export default function ContentRow({
   hasMore = false,
   cardSize = 'md',
 }: ContentRowProps): React.JSX.Element {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -151,7 +154,7 @@ export default function ContentRow({
             onClick={(): void => scroll('left')}
             disabled={!canScrollLeft}
             className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]"
-            aria-label={`Scroll ${title} left`}
+            aria-label={t('content.scrollLeft', { title })}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -168,7 +171,7 @@ export default function ContentRow({
             onClick={(): void => scroll('right')}
             disabled={!canScrollRight}
             className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]"
-            aria-label={`Scroll ${title} right`}
+            aria-label={t('content.scrollRight', { title })}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -194,21 +197,16 @@ export default function ContentRow({
         }}
         onScroll={trackScroll}
         role="region"
-        aria-label={`${title} content list`}
+        aria-label={t('content.contentList', { title })}
       >
-        <style>{`.content-row-scroll::-webkit-scrollbar { display: none; }`}</style>
-
         {isLoading
           ? skeletons.map((_, i) => (
-              <div
+              <Skeleton
                 key={i}
-                className="flex-shrink-0 rounded-xl overflow-hidden"
-                style={{
-                  width: cardWidth,
-                  height: cardSize === 'sm' ? 224 : cardSize === 'lg' ? 400 : 310,
-                  background: 'var(--brand-surface)',
-                  animation: 'pulse 1.5s ease-in-out infinite',
-                }}
+                width={`${cardWidth}px`}
+                height={`${cardSize === 'sm' ? 224 : cardSize === 'lg' ? 400 : 310}px`}
+                borderRadius="12px"
+                className="flex-shrink-0"
               />
             ))
           : items.map((item, index) => (

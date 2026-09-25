@@ -1,16 +1,19 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
-import { ContentModule } from './modules/content/content.module';
-import { DatabaseModule } from './modules/database/database.module';
-import { HealthModule } from './modules/health/health.module';
-import { PublicModule } from './modules/public/public.module';
+import { ContentModule } from './modules/content/content.module.js';
+import { DatabaseModule } from './modules/database/database.module.js';
+import { HealthModule } from './modules/health/health.module.js';
+import { PublicModule } from './modules/public/public.module.js';
+import { DownloadModule } from './modules/downloads/download.module.js';
+import { ShareModule } from './modules/sharing/share.module.js';
+import { ReviewModule } from './modules/reviews/review.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
-import { RateLimiterModule } from '@azeebo/security';
-import { ServiceAuthGuard } from '@azeebo/security';
-import { CacheModule } from './cache/cache.module';
-import { JwtStrategy } from './modules/auth/jwt.strategy';
+import { RateLimiterModule, ServiceAuthGuard, SecurityModule } from '@azeebo/security';
+import { CacheModule } from './cache/cache.module.js';
+import { JwtStrategy } from './modules/auth/jwt.strategy.js';
+import { FeatureFlagModule, contentFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -19,17 +22,36 @@ import { JwtStrategy } from './modules/auth/jwt.strategy';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
+    SecurityModule,
     DatabaseModule,
     CacheModule,
+    // DownloadModule must register before ContentModule so its static routes
+    // (/v1/content/downloads, /v1/content/downloads/storage) are matched before
+    // ContentModule's /v1/content/:id wildcard swallows them.
+    DownloadModule,
     ContentModule,
+    ShareModule,
+    ReviewModule,
     HealthModule,
     PublicModule,
+    FlagMetricsModule.register({ service: 'content-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('content-service'),
+      defaultFlags: {
+        // Content flags: moderation stays ON (kill-switch for safety scans);
+        // new pipelines (AI tags, clip ingestion, transcoding v2, threaded
+        // comments, premium gating, recommended rail) default OFF until ready.
+        [contentFlags.moderationEnabled]: true,
+        [contentFlags.transcodingNew]: false,
+        [contentFlags.aiTags]: false,
+        [contentFlags.clipIngestion]: false,
+        [contentFlags.commentsV2]: false,
+        [contentFlags.windowingEnabled]: true,
+        [contentFlags.premiumGate]: false,
+        [contentFlags.recommendedRail]: false,
+      },
+    }),
   ],
   providers: [
     JwtStrategy,

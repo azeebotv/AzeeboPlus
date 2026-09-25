@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -10,9 +11,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { StoriesService } from './stories.service';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 
 interface CreateStoryDto {
   title: string;
@@ -31,9 +32,11 @@ interface UpdateStoryDto {
 }
 
 @ApiTags('Stories')
-@Controller('v1/lifestyle/stories')
+@FeatureFlag(lifestyleFlags.storiesEnabled)
+@UseGuards(FeatureFlagGuard)
+@Controller('lifestyle/stories')
 export class StoriesController {
-  constructor(private readonly storiesService: StoriesService) {}
+  constructor(@Inject(StoriesService) private readonly storiesService: StoriesService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all stories' })
@@ -61,7 +64,7 @@ export class StoriesController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create new story' })
   @ApiResponse({ status: 201, description: 'Story created' })
@@ -70,7 +73,7 @@ export class StoriesController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update story' })
   @ApiResponse({ status: 200, description: 'Story updated' })
@@ -79,7 +82,7 @@ export class StoriesController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Delete story' })
   @ApiResponse({ status: 200, description: 'Story deleted' })

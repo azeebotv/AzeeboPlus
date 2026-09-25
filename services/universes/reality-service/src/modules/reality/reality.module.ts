@@ -1,30 +1,16 @@
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RedisModule, JwtConfigModule } from '@azeebo/shared-services';
 
-import { RealityController } from './reality.controller';
-import { RealityService } from './reality.service';
-import { DatabaseModule } from '../database/database.module';
-import { RedisService } from '../../common/services/redis.service';
+import { RealityController } from './reality.controller.js';
+import { RealityService } from './reality.service.js';
+import { RealityGateway } from './reality.gateway.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { VoteFraudDetectionService } from './vote-fraud-detection.service.js';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    PassportModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m'),
-        },
-      }),
-      inject: [ConfigService],
-    }),
-  ],
+  imports: [DatabaseModule, RedisModule, JwtConfigModule],
   controllers: [RealityController],
-  providers: [RealityService, RedisService],
-  exports: [RealityService, DatabaseModule],
+  providers: [RealityService, RealityGateway, VoteFraudDetectionService],
+  exports: [RealityService, RealityGateway, VoteFraudDetectionService, DatabaseModule],
 })
 export class RealityModule {}

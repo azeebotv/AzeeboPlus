@@ -7,9 +7,10 @@ A modular digital entertainment platform that functions as a shared operating sy
 ```
 azeebo-plus/
 ├── apps/                    # Client applications
-│   ├── web/                # Next.js web app (port 4000)
-│   ├── admin/              # NestJS admin panel (port 4016)
-│   └── creator-portal/     # NestJS creator portal (port 4014)
+│   ├── mobile/              # Mobile app (Expo React Native, port 8081)
+│   ├── web/                 # Next.js web app (port 4000)
+│   ├── admin/              # Standalone admin dashboard (Vite+React + NestJS, port 4016)
+│   └── creator/           # Standalone creator dashboard (Vite+React + NestJS, port 4014)
 │
 ├── services/               # Backend microservices
 │   ├── core/              # Essential platform services
@@ -25,7 +26,7 @@ azeebo-plus/
 └── ci/                    # CI/CD scripts
 ```
 
-## Service Inventory (27 services + 3 frontends)
+## Service Inventory (28 services + 4 frontends)
 
 ### Core Services (ports 3000-3005, 3019)
 | Service | Port | DB | Description |
@@ -49,16 +50,17 @@ azeebo-plus/
 | vertical-service | 3017 | azeebo_vertical | Vertical video & storyworlds |
 | creator-service | 3018 | azeebo_creator | Creator onboarding, verification, earnings |
 | sports-service | 3021 | azeebo_sports | Sports content & predictions |
+| live-event-service | 3027 | azeebo_live_event | Pay-per-view live events & streaming |
 
 ### Engagement Services (ports 3006, 3007, 3023-3026)
 | Service | Port | DB | Description |
 |---------|------|----|-------------|
 | notification-service | 3006 | azeebo_notification | Push, email, SMS notifications |
 | reward-service | 3007 | azeebo_reward | Rewards & gamification |
-| engagement-service | 3023 | azeebo_engagement | Engagement tracking |
-| messaging-service | 3024 | azeebo_messaging | In-app messaging |
 | referral-service | 3025 | azeebo_referral | Referral program |
 | subscription-service | 3026 | azeebo_subscription | Subscription management |
+| engagement-service | 3023 | azeebo_engagement | Engagement tracking |
+| messaging-service | 3024 | azeebo_messaging | In-app messaging |
 
 ### Intelligence Services (ports 3008, 3009)
 | Service | Port | DB | Description |
@@ -81,9 +83,10 @@ azeebo-plus/
 ### Frontend Apps
 | App | Port | Framework | Description |
 |-----|------|-----------|-------------|
+| mobile | 8081 | Expo (React Native) | Mobile app (iOS/Android) |
 | web | 4000 | Next.js | Main web application |
-| admin | 4016 | NestJS + SSR | Admin dashboard |
-| creator-portal | 4014 | NestJS + SSR | Creator management portal |
+| admin | 4016 | Vite+React + NestJS | Standalone admin dashboard |
+| creator | 4014 | Vite+React + NestJS | Standalone creator dashboard |
 
 ## Running Locally
 
@@ -154,6 +157,51 @@ docker compose -f docker-compose.all-in-one.yml up -d
 | Startup time | ~30s (quick) / ~3min (all) | ~2min |
 | Best for | Development, debugging | Staging, production |
 
+## Shared Dev & Build Runners
+
+Every service, schema-owning app, and package routes its `start:dev` and/or
+`build` script through a single shared runner — no per-workspace copies, no
+inline command chains. This replaced 28 drifted copies of the same start-dev
+script (each with its own bugs) and 4 textual variants of the same package
+build line.
+
+| Workspace class | Script | Runner | What the runner does |
+|-----------|--------|--------|----------------------|
+| `services/<group>/<svc>` | `pnpm start:dev` | `scripts/start-dev-service.sh` | First-run `prisma generate` → mirror client into `dist/prisma/client` → `nest start --watch` |
+| `services/<group>/<svc>` | `pnpm run build` | `scripts/build-service.sh` | `prisma generate` (always) → `tsc -p tsconfig.build.json` → mirror client into `dist/prisma/client` |
+| `apps/admin`, `apps/creator` | `pnpm start:dev` | `scripts/start-dev-app.sh` | First-run `prisma generate` (client at `src/generated/prisma`) → `tsx watch src/main.ts` |
+| `packages/<name>` | `pnpm run build` | `scripts/build-package.sh` | `tsc -p tsconfig.json` (compile-only) |
+
+The runners' shared contract:
+
+- **Run from the workspace directory** (`pnpm run` guarantees this); direct
+  invocation from elsewhere exits 2 with guidance.
+- **Fail loud, fail early.** A failed `prisma generate` or `tsc` aborts before
+  anything boots or continues, echoes the full error output with a `|` prefix,
+  and prints a fix hint. A build never completes against a stale or missing
+  client, and a dev server never starts into a cryptic runtime crash.
+- **Arg passthrough** (dev runners): extra CLI args reach the underlying
+  process, e.g. `pnpm start:dev --entryFile main2`.
+- **Packages are compile-only by design** — they never run `prisma generate`.
+  Package clients are generated repo-wide by `scripts/generate-prisma-clients.sh`
+  (CI and the Docker build's T-1 step).
+- **The app runner is deliberately its own contract** (not a services variant):
+  apps/admin and apps/creator generate on first run only, into their own
+  `src/generated/prisma` layout, then `exec tsx watch src/main.ts` — no dist
+  mirror, because tsx imports the client by relative path and nothing compiles
+  before boot. Schema-less apps like `apps/web` keep their own dev model and
+  must not wire through it.
+
+This wiring is not convention-on-paper; CI enforces it (full catalog of every
+check and its invariants: [CHECKS.md](CHECKS.md)). `check-dev-wiring`
+(the `pnpm run check:dev-wiring` step in the Flag & Swagger Conventions job)
+fails the PR when any workspace's `start:dev`/`build` script drifts from the
+exact runner invocation, when a legacy per-service `start-dev.sh` reappears,
+or when a shared runner file itself is missing. Docker's all-in-one build runs
+the same runners inside the image, and the Docker build chain's topological
+ordering against real package dependencies is separately guarded by
+`check:build-chain`.
+
 ## Per-Service Database Architecture
 
 Each service gets its own PostgreSQL database, avoiding cross-service coupling:
@@ -167,7 +215,6 @@ azeebo_notification  azeebo_reward  azeebo_engagement
 azeebo_messaging     azeebo_referral azeebo_subscription
 azeebo_analytics     azeebo_recommendation
 azeebo_queue    azeebo_support  azeebo_moderation
-azeebo_admin    azeebo_creator_portal
 ```
 
 Each service's `.env` contains its own `DATABASE_URL` pointing to its database.
@@ -186,7 +233,7 @@ JWT_REFRESH_SECRET=<random-64-char-hex>
 These override the placeholder values in service `.env` files at runtime.
 For production, set secrets via Coolify UI or Docker environment variables.
 
-## Shared Packages
+## Shared Packages (20 total)
 
 | Package | Description |
 |---------|-------------|
@@ -204,6 +251,12 @@ For production, set secrets via Coolify UI or Docker environment variables.
 | `test-utils` | Testing utilities |
 | `internal-clients` | Internal service clients |
 | `shared-services` | Shared NestJS modules (prisma, redis, cache, rate-limit, queue, audit, analytics, validation, pagination, api-versioning, sanitize, middleware) |
+| `ui` | Shared React UI components |
+| `design-tokens` | Design tokens (colors, spacing, typography) |
+| `http-client` | HTTP client for service-to-service calls |
+| `event-bus` | Event bus for inter-service communication |
+| `opentelemetry` | OpenTelemetry tracing and instrumentation |
+| `contract-tests` | API contract testing utilities |
 
 ## Running Tests
 
@@ -214,6 +267,45 @@ pnpm -r test
 # Run specific service tests
 cd services/core/wallet-service && pnpm test
 ```
+
+## Git Hooks
+
+The repo ships a pre-commit hook that blocks commits when a generated
+Prisma client is stale relative to its `prisma/schema.prisma` — a failure mode
+CI structurally cannot catch, because CI regenerates clients fresh and would
+silently trust the stale one sitting in your working tree.
+
+**Installed automatically:** the root `prepare` script runs
+`scripts/install-git-hooks.sh` on every `pnpm install`, pointing
+`core.hooksPath` at `scripts/hooks`. Verify with:
+
+```bash
+# Should print: scripts/hooks
+git config --get core.hooksPath
+```
+
+The installer is a no-op outside a git checkout (Docker builds, tarballs) and
+never touches a `core.hooksPath` you have already set yourself.
+
+To uninstall (opt out):
+
+```bash
+git config --unset core.hooksPath
+```
+
+What it does:
+
+- Runs `scripts/check-prisma-client-stale.mjs` before every commit (~100ms)
+- Blocks the commit when any workspace's generated client is stale
+- Fix when blocked: `pnpm run prisma:generate`, then re-stage and commit
+
+Skip once (not recommended): `git commit --no-verify`.
+
+The hook itself is guarded by CI: `scripts/check-git-hooks.mjs` (wired as
+`pnpm run check:git-hooks` in the Flag & Swagger Conventions job) fails the PR
+when the hook file is missing, not executable, untracked by git or committed
+without mode 100755 (so fresh clones would materialize a dead hook), or
+rewritten without the stale-client check.
 
 ## Engineering Guidelines
 

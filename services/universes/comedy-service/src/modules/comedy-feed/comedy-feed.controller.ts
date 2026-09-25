@@ -1,14 +1,28 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { ComedyFeedService } from './comedy-feed.service';
+import { ServiceAuthGuard, AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, comedyFlags } from '@azeebo/feature-flags';
+import { ComedyFeedService } from './comedy-feed.service.js';
 
 @ApiTags('Comedy Feed')
-@Controller('v1/comedy')
+@UseGuards(ServiceAuthGuard)
+@Controller('comedy')
 export class ComedyFeedController {
-  constructor(private readonly comedyFeedService: ComedyFeedService) {}
+  constructor(@Inject(ComedyFeedService) private readonly comedyFeedService: ComedyFeedService) {}
 
   @Get()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get comedy feed' })
   @ApiResponse({ status: 200, description: 'Feed items' })
   async getFeed(
@@ -20,6 +34,8 @@ export class ComedyFeedController {
   }
 
   @Get('trending')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get trending clips' })
   @ApiResponse({ status: 200, description: 'Trending list' })
   async getTrending(
@@ -30,6 +46,9 @@ export class ComedyFeedController {
   }
 
   @Get('specials')
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(comedyFlags.specialsGate)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get premium specials' })
   @ApiResponse({ status: 200, description: 'Specials list' })
   async getSpecials(
@@ -41,6 +60,9 @@ export class ComedyFeedController {
   }
 
   @Get('specials/:id')
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(comedyFlags.specialsGate)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get special by id' })
   @ApiResponse({ status: 200, description: 'Special details' })
   async getSpecial(@Param('id') id: string): Promise<unknown> {
@@ -48,9 +70,12 @@ export class ComedyFeedController {
   }
 
   @Post('specials/:id/like')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Like/unlike special' })
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(comedyFlags.specialsGate)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Like/unlike special (comedy_specials_gate)' })
   @ApiResponse({ status: 200, description: 'Result' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async likeSpecial(
     @Param('id') id: string,
     @Request() req: { user: { id: string } }
@@ -59,6 +84,8 @@ export class ComedyFeedController {
   }
 
   @Get('clips/:id')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get clip details' })
   @ApiResponse({ status: 200, description: 'Clip details' })
   async getClip(@Param('id') id: string, @Query('userId') userId?: string): Promise<unknown> {
@@ -66,7 +93,6 @@ export class ComedyFeedController {
   }
 
   @Post('clips/:id/like')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Like/unlike clip' })
   @ApiResponse({ status: 200, description: 'Result' })
   async likeClip(
@@ -77,7 +103,6 @@ export class ComedyFeedController {
   }
 
   @Post('clips/:id/comment')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Comment on clip' })
   @ApiResponse({ status: 200, description: 'Comment added' })
   async comment(
@@ -89,7 +114,7 @@ export class ComedyFeedController {
   }
 
   @Post('trends/record')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Record trends (admin)' })
   @ApiResponse({ status: 200, description: 'Recorded' })
   async recordTrends(@Body() body: { period?: string }): Promise<unknown> {

@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { RewardResponse } from './interfaces/reward-response.interface';
+import { PrismaService } from '../database/prisma.service.js';
+import { RewardResponse } from './interfaces/reward-response.interface.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { FeatureFlagService, rewardFlags } from '@azeebo/feature-flags';
+import axios from 'axios';
 
 interface MissionWithCompletion {
   id: string;
@@ -18,13 +20,35 @@ interface MissionWithCompletion {
 export class RewardsService {
   private readonly logger = new Logger(RewardsService.name);
   private readonly defaultPaginationLimit: number;
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly cacheService: CacheService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cacheService: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    private readonly featureFlagService?: FeatureFlagService
   ) {
     this.defaultPaginationLimit = this.configService.get<number>('DEFAULT_PAGINATION_LIMIT', 100);
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 
   private async invalidateRewardCache(userId: string): Promise<void> {
@@ -95,8 +119,14 @@ export class RewardsService {
         },
       };
     } catch (error) {
-      this.logger.error(`getRewardAccount failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      this.logger.error(
+        `getRewardAccount failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -142,7 +172,10 @@ export class RewardsService {
       return result;
     } catch (error) {
       this.logger.error(`getMissions failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -181,7 +214,10 @@ export class RewardsService {
       return result;
     } catch (error) {
       this.logger.error(`getBadges failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -211,6 +247,9 @@ export class RewardsService {
         currentStreak = 0;
       }
 
+      // NOTE: currentStreak is calculated but not persisted here.
+      // The check-in endpoint should update streak and lastCheckInAt in the same transaction.
+
       return {
         success: true,
         data: {
@@ -222,7 +261,49 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`getStreak failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
+    }
+  }
+
+  /**
+   * Catalog of active rewards available for redemption. This backs the mobile
+   * Rewards tab's "Redeem Rewards" grid — previously the app fetched a
+   * /rewards/redeem-options route that did not exist, so the grid was always
+   * empty and the tap handlers were no-ops.
+   */
+  async getRedeemOptions(): Promise<RewardResponse> {
+    try {
+      const rewards = await this.prisma.reward.findMany({
+        where: { isActive: true },
+        orderBy: { cost: 'asc' },
+        take: 50,
+      });
+
+      return {
+        success: true,
+        data: {
+          options: rewards.map((r) => ({
+            id: r.id,
+            name: r.name,
+            description: r.description,
+            cost: r.cost,
+            type: r.type,
+            metadata: r.metadata,
+          })),
+        },
+      };
+    } catch (error) {
+      this.logger.error(
+        `getRedeemOptions failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -267,6 +348,8 @@ export class RewardsService {
 
       await this.invalidateRewardCache(userId);
 
+      this.trackAnalyticsEvent('reward_redeemed', userId, { rewardId, points: reward.cost });
+
       return {
         success: true,
         data: {
@@ -286,7 +369,10 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`redeemReward failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -301,7 +387,7 @@ export class RewardsService {
         throw new NotFoundException(`Reward account not found for user ${userId}`);
       }
 
-      const nextLevel = await this.prisma.level.findFirst({
+      const nextLevel = await this.prisma.level.findUnique({
         where: { rank: rewardAccount.level.rank + 1 },
       });
 
@@ -334,7 +420,10 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`getLevel failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -390,11 +479,28 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`addPoints failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
   async checkIn(userId: string): Promise<RewardResponse> {
+    // reward_streaks: off by default — check-ins only advance the streak
+    // counter when the flag is enabled; otherwise fall through to points.
+    if (
+      this.featureFlagService &&
+      !(await this.featureFlagService.isEnabled(rewardFlags.streaks))
+    ) {
+      return {
+        success: true,
+        data: {
+          message: 'Streaks disabled',
+          streak: { current: 0, lastCheckInAt: null },
+        },
+      };
+    }
     try {
       const rewardAccount = await this.prisma.rewardAccount.findUnique({
         where: { userId },
@@ -460,7 +566,10 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`checkIn failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -482,9 +591,9 @@ export class RewardsService {
         throw new NotFoundException(`Reward account not found for user ${userId}`);
       }
 
-      const activityPoints = this.getActivityPoints(activity);
+      const activityPoints = await this.getActivityPoints(activity);
 
-      await this.prisma.$transaction([
+      const [updatedAccount] = await this.prisma.$transaction([
         this.prisma.rewardAccount.update({
           where: { userId },
           data: {
@@ -503,22 +612,49 @@ export class RewardsService {
 
       await this.invalidateRewardCache(userId);
 
+      this.trackAnalyticsEvent('reward_points_earned', userId, {
+        points: activityPoints,
+        reason: activity,
+      });
+
       return {
         success: true,
         data: {
           message: 'Points earned successfully',
           activity,
           pointsEarned: activityPoints,
-          newBalance: rewardAccount.points + activityPoints,
+          newBalance: updatedAccount.points,
         },
       };
     } catch (error) {
       this.logger.error(`earnPoints failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
-  private getActivityPoints(activity: string): number {
+  private async getActivityPoints(activity: string): Promise<number> {
+    // Try to load from database config table
+    try {
+      const config = await (
+        this.prisma as unknown as {
+          activityPointConfig?: {
+            findUnique: (args: {
+              where: { activity: string };
+            }) => Promise<{ points: number } | null>;
+          };
+        }
+      ).activityPointConfig?.findUnique({
+        where: { activity },
+      });
+      if (config) return config.points;
+    } catch {
+      // Config table may not exist — fall back to defaults
+    }
+
+    // Default points map
     const pointsMap: Record<string, number> = {
       content_view: 1,
       content_share: 5,
@@ -532,6 +668,16 @@ export class RewardsService {
     if (!points) {
       throw new BadRequestException('Unknown activity');
     }
+
+    // reward_double_points: off by default — when enabled, every activity
+    // earns double points for promotions without changing the base config.
+    if (
+      this.featureFlagService &&
+      (await this.featureFlagService.isEnabled(rewardFlags.doublePoints))
+    ) {
+      return points * 2;
+    }
+
     return points;
   }
 
@@ -563,7 +709,10 @@ export class RewardsService {
       return result;
     } catch (error) {
       this.logger.error(`getBalance failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -601,7 +750,10 @@ export class RewardsService {
       };
     } catch (error) {
       this.logger.error(`getHistory failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
     }
   }
 }

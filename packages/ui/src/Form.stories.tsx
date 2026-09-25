@@ -25,13 +25,13 @@ export const FormWithValidation: StoryObj<typeof Form> = {
         {({ register, formState: { errors } }) => (
           <div className="space-y-4">
             <FormField label="Email" error={errors.email?.message}>
-              <Field {...register('email')} type="email" placeholder="Enter your email" />
+              <Input {...register('email')} type="email" placeholder="Enter your email" />
             </FormField>
             <FormField label="Password" error={errors.password?.message}>
-              <Field {...register('password')} type="password" placeholder="Enter your password" />
+              <Input {...register('password')} type="password" placeholder="Enter your password" />
             </FormField>
             <label className="flex items-center gap-2 cursor-pointer">
-              <Field {...register('rememberMe')} type="checkbox" />
+              <Input {...register('rememberMe')} type="checkbox" />
               <span className="text-sm">Remember me</span>
             </label>
             <FormButton type="submit">Sign In</FormButton>
@@ -51,7 +51,8 @@ export const FormFieldComponent: StoryObj<typeof FormField> = {
   render: (args) => (
     <div className="p-4 w-full max-w-md">
       <FormField {...args}>
-        <Field name="username" label="Username" control={{} as any}>
+        {/* @ts-expect-error Storybook story only — control not needed for render */}
+        <Field name="username" label="Username" control={{}}>
           <Input type="text" placeholder="Enter your username" />
         </Field>
       </FormField>
@@ -68,7 +69,8 @@ export const FormFieldWithError: StoryObj<typeof FormField> = {
   render: (args) => (
     <div className="p-4 w-full max-w-md">
       <FormField {...args}>
-        <Field name="email" label="Email" control={{} as any}>
+        {/* @ts-expect-error Storybook story only — control not needed for render */}
+        <Field name="email" label="Email" control={{}}>
           <Input type="email" placeholder="Enter your email" />
         </Field>
       </FormField>
@@ -109,12 +111,14 @@ export const FieldTypes: StoryObj<typeof Form> = {
               <Textarea {...register('textarea')} placeholder="Multi-line text input..." rows={3} />
             </FormField>
             <FormField label="Select">
-              <Select {...register('select')}>
-                <option value="">Select an option</option>
-                <option value="option1">Option 1</option>
-                <option value="option2">Option 2</option>
-                <option value="option3">Option 3</option>
-              </Select>
+              <Select
+                {...register('select')}
+                options={[
+                  { value: 'us', label: 'United States' },
+                  { value: 'ca', label: 'Canada' },
+                  { value: 'uk', label: 'United Kingdom' },
+                ]}
+              />
             </FormField>
           </>
         )}
@@ -180,30 +184,33 @@ export const ComplexForm: StoryObj<typeof Form> = {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <FormField label="First Name" error={errors.firstName?.message}>
-                <Field {...register('firstName')} placeholder="John" />
+                <Input {...register('firstName')} placeholder="John" />
               </FormField>
               <FormField label="Last Name" error={errors.lastName?.message}>
-                <Field {...register('lastName')} placeholder="Doe" />
+                <Input {...register('lastName')} placeholder="Doe" />
               </FormField>
             </div>
             <FormField label="Email" error={errors.email?.message}>
-              <Field {...register('email')} type="email" placeholder="john@example.com" />
+              <Input {...register('email')} type="email" placeholder="john@example.com" />
             </FormField>
             <FormField label="Phone" error={errors.phone?.message}>
-              <Field {...register('phone')} type="tel" placeholder="+1 234 567 890" />
+              <Input {...register('phone')} type="tel" placeholder="+1 234 567 890" />
             </FormField>
             <FormField label="Country" error={errors.country?.message}>
-              <Field {...register('country')} as="select">
-                <option value="">Select country</option>
-                <option value="US">United States</option>
-                <option value="CA">Canada</option>
-                <option value="UK">United Kingdom</option>
-                <option value="DE">Germany</option>
-                <option value="FR">France</option>
-              </Field>
+              <Select
+                {...register('country')}
+                options={[
+                  { value: '', label: 'Select country' },
+                  { value: 'US', label: 'United States' },
+                  { value: 'CA', label: 'Canada' },
+                  { value: 'UK', label: 'United Kingdom' },
+                  { value: 'DE', label: 'Germany' },
+                  { value: 'FR', label: 'France' },
+                ]}
+              />
             </FormField>
             <label className="flex items-start gap-3 cursor-pointer">
-              <Field {...register('terms')} type="checkbox" />
+              <Input {...register('terms')} type="checkbox" />
               <span className="text-sm text-text-secondary">
                 I agree to the Terms of Service and Privacy Policy
               </span>

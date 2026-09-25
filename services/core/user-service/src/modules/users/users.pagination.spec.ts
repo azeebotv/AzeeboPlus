@@ -1,13 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
-import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
+import { UsersController } from './users.controller.js';
+import { UsersService } from './users.service.js';
+import { AvatarService } from './avatar.service.js';
+import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagGuard, FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('User Service Pagination Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockUsersService = {
     getWatchHistory: jest.fn().mockResolvedValue({
@@ -57,8 +60,21 @@ describe('User Service Pagination Tests', () => {
           useValue: mockUsersService,
         },
         {
-          provide: APP_GUARD,
-          useClass: ServiceAuthGuard,
+          provide: AvatarService,
+          useValue: { uploadAvatar: jest.fn(), deleteAvatar: jest.fn() },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
       ],
     })
@@ -66,11 +82,24 @@ describe('User Service Pagination Tests', () => {
       .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useValue(mockRateLimitGuard)
+      .overrideGuard(FeatureFlagGuard)
+      .useValue({
+        canActivate: jest.fn(() => true),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+    // Mock ServiceAuthGuard behavior
+    app.use((req: { user?: unknown }, _res: unknown, next: () => void) => {
+      if (!req.user) {
+        req.user = { id: 'test-user-123', sub: 'test-user-123', role: 'user' };
+      }
+      next();
+    });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -99,7 +128,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history')
         .set('Authorization', 'Bearer test-token');
 
@@ -125,7 +154,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history?page=3')
         .set('Authorization', 'Bearer test-token');
 
@@ -147,7 +176,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history?limit=10')
         .set('Authorization', 'Bearer test-token');
 
@@ -169,7 +198,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history?limit=1000')
         .set('Authorization', 'Bearer test-token');
 
@@ -191,7 +220,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history')
         .set('Authorization', 'Bearer test-token');
 
@@ -213,7 +242,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history?page=3')
         .set('Authorization', 'Bearer test-token');
 
@@ -235,7 +264,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/history')
         .set('Authorization', 'Bearer test-token');
 
@@ -259,7 +288,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/saved')
         .set('Authorization', 'Bearer test-token');
 
@@ -284,7 +313,7 @@ describe('User Service Pagination Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/users/me/saved?page=2&limit=10')
         .set('Authorization', 'Bearer test-token');
 

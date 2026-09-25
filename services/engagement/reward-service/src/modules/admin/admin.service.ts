@@ -1,13 +1,14 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getStats() {
     try {
@@ -27,7 +28,7 @@ export class AdminService {
       });
     } catch (error) {
       this.logger.error(`getStats failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 
@@ -53,9 +54,6 @@ export class AdminService {
           take: limit,
           orderBy: { createdAt: 'desc' },
           include: {
-            user: {
-              select: { id: true, email: true, displayName: true },
-            },
             level: true,
             badges: true,
           },
@@ -66,7 +64,7 @@ export class AdminService {
       return ApiResponseWrapper.paginated(accounts, page, limit, total);
     } catch (error) {
       this.logger.error(`getRewards failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 
@@ -98,8 +96,11 @@ export class AdminService {
 
       return ApiResponseWrapper.paginated(transactions, page, limit, total);
     } catch (error) {
-      this.logger.error(`getRewardTransactions failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      this.logger.error(
+        `getRewardTransactions failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 
@@ -118,7 +119,7 @@ export class AdminService {
       return ApiResponseWrapper.success(missions);
     } catch (error) {
       this.logger.error(`getMissions failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 
@@ -142,8 +143,11 @@ export class AdminService {
 
       return ApiResponseWrapper.created(mission);
     } catch (error) {
-      this.logger.error(`createMission failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      this.logger.error(
+        `createMission failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 
@@ -178,8 +182,164 @@ export class AdminService {
 
       return ApiResponseWrapper.success(updated);
     } catch (error) {
-      this.logger.error(`updateMission failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      this.logger.error(
+        `updateMission failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
+    }
+  }
+
+  // Badge CRUD
+  async getBadges(options?: { page?: number; limit?: number }) {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const [badges, total] = await Promise.all([
+      this.prisma.badge.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.badge.count(),
+    ]);
+
+    return ApiResponseWrapper.success({
+      badges,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  }
+
+  async createBadge(data: { name: string; description?: string; icon: string; points: number }) {
+    const badge = await this.prisma.badge.create({ data });
+    return ApiResponseWrapper.created(badge);
+  }
+
+  async assignBadge(badgeId: string, userId: string, reason?: string) {
+    const badge = await this.prisma.badge.findUnique({ where: { id: badgeId } });
+    if (!badge) throw new NotFoundException('Badge not found');
+
+    await this.prisma.$transaction(async (tx) => {
+      // Credit points for the badge
+      await tx.pointsLedger.create({
+        data: {
+          userId,
+          points: badge.points,
+          type: 'badge',
+          reason: `Badge awarded: ${badge.name}${reason ? ` - ${reason}` : ''}`,
+        },
+      });
+
+      // Link the badge to the user's reward account (if badges field exists)
+      try {
+        const rewardAccount = await tx.rewardAccount.findUnique({
+          where: { userId },
+        });
+
+        if (rewardAccount) {
+          const accountRecord = rewardAccount as unknown as Record<string, unknown>;
+          const currentBadges = (accountRecord.badges as string[]) || [];
+          if (!currentBadges.includes(badgeId)) {
+            await tx.rewardAccount.update({
+              where: { userId },
+              data: {
+                totalPoints: { increment: badge.points },
+                availablePoints: { increment: badge.points },
+              } as never,
+            });
+          }
+        }
+      } catch {
+        // badges field may not exist on rewardAccount
+      }
+    });
+
+    return ApiResponseWrapper.success({
+      message: `Badge ${badge.name} assigned to user ${userId}`,
+    });
+  }
+
+  // Level CRUD
+  async getLevels() {
+    const levels = await this.prisma.level.findMany({ orderBy: { minPoints: 'asc' } });
+    return ApiResponseWrapper.success(levels);
+  }
+
+  async createLevel(data: {
+    name: string;
+    rank: number;
+    minPoints: number;
+    icon?: string;
+    color?: string;
+  }) {
+    const level = await this.prisma.level.create({ data });
+    return ApiResponseWrapper.created(level);
+  }
+
+  async updateLevel(
+    id: string,
+    data: { name?: string; rank?: number; minPoints?: number; icon?: string; color?: string }
+  ) {
+    const existing = await this.prisma.level.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Level not found');
+
+    const updated = await this.prisma.level.update({ where: { id }, data });
+    return ApiResponseWrapper.success(updated);
+  }
+
+  // Activity Point Configuration
+  async getActivityPointConfigs() {
+    try {
+      const configs = await (
+        this.prisma as unknown as {
+          activityPointConfig?: { findMany: (args?: unknown) => Promise<unknown[]> };
+        }
+      ).activityPointConfig?.findMany({
+        orderBy: { activity: 'asc' },
+      });
+      return ApiResponseWrapper.success(configs || []);
+    } catch {
+      return ApiResponseWrapper.success([]);
+    }
+  }
+
+  async createActivityPointConfig(data: {
+    activity: string;
+    points: number;
+    description?: string;
+  }) {
+    try {
+      const config = await (
+        this.prisma as unknown as {
+          activityPointConfig?: { create: (args: { data: unknown }) => Promise<unknown> };
+        }
+      ).activityPointConfig?.create({ data });
+      return ApiResponseWrapper.created(config);
+    } catch (error) {
+      mapAndThrow(error, 'creating activity point config');
+    }
+  }
+
+  async updateActivityPointConfig(
+    activity: string,
+    data: { points?: number; description?: string }
+  ) {
+    try {
+      const config = await (
+        this.prisma as unknown as {
+          activityPointConfig?: {
+            upsert: (args: {
+              where: { activity: string };
+              create: unknown;
+              update: unknown;
+            }) => Promise<unknown>;
+          };
+        }
+      ).activityPointConfig?.upsert({
+        where: { activity },
+        create: { activity, points: data.points || 0, description: data.description },
+        update: data,
+      });
+      return ApiResponseWrapper.success(config);
+    } catch (error) {
+      mapAndThrow(error, 'updating activity point config');
     }
   }
 }

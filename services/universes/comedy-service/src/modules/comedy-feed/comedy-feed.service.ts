@@ -1,5 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
 interface FeedItem {
@@ -29,7 +29,10 @@ interface FeedResponse {
 @Injectable()
 export class ComedyFeedService {
   private readonly logger = new Logger(ComedyFeedService.name);
-  constructor(private prisma: PrismaService, private cache: CacheService) {}
+  constructor(
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private cache: CacheService
+  ) {}
 
   async getFeed(page = 1, limit = 20, type?: string): Promise<FeedResponse> {
     try {
@@ -50,8 +53,10 @@ export class ComedyFeedService {
           createdAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
         },
         include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
-        },
+          comedian: {
+            select: { id: true, name: true, stageName: true, avatar: true },
+          },
+        } as never,
         orderBy: { viewCount: 'desc' },
         take: 20,
       });
@@ -67,8 +72,15 @@ export class ComedyFeedService {
           likeCount: clip.likeCount,
           shareCount: clip.shareCount,
           creator: {
-            ...clip.creator,
-            avatar: clip.creator.avatar ?? undefined,
+            id: clip.creatorId,
+            displayName: (clip as unknown as Record<string, unknown>).comedian
+              ? (((clip as unknown as Record<string, unknown>).comedian as Record<string, unknown>)
+                  .name as string) || ''
+              : '',
+            avatar: (clip as unknown as Record<string, unknown>).comedian
+              ? (((clip as unknown as Record<string, unknown>).comedian as Record<string, unknown>)
+                  .avatar as string) || undefined
+              : undefined,
           },
           createdAt: clip.createdAt.toISOString(),
         })),
@@ -89,7 +101,10 @@ export class ComedyFeedService {
       return result;
     } catch (error) {
       this.logger.error(`Failed to get feed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'FEED_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'FEED_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 
@@ -99,17 +114,19 @@ export class ComedyFeedService {
   ): Promise<{ success: boolean; data?: unknown; error?: { code: string; message: string } }> {
     try {
       const cacheK = cacheKey('comedy', `clip:${clipId}`);
-      const cached = await this.cache.get<{ success: boolean; data?: unknown; error?: { code: string; message: string } }>(cacheK);
+      const cached = await this.cache.get<{
+        success: boolean;
+        data?: unknown;
+        error?: { code: string; message: string };
+      }>(cacheK);
       if (cached) return cached;
 
       const clip = await this.prisma.comedyClip.findUnique({
         where: { id: clipId },
         include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
           comedian: true,
           likes: userId ? { where: { userId } } : false,
           comments: {
-            include: { user: { select: { id: true, displayName: true, avatar: true } } },
             orderBy: { createdAt: 'desc' },
             take: 20,
           },
@@ -129,16 +146,22 @@ export class ComedyFeedService {
         success: true,
         data: {
           ...clip,
-          isLiked: userId ? clip.likes.length > 0 : false,
+          isLiked: userId ? (clip.likes?.length ?? 0) > 0 : false,
         },
       };
 
       await this.cache.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get clip by id: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get clip by id: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'CLIP_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'CLIP_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 
@@ -171,7 +194,10 @@ export class ComedyFeedService {
       return { success: true, data: { message: 'Liked', likeCount: updated.likeCount } };
     } catch (error) {
       this.logger.error(`Failed to like clip: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'LIKE_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'LIKE_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 
@@ -197,9 +223,15 @@ export class ComedyFeedService {
         data: { commentId: comment.id, message: 'Comment added' },
       };
     } catch (error) {
-      this.logger.error(`Failed to comment on clip: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to comment on clip: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'COMMENT_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'COMMENT_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 
@@ -216,7 +248,7 @@ export class ComedyFeedService {
         this.prisma.comedySpecial.findMany({
           where,
           include: {
-            comedian: { include: { user: { select: { displayName: true, avatar: true } } } },
+            comedian: true,
           },
           skip: (page - 1) * limit,
           take: limit,
@@ -230,8 +262,14 @@ export class ComedyFeedService {
         data: { items, total },
       };
     } catch (error) {
-      this.logger.error(`Failed to get specials: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'SPECIALS_ERROR', message: (error as Error).message } };
+      this.logger.error(
+        `Failed to get specials: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'SPECIALS_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 
@@ -240,7 +278,7 @@ export class ComedyFeedService {
       const special = await this.prisma.comedySpecial.findUnique({
         where: { id: specialId },
         include: {
-          comedian: { include: { user: { select: { displayName: true, avatar: true } } } },
+          comedian: true,
         },
       });
 
@@ -250,9 +288,15 @@ export class ComedyFeedService {
 
       return { success: true, data: special };
     } catch (error) {
-      this.logger.error(`Failed to get special by id: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get special by id: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'SPECIAL_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'SPECIAL_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 
@@ -284,24 +328,29 @@ export class ComedyFeedService {
       await this.cache.invalidate('comedy:*');
       return { success: true, data: { message: 'Liked' } };
     } catch (error) {
-      this.logger.error(`Failed to like special: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'LIKE_ERROR', message: (error as Error).message } };
+      this.logger.error(
+        `Failed to like special: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'LIKE_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 
   async getTrending(
-    _period = 'daily',
+    period = 'daily',
     limit = 20
   ): Promise<{ success: boolean; data?: { items: unknown[] } }> {
     try {
-      const cacheK = cacheKey('comedy', `trending:${_period}:${limit}`);
-      const cached = await this.cache.get<{ success: boolean; data?: { items: unknown[] } }>(cacheK);
+      const cacheK = cacheKey('comedy', `trending:${period}:${limit}`);
+      const cached = await this.cache.get<{ success: boolean; data?: { items: unknown[] } }>(
+        cacheK
+      );
       if (cached) return cached;
 
       const clips = await this.prisma.comedyClip.findMany({
-        include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
-        },
         orderBy: { viewCount: 'desc' },
         take: limit,
       });
@@ -320,8 +369,14 @@ export class ComedyFeedService {
       await this.cache.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get trending: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'TRENDING_ERROR', message: (error as Error).message } };
+      this.logger.error(
+        `Failed to get trending: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'TRENDING_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 
@@ -361,8 +416,14 @@ export class ComedyFeedService {
 
       return { success: true, data: { message: `Recorded ${scored.length} trends for ${period}` } };
     } catch (error) {
-      this.logger.error(`Failed to record trend: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'TREND_RECORD_ERROR', message: (error as Error).message } };
+      this.logger.error(
+        `Failed to record trend: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'TREND_RECORD_ERROR', message: (error as Error).message },
+      } as never;
     }
   }
 }

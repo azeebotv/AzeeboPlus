@@ -1,11 +1,147 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   output   = "../src/prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// Stub models for cross-service references
+model User {
+  id             String           @id @default(uuid())
+  email          String           @unique
+  displayName    String?
+  avatar         String?
+  role           String           @default("user")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  creatorProfile CreatorProfile?
+
+  @@map("users")
+}
+
+model ContentItem {
+  id             String        @id @default(uuid())
+  title          String
+  description    String?
+  thumbnail      String?
+  universeId     String
+  universe       String
+  contentType    String
+  status         String        @default("published")
+  viewCount      Int           @default(0)
+  creatorId      String?
+  creatorProfile CreatorProfile? @relation(fields: [creatorId], references: [userId])
+  userId         String?
+  watchedAt      DateTime?
+  publishedAt    DateTime?
+  contentId      String?
+  categories     String[]
+  tags           String[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  universeModel  Universe?     @relation(fields: [universeId], references: [id])
+
+  @@map("content_items")
+}
+
+model CreatorProfile {
+  id          String        @id @default(uuid())
+  userId      String        @unique
+  displayName String
+  avatar      String?
+  bio         String?
+  verified    Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  user        User?         @relation(fields: [userId], references: [id])
+  contentItems ContentItem[]
+
+  @@map("creator_profiles")
+}
+
+model Universe {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  displayName String
+  description String?
+  icon        String?
+  color       String?
+  isEnabled   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  contentItems ContentItem[]
+
+  @@map("universes")
+}
+
+model PaymentIntent {
+  id        String   @id @default(uuid())
+  userId    String
+  amount    Decimal  @db.Decimal(18, 2)
+  currency  String   @default("NGN")
+  status    String
+  provider  String?
+  reference String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payment_intents")
+  @@index([userId])
+}
+
+model ProductEvent {
+  id        String   @id @default(uuid())
+  eventName String
+  userId    String?
+  sessionId String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@map("product_events")
+  @@index([userId])
+  @@index([eventName])
+}
+
+model PointsLedger {
+  id        String   @id @default(uuid())
+  userId    String
+  points    Int
+  type      String
+  reference String?
+  createdAt DateTime @default(now())
+
+  @@map("points_ledger")
+  @@index([userId])
+}
+
+model AudienceSegment {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  criteria    Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("audience_segments")
+}
+
+model UserSegment {
+  id        String   @id @default(uuid())
+  userId    String
+  segmentId String
+  score     Float    @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("user_segments")
+  @@index([userId])
+  @@index([segmentId])
 }
 
 model RecommendationLog {

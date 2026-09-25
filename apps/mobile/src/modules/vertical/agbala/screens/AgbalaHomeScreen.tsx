@@ -1,13 +1,13 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import type { StackNavigationProp } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
 import { AgbalaHero } from '../components/AgbalaHero';
 import { AgbalaPathCard } from '../components/AgbalaPathCard';
 import { colors, typography, spacing, pathColors } from '../../../../theme';
 import type { AgbalaStackParamList } from '../types';
 
-type NavigationProp = StackNavigationProp<AgbalaStackParamList, 'AgbalaHome'>;
+type HomeNavigationProp = NavigationProp<AgbalaStackParamList, 'AgbalaHome'>;
 
-export default function AgbalaHomeScreen({ navigation }: { navigation: NavigationProp }) {
+export default function AgbalaHomeScreen({ navigation }: { navigation: HomeNavigationProp }) {
   const handleBeginJourney = () => {
     navigation.navigate('AgbalaStoryworld');
   };
@@ -80,7 +80,7 @@ export default function AgbalaHomeScreen({ navigation }: { navigation: Navigatio
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.primary,
+    backgroundColor: colors.bg.primary,
   },
   content: {
     paddingBottom: spacing.xxxl,

@@ -1,26 +1,28 @@
 'use client';
+'use client';
 
 import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import type { ContentItem } from '../../lib/api';
 import { announceToScreenReader } from '../../lib/keyboard';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
+import { OptimizedImage } from '../../components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { Gamepad2, Trophy, Tv, Film, Sparkles } from 'lucide-react';
 
-interface ContentItem {
-  id: string;
-  title: string;
-  description?: string;
-  thumbnail: string;
-  duration?: number;
-  category?: string;
-  universe?: { id: string; name: string; icon?: string };
-  creator?: { name: string };
-  rating?: number;
-  year?: number;
-  language?: string;
+function getUniverseIcon(name: string): React.JSX.Element {
+  const lower = name.toLowerCase();
+  if (lower.includes('game')) return <Gamepad2 className="w-4 h-4 inline mr-2 text-amber-400" />;
+  if (lower.includes('sport')) return <Trophy className="w-4 h-4 inline mr-2 text-emerald-400" />;
+  if (lower.includes('reality') || lower.includes('show'))
+    return <Tv className="w-4 h-4 inline mr-2 text-purple-400" />;
+  if (lower.includes('movie') || lower.includes('film') || lower.includes('cinema'))
+    return <Film className="w-4 h-4 inline mr-2 text-rose-400" />;
+  return <Sparkles className="w-4 h-4 inline mr-2 text-orange-400" />;
 }
 
 interface ContentResponse {
@@ -133,8 +135,7 @@ export default function BrowsePage(): React.JSX.Element {
     queryKey: ['browse', 'content', selectedCategory, selectedUniverseId],
     queryFn: async () => {
       let response;
-      if (selectedUniverseId)
-        response = await api.content.getContentByUniverse(selectedUniverseId);
+      if (selectedUniverseId) response = await api.content.getContentByUniverse(selectedUniverseId);
       else if (selectedCategory)
         response = await api.content.getContentByCategory(selectedCategory);
       else response = await api.content.getFeaturedContent();
@@ -144,6 +145,15 @@ export default function BrowsePage(): React.JSX.Element {
         let items: ContentItem[] = Array.isArray(data)
           ? data
           : (data as ContentResponse).items || [];
+        // Some feed endpoints store duration only inside the metadata JSON
+        // (ContentItem has no duration column) — lift it so the max-duration
+        // slider filters on real values instead of filtering everything to 0.
+        items = items.map((item) => ({
+          ...item,
+          duration:
+            item.duration ??
+            (item as unknown as { metadata?: { duration?: number } | null }).metadata?.duration,
+        }));
         return items;
       }
       return [];
@@ -155,31 +165,39 @@ export default function BrowsePage(): React.JSX.Element {
   const universes = universesQuery.data ?? [];
   const rawContent = contentQuery.data ?? [];
   const isLoading = categoriesQuery.isLoading || universesQuery.isLoading || contentQuery.isLoading;
-  const error = categoriesQuery.error?.message || universesQuery.error?.message || contentQuery.error?.message || null;
+  const error =
+    categoriesQuery.error?.message ||
+    universesQuery.error?.message ||
+    contentQuery.error?.message ||
+    null;
 
   const content = (() => {
     let items = [...rawContent];
+    // Language and Year dropdowns filter on metadata seeded by
+    // scripts/enrich-seed-content.mjs (meta.language / meta.releaseYear).
+    const metaOf = (item: ContentItem) =>
+      (item as unknown as { metadata?: { language?: string; releaseYear?: number } | null })
+        .metadata ?? {};
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       items = items.filter(
         (item) =>
           item.title.toLowerCase().includes(q) ||
           item.description?.toLowerCase().includes(q) ||
-          item.creator?.name.toLowerCase().includes(q)
+          item.creator?.name?.toLowerCase().includes(q)
       );
     }
-    if (minRating > 0) items = items.filter((item) => (item.rating || 0) >= minRating);
-    items = items.filter((item) => (item.duration || 0) <= maxDuration * 60);
     if (selectedLanguage !== 'all')
-      items = items.filter((item) => item.language === selectedLanguage);
+      items = items.filter((item) => metaOf(item).language === selectedLanguage);
     if (selectedYear !== 'all')
-      items = items.filter((item) => item.year?.toString() === selectedYear);
-    if (sortBy === 'Rating')
-      items = [...items].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    else if (sortBy === 'Newest')
-      items = [...items].sort((a, b) => (b.year || 0) - (a.year || 0));
-    else if (sortBy === 'A-Z')
-      items = [...items].sort((a, b) => a.title.localeCompare(b.title));
+      items = items.filter((item) => String(metaOf(item).releaseYear ?? '') === selectedYear);
+    if (minRating > 0) items = items.filter((item) => (item.likes || 0) >= minRating);
+    items = items.filter((item) => (item.duration || 0) <= maxDuration * 60);
+    if (sortBy === 'Newest')
+      items = [...items].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    else if (sortBy === 'A-Z') items = [...items].sort((a, b) => a.title.localeCompare(b.title));
     return items;
   })();
 
@@ -194,19 +212,26 @@ export default function BrowsePage(): React.JSX.Element {
     setSortBy('Popular');
   };
 
-  const activeFilterCount = [
-    searchQuery,
-    minRating > 0,
-    maxDuration < 300,
-    selectedLanguage !== 'all',
-    selectedYear !== 'all',
-  ].filter(Boolean).length;
+  const activeFilterCount = [searchQuery, minRating > 0, maxDuration < 300].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Browse" />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Browse" logoVariant="light" />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      {/* Top Ambient Glow */}
+      <div
+        className="pointer-events-none absolute -top-32 left-1/3 -translate-x-1/2 w-[650px] h-[450px] rounded-full blur-[140px] -z-0"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(232,66,10,0.16) 0%, rgba(204,28,28,0.05) 50%, transparent 80%)',
+        }}
+        aria-hidden="true"
+      />
+
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {/* Page Title */}
         <motion.div
           className="mb-6 sm:mb-8"
@@ -214,13 +239,13 @@ export default function BrowsePage(): React.JSX.Element {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <p
-            className="text-xs font-bold uppercase tracking-widest mb-2"
-            style={{ color: '#E8420A' }}
-          >
-            Discover
-          </p>
-          <h1 className="az-headline text-white text-3xl sm:text-4xl">Browse Content</h1>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-3 border border-white/10 bg-white/5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-orange)] animate-pulse" />
+            <span className="tracking-widest uppercase text-white/70">DISCOVER</span>
+          </div>
+          <h1 className="az-headline font-extrabold text-white text-3xl sm:text-4xl tracking-tight">
+            Browse Content
+          </h1>
         </motion.div>
 
         {error && (
@@ -284,7 +309,7 @@ export default function BrowsePage(): React.JSX.Element {
                 {activeFilterCount > 0 && (
                   <span
                     className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: '#CC1C1C', color: '#fff' }}
+                    style={{ background: 'var(--brand-red)', color: 'var(--brand-white)' }}
                   >
                     {activeFilterCount}
                   </span>
@@ -319,7 +344,7 @@ export default function BrowsePage(): React.JSX.Element {
                     step="0.5"
                     value={minRating}
                     onChange={(e) => setMinRating(parseFloat(e.target.value))}
-                    className="w-full accent-[#E8420A]"
+                    className="w-full accent-[var(--brand-orange)]"
                   />
                 </div>
                 <div>
@@ -334,7 +359,7 @@ export default function BrowsePage(): React.JSX.Element {
                     step="5"
                     value={maxDuration}
                     onChange={(e) => setMaxDuration(parseInt(e.target.value))}
-                    className="w-full accent-[#E8420A]"
+                    className="w-full accent-[var(--brand-orange)]"
                   />
                 </div>
                 <div>
@@ -375,8 +400,12 @@ export default function BrowsePage(): React.JSX.Element {
                 {activeFilterCount > 0 && (
                   <button
                     onClick={clearFilters}
+                    aria-label="Clear all filters"
                     className="w-full px-4 py-2 text-sm font-medium rounded-full transition-colors"
-                    style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#E8420A' }}
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      color: 'var(--brand-orange)',
+                    }}
                   >
                     Clear All Filters
                   </button>
@@ -386,12 +415,14 @@ export default function BrowsePage(): React.JSX.Element {
 
             {/* Categories */}
             <div className="az-glass p-4">
-              <h3 id="categories-heading" className="font-bold text-white text-sm mb-3">
+              <h2 id="categories-heading" className="font-bold text-white text-sm mb-3">
                 Categories
-              </h3>
+              </h2>
+              {/* Filter buttons in a plain list; selected state via aria-pressed
+                  (listbox/option semantics require focusable option children —
+                  buttons inside li are invalid ARIA and fail Lighthouse). */}
               <ul
                 ref={categoryListRef}
-                role="listbox"
                 aria-label="Content categories"
                 aria-labelledby="categories-heading"
                 className="space-y-1.5"
@@ -400,7 +431,7 @@ export default function BrowsePage(): React.JSX.Element {
                   <button
                     onClick={() => setSelectedCategory(null)}
                     onKeyDown={(e) => handleCategoryKeyDown(e, 0)}
-                    aria-selected={!selectedCategory}
+                    aria-pressed={!selectedCategory}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedCategory ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                     style={
                       !selectedCategory
@@ -416,7 +447,7 @@ export default function BrowsePage(): React.JSX.Element {
                     <button
                       onClick={() => setSelectedCategory(category.id)}
                       onKeyDown={(e) => handleCategoryKeyDown(e, index + 1)}
-                      aria-selected={selectedCategory === category.id}
+                      aria-pressed={selectedCategory === category.id}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedCategory === category.id ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                       style={
                         selectedCategory === category.id
@@ -433,12 +464,11 @@ export default function BrowsePage(): React.JSX.Element {
 
             {/* Universes */}
             <div className="az-glass p-4">
-              <h3 id="universes-heading" className="font-bold text-white text-sm mb-3">
+              <h2 id="universes-heading" className="font-bold text-white text-sm mb-3">
                 Universes
-              </h3>
+              </h2>
               <ul
                 ref={universeListRef}
-                role="listbox"
                 aria-label="Content universes"
                 aria-labelledby="universes-heading"
                 className="space-y-1.5"
@@ -447,7 +477,7 @@ export default function BrowsePage(): React.JSX.Element {
                   <button
                     onClick={() => setSelectedUniverseId(null)}
                     onKeyDown={(e) => handleUniverseKeyDown(e, 0)}
-                    aria-selected={!selectedUniverseId}
+                    aria-pressed={!selectedUniverseId}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedUniverseId ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                     style={
                       !selectedUniverseId
@@ -463,7 +493,7 @@ export default function BrowsePage(): React.JSX.Element {
                     <button
                       onClick={() => setSelectedUniverseId(universe.id)}
                       onKeyDown={(e) => handleUniverseKeyDown(e, index + 1)}
-                      aria-selected={selectedUniverseId === universe.id}
+                      aria-pressed={selectedUniverseId === universe.id}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedUniverseId === universe.id ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                       style={
                         selectedUniverseId === universe.id
@@ -471,7 +501,7 @@ export default function BrowsePage(): React.JSX.Element {
                           : {}
                       }
                     >
-                      {universe.icon && <span className="mr-2">{universe.icon}</span>}
+                      {getUniverseIcon(universe.name)}
                       {universe.name}
                     </button>
                   </li>
@@ -548,51 +578,54 @@ export default function BrowsePage(): React.JSX.Element {
                     role="article"
                     tabIndex={0}
                     onKeyDown={(e) => handleContentKeyDown(e, index)}
-                    className="az-glass overflow-hidden group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E8420A]"
+                    className="rounded-2xl overflow-hidden group cursor-pointer border border-[var(--hp-card-border)] bg-[var(--hp-card-bg)] hover:border-[rgba(232,66,10,0.4)] hover:shadow-[0_8px_30px_rgba(232,66,10,0.15)] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)] flex flex-col"
                   >
-                    <div className="relative h-48 flex items-center justify-center overflow-hidden">
+                    <div className="relative h-48 flex items-center justify-center overflow-hidden bg-black/40">
                       {item.thumbnail ? (
-                        <img
+                        <OptimizedImage
                           src={item.thumbnail}
                           alt={item.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
-                        <div
-                          className="w-full h-full flex items-center justify-center"
-                          style={{
-                            background:
-                              'linear-gradient(135deg, rgba(232,66,10,0.3), rgba(13,59,46,0.4))',
-                          }}
-                        >
-                          <span style={{ fontSize: 48 }}>
-                            {item.universe?.icon || '\uD83C\uDFAC'}
-                          </span>
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--brand-orange)]/20 to-black/60">
+                          <svg
+                            className="w-12 h-12 text-white/40"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={1.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625c.621 0 1.125-.504 1.125-1.125m-1.125 1.125h-7.5c-.621 0-1.125-.504-1.125-1.125m8.625 0V5.625m0 12.75v-1.5c0-.621-.504-1.125-1.125-1.125m0 0h-7.5m7.5 0V5.625m-8.625 12.75h-7.5m7.5 0V5.625"
+                            />
+                          </svg>
                         </div>
                       )}
-                      {item.rating && item.rating >= 4 && (
-                        <span
-                          className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded"
-                          style={{ background: 'rgba(232,66,10,0.9)', color: '#fff' }}
-                        >
-                          Top Rated
-                        </span>
-                      )}
+                      {/* Gradient Bottom overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--hp-card-bg)] via-transparent to-transparent opacity-80" />
                     </div>
-                    <div className="p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-white/50 mb-1">
-                        {item.universe?.name}
-                      </p>
-                      <h4 className="font-bold text-white text-sm mb-1 group-hover:text-[#E8420A] transition-colors line-clamp-1">
-                        {item.title}
-                      </h4>
-                      <p className="text-white/45 text-xs line-clamp-2 mb-3">{item.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-white/40">{item.creator?.name}</span>
-                        <span
-                          className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                          style={{ background: 'rgba(255,255,255,0.08)', color: '#E8420A' }}
-                        >
+                    <div className="p-4 flex-1 flex flex-col justify-between">
+                      <div>
+                        {item.universe?.name && (
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--brand-orange)] mb-1">
+                            {item.universe.name}
+                          </p>
+                        )}
+                        <h4 className="font-bold text-white text-base mb-1 group-hover:text-[var(--brand-orange)] transition-colors line-clamp-1">
+                          {item.title}
+                        </h4>
+                        <p className="text-white/50 text-xs line-clamp-2 mb-3 leading-relaxed">
+                          {item.description}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                        <span className="text-xs text-white/40">
+                          {item.creator?.name || 'Azeebo Originals'}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-white/10 text-white group-hover:bg-[var(--brand-orange)] transition-colors">
                           Watch
                         </span>
                       </div>
@@ -601,19 +634,19 @@ export default function BrowsePage(): React.JSX.Element {
                 ))}
               </div>
             ) : (
-              <div className="az-glass p-12 text-center">
-                <span className="text-5xl mb-4 block">&#x1F50D;</span>
-                <h3 className="text-lg font-bold text-white mb-2">No content found</h3>
-                <p className="text-white/50 text-sm">
-                  Try selecting a different category or universe
-                </p>
-              </div>
+              <EmptyState
+                icon="Search"
+                title="No content found"
+                description="Try selecting a different category or universe"
+                dark
+                className="az-glass p-12"
+              />
             )}
           </motion.div>
         </div>
       </main>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

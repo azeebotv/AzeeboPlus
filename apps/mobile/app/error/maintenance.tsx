@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import { colors } from '../../src/theme';
 
 export default function MaintenanceScreen() {
   const colorScheme = useColorScheme();
@@ -48,7 +49,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: '#888',
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 1.6,
     marginBottom: 24,
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: '#666',
+    color: colors.text.tertiary,
     textAlign: 'center',
   },
 });

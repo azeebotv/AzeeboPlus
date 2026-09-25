@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -18,7 +19,7 @@ import {
   ChargebackQueryDto,
 } from './dto/chargeback.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { AdminGuard } from '@azeebo/security';
 
@@ -34,7 +35,7 @@ interface AuthenticatedRequest {
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class ChargebackController {
-  constructor(private chargebackService: ChargebackService) {}
+  constructor(@Inject(ChargebackService) private chargebackService: ChargebackService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a chargeback case' })

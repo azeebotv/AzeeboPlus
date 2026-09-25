@@ -1,22 +1,35 @@
-import { Controller, Get, Put, Delete, Param, Query, Body, UseGuards, Req } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { UserManagementService } from './user-management.service';
 import { AuditLogService } from '../audit/audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { resolveActorId } from '../../common/resolve-actor-id';
 
 interface AuthRequest extends Request {
-  user: { id: string; email: string; role: string };
+  user: { id?: string; sub?: string; email: string; role: string };
 }
 
 @Controller('admin/users')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class UserManagementController {
   constructor(
-    private readonly userService: UserManagementService,
-    private readonly auditLogService: AuditLogService
+    @Inject(UserManagementService) private readonly userService: UserManagementService,
+    @Inject(AuditLogService) private readonly auditLogService: AuditLogService
   ) {}
 
   @Get()
@@ -47,11 +60,34 @@ export class UserManagementController {
   ): Promise<unknown> {
     const result = await this.userService.updateUserRole(id, body.role);
     await this.auditLogService.log({
-      actorId: req.user.id,
+      actorId: resolveActorId(req),
       action: 'user.role.updated',
       targetType: 'user',
       targetId: id,
       details: { role: body.role },
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
+  @Post('bulk/suspend')
+  async bulkSuspendUsers(
+    @Req() req: AuthRequest,
+    @Body() body: { ids: string[]; reason: string; durationDays?: number }
+  ): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.bulkSuspend(
+      body.ids || [],
+      body.reason || 'Bulk suspended by admin',
+      actorId,
+      body.durationDays,
+      req.ip
+    );
+    await this.auditLogService.log({
+      actorId,
+      action: 'user.bulk_suspended',
+      targetType: 'user',
+      details: { count: body.ids?.length, reason: body.reason, durationDays: body.durationDays },
       ipAddress: req.ip,
     });
     return result;
@@ -63,7 +99,7 @@ export class UserManagementController {
     @Req() req: AuthRequest,
     @Body() body: { reason: string; durationDays?: number }
   ): Promise<unknown> {
-    const actorId = req.user.id;
+    const actorId = resolveActorId(req);
     const result = await this.userService.suspendUser(id, body.reason, actorId, body.durationDays);
     await this.auditLogService.log({
       actorId,
@@ -82,7 +118,7 @@ export class UserManagementController {
     @Req() req: AuthRequest,
     @Body() body: { reason: string }
   ): Promise<unknown> {
-    const actorId = req.user.id;
+    const actorId = resolveActorId(req);
     const result = await this.userService.revokeSuspension(id, actorId, body.reason);
     await this.auditLogService.log({
       actorId,
@@ -95,14 +131,43 @@ export class UserManagementController {
     return result;
   }
 
+  @Post(':id/verify')
+  async verifyCreator(@Param('id') id: string, @Req() req: AuthRequest): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.setCreatorVerified(id, true, actorId, req.ip);
+    await this.auditLogService.log({
+      actorId,
+      action: 'creator.verified',
+      targetType: 'user',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
+  @Post(':id/unverify')
+  async unverifyCreator(@Param('id') id: string, @Req() req: AuthRequest): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.setCreatorVerified(id, false, actorId, req.ip);
+    await this.auditLogService.log({
+      actorId,
+      action: 'creator.unverified',
+      targetType: 'user',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
   @Get(':id/suspensions')
   async getUserSuspensions(@Param('id') id: string): Promise<unknown> {
     return this.userService.getUserSuspensions(id);
   }
 
   @Delete(':id')
+  @Roles('superadmin')
   async deleteUser(@Param('id') id: string, @Req() req: AuthRequest): Promise<unknown> {
-    const actorId = req.user.id;
+    const actorId = resolveActorId(req);
     const result = await this.userService.deleteUser(id, actorId);
     await this.auditLogService.log({
       actorId,

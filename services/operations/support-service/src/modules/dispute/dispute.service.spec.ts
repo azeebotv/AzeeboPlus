@@ -3,6 +3,17 @@ import { DisputeService } from './dispute.service';
 import { PrismaService } from '../database/prisma.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import { ConfigService } from '@nestjs/config';
+
+jest.mock('@azeebo/http-client', () => ({
+  ServiceClient: jest.fn().mockImplementation(() => ({
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    patch: jest.fn(),
+    delete: jest.fn(),
+  })),
+}));
 
 describe('DisputeService', () => {
   let service: DisputeService;
@@ -18,9 +29,24 @@ describe('DisputeService', () => {
     },
   };
 
+  const mockConfigService = {
+    get: jest.fn((key: string, defaultValue?: string) => {
+      const config: Record<string, string> = {
+        WALLET_SERVICE_URL: 'http://localhost:3002',
+        INTERNAL_API_KEY: 'test-key',
+      };
+      return config[key] || defaultValue;
+    }),
+    getOrThrow: jest.fn().mockReturnValue('http://mock-url'),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [DisputeService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        DisputeService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: ConfigService, useValue: mockConfigService },
+      ],
     }).compile();
 
     service = module.get<DisputeService>(DisputeService);
@@ -75,6 +101,7 @@ describe('DisputeService', () => {
         payoutId: 'payout123',
         status: 'PENDING',
       };
+      mockPrisma.payoutDispute.findUnique.mockResolvedValue(dispute);
       mockPrisma.payoutDispute.update.mockResolvedValue({
         ...dispute,
         status: 'RESOLVED',

@@ -77,5 +77,53 @@ export function createUserMethods(client: RequestClient) {
         body: JSON.stringify(settings),
       });
     },
+
+    getSavedItems: async (
+      page = 1,
+      limit = 20
+    ): Promise<
+      ApiResponse<{
+        items: Array<{
+          id: string;
+          contentId: string;
+          title: string;
+          thumbnail: string;
+          savedAt: string;
+          type: string;
+        }>;
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    > => {
+      return client.request<{
+        items: Array<{
+          id: string;
+          contentId: string;
+          title: string;
+          thumbnail: string;
+          savedAt: string;
+          type: string;
+        }>;
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>(`/api/v1/users/me/saved?page=${page}&limit=${limit}`);
+    },
+
+    saveItem: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
+      return client.request<{ message: string }>('/api/v1/users/me/saved', {
+        method: 'POST',
+        body: JSON.stringify({ contentId }),
+      });
+    },
+
+    unsaveItem: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
+      return client.request<{ message: string }>(`/api/v1/users/me/saved/${contentId}`, {
+        method: 'DELETE',
+      });
+    },
   };
 }

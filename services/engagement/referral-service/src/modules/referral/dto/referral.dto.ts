@@ -19,17 +19,3 @@ export class ApplyReferralCodeDto {
   @IsString()
   code!: string;
 }
-
-export class GetReferralsDto {
-  @ApiPropertyOptional({ description: 'Page number' })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  page?: number;
-
-  @ApiPropertyOptional({ description: 'Items per page' })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  limit?: number;
-}

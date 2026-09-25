@@ -1,12 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { SearchService } from '../search/search.service.js';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(SearchService) private readonly searchService: SearchService
+  ) {}
 
   async getStats() {
     try {
@@ -24,19 +28,27 @@ export class AdminService {
           })
           .then((groups) => groups.length),
         this.prisma.searchQueryLog.findMany({
-          orderBy: { count: 'desc' },
+          orderBy: { createdAt: 'desc' },
           take: 10,
         }),
       ]);
+
+      // Fuzzy-search guard state — the same shape /health reports, so ops can
+      // see degradation without hitting the health endpoint.
+      const fuzzy = await this.searchService.getFuzzyStatus();
 
       return ApiResponseWrapper.success({
         totalSearchesToday,
         uniqueSearchers,
         topQueries,
+        fuzzy,
       });
     } catch (error: unknown) {
       this.logger.error(`Failed to get search stats: ${error}`);
-      return { success: false, error: { code: 'GET_STATS_FAILED', message: 'Failed to retrieve search stats' } };
+      return {
+        success: false,
+        error: { code: 'GET_STATS_FAILED', message: 'Failed to retrieve search stats' },
+      };
     }
   }
 
@@ -64,7 +76,7 @@ export class AdminService {
           where,
           skip,
           take: limit,
-          orderBy: { lastSearchAt: 'desc' },
+          orderBy: { createdAt: 'desc' },
         }),
         this.prisma.searchQueryLog.count({ where }),
       ]);
@@ -72,7 +84,10 @@ export class AdminService {
       return ApiResponseWrapper.paginated(queries, page, limit, total);
     } catch (error: unknown) {
       this.logger.error(`Failed to get search queries: ${error}`);
-      return { success: false, error: { code: 'GET_QUERIES_FAILED', message: 'Failed to retrieve search queries' } };
+      return {
+        success: false,
+        error: { code: 'GET_QUERIES_FAILED', message: 'Failed to retrieve search queries' },
+      };
     }
   }
 }

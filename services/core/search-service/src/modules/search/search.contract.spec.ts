@@ -1,12 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, BadRequestException } from '@nestjs/common';
 import request from 'supertest';
-import { SearchController } from './search.controller';
-import { SearchService } from './search.service';
-import { RateLimitGuard } from '@azeebo/security';
+import { SearchController } from './search.controller.js';
+import { SearchService } from './search.service.js';
+import { SearchIntelligenceService } from './search-intelligence.service.js';
+import { RateLimitGuard, ServiceAuthGuard, AdminGuard } from '@azeebo/security';
 
 describe('Search Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let searchService: jest.Mocked<SearchService>;
 
   beforeAll(async () => {
@@ -17,7 +19,7 @@ describe('Search Controller Contract Tests', () => {
       getTrending: jest.fn(),
       getFacets: jest.fn(),
       logSearch: jest.fn(),
-    } as any;
+    } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [SearchController],
@@ -26,14 +28,28 @@ describe('Search Controller Contract Tests', () => {
           provide: SearchService,
           useValue: searchService,
         },
+        {
+          provide: SearchIntelligenceService,
+          useValue: {
+            filterByAvailability: jest.fn(),
+            trackZeroResult: jest.fn(),
+            getSearchQualityMetrics: jest.fn(),
+          },
+        },
       ],
     })
       .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(ServiceAuthGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(AdminGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -52,12 +68,11 @@ describe('Search Controller Contract Tests', () => {
                 id: 'content-1',
                 title: 'Test Content',
                 description: 'Test description',
-                contentType: 'video',
                 status: 'published',
                 viewCount: 100,
-                averageRating: 4.5,
                 createdAt: new Date(),
                 updatedAt: new Date(),
+                categories: [],
               },
             ],
             creators: [],
@@ -67,7 +82,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
+      const response = await request(baseUrl).get('/search?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -81,7 +96,7 @@ describe('Search Controller Contract Tests', () => {
         new BadRequestException('Search query must be at least 2 characters')
       );
 
-      const response = await request(app.getHttpServer()).get('/v1/search');
+      const response = await request(baseUrl).get('/search');
 
       expect(response.status).toBe(400);
     });
@@ -96,7 +111,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/search/suggestions?q=test');
+      const response = await request(baseUrl).get('/search/suggestions?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -116,7 +131,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/search/trending');
+      const response = await request(baseUrl).get('/search/trending');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -139,7 +154,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/search/facets');
+      const response = await request(baseUrl).get('/search/facets');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

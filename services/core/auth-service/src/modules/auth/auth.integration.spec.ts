@@ -1,14 +1,96 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { AuthModule } from './auth.module';
-import { RedisService } from '../../common/services/redis.service';
-import { PrismaService } from '../database/prisma.service';
-import { JwtService } from '@nestjs/jwt';
+import { AuthModule } from './auth.module.js';
+import { RedisService } from '@azeebo/shared-services';
+import { CacheService } from '@azeebo/shared-services';
+import { PrismaService } from '../database/prisma.service.js';
+import { JwtService, JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';
+import { FeatureFlagModule, FeatureFlagService } from '@azeebo/feature-flags';
 import { AuthGuard } from '@nestjs/passport';
 import * as bcrypt from 'bcrypt';
+
+jest.mock('@azeebo/shared-services', () => {
+  const { JwtModule } = require('@nestjs/jwt');
+
+  const { ConfigModule, ConfigService } = require('@nestjs/config');
+
+  const mockCacheServiceInstance = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    delete: jest.fn().mockResolvedValue(1),
+    invalidate: jest.fn().mockResolvedValue(1),
+  };
+
+  const mockRedisServiceInstance = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    del: jest.fn().mockResolvedValue(1),
+    incr: jest.fn().mockResolvedValue(0),
+    expire: jest.fn().mockResolvedValue(1),
+    ttl: jest.fn().mockResolvedValue(-1),
+    quit: jest.fn().mockResolvedValue('OK'),
+    disconnect: jest.fn().mockResolvedValue(undefined),
+    on: jest.fn(),
+  };
+
+  const MockCacheService = jest.fn().mockImplementation(() => mockCacheServiceInstance);
+  const MockRedisService = jest.fn().mockImplementation(() => mockRedisServiceInstance);
+
+  const MockSlowQueryLogger = jest.fn().mockImplementation(() => ({
+    logQuery: jest.fn(),
+    getMetrics: jest.fn().mockReturnValue({
+      totalQueries: 0,
+      slowQueries: 0,
+      criticalQueries: 0,
+      n1PatternsDetected: 0,
+      avgQueryDurationMs: 0,
+      p95QueryDurationMs: 0,
+      p99QueryDurationMs: 0,
+      queriesByModel: new Map(),
+    }),
+    resetMetrics: jest.fn(),
+    getRecentN1Patterns: jest.fn().mockReturnValue([]),
+  }));
+
+  return {
+    CacheService: MockCacheService,
+    RedisService: MockRedisService,
+    SlowQueryLogger: MockSlowQueryLogger,
+    cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+    CacheModule: {
+      module: class {},
+      providers: [{ provide: MockCacheService, useValue: mockCacheServiceInstance }],
+      exports: [MockCacheService],
+      global: true,
+    },
+    RedisModule: {
+      module: class {},
+      providers: [{ provide: MockRedisService, useValue: mockRedisServiceInstance }],
+      exports: [MockRedisService],
+      global: true,
+    },
+    JwtConfigModule: {
+      module: class {},
+      imports: [
+        JwtModule.registerAsync({
+          imports: [ConfigModule],
+          useFactory: (configService: { get: (key: string, defaultValue?: string) => string }) => ({
+            secret: configService.get('JWT_ACCESS_SECRET') ?? '',
+            signOptions: {
+              expiresIn: configService.get('JWT_EXPIRES_IN', '30m'),
+            },
+          }),
+          inject: [ConfigService],
+        }),
+      ],
+      exports: [JwtModule],
+      global: true,
+    },
+  };
+});
 
 jest.mock('ioredis', () => {
   const mockRedisInstance = {
@@ -53,6 +135,7 @@ class MockRateLimitGuard {
 
 describe('AuthService - Refresh Token Rotation (Integration)', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let jwtService: JwtService;
 
   const mockRedisService = {
@@ -61,6 +144,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
     del: jest.fn(),
     incr: jest.fn(),
     expire: jest.fn(),
+    ttl: jest.fn().mockResolvedValue(300),
     exists: jest.fn(),
     quit: jest.fn(),
   };
@@ -79,6 +163,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
       findUnique: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      count: jest.fn().mockResolvedValue(0),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -101,7 +186,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
     process.env.JWT_REFRESH_SECRET = 'test-refresh-token-secret-for-integration';
     process.env.JWT_ISSUER = 'test-issuer';
     process.env.JWT_AUDIENCE = 'test-audience';
-    process.env.NODE_ENV = 'test';
+    (process.env as Record<string, string>).NODE_ENV = 'test';
     process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -109,6 +194,13 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         ConfigModule.forRoot({
           isGlobal: true,
         }),
+        JwtModule.register({
+          secret: 'test-jwt-secret-for-integration',
+          signOptions: { expiresIn: '15m' },
+        }),
+        // Provides the FeatureFlagService token (AuthService injects it); the
+        // overrideProvider below swaps in the mock so no Redis is contacted.
+        FeatureFlagModule.register({ global: true, defaultFlags: {} }),
         AuthModule,
       ],
     })
@@ -116,6 +208,29 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
       .useValue(mockPrismaService)
       .overrideProvider(RedisService)
       .useValue(mockRedisService)
+      .overrideProvider(CacheService)
+      .useValue({
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn().mockResolvedValue(undefined),
+        delete: jest.fn().mockResolvedValue(0),
+      })
+      .overrideProvider(FeatureFlagService)
+      .useValue({
+        // Guards pass for every flag except the email-verification signup
+        // branch, which stays OFF so the default flows issue tokens.
+        isEnabled: jest
+          .fn()
+          .mockImplementation((key: string) =>
+            Promise.resolve(key !== 'auth_email_verification_required')
+          ),
+      })
+      .overrideProvider(JwtService)
+      .useValue(
+        new JwtService({
+          secret: 'test-jwt-secret-for-integration',
+          signOptions: { expiresIn: '15m' },
+        })
+      )
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)
@@ -131,7 +246,27 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         transform: true,
       })
     );
+    // Mock ServiceAuthGuard behavior: set req.user for authenticated routes
+    app.use(
+      (
+        req: { headers: { authorization?: string }; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (req.headers.authorization && !req.user) {
+          req.user = {
+            id: testUser.id,
+            sub: testUser.id,
+            email: testUser.email,
+            role: testUser.role,
+          };
+        }
+        next();
+      }
+    );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
 
     jwtService = moduleFixture.get<JwtService>(JwtService);
   });
@@ -218,7 +353,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken })
         .expect(201);
@@ -251,14 +386,11 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         updatedAt: new Date(),
       });
 
-      await request(app.getHttpServer())
-        .post('/v1/auth/refresh')
-        .send({ refreshToken })
-        .expect(201);
+      await request(baseUrl).post('/v1/auth/refresh').send({ refreshToken }).expect(201);
 
       mockPrismaService.session.findFirst.mockResolvedValue(null);
 
-      const secondRefreshResponse = await request(app.getHttpServer())
+      const secondRefreshResponse = await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken })
         .expect(401);
@@ -279,7 +411,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         }
       );
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken: expiredToken })
         .expect(401);
@@ -288,7 +420,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
     });
 
     it('should reject invalid refresh token', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken: 'invalid-token' })
         .expect(401);
@@ -301,7 +433,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
 
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken })
         .expect(401);
@@ -332,9 +464,9 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
       });
 
       const promises = [
-        request(app.getHttpServer()).post('/v1/auth/refresh').send({ refreshToken }),
-        request(app.getHttpServer()).post('/v1/auth/refresh').send({ refreshToken }),
-        request(app.getHttpServer()).post('/v1/auth/refresh').send({ refreshToken }),
+        request(baseUrl).post('/v1/auth/refresh').send({ refreshToken }),
+        request(baseUrl).post('/v1/auth/refresh').send({ refreshToken }),
+        request(baseUrl).post('/v1/auth/refresh').send({ refreshToken }),
       ];
 
       const results = await Promise.allSettled(promises);
@@ -351,7 +483,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
 
       mockPrismaService.session.deleteMany.mockResolvedValue({ count: 1 });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/logout')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(201);
@@ -362,7 +494,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
     it('should return user profile for valid token', async () => {
       const { accessToken } = generateTokens();
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/auth/me')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
@@ -386,7 +518,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/login')
         .send({
           email: 'test@example.com',
@@ -403,7 +535,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
     it('should reject invalid credentials', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/login')
         .send({
           email: 'invalid@example.com',
@@ -424,23 +556,31 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
 
       mockPrismaService.user.findUnique.mockResolvedValue(lockoutUser);
 
-      let failCount = 0;
+      // Track state per key so incr/get/ttl work coherently
+      const store = new Map<string, string>();
       mockRedisService.get.mockImplementation((key: string) => {
-        if (key.startsWith('failed_login:')) {
-          return failCount >= 5 ? String(failCount) : null;
-        }
-        return null;
+        return Promise.resolve(store.get(key) ?? null);
+      });
+      mockRedisService.set.mockImplementation((key: string, value: string) => {
+        store.set(key, value);
+        return Promise.resolve('OK');
       });
       mockRedisService.incr.mockImplementation((key: string) => {
-        if (key.startsWith('failed_login:')) {
-          failCount++;
-          return failCount;
-        }
-        return 1;
+        const current = parseInt(store.get(key) ?? '0', 10);
+        const next = current + 1;
+        store.set(key, String(next));
+        return Promise.resolve(next);
+      });
+      mockRedisService.del.mockImplementation((key: string) => {
+        store.delete(key);
+        return Promise.resolve(1);
+      });
+      mockRedisService.ttl.mockImplementation((key: string) => {
+        return store.has(key) ? Promise.resolve(300) : Promise.resolve(-2);
       });
 
       for (let i = 0; i < 5; i++) {
-        await request(app.getHttpServer())
+        await request(baseUrl)
           .post('/v1/auth/login')
           .send({
             email,
@@ -449,7 +589,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
           .expect(401);
       }
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/auth/login')
         .send({
           email,

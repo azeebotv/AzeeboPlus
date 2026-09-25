@@ -1,7 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventsService } from './events.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { CacheService } from '@azeebo/shared-services';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
 
 describe('EventsService', () => {
   let service: EventsService;
@@ -82,6 +89,29 @@ describe('EventsService', () => {
               delete: jest.fn(),
               count: jest.fn(),
             },
+            $transaction: jest.fn((fn: unknown) => {
+              const prismaMock = (service as unknown as { prisma: Record<string, unknown> })
+                ?.prisma;
+              return typeof fn === 'function'
+                ? (fn as (tx: unknown) => unknown)(prismaMock ?? {})
+                : Promise.all(fn as unknown[]);
+            }),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('test-value'),
+            getOrThrow: jest.fn().mockReturnValue('test-value'),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue('OK'),
+            delete: jest.fn().mockResolvedValue(1),
+            invalidate: jest.fn().mockResolvedValue(1),
           },
         },
       ],
@@ -127,6 +157,7 @@ describe('EventsService', () => {
       const result = await service.getEventBySlug('test-event');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Test Event');
     });
 
@@ -160,6 +191,7 @@ describe('EventsService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).slug).toBe('test-event');
     });
   });
@@ -176,6 +208,7 @@ describe('EventsService', () => {
       const result = await service.updateEvent('event-1', { title: 'Updated Event' });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Updated Event');
     });
 
@@ -196,6 +229,7 @@ describe('EventsService', () => {
       const result = await service.deleteEvent('event-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Event deleted successfully');
     });
 

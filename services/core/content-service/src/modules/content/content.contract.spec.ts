@@ -1,22 +1,78 @@
 /// <reference types="jest" />
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, CanActivate, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { ContentModule } from './content.module';
-import { ContentRepository } from './content.repository';
-import { PrismaService } from '../database/prisma.service';
-import { RedisService } from '../../cache/redis.service';
-import { MediaService } from '../media/media.service';
-import { TranscodingService } from '../media/transcoding.service';
+import { ContentModule } from './content.module.js';
+import { ContentRepository } from './content.repository.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { RedisService } from '../../cache/redis.service.js';
+import { MediaService } from '../media/media.service.js';
+import { TranscodingService } from '../media/transcoding.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
-import { CacheInterceptor, CacheService } from '../../cache';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CacheInterceptor } from '../../cache/index.js';
+import { ConfigModule } from '@nestjs/config';
+
+jest.mock('ioredis', () => {
+  const Redis = jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    del: jest.fn().mockResolvedValue(1),
+    incr: jest.fn().mockResolvedValue(1),
+    expire: jest.fn().mockResolvedValue(1),
+    ttl: jest.fn().mockResolvedValue(-1),
+    keys: jest.fn().mockResolvedValue([]),
+    quit: jest.fn().mockResolvedValue('OK'),
+    on: jest.fn(),
+    disconnect: jest.fn(),
+  }));
+  return { Redis };
+});
+
+import { FeatureFlagService, FeatureFlagModule } from '@azeebo/feature-flags';
+
+jest.mock('@azeebo/feature-flags', () => {
+  const svc = {
+    getFlag: jest.fn().mockResolvedValue(false),
+    setFlag: jest.fn().mockResolvedValue(undefined),
+    getAllFlags: jest.fn().mockResolvedValue([]),
+    isEnabled: jest.fn().mockResolvedValue(false),
+  };
+  class MockFeatureFlagService {}
+  const mockProvider = { provide: MockFeatureFlagService, useValue: svc };
+  class MockFeatureFlagModule {
+    static register() {
+      return {
+        // Mirrors production: the app registers FeatureFlagModule globally at
+        // the root, and ContentModule injects the service without importing it.
+        global: true,
+        module: MockFeatureFlagModule,
+        providers: [mockProvider],
+        exports: [MockFeatureFlagService],
+      };
+    }
+  }
+  return {
+    FeatureFlagModule: MockFeatureFlagModule,
+    FeatureFlagService: MockFeatureFlagService,
+    FeatureFlagGuard: class {},
+    contentFlags: {
+      moderationEnabled: 'content_moderation_enabled',
+      transcodingNew: 'content_transcoding_new',
+      aiTags: 'content_ai_tags',
+      clipIngestion: 'content_clip_ingestion',
+      commentsV2: 'content_comments_v2',
+      windowingEnabled: 'content_windowing_enabled',
+      premiumGate: 'content_premium_gate',
+      recommendedRail: 'content_recommended_rail',
+    },
+  };
+});
 
 class MockAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
-    request.user = { sub: 'user-123' };
+    request.user = { id: 'user-123', sub: 'user-123', role: 'admin' };
     return true;
   }
 }
@@ -35,13 +91,19 @@ class MockAdminGuard implements CanActivate {
 
 describe('Content Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   beforeAll(async () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
+    // SharedCacheModule's RedisService requires REDIS_URL at construction;
+    // the test-pr CI job provisions a redis service container on 6379.
+    process.env.REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot(), ContentModule],
+      imports: [ConfigModule.forRoot(), FeatureFlagModule.register({}), ContentModule],
     })
+      .overrideProvider(FeatureFlagService)
+      .useValue({ isEnabled: jest.fn().mockResolvedValue(false) })
       .overrideProvider(PrismaService)
       .useValue({
         contentItem: {
@@ -149,6 +211,12 @@ describe('Content Controller Contract Tests', () => {
         del: jest.fn().mockResolvedValue(undefined),
         delPattern: jest.fn().mockResolvedValue(undefined),
       })
+      .overrideProvider('CacheService')
+      .useValue({
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn().mockResolvedValue(undefined),
+        delete: jest.fn().mockResolvedValue(0),
+      })
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)
@@ -156,11 +224,22 @@ describe('Content Controller Contract Tests', () => {
       .overrideGuard(AdminGuard)
       .useClass(MockAdminGuard)
       .overrideInterceptor(CacheInterceptor)
-      .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
+      .useValue({
+        intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
+    // Mock ServiceAuthGuard behavior: always set req.user for tests
+    app.use((req: { user?: unknown }, _res: unknown, next: () => void) => {
+      if (!req.user) {
+        req.user = { id: 'user-123', sub: 'user-123', role: 'admin' };
+      }
+      next();
+    });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -169,11 +248,9 @@ describe('Content Controller Contract Tests', () => {
     }
   });
 
-  describe('GET /v1/content', () => {
+  describe('GET /content', () => {
     it('should list content with filters', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/v1/content')
-        .query({ universe: 'reality' });
+      const response = await request(baseUrl).get('/content').query({ universe: 'reality' });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -183,9 +260,9 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('GET /v1/content/:id', () => {
+  describe('GET /content/:id', () => {
     it('should get content by ID', async () => {
-      const response = await request(app.getHttpServer()).get('/v1/content/content-1');
+      const response = await request(baseUrl).get('/content/content-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -198,9 +275,9 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('POST /v1/content', () => {
+  describe('POST /content', () => {
     it('should create content', async () => {
-      const response = await request(app.getHttpServer()).post('/v1/content').send({
+      const response = await request(baseUrl).post('/content').send({
         title: 'New Content',
         description: 'Test description',
         type: 'video',
@@ -217,10 +294,10 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('PATCH /v1/content/:id', () => {
+  describe('PATCH /content/:id', () => {
     it('should update content', async () => {
-      const response = await request(app.getHttpServer())
-        .patch('/v1/content/content-1')
+      const response = await request(baseUrl)
+        .patch('/content/550e8400-e29b-41d4-a716-446655440000')
         .send({ title: 'Updated Title' });
 
       expect(response.status).toBe(200);
@@ -233,9 +310,11 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('DELETE /v1/content/:id', () => {
+  describe('DELETE /content/:id', () => {
     it('should delete content', async () => {
-      const response = await request(app.getHttpServer()).delete('/v1/content/content-1');
+      const response = await request(baseUrl).delete(
+        '/content/550e8400-e29b-41d4-a716-446655440000'
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -245,9 +324,11 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('GET /v1/content/:id/comments', () => {
+  describe('GET /content/:id/comments', () => {
     it('should get content comments', async () => {
-      const response = await request(app.getHttpServer()).get('/v1/content/content-1/comments');
+      const response = await request(baseUrl).get(
+        '/content/550e8400-e29b-41d4-a716-446655440000/comments'
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -257,10 +338,10 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('POST /v1/content/:id/comments', () => {
+  describe('POST /content/:id/comments', () => {
     it('should add comment', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/v1/content/content-1/comments')
+      const response = await request(baseUrl)
+        .post('/content/550e8400-e29b-41d4-a716-446655440000/comments')
         .send({ text: 'New comment' });
 
       expect(response.status).toBe(201);
@@ -273,9 +354,9 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('GET /v1/content/:id/analytics', () => {
+  describe('GET /content/:id/analytics', () => {
     it('should get content analytics', async () => {
-      const response = await request(app.getHttpServer()).get('/v1/content/content-1/analytics');
+      const response = await request(baseUrl).get('/content/content-1/analytics');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

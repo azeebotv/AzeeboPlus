@@ -1,10 +1,13 @@
 'use client';
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
+import { OptimizedImage } from '@/components/OptimizedImage';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { Trophy, Medal, Award, Flame, Sparkles, Crown } from 'lucide-react';
 
 interface LeaderboardEntry {
   rank: number;
@@ -20,9 +23,11 @@ export default function LeaderboardPage(): React.JSX.Element {
   const [timeframe, setTimeframe] = useState<'weekly' | 'monthly' | 'allTime'>('weekly');
 
   const leaderboardQuery = useQuery({
-    queryKey: ['leaderboard', timeframe],
+    queryKey: ['leaderboard', 'engagement', timeframe],
     queryFn: async () => {
-      const response = await apiFetch<{ success: boolean; data: LeaderboardEntry[] | { items?: LeaderboardEntry[] } }>(`/engagement/leaderboard?timePeriod=${timeframe}`);
+      const response = await apiFetch<LeaderboardEntry[] | { items?: LeaderboardEntry[] }>(
+        `/engagement/leaderboard?timePeriod=${timeframe}`
+      );
       if (response.success && response.data) {
         const data = response.data;
         return Array.isArray(data) ? data : data.items || [];
@@ -36,155 +41,161 @@ export default function LeaderboardPage(): React.JSX.Element {
   const isLoading = leaderboardQuery.isLoading;
   const error = leaderboardQuery.error?.message || null;
 
-  const getRankStyle = (rank: number): { bg: string; color: string } => {
-    if (rank === 1)
-      return { bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', color: '#1A0A0A' };
-    if (rank === 2)
-      return { bg: 'linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)', color: '#1A0A0A' };
-    if (rank === 3)
-      return { bg: 'linear-gradient(135deg, #CD7F32 0%, #A0522D 100%)', color: '#fff' };
-    return { bg: '#2A1A1A', color: '#9A8A7A' };
+  const getRankBadge = (rank: number) => {
+    if (rank === 1) {
+      return (
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-yellow-500 to-amber-300 text-black flex items-center justify-center font-black shadow-[0_4px_16px_rgba(234,179,8,0.4)]">
+          <Crown className="w-5 h-5 fill-black" />
+        </div>
+      );
+    }
+    if (rank === 2) {
+      return (
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-slate-300 to-slate-100 text-black flex items-center justify-center font-black shadow-[0_4px_16px_rgba(203,213,225,0.3)]">
+          <Medal className="w-5 h-5" />
+        </div>
+      );
+    }
+    if (rank === 3) {
+      return (
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-700 to-amber-500 text-white flex items-center justify-center font-black shadow-[0_4px_16px_rgba(180,83,9,0.3)]">
+          <Award className="w-5 h-5" />
+        </div>
+      );
+    }
+    return (
+      <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 text-white/60 flex items-center justify-center font-mono font-bold text-sm">
+        {rank}
+      </div>
+    );
   };
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 800,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Leaderboard</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Top contributors on Azeebo+</p>
-        </div>
+    <PageShell glowColor="rgba(234,179,8,0.12)">
+      <PageHero
+        badge="Community Honor Roll"
+        title="Creator & Fan Leaderboard"
+        description="Celebrate the most dedicated African cinema enthusiasts, top live reality voters, trivia champions, and community curators on Azeebo+."
+      />
 
-        {/* Timeframe selector */}
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 32 }}>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 -mt-4">
+        {/* Timeframe Selector Tabs */}
+        <div className="flex items-center justify-center gap-2 mb-10 overflow-x-auto pb-2">
           {(
             [
               ['weekly', 'This Week'],
               ['monthly', 'This Month'],
-              ['allTime', 'All Time'],
+              ['allTime', 'All Time Legends'],
             ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setTimeframe(key)}
-              style={{
-                padding: '10px 24px',
-                borderRadius: 999,
-                border: timeframe === key ? 'none' : '1px solid #2A1A1A',
-                background:
-                  timeframe === key
-                    ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
-                    : 'transparent',
-                color: timeframe === key ? '#fff' : '#9A8A7A',
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: 'pointer',
-              }}
-            >
-              {label}
-            </button>
-          ))}
+          ).map(([key, label]) => {
+            const active = timeframe === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setTimeframe(key)}
+                className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all ${
+                  active
+                    ? 'bg-gradient-to-r from-[#e8420a] to-[#cc1c1c] text-white shadow-[0_4px_20px_rgba(232,66,10,0.35)]'
+                    : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/5'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
+        {/* Content State */}
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+          <div className="flex flex-col items-center justify-center py-20">
             <Spinner size="lg" color="#E8420A" />
+            <p className="text-white/40 text-xs mt-4">Tabulating point standings...</p>
           </div>
         ) : error ? (
-          <ErrorState
-            title="Failed to load leaderboard"
-            description={error}
-            buttonText="Retry"
-            onButtonPress={() => leaderboardQuery.refetch()}
-          />
+          <div className="az-glass p-8 rounded-3xl border border-white/10 text-center">
+            <ErrorState
+              title="Failed to load leaderboard"
+              description={error}
+              buttonText="Retry"
+              onButtonPress={() => leaderboardQuery.refetch()}
+            />
+          </div>
         ) : entries.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🏆</div>
-            <h3 style={{ fontSize: 18 }}>No leaderboard data yet</h3>
-            <p style={{ color: '#9A8A7A', marginTop: 8 }}>Start engaging to climb the ranks!</p>
+          <div className="az-glass p-12 rounded-3xl border border-white/10 text-center max-w-md mx-auto">
+            <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 mx-auto mb-4">
+              <Trophy className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">No leaderboard rankings yet</h3>
+            <p className="text-xs text-white/50 leading-relaxed max-w-xs mx-auto">
+              Participate in reality show votes, trivia quizzes, and streaming challenges to climb to the podium!
+            </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="space-y-3">
             {entries.map((entry) => {
-              const rankStyle = getRankStyle(entry.rank);
+              const isTopThree = entry.rank <= 3;
               return (
                 <div
                   key={entry.userId}
-                  className="az-glass"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 16,
-                    padding: '16px 20px',
-                    borderRadius: 16,
-                  }}
+                  className={`az-glass p-4 sm:p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 ${
+                    isTopThree
+                      ? 'border-orange-500/30 bg-gradient-to-r from-orange-500/[0.04] to-transparent shadow-[0_8px_30px_rgba(0,0,0,0.4)]'
+                      : 'border-white/10 hover:border-white/20'
+                  }`}
                 >
-                  <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '50%',
-                      background: rankStyle.bg,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: 16,
-                      color: rankStyle.color,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {entry.rank}
+                  {/* Rank Badge */}
+                  <div className="flex-shrink-0">
+                    {getRankBadge(entry.rank)}
                   </div>
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: '50%',
-                      overflow: 'hidden',
-                      flexShrink: 0,
-                      border: entry.rank <= 3 ? '2px solid #E8420A' : '2px solid #2A1A1A',
-                    }}
-                  >
+
+                  {/* Avatar */}
+                  <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 relative border-2 border-white/10 shadow-md">
                     {entry.avatar ? (
-                      <img
+                      <OptimizedImage
                         src={entry.avatar}
                         alt={entry.displayName}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        width={44}
+                        height={44}
+                        className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          backgroundColor: '#2A1A1A',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 18,
-                        }}
-                      >
+                      <div className="w-full h-full bg-gradient-to-br from-[#e8420a] to-[#cc1c1c] text-white flex items-center justify-center font-bold text-sm">
                         {entry.displayName.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ fontWeight: 600, fontSize: 15 }}>{entry.displayName}</h3>
-                    <p style={{ color: '#9A8A7A', fontSize: 12 }}>Level {entry.level}</p>
+
+                  {/* User details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className="font-bold text-white text-sm sm:text-base truncate tracking-tight">
+                        {entry.displayName}
+                      </h3>
+                      {entry.rank === 1 && (
+                        <Sparkles className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-white/50">
+                      <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 font-mono text-[10px] text-white/70">
+                        LVL {entry.level}
+                      </span>
+                      {entry.badges?.length > 0 && (
+                        <span>• {entry.badges.length} badges</span>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontWeight: 700, fontSize: 18, color: '#E8420A' }}>
-                      {entry.score.toLocaleString()}
+
+                  {/* Score */}
+                  <div className="text-right flex-shrink-0">
+                    <div className="flex items-center justify-end gap-1">
+                      <Flame className="w-3.5 h-3.5 text-orange-500" />
+                      <span className="font-extrabold text-base sm:text-lg text-white font-mono tracking-tight">
+                        {(entry.score ?? 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-white/40 font-medium uppercase tracking-wider">
+                      Points
                     </p>
-                    <p style={{ color: '#9A8A7A', fontSize: 11 }}>pts</p>
                   </div>
                 </div>
               );
@@ -192,7 +203,6 @@ export default function LeaderboardPage(): React.JSX.Element {
           </div>
         )}
       </main>
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

@@ -1,11 +1,11 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getAllWallets(options?: { page?: number; limit?: number; currency?: string }) {
     try {
@@ -36,7 +36,10 @@ export class AdminService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get all wallets: ${error}`);
-      return { success: false, error: { code: 'GET_WALLETS_FAILED', message: 'Failed to retrieve wallets' } };
+      return {
+        success: false,
+        error: { code: 'GET_WALLETS_FAILED', message: 'Failed to retrieve wallets' },
+      };
     }
   }
 
@@ -60,7 +63,10 @@ export class AdminService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get wallet by id: ${error}`);
-      return { success: false, error: { code: 'GET_WALLET_FAILED', message: 'Failed to retrieve wallet' } };
+      return {
+        success: false,
+        error: { code: 'GET_WALLET_FAILED', message: 'Failed to retrieve wallet' },
+      };
     }
   }
 
@@ -84,7 +90,10 @@ export class AdminService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get wallet by user id: ${error}`);
-      return { success: false, error: { code: 'GET_WALLET_BY_USER_FAILED', message: 'Failed to retrieve wallet for user' } };
+      return {
+        success: false,
+        error: { code: 'GET_WALLET_BY_USER_FAILED', message: 'Failed to retrieve wallet for user' },
+      };
     }
   }
 
@@ -113,7 +122,10 @@ export class AdminService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get wallet stats: ${error}`);
-      return { success: false, error: { code: 'GET_WALLET_STATS_FAILED', message: 'Failed to retrieve wallet stats' } };
+      return {
+        success: false,
+        error: { code: 'GET_WALLET_STATS_FAILED', message: 'Failed to retrieve wallet stats' },
+      };
     }
   }
 
@@ -152,7 +164,10 @@ export class AdminService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get transactions by wallet id: ${error}`);
-      return { success: false, error: { code: 'GET_TRANSACTIONS_FAILED', message: 'Failed to retrieve transactions' } };
+      return {
+        success: false,
+        error: { code: 'GET_TRANSACTIONS_FAILED', message: 'Failed to retrieve transactions' },
+      };
     }
   }
 }

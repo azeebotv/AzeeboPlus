@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GamesService } from './games.service';
-import { PrismaService } from '../database/prisma.service';
+import { GamesService } from './games.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
@@ -236,17 +236,26 @@ describe('GamesService', () => {
 
     it('should enter tournament successfully (happy path)', async () => {
       const mockEntry = { id: 'entry-1', userId, tournamentId };
+      (prismaService.tournament.findUnique as jest.Mock).mockResolvedValue({
+        id: tournamentId,
+        status: 'active',
+      });
       (prismaService.tournamentEntry.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaService.tournamentEntry.create as jest.Mock).mockResolvedValue(mockEntry);
 
       const result = await service.enterTournament(userId, tournamentId);
 
       expect(result.success).toBe(true);
-      expect(result.data?.entryId).toBe('entry-1');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((result.data as any).entry.id).toBe('entry-1');
     });
 
     it('should throw BadRequestException when already entered', async () => {
       const mockExistingEntry = { id: 'entry-1', userId, tournamentId };
+      (prismaService.tournament.findUnique as jest.Mock).mockResolvedValue({
+        id: tournamentId,
+        status: 'active',
+      });
       (prismaService.tournamentEntry.findUnique as jest.Mock).mockResolvedValue(mockExistingEntry);
 
       await expect(service.enterTournament(userId, tournamentId)).rejects.toThrow(

@@ -1,14 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WebhookController } from './webhook.controller';
-import { WebhookService, WebhookPayload } from './webhook.service';
-import { WebhookSecurityService } from './webhook-security.service';
+import { CanActivate, ExecutionContext } from '@nestjs/common';
+import { WebhookController } from './webhook.controller.js';
+import { WebhookService, WebhookPayload } from './webhook.service.js';
+import { WebhookSecurityService } from './webhook-security.service.js';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
+import { RateLimitGuard } from '@azeebo/security';
+import { FeatureFlagService } from '@azeebo/feature-flags';
+
+class MockRateLimitGuard implements CanActivate {
+  canActivate(_context: ExecutionContext) {
+    return true;
+  }
+}
 
 describe('WebhookController', () => {
   let controller: WebhookController;
-  let webhookSecurity: WebhookSecurityService;
-  let webhookService: WebhookService;
 
   const mockWebhookSecurity = {
     isDuplicate: jest.fn(),
@@ -31,12 +38,14 @@ describe('WebhookController', () => {
         { provide: WebhookSecurityService, useValue: mockWebhookSecurity },
         { provide: WebhookService, useValue: mockWebhookService },
         { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue(30000) } },
+        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
       ],
-    }).compile();
+    })
+      .overrideGuard(RateLimitGuard)
+      .useClass(MockRateLimitGuard)
+      .compile();
 
     controller = module.get<WebhookController>(WebhookController);
-    webhookSecurity = module.get<WebhookSecurityService>(WebhookSecurityService);
-    webhookService = module.get<WebhookService>(WebhookService);
   });
 
   afterEach(() => {

@@ -13,10 +13,18 @@ COPY services/engagement/engagement-service/src ./services/engagement/engagement
 COPY services/engagement/engagement-service/tsconfig*.json ./services/engagement/engagement-service/
 COPY services/engagement/engagement-service/prisma ./services/engagement/engagement-service/prisma
 
-RUN for i in 1 2 3 4 5; do pnpm --filter @azeebo/engagement-service prisma:generate && break || (echo "Retry prisma generate $i/5..." && sleep 15); done
+# Single-pass Prisma client generation for every schema in this context
+# (engagement-service + the workspace packages), mirroring Dockerfile.all-in-one's
+# T-1 step — no per-service prisma:generate to drift.
+COPY scripts/generate-prisma-clients.sh ./scripts/generate-prisma-clients.sh
+RUN bash scripts/generate-prisma-clients.sh
 
 WORKDIR /app/services/engagement/engagement-service
-RUN nest build
+# Workspace build script = the single source of truth for what "built" means:
+# prisma generate + tsc + copy the client into dist/prisma/client. Using it
+# here (instead of a hand-rolled `nest build`) is what guarantees the image
+# ships the same fresh client the schema declares.
+RUN pnpm run build
 WORKDIR /app
 
 FROM node:22.16.0-alpine AS runner
@@ -41,7 +49,10 @@ RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (ec
 
 COPY --from=builder /app/services/engagement/engagement-service/dist ./services/engagement/engagement-service/dist
 COPY services/engagement/engagement-service/prisma ./services/engagement/engagement-service/prisma
-RUN for i in 1 2 3 4 5; do pnpm --filter @azeebo/engagement-service prisma:generate && break || (echo "Retry prisma generate $i/5..." && sleep 15); done
+# Single-pass Prisma client generation (see builder stage note) — regenerates
+# the client after the prod-only install wiped it.
+COPY scripts/generate-prisma-clients.sh ./scripts/generate-prisma-clients.sh
+RUN bash scripts/generate-prisma-clients.sh
 
 RUN chown -R nodejs:nodejs /app
 

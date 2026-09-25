@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 interface Title {
@@ -96,7 +96,7 @@ export interface CreateChapterData {
 export class TitlesService {
   private readonly logger = new Logger(TitlesService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   private formatTitle(title: Record<string, unknown>): Title {
     return {

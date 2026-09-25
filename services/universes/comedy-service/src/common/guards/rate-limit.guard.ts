@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   CanActivate,
   ExecutionContext,
@@ -9,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { RedisService } from '../services/redis.service';
+import { RedisService } from '@azeebo/shared-services';
 
 export const RateLimit = (limit: number, windowMs: number): ReturnType<typeof SetMetadata> =>
   SetMetadata('rateLimit', { limit, windowMs });
@@ -24,8 +25,8 @@ export class RateLimitGuard implements CanActivate {
   private readonly logger = new Logger(RateLimitGuard.name);
 
   constructor(
-    private reflector: Reflector,
-    private redisService: RedisService
+    @Inject(Reflector) private reflector: Reflector,
+    @Inject(RedisService) private redisService: RedisService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

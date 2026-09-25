@@ -16,13 +16,22 @@ describe('DashboardController', () => {
               totalUsers: 0,
               totalContent: 0,
               totalRevenue: 0,
-              activeSubscriptions: 0,
+              pendingReports: 0,
+              activeCreators: 0,
+              newUsers: 0,
+              totalViews: 0,
             }),
             getRevenueData: jest.fn().mockResolvedValue([]),
             getContentTrend: jest.fn().mockResolvedValue([]),
             getTopContent: jest.fn().mockResolvedValue([]),
             getTopCreators: jest.fn().mockResolvedValue([]),
             getRecentActivity: jest.fn().mockResolvedValue([]),
+            getGovernanceSummary: jest.fn().mockResolvedValue({
+              pendingDualControl: 0,
+              approvedNotExecuted: 0,
+              expiringClearances: 0,
+              expiredClearances: 0,
+            }),
           },
         },
       ],
@@ -41,7 +50,8 @@ describe('DashboardController', () => {
     expect(result).toHaveProperty('totalUsers');
     expect(result).toHaveProperty('totalContent');
     expect(result).toHaveProperty('totalRevenue');
-    expect(result).toHaveProperty('activeSubscriptions');
+    expect(result).toHaveProperty('newUsers');
+    expect(result).toHaveProperty('totalViews');
   });
 
   it('should return revenue data', async () => {
@@ -67,5 +77,14 @@ describe('DashboardController', () => {
   it('should return recent activity', async () => {
     const result = await controller.getRecentActivity(20);
     expect(result).toBeDefined();
+  });
+
+  it('should return the governance summary', async () => {
+    const result = await controller.getGovernanceSummary();
+    expect(result).toBeDefined();
+    expect(result).toHaveProperty('pendingDualControl');
+    expect(result).toHaveProperty('approvedNotExecuted');
+    expect(result).toHaveProperty('expiringClearances');
+    expect(result).toHaveProperty('expiredClearances');
   });
 });

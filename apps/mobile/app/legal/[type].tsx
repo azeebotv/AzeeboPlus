@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { colors } from '../../src/theme';
 
 const legalContent: Record<
   string,
@@ -70,7 +71,7 @@ const legalContent: Record<
 
 export default function LegalPage() {
   const colorScheme = useColorScheme();
-  
+
   const { type } = useLocalSearchParams<{ type: 'privacy' | 'terms' }>();
 
   const content = legalContent[type || 'privacy'];
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
   header: {
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: colors.neutral[200],
   },
   title: {
     fontSize: 28,
@@ -144,18 +145,18 @@ const styles = StyleSheet.create({
   },
   sectionContent: {
     fontSize: 16,
-    color: '#666',
+    color: colors.text.tertiary,
     lineHeight: 1.6,
   },
   footer: {
     marginTop: 24,
     paddingTop: 24,
     borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
+    borderTopColor: colors.neutral[200],
     alignItems: 'center',
   },
   footerText: {
     fontSize: 14,
-    color: '#888',
+    color: colors.text.secondary,
   },
 });

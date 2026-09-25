@@ -1,12 +1,26 @@
-import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { CinemaPassService } from './cinema-pass.service';
+import { ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, movieFlags } from '@azeebo/feature-flags';
+import { CinemaPassService } from './cinema-pass.service.js';
 
 @ApiTags('Cinema Pass')
-@Controller('v1/movies/passes')
+@FeatureFlag(movieFlags.cinemaPass)
+@UseGuards(FeatureFlagGuard, ServiceAuthGuard)
+@Controller('movies/passes')
 export class CinemaPassController {
-  constructor(private readonly cinemaPassService: CinemaPassService) {}
+  constructor(@Inject(CinemaPassService) private readonly cinemaPassService: CinemaPassService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all cinema passes' })
@@ -23,31 +37,28 @@ export class CinemaPassController {
   }
 
   @Get('user/subscriptions')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user subscriptions' })
   @ApiResponse({ status: 200, description: 'Subscriptions list' })
-  async getUserSubscriptions(@Request() req: { user: { sub: string } }): Promise<unknown> {
+  async getUserSubscriptions(@Request() req: { user: { id: string } }): Promise<unknown> {
     return this.cinemaPassService.getUserSubscriptions(req.user.id);
   }
 
   @Post('subscribe')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Subscribe to a pass' })
   @ApiResponse({ status: 201, description: 'Subscribed' })
   async subscribe(
     @Body() body: { passId: string; autoRenew?: boolean },
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.cinemaPassService.subscribe(req.user.id, body.passId, body.autoRenew);
   }
 
   @Delete('cancel')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Cancel subscription' })
   @ApiResponse({ status: 200, description: 'Cancelled' })
   async cancelSubscription(
     @Query('passId') passId: string,
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.cinemaPassService.cancelSubscription(req.user.id, passId);
   }
@@ -57,8 +68,8 @@ export class CinemaPassController {
   @ApiResponse({ status: 200, description: 'Access status' })
   async checkAccess(
     @Param('movieId') movieId: string,
-    @Query('userId') userId: string
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.cinemaPassService.checkAccess(userId, movieId);
+    return this.cinemaPassService.checkAccess(req.user.id, movieId);
   }
 }

@@ -1,13 +1,21 @@
-import type { Metadata } from 'next';
-import React from 'react';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
+import { FlagsProvider } from '../context/FlagsContext';
 import { WalletProvider } from '../context/WalletContext';
+import { MaintenanceGate } from '../components/layout/MaintenanceGate';
+import AnnouncementBanner from '../components/layout/AnnouncementBanner';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { QueryProvider } from '../providers/QueryProvider';
 import { ToastProvider } from '@/components/ToastProvider';
+import I18nProvider from '@/components/I18nProvider';
 import { KeyboardNavigationProvider } from '../components/KeyboardNavigationProvider';
+import { CookieConsent } from '../components/privacy/CookieConsent';
+import { OfflineBanner, NetworkProvider } from '../components/ui/OfflineIndicator';
+import { OfflineProvider } from '../context/OfflineContext';
+import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration';
+import { WebVitalsInit } from '../components/WebVitalsInit';
 
 import { Inter, Montserrat } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -16,6 +24,13 @@ const montserrat = Montserrat({
   weight: ['600', '700', '800', '900'],
   variable: '--font-display-base',
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: 'var(--brand-near-black)',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com'),
@@ -77,25 +92,43 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
-      <body className={`${inter.variable} ${montserrat.variable}`}>
+      <body
+        className={`${inter.variable} ${montserrat.variable} min-h-screen`}
+        style={{ backgroundColor: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+      >
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
         <ErrorBoundary>
           <QueryProvider>
-            <ThemeProvider>
-              <AuthProvider>
-                <WalletProvider>
-                  <ToastProvider>
-                    <KeyboardNavigationProvider>
-                      <main id="main-content" role="main">
-                        {children}
-                      </main>
-                    </KeyboardNavigationProvider>
-                  </ToastProvider>
-                </WalletProvider>
-              </AuthProvider>
-            </ThemeProvider>
+            <AuthProvider>
+              <FlagsProvider>
+                <ThemeProvider>
+                  <WalletProvider>
+                    <I18nProvider>
+                      <NetworkProvider>
+                        <OfflineProvider>
+                          <ToastProvider>
+                            <KeyboardNavigationProvider>
+                              <ServiceWorkerRegistration />
+                              <WebVitalsInit />
+                              <OfflineBanner />
+                              <AnnouncementBanner />
+                              <CookieConsent />
+                              <MaintenanceGate>
+                                <main id="main-content" role="main">
+                                  {children}
+                                </main>
+                              </MaintenanceGate>
+                            </KeyboardNavigationProvider>
+                          </ToastProvider>
+                        </OfflineProvider>
+                      </NetworkProvider>
+                    </I18nProvider>
+                  </WalletProvider>
+                </ThemeProvider>
+              </FlagsProvider>
+            </AuthProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>

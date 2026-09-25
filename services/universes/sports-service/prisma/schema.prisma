@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   output   = "../src/prisma/client"
 }
 
@@ -58,14 +59,17 @@ model PredictionEntry {
   prediction Json
   points     Int      @default(0)
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   event              SportsEvent       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user               User?             @relation(fields: [userId], references: [id], onDelete: Restrict)
   PredictionMarket   PredictionMarket? @relation(fields: [predictionMarketId], references: [id])
   predictionMarketId String?
 
   @@map("prediction_entries")
   @@index([userId])
   @@index([eventId])
+  @@index([eventId, userId])
   @@index([predictionMarketId])
   @@index([createdAt])
 }
@@ -82,13 +86,50 @@ model Highlight {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  event SportsEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event   SportsEvent      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  creator CreatorProfile?  @relation(fields: [creatorId], references: [id], onDelete: Restrict)
 
   @@map("highlights")
   @@index([eventId])
   @@index([creatorId])
   @@index([createdAt])
   @@index([viewCount])
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  fanBoards       FanBoard[]
+  fanBoardComments FanBoardComment[]
+  predictionEntries PredictionEntry[]
+  contestEntries  ContestEntry[]
+  tipsGiven       Tip[] @relation("TipFrom")
+  tipsReceived    Tip[] @relation("TipTo")
+  subscriptions   Subscription[]
+
+  @@map("users")
+}
+
+model CreatorProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  displayName String?
+  avatar      String?
+  bio         String?
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  highlights  Highlight[]
+  earnings    CreatorEarning[]
+  subscriptions Subscription[]
+
+  @@map("creator_profiles")
 }
 
 model FanBoard {
@@ -101,6 +142,7 @@ model FanBoard {
   updatedAt DateTime @updatedAt
 
   event    SportsEvent       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user     User?             @relation(fields: [userId], references: [id], onDelete: Restrict)
   comments FanBoardComment[]
 
   @@map("fan_boards")
@@ -116,8 +158,10 @@ model FanBoardComment {
   userId     String
   text       String
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   fanBoard FanBoard @relation(fields: [fanBoardId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@map("fan_board_comments")
   @@index([fanBoardId])
@@ -155,6 +199,7 @@ model ContestPrize {
   rank      Int
   amount Decimal  @db.Decimal(18, 2)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
 
@@ -169,8 +214,10 @@ model ContestEntry {
   entryData Json
   score     Int      @default(0)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   contest       Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user          User?        @relation(fields: [userId], references: [id], onDelete: Restrict)
   SportsEvent   SportsEvent? @relation(fields: [sportsEventId], references: [id])
   sportsEventId String?
 
@@ -226,6 +273,7 @@ model PredictionReward {
   rewardPoints Int     @default(0)
   bonusPool Decimal @default(0) @db.Decimal(18, 2)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   event SportsEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
@@ -238,6 +286,10 @@ model Tip {
   toUserId   String
   amount Decimal  @db.Decimal(18, 2)
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  fromUser User @relation("TipFrom", fields: [fromUserId], references: [id], onDelete: Restrict)
+  toUser   User @relation("TipTo", fields: [toUserId], references: [id], onDelete: Restrict)
 
   @@map("tips")
   @@index([fromUserId])
@@ -255,6 +307,9 @@ model Subscription {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  user    User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  creator CreatorProfile? @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+
   @@unique([userId, creatorId])
   @@index([userId])
   @@index([creatorId])
@@ -271,6 +326,9 @@ model CreatorEarning {
   status      String    @default("pending")
   paidAt      DateTime?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  creator CreatorProfile? @relation(fields: [creatorId], references: [id], onDelete: Restrict)
 
   @@index([creatorId])
   @@index([status])

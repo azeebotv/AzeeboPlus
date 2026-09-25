@@ -2,13 +2,14 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { TerminusModule } from '@nestjs/terminus';
-import { ThrottlerModule } from '@nestjs/throttler';
-import { UsersModule } from './modules/users/users.module';
-import { HealthModule } from './modules/health/health.module';
-import { AdminModule } from './modules/admin/admin.module';
+import { UsersModule } from './modules/users/users.module.js';
+import { HealthModule } from './modules/health/health.module.js';
+import { AdminModule } from './modules/admin/admin.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlagModule, userFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -17,16 +18,25 @@ import { ServiceAuthGuard } from '@azeebo/security';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
     TerminusModule,
     UsersModule,
     HealthModule,
     AdminModule,
+    // User-profile feature toggles: new surfaces default OFF until rolled out;
+    // deletion soft-mode defaults ON as a safety net for hard deletes.
+    FlagMetricsModule.register({ service: 'user-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('user-service'),
+      defaultFlags: {
+        [userFlags.profileV2]: false,
+        [userFlags.universeAffinity]: false,
+        [userFlags.continueWatching]: true,
+        [userFlags.deletionSoft]: true,
+        [userFlags.followSystem]: false,
+        [userFlags.privacySettingsV2]: false,
+      },
+    }),
   ],
   controllers: [],
   providers: [

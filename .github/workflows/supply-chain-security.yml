@@ -1,0 +1,154 @@
+name: Supply Chain Security
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  release:
+    types: [published]
+
+env:
+  NODE_VERSION: '22.16.0'
+  PNPM_VERSION: '10.33.2'
+
+jobs:
+  # Block critical and high-severity vulnerabilities
+  vulnerability-scan:
+    name: Vulnerability Scan (Block Critical)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      # Block CRITICAL vulnerabilities (exit code 1)
+      - name: Block critical vulnerabilities
+        run: |
+          echo "Checking for critical vulnerabilities..."
+          pnpm audit --audit-level=critical
+          echo "No critical vulnerabilities found."
+
+      # Report high vulnerabilities (don't block, but surface them)
+      - name: Report high vulnerabilities
+        run: pnpm audit --audit-level=high || echo "::warning::High-severity vulnerabilities detected — review before merging"
+        continue-on-error: true
+
+  # Generate SBOM (Software Bill of Materials)
+  sbom-generation:
+    name: SBOM Generation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      # Generate SBOM using Syft
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+        id: syft-install
+
+      - name: Generate SBOM (CycloneDX format)
+        run: |
+          syft dir:. -o cyclonedx-json=sbom-cyclonedx.json
+          syft dir:. -o spdx-json=sbom-spdx.json
+        continue-on-error: true
+
+      # Generate dependency inventory
+      - name: Generate dependency inventory
+        run: |
+          echo "# Dependency Inventory" > DEPENDENCIES.md
+          echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> DEPENDENCIES.md
+          echo "" >> DEPENDENCIES.md
+          echo "## Production Dependencies" >> DEPENDENCIES.md
+          pnpm ls --depth 0 --prod --json 2>/dev/null | jq -r '.[0].dependencies // {} | to_entries[] | "- \(.key): \(.value.version)"' >> DEPENDENCIES.md 2>/dev/null || echo "N/A" >> DEPENDENCIES.md
+          echo "" >> DEPENDENCIES.md
+          echo "## Dev Dependencies" >> DEPENDENCIES.md
+          pnpm ls --depth 0 --dev --json 2>/dev/null | jq -r '.[0].devDependencies // {} | to_entries[] | "- \(.key): \(.value.version)"' >> DEPENDENCIES.md 2>/dev/null || echo "N/A" >> DEPENDENCIES.md
+
+      # Upload SBOM artifacts
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: |
+            sbom-cyclonedx.json
+            sbom-spdx.json
+            DEPENDENCIES.md
+          retention-days: 90
+
+  # Build provenance using SLSA framework
+  build-provenance:
+    name: Build Provenance
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'release'
+    needs: [vulnerability-scan, sbom-generation]
+    permissions:
+      id-token: write   # Required for SLSA provenance
+      contents: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Generate SLSA provenance attestation for source artifacts
+      # subject-path should point to a built artifact, not the entire workspace.
+      # TODO: chain this job to `needs: [build]` and point at the build output.
+      - name: Generate Provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: '${{ github.workspace }}/dist'
+
+      # Generate SLSA provenance for Docker images
+      # subject-digest must be the image digest (sha256:<image-hash>), NOT the git commit SHA.
+      # This step is skipped unless CONTAINER_DIGEST is provided by a preceding build step.
+      - name: Generate Container Provenance
+        uses: actions/attest-build-provenance@v2
+        if: github.event_name == 'release' && env.CONTAINER_DIGEST != ''
+        with:
+          subject-name: 'ghcr.io/${{ github.repository }}'
+          subject-digest: '${{ env.CONTAINER_DIGEST }}'
+          push-to-registry: true
+
+  # License compliance check
+  license-compliance:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      - name: Check license compliance
+        run: |
+          echo "Checking for copyleft licenses..."
+          # List all licenses
+          pnpm licenses ls --prod 2>/dev/null || echo "License check skipped (pnpm version may not support this command)"
+
+          # Block known problematic licenses
+          BLOCKED_LICENSES="GPL-3.0|AGPL-3.0|SSPL-1.0|EUPL-1.1"
+          BLOCKED=$(pnpm licenses ls --prod --json 2>/dev/null | jq -r '.[]? | .licenses[]?' | grep -iE "$BLOCKED_LICENSES" || true)
+          if [ -n "$BLOCKED" ]; then
+            echo "::error::Blocked copyleft licenses found:"
+            echo "$BLOCKED"
+            exit 1
+          fi
+          echo "No blocked licenses found."
+

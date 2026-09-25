@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Post,
   Body,
@@ -13,11 +14,12 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Public, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { WebhookService, WebhookPayload } from './webhook.service';
-import { WebhookSecurityService } from './webhook-security.service';
-import { PaystackWebhookGuard } from './guards/paystack-webhook.guard';
-import { FlutterwaveWebhookGuard } from './guards/flutterwave-webhook.guard';
+import { WebhookService, WebhookPayload } from './webhook.service.js';
+import { WebhookSecurityService } from './webhook-security.service.js';
+import { PaystackWebhookGuard } from './guards/paystack-webhook.guard.js';
+import { FlutterwaveWebhookGuard } from './guards/flutterwave-webhook.guard.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { FeatureFlagGuard, FeatureFlag, paymentFlags } from '@azeebo/feature-flags';
 
 @ApiTags('Webhooks')
 @Public()
@@ -28,16 +30,17 @@ export class WebhookController {
   private readonly webhookTimeout: number;
 
   constructor(
-    private webhookService: WebhookService,
-    private webhookSecurity: WebhookSecurityService,
-    private configService: ConfigService
+    @Inject(WebhookService) private webhookService: WebhookService,
+    @Inject(WebhookSecurityService) private webhookSecurity: WebhookSecurityService,
+    @Inject(ConfigService) private configService: ConfigService
   ) {
     this.webhookTimeout = this.configService.get<number>('WEBHOOK_TIMEOUT', 30000);
   }
 
   @Post('paystack')
   @RateLimit(100, 60000)
-  @UseGuards(PaystackWebhookGuard)
+  @UseGuards(FeatureFlagGuard, PaystackWebhookGuard)
+  @FeatureFlag(paymentFlags.webhooksEnabled)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Handle Paystack webhook' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
@@ -112,7 +115,8 @@ export class WebhookController {
 
   @Post('flutterwave')
   @RateLimit(100, 60000)
-  @UseGuards(FlutterwaveWebhookGuard)
+  @UseGuards(FeatureFlagGuard, FlutterwaveWebhookGuard)
+  @FeatureFlag(paymentFlags.webhooksEnabled)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Handle Flutterwave webhook' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })

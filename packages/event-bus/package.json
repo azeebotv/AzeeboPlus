@@ -7,22 +7,29 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "bash ../../scripts/build-package.sh",
     "clean": "rm -rf dist",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "lint": "eslint src --fix"
+    "lint": "eslint src"
   },
-  "dependencies": {
+  "dependencies": {},
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
     "ioredis": "^5.11.1"
   },
   "devDependencies": {
+    "@prisma/client": "^6.19.3",
+    "prisma": "^6.19.3",
     "@types/jest": "^29.5.0",
     "@types/node": "^25.9.3",
     "eslint": "^10.5.0",
@@ -32,9 +39,5 @@
     "ts-jest": "^29.1.0",
     "typescript": "^5.8.4",
     "typescript-eslint": "^8.61.1"
-  },
-  "peerDependencies": {
-    "@nestjs/common": "^11.0.0",
-    "@nestjs/core": "^11.0.0"
   }
 }

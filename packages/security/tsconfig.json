@@ -4,14 +4,28 @@
     "declaration": true,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2021",
+    "target": "ES2022",
     "sourceMap": true,
-    "outDir": "./dist",
     "rootDir": "./src",
+    "outDir": "./dist",
     "incremental": true,
-    "types": ["node", "jest"],
-    "paths": {}
+    "paths": {
+      "@azeebo/shared-types": ["../shared-types/dist"],
+      "@azeebo/shared-types/*": ["../shared-types/dist/*"]
+    },
+    "types": [
+      "node",
+      "jest"
+    ]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test", "src/**/*.spec.ts"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "src/**/*.spec.ts",
+    "src/prisma/client/**/*"
+  ]
 }

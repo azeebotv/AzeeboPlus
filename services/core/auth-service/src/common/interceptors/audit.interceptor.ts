@@ -3,13 +3,13 @@ import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request } from 'express';
-import { AuditLogService } from '../../modules/audit/audit.service';
-import { AUDIT_LOG_METADATA } from '../decorators/audit-log.decorator';
+import { AuditLogService } from '../../modules/audit/audit.service.js';
+import { AUDIT_LOG_METADATA } from '../decorators/audit-log.decorator.js';
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
   constructor(
-    private reflector: Reflector,
+    @Inject(Reflector) private reflector: Reflector,
     @Inject(AuditLogService) private auditService: AuditLogService
   ) {}
 

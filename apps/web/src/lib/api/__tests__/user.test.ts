@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createUserMethods } from '../user';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 describe('User API Methods', () => {
@@ -52,7 +52,11 @@ describe('User API Methods', () => {
     it('should POST to /api/v1/users/me/complete-profile', async () => {
       client.request.mockResolvedValue({ success: true, data: { id: '1' } });
 
-      await user.completeProfileSetup({ displayName: 'New Name', bio: 'Bio', interests: ['movies'] });
+      await user.completeProfileSetup({
+        displayName: 'New Name',
+        bio: 'Bio',
+        interests: ['movies'],
+      });
 
       expect(client.request).toHaveBeenCalledWith('/api/v1/users/me/complete-profile', {
         method: 'POST',
@@ -63,7 +67,10 @@ describe('User API Methods', () => {
 
   describe('getWatchHistory', () => {
     it('should GET /api/v1/users/me/history with pagination', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+      });
 
       await user.getWatchHistory(2, 10);
 

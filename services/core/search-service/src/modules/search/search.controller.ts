@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -10,19 +11,23 @@ import {
   HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard, AdminGuard } from '@azeebo/security';
 
-import { SearchService } from './search.service';
-import { SearchResponse } from './interfaces/search-response.interface';
-import { LogSearchDto } from './dto/log-search.dto';
+import { SearchService } from './search.service.js';
+import { SearchIntelligenceService } from './search-intelligence.service.js';
+import { SearchResponse } from './interfaces/search-response.interface.js';
+import { LogSearchDto } from './dto/log-search.dto.js';
 
 @ApiTags('Search')
-@Controller('v1/search')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(ServiceAuthGuard)
+@Controller('search')
 export class SearchController {
-  constructor(private readonly searchService: SearchService) {}
+  constructor(
+    @Inject(SearchService) private readonly searchService: SearchService,
+    @Inject(SearchIntelligenceService)
+    private readonly intelligenceService: SearchIntelligenceService
+  ) {}
 
   @Get()
   @UseGuards(RateLimitGuard)
@@ -39,8 +44,13 @@ export class SearchController {
     @Query('dateEnd') dateEnd?: string,
     @Query('sort') sort?: string,
     @Query('page') page?: number,
-    @Query('limit') limit?: number
+    @Query('limit') limit?: number,
+    @Query('creatorsPage') creatorsPage?: number,
+    @Query('creatorsLimit') creatorsLimit?: number,
+    @Query('universesPage') universesPage?: number,
+    @Query('universesLimit') universesLimit?: number
   ): Promise<SearchResponse> {
+    const safeLimit = Math.min(Math.max(1, limit ? Number(limit) : 20), 100);
     return this.searchService.search(query, {
       universe,
       categories: categories ? categories.split(',') : undefined,
@@ -49,11 +59,19 @@ export class SearchController {
       dateRange: dateStart || dateEnd ? { start: dateStart, end: dateEnd } : undefined,
       sort,
       page: page ? Number(page) : 1,
-      limit: limit ? Number(limit) : 20,
+      limit: safeLimit,
+      creatorsPage: creatorsPage ? Number(creatorsPage) : undefined,
+      creatorsLimit: creatorsLimit ? Math.min(Math.max(1, Number(creatorsLimit)), 100) : undefined,
+      universesPage: universesPage ? Number(universesPage) : undefined,
+      universesLimit: universesLimit
+        ? Math.min(Math.max(1, Number(universesLimit)), 100)
+        : undefined,
     });
   }
 
   @Get('faceted')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Search with faceted filtering' })
   @ApiResponse({ status: 200, description: 'Search results with facets' })
   async searchWithFacets(
@@ -95,6 +113,8 @@ export class SearchController {
   }
 
   @Get('facets')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get search facets' })
   @ApiResponse({ status: 200, description: 'Search facets' })
   async getFacets(
@@ -105,7 +125,6 @@ export class SearchController {
   }
 
   @Post('log')
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Log search query' })
   @ApiResponse({ status: 200, description: 'Search logged' })
@@ -118,6 +137,73 @@ export class SearchController {
     if (!userId) {
       throw new UnauthorizedException();
     }
-    return this.searchService.logSearch(userId, body.query, body.resultsCount ?? 0);
+    return this.searchService.logSearch(
+      userId,
+      body.query,
+      body.resultsCount ?? 0,
+      body.correction,
+      body.accepted
+    );
+  }
+
+  // ── Admin endpoints ──────────────────────────────────────────────
+  @Get('admin/stats')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Search service stats (admin)' })
+  @ApiResponse({ status: 200, description: 'Search stats' })
+  async getAdminStats() {
+    const stats = await this.searchService.getAdminStats();
+    return { success: true, data: stats };
+  }
+
+  @Get('admin/queries')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Search query log (admin)' })
+  @ApiResponse({ status: 200, description: 'Recent queries' })
+  async getAdminQueries(@Query('page') page = 1, @Query('limit') limit = 20) {
+    const result = await this.searchService.getAdminQueries(Number(page), Number(limit));
+    return { success: true, data: result };
+  }
+
+  @Post('admin/indexes/repair')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Recreate missing GIN trigram indexes' })
+  @ApiResponse({ status: 200, description: 'Indexes repaired' })
+  async repairIndexes() {
+    return this.searchService.repairIndexes();
+  }
+
+  // ========================
+  // Search intelligence endpoints
+  // ========================
+
+  @Get('quality/metrics')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get search quality metrics' })
+  @ApiResponse({ status: 200, description: 'Search quality metrics' })
+  async getSearchQualityMetrics(@Query('days') days?: number) {
+    const metrics = await this.intelligenceService.getSearchQualityMetrics(days);
+    return { success: true, data: metrics };
+  }
+
+  @Post('track/zero-result')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Track zero-result search query' })
+  @ApiResponse({ status: 200, description: 'Zero result tracked' })
+  async trackZeroResult(
+    @Request() req: { user?: { id: string } },
+    @Body() body: { query: string; resultCount: number; filters?: Record<string, unknown> }
+  ) {
+    this.intelligenceService.trackZeroResult({
+      query: body.query,
+      userId: req.user?.id,
+      resultCount: body.resultCount,
+      filters: body.filters,
+    });
+    return { success: true };
   }
 }

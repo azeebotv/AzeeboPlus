@@ -1,7 +1,10 @@
 // Standard API Response Type (BE-005)
-// NOTE: ApiResponse<T> and ApiError are defined at the end of this file.
+// NOTE: ApiResponse<T> and ApiError are defined in api-response-types.ts and re-exported below.
 // ApiResponse<T>: { success, data?, error?: ApiError, meta?: PaginationMeta }
 // ApiError: { code, message, details? }
+
+import type { ApiError } from './api-response-types';
+import type { Universe } from './universe';
 
 // Permission types
 /** Union of all granular permission strings used across the platform. */
@@ -95,6 +98,16 @@ export type UserRole =
   | 'sponsor_manager';
 
 // Auth types
+/** Standard authenticated request shape used across all services. */
+export interface AuthenticatedRequest {
+  user: {
+    id: string;
+    sub?: string;
+    role?: string;
+    email?: string;
+  };
+}
+
 /** Response shape returned by login and register endpoints. */
 export interface AuthResponse {
   success: boolean;
@@ -161,17 +174,8 @@ export interface ContentItem {
 /** Supported content media types. */
 export type ContentType = 'video' | 'audio' | 'image' | 'article' | 'document';
 
-/** Platform universe categories. */
-export type Universe =
-  | 'reality'
-  | 'creator'
-  | 'lifestyle'
-  | 'vertical'
-  | 'movie'
-  | 'games'
-  | 'comedy'
-  | 'sports'
-  | 'music';
+// `Universe` is defined in universe.ts, derived from the canonical UNIVERSE_SLUGS
+// list so the type-level union and runtime universe values can never drift.
 export type PublishStatus = 'draft' | 'pending' | 'published' | 'archived';
 
 export interface ContentCreateRequest {
@@ -416,6 +420,20 @@ export interface AnalyticsEventRequest {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Canonical analytics event payload for service-to-service tracking (the wire
+ * shape POSTed to `POST /analytics/track`). Services must emit this shape so
+ * the analytics ingestion accepts the event; adopters use the `eventName`
+ * field (not `type`, which was the historical controller-only alias).
+ */
+export interface EventPayload {
+  eventName: string;
+  userId?: string;
+  sessionId?: string;
+  timestamp?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface FunnelAnalyticsRequest {
   funnelName: string;
   startDate: Date;
@@ -541,7 +559,7 @@ export type { ApiResponse, ApiError, PaginationMeta } from './api-response-types
 /** Wrapper factory and helpers for building consistent API responses. */
 export {
   ApiResponseWrapper,
-/** Creates a successful API response with data. */
+  /** Creates a successful API response with data. */
   createSuccessResponse,
   /** Creates an error API response with an ApiError. */
   createErrorResponse,
@@ -578,7 +596,7 @@ export { environmentSchema, validateEnvironment } from './env-validation';
 export type { EnvironmentVariables } from './env-validation';
 
 // Pricing constants and utilities
-export { getPricing } from './pricing';
+export { getPricing, PRICE_CONFIG } from './pricing';
 export type { PricingPlan, WalletPricing, ContentPricing } from './pricing';
 
 // Secret Validation
@@ -586,17 +604,14 @@ export type { PricingPlan, WalletPricing, ContentPricing } from './pricing';
 export { validateStartup, isPlaceholderSecret, validateNoPlaceholders } from './secret-validation';
 
 // Data Classification types
-export {
-  DataClassification,
-  PiiCategory,
-  ConsentType,
-  AuditLogEntry,
-} from './data-classification';
+export { DataClassification, PiiCategory, ConsentType } from './data-classification';
+export { DEFAULT_RETENTION_POLICIES } from './data-classification';
 export type {
   DataClassificationMetadata,
   UserDataExport,
   UserDataDeletionRequest,
   RetentionPolicy,
+  AuditLogEntry,
 } from './data-classification';
 
 // Privacy Policy types
@@ -606,6 +621,12 @@ export type {
   PrivacyPolicyAcceptance,
   ConsentAuditLog,
 } from './privacy-policy';
+export { PRIVACY_POLICY, checkConsentCompliance } from './privacy-policy';
+
+// Universe slugs + key builders (single source of truth for universe-scoped
+// feature-flag keys and nav sentinels — see universe.ts).
+export { UNIVERSE_SLUGS, universeEnabledKey, universeFlagKey } from './universe';
+export type { Universe, UniverseSlug } from './universe';
 
 // Universe-specific types
 export interface UniverseKpi {
@@ -736,4 +757,13 @@ export interface TokenStorage {
   setAccessToken(token: string): Promise<void>;
   setRefreshToken(token: string): Promise<void>;
   clearTokens(): Promise<void>;
+}
+
+// Logger interface (canonical definition)
+/** Structured logger interface for services and apps. */
+export interface Logger {
+  log: (message: string, context?: Record<string, unknown>) => void;
+  error: (message: string, trace?: string, context?: Record<string, unknown>) => void;
+  warn: (message: string, context?: Record<string, unknown>) => void;
+  debug: (message: string, context?: Record<string, unknown>) => void;
 }

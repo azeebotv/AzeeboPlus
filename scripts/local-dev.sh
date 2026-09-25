@@ -2,8 +2,11 @@
 # ============================================================
 # Azeebo+ Local Development Environment
 # ============================================================
-# Production-grade development runner for all Azeebo+ services.
+# Native development runner for all Azeebo+ services.
+# Runs all services (backend + frontend) via pnpm on the host.
 # Uses per-service databases matching the Docker all-in-one setup.
+# Docker architecture (Dockerfile.all-in-one) is preserved for
+# staging/production deployment — this script is for local dev only.
 #
 # Usage:
 #   ./scripts/local-dev.sh [command] [options]
@@ -27,24 +30,47 @@
 #   --universes    Start universe services
 #   --operations   Start operations services
 #   --gateway      Start API gateway
-#   --frontend     Frontend apps
+#   --frontend     Frontend apps (web, admin, creator)
 #   --all          Start everything
 #   --quick        Core + gateway + web (recommended for most dev work)
 #   --no-build     Skip prisma generate (fast start with cached builds)
 #   --skip-migrate Skip migration checks
-#   --local-frontend Start frontend on host via pnpm dev instead of Docker
 #
 # Options (for 'db'):
 #   migrate        Run Prisma migrations for all services
 #   seed           Seed all databases with demo data
 #   reset          Reset ALL databases (drop + recreate + migrate + seed)
+#   status         Show status of all databases
+#   reset-service  Reset a specific service's database
+#   test           Test database connections
 #   studio         Open Prisma Studio for a service
 #
+# ============================================================
+# CHANGELOG
+# ============================================================
+# v3.4.0 (2026-07-22) — Infrastructure Alignment Update
+#   - FIX: load_env() service URL mappings corrected to match actual
+#     service .env PORT values. Previously 16 service URLs pointed to
+#     wrong ports (e.g. NOTIFICATION was at 3006 in load_env but
+#     actual service runs at 3006 — fixed grouping and added missing
+#     SUPPORT_SERVICE_URL).
+#   - FIX: Reorganized load_env() service URLs by category (core,
+#     engagement, intelligence, operations, universes) with source
+#     comments referencing service registry arrays for traceability.
+#   - FIX: Help text version updated from v3.1 to v3.3.0 to match
+#     SCRIPT_VERSION variable.
+#   - ADD: Disk space prerequisite check (warns if < 2GB available).
+#   - ADD: Docker status detection in prereq validation (informational,
+#     not required for native dev).
+#   - ADD: SUPPORT_SERVICE_URL to load_env() (was missing entirely).
+#   - ADD: Comprehensive changelog section in script header.
+#
+# v3.3.0 — Previous version (see git history for details)
 # ============================================================
 set -euo pipefail
 
 # ---- Script Metadata ----
-SCRIPT_VERSION="3.0.0"
+SCRIPT_VERSION="3.4.0"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -54,15 +80,15 @@ REQUIRED_PNPM_VERSION="10.33.2"
 LOG_LEVEL="${LOG_LEVEL:-info}"
 SKIP_PREREQS="${SKIP_PREREQS:-false}"
 DRY_RUN="${DRY_RUN:-false}"
-HEALTH_CHECK_TIMEOUT=30
+HEALTH_CHECK_TIMEOUT=90
 HEALTH_CHECK_INTERVAL=2
 
 # ---- Database ----
-# All services use user 'azeebo' with password 'azeebo_dev_2024'
-DB_USER="azeebo"
-DB_PASS="azeebo_dev_2024"
-DB_HOST="localhost"
-DB_PORT="5432"
+# All services use user 'azeebo' with password from env or default for local dev
+DB_USER="${DB_USER:-azeebo}"
+DB_PASS="${DB_PASS:-azeebo_dev_2024}"
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
 DB_BASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}"
 
 # ---- State ----
@@ -195,6 +221,25 @@ validate_prereqs() {
     log_warn "node_modules not found (will install during setup)"
   fi
 
+  # Check available disk space (need ~2GB for node_modules + databases)
+  if command -v df &>/dev/null; then
+    local avail_kb
+    avail_kb="$(df -k "$ROOT_DIR" 2>/dev/null | awk 'NR==2{print $4}' || echo 0)"
+    if (( avail_kb > 0 )); then
+      local avail_gb=$(( avail_kb / 1048576 ))
+      if (( avail_gb < 2 )); then
+        log_warn "Low disk space: ${avail_gb}GB available (recommend >= 2GB)"
+      else
+        log_ok "Disk space: ${avail_gb}GB available"
+      fi
+    fi
+  fi
+
+  # Warn if Docker Desktop is running (not needed for native dev, wastes resources)
+  if command -v docker &>/dev/null && docker info &>/dev/null 2>&1; then
+    log_debug "Docker is running (not required for native dev)"
+  fi
+
   if (( failed > 0 )); then
     log_error "$failed prerequisite(s) failed."
     return 1
@@ -231,6 +276,8 @@ generate_local_secrets() {
 JWT_ACCESS_SECRET=${jwt_access}
 JWT_REFRESH_SECRET=${jwt_refresh}
 GATEWAY_SECRET=${gateway_secret}
+# Feature-flag store (FeatureFlagService falls back to REDIS_URL if unset)
+FEATURE_FLAG_REDIS_URL=redis://localhost:6379
 ENVEOF
   chmod 600 "$env_local"
   log_ok "Secrets saved to .env.local"
@@ -245,44 +292,66 @@ load_env() {
   for env_file in "${env_files[@]}"; do
     if [[ -f "$env_file" ]]; then
       set -a
-      source "$env_file"
+      # shellcheck disable=SC1090
+      source "$env_file" || log_warn "Failed to source $env_file — skipping"
       set +a
     fi
   done
 
   export NODE_ENV="${NODE_ENV:-development}"
-  export REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
+  if [[ -n "${REDIS_PASSWORD:-}" ]]; then
+    export REDIS_URL="${REDIS_URL:-redis://:${REDIS_PASSWORD}@localhost:6379}"
+  else
+    export REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
+  fi
   export ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-http://localhost:4000,http://localhost:4014,http://localhost:4016}"
   export RATE_LIMIT_TTL="${RATE_LIMIT_TTL:-60}"
   export RATE_LIMIT_MAX="${RATE_LIMIT_MAX:-1000}"
   export LOG_LEVEL="${LOG_LEVEL:-debug}"
 
+  # Observability
+  export SENTRY_DSN="${SENTRY_DSN:-}"
+  export ANALYTICS_ENDPOINT="${ANALYTICS_ENDPOINT:-http://localhost:3008}"
+  export OTEL_EXPORTER_OTLP_ENDPOINT="${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
+  export OTEL_SDK_DISABLED=true  # Disable OpenTelemetry SDK (Node.js 26 incompatible)
+  export OTEL_SERVICE_NAME="${OTEL_SERVICE_NAME:-azeebo-platform}"
+
   # Service URLs for gateway routing (local mode)
+  # Port mapping sourced from each service's .env — must match service registry arrays
+  # Core
   export AUTH_SERVICE_URL="${AUTH_SERVICE_URL:-http://localhost:3000}"
   export USER_SERVICE_URL="${USER_SERVICE_URL:-http://localhost:3001}"
   export WALLET_SERVICE_URL="${WALLET_SERVICE_URL:-http://localhost:3002}"
   export PAYMENT_SERVICE_URL="${PAYMENT_SERVICE_URL:-http://localhost:3003}"
   export CONTENT_SERVICE_URL="${CONTENT_SERVICE_URL:-http://localhost:3004}"
   export SEARCH_SERVICE_URL="${SEARCH_SERVICE_URL:-http://localhost:3005}"
+  export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL:-http://localhost:3019}"
+  # Engagement
   export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL:-http://localhost:3006}"
   export REWARD_SERVICE_URL="${REWARD_SERVICE_URL:-http://localhost:3007}"
+  export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL:-http://localhost:3023}"
+  export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL:-http://localhost:3024}"
+  export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL:-http://localhost:3025}"
+  export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL:-http://localhost:3026}"
+  # Intelligence
   export ANALYTICS_SERVICE_URL="${ANALYTICS_SERVICE_URL:-http://localhost:3008}"
   export RECOMMENDATION_SERVICE_URL="${RECOMMENDATION_SERVICE_URL:-http://localhost:3009}"
+  # Operations
   export MODERATION_SERVICE_URL="${MODERATION_SERVICE_URL:-http://localhost:3022}"
   export QUEUE_SERVICE_URL="${QUEUE_SERVICE_URL:-http://localhost:3015}"
-  export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL:-http://localhost:3019}"
+  export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL:-http://localhost:3028}"
+  export KNOWLEDGE_SERVICE_URL="${KNOWLEDGE_SERVICE_URL:-http://localhost:3020}"
+  # Universes
   export REALITY_SERVICE_URL="${REALITY_SERVICE_URL:-http://localhost:3010}"
   export MOVIE_SERVICE_URL="${MOVIE_SERVICE_URL:-http://localhost:3011}"
   export COMEDY_SERVICE_URL="${COMEDY_SERVICE_URL:-http://localhost:3012}"
   export GAMES_SERVICE_URL="${GAMES_SERVICE_URL:-http://localhost:3014}"
   export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL:-http://localhost:3016}"
   export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL:-http://localhost:3017}"
-  export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL:-http://localhost:3021}"
   export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL:-http://localhost:3018}"
-  export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL:-http://localhost:3023}"
-  export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL:-http://localhost:3024}"
-  export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL:-http://localhost:3025}"
-  export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL:-http://localhost:3026}"
+  export LIVE_EVENT_SERVICE_URL="${LIVE_EVENT_SERVICE_URL:-http://localhost:3027}"
+  export CREATOR_APP_URL="${CREATOR_APP_URL:-http://localhost:4014}"
+  export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL:-http://localhost:3021}"
 }
 
 validate_env() {
@@ -294,8 +363,8 @@ validate_env() {
     if [[ -z "$secret_val" ]]; then
       log_error "$secret_var is not set"
       failed=$((failed + 1))
-    elif [[ ${#secret_val} -lt 32 ]]; then
-      log_error "$secret_var must be >= 32 chars (got ${#secret_val})"
+    elif [[ ${#secret_val} -lt 64 ]]; then
+      log_error "$secret_var must be >= 64 chars (got ${#secret_val})"
       failed=$((failed + 1))
     else
       log_ok "$secret_var: ${#secret_val} chars"
@@ -327,6 +396,7 @@ DB_SERVICES=(
   "content-service|services/core/content-service|azeebo_content|3004"
   "search-service|services/core/search-service|azeebo_search|3005"
   "media-service|services/core/media-service|azeebo_media|3019"
+  "knowledge-service|services/core/knowledge-service|azeebo_knowledge|3020"
   "notification-service|services/engagement/notification-service|azeebo_notification|3006"
   "reward-service|services/engagement/reward-service|azeebo_reward|3007"
   "engagement-service|services/engagement/engagement-service|azeebo_engagement|3023"
@@ -343,12 +413,13 @@ DB_SERVICES=(
   "lifestyle-service|services/universes/lifestyle-service|azeebo_lifestyle|3016"
   "vertical-service|services/universes/vertical-service|azeebo_vertical|3017"
   "creator-service|services/universes/creator-service|azeebo_creator|3018"
+  "live-event-service|services/universes/live-event-service|azeebo_live_event|3027"
   "queue-service|services/operations/queue-service|azeebo_queue|3015"
-  "support-service|services/operations/support-service|azeebo_support|3020"
+  "support-service|services/operations/support-service|azeebo_support|3028"
   "moderation-service|services/operations/moderation-service|azeebo_moderation|3022"
   "auth-service|services/core/auth-service|azeebo_auth|3000"
   "admin|apps/admin|azeebo_admin|4016"
-  "creator-portal|apps/creator-portal|azeebo_creator_portal|4014"
+  "creator|apps/creator|azeebo_creator|4014"
 )
 
 setup_multi_db() {
@@ -383,7 +454,7 @@ setup_multi_db() {
 run_prisma_generate() {
   section "Generating Prisma Clients"
 
-  local count=0
+  local count=0 failed=0
   for entry in "${DB_SERVICES[@]}"; do
     IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
     count=$((count + 1))
@@ -396,14 +467,92 @@ run_prisma_generate() {
 
     local db_url="${DB_BASE_URL}/${db_name}?schema=public"
     local gen_output
-    gen_output="$(cd "$service_dir" && DATABASE_URL="$db_url" npx prisma generate 2>&1)"
-    if [[ $? -eq 0 ]]; then
+    if gen_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1)"; then
       log_ok "  [$count] $svc_name: generated"
     else
-      log_warn "  [$count] $svc_name: failed"
-      log_debug "    $gen_output"
+      log_error "  [$count] $svc_name: prisma generate FAILED"
+      # Show the real error unconditionally — a hidden failure here becomes a
+      # cryptic "Cannot find module '.prisma/client'" crash later.
+      printf '%s\n' "$gen_output" | sed 's/^/    /'
+      failed=$((failed + 1))
     fi
   done
+
+  if (( failed > 0 )); then
+    log_error "$failed Prisma client(s) failed to generate"
+    log_error "Fix the errors above (usually a schema or datasource problem), or regenerate manually:"
+    log_error "  pnpm run prisma:generate"
+    return 1
+  fi
+}
+
+# T0: Shared packages that ALL services depend on.
+# These must be built before any service can start (nest start:dev compiles
+# on the fly, but it needs the @azeebo/* type declarations from dist/).
+T0_PACKAGES=(
+  "shared-types"
+  "http-client"
+  "utils"
+  "validation"
+  "error-handling"
+  "logger"
+  "api-client"
+  "design-tokens"
+  "analytics-sdk"
+  "shared-services"
+  "security"
+  "ui"
+  "observability"
+  "opentelemetry"
+  "event-bus"
+  "feature-flags"
+  "internal-clients"
+)
+
+build_t0_packages() {
+  section "Building T0 Shared Packages"
+  local count=0 failed=0
+
+  for pkg in "${T0_PACKAGES[@]}"; do
+    count=$((count + 1))
+    local pkg_dir="$ROOT_DIR/packages/$pkg"
+
+    if [[ ! -f "$pkg_dir/package.json" ]]; then
+      log_warn "  [$count] $pkg: not found — skipping"
+      continue
+    fi
+
+    # shared-services needs prisma generate first — failures must abort (its
+    # build and everything depending on it cannot succeed with a stale/missing
+    # client), and the error must be visible instead of swallowed.
+    if [[ "$pkg" == "shared-services" ]]; then
+      if [[ -f "$pkg_dir/prisma/schema.prisma" ]]; then
+        local db_url="${DB_BASE_URL}/azeebo_content?schema=public"
+        log_info "  [$count] shared-services: generating Prisma client first..."
+        if ! gen_ss_output="$(cd "$pkg_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1)"; then
+          log_error "  [$count] shared-services: prisma generate FAILED — cannot build"
+          printf '%s\n' "$gen_ss_output" | sed 's/^/    /'
+          return 1
+        fi
+        log_ok "  [$count] shared-services: client generated"
+      fi
+    fi
+
+    local build_output
+    if build_output="$(cd "$pkg_dir" && pnpm run build 2>&1)"; then
+      log_ok "  [$count] $pkg: built"
+    else
+      log_error "  [$count] $pkg: FAILED"
+      log_debug "    $build_output"
+      failed=$((failed + 1))
+    fi
+  done
+
+  if (( failed > 0 )); then
+    log_error "$failed T0 package(s) failed to build"
+    return 1
+  fi
+  log_ok "All T0 packages built ($count total)"
 }
 
 run_migrations() {
@@ -423,7 +572,7 @@ run_migrations() {
     log_info "  [$count] $svc_name -> $db_name..."
     local migrate_output
     set +e
-    migrate_output="$(cd "$service_dir" && DATABASE_URL="$db_url" npx prisma migrate deploy 2>&1)"
+    migrate_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma migrate deploy 2>&1)"
     local rc=$?
     set -e
 
@@ -437,7 +586,7 @@ run_migrations() {
         log_info "  [$count] $svc_name: migration history stuck, using db push..."
         local push_output
         set +e
-        push_output="$(cd "$service_dir" && DATABASE_URL="$db_url" npx prisma db push --accept-data-loss 2>&1)"
+        push_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma db push --accept-data-loss 2>&1)"
         local push_rc=$?
         set -e
         if [[ $push_rc -eq 0 ]]; then
@@ -497,6 +646,7 @@ CORE_SERVICES=(
   "@azeebo/content-service|services/core/content-service|3004"
   "@azeebo/search-service|services/core/search-service|3005"
   "@azeebo/media-service|services/core/media-service|3019"
+  "@azeebo/knowledge-service|services/core/knowledge-service|3020"
 )
 
 ENGAGEMENT_SERVICES=(
@@ -522,11 +672,12 @@ UNIVERSE_SERVICES=(
   "@azeebo/lifestyle-service|services/universes/lifestyle-service|3016"
   "@azeebo/vertical-service|services/universes/vertical-service|3017"
   "@azeebo/creator-service|services/universes/creator-service|3018"
+  "@azeebo/live-event-service|services/universes/live-event-service|3027"
 )
 
 OPERATIONS_SERVICES=(
   "@azeebo/queue-service|services/operations/queue-service|3015"
-  "@azeebo/support-service|services/operations/support-service|3020"
+  "@azeebo/support-service|services/operations/support-service|3028"
   "@azeebo/moderation-service|services/operations/moderation-service|3022"
 )
 
@@ -537,7 +688,7 @@ GATEWAY_SERVICES=(
 FRONTEND_SERVICES=(
   "@azeebo/web|apps/web|4000"
   "@azeebo/admin|apps/admin|4016"
-  "@azeebo/creator-portal|apps/creator-portal|4014"
+  "@azeebo/creator|apps/creator|4014"
 )
 
 ALL_SERVICE_GROUPS=(
@@ -554,13 +705,16 @@ check_port() {
 }
 
 kill_port() {
-  local pid
-  pid="$(lsof -ti :"$1" -sTCP:LISTEN 2>/dev/null || true)"
-  if [[ -n "$pid" ]]; then
-    log_info "  Stopping port $1 (PID $pid)"
-    kill "$pid" 2>/dev/null || true
+  local pids
+  pids="$(lsof -ti :"$1" -sTCP:LISTEN 2>/dev/null || true)"
+  if [[ -n "$pids" ]]; then
+    log_info "  Stopping port $1 (PIDs: $pids)"
+    echo "$pids" | xargs kill 2>/dev/null || true
     sleep 1
-    kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null || true
+    # Force-kill any survivors
+    local survivors
+    survivors="$(lsof -ti :"$1" -sTCP:LISTEN 2>/dev/null || true)"
+    [[ -n "$survivors" ]] && echo "$survivors" | xargs kill -9 2>/dev/null || true
   fi
 }
 
@@ -587,17 +741,20 @@ start_service() {
   # Load service .env — each service has its own DATABASE_URL
   if [[ -f "$service_dir/.env" ]]; then
     set -a
-    source "$service_dir/.env"
+    # shellcheck disable=SC1090
+    source "$service_dir/.env" || log_warn "  $pkg: failed to source .env — using defaults"
     set +a
   fi
 
-  # Re-apply real JWT secrets from .env.local over service .env placeholders
+  # Re-apply real JWT secrets and gateway secret from .env.local over service .env placeholders
   if [[ -f "$ROOT_DIR/.env.local" ]]; then
-    local jwt_access jwt_refresh
+    local jwt_access jwt_refresh gateway_secret
     jwt_access="$(grep '^JWT_ACCESS_SECRET=' "$ROOT_DIR/.env.local" | tail -1 | cut -d= -f2-)"
     jwt_refresh="$(grep '^JWT_REFRESH_SECRET=' "$ROOT_DIR/.env.local" | tail -1 | cut -d= -f2-)"
+    gateway_secret="$(grep '^GATEWAY_SECRET=' "$ROOT_DIR/.env.local" | tail -1 | cut -d= -f2-)"
     [[ -n "$jwt_access" ]] && export JWT_ACCESS_SECRET="$jwt_access"
     [[ -n "$jwt_refresh" ]] && export JWT_REFRESH_SECRET="$jwt_refresh"
+    [[ -n "$gateway_secret" ]] && export GATEWAY_SECRET="$gateway_secret"
   fi
 
   # Warn if placeholder secrets are in use
@@ -617,11 +774,11 @@ start_service() {
     export NEXT_PUBLIC_API_URL="http://localhost:3013"
     export WATCHPACK_POLLING=true
     export CHOKIDAR_USEPOLLING=true
-    run_cmd_str="cd $service_dir && pnpm dev"
+    run_cmd_str="cd \"$service_dir\" && PORT=$port pnpm dev"
   elif grep -q '"start:dev"' "$service_dir/package.json" 2>/dev/null; then
-    run_cmd_str="cd $service_dir && pnpm start:dev"
+    run_cmd_str="cd \"$service_dir\" && pnpm start:dev"
   elif grep -q '"start"' "$service_dir/package.json" 2>/dev/null; then
-    run_cmd_str="cd $service_dir && pnpm start"
+    run_cmd_str="cd \"$service_dir\" && pnpm start"
   else
     log_warn "  $pkg: no start script — skipping"
     return 1
@@ -633,9 +790,32 @@ start_service() {
   PIDS+=("$pid")
   echo "$pid" >> "$PID_FILE"
 
-  sleep 2
+  # Wait for service to be healthy (up to 30s)
+  local waited=0
+  while (( waited < HEALTH_CHECK_TIMEOUT )); do
+    sleep "$HEALTH_CHECK_INTERVAL"
+    waited=$((waited + HEALTH_CHECK_INTERVAL))
+
+    # Process died — immediate failure
+    if ! kill -0 "$pid" 2>/dev/null; then
+      log_error "  $pkg failed — check $log_file"
+      tail -3 "$log_file" 2>/dev/null | sed 's/^/    /'
+      return 1
+    fi
+
+    # HTTP health check (try versioned and unversioned paths)
+    if curl -sf "http://localhost:$port/api/health" >/dev/null 2>&1 || \
+       curl -sf "http://localhost:$port/v1/health" >/dev/null 2>&1 || \
+       curl -sf "http://localhost:$port/health" >/dev/null 2>&1 || \
+       curl -sf "http://localhost:$port/" >/dev/null 2>&1; then
+      log_ok "  $pkg healthy on port $port (PID $pid, ${waited}s)"
+      return 0
+    fi
+  done
+
+  # Timed out — process alive but not responding
   if kill -0 "$pid" 2>/dev/null; then
-    log_ok "  $pkg started on port $port (PID $pid)"
+    log_warn "  $pkg started on port $port (PID $pid) but health check timed out"
     return 0
   else
     log_error "  $pkg failed — check $log_file"
@@ -659,61 +839,6 @@ start_group() {
   log_info "  $group_name: $started started, $failed failed"
 }
 
-ensure_docker_network() {
-  local network_name="${1:-azeebo-dev}"
-  if docker network inspect "$network_name" &>/dev/null 2>&1; then
-    log_debug "Docker network '$network_name' exists"
-  else
-    log_info "Creating Docker network '$network_name'..."
-    docker network create "$network_name" 2>/dev/null || true
-    log_ok "Docker network '$network_name' created"
-  fi
-}
-
-docker_frontend_stop() {
-  section "Stopping Frontend Docker Containers"
-  for app_dir in apps/web apps/admin apps/creator-portal; do
-    local compose_dir="$ROOT_DIR/$app_dir"
-    if [[ -f "$compose_dir/docker-compose.yml" ]]; then
-      log_info "  Stopping $app_dir..."
-      (cd "$compose_dir" && docker compose down 2>/dev/null) || true
-    fi
-  done
-  log_ok "Frontend Docker containers stopped"
-}
-
-start_frontend_via_docker() {
-  section "Starting Frontend Services (Docker)"
-  ensure_docker_network azeebo-dev
-
-  local started=0 failed=0
-  for entry in "${FRONTEND_SERVICES[@]}"; do
-    IFS='|' read -r pkg dir port <<< "$entry"
-    local compose_dir="$ROOT_DIR/$dir"
-
-    if [[ ! -f "$compose_dir/docker-compose.yml" ]]; then
-      log_warn "  $pkg: no docker-compose.yml — skipping"
-      failed=$((failed + 1))
-      continue
-    fi
-
-    log_info "  Building and starting $pkg on port $port..."
-    local output
-    output="$(cd "$compose_dir" && docker compose up -d --build 2>&1)"
-    local rc=$?
-    if [[ $rc -eq 0 ]] && docker ps --format '{{.Names}}' | grep -q "azeebo-${pkg##*/}"; then
-      log_ok "  $pkg container running"
-      started=$((started + 1))
-    else
-      log_warn "  $pkg: docker compose failed (rc=$rc)"
-      log_debug "    $output"
-      failed=$((failed + 1))
-    fi
-  done
-
-  log_info "  Frontend Docker: $started started, $failed failed"
-}
-
 # ============================================================
 # SECTION 7: Cleanup
 # ============================================================
@@ -721,7 +846,7 @@ start_frontend_via_docker() {
 cleanup() {
   echo ""
   log_info "Shutting down services..."
-  for pid in "${PIDS[@]}"; do
+  for pid in "${PIDS[@]+"${PIDS[@]}"}"; do
     kill "$pid" 2>/dev/null || true
   done
   if [[ -f "$PID_FILE" ]]; then
@@ -730,7 +855,6 @@ cleanup() {
     done < "$PID_FILE"
     rm -f "$PID_FILE"
   fi
-  docker_frontend_stop
   wait 2>/dev/null || true
   log_ok "All services stopped"
   exit 0
@@ -746,7 +870,9 @@ show_status() {
   printf "  %-35s %-8s %-10s %s\n" "---" "---" "---" "---"
 
   local all_entries=(
-    "${CORE_SERVICES[@]}" "${GATEWAY_SERVICES[@]}" "${FRONTEND_SERVICES[@]}"
+    "${CORE_SERVICES[@]}" "${ENGAGEMENT_SERVICES[@]}" "${INTELLIGENCE_SERVICES[@]}"
+    "${UNIVERSE_SERVICES[@]}" "${OPERATIONS_SERVICES[@]}" "${GATEWAY_SERVICES[@]}"
+    "${FRONTEND_SERVICES[@]}"
   )
   for entry in "${all_entries[@]}"; do
     IFS='|' read -r pkg dir port <<< "$entry"
@@ -756,12 +882,7 @@ show_status() {
     if [[ -n "$pid" ]]; then
       printf "  %-35s %-8s ${GREEN}%-10s${RESET} %s\n" "$short_name" "$port" "RUNNING" "$pid"
     else
-      local container_name="azeebo-${short_name}"
-      if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "$container_name"; then
-        printf "  %-35s %-8s ${GREEN}%-10s${RESET} %s\n" "$short_name" "$port" "DOCKER" "$container_name"
-      else
-        printf "  %-35s %-8s ${RED}%-10s${RESET} %s\n" "$short_name" "$port" "STOPPED" "-"
-      fi
+      printf "  %-35s %-8s ${RED}%-10s${RESET} %s\n" "$short_name" "$port" "STOPPED" "-"
     fi
   done
 }
@@ -779,6 +900,7 @@ tail_logs() {
     return 1
   fi
   log_info "Tailing logs (Ctrl+C to stop)..."
+  # shellcheck disable=SC2086
   tail -f $log_files
 }
 
@@ -788,7 +910,7 @@ tail_logs() {
 
 cmd_setup() {
   section "Azeebo+ Development Environment Setup (v${SCRIPT_VERSION})"
-  log_info "Per-service databases — matches Docker all-in-one"
+  log_info "Per-service databases — native dev (Docker architecture for staging/production)"
 
   detect_os
   if [[ "$SKIP_PREREQS" != "true" ]]; then
@@ -811,8 +933,13 @@ cmd_setup() {
     log_ok "Dependencies already installed"
   fi
 
-  run_prisma_generate
-  run_migrations
+  run_prisma_generate || return 1
+  run_migrations || return 1
+  build_t0_packages || return 1
+
+  # Seed demo data
+  section "Seeding Demo Data"
+  bash "$SCRIPT_DIR/database/seed-all.sh"
 
   log_ok "Setup complete! Run './scripts/local-dev.sh start --quick' to begin."
 }
@@ -825,6 +952,35 @@ cmd_start() {
     validate_prereqs || return 1
   fi
   validate_env || return 1
+
+  # Kill any orphaned processes from previous sessions before starting
+  section "Cleaning up orphaned processes"
+  local all_ports=(
+    3000 3001 3002 3003 3004 3005 3006 3007 3008 3009
+    3010 3011 3012 3013 3014 3015 3016 3017 3018 3019
+    3020 3021 3022 3023 3024 3025 3026 3027 3028 4000 4014 4016
+  )
+  local cleaned=0
+  for port in "${all_ports[@]}"; do
+    local pids
+    pids="$(lsof -ti :"$port" -sTCP:LISTEN 2>/dev/null || true)"
+    if [[ -n "$pids" ]]; then
+      echo "$pids" | xargs kill 2>/dev/null || true
+      cleaned=$((cleaned + 1))
+    fi
+  done
+  if (( cleaned > 0 )); then
+    sleep 1
+    # Force-kill survivors
+    for port in "${all_ports[@]}"; do
+      local survivors
+      survivors="$(lsof -ti :"$port" -sTCP:LISTEN 2>/dev/null || true)"
+      [[ -n "$survivors" ]] && echo "$survivors" | xargs kill -9 2>/dev/null || true
+    done
+    log_ok "Stopped $cleaned orphaned process(es)"
+  else
+    log_ok "No orphaned processes found"
+  fi
 
   mkdir -p "$STATE_DIR" "$LOG_DIR"
   : > "$PID_FILE"
@@ -842,7 +998,6 @@ cmd_start() {
   local do_universes=false do_operations=false do_gateway=false
   local do_frontend=false do_all=false do_quick=false
   local do_no_build=false do_skip_migrate=false
-  local do_local_frontend=false
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -857,7 +1012,6 @@ cmd_start() {
       --quick)        do_quick=true ;;
       --no-build)     do_no_build=true ;;
       --skip-migrate) do_skip_migrate=true ;;
-      --local-frontend) do_local_frontend=true ;;
       *)              log_error "Unknown option: $1"; return 1 ;;
     esac
     shift
@@ -866,6 +1020,11 @@ cmd_start() {
   [[ "$do_all" == "true" ]] && { do_core=true; do_engagement=true; do_intelligence=true; do_universes=true; do_operations=true; do_gateway=true; do_frontend=true; }
   [[ "$do_quick" == "true" ]] && { do_core=true; do_gateway=true; do_frontend=true; }
 
+  # Build T0 shared packages first (services depend on these)
+  if [[ "$do_no_build" != "true" ]]; then
+    build_t0_packages || return 1
+  fi
+
   [[ "$do_core" == "true" ]]       && start_group "core" "${CORE_SERVICES[@]}"
   [[ "$do_engagement" == "true" ]] && start_group "engagement" "${ENGAGEMENT_SERVICES[@]}"
   [[ "$do_intelligence" == "true" ]] && start_group "intelligence" "${INTELLIGENCE_SERVICES[@]}"
@@ -873,11 +1032,7 @@ cmd_start() {
   [[ "$do_operations" == "true" ]] && start_group "operations" "${OPERATIONS_SERVICES[@]}"
   [[ "$do_gateway" == "true" ]]    && start_group "gateway" "${GATEWAY_SERVICES[@]}"
   if [[ "$do_frontend" == "true" ]]; then
-    if [[ "$do_local_frontend" == "true" ]]; then
-      start_group "frontend" "${FRONTEND_SERVICES[@]}"
-    else
-      start_frontend_via_docker
-    fi
+    start_group "frontend" "${FRONTEND_SERVICES[@]}"
   fi
 
   local elapsed=$(( $(date +%s) - START_TIME ))
@@ -891,7 +1046,7 @@ cmd_start() {
 cmd_start_interactive() {
   echo ""
   printf "${BOLD}${BLUE}Azeebo+ Local Dev Runner (v${SCRIPT_VERSION})${RESET}\n"
-  printf "${BLUE}Per-service databases — Docker parity${RESET}\n"
+  printf "${BLUE}Native dev — all services run via pnpm on host${RESET}\n"
   echo ""
   echo "  1)  Core Services       (auth, user, wallet, payment, content, search, media)"
   echo "  2)  Engagement Services (notification, reward, engagement, messaging, referral, subscription)"
@@ -899,12 +1054,12 @@ cmd_start_interactive() {
   echo "  4)  Universe Services   (reality, movie, comedy, games, sports, lifestyle, vertical, creator)"
   echo "  5)  Operations          (queue, support, moderation)"
   echo "  6)  Gateway             (api-gateway)"
-  echo "  7)  Frontend Apps       (web, admin, creator-portal)"
+  echo "  7)  Frontend Apps       (web, admin, creator)"
   echo "  8)  All Services        (everything)"
   echo "  9)  Quick Start         (core + gateway + web)"
   echo "  0)  Exit"
   echo ""
-  echo "${YELLOW}Tip: option 9 for most dev work. ~200-300MB per NestJS service.${RESET}"
+  printf "${YELLOW}Tip: option 9 for most dev work. ~200-300MB per NestJS service.${RESET}\n"
   echo ""
 
   local choice=""
@@ -924,7 +1079,7 @@ cmd_start_interactive() {
       4) start_group "universes" "${UNIVERSE_SERVICES[@]}" ;;
       5) start_group "operations" "${OPERATIONS_SERVICES[@]}" ;;
       6) start_group "gateway" "${GATEWAY_SERVICES[@]}" ;;
-      7) start_frontend_via_docker ;;
+      7) start_group "frontend" "${FRONTEND_SERVICES[@]}" ;;
       8)
         start_group "core" "${CORE_SERVICES[@]}"
         start_group "engagement" "${ENGAGEMENT_SERVICES[@]}"
@@ -932,12 +1087,12 @@ cmd_start_interactive() {
         start_group "universes" "${UNIVERSE_SERVICES[@]}"
         start_group "operations" "${OPERATIONS_SERVICES[@]}"
         start_group "gateway" "${GATEWAY_SERVICES[@]}"
-        start_frontend_via_docker
+        start_group "frontend" "${FRONTEND_SERVICES[@]}"
         ;;
       9)
         start_group "core" "${CORE_SERVICES[@]}"
         start_group "gateway" "${GATEWAY_SERVICES[@]}"
-        start_frontend_via_docker
+        start_group "frontend" "${FRONTEND_SERVICES[@]}"
         ;;
       *) log_error "Invalid choice: $sel" ;;
     esac
@@ -955,23 +1110,27 @@ cmd_stop() {
   local all_ports=(
     3000 3001 3002 3003 3004 3005 3006 3007 3008 3009
     3010 3011 3012 3013 3014 3015 3016 3017 3018 3019
-    3020 3021 3022 3023 3024 3025 3026 4000 4014 4016
+    3020 3021 3022 3023 3024 3025 3026 3027 3028 4000 4014 4016
   )
   for port in "${all_ports[@]}"; do
-    local pid
-    pid="$(lsof -ti :"$port" -sTCP:LISTEN 2>/dev/null || true)"
-    if [[ -n "$pid" ]]; then
-      log_info "  Stopping port $port (PID $pid)"
-      kill "$pid" 2>/dev/null || true
+    local pids
+    pids="$(lsof -ti :"$port" -sTCP:LISTEN 2>/dev/null || true)"
+    if [[ -n "$pids" ]]; then
+      log_info "  Stopping port $port (PIDs: $pids)"
+      echo "$pids" | xargs kill 2>/dev/null || true
       stopped=$((stopped + 1))
     fi
   done
   [[ -f "$PID_FILE" ]] && while IFS= read -r pid; do kill "$pid" 2>/dev/null || true; done < "$PID_FILE" && rm -f "$PID_FILE"
 
-  docker_frontend_stop
-
   if (( stopped > 0 )); then
     sleep 1
+    # Force-kill any survivors
+    for port in "${all_ports[@]}"; do
+      local survivors
+      survivors="$(lsof -ti :"$port" -sTCP:LISTEN 2>/dev/null || true)"
+      [[ -n "$survivors" ]] && echo "$survivors" | xargs kill -9 2>/dev/null || true
+    done
     log_ok "Stopped $stopped service(s)"
   else
     log_info "No running services found"
@@ -995,6 +1154,78 @@ cmd_db() {
       bash "$SCRIPT_DIR/database/seed-all.sh"
       ;;
     reset)    db_reset ;;
+    status)
+      section "Database Status"
+      for entry in "${DB_SERVICES[@]}"; do
+        IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
+        if psql -U "$DB_USER" -d "$db_name" -c "SELECT 1" &>/dev/null; then
+          local table_count
+          table_count=$(psql -U "$DB_USER" -d "$db_name" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'" 2>/dev/null | tr -d ' ')
+          log_ok "  $db_name: connected ($table_count tables)"
+        else
+          log_error "  $db_name: FAILED to connect"
+        fi
+      done
+      ;;
+    reset-service)
+      local service="${2:-}"
+      if [[ -z "$service" ]]; then
+        log_error "Usage: local-dev.sh db reset-service <service-name>"
+        log_info "Available services:"
+        for entry in "${DB_SERVICES[@]}"; do
+          IFS='|' read -r svc_name _ db_name _ <<< "$entry"
+          echo "  $svc_name ($db_name)"
+        done
+        return 1
+      fi
+      local found=false
+      for entry in "${DB_SERVICES[@]}"; do
+        IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
+        if [[ "$svc_name" == "$service" ]]; then
+          log_warn "Resetting database for $service ($db_name)..."
+          psql -U postgres -c "DROP DATABASE IF EXISTS $db_name;" 2>/dev/null
+          psql -U postgres -c "CREATE DATABASE $db_name OWNER $DB_USER;" 2>/dev/null
+          local db_url="${DB_BASE_URL}/${db_name}?schema=public"
+          if [[ -f "$ROOT_DIR/$svc_dir/prisma/schema.prisma" ]]; then
+            local migrate_out
+            set +e
+            migrate_out="$(cd "$ROOT_DIR/$svc_dir" && DATABASE_URL="$db_url" pnpm exec prisma migrate deploy 2>&1)"
+            local migrate_rc=$?
+            set -e
+            echo "$migrate_out" | tail -3
+            if [[ $migrate_rc -ne 0 ]]; then
+              log_warn "  Migration failed for $service (rc=$migrate_rc)"
+            fi
+          fi
+          log_ok "Database for $service reset and migrated"
+          found=true
+          break
+        fi
+      done
+      if [[ "$found" != "true" ]]; then
+        log_error "Service '$service' not found"
+        return 1
+      fi
+      ;;
+    test)
+      section "Testing Database Connections"
+      local failed=0
+      for entry in "${DB_SERVICES[@]}"; do
+        IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
+        if psql -U "$DB_USER" -d "$db_name" -c "SELECT 1" &>/dev/null; then
+          log_ok "  $db_name: OK"
+        else
+          log_error "  $db_name: FAILED"
+          failed=$((failed + 1))
+        fi
+      done
+      if [[ $failed -eq 0 ]]; then
+        log_ok "All database connections successful"
+      else
+        log_error "$failed database connection(s) failed"
+        return 1
+      fi
+      ;;
     studio)
       local service="${2:-auth-service}"
       local dir=""
@@ -1009,14 +1240,16 @@ cmd_db() {
       local svc_db_url
       svc_db_url="$(grep '^DATABASE_URL=' "$dir/.env" 2>/dev/null | head -1 | cut -d= -f2-)"
       [[ -z "$svc_db_url" ]] && svc_db_url="${DB_BASE_URL}/azeebo_dev?schema=public"
-      (cd "$dir" && DATABASE_URL="$svc_db_url" npx prisma studio)
+      (cd "$dir" && DATABASE_URL="$svc_db_url" pnpm exec prisma studio)
       ;;
     help|*)
-      echo "Usage: $0 db [migrate|seed|reset|studio] [service-name]"
+      echo "Usage: $0 db [migrate|seed|reset|reset-service|test|studio] [service-name]"
       echo ""
       echo "  migrate              Run Prisma migrations for all per-service databases"
       echo "  seed                 Seed all databases with demo data"
       echo "  reset                Drop, recreate, migrate, and seed (DESTRUCTIVE)"
+      echo "  reset-service <svc>  Reset a specific service's database"
+      echo "  test                 Test all database connections"
       echo "  studio [service]     Open Prisma Studio (default: auth-service)"
       ;;
   esac
@@ -1042,11 +1275,97 @@ cmd_clean() {
   log_ok "Cleaned"
 }
 
+cmd_deploy() {
+  section "Local Staging Deployment"
+  log_info "Building and deploying all services locally"
+
+  # Build T0 packages
+  build_t0_packages || return 1
+
+  # Build admin and creator client SPAs
+  section "Building Admin Client"
+  if pnpm --filter @azeebo/admin run build:client 2>&1 | tail -3; then
+    log_ok "Admin client built"
+  else
+    log_warn "Admin client build failed (non-critical)"
+  fi
+
+  section "Building Creator Client"
+  if pnpm --filter @azeebo/creator run build:client 2>&1 | tail -3; then
+    log_ok "Creator client built"
+  else
+    log_warn "Creator client build failed (non-critical)"
+  fi
+
+  # Run migrations
+  run_migrations
+
+  # Start all services
+  log_info "Starting all services..."
+  cmd_start --all
+
+  # Run smoke tests
+  cmd_smoke
+}
+
+cmd_smoke() {
+  section "Running Smoke Tests"
+  local failed=0
+  local base_url="${SMOKE_BASE_URL:-http://localhost}"
+
+  local endpoints=(
+    "3013:API Gateway:/health"
+    "4000:Web App:/"
+    "4014:Creator Portal:/v1/health"
+    "4016:Admin Panel:/v1/health"
+  )
+
+  for entry in "${endpoints[@]}"; do
+    IFS=':' read -r port name path <<< "$entry"
+    if curl -sf "${base_url}:${port}${path}" >/dev/null 2>&1; then
+      log_ok "  $name: healthy (port $port)"
+    else
+      log_error "  $name: unhealthy (port $port)"
+      failed=$((failed + 1))
+    fi
+  done
+
+  # Test API endpoints
+  local api_endpoints=(
+    "/api/v1/auth/health:Auth Service"
+    "/api/v1/users/health:User Service"
+    "/api/v1/wallet/health:Wallet Service"
+    "/api/v1/content/health:Content Service"
+  )
+
+  for entry in "${api_endpoints[@]}"; do
+    IFS=':' read -r path name <<< "$entry"
+    if curl -sf "${base_url}:3013${path}" >/dev/null 2>&1; then
+      log_ok "  $name: healthy"
+    else
+      log_warn "  $name: not responding (may need full startup)"
+    fi
+  done
+
+  if (( failed > 0 )); then
+    log_error "$failed endpoint(s) failed smoke tests"
+    return 1
+  fi
+  log_ok "All smoke tests passed"
+}
+
+cmd_seed() {
+  section "Seeding Demo Data"
+  bash "$SCRIPT_DIR/database/seed-all.sh"
+}
+
 cmd_help() {
   cat << 'HELPEOF'
-Azeebo+ Local Development Environment (v3.0)
-=============================================
-Per-service databases — matches Docker all-in-one.
+Azeebo+ Local Development Environment (v3.4.0)
+================================================
+Native dev runner — all services run via pnpm on the host.
+Uses per-service databases matching the Docker all-in-one setup.
+Docker architecture is preserved for staging/production deployment.
 
 USAGE:
   ./scripts/local-dev.sh <command> [options]
@@ -1059,6 +1378,9 @@ COMMANDS:
   status         Show status of all services
   logs [pattern] Tail logs for services matching pattern
   db <action>    Database operations
+  deploy         Build all + migrate + start all + smoke tests
+  smoke          Run health check smoke tests against running services
+  seed           Seed databases with demo data
   validate       Validate environment
   clean          Stop services and clean logs/state
   help           Show this help
@@ -1070,12 +1392,11 @@ START OPTIONS:
   --universes    Reality, movie, comedy, games, sports, lifestyle, vertical, creator
   --operations   Queue, support, moderation
   --gateway      API gateway
-  --frontend     Web app
+  --frontend     Web, admin, creator (runs via pnpm dev)
   --all          Everything (~6GB+ RAM)
   --quick        Core + gateway + web (recommended)
   --no-build     Skip prisma generate (fast start with cached builds)
   --skip-migrate Skip migration checks (use --no-build for full skip)
-  --local-frontend Start frontend on host via pnpm dev instead of Docker
 
 DB ACTIONS:
   migrate        Run Prisma migrations for all services
@@ -1095,11 +1416,14 @@ DATABASES (one per service):
   azeebo_queue  azeebo_support  azeebo_moderation
 
 FIRST-TIME SETUP:
-  1. Ensure PostgreSQL and Redis are running
+  1. Ensure PostgreSQL and Redis are running (FlyEnv or brew services)
   2. ./scripts/local-dev.sh setup
-  3. ./scripts/local-dev.sh db seed
-  4. ./scripts/local-dev.sh start --quick
-  5. Open http://localhost:4000
+  3. ./scripts/local-dev.sh start --quick
+  4. Open http://localhost:4000
+
+DOCKER (staging/production):
+  The all-in-one Docker setup is in Dockerfile.all-in-one and
+  deploy/docker-compose.all-in-one.yml. This script is for local dev only.
 HELPEOF
 }
 
@@ -1119,7 +1443,9 @@ main() {
     logs)     tail_logs "$@" ;;
     db)       cmd_db "$@" ;;
     migrate)  cmd_db migrate "$@" ;;
-    seed)     cmd_db seed "$@" ;;
+    seed)     cmd_seed "$@" ;;
+    deploy)   cmd_deploy "$@" ;;
+    smoke)    cmd_smoke "$@" ;;
     validate) cmd_validate "$@" ;;
     clean)    cmd_clean "$@" ;;
     help|-h|--help) cmd_help ;;

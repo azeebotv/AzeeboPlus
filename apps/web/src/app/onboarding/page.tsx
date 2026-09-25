@@ -1,35 +1,70 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useUniverses } from '@/hooks/useDatabase';
-import { apiFetch } from '@/lib/api';
+import { useUniverses } from '@/hooks/useUniverses';
+import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import BrandLogo from '@/components/auth/BrandLogo';
+import { Mic, Film, Trophy, Compass, Laugh, Radio, Tv, Sparkles, type LucideIcon } from 'lucide-react';
 
 type CategoryCard = {
   category: string;
   sub: string;
   descriptor: string;
-  emoji: string;
+  icon: LucideIcon;
   side: 'left' | 'right';
 };
 
 const CATEGORY_CARDS: CategoryCard[] = [
-  { category: 'Music', sub: 'Afrobeats', descriptor: 'Wande Coal', emoji: '🎤', side: 'left' },
-  { category: 'Movies', sub: 'Nollywood', descriptor: 'Jenevive Nnaji', emoji: '🎬', side: 'left' },
+  { category: 'Music', sub: 'Afrobeats', descriptor: 'Wande Coal', icon: Mic, side: 'left' },
+  {
+    category: 'Movies',
+    sub: 'Nollywood',
+    descriptor: 'Genevieve Nnaji',
+    icon: Film,
+    side: 'left',
+  },
   {
     category: 'Sports',
     sub: 'Super Eagles',
     descriptor: 'Live Matches',
-    emoji: '⚽',
+    icon: Trophy,
     side: 'left',
   },
-  { category: 'Culture', sub: 'Heritage', descriptor: 'Osun Osogbo', emoji: '🪕', side: 'right' },
-  { category: 'Comedy', sub: 'Taooma', descriptor: 'Laugh Out Loud', emoji: '😂', side: 'right' },
-  { category: 'Creators', sub: 'Vloggers', descriptor: 'Live Stream', emoji: '📡', side: 'right' },
+  {
+    category: 'Culture',
+    sub: 'Heritage',
+    descriptor: 'Osun Osogbo',
+    icon: Compass,
+    side: 'right',
+  },
+  {
+    category: 'Comedy',
+    sub: 'Taaooma',
+    descriptor: 'Laugh Out Loud',
+    icon: Laugh,
+    side: 'right',
+  },
+  {
+    category: 'Creators',
+    sub: 'Vloggers',
+    descriptor: 'Live Stream',
+    icon: Radio,
+    side: 'right',
+  },
 ];
+
+const universeIcons: Record<string, LucideIcon> = {
+  movies: Film,
+  music: Mic,
+  sports: Trophy,
+  lifestyle: Compass,
+  comedy: Laugh,
+  reality: Tv,
+  games: Sparkles,
+};
 
 export default function OnboardingPage(): React.JSX.Element {
   const router = useRouter();
@@ -45,9 +80,9 @@ export default function OnboardingPage(): React.JSX.Element {
 
   const handleComplete = async (): Promise<void> => {
     try {
-      const result = await apiFetch('/users/me/preferences', {
-        method: 'PATCH',
-        body: JSON.stringify({ interests: selectedInterests, onboardingCompleted: true }),
+      const result = await api.user.updatePreferences({
+        interests: selectedInterests,
+        onboardingCompleted: true,
       });
       if (result.success) {
         localStorage.setItem('onboardingCompleted', 'true');
@@ -77,15 +112,14 @@ export default function OnboardingPage(): React.JSX.Element {
         }}
       >
         <div
-          className="flex-shrink-0 flex items-center justify-center rounded-lg"
+          className="flex-shrink-0 flex items-center justify-center rounded-xl text-white shadow-md shadow-orange-500/20"
           style={{
             width: 44,
             height: 44,
             background: 'linear-gradient(135deg, #E8420A, #CC1C1C)',
-            fontSize: 22,
           }}
         >
-          {c.emoji}
+          <c.icon size={22} strokeWidth={2} />
         </div>
         <div className="min-w-0">
           <p className="font-bold text-white text-sm leading-tight">
@@ -99,7 +133,7 @@ export default function OnboardingPage(): React.JSX.Element {
     return (
       <div
         className="relative min-h-screen w-full overflow-hidden flex items-center justify-center"
-        style={{ backgroundColor: '#0D3B2E' }}
+        style={{ backgroundColor: 'var(--brand-forest)' }}
       >
         {/* Ambient green glow */}
         <div
@@ -135,7 +169,7 @@ export default function OnboardingPage(): React.JSX.Element {
             style={{
               width: 260,
               height: 520,
-              background: 'linear-gradient(160deg, #1A0A0A, #000)',
+              background: 'linear-gradient(160deg, var(--bg-primary), #000)',
               border: '2px solid rgba(255,255,255,0.15)',
               boxShadow: '0 0 50px rgba(232,66,10,0.25), 0 30px 60px rgba(0,0,0,0.6)',
             }}
@@ -143,7 +177,7 @@ export default function OnboardingPage(): React.JSX.Element {
             {/* Phone notch */}
             <div
               className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full"
-              style={{ width: 90, height: 18, background: '#000' }}
+              style={{ width: 90, height: 18, background: 'black' }}
             />
             {/* Phone screen */}
             <div
@@ -155,7 +189,7 @@ export default function OnboardingPage(): React.JSX.Element {
             >
               {/* Content collage emoji grid */}
               <div className="grid grid-cols-3 gap-1.5 mb-6 opacity-90">
-                {['🎬', '🎤', '⚽', '🎭', '🏆', '🎵'].map((e, i) => (
+                {['Film', 'Mic', 'Circle', 'Drama', 'Trophy', 'Music'].map((e, i) => (
                   <div
                     key={i}
                     className="rounded-md flex items-center justify-center text-lg"
@@ -177,6 +211,7 @@ export default function OnboardingPage(): React.JSX.Element {
               <p className="az-headline text-white text-xl leading-tight mb-6">Welcome Home</p>
 
               <button
+                aria-label="Get started"
                 onClick={() => setStep(2)}
                 className="az-btn-primary"
                 style={{ width: 'auto', paddingInline: '1.75rem', fontSize: '0.8rem' }}
@@ -189,6 +224,7 @@ export default function OnboardingPage(): React.JSX.Element {
           {/* Mobile fallback CTA */}
           <div className="xl:hidden">
             <button
+              aria-label="Get started"
               onClick={() => setStep(2)}
               className="az-btn-primary"
               style={{ width: 'auto', paddingInline: '2.5rem' }}
@@ -212,7 +248,10 @@ export default function OnboardingPage(): React.JSX.Element {
 
   /* ---------- STEP 2: Interests (Dark) ---------- */
   return (
-    <div className="min-h-screen w-full p-6 sm:p-10" style={{ backgroundColor: '#1A0A0A' }}>
+    <div
+      className="min-h-screen w-full p-6 sm:p-10"
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
+    >
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <BrandLogo variant="light" />
@@ -233,19 +272,28 @@ export default function OnboardingPage(): React.JSX.Element {
           ) : (
             universes.map((universe) => {
               const active = selectedInterests.includes(universe.name);
+              const UniverseIcon = universeIcons[universe.name?.toLowerCase() || ''] || Film;
               return (
                 <button
                   key={universe.id}
                   onClick={() => toggleInterest(universe.name)}
-                  className="flex items-center gap-3 p-4 rounded-xl border transition-all"
+                  className="flex items-center gap-3.5 p-4 rounded-2xl border transition-all text-left"
                   style={{
-                    background: active ? 'rgba(204,28,28,0.25)' : 'rgba(255,255,255,0.05)',
-                    borderColor: active ? '#CC1C1C' : 'rgba(255,255,255,0.12)',
-                    boxShadow: active ? '0 0 20px rgba(204,28,28,0.4)' : 'none',
+                    background: active ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.04)',
+                    borderColor: active ? 'var(--brand-orange)' : 'rgba(255,255,255,0.1)',
+                    boxShadow: active ? '0 0 20px rgba(232,66,10,0.3)' : 'none',
                   }}
                 >
-                  <span className="text-3xl">{universe.icon || '🎬'}</span>
-                  <span className="font-semibold text-white text-sm">{universe.displayName}</span>
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                      active
+                        ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30'
+                        : 'bg-white/10 text-white/70'
+                    }`}
+                  >
+                    <UniverseIcon size={20} strokeWidth={1.75} />
+                  </div>
+                  <span className="font-bold text-white text-sm">{universe.displayName}</span>
                 </button>
               );
             })
@@ -262,6 +310,7 @@ export default function OnboardingPage(): React.JSX.Element {
           <button
             onClick={handleComplete}
             disabled={selectedInterests.length < 3}
+            aria-label="Continue to Azeebo+"
             className="az-btn-primary"
             style={{ width: 'auto', paddingInline: '3rem' }}
           >

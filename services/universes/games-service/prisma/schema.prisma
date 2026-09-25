@@ -1,11 +1,24 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   output   = "../src/prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// Stub model for cross-service references
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("users")
 }
 
 model Challenge {
@@ -18,6 +31,9 @@ model Challenge {
   metadata    Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  questions Question[]
+  sessions  GameSession[]
 
   @@map("challenges")
   @@index([type])
@@ -35,6 +51,10 @@ model Question {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  sessions  GameSession[]
+  answers   GameAnswer[]
+
   @@index([challengeId])
   @@map("questions")
 }
@@ -51,6 +71,10 @@ model GameSession {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  challenge Challenge? @relation(fields: [challengeId], references: [id], onDelete: Restrict)
+  question  Question?  @relation(fields: [questionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, challengeId])
   @@index([userId])
   @@index([challengeId])
   @@index([questionId])
@@ -82,6 +106,10 @@ model Tournament {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  prizes  TournamentPrize[]
+  entries TournamentEntry[]
+  matches TournamentMatch[]
+
   @@map("tournaments")
   @@index([status])
   @@index([startsAt])
@@ -93,6 +121,9 @@ model TournamentPrize {
   rank         Int
   amount Decimal  @db.Decimal(18, 2)
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@index([tournamentId])
   @@map("tournament_prizes")
@@ -104,6 +135,8 @@ model TournamentEntry {
   tournamentId String
   score        Int      @default(0)
   enteredAt    DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, tournamentId])
   @@index([userId])
@@ -125,6 +158,9 @@ model Game {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  questions GameQuestion[]
+  sessions  GamePlaySession[]
+
   @@index([category])
   @@index([isActive])
   @@map("games")
@@ -140,6 +176,9 @@ model GameQuestion {
   order       Int      @default(0)
   timeLimit   Int      @default(30)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@index([gameId])
   @@map("game_questions")
@@ -154,6 +193,10 @@ model GameAnswer {
   timeTaken   Int
   pointsEarned Int     @default(0)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  session    GamePlaySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question   Question        @relation(fields: [questionId], references: [id], onDelete: Restrict)
 
   @@index([sessionId])
   @@index([questionId])
@@ -170,6 +213,10 @@ model GamePlaySession {
   startedAt   DateTime  @default(now())
   completedAt DateTime?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  answers GameAnswer[]
 
   @@index([userId])
   @@index([gameId])
@@ -189,6 +236,9 @@ model TournamentMatch {
   scheduledAt  DateTime?
   completedAt  DateTime?
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@index([tournamentId])
   @@index([status])
@@ -204,6 +254,7 @@ model Tip {
   toUserId   String
   amount Decimal  @db.Decimal(18, 2)
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("tips")
   @@index([fromUserId])
@@ -240,6 +291,7 @@ model CreatorEarning {
   status      String    @default("pending")
   paidAt      DateTime?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@map("creator_earnings")
   @@index([creatorId])

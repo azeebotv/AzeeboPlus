@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
 
-type ModerationStatusResult = { reports: number; openReports: number; moderationCases: number; currentStatus: string };
+type ModerationStatusResult = {
+  reports: number;
+  openReports: number;
+  moderationCases: number;
+  currentStatus: string;
+};
 
 @Injectable()
 export class ContentModerationService {
@@ -12,8 +18,8 @@ export class ContentModerationService {
   private readonly safetyScanEnabled: boolean;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.moderationServiceUrl = this.configService.get<string>(
       'MODERATION_SERVICE_URL',
@@ -27,7 +33,7 @@ export class ContentModerationService {
   ): Promise<{ isSafe: boolean; issues: string[]; scanId?: string }> {
     if (!this.safetyScanEnabled) {
       this.logger.warn('Safety scanning is disabled, skipping safety check');
-      return { isSafe: true, issues: [] };
+      return { isSafe: true, issues: ['safety_scan_disabled'] };
     }
 
     try {
@@ -38,14 +44,35 @@ export class ContentModerationService {
 
       if (!content?.mediaAsset?.originalUrl) {
         this.logger.warn(`No media asset found for content ${contentId}, skipping scan`);
-        return { isSafe: true, issues: [] };
+        return { isSafe: true, issues: ['no_media_asset'] };
       }
 
-      const response = await axios.post(`${this.moderationServiceUrl}/api/moderation/scan`, {
-        contentId,
-        mediaUrl: content.mediaAsset.originalUrl,
-        scanTypes: ['malware', 'content_safety'],
-      }, { timeout: 10000 });
+      // SSRF protection: validate URL before forwarding to external service
+      const url = new URL(content.mediaAsset.originalUrl);
+      if (url.protocol !== 'https:') {
+        throw new BadRequestException('Only HTTPS media URLs are allowed for scanning');
+      }
+      const privatePatterns = [
+        /^127\./,
+        /^10\./,
+        /^172\.(1[6-9]|2\d|3[01])\./,
+        /^192\.168\./,
+        /^169\.254\./,
+        /^localhost$/i,
+      ];
+      if (privatePatterns.some((p) => p.test(url.hostname))) {
+        throw new BadRequestException('Media URLs pointing to private networks are not allowed');
+      }
+
+      const response = await axios.post(
+        `${this.moderationServiceUrl}/api/moderation/scan`,
+        {
+          contentId,
+          mediaUrl: content.mediaAsset.originalUrl,
+          scanTypes: ['malware', 'content_safety'],
+        },
+        { timeout: 10000 }
+      );
 
       const result = response.data;
 
@@ -74,7 +101,7 @@ export class ContentModerationService {
       return { isSafe: true, issues: [], scanId: scanResult.scanId };
     } catch (error) {
       this.logger.error(`Safety scan failed for content ${contentId}: ${(error as Error).message}`);
-      throw new BadRequestException('Safety scan failed, please try again later');
+      mapAndThrow(error, 'content safety check');
     }
   }
 
@@ -95,17 +122,44 @@ export class ContentModerationService {
       throw new BadRequestException('Content has no media asset to scan');
     }
 
+    // SSRF protection: validate URL before forwarding to external service
+    // (URL.canParse keeps the invalid-URL 400 outside any catch block —
+    // fabricating client errors inside a catch is banned by
+    // azeebo-custom/require-map-and-throw)
+    if (!URL.canParse(content.mediaAsset.originalUrl)) {
+      throw new BadRequestException('Invalid media URL format');
+    }
+    const scanUrl = new URL(content.mediaAsset.originalUrl);
+    if (scanUrl.protocol !== 'https:') {
+      throw new BadRequestException('Only HTTPS media URLs are allowed for scanning');
+    }
+    const privatePatterns = [
+      /^127\./,
+      /^10\./,
+      /^172\.(1[6-9]|2\d|3[01])\./,
+      /^192\.168\./,
+      /^169\.254\./,
+      /^localhost$/i,
+    ];
+    if (privatePatterns.some((p) => p.test(scanUrl.hostname))) {
+      throw new BadRequestException('Media URLs pointing to private networks are not allowed');
+    }
+
     try {
-      const response = await axios.post(`${this.moderationServiceUrl}/api/moderation/scan`, {
-        contentId,
-        mediaUrl: content.mediaAsset.originalUrl,
-        scanTypes: ['malware', 'content_safety'],
-      }, { timeout: 10000 });
+      const response = await axios.post(
+        `${this.moderationServiceUrl}/api/moderation/scan`,
+        {
+          contentId,
+          mediaUrl: content.mediaAsset.originalUrl,
+          scanTypes: ['malware', 'content_safety'],
+        },
+        { timeout: 10000 }
+      );
 
       return response.data;
     } catch (error) {
       this.logger.error(`Safety scan failed for content ${contentId}: ${(error as Error).message}`);
-      throw new BadRequestException('Safety scan failed, please try again later');
+      mapAndThrow(error, 'safety scan');
     }
   }
 
@@ -126,24 +180,21 @@ export class ContentModerationService {
     }
 
     try {
-      const response = await fetch(`${this.moderationServiceUrl}/moderation/report`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await axios.post(
+        `${this.moderationServiceUrl}/moderation/report`,
+        {
           reportingUserId: userId,
           type: reportData.type,
           contentId,
           reason: reportData.reason,
-        }),
-      });
+        },
+        {
+          timeout: 5000,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
 
-      if (!response.ok) {
-        this.logger.warn(`Moderation service returned ${response.status} for content report`);
-      }
-
-      const result = await response.json();
+      const result = response.data;
       return {
         success: true,
         data: {
@@ -155,7 +206,7 @@ export class ContentModerationService {
       this.logger.error(
         `Failed to report content to moderation service: ${(error as Error).message}`
       );
-      throw new BadRequestException('Failed to submit report. Please try again later.');
+      mapAndThrow(error, 'submitting content report');
     }
   }
 
@@ -164,33 +215,15 @@ export class ContentModerationService {
     data: ModerationStatusResult;
   }> {
     try {
-      const response = await fetch(
+      const response = await axios.get(
         `${this.moderationServiceUrl}/moderation/content/${contentId}/status`,
         {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          timeout: 5000,
+          headers: { 'Content-Type': 'application/json' },
         }
       );
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          return {
-            success: true,
-            data: {
-              reports: 0,
-              openReports: 0,
-              moderationCases: 0,
-              currentStatus: 'none',
-            },
-          };
-        }
-        this.logger.warn(`Moderation service returned ${response.status} for status check`);
-      }
-
-      const result = await response.json();
-      return result;
+      return response.data;
     } catch (error) {
       this.logger.error(`Failed to get moderation status: ${(error as Error).message}`);
       return {
@@ -199,7 +232,7 @@ export class ContentModerationService {
           reports: 0,
           openReports: 0,
           moderationCases: 0,
-          currentStatus: 'unknown',
+          currentStatus: 'unavailable',
         },
       };
     }

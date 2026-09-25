@@ -11,8 +11,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { realityApi, chatApi } from '../../../src/api';
-import { logger } from '../../../src/utils/logger';
+import { realityApi, chatApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../../src/theme';
 
 interface ChatMessage {
   id: string;
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 12,
   },
   header: {
@@ -211,14 +212,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   viewersBadge: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
   viewersText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   chatList: {
     flex: 1,
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 14,
-    color: '#E5E7EB',
+    color: colors.light[200],
     lineHeight: 20,
   },
   reactionsContainer: {
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
   reaction: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
   },
   reactionCount: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   inputContainer: {
     flexDirection: 'row',
@@ -291,7 +292,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
   },
   input: {
     flex: 1,

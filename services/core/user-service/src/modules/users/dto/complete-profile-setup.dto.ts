@@ -4,6 +4,11 @@ import { ApiProperty } from '@nestjs/swagger';
 export enum UserRole {
   USER = 'user',
   CREATOR = 'creator',
+}
+
+export enum AdminUserRole {
+  USER = 'user',
+  CREATOR = 'creator',
   MODERATOR = 'moderator',
   ADMIN = 'admin',
   SUPER_ADMIN = 'super_admin',
@@ -59,7 +64,7 @@ export class CompleteProfileSetupDto {
   @IsOptional()
   bio?: string;
 
-  @ApiProperty({ example: ['comedy', 'movies', 'sports'], required: false })
+  @ApiProperty({ example: ['comedy', 'movie', 'sports'], required: false })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()

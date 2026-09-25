@@ -1,3 +1,4 @@
+jest.mock('libphonenumber-js/max', () => ({}));
 import { validate } from 'class-validator';
 import {
   CreateShowDto,
@@ -6,8 +7,8 @@ import {
   CreateSeasonDto,
   CreateContestantDto,
   ShowStatus,
-} from './dto/show.dto';
-import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto';
+} from './dto/show.dto.js';
+import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto.js';
 
 describe('Reality Service Validation Tests', () => {
   describe('CreateShowDto', () => {

@@ -11,9 +11,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { referralApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { referralApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../src/theme';
 
 interface ReferralStats {
   referralCode: string;
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 12,
   },
   errorText: {
@@ -236,10 +237,10 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   codeCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   },
   codeLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 12,
   },
   codeContainer: {
@@ -299,7 +300,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   section: {
     marginBottom: 24,
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 4,
   },
   emptySubtext: {
@@ -344,7 +345,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   referralCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -377,7 +378,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B98120',
   },
   statusBadgeActive: {
-    backgroundColor: '#E8420A20',
+    backgroundColor: colors.alpha.primary20,
   },
   statusBadgePending: {
     backgroundColor: '#F59E0B20',

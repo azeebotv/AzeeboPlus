@@ -1,10 +1,13 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useToast } from '@/components/ToastProvider';
 
 interface Contestant {
   id: string;
@@ -25,6 +28,7 @@ interface VotePackage {
 
 export default function SuperVotePage(): React.JSX.Element {
   const router = useRouter();
+  const toast = useToast();
   const searchParams = useSearchParams();
   const episodeId = searchParams.get('episodeId') || '';
   const [contestants, setContestants] = useState<Contestant[]>([]);
@@ -33,41 +37,37 @@ export default function SuperVotePage(): React.JSX.Element {
   const [walletBalance, setWalletBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isVoting, setIsVoting] = useState(false);
+  const [votePackages, setVotePackages] = useState<VotePackage[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    destructive?: boolean;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', onConfirm: () => {} });
 
-  const votePackages: VotePackage[] = [
-    {
-      id: 'pkg-10',
-      name: '10 Super Votes',
-      votes: 10,
-      price: 500,
-      description: '10 votes at 2x power',
-      isPopular: false,
-    },
-    {
-      id: 'pkg-25',
-      name: '25 Super Votes',
-      votes: 25,
-      price: 1000,
-      description: '25 votes at 2x power + bonus',
-      isPopular: true,
-    },
-    {
-      id: 'pkg-50',
-      name: '50 Super Votes',
-      votes: 50,
-      price: 1800,
-      description: '50 votes at 2x power + big bonus',
-      isPopular: false,
-    },
-    {
-      id: 'pkg-100',
-      name: '100 Super Votes',
-      votes: 100,
-      price: 3000,
-      description: '100 votes at 2x power + mega bonus',
-      isPopular: false,
-    },
-  ];
+  useEffect(() => {
+    const fetchVotePackages = async () => {
+      try {
+        const response = await apiFetch<VotePackage[]>('/v1/pricing/vote-packages/superVote');
+        if (response.success && response.data) {
+          setVotePackages(
+            response.data.map((pkg, index) => ({
+              ...pkg,
+              name: pkg.name || `${pkg.votes} Super Votes`,
+              description: pkg.description || `${pkg.votes} votes at 2x power`,
+              isPopular: pkg.isPopular || index === 1,
+            }))
+          );
+        }
+      } catch (err) {
+        // On API failure, show error state instead of hardcoded prices
+        webLogger.error('Failed to fetch vote packages', err);
+        setVotePackages([]);
+      }
+    };
+    fetchVotePackages();
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -100,41 +100,61 @@ export default function SuperVotePage(): React.JSX.Element {
 
   const handleVote = async (): Promise<void> => {
     if (!selectedContestant || !selectedPackage) {
-      alert('Please select a contestant and vote package');
+      toast.showToast('Please select a contestant and vote package', 'error');
       return;
     }
     const pkg = votePackages.find((p) => p.id === selectedPackage);
     if (!pkg) return;
     if (walletBalance < pkg.price) {
-      if (
-        confirm(
-          `You need ₦${pkg.price.toLocaleString()} but your balance is ₦${walletBalance.toLocaleString()}. Add funds?`
-        )
-      )
-        router.push('/wallet/add-funds');
+      setConfirmDialog({
+        open: true,
+        title: 'Insufficient Balance',
+        message: `You need ₦${pkg.price.toLocaleString()} but your balance is ₦${walletBalance.toLocaleString()}. Add funds?`,
+        onConfirm: () => {
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+          router.push('/wallet/add-funds');
+        },
+      });
       return;
     }
-    if (!confirm(`Purchase ${pkg.votes} Super Vote(s) for ₦${pkg.price.toLocaleString()}?`)) return;
-    setIsVoting(true);
-    try {
-      const result = await apiFetch('/v1/content/super-vote', {
-        method: 'POST',
-        body: JSON.stringify({ contestantId: selectedContestant, episodeId, voteCount: pkg.votes }),
-      });
-      if (!result.success) throw new Error(result.message || 'Failed to submit super vote');
-      alert(`Your ${pkg.votes} Super Vote(s) submitted! Each counts as 2x.`);
-      setSelectedContestant(null);
-      setSelectedPackage(null);
-    } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : 'Failed to submit super vote');
-    } finally {
-      setIsVoting(false);
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Confirm Purchase',
+      message: `Purchase ${pkg.votes} Super Vote(s) for ₦${pkg.price.toLocaleString()}?`,
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+        setIsVoting(true);
+        try {
+          const result = await apiFetch('/reality/supervotes', {
+            method: 'POST',
+            body: JSON.stringify({
+              contestantId: selectedContestant,
+              episodeId,
+              voteCount: pkg.votes,
+            }),
+          });
+          if (!result.success) throw new Error(result.message || 'Failed to submit super vote');
+          toast.showToast(
+            `Your ${pkg.votes} Super Vote(s) submitted! Each counts as 2x.`,
+            'success'
+          );
+          setSelectedContestant(null);
+          setSelectedPackage(null);
+        } catch (error: unknown) {
+          toast.showToast(
+            error instanceof Error ? error.message : 'Failed to submit super vote',
+            'error'
+          );
+        } finally {
+          setIsVoting(false);
+        }
+      },
+    });
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -143,7 +163,10 @@ export default function SuperVotePage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{
+                border: '3px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--brand-orange)',
+              }}
             />
             <p className="mt-4 text-white/60">Loading...</p>
           </div>
@@ -153,7 +176,7 @@ export default function SuperVotePage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
@@ -174,7 +197,7 @@ export default function SuperVotePage(): React.JSX.Element {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white">Super Vote</h1>
-              <p className="mt-1" style={{ color: '#E8420A' }}>
+              <p className="mt-1" style={{ color: 'var(--brand-orange)' }}>
                 2x Voting Power
               </p>
             </div>
@@ -203,13 +226,18 @@ export default function SuperVotePage(): React.JSX.Element {
                 }`}
                 style={
                   selectedContestant === contestant.id
-                    ? { borderColor: '#E8420A', boxShadow: '0 0 20px rgba(232,66,10,0.3)' }
+                    ? {
+                        borderColor: 'var(--brand-orange)',
+                        boxShadow: '0 0 20px rgba(232,66,10,0.3)',
+                      }
                     : undefined
                 }
               >
-                <img
+                <OptimizedImage
                   src={contestant.avatar}
                   alt={contestant.name}
+                  width={80}
+                  height={80}
                   className="w-20 h-20 rounded-full mx-auto mb-3 object-cover"
                 />
                 <h3 className="text-sm font-semibold text-white mb-1">{contestant.name}</h3>
@@ -242,7 +270,7 @@ export default function SuperVotePage(): React.JSX.Element {
                 {pkg.isPopular && (
                   <span
                     className="absolute -top-3 right-4 px-3 py-1 rounded-full text-xs font-semibold text-white"
-                    style={{ backgroundColor: '#E8420A' }}
+                    style={{ backgroundColor: 'var(--brand-orange)' }}
                   >
                     Most Popular
                   </span>
@@ -252,7 +280,7 @@ export default function SuperVotePage(): React.JSX.Element {
                     <h3 className="text-lg font-semibold text-white">{pkg.name}</h3>
                     <p className="text-sm text-white/50">{pkg.description}</p>
                   </div>
-                  <p className="text-2xl font-bold" style={{ color: '#E8420A' }}>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--brand-orange)' }}>
                     ₦{pkg.price.toLocaleString()}
                   </p>
                 </div>
@@ -266,9 +294,17 @@ export default function SuperVotePage(): React.JSX.Element {
           disabled={!selectedContestant || !selectedPackage || isVoting}
           className="w-full py-4 rounded-full font-semibold text-lg transition-all az-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isVoting ? 'Processing...' : '🗳 Submit Super Vote'}
+          {isVoting ? 'Processing...' : 'Vote Submit Super Vote'}
         </button>
       </div>
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        destructive={confirmDialog.destructive}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+      />
       <AppFooter />
     </div>
   );

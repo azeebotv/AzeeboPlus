@@ -2,9 +2,9 @@
 CREATE TABLE "balance_snapshots" (
     "id" TEXT NOT NULL DEFAULT gen_random_uuid(),
     "walletId" TEXT NOT NULL,
-    "balance" DECIMAL(65,30) NOT NULL,
-    "bonusBalance" DECIMAL(65,30) NOT NULL,
-    "promoBalance" DECIMAL(65,30) NOT NULL,
+    "balance" DECIMAL(18,2) NOT NULL,
+    "bonusBalance" DECIMAL(18,2) NOT NULL,
+    "promoBalance" DECIMAL(18,2) NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'NGN',
     "capturedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

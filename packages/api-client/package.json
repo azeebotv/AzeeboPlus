@@ -2,18 +2,21 @@
   "name": "@azeebo/api-client",
   "version": "0.1.0",
   "private": true,
-  "description": "Shared API client for Azeebo+",
+  "description": "DEPRECATED: Use @azeebo/http-client instead. This package is maintained for backwards compatibility only.",
+  "deprecated": "Use @azeebo/http-client instead",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "lint": "eslint src --fix",
+    "build": "bash ../../scripts/build-package.sh",
+    "lint": "eslint src",
     "clean": "rm -rf dist",
     "test": "jest"
   },

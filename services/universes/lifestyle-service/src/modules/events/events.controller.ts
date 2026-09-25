@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -11,17 +12,21 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { EventsService } from './events.service';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { RsvpDto } from './dto/rsvp.dto';
 
 @ApiTags('Events')
-@Controller('v1/lifestyle/events')
+@UseGuards(ServiceAuthGuard)
+@FeatureFlag(lifestyleFlags.eventsTicketing)
+@UseGuards(FeatureFlagGuard)
+@Controller('lifestyle/events')
 export class EventsController {
-  constructor(private readonly eventsService: EventsService) {}
+  constructor(@Inject(EventsService) private readonly eventsService: EventsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all events' })
@@ -57,16 +62,19 @@ export class EventsController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create new event' })
   @ApiResponse({ status: 201, description: 'Event created' })
-  async createEvent(@Body() data: CreateEventDto, @Request() req: { user: { id: string } }): Promise<unknown> {
+  async createEvent(
+    @Body() data: CreateEventDto,
+    @Request() req: { user: { id: string } }
+  ): Promise<unknown> {
     return this.eventsService.createEvent({ ...data, creatorId: req.user.id });
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update event' })
   @ApiResponse({ status: 200, description: 'Event updated' })
@@ -75,7 +83,7 @@ export class EventsController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Delete event' })
   @ApiResponse({ status: 200, description: 'Event deleted' })
@@ -84,18 +92,34 @@ export class EventsController {
   }
 
   @Post(':id/rsvp')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'RSVP to event' })
   @ApiResponse({ status: 200, description: 'RSVP successful' })
-  async rsvpEvent(@Param('id') id: string, @Body() data: RsvpDto, @Request() req: { user: { id: string } }): Promise<unknown> {
+  async rsvpEvent(
+    @Param('id') id: string,
+    @Body() data: RsvpDto,
+    @Request() req: { user: { id: string } }
+  ): Promise<unknown> {
     return this.eventsService.rsvpEvent(id, req.user.id, data);
   }
 
   @Delete(':id/rsvp')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Cancel RSVP' })
   @ApiResponse({ status: 200, description: 'RSVP cancelled' })
-  async cancelRsvp(@Param('id') id: string, @Request() req: { user: { id: string } }): Promise<unknown> {
+  async cancelRsvp(
+    @Param('id') id: string,
+    @Request() req: { user: { id: string } }
+  ): Promise<unknown> {
     return this.eventsService.cancelRsvp(id, req.user.id);
+  }
+
+  @Get(':id/attendees')
+  @ApiOperation({ summary: 'Get event attendees' })
+  @ApiResponse({ status: 200, description: 'List of attendees' })
+  async getAttendees(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<unknown> {
+    return this.eventsService.getAttendees(id, Number(page), Number(limit));
   }
 }

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { useFlags } from '@/context/FlagsContext';
 import { api } from '@/lib/api';
-import type { ContentItem, EngagementHistoryItem, RecommendationGroup } from '@/lib/api';
+import type { ContentItem, RecommendationGroup } from '@/lib/api';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import analytics from '@/lib/analytics';
 import AppHeader from '../layout/AppHeader';
@@ -23,16 +24,26 @@ interface UniverseSection {
   items: ContentItem[];
 }
 
+function extractContentItem(r: ContentItem | { content: ContentItem }): ContentItem {
+  return 'content' in r ? r.content : r;
+}
+
 export default function AuthenticatedHomepage({
   siteName = 'Azeebo+',
 }: AuthenticatedHomepageProps): React.JSX.Element {
   const { user } = useAuth();
+  const { isEnabled } = useFlags();
+  // web_recommendations_rail (off): gates the personalized recommendation row.
+  const showRecommendationsRail = isEnabled('web_recommendations_rail');
+  // web_new_home (off): gates the newer home rails (trending / new releases /
+  // popular-in-region supplementary sections).
+  const showNewHomeRails = isEnabled('web_new_home');
 
   // Section 1: Hero Slides
   const [featuredSlides, setFeaturedSlides] = useState<ContentItem[]>([]);
 
   // Section 2: Recently Watched
-  const [recentlyWatched, setRecentlyWatched] = useState<EngagementHistoryItem[]>([]);
+  const [recentlyWatched, setRecentlyWatched] = useState<ContentItem[]>([]);
   const [recentlyWatchedOffset, setRecentlyWatchedOffset] = useState(0);
   const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -47,61 +58,122 @@ export default function AuthenticatedHomepage({
 
   // Section 5: Supplementary sections
   const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
-  const [continueWatching, setContinueWatching] = useState<ContentItem[]>([]);
+  const [continueWatching] = useState<ContentItem[]>([]);
   const [newReleases, setNewReleases] = useState<ContentItem[]>([]);
   const [popularInRegion, setPopularInRegion] = useState<ContentItem[]>([]);
   const [isLoadingSupplementary, setIsLoadingSupplementary] = useState(true);
 
-  // --- Section 1: Hero Slides ---
+  // --- Single API call for all home page data ---
   useEffect(() => {
-    const loadSlides = async () => {
+    const loadAllData = async () => {
       try {
-        const response = await api.engagement.getFeaturedSlides(5);
-        if (response.success && Array.isArray(response.data)) {
-          setFeaturedSlides(response.data);
+        // Use the combined home feed endpoint
+        const homeResponse = await api.content.getHomeFeed();
+
+        if (homeResponse.success && homeResponse.data) {
+          const { trending, recommended, latest } = homeResponse.data;
+
+          // Set hero slides from trending (top 5)
+          setFeaturedSlides((trending || []).slice(0, 5));
+
+          // Set recently watched from latest
+          setRecentlyWatched(latest || []);
+          setIsLoadingHistory(false);
+
+          // Set trending content
+          setTrendingContent(trending || []);
+
+          // Set recommendations
+          if (recommended && recommended.length > 0) {
+            setRecommendationGroups([
+              {
+                title: 'Recommended for You',
+                reason: 'Based on your viewing history',
+                items: recommended,
+              },
+            ]);
+          }
+
+          // Group by universe for universe sections
+          const allContent = [...(trending || []), ...(latest || [])];
+          const universeMap = new Map<string, UniverseSection>();
+
+          allContent.forEach((item) => {
+            const universeId = item.universeId || 'unknown';
+            const universeName = item.universe?.name || 'Unknown';
+            const universeIcon = item.universe?.icon;
+
+            if (!universeMap.has(universeId)) {
+              universeMap.set(universeId, {
+                universeId,
+                universeName,
+                universeIcon,
+                items: [],
+              });
+            }
+
+            const section = universeMap.get(universeId)!;
+            if (section.items.length < 12) {
+              section.items.push(item);
+            }
+          });
+
+          setUniverseSections(Array.from(universeMap.values()).filter((s) => s.items.length > 0));
+          setIsLoadingUniverses(false);
+
+          // Set new releases and popular
+          setNewReleases((latest || []).slice(0, 12));
+          setPopularInRegion((trending || []).slice(0, 12));
         }
       } catch {
-        // Graceful degradation
+        // Graceful degradation - load individual sections
+        try {
+          const [slidesRes, trendingRes, newRes, popularRes] = await Promise.allSettled([
+            api.content.getFeaturedSlides(5),
+            api.content.getTrendingContent(12),
+            api.content.getNewReleases(12),
+            api.content.getPopularInRegion(12),
+          ]);
+
+          if (slidesRes.status === 'fulfilled' && slidesRes.value.success) {
+            setFeaturedSlides(slidesRes.value.data || []);
+          }
+          if (trendingRes.status === 'fulfilled' && trendingRes.value.success) {
+            setTrendingContent(trendingRes.value.data || []);
+          }
+          if (newRes.status === 'fulfilled' && newRes.value.success) {
+            setNewReleases(newRes.value.data || []);
+          }
+          if (popularRes.status === 'fulfilled' && popularRes.value.success) {
+            setPopularInRegion(popularRes.value.data || []);
+          }
+        } catch {
+          // Complete fallback
+        }
+      } finally {
+        setIsLoadingHistory(false);
+        setIsLoadingUniverses(false);
+        setIsLoadingRecommendations(false);
+        setIsLoadingSupplementary(false);
       }
     };
-    loadSlides();
+    loadAllData();
   }, []);
 
-  // --- Section 2: Recently Watched (with infinite scroll) ---
   const HISTORY_PAGE_SIZE = 10;
-
-  const loadRecentlyWatched = useCallback(async () => {
-    try {
-      const response = await api.engagement.getRecentlyWatched(
-        HISTORY_PAGE_SIZE,
-        recentlyWatchedOffset
-      );
-      if (response.success && response.data) {
-        const newItems = Array.isArray(response.data.items) ? response.data.items : [];
-        setRecentlyWatched((prev) =>
-          recentlyWatchedOffset === 0 ? newItems : [...prev, ...newItems]
-        );
-        setHasMoreHistory(!!response.data.hasMore);
-      }
-    } catch {
-      // Graceful degradation
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  }, [recentlyWatchedOffset]);
-
-  useEffect(() => {
-    loadRecentlyWatched();
-  }, []);
 
   const loadMoreHistory = useCallback(async () => {
     const nextOffset = recentlyWatchedOffset + HISTORY_PAGE_SIZE;
     setRecentlyWatchedOffset(nextOffset);
     try {
-      const response = await api.engagement.getRecentlyWatched(HISTORY_PAGE_SIZE, nextOffset);
+      const response = await api.content.getContentList({
+        page: Math.floor(nextOffset / HISTORY_PAGE_SIZE) + 1,
+        limit: HISTORY_PAGE_SIZE,
+      });
       if (response.success && response.data) {
-        setRecentlyWatched((prev) => [...prev, ...(response.data?.items || [])]);
-        setHasMoreHistory(!!response.data.hasMore);
+        const newItems = Array.isArray(response.data.items) ? response.data.items : [];
+        setRecentlyWatched((prev) => [...prev, ...newItems]);
+        setHasMoreHistory(newItems.length === HISTORY_PAGE_SIZE);
       }
     } catch {
       // Graceful degradation
@@ -111,98 +183,43 @@ export default function AuthenticatedHomepage({
   // Build progress map for recently watched
   const recentlyWatchedProgressMap: Record<string, number> = {};
   recentlyWatched.forEach((item) => {
-    recentlyWatchedProgressMap[item.contentId] = item.progress;
+    recentlyWatchedProgressMap[item.id] = 0;
   });
-
-  // --- Section 3: Universe-Specific Content ---
-  useEffect(() => {
-    const loadUniverseContent = async () => {
-      try {
-        const engagementResponse = await api.engagement.getUniverseEngagement();
-        if (!engagementResponse.success || !engagementResponse.data) {
-          setIsLoadingUniverses(false);
-          return;
-        }
-
-        const universeEngagement = Array.isArray(engagementResponse.data)
-          ? engagementResponse.data.sort((a, b) => b.engagementCount - a.engagementCount)
-          : [];
-
-        const contentPromises = universeEngagement.map(async (ue) => {
-          try {
-            const contentResponse = await api.engagement.getContentByUniverse(ue.universeId, 12);
-            return {
-              universeId: ue.universeId,
-              universeName: ue.universeName,
-              universeIcon: ue.universeIcon,
-              items: contentResponse.success
-                ? Array.isArray(contentResponse.data)
-                  ? contentResponse.data
-                  : []
-                : [],
-            };
-          } catch {
-            return {
-              universeId: ue.universeId,
-              universeName: ue.universeName,
-              universeIcon: ue.universeIcon,
-              items: [],
-            };
-          }
-        });
-
-        const sections = await Promise.all(contentPromises);
-        setUniverseSections(sections.filter((s) => s.items.length > 0));
-      } catch {
-        // Graceful degradation
-      } finally {
-        setIsLoadingUniverses(false);
-      }
-    };
-    loadUniverseContent();
-  }, []);
 
   // --- Section 4: Personalized Recommendations ---
   useEffect(() => {
     const loadRecommendations = async () => {
       try {
-        const response = await api.engagement.getPersonalizedRecommendations();
-        if (response.success && response.data) {
-          setRecommendationGroups(response.data);
-        }
-      } catch {
-        // Graceful degradation — fall back to generic recommendations
-        try {
-          const [forYou, trending] = await Promise.allSettled([
-            api.recommendation.getForYou(12),
-            api.recommendation.getTrending(12),
-          ]);
+        // Use content list as fallback for recommendations
+        const [forYou, trending] = await Promise.allSettled([
+          api.content.getContentList({ page: 1, limit: 12 }),
+          api.content.getTrendingContent(12),
+        ]);
 
-          const fallbackGroups: RecommendationGroup[] = [];
-          if (forYou.status === 'fulfilled' && forYou.value.success && forYou.value.data) {
-            const items = Array.isArray(forYou.value.data)
-              ? forYou.value.data.map((r: ContentItem & { content?: ContentItem }) => r.content || r)
-              : [];
-            fallbackGroups.push({
-              title: 'Top picks for you',
-              reason: 'Based on your viewing history',
-              items,
-            });
-          }
-          if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
-            const items = Array.isArray(trending.value.data)
-              ? trending.value.data.map((r: ContentItem & { content?: ContentItem }) => r.content || r)
-              : [];
-            fallbackGroups.push({
-              title: 'Popular right now',
-              reason: 'Trending across the platform',
-              items,
-            });
-          }
-          setRecommendationGroups(fallbackGroups);
-        } catch {
-          // Complete fallback
+        const fallbackGroups: RecommendationGroup[] = [];
+        if (forYou.status === 'fulfilled' && forYou.value.success && forYou.value.data) {
+          const items = Array.isArray(forYou.value.data.items)
+            ? forYou.value.data.items.map(extractContentItem)
+            : [];
+          fallbackGroups.push({
+            title: 'Top picks for you',
+            reason: 'Based on your viewing history',
+            items,
+          });
         }
+        if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
+          const items = Array.isArray(trending.value.data)
+            ? trending.value.data.map(extractContentItem)
+            : [];
+          fallbackGroups.push({
+            title: 'Popular right now',
+            reason: 'Trending across the platform',
+            items,
+          });
+        }
+        setRecommendationGroups(fallbackGroups);
+      } catch {
+        // Complete fallback
       } finally {
         setIsLoadingRecommendations(false);
       }
@@ -214,11 +231,10 @@ export default function AuthenticatedHomepage({
   useEffect(() => {
     const loadSupplementary = async () => {
       try {
-        const [trendingRes, continueRes, newRes, popularRes] = await Promise.allSettled([
+        const [trendingRes, newRes, popularRes] = await Promise.allSettled([
           api.content.getTrendingContent(12),
-          api.engagement.getContinueWatching(10),
-          api.engagement.getNewReleases(12),
-          api.engagement.getPopularInRegion(12),
+          api.content.getNewReleases(12),
+          api.content.getPopularInRegion(12),
         ]);
 
         if (
@@ -227,13 +243,6 @@ export default function AuthenticatedHomepage({
           Array.isArray(trendingRes.value.data)
         ) {
           setTrendingContent(trendingRes.value.data);
-        }
-        if (
-          continueRes.status === 'fulfilled' &&
-          continueRes.value.success &&
-          Array.isArray(continueRes.value.data)
-        ) {
-          setContinueWatching(continueRes.value.data);
         }
         if (
           newRes.status === 'fulfilled' &&
@@ -264,17 +273,30 @@ export default function AuthenticatedHomepage({
   }, []);
 
   return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Home" />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Home" logoVariant="light" />
 
-      <main>
+      {/* Top Ambient glow */}
+      <div
+        className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full blur-[140px] -z-0"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(232,66,10,0.18) 0%, rgba(204,28,28,0.06) 50%, transparent 80%)',
+        }}
+        aria-hidden="true"
+      />
+
+      <main className="relative z-10">
         {/* ===== Section 1: Hero Slides Carousel ===== */}
         <HeroSlides slides={featuredSlides} />
 
         {/* Personalized greeting */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-2">
           <motion.h1
-            className="az-headline text-white text-2xl sm:text-3xl"
+            className="az-headline font-extrabold text-white text-2xl sm:text-3xl tracking-tight"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
@@ -288,7 +310,7 @@ export default function AuthenticatedHomepage({
           title="Recently Watched"
           subtitle="Continue where you left off"
           sectionId="recently-watched"
-          items={recentlyWatched.map((e) => e.content)}
+          items={recentlyWatched}
           isLoading={isLoadingHistory}
           progressMap={recentlyWatchedProgressMap}
           showProgress
@@ -316,7 +338,7 @@ export default function AuthenticatedHomepage({
         )}
 
         {/* ===== Section 4: Personalized Recommendations ===== */}
-        {recommendationGroups.length > 0 && (
+        {showRecommendationsRail && recommendationGroups.length > 0 && (
           <div data-testid="recommendation-sections">
             {recommendationGroups.map((group, index) => (
               <ScrollReveal key={`${group.title}-${index}`}>
@@ -332,50 +354,60 @@ export default function AuthenticatedHomepage({
           </div>
         )}
 
-        {/* ===== Section 5: Supplementary Sections ===== */}
+        {/* ===== Section 5: Supplementary Sections (gated by web_new_home) ===== */}
+        {showNewHomeRails && (
+          <>
+            {/* Continue Watching */}
+            <ContentRow
+              title="Continue Watching"
+              subtitle="Pick up where you left off"
+              sectionId="continue-watching"
+              items={continueWatching}
+              isLoading={isLoadingSupplementary}
+              showProgress
+              progressMap={
+                Object.fromEntries(
+                  continueWatching.map((c) => [
+                    c.id,
+                    (c as ContentItem & { progress?: number }).progress ?? 0.5,
+                  ])
+                ) as Record<string, number>
+              }
+            />
 
-        {/* Continue Watching */}
-        <ContentRow
-          title="Continue Watching"
-          subtitle="Pick up where you left off"
-          sectionId="continue-watching"
-          items={continueWatching}
-          isLoading={isLoadingSupplementary}
-          showProgress
-          progressMap={Object.fromEntries(continueWatching.map((c) => [c.id, 0.5]))}
-        />
+            {/* Trending Now */}
+            <ContentRow
+              title="Trending Now"
+              subtitle="Popular across the platform"
+              sectionId="trending"
+              items={trendingContent}
+              isLoading={isLoadingSupplementary}
+              cardSize="lg"
+            />
 
-        {/* Trending Now */}
-        <ContentRow
-          title="Trending Now"
-          subtitle="Popular across the platform"
-          sectionId="trending"
-          items={trendingContent}
-          isLoading={isLoadingSupplementary}
-          cardSize="lg"
-        />
+            {/* New Releases */}
+            <ScrollReveal>
+              <ContentRow
+                title="New Releases"
+                subtitle="Fresh content just dropped"
+                sectionId="new-releases"
+                items={newReleases}
+                isLoading={isLoadingSupplementary}
+              />
+            </ScrollReveal>
 
-        {/* New Releases */}
-        <ScrollReveal>
-          <ContentRow
-            title="New Releases"
-            subtitle="Fresh content just dropped"
-            sectionId="new-releases"
-            items={newReleases}
-            isLoading={isLoadingSupplementary}
-          />
-        </ScrollReveal>
-
-        {/* Popular in Your Region */}
-        <ScrollReveal>
-          <ContentRow
-            title="Popular in Your Region"
-            subtitle="What's hot near you"
-            sectionId="popular-region"
-            items={popularInRegion}
-            isLoading={isLoadingSupplementary}
-          />
-        </ScrollReveal>
+            {/* Popular in Your Region */}
+            <ScrollReveal>
+              <ContentRow
+                title="Popular in Your Region"
+                subtitle="What's hot near you"
+                sectionId="popular-region"
+                items={popularInRegion}
+                isLoading={isLoadingSupplementary}
+              />
+            </ScrollReveal>
+          </>
+        )}
 
         {/* Bottom CTA for referrals */}
         <ScrollReveal>
@@ -398,7 +430,7 @@ export default function AuthenticatedHomepage({
                   <motion.button
                     type="button"
                     className="px-6 sm:px-8 py-3 rounded-full text-sm sm:text-base font-bold transition-all"
-                    style={{ background: '#1A0A0A', color: '#fff' }}
+                    style={{ background: 'var(--brand-near-black)', color: 'var(--brand-white)' }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -411,7 +443,7 @@ export default function AuthenticatedHomepage({
         </ScrollReveal>
       </main>
 
-      <AppFooter siteName={siteName} />
+      <AppFooter siteName={siteName} logoVariant="light" />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { motion } from 'framer-motion';
 import BrandLogo from './BrandLogo';
 
@@ -15,14 +14,17 @@ type AuthShellProps = {
 
 export default function AuthShell({
   headlineLines,
-  backgroundImage,
-  backgroundFallback = '#1A0A0A',
+  backgroundImage = '/images/poster_ember_queen.jpg',
+  backgroundFallback = 'var(--hp-bg)',
   children,
   showLogo = true,
   logoVariant = 'light',
 }: AuthShellProps): React.JSX.Element {
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row az-nollywood-bg">
+    <div
+      className="min-h-screen w-full flex flex-col lg:flex-row"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
       {/* Left cinematic panel — hidden on mobile, parallax on desktop */}
       <motion.div
         className="relative hidden lg:flex lg:w-3/5 items-end overflow-hidden"
@@ -41,7 +43,7 @@ export default function AuthShell({
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.85) 100%)',
+              'linear-gradient(180deg, rgba(11,9,14,0.4) 0%, rgba(11,9,14,0.2) 40%, rgba(11,9,14,0.92) 100%)',
           }}
         />
 
@@ -86,7 +88,7 @@ export default function AuthShell({
       {/* Right glass-card panel */}
       <div
         className="relative flex-1 flex items-center justify-center p-5 sm:p-8 lg:p-10"
-        style={{ backgroundColor: '#1A0A0A' }}
+        style={{ backgroundColor: 'var(--hp-bg)' }}
       >
         {/* Logo on mobile */}
         {showLogo && (
@@ -109,7 +111,7 @@ export default function AuthShell({
         {/* Glass card with entrance animation */}
         <motion.div
           className="az-glass az-glass--glow az-glass--breathing relative z-10 w-full max-w-md p-6 sm:p-8"
-          initial={{ opacity: 0, y: 30, scale: 0.96 }}
+          initial={{ opacity: 1, y: 0, scale: 1 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{
             delay: 0.2,

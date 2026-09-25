@@ -1,4 +1,5 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { evaluateAmountLimits } from '@azeebo/react-data/utils/money';
 import { colors } from '../theme';
 
 interface AmountInputProps {
@@ -41,24 +42,41 @@ export function AmountInput({
 
   const currencySymbol = currency === 'NGN' ? '₦' : '$';
 
+  // Live limit feedback (H4): surface min/max violations as the user types
+  // instead of only at submit. The value is NOT clamped against their will —
+  // fighting the numeric keypad mid-edit is hostile — but the violation is
+  // visible immediately and the violated limit is highlighted below.
+  // Evaluation logic is shared (and unit-tested) via react-data/utils/money.
+  const { isOverMax, isUnderMin } = evaluateAmountLimits(value, minimumAmount, maximumAmount);
+  const liveHint = isOverMax
+    ? `Amount exceeds the ${currencySymbol}${maximumAmount.toLocaleString('en-NG')} maximum`
+    : isUnderMin
+      ? `Minimum amount is ${currencySymbol}${minimumAmount.toLocaleString('en-NG')}`
+      : undefined;
+
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
 
-      <View style={[styles.inputContainer, error && styles.inputError]}>
+      <View style={[styles.inputContainer, (error || liveHint) && styles.inputError]}>
         <Text style={styles.currencySymbol}>{currencySymbol}</Text>
         <TextInput
           style={styles.input}
           placeholder={placeholder}
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.text.tertiary}
           value={value}
           onChangeText={onChangeText}
           keyboardType="numeric"
           autoCapitalize="none"
+          accessibilityLabel={label ?? placeholder}
         />
       </View>
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : liveHint ? (
+        <Text style={styles.liveHintText}>{liveHint}</Text>
+      ) : null}
 
       {value && (
         <Text style={styles.formattedAmount}>
@@ -102,11 +120,17 @@ export function AmountInput({
       )}
 
       <View style={styles.limitsContainer}>
-        <Text style={styles.limitText}>
+        <Text
+          style={[styles.limitText, isUnderMin && styles.limitTextViolated]}
+          accessibilityLiveRegion="polite"
+        >
           Min: {currencySymbol}
           {minimumAmount.toLocaleString('en-NG')}
         </Text>
-        <Text style={styles.limitText}>
+        <Text
+          style={[styles.limitText, isOverMax && styles.limitTextViolated]}
+          accessibilityLiveRegion="polite"
+        >
           Max: {currencySymbol}
           {maximumAmount.toLocaleString('en-NG')}
         </Text>
@@ -134,7 +158,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   inputError: {
-    borderColor: colors.error,
+    borderColor: colors.error[500],
   },
   currencySymbol: {
     fontSize: 18,
@@ -150,7 +174,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorText: {
-    color: colors.error,
+    color: colors.error[500],
+    fontSize: 12,
+    marginTop: 4,
+  },
+  liveHintText: {
+    color: colors.warning[600],
     fontSize: 12,
     marginTop: 4,
   },
@@ -199,5 +228,9 @@ const styles = StyleSheet.create({
   limitText: {
     fontSize: 11,
     color: colors.text.tertiary,
+  },
+  limitTextViolated: {
+    color: colors.warning[600],
+    fontWeight: '600',
   },
 });

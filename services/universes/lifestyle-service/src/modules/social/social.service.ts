@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 interface SavedItem {
@@ -7,15 +7,6 @@ interface SavedItem {
   itemType: string;
   itemId: string;
   note: string | null;
-  createdAt: string;
-}
-
-interface _ShareRecord {
-  id: string;
-  userId: string;
-  itemType: string;
-  itemId: string;
-  platform: string;
   createdAt: string;
 }
 
@@ -55,7 +46,7 @@ interface ShareData {
 export class SocialService {
   private readonly logger = new Logger(SocialService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async saveItem(data: SaveItemData): Promise<SavedItemsResponse> {
     try {

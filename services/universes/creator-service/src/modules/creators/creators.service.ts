@@ -1,11 +1,22 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
-import { CreatorResponse } from './interfaces/creator-response.interface';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
+import { CreatorResponse } from './interfaces/creator-response.interface.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { sanitizeFields } from '@azeebo/validation';
+import {
+  tipDebitPayload,
+  tipCreditPayload,
+  tipCompensationPayload,
+  subscriptionDebitPayload,
+  subscriptionCreditPayload,
+  subscriptionCompensationPayload,
+  tipIdempotencyKey,
+} from './wallet-payloads.js';
 
 interface UpdateProfileData {
   displayName?: string;
@@ -48,17 +59,28 @@ export class CreatorsService {
   private readonly walletServiceBaseUrl: string;
   private readonly mediaServiceBaseUrl: string;
   private readonly analyticsServiceBaseUrl: string;
+  private readonly notificationServiceBaseUrl: string;
   private readonly minimumPayout: number;
+  private readonly internalApiKey: string;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.mediaServiceBaseUrl = this.configService.getOrThrow<string>('MEDIA_SERVICE_URL');
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
+    this.notificationServiceBaseUrl = this.configService.get<string>(
+      'NOTIFICATION_SERVICE_URL',
+      'http://notification-service:3006'
+    );
     this.minimumPayout = parseInt(this.configService.get<string>('MINIMUM_PAYOUT', '5000'), 10);
+    // Secret for internal wallet-service calls — same resolution order the
+    // wallet-service InternalSecretGuard uses to validate it.
+    this.internalApiKey =
+      this.configService.get<string>('GATEWAY_SECRET') ??
+      this.configService.getOrThrow<string>('INTERNAL_API_KEY');
   }
 
   private async trackAnalyticsEvent(
@@ -97,20 +119,25 @@ export class CreatorsService {
         },
       });
 
-      await (
-        tx as unknown as { notification: { create: (args: unknown) => Promise<void> } }
-      ).notification.create({
-        data: {
+      return creatorProfile;
+    });
+
+    // Send welcome notification via notification service (outside transaction)
+    try {
+      await axios.post(
+        `${this.notificationServiceBaseUrl}/v1/notifications`,
+        {
           userId,
           type: 'system',
           title: 'Welcome to Creator Program',
           message:
             'Your creator profile has been created. Complete verification to unlock all features.',
         },
-      });
-
-      return creatorProfile;
-    });
+        { timeout: 5000 }
+      );
+    } catch (error) {
+      this.logger.warn('Failed to send welcome notification:', error);
+    }
 
     await this.trackAnalyticsEvent('creator_onboarded', userId, {});
 
@@ -118,7 +145,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: profile as unknown as Record<string, unknown>,
+      data: profile,
     };
   }
 
@@ -303,12 +330,12 @@ export class CreatorsService {
           uploadDbId: upload.id,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       await this.prisma.mediaUpload.update({
         where: { id: upload.id },
         data: { status: 'failed' },
       });
-      throw new BadRequestException('Failed to initiate media upload');
+      mapAndThrow(error, 'initiating media upload');
     }
   }
 
@@ -398,7 +425,7 @@ export class CreatorsService {
 
     const result: CreatorResponse = {
       success: true,
-      data: profile as unknown as Record<string, unknown>,
+      data: profile,
     };
 
     await this.cache.set(cacheK, result, 600);
@@ -429,7 +456,7 @@ export class CreatorsService {
         ...profile,
         subscriberCount: (profile as { subscriptions?: unknown[] }).subscriptions?.length || 0,
         isSubscribed: false,
-      } as unknown as Record<string, unknown>,
+      } as Record<string, unknown>,
     };
 
     await this.cache.set(cacheK, result, 600);
@@ -445,10 +472,15 @@ export class CreatorsService {
       throw new NotFoundException(`Creator profile not found`);
     }
 
+    const sanitized = sanitizeFields(profileData as unknown as Record<string, unknown>, [
+      'displayName',
+      'bio',
+    ]) as unknown as UpdateProfileData;
+
     const updatedProfile = await this.prisma.creatorProfile.update({
       where: { userId },
       data: {
-        ...profileData,
+        ...sanitized,
         socialLinks: profileData.socialLinks as unknown as Prisma.InputJsonValue | undefined,
       },
     });
@@ -457,7 +489,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: updatedProfile as unknown as Record<string, unknown>,
+      data: updatedProfile as Record<string, unknown>,
     };
   }
 
@@ -500,7 +532,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { channels } as unknown as Record<string, unknown>,
+      data: { channels } as Record<string, unknown>,
     };
   }
 
@@ -553,7 +585,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: contentItem as unknown as Record<string, unknown>,
+      data: contentItem as Record<string, unknown>,
     };
   }
 
@@ -587,7 +619,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: contentItem as unknown as Record<string, unknown>,
+      data: contentItem as Record<string, unknown>,
     };
   }
 
@@ -619,7 +651,12 @@ export class CreatorsService {
     };
   }
 
-  async sendTip(userId: string, creatorId: string, amount: number): Promise<CreatorResponse> {
+  async sendTip(
+    userId: string,
+    creatorId: string,
+    amount: number,
+    message?: string
+  ): Promise<CreatorResponse> {
     if (amount <= 0) {
       throw new BadRequestException('Tip amount must be greater than 0');
     }
@@ -636,17 +673,35 @@ export class CreatorsService {
       throw new BadRequestException('Cannot tip yourself');
     }
 
-    const senderWallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    let senderWallet: { id: string; balance: number | string } | undefined;
+    try {
+      const response = await axios.get<{ data?: { id: string; balance: number | string } }>(
+        `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}`,
+        { headers: this.walletInternalHeaders(), timeout: 10000 }
+      );
+      senderWallet = response.data?.data;
+    } catch (error) {
+      mapAndThrow(error, 'fetching sender wallet');
+    }
     if (!senderWallet) {
-      throw new NotFoundException(`Sender wallet not found`);
+      throw new NotFoundException('Sender wallet not found');
     }
 
-    const creatorWallet = await this.prisma.wallet.findUnique({ where: { userId: creatorId } });
+    let creatorWallet: { id: string; balance: number | string } | undefined;
+    try {
+      const response = await axios.get<{ data?: { id: string; balance: number | string } }>(
+        `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${creatorId}`,
+        { headers: this.walletInternalHeaders(), timeout: 10000 }
+      );
+      creatorWallet = response.data?.data;
+    } catch (error) {
+      mapAndThrow(error, 'fetching creator wallet');
+    }
     if (!creatorWallet) {
-      throw new NotFoundException(`Creator wallet not found`);
+      throw new NotFoundException('Creator wallet not found');
     }
 
-    const idempotencyKey = `tip:${userId}:${creatorId}:${amount}`;
+    const idempotencyKey = tipIdempotencyKey(userId, creatorId, amount);
 
     const existingTip = await this.prisma.tip.findFirst({
       where: {
@@ -677,12 +732,11 @@ export class CreatorsService {
 
     try {
       const debitResult = await axios
-        .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-          walletId: senderWallet.id,
-          amount,
-          description: `Tip to creator ${creatorId}`,
-          idempotencyKey,
-        }, { timeout: 10000 })
+        .post(
+          `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}/debit`,
+          tipDebitPayload(userId, creatorId, amount),
+          { headers: this.walletInternalHeaders(), timeout: 10000 }
+        )
         .catch((err) => {
           if (err.response?.data?.idempotent === true) {
             return { data: { existing: true } };
@@ -715,20 +769,18 @@ export class CreatorsService {
       }
 
       try {
-        await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-          walletId: creatorWallet.id,
-          amount,
-          description: `Tip from user ${userId}`,
-          idempotencyKey: `${idempotencyKey}:credit`,
-        }, { timeout: 10000 });
+        await axios.post(
+          `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${creatorId}/credit`,
+          tipCreditPayload(userId, creatorId, amount),
+          { headers: this.walletInternalHeaders(), timeout: 10000 }
+        );
       } catch (creditError: unknown) {
         await axios
-          .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-            walletId: senderWallet.id,
-            amount,
-            description: `Compensation for failed tip credit: ${idempotencyKey}`,
-            reference: `compensate:${idempotencyKey}`,
-          }, { timeout: 10000 })
+          .post(
+            `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}/credit`,
+            tipCompensationPayload(userId, creatorId, amount),
+            { headers: this.walletInternalHeaders(), timeout: 10000 }
+          )
           .catch((compensateError: unknown) => {
             this.logger.error('Failed to compensate sender after credit failure:', compensateError);
           });
@@ -740,7 +792,9 @@ export class CreatorsService {
           data: {
             fromUserId: userId,
             toUserId: creatorId,
+            creatorId,
             amount,
+            message: message || null,
           },
         });
 
@@ -754,7 +808,21 @@ export class CreatorsService {
           },
         });
 
-        return { newTip: newTipRecord, earning: earningRecord };
+        const previousEntry = await tx.tipLeaderboard.findUnique({
+          where: { creatorId_userId: { creatorId, userId } },
+        });
+        const previousTotal = previousEntry ? Number(previousEntry.totalAmount) : 0;
+        const newTotal = previousTotal + Number(amount);
+        const newTier = this.calculateTipTier(newTotal);
+        const previousTier = previousEntry?.tier || '';
+
+        await tx.tipLeaderboard.upsert({
+          where: { creatorId_userId: { creatorId, userId } },
+          update: { totalAmount: { increment: amount }, tier: newTier, lastTipAt: new Date() },
+          create: { creatorId, userId, totalAmount: amount, tier: newTier, lastTipAt: new Date() },
+        });
+
+        return { newTip: newTipRecord, earning: earningRecord, newTier, previousTier, newTotal };
       });
 
       const newTip = transactionResult.newTip;
@@ -772,7 +840,19 @@ export class CreatorsService {
         tipId: newTip.id,
       });
 
+      if (
+        transactionResult.newTier &&
+        transactionResult.newTier !== transactionResult.previousTier
+      ) {
+        await this.trackAnalyticsEvent('tier_unlocked', userId, {
+          creatorId,
+          tier: transactionResult.newTier,
+          totalAmount: transactionResult.newTotal,
+        });
+      }
+
       await this.cache.invalidate(`creator:earnings:${creatorId}*`);
+      await this.cache.invalidate(`creator:leaderboard:${creatorId}*`);
 
       return {
         success: true,
@@ -780,13 +860,89 @@ export class CreatorsService {
           tipId: newTip.id,
           amount,
           balance: debitResult.data?.balance,
+          tier: transactionResult.newTier || null,
           message: 'Tip sent successfully',
         },
       };
-    } catch (_err) {
-      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to send tip';
-      throw new BadRequestException(errorMessage);
+    } catch (error) {
+      mapAndThrow(error, 'sending tip');
     }
+  }
+
+  /**
+   * Headers for internal wallet-service calls (tip / premium-subscription
+   * flows). Those routes carry no user identity — the shared secret
+   * authenticates the service itself (wallet-service InternalSecretGuard).
+   */
+  private walletInternalHeaders(): Record<string, string> {
+    return { 'x-internal-api-key': this.internalApiKey };
+  }
+
+  private calculateTipTier(totalAmount: number): string {
+    if (totalAmount >= 100000) return 'platinum';
+    if (totalAmount >= 50000) return 'gold';
+    if (totalAmount >= 10000) return 'silver';
+    if (totalAmount >= 1000) return 'bronze';
+    return '';
+  }
+
+  async getTipLeaderboard(creatorId: string, period: string): Promise<CreatorResponse> {
+    const where: Record<string, unknown> = { creatorId };
+
+    if (period === 'weekly') {
+      where.lastTipAt = { gte: new Date(Date.now() - 7 * 86400000) };
+    } else if (period === 'monthly') {
+      where.lastTipAt = { gte: new Date(Date.now() - 30 * 86400000) };
+    }
+
+    const entries = await this.prisma.tipLeaderboard.findMany({
+      where,
+      orderBy: { totalAmount: 'desc' },
+      take: 50,
+    });
+
+    return { success: true, data: { entries, period } };
+  }
+
+  async getTipStats(creatorId: string): Promise<CreatorResponse> {
+    const [totalTips, totalAmount, topTier, recentTips] = await Promise.all([
+      this.prisma.tip.count({ where: { creatorId } }),
+      this.prisma.tip.aggregate({ where: { creatorId }, _sum: { amount: true } }),
+      this.prisma.tipLeaderboard.findFirst({
+        where: { creatorId },
+        orderBy: { totalAmount: 'desc' },
+      }),
+      this.prisma.tip.findMany({
+        where: { creatorId },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        totalTips,
+        totalAmount: totalAmount._sum.amount || 0,
+        topTier: topTier?.tier || null,
+        recentTips,
+      },
+    };
+  }
+
+  async getMyTips(userId: string): Promise<CreatorResponse> {
+    const tips = await this.prisma.tip.findMany({
+      where: { fromUserId: userId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    const totalAmount = tips.reduce((sum, t) => sum + Number(t.amount), 0);
+
+    return {
+      success: true,
+      data: { tips, totalAmount, count: tips.length },
+    };
   }
 
   async subscribe(
@@ -879,34 +1035,35 @@ export class CreatorsService {
       throw new NotFoundException('Creator not found');
     }
 
-    const senderWallet = await (
-      this.prisma as unknown as {
-        wallet: { findUnique: (args: unknown) => Promise<{ id: string } | null> };
-      }
-    ).wallet.findUnique({ where: { userId } });
+    const senderWalletResponse = await axios
+      .get(`${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}`, {
+        headers: this.walletInternalHeaders(),
+        timeout: 10000,
+      })
+      .catch(() => null);
+    const senderWallet = senderWalletResponse?.data?.wallet || senderWalletResponse?.data;
     if (!senderWallet) {
       throw new NotFoundException('Wallet not found');
     }
 
-    const creatorWallet = await (
-      this.prisma as unknown as {
-        wallet: { findUnique: (args: unknown) => Promise<{ id: string } | null> };
-      }
-    ).wallet.findUnique({ where: { userId: creatorId } });
+    const creatorWalletResponse = await axios
+      .get(`${this.walletServiceBaseUrl}/v1/internal/wallets/user/${creatorId}`, {
+        headers: this.walletInternalHeaders(),
+        timeout: 10000,
+      })
+      .catch(() => null);
+    const creatorWallet = creatorWalletResponse?.data?.wallet || creatorWalletResponse?.data;
     if (!creatorWallet) {
       throw new NotFoundException('Creator wallet not found');
     }
 
-    const idempotencyKey = `subscribe:${userId}:${creatorId}:${tier}`;
-
     try {
       const debitResult = await axios
-        .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-          walletId: senderWallet.id,
-          amount,
-          description: `Subscription to creator ${creatorId} - ${tier}`,
-          idempotencyKey,
-        }, { timeout: 10000 })
+        .post(
+          `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}/debit`,
+          subscriptionDebitPayload(userId, creatorId, amount, tier),
+          { headers: this.walletInternalHeaders(), timeout: 10000 }
+        )
         .catch((err) => {
           if (err.response?.data?.idempotent === true) {
             return { data: { existing: true } };
@@ -930,20 +1087,18 @@ export class CreatorsService {
       }
 
       try {
-        await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-          walletId: creatorWallet.id,
-          amount,
-          description: `Subscription from user ${userId} - ${tier}`,
-          idempotencyKey: `${idempotencyKey}:credit`,
-        }, { timeout: 10000 });
+        await axios.post(
+          `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${creatorId}/credit`,
+          subscriptionCreditPayload(userId, creatorId, amount, tier),
+          { headers: this.walletInternalHeaders(), timeout: 10000 }
+        );
       } catch (creditError: unknown) {
         await axios
-          .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-            walletId: senderWallet.id,
-            amount,
-            description: `Compensation for failed subscription credit: ${idempotencyKey}`,
-            reference: `compensate:${idempotencyKey}`,
-          }, { timeout: 10000 })
+          .post(
+            `${this.walletServiceBaseUrl}/v1/internal/wallets/user/${userId}/credit`,
+            subscriptionCompensationPayload(userId, creatorId, amount, tier),
+            { headers: this.walletInternalHeaders(), timeout: 10000 }
+          )
           .catch((compensateError: unknown) => {
             this.logger.error(
               'Failed to compensate sender after subscription credit failure:',
@@ -995,9 +1150,8 @@ export class CreatorsService {
           message: 'Premium subscription created successfully',
         },
       };
-    } catch (_err) {
-      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to create subscription';
-      throw new BadRequestException(errorMessage);
+    } catch (error) {
+      mapAndThrow(error, 'creating premium subscription');
     }
   }
 
@@ -1046,7 +1200,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { subscriptions } as unknown as Record<string, unknown>,
+      data: { subscriptions } as Record<string, unknown>,
     };
   }
 
@@ -1057,7 +1211,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { subscribers } as unknown as Record<string, unknown>,
+      data: { subscribers } as Record<string, unknown>,
     };
   }
 
@@ -1207,7 +1361,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { payouts } as unknown as Record<string, unknown>,
+      data: { payouts } as Record<string, unknown>,
     };
   }
 
@@ -1237,7 +1391,7 @@ export class CreatorsService {
       where: { creatorId: userId, status: 'active' },
     });
 
-    const totalTips = await this.prisma.tip.aggregate({
+    const tipAggregate = await this.prisma.tip.aggregate({
       where: { toUserId: userId },
       _sum: { amount: true },
     });
@@ -1329,6 +1483,7 @@ export class CreatorsService {
         },
         earnings: {
           total: totalEarnings._sum.amount?.toNumber() || 0,
+          tips: Number(tipAggregate._sum.amount) || 0,
           pending: 0,
           paid: 0,
           currency: 'NGN',
@@ -1386,7 +1541,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { challenges } as unknown as Record<string, unknown>,
+      data: { challenges } as Record<string, unknown>,
     };
   }
 
@@ -1410,7 +1565,7 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: { challenges } as unknown as Record<string, unknown>,
+      data: { challenges } as Record<string, unknown>,
     };
   }
 
@@ -1512,6 +1667,43 @@ export class CreatorsService {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Resolve participant display names via the auth/user store when the
+    // account still exists; stale ids degrade to a masked fallback instead of
+    // dropping the row from the leaderboard.
+    const userIds = [...new Set(entries.map((e) => e.userId))];
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, displayName: true },
+    });
+    const nameById = new Map(users.map((u) => [u.id, u.displayName]));
+
+    // Winner-first ranking: decided entries (winner > rejected) lead, then
+    // under_review, then plain pending submissions — recent first within a
+    // tier. Position is 1-based so clients can render "#1" directly.
+    const rank: Record<string, number> = {
+      winner: 0,
+      rejected: 1,
+      under_review: 2,
+      pending: 3,
+    };
+    const ranked = [...entries]
+      .sort(
+        (a, b) =>
+          (rank[a.status] ?? 3) - (rank[b.status] ?? 3) ||
+          b.createdAt.getTime() - a.createdAt.getTime()
+      )
+      .map((e, i) => ({
+        position: i + 1,
+        entryId: e.id,
+        userId: e.userId,
+        displayName: nameById.get(e.userId) || `Participant ${e.userId.slice(0, 8)}`, 
+        status: e.status,
+        reviewedAt: e.reviewedAt,
+        reviewNote: e.reviewNote,
+        contentUrl: e.contentUrl,
+        submittedAt: e.createdAt,
+      }));
+
     return {
       success: true,
       data: {
@@ -1521,7 +1713,8 @@ export class CreatorsService {
           prize: challenge.prize,
           endDate: challenge.endDate,
         },
-        entries,
+        totalEntries: entries.length,
+        entries: ranked,
       },
     };
   }
@@ -1545,10 +1738,263 @@ export class CreatorsService {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Resolve reviewer identities so participants can see WHO judged their
+    // entry, not just when. Moderators are admin/moderator users in the same
+    // user table; deleted reviewers degrade to a masked fallback.
+    const reviewerIds = [
+      ...new Set(entries.map((e) => e.reviewedBy).filter((id): id is string => !!id)),
+    ];
+    const reviewers =
+      reviewerIds.length > 0
+        ? await this.prisma.user.findMany({
+            where: { id: { in: reviewerIds } },
+            select: { id: true, displayName: true },
+          })
+        : [];
+    const reviewerNameById = new Map(reviewers.map((r) => [r.id, r.displayName]));
+
     return {
       success: true,
-      data: { challenges: entries } as unknown as Record<string, unknown>,
+      data: {
+        challenges: entries.map((e) => ({
+          ...e,
+          reviewedByName:
+            (e.reviewedBy ? reviewerNameById.get(e.reviewedBy) : null) ??
+            (e.reviewedBy ? `Moderator ${e.reviewedBy.slice(0, 8)}` : null),
+        })) as unknown as Record<string, unknown>,
+      },
     };
+  }
+
+  /**
+   * Admin/moderator review action on a challenge entry. Allowed transitions:
+   *   pending → under_review → winner | rejected, plus a re-review back to
+   *   under_review (e.g. a winner is overturned). 'rejected' is NOT terminal
+   *   for admins (they can reconsider), but nothing ever auto-transitions —
+   *   only this endpoint mutates review state.
+   */
+  /**
+   * Admin/moderator listing for the review queue. Every entry (optionally
+   * filtered by status and/or challenge) with participant display names
+   * resolved; deleted accounts degrade to a masked fallback like the
+   * leaderboard does. Newest first — the queue is worked back-to-front.
+   */
+  async listChallengeEntriesForReview(
+    status?: string,
+    challengeId?: string,
+    take?: number
+  ): Promise<CreatorResponse> {
+    const allowed = ['pending', 'under_review', 'winner', 'rejected'];
+    if (status && !allowed.includes(status)) {
+      throw new BadRequestException(`Unknown status filter: ${status}`);
+    }
+
+    const entries = await this.prisma.challengeEntry.findMany({
+      where: {
+        ...(status ? { status } : {}),
+        ...(challengeId ? { challengeId } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(Math.max(take ?? 100, 1), 500),
+      include: {
+        challenge: { select: { id: true, title: true, prize: true } },
+      },
+    });
+
+    const userIds = [...new Set(entries.map((e) => e.userId))];
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, displayName: true, email: true },
+    });
+    const userById = new Map(users.map((u) => [u.id, u]));
+
+    return {
+      success: true,
+      data: {
+        items: entries.map((e) => ({
+          id: e.id,
+          challengeId: e.challengeId,
+          challengeTitle: e.challenge?.title ?? 'Unknown challenge',
+          prize: e.challenge?.prize ?? null,
+          participantId: e.userId,
+          participantName:
+            userById.get(e.userId)?.displayName ?? `Participant ${e.userId.slice(0, 8)}`,
+          participantEmail: userById.get(e.userId)?.email ?? null,
+          contentUrl: e.contentUrl,
+          status: e.status,
+          reviewedAt: e.reviewedAt?.toISOString() ?? null,
+          reviewedBy: e.reviewedBy ?? null,
+          reviewNote: e.reviewNote ?? null,
+          createdAt: e.createdAt.toISOString(),
+        })),
+      },
+    };
+  }
+
+  async reviewChallengeEntry(
+    reviewerId: string,
+    entryId: string,
+    action: 'under_review' | 'winner' | 'rejected',
+    note?: string
+  ): Promise<CreatorResponse> {
+    const entry = await this.prisma.challengeEntry.findUnique({
+      where: { id: entryId },
+      include: { challenge: { select: { title: true, prize: true } } },
+    });
+    if (!entry) throw new NotFoundException('Entry not found');
+
+    // Reject unknown/missing actions up front — otherwise `status: undefined`
+    // is silently ignored by Prisma and the request half-applies (stamps
+    // review metadata without moving the status).
+    const VALID_ACTIONS = ['under_review', 'winner', 'rejected'] as const;
+    if (!action || !VALID_ACTIONS.includes(action)) {
+      throw new BadRequestException(
+        `Invalid review action: expected one of ${VALID_ACTIONS.join(', ')}`,
+      );
+    }
+
+    // The note is the moderator's message TO the participant — strip markup,
+    // bound its length, and clear it when none is supplied so a re-review
+    // without a note doesn't leave a stale note behind.
+    const cleanNote = note?.replace(/<[^>]*>/g, '').trim() || null;
+    if (cleanNote && cleanNote.length > 1000) {
+      throw new BadRequestException('Review note must be 1000 characters or fewer');
+    }
+
+    await this.prisma.challengeEntry.update({
+      where: { id: entryId },
+      data: {
+        status: action,
+        reviewedAt: new Date(),
+        reviewedBy: reviewerId,
+        reviewNote: cleanNote,
+      },
+    });
+
+    await this.notifyChallengeReview(entry, action, cleanNote);
+
+    await this.trackAnalyticsEvent('challenge_entry_reviewed', entry.userId, {
+      challengeId: entry.challengeId,
+      entryId,
+      action,
+      reviewerId,
+      hasNote: Boolean(cleanNote),
+    });
+
+    return {
+      success: true,
+      data: {
+        entryId,
+        status: action,
+        reviewedAt: new Date().toISOString(),
+        reviewNote: cleanNote,
+      },
+    };
+  }
+
+  /**
+   * Notify a participant that their challenge entry was reviewed. Two channels:
+   *  1. In-app — a `notification` row in this service's DB (mirrors the
+   *     verification-submitted pattern; visible on the creator profile feed).
+   *  2. Email — best-effort templated send via notification-service's internal
+   *     `POST /v1/notifications/email` endpoint. Identity rides the same
+   *     x-user-id + x-gateway-secret header pair ServiceAuthGuard validates
+   *     (creator-service carries the participant's userId as the identity —
+   *     notification-service only uses it to satisfy the auth contract; the
+   *     email recipient comes from the request body).
+   *
+   * Both channels are best-effort: a notification failure is logged, never
+   * thrown — a review must not fail because a notification did.
+   */
+  private async notifyChallengeReview(
+    entry: {
+      id: string;
+      userId: string;
+      challengeId: string;
+      challenge?: { title?: string; prize?: string } | null;
+    },
+    action: 'under_review' | 'winner' | 'rejected',
+    note?: string | null
+  ): Promise<void> {
+    const challengeTitle = entry.challenge?.title ?? 'a challenge';
+    const prize = entry.challenge?.prize ?? null;
+
+    const copy: Record<typeof action, { title: string; message: string; phrase: string }> = {
+      under_review: {
+        title: 'Entry Under Review',
+        message: `Your entry for "${challengeTitle}" is being reviewed by our moderators.`,
+        phrase: 'is now under review by our moderators',
+      },
+      winner: {
+        title: 'Congratulations — You Won!',
+        message: `Your entry for "${challengeTitle}" was selected as a winner!`,
+        phrase: 'was selected as a winner',
+      },
+      rejected: {
+        title: 'Entry Not Selected',
+        message: `Your entry for "${challengeTitle}" was not selected this time. Thank you for participating!`,
+        phrase: 'was not selected this time',
+      },
+    };
+    const text = copy[action];
+    // A reviewer note rides the notification so the participant sees the WHY,
+    // not just the verdict.
+    const messageWithNote = note ? `${text.message} Reviewer note: "${note}"` : text.message;
+
+    // 1. In-app notification row (same store the verification flow uses).
+    try {
+      await this.prisma.notification.create({
+        data: {
+          userId: entry.userId,
+          type: 'system',
+          title: text.title,
+          message: messageWithNote,
+          metadata: {
+            challengeId: entry.challengeId,
+            entryId: entry.id,
+            status: action,
+            ...(note ? { reviewNote: note } : {}),
+          } as Prisma.InputJsonValue,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(`Failed to create challenge-review notification: ${(error as Error).message}`);
+    }
+
+    // 2. Best-effort templated email via notification-service.
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: entry.userId },
+        select: { email: true, displayName: true },
+      });
+      if (user?.email) {
+        await axios.post(
+          `${this.notificationServiceBaseUrl}/v1/notifications/email`,
+          {
+            to: user.email,
+            template: 'challenge-review',
+            data: {
+              displayName: user.displayName,
+              challengeTitle,
+              prize,
+              statusPhrase: text.phrase,
+              ...(note ? { reviewNote: note } : {}),
+            },
+          },
+          {
+            timeout: 5000,
+            headers: {
+              'x-user-id': entry.userId,
+              'x-gateway-secret':
+                this.configService.get<string>('GATEWAY_SECRET') ??
+                this.configService.getOrThrow<string>('INTERNAL_API_KEY'),
+            },
+          }
+        );
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to send challenge-review email: ${(error as Error).message}`);
+    }
   }
 
   async getStats(userId: string): Promise<CreatorResponse> {
@@ -1557,50 +2003,168 @@ export class CreatorsService {
 
     const [contentCount, earnings, subscribers] = await Promise.all([
       this.prisma.contentItem.count({ where: { creatorId: userId } }),
-      this.prisma.creatorEarning.aggregate({ where: { creatorId: profile.id }, _sum: { amount: true } }),
+      this.prisma.creatorEarning.aggregate({
+        where: { creatorId: profile.id },
+        _sum: { amount: true },
+      }),
       this.prisma.subscription.count({ where: { creatorId: profile.id, status: 'active' } }),
     ]);
+
+    // Fetch analytics data from analytics-service
+    let totalViews = 0;
+    let totalLikes = 0;
+    let totalComments = 0;
+    let viewsChangePercentage: number | null = null;
+    let viewsChange: number | null = null;
+    let likesChange: number | null = null;
+    let commentsChange: number | null = null;
+    let followersChange: number | null = null;
+
+    try {
+      const analyticsResponse = await axios.get(
+        `${this.analyticsServiceBaseUrl}/analytics/creator/${profile.id}/stats`,
+        { timeout: 5000 }
+      );
+      const analyticsData = analyticsResponse.data?.data || analyticsResponse.data;
+      if (analyticsData) {
+        totalViews = analyticsData.totalViews || 0;
+        totalLikes = analyticsData.totalLikes || 0;
+        totalComments = analyticsData.totalComments || 0;
+        viewsChangePercentage = analyticsData.viewsChangePercentage ?? null;
+        viewsChange = analyticsData.viewsChange ?? null;
+        likesChange = analyticsData.likesChange ?? null;
+        commentsChange = analyticsData.commentsChange ?? null;
+        followersChange = analyticsData.followersChange ?? null;
+      }
+    } catch (analyticsError) {
+      this.logger.warn(
+        `Failed to fetch analytics for creator ${profile.id}: ${(analyticsError as Error).message}`
+      );
+    }
+
+    // Calculate pending earnings (earnings not yet paid out)
+    const pendingEarnings = await this.prisma.creatorEarning.aggregate({
+      where: { creatorId: profile.id, status: 'pending' },
+      _sum: { amount: true },
+    });
+
+    // Calculate engagement rate (likes + comments / views)
+    const avgEngagementRate =
+      totalViews > 0
+        ? Math.round(((totalLikes + totalComments) / totalViews) * 100 * 100) / 100
+        : 0;
 
     return {
       success: true,
       data: {
-        totalViews: 0,
-        totalLikes: 0,
-        totalComments: 0,
+        totalViews,
+        totalLikes,
+        totalComments,
         followerCount: subscribers,
         contentCount,
         totalEarnings: Number(earnings._sum.amount) || 0,
-        pendingEarnings: 0,
-        viewsChangePercentage: 0,
-        avgEngagementRate: 0,
+        pendingEarnings: Number(pendingEarnings._sum.amount) || 0,
+        // Change percentages from analytics-service
+        viewsChangePercentage,
+        avgEngagementRate,
         totalFollowers: subscribers,
-        viewsChange: 0,
-        likesChange: 0,
-        commentsChange: 0,
-        followersChange: 0,
-      } as unknown as Record<string, unknown>,
+        viewsChange,
+        likesChange,
+        commentsChange,
+        followersChange,
+      } as Record<string, unknown>,
     };
   }
 
   async getSettings(userId: string): Promise<CreatorResponse> {
-    return {
-      success: true,
-      data: {
-        emailNotifications: true,
-        pushNotifications: true,
-        smsNotifications: false,
-        marketingNotifications: false,
+    const profile = await this.prisma.creatorProfile.findUnique({
+      where: { userId },
+      select: { settings: true },
+    });
+
+    const defaultSettings = {
+      notifications: {
+        email: true,
+        push: true,
+        sms: false,
+        marketing: false,
+      },
+      privacy: {
         profileVisibility: 'public',
         showEarnings: false,
         allowMessages: true,
-      } as unknown as Record<string, unknown>,
+      },
+    };
+
+    if (!profile?.settings) {
+      return { success: true, data: defaultSettings };
+    }
+
+    const raw = profile.settings as Record<string, unknown>;
+    const notifications = (raw.notifications as Record<string, unknown>) || {
+      email: raw.emailNotifications ?? true,
+      push: raw.pushNotifications ?? true,
+      sms: raw.smsNotifications ?? false,
+      marketing: raw.marketingNotifications ?? false,
+    };
+    const privacy = (raw.privacy as Record<string, unknown>) || {
+      profileVisibility: (raw.profileVisibility as string) || 'public',
+      showEarnings: (raw.showEarnings as boolean) ?? false,
+      allowMessages: (raw.allowMessages as boolean) ?? true,
+    };
+
+    return {
+      success: true,
+      data: { notifications, privacy },
     };
   }
 
-  async updateSettings(userId: string, data: Record<string, unknown>): Promise<CreatorResponse> {
+  async updateSettings(
+    userId: string,
+    data: {
+      notifications?:
+        | Record<string, boolean>
+        | { email?: boolean; push?: boolean; sms?: boolean; marketing?: boolean };
+      privacy?: Record<string, unknown> | { profileVisibility?: string; showEarnings?: boolean };
+    }
+  ): Promise<CreatorResponse> {
+    const profile = await this.prisma.creatorProfile.findUnique({
+      where: { userId },
+      select: { id: true, settings: true },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Creator profile not found');
+    }
+
+    const current = (profile.settings as Record<string, unknown>) || {};
+    const currentNotifications = (current.notifications as Record<string, boolean>) || {
+      email: (current.emailNotifications as boolean) ?? true,
+      push: (current.pushNotifications as boolean) ?? true,
+      sms: (current.smsNotifications as boolean) ?? false,
+      marketing: (current.marketingNotifications as boolean) ?? false,
+    };
+    const currentPrivacy = (current.privacy as Record<string, unknown>) || {
+      profileVisibility: (current.profileVisibility as string) || 'public',
+      showEarnings: (current.showEarnings as boolean) ?? false,
+      allowMessages: (current.allowMessages as boolean) ?? true,
+    };
+
+    const updatedSettings = {
+      notifications: { ...currentNotifications, ...data.notifications },
+      privacy: { ...currentPrivacy, ...data.privacy },
+    };
+
+    await this.prisma.creatorProfile.update({
+      where: { id: profile.id },
+      data: { settings: updatedSettings as Prisma.InputJsonValue },
+    });
+
+    await this.cache.invalidate(`creator:profile:${userId}*`);
+
     return {
       success: true,
-      data: { message: 'Settings updated', ...data } as unknown as Record<string, unknown>,
+      data: updatedSettings,
     };
   }
 
@@ -1628,7 +2192,7 @@ export class CreatorsService {
         page,
         limit,
         hasMore: skip + limit < total,
-      } as unknown as Record<string, unknown>,
+      } as Record<string, unknown>,
     };
 
     await this.cache.set(cacheK, result, 300);

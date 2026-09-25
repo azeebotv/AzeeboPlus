@@ -187,6 +187,39 @@ describe('SanitizeInterceptor', () => {
     });
   });
 
+  describe('Class Instance Preservation', () => {
+    it('should preserve Date instances inside responses (regression: dates became {})', (done) => {
+      const at = new Date('2026-09-10T10:07:51.386Z');
+      const mockData = {
+        success: true,
+        data: {
+          transactions: [{ id: 'tx-1', createdAt: at, updatedAt: at }],
+        },
+      };
+
+      mockCallHandler.handle = jest.fn(() => of(mockData));
+
+      interceptor.intercept({} as ExecutionContext, mockCallHandler).subscribe((result) => {
+        const typed = result as typeof mockData;
+        const tx = typed.data.transactions[0];
+        expect(tx.createdAt).toBeInstanceOf(Date);
+        expect((tx.createdAt as Date).toISOString()).toBe('2026-09-10T10:07:51.386Z');
+        expect(tx.updatedAt).toBeInstanceOf(Date);
+        done();
+      });
+    });
+
+    it('should pass a top-level Date through untouched', (done) => {
+      const at = new Date();
+      mockCallHandler.handle = jest.fn(() => of(at));
+
+      interceptor.intercept({} as ExecutionContext, mockCallHandler).subscribe((result) => {
+        expect(result).toBe(at);
+        done();
+      });
+    });
+  });
+
   describe('Case Insensitivity', () => {
     it('should remove fields regardless of case', (done) => {
       const mockData = {

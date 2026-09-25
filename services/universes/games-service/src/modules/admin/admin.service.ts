@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getStats() {
     try {
@@ -67,8 +67,36 @@ export class AdminService {
 
       return { tournaments, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
     } catch (error) {
-      this.logger.error(`Failed to get tournaments: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get tournaments: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
+  }
+
+  // Write operations
+  async updateGame(id: string, data: { name?: string; category?: string; description?: string }) {
+    const existing = await this.prisma.game.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Game not found');
+    return this.prisma.game.update({ where: { id }, data: data as never });
+  }
+
+  async deleteGame(id: string) {
+    const existing = await this.prisma.game.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Game not found');
+    return this.prisma.game.delete({ where: { id } });
+  }
+
+  async updateTournament(id: string, data: { name?: string; status?: string; prizePool?: number }) {
+    const existing = await this.prisma.tournament.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Tournament not found');
+    return this.prisma.tournament.update({ where: { id }, data: data as never });
+  }
+
+  async deleteTournament(id: string) {
+    const existing = await this.prisma.tournament.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Tournament not found');
+    return this.prisma.tournament.delete({ where: { id } });
   }
 }

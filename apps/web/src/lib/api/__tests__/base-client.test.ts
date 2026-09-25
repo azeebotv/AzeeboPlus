@@ -6,25 +6,25 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 describe('gatewayPath()', () => {
   it('should return /api/ paths unchanged', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://test.api');
-    const { gatewayPath } = await import('../base');
+    const { gatewayPath } = await import('../base.js');
     expect(gatewayPath('/api/v1/content')).toBe('/api/v1/content');
   });
 
   it('should prepend /api to /v1/ paths', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://test.api');
-    const { gatewayPath } = await import('../base');
+    const { gatewayPath } = await import('../base.js');
     expect(gatewayPath('/v1/auth/login')).toBe('/api/v1/auth/login');
   });
 
   it('should prepend /api/v1 to bare paths', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://test.api');
-    const { gatewayPath } = await import('../base');
+    const { gatewayPath } = await import('../base.js');
     expect(gatewayPath('/content')).toBe('/api/v1/content');
   });
 
   it('should handle empty path', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://test.api');
-    const { gatewayPath } = await import('../base');
+    const { gatewayPath } = await import('../base.js');
     expect(gatewayPath('')).toBe('/api/v1');
   });
 });
@@ -44,19 +44,16 @@ describe('apiFetch — standalone fetch helper', () => {
       removeItem: vi.fn(),
     });
     // Re-import to pick up env
-    const mod = await import('../base');
+    const mod = await import('../base.js');
     apiFetch = mod.apiFetch;
   });
 
   describe('Authentication Headers', () => {
-    it('should include Authorization header when token is in localStorage', async () => {
-      vi.stubGlobal('localStorage', {
-        getItem: vi.fn((key: string) =>
-          key === 'azeebo_access_token' ? 'stored-token' : null
-        ),
-        setItem: vi.fn(),
-        removeItem: vi.fn(),
-      });
+    it('should include Authorization header when token is in cookies', async () => {
+      // Cookie-first auth: only a token readable from the cookie jar may be
+      // mirrored into the header — a localStorage copy goes stale the first
+      // time /auth/refresh rotates the token and would 401 every request.
+      document.cookie = 'access_token=cookie-token; path=/';
 
       fetchMock.mockResolvedValue({
         ok: true,
@@ -65,11 +62,24 @@ describe('apiFetch — standalone fetch helper', () => {
         json: async () => ({ success: true, data: { id: '1' } }),
       });
 
-      const { apiFetch: freshApiFetch } = await import('../base');
+      const { apiFetch: freshApiFetch } = await import('../base.js');
       await freshApiFetch('/api/v1/users/me');
 
       const headers = fetchMock.mock.calls[0][1].headers;
-      expect(headers['Authorization']).toBe('Bearer stored-token');
+      expect(headers['Authorization']).toBe('Bearer cookie-token');
+
+      // A localStorage token must NOT be attached — that is the stale-header
+      // bug class this contract change exists to prevent.
+      vi.stubGlobal('localStorage', {
+        getItem: vi.fn((key: string) => (key === 'azeebo_access_token' ? 'stored-token' : null)),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+      });
+      document.cookie = 'access_token=; Max-Age=0; path=/';
+      fetchMock.mockClear();
+      await freshApiFetch('/api/v1/users/me');
+      const headers2 = fetchMock.mock.calls[0][1].headers;
+      expect(headers2['Authorization']).toBeUndefined();
     });
 
     it('should not include Authorization header when no token in localStorage', async () => {
@@ -101,6 +111,20 @@ describe('apiFetch — standalone fetch helper', () => {
       expect(result.success).toBe(true);
       expect(result.data).toEqual({ id: '1' });
       expect(result.message).toBe('OK');
+    });
+
+    it('should treat HTTP 200 with a success:false envelope as an error', async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ success: false, message: 'Failed to fetch universes' }),
+      });
+
+      const result = await apiFetch('/api/v1/public/universes');
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Failed to fetch universes');
     });
 
     it('should return success for 201 Created with data fallback', async () => {
@@ -155,7 +179,7 @@ describe('apiFetch — standalone fetch helper', () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(401);
-      expect(result.message).toBe('Token expired');
+      expect(result.message).toBe('Session expired. Please login again.');
     });
 
     it('should handle 403 Forbidden', async () => {
@@ -191,7 +215,11 @@ describe('apiFetch — standalone fetch helper', () => {
         ok: false,
         status: 409,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: false, message: 'Email already exists', code: 'EMAIL_EXISTS' }),
+        json: async () => ({
+          success: false,
+          message: 'Email already exists',
+          code: 'EMAIL_EXISTS',
+        }),
       });
 
       const result = await apiFetch('/api/v1/auth/signup', { method: 'POST', body: '{}' });
@@ -284,7 +312,7 @@ describe('apiFetch — standalone fetch helper', () => {
       const result = await apiFetch('/api/v1/content');
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Unknown error');
+      expect(result.error).toBe('string error');
     });
   });
 
@@ -307,12 +335,14 @@ describe('apiFetch — standalone fetch helper', () => {
       const result = await apiFetch('/api/v1/auth/signup', { method: 'POST', body: '{}' });
 
       expect(result.success).toBe(false);
-      expect(result.status).toBe(400);
-      expect(result.type).toBe('https://api.azeebo.com/errors/validation');
-      expect(result.title).toBe('Validation Error');
-      expect(result.detail).toBe('The request body is invalid');
-      expect(result.instance).toBe('/api/v1/auth/signup');
-      expect(result.code).toBe('VALIDATION_ERROR');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const r = result as any;
+      expect(r.status).toBe(400);
+      expect(r.type).toBe('https://api.azeebo.com/errors/validation');
+      expect(r.title).toBe('Validation Error');
+      expect(r.detail).toBe('The request body is invalid');
+      expect(r.instance).toBe('/api/v1/auth/signup');
+      expect(r.code).toBe('VALIDATION_ERROR');
     });
   });
 

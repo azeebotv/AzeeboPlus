@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
-import { RedisService } from '../../cache/redis.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
+import { RedisService } from '../../cache/redis.service.js';
 import { ConfigService } from '@nestjs/config';
+import { FeatureFlagService, contentFlags, universeFlagKey } from '@azeebo/feature-flags';
 
 type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: true } }>;
 
@@ -12,11 +13,62 @@ export class ContentFeedService {
   private readonly cacheTTL: number;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly redisService: RedisService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
     this.cacheTTL = this.configService.get<number>('CONTENT_CACHE_TTL', 300);
+  }
+
+  /**
+   * Per-universe flag bridge: returns the ids of universes that may surface in
+   * discovery feeds for the given feature key. A universe is enabled when it
+   * has no explicitly-disabled row for the key (default true) or its row is
+   * explicitly enabled.
+   *
+   * Source of truth: the admin app publishes universe toggles to the runtime
+   * flag store (`feature_flags:universe.<name>.<feature>`, see
+   * `universeFlagKey`), so this consults that Redis store FIRST via
+   * FeatureFlagService — admin toggles then gate discovery feeds within the
+   * flag cache TTL. The local `UniverseFeatureFlag` table is the historical
+   * content-service copy and remains a fallback when the Redis store has no
+   * row for the key (default-enabled), which also makes the two stores
+   * converge instead of diverging on admin edits. Cached 5 minutes.
+   */
+  async getEnabledUniverseIds(featureKey: string): Promise<string[]> {
+    const cacheKey = `universe-features:${featureKey}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached) as string[];
+    }
+
+    // All universes (with names, needed for the Redis key convention), then
+    // filter by the bridge: Redis flag present + disabled → excluded;
+    // otherwise default-enabled.
+    const universes = await this.prisma.universe.findMany({
+      select: { id: true, name: true },
+    });
+
+    const ids: string[] = [];
+    for (const universe of universes) {
+      const flag = await this.featureFlagService.getFlag(
+        universeFlagKey(universe.name, featureKey)
+      );
+      if (flag && !flag.enabled) {
+        continue; // explicitly disabled by admin
+      }
+      ids.push(universe.id);
+    }
+
+    await this.redisService.set(cacheKey, JSON.stringify(ids), this.cacheTTL);
+    return ids;
+  }
+
+  /** where-clause fragment that limits results to discovery-enabled universes. */
+  async discoveryUniverseFilter(): Promise<Record<string, unknown>> {
+    const ids = await this.getEnabledUniverseIds('discovery_enabled');
+    return { universeId: { in: ids } };
   }
 
   async getHomeFeed(userId?: string): Promise<{
@@ -61,17 +113,24 @@ export class ContentFeedService {
         ).map((h) => h.contentId)
       : [];
 
+    const [enabledUniverseFilter, recommendedRailOn] = await Promise.all([
+      this.discoveryUniverseFilter(),
+      this.featureFlagService.isEnabled(contentFlags.recommendedRail),
+    ]);
+
+    const baseWhere = { status: 'published', ...enabledUniverseFilter };
+
     const [trending, recommended, latest] = await Promise.all([
       this.prisma.contentItem.findMany({
-        where: { status: 'published' },
+        where: baseWhere,
         select: contentSelect,
         orderBy: { viewCount: 'desc' },
         take: 10,
       }),
-      userId
+      recommendedRailOn && userId
         ? this.prisma.contentItem.findMany({
             where: {
-              status: 'published',
+              ...baseWhere,
               id: { notIn: watchedContentIds },
             },
             select: contentSelect,
@@ -80,7 +139,7 @@ export class ContentFeedService {
           })
         : [],
       this.prisma.contentItem.findMany({
-        where: { status: 'published' },
+        where: baseWhere,
         select: contentSelect,
         orderBy: { createdAt: 'desc' },
         take: 10,
@@ -101,9 +160,27 @@ export class ContentFeedService {
     return result;
   }
 
-  async getWatchFeed(_userId?: string): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+  async getWatchFeed(userId?: string): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    const where: Record<string, unknown> = {
+      status: 'published',
+      ...(await this.discoveryUniverseFilter()),
+    };
+
+    if (userId) {
+      const watchedIds = await this.prisma.watchHistory.findMany({
+        where: { userId },
+        select: { contentId: true },
+        orderBy: { watchedAt: 'desc' },
+        take: 100,
+      });
+      const excludeIds = watchedIds.map((w) => w.contentId);
+      if (excludeIds.length > 0) {
+        where.id = { notIn: excludeIds };
+      }
+    }
+
     const content = await this.prisma.contentItem.findMany({
-      where: { status: 'published' },
+      where,
       select: {
         id: true,
         title: true,
@@ -130,7 +207,11 @@ export class ContentFeedService {
     };
   }
 
-  async getFeatured(): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+  async getFeatured(): Promise<{
+    success: boolean;
+    data: ContentWithUniverse[];
+    error?: { code: string; message: string };
+  }> {
     try {
       const content = await this.prisma.contentItem.findMany({
         where: {
@@ -155,14 +236,18 @@ export class ContentFeedService {
       return { success: true, data: content };
     } catch (error) {
       this.logger.error(`getFeatured failed: ${(error as Error).message}`);
-      return { success: true, data: [] };
+      return {
+        success: false,
+        data: [],
+        error: { code: 'FEED_ERROR', message: 'Failed to fetch featured content' },
+      };
     }
   }
 
   async getTrending(): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
     try {
       const content = await this.prisma.contentItem.findMany({
-        where: { status: 'published' },
+        where: { status: 'published', ...(await this.discoveryUniverseFilter()) },
         orderBy: { viewCount: 'desc' },
         take: 20,
         include: { universe: true },
@@ -181,12 +266,17 @@ export class ContentFeedService {
     }
   }
 
-  async getNewReleases(limit?: number): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+  async getNewReleases(limit?: number): Promise<{
+    success: boolean;
+    data: ContentWithUniverse[];
+    error?: { code: string; message: string };
+  }> {
     try {
       const take = Math.min(limit || 12, 50);
       const content = await this.prisma.contentItem.findMany({
         where: {
           status: 'published',
+          ...(await this.discoveryUniverseFilter()),
           releaseDate: { not: null },
         },
         orderBy: { releaseDate: 'desc' },
@@ -197,11 +287,19 @@ export class ContentFeedService {
       return { success: true, data: content };
     } catch (error) {
       this.logger.error(`getNewReleases failed: ${(error as Error).message}`);
-      return { success: true, data: [] };
+      return {
+        success: false,
+        data: [],
+        error: { code: 'FEED_ERROR', message: 'Failed to fetch new releases' },
+      };
     }
   }
 
-  async getFeaturedSlides(limit?: number): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+  async getFeaturedSlides(limit?: number): Promise<{
+    success: boolean;
+    data: ContentWithUniverse[];
+    error?: { code: string; message: string };
+  }> {
     try {
       const take = Math.min(limit || 5, 10);
       const content = await this.prisma.contentItem.findMany({
@@ -227,11 +325,19 @@ export class ContentFeedService {
       return { success: true, data: content };
     } catch (error) {
       this.logger.error(`getFeaturedSlides failed: ${(error as Error).message}`);
-      return { success: true, data: [] };
+      return {
+        success: false,
+        data: [],
+        error: { code: 'FEED_ERROR', message: 'Failed to fetch featured slides' },
+      };
     }
   }
 
-  async getPopularInRegion(limit?: number): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+  async getPopularInRegion(limit?: number): Promise<{
+    success: boolean;
+    data: ContentWithUniverse[];
+    error?: { code: string; message: string };
+  }> {
     try {
       const take = Math.min(limit || 12, 50);
       const content = await this.prisma.contentItem.findMany({
@@ -244,11 +350,20 @@ export class ContentFeedService {
       return { success: true, data: content };
     } catch (error) {
       this.logger.error(`getPopularInRegion failed: ${(error as Error).message}`);
-      return { success: true, data: [] };
+      return {
+        success: false,
+        data: [],
+        error: { code: 'FEED_ERROR', message: 'Failed to fetch popular content' },
+      };
     }
   }
 
   async getRecommended(userId: string): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    // content_recommended_rail: the rail is empty while the flag is off.
+    if (!(await this.featureFlagService.isEnabled(contentFlags.recommendedRail))) {
+      return { success: true, data: [] };
+    }
+
     const watchedContent = await this.prisma.watchHistory.findMany({
       where: { userId },
       take: 100,
@@ -268,6 +383,7 @@ export class ContentFeedService {
       where: {
         status: 'published',
         universeId: { in: watchedUniverseIds.length ? watchedUniverseIds : undefined },
+        ...(await this.discoveryUniverseFilter()),
         id: {
           notIn: watchedContentIds,
         },

@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Inject, Controller, Get, Logger } from '@nestjs/common';
 import { Public } from '@azeebo/security';
 import {
   HealthCheck,
@@ -7,15 +7,17 @@ import {
   HealthIndicatorResult,
 } from '@nestjs/terminus';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 
 @ApiTags('Health')
 @Public()
 @Controller('health')
 export class HealthController {
+  private readonly logger = new Logger(HealthController.name);
+
   constructor(
-    private health: HealthCheckService,
-    private prisma: PrismaService,
+    @Inject(HealthCheckService) private health: HealthCheckService,
+    @Inject(PrismaService) private prisma: PrismaService
   ) {}
 
   @Get()
@@ -29,7 +31,10 @@ export class HealthController {
         try {
           await this.prisma.$queryRaw`SELECT 1`;
           return { db: { status: 'up' } };
-        } catch {
+        } catch (error) {
+          this.logger.debug(
+            `Health check failed: ${error instanceof Error ? error.message : 'unknown'}`
+          );
           return { db: { status: 'down' } };
         }
       },
@@ -57,7 +62,10 @@ export class HealthController {
         try {
           await this.prisma.$queryRaw`SELECT 1`;
           return { db: { status: 'up' } };
-        } catch {
+        } catch (error) {
+          this.logger.debug(
+            `Readiness check failed: ${error instanceof Error ? error.message : 'unknown'}`
+          );
           return { db: { status: 'down' } };
         }
       },

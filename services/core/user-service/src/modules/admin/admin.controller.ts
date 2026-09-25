@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Put,
@@ -13,13 +14,13 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IsString, IsOptional, IsObject } from 'class-validator';
-import { AdminService } from './admin.service';
+import { AdminService } from './admin.service.js';
 import { AdminGuard } from '@azeebo/security';
 import { Request } from 'express';
-import { SuspendUserDto } from './dto/suspend-user.dto';
-import { ModerateContentDto } from './dto/moderate-content.dto';
-import { ResolveReportDto } from './dto/resolve-report.dto';
-import { VerifyCreatorDto } from './dto/verify-creator.dto';
+import { SuspendUserDto } from './dto/suspend-user.dto.js';
+import { ModerateContentDto } from './dto/moderate-content.dto.js';
+import { ResolveReportDto } from './dto/resolve-report.dto.js';
+import { VerifyCreatorDto } from './dto/verify-creator.dto.js';
 
 class UpdateSubscriptionDto {
   @IsString()
@@ -53,7 +54,7 @@ interface AuthenticatedRequest extends Request {
 @Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
 
   @Get('stats')
   @ApiOperation({ summary: 'Get user service statistics (admin)' })
@@ -241,7 +242,11 @@ export class AdminController {
     @Query('limit') limit?: number,
     @Query('status') status?: string
   ) {
-    return this.adminService.getModerationReports(Number(page) || 1, Math.min(100, Math.max(1, Number(limit) || 20)), status);
+    return this.adminService.getModerationReports(
+      Number(page) || 1,
+      Math.min(100, Math.max(1, Number(limit) || 20)),
+      status
+    );
   }
 
   @Patch('moderation/reports/:id')
@@ -276,7 +281,11 @@ export class AdminController {
     @Query('limit') limit?: number,
     @Query('userId') userId?: string
   ) {
-    return this.adminService.getAuditLogs(Number(page) || 1, Math.min(100, Math.max(1, Number(limit) || 20)), userId);
+    return this.adminService.getAuditLogs(
+      Number(page) || 1,
+      Math.min(100, Math.max(1, Number(limit) || 20)),
+      userId
+    );
   }
 
   @Get('creators/verification')

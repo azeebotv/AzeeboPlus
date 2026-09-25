@@ -11,8 +11,9 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
-import { engagementApi } from '../src/api';
+import { engagementApi } from '@azeebo/react-data';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { colors } from '../src/theme';
 
 interface LeaderboardEntry {
   rank: number;
@@ -91,7 +92,10 @@ export default function LeaderboardScreen() {
   if (error) {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ErrorState description={error instanceof Error ? error.message : 'Failed to load leaderboard'} onRetry={() => refetch()} />
+        <ErrorState
+          description={error instanceof Error ? error.message : 'Failed to load leaderboard'}
+          onRetry={() => refetch()}
+        />
       </SafeAreaView>
     );
   }
@@ -102,7 +106,11 @@ export default function LeaderboardScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} colors={['#E8420A']} />
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
+            colors={['#E8420A']}
+          />
         }
       >
         <View style={styles.header}>
@@ -207,7 +215,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   filterContainer: {
     marginBottom: 12,
@@ -219,7 +227,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     marginRight: 8,
   },
   filterButtonActive: {
@@ -227,7 +235,7 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontWeight: '500',
   },
   filterTextActive: {
@@ -242,7 +250,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
   },
   categoryButtonActive: {
@@ -250,7 +258,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontWeight: '500',
   },
   categoryTextActive: {
@@ -267,7 +275,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderRadius: 16,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     flex: 1,
   },
   topCardFirst: {
@@ -312,13 +320,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
   },
   listItemCurrentUser: {
     borderWidth: 2,
     borderColor: '#E8420A',
-    backgroundColor: '#2D1B69',
+    backgroundColor: colors.bg.deep,
   },
   rankText: {
     fontSize: 18,
@@ -343,7 +351,7 @@ const styles = StyleSheet.create({
   },
   userStats: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   pointsText: {
     fontSize: 16,

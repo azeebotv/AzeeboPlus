@@ -1,14 +1,17 @@
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { RateLimiterModule } from '@azeebo/security';
-import { CacheModule } from '@azeebo/shared-services';
+import { CacheModule, JwtConfigModule, JwtStrategy } from '@azeebo/shared-services';
 
-import { CreatorsController } from './creators.controller';
-import { CreatorsService } from './creators.service';
-import { DatabaseModule } from '../database/database.module';
-import { JwtStrategy } from '../../common/strategies/jwt.strategy';
+import { CreatorsController } from './creators.controller.js';
+import { CreatorsService } from './creators.service.js';
+import { TippingController } from './tipping.controller.js';
+import { TippingService } from './tipping.service.js';
+import { WalletSnapshotSyncService } from './wallet-snapshot-sync.service.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { CreatorPayoutService } from '../creator/creator-payout.service.js';
+import { CreatorTrustSafetyService } from '../creator/creator-trust-safety.service.js';
 
 @Module({
   imports: [
@@ -16,19 +19,25 @@ import { JwtStrategy } from '../../common/strategies/jwt.strategy';
     PassportModule,
     RateLimiterModule,
     CacheModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService): Promise<Record<string, unknown>> => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
+    ScheduleModule.forRoot(),
   ],
-  controllers: [CreatorsController],
-  providers: [CreatorsService, JwtStrategy],
-  exports: [CreatorsService, DatabaseModule],
+  controllers: [CreatorsController, TippingController],
+  providers: [
+    CreatorsService,
+    JwtStrategy,
+    CreatorPayoutService,
+    CreatorTrustSafetyService,
+    TippingService,
+    WalletSnapshotSyncService,
+  ],
+  exports: [
+    CreatorsService,
+    CreatorPayoutService,
+    CreatorTrustSafetyService,
+    TippingService,
+    WalletSnapshotSyncService,
+    DatabaseModule,
+  ],
 })
 export class CreatorsModule {}

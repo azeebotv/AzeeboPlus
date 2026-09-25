@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -13,7 +14,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { DisputeService } from './dispute.service';
 import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './dto/dispute.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { AdminGuard } from '@azeebo/security';
 
@@ -29,7 +30,7 @@ interface AuthenticatedRequest {
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class DisputeController {
-  constructor(private disputeService: DisputeService) {}
+  constructor(@Inject(DisputeService) private disputeService: DisputeService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create payout dispute' })

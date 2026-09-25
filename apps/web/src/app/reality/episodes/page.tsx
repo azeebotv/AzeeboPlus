@@ -1,10 +1,13 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Lock, Play } from 'lucide-react';
 
 interface Episode {
   id: string;
@@ -31,7 +34,6 @@ export default function EpisodesPage(): React.JSX.Element {
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEpisodes = async () => {
@@ -43,12 +45,9 @@ export default function EpisodesPage(): React.JSX.Element {
         const result = await apiFetch<{ seasons: Season[] }>(`/v1/content/${contentId}/episodes`);
         if (result.success && result.data) {
           setSeasons(result.data.seasons || []);
-        } else {
-          setError(result.message || 'Failed to load episodes');
         }
       } catch (err) {
         webLogger.error('Failed to load episodes', err);
-        setError(err instanceof Error ? err.message : 'Failed to load episodes');
       } finally {
         setIsLoading(false);
       }
@@ -78,7 +77,7 @@ export default function EpisodesPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -87,7 +86,10 @@ export default function EpisodesPage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{
+                border: '3px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--brand-orange)',
+              }}
             />
             <p className="mt-4 text-white/60">Loading episodes...</p>
           </div>
@@ -97,7 +99,7 @@ export default function EpisodesPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
@@ -135,7 +137,7 @@ export default function EpisodesPage(): React.JSX.Element {
                     ? {
                         border: '1px solid rgba(255,255,255,0.2)',
                         backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: '#fff',
+                        color: 'var(--brand-white)',
                       }
                     : undefined
                 }
@@ -151,27 +153,36 @@ export default function EpisodesPage(): React.JSX.Element {
             <div
               key={episode.id}
               onClick={() => handleEpisodeClick(episode)}
-              className={`az-glass flex gap-4 overflow-hidden transition-all ${
+              className={`az-glass flex gap-4 overflow-hidden transition-all group ${
                 episode.isLocked
                   ? 'opacity-60 cursor-not-allowed'
                   : 'cursor-pointer hover:scale-[1.01]'
               }`}
             >
               <div className="relative w-48 h-28 flex-shrink-0">
-                <img
+                <OptimizedImage
                   src={episode.thumbnail}
                   alt={episode.title}
+                  fill
                   className="w-full h-full object-cover"
                 />
-                {episode.isLocked && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="text-3xl">🔒</span>
+                {episode.isLocked ? (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-black/70 border border-white/20 flex items-center justify-center text-white/70 shadow-lg">
+                      <Lock size={18} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-orange-500/90 text-white flex items-center justify-center shadow-lg shadow-orange-500/30">
+                      <Play size={18} className="fill-white ml-0.5" />
+                    </div>
                   </div>
                 )}
               </div>
               <div className="flex-1 p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold" style={{ color: '#E8420A' }}>
+                  <span className="text-xs font-semibold" style={{ color: 'var(--brand-orange)' }}>
                     E{episode.episodeNumber.toString().padStart(2, '0')}
                   </span>
                   <span className="text-xs text-white/50">{formatDuration(episode.duration)}</span>

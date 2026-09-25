@@ -1,13 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagService, paymentFlags } from '@azeebo/feature-flags';
 
 @Injectable()
 export class CronTasksService {
   private readonly logger = new Logger(CronTasksService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+  ) {}
 
   async cleanupStalePaymentIntents(): Promise<void> {
+    if (!(await this.featureFlagService.isEnabled(paymentFlags.scheduledTasks))) {
+      this.logger.log('Skipping stale payment intent cleanup (payment_scheduled_tasks disabled)');
+      return;
+    }
     this.logger.log('Running stale payment intent cleanup...');
 
     try {
@@ -30,6 +38,10 @@ export class CronTasksService {
   }
 
   async cleanupStaleWebhookRetries(): Promise<void> {
+    if (!(await this.featureFlagService.isEnabled(paymentFlags.scheduledTasks))) {
+      this.logger.log('Skipping stale webhook retry cleanup (payment_scheduled_tasks disabled)');
+      return;
+    }
     this.logger.log('Running stale webhook retry cleanup...');
 
     try {

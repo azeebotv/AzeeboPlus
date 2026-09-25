@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { TournamentController } from './tournament.controller';
-import { TournamentService } from './tournament.service';
-import { DatabaseModule } from '../database/database.module';
+import { TournamentController } from './tournament.controller.js';
+import { TournamentService } from './tournament.service.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
   imports: [DatabaseModule],

@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -10,112 +11,156 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, rewardFlags } from '@azeebo/feature-flags';
 
-import { RewardsService } from './rewards.service';
-import { RedeemRewardDto } from './dto/redeem-reward.dto';
-import { RewardResponse } from './interfaces/reward-response.interface';
+import { RewardsService } from './rewards.service.js';
+import { RewardAbuseControlsService } from '../reward/reward-abuse-controls.service.js';
+import { RedeemRewardDto } from './dto/redeem-reward.dto.js';
+import { RewardResponse } from './interfaces/reward-response.interface.js';
 
 @ApiTags('Rewards')
-@UseGuards(RateLimitGuard)
-@Controller('v1/rewards')
+@UseGuards(RateLimitGuard, ServiceAuthGuard)
+@UseGuards(FeatureFlagGuard)
+@FeatureFlag(rewardFlags.pointsEnabled)
+@Controller('rewards')
 export class RewardsController {
-  constructor(private readonly rewardsService: RewardsService) {}
+  constructor(
+    @Inject(RewardsService) private readonly rewardsService: RewardsService,
+    @Inject(RewardAbuseControlsService) private readonly abuseControls: RewardAbuseControlsService
+  ) {}
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get reward account overview' })
   @ApiResponse({ status: 200, description: 'Reward account' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getRewardAccount(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
+  async getRewardAccount(@Request() req: { user: { id: string } }): Promise<RewardResponse> {
     return this.rewardsService.getRewardAccount(req.user.id);
   }
 
   @Get('missions')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(rewardFlags.missions)
   @ApiOperation({ summary: 'List active missions' })
   @ApiResponse({ status: 200, description: 'Active missions' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getMissions(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
+  async getMissions(@Request() req: { user: { id: string } }): Promise<RewardResponse> {
     return this.rewardsService.getMissions(req.user.id);
   }
 
   @Get('badges')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(rewardFlags.badges)
   @ApiOperation({ summary: 'List badges' })
   @ApiResponse({ status: 200, description: 'User badges' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getBadges(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
+  async getBadges(@Request() req: { user: { id: string } }): Promise<RewardResponse> {
     return this.rewardsService.getBadges(req.user.id);
   }
 
   @Get('streak')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(rewardFlags.streaks)
   @ApiOperation({ summary: 'Get current streak' })
   @ApiResponse({ status: 200, description: 'Streak info' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getStreak(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
+  async getStreak(@Request() req: { user: { id: string } }): Promise<RewardResponse> {
     return this.rewardsService.getStreak(req.user.id);
+  }
+
+  @Get('redeem-options')
+  @ApiOperation({ summary: 'List active rewards available for redemption' })
+  @ApiResponse({ status: 200, description: 'Redeem options catalog' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getRedeemOptions(): Promise<RewardResponse> {
+    return this.rewardsService.getRedeemOptions();
   }
 
   @Post('redeem')
   @RateLimit(30, 60000)
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Redeem reward' })
   @ApiResponse({ status: 200, description: 'Reward redeemed' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async redeemReward(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() redeemRewardDto: RedeemRewardDto
   ): Promise<RewardResponse> {
     return this.rewardsService.redeemReward(req.user.id, redeemRewardDto.rewardId);
   }
 
   @Get('level')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user level' })
   @ApiResponse({ status: 200, description: 'User level' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getLevel(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
+  async getLevel(@Request() req: { user: { id: string } }): Promise<RewardResponse> {
     return this.rewardsService.getLevel(req.user.id);
   }
 
   @Post('earn')
   @RateLimit(30, 60000)
-  @UseGuards(AuthGuard('jwt'), ServiceAuthGuard)
+  @UseGuards(ServiceAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Earn points for activity' })
   @ApiResponse({ status: 200, description: 'Points earned' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async earnPoints(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() body: { activity: string }
   ): Promise<RewardResponse> {
     return this.rewardsService.earnPoints(req.user.id, body.activity);
   }
 
   @Get('balance')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get points balance' })
   @ApiResponse({ status: 200, description: 'Points balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getBalance(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
+  async getBalance(@Request() req: { user: { id: string } }): Promise<RewardResponse> {
     return this.rewardsService.getBalance(req.user.id);
   }
 
   @Get('history')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get reward history' })
   @ApiResponse({ status: 200, description: 'Reward history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getHistory(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Query('page') page?: number,
     @Query('limit') limit?: number
   ): Promise<RewardResponse> {
     return this.rewardsService.getHistory(req.user.id, Number(page) || 1, Number(limit) || 20);
+  }
+
+  // ========================
+  // Abuse control endpoints
+  // ========================
+
+  @Get('abuse-check')
+  @UseGuards(ServiceAuthGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Check for reward abuse' })
+  @ApiResponse({ status: 200, description: 'Abuse check result' })
+  async checkAbuse(@Request() req: { user: { id: string } }) {
+    const result = await this.abuseControls.checkAbuse(req.user.id);
+    return { success: true, data: result };
+  }
+
+  @Post('admin/adjust')
+  @UseGuards(ServiceAuthGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Admin reward adjustment' })
+  @ApiResponse({ status: 200, description: 'Adjustment recorded' })
+  async adminAdjust(
+    @Request() req: { user: { id: string } },
+    @Body() body: { userId: string; amount: number; reason: string }
+  ) {
+    const result = await this.abuseControls.recordAdminAdjustment(
+      body.userId,
+      body.amount,
+      body.reason,
+      req.user.id
+    );
+    return { success: true, data: result };
   }
 }

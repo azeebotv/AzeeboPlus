@@ -1,26 +1,42 @@
 import { Module, Global } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { DatabaseModule } from './modules/database/database.module';
-import { ComedyModule } from './modules/comedy/comedy.module';
-import { ComedyFeedModule } from './modules/comedy-feed/comedy-feed.module';
-import { HealthModule } from './modules/health/health.module';
+import { DatabaseModule } from './modules/database/database.module.js';
+import { ComedyModule } from './modules/comedy/comedy.module.js';
+import { ComedyFeedModule } from './modules/comedy-feed/comedy-feed.module.js';
+import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
-import { AdminModule } from './modules/admin/admin.module';
-import { RateLimiterModule, RateLimitGuard } from '@azeebo/security';
+import { AdminModule } from './modules/admin/admin.module.js';
+import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
+import { CacheModule, RedisModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, comedyFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Global()
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
+    CacheModule,
+    RedisModule,
     DatabaseModule,
     RateLimiterModule.forRoot(),
     ComedyModule,
     ComedyFeedModule,
     HealthModule,
     AdminModule,
+    // Comedy toggles: challenges + premium specials gate OFF until launched.
+    FlagMetricsModule.register({ service: 'comedy-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('comedy-service'),
+      defaultFlags: {
+        [comedyFlags.challengesEnabled]: false,
+        [comedyFlags.specialsGate]: false,
+      },
+    }),
   ],
   providers: [
     {
@@ -33,7 +49,7 @@ import { RateLimiterModule, RateLimitGuard } from '@azeebo/security';
     },
     {
       provide: APP_GUARD,
-      useClass: RateLimitGuard,
+      useClass: ServiceAuthGuard,
     },
   ],
 })

@@ -1,28 +1,15 @@
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtConfigModule } from '@azeebo/shared-services';
 
-import { ReferralController } from './referral.controller';
-import { ReferralService } from './referral.service';
-import { JwtStrategy } from './jwt.strategy';
-import { DatabaseModule } from '../database/database.module';
+import { ReferralController } from './referral.controller.js';
+import { ReferralService } from './referral.service.js';
+import { JwtStrategy } from './jwt.strategy.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { AdminModule } from '../admin/admin.module.js';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    PassportModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get<string | undefined>('JWT_EXPIRES_IN', '30m') as string | number,
-        },
-      }),
-      inject: [ConfigService],
-    }),
-  ],
+  imports: [DatabaseModule, PassportModule, JwtConfigModule, AdminModule],
   controllers: [ReferralController],
   providers: [ReferralService, JwtStrategy],
   exports: [ReferralService, DatabaseModule],

@@ -1,12 +1,11 @@
-import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Inject, Controller, Get, Post, Body, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ServiceAuthGuard } from '@azeebo/security';
 
-import * as speakeasy from 'speakeasy';
-
-import { MfaService } from './mfa.service';
-import { EnableMfaDto } from '../dto/enable-mfa.dto';
+import { MfaService } from './mfa.service.js';
+import { EnableMfaDto } from '../dto/enable-mfa.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { FeatureFlag, FeatureFlagGuard, authFlags } from '@azeebo/feature-flags';
 
 interface MfaRequest {
   user: {
@@ -19,12 +18,16 @@ interface MfaRequest {
 }
 
 @ApiTags('MFA')
-@Controller('mfa')
+@FeatureFlag(authFlags.mfaTotp)
+@UseGuards(FeatureFlagGuard, ServiceAuthGuard)
+// Served through the gateway as /v1/auth/mfa/* (the gateway routes /auth and
+// prefixes the controller path) — the controller must live under 'auth/mfa'
+// to match the documented/guarded /auth/mfa/* contract.
+@Controller('auth/mfa')
 export class MfaController {
-  constructor(private readonly mfaService: MfaService) {}
+  constructor(@Inject(MfaService) private readonly mfaService: MfaService) {}
 
   @Get('setup')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Setup MFA for user' })
   @ApiResponse({ status: 200, description: 'MFA setup information' })
   async setup(@Request() req: MfaRequest): Promise<unknown> {
@@ -39,7 +42,6 @@ export class MfaController {
   }
 
   @Post('verify')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Verify MFA code' })
   @ApiResponse({ status: 200, description: 'MFA verification result' })
   async verify(@Request() req: MfaRequest, @Body() dto: EnableMfaDto): Promise<unknown> {
@@ -52,7 +54,6 @@ export class MfaController {
   }
 
   @Post('enable')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Enable MFA for user' })
   @ApiResponse({ status: 200, description: 'MFA enabled' })
   async enable(@Request() req: MfaRequest, @Body() dto: EnableMfaDto): Promise<unknown> {
@@ -61,27 +62,32 @@ export class MfaController {
       return ApiResponseWrapper.error('MFA_SETUP_REQUIRED', 'Run /mfa/setup first');
     }
 
-    const isValid = speakeasy.totp.verify({
-      secret: pendingSecret,
-      encoding: 'base32',
-      token: dto.code,
-    });
+    const isValid = await this.mfaService.verifyMfaCode(req.user.id, dto.code);
 
     if (!isValid) {
       return ApiResponseWrapper.error('MFA_INVALID_CODE', 'Invalid MFA code');
     }
 
-    await this.mfaService.enableMfa(req.user.id, pendingSecret);
+    const hashedBackupCodes = await this.mfaService.getPendingBackupCodes(req.user.id);
+    await this.mfaService.enableMfa(req.user.id, pendingSecret, hashedBackupCodes ?? undefined);
     await this.mfaService.clearPendingMfaSecret(req.user.id);
 
     return ApiResponseWrapper.success({ mfaEnabled: true });
   }
 
   @Post('disable')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Disable MFA for user' })
   @ApiResponse({ status: 200, description: 'MFA disabled' })
-  async disable(@Request() req: MfaRequest): Promise<unknown> {
+  async disable(@Request() req: MfaRequest, @Body() dto: EnableMfaDto): Promise<unknown> {
+    const isValid = await this.mfaService.verifyMfaCode(req.user.id, dto.code);
+
+    if (!isValid) {
+      return ApiResponseWrapper.error(
+        'MFA_INVALID_CODE',
+        'Invalid TOTP code required to disable MFA'
+      );
+    }
+
     await this.mfaService.disableMfa(req.user.id);
 
     return ApiResponseWrapper.success({ mfaEnabled: false });

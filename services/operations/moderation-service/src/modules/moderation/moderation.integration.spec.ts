@@ -1,7 +1,19 @@
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: class MockCacheService {
+    get = jest.fn().mockResolvedValue(null);
+    set = jest.fn().mockResolvedValue(undefined);
+    invalidate = jest.fn().mockResolvedValue(undefined);
+  },
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { ModerationService, CreateCaseRequest, ResolveCaseRequest } from './moderation.service';
-import { PrismaService } from '../database/prisma.service';
-import { SafetyScanningService } from './safety-scanning.service';
+import { ModerationService, CreateCaseRequest, ResolveCaseRequest } from './moderation.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { SafetyScanningService } from './safety-scanning.service.js';
+import { ConfigService } from '@nestjs/config';
+import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -9,7 +21,6 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('ModerationService Integration - Cross-Service Communication', () => {
   let service: ModerationService;
-  let prisma: PrismaService;
   let safetyScanningService: SafetyScanningService;
 
   const mockPrismaService = {
@@ -65,11 +76,29 @@ describe('ModerationService Integration - Cross-Service Communication', () => {
           provide: SafetyScanningService,
           useValue: mockSafetyScanningService,
         },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<ModerationService>(ModerationService);
-    prisma = module.get<PrismaService>(PrismaService);
+    module.get<PrismaService>(PrismaService);
     safetyScanningService = module.get<SafetyScanningService>(SafetyScanningService);
 
     jest.clearAllMocks();

@@ -1,7 +1,9 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
+  Put,
   Delete,
   Body,
   Param,
@@ -10,24 +12,26 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlag, subscriptionFlags } from '@azeebo/feature-flags';
 
-import { SubscriptionService } from './subscription.service';
-import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
-import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto';
-import type { SubscriptionPlan, Subscription } from '../../prisma/client';
+import { SubscriptionService } from './subscription.service.js';
+import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto.js';
+import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto.js';
+import type { SubscriptionPlan, Subscription } from '../../prisma/client/index.js';
 
 interface AuthenticatedRequest {
   user: {
-    sub: string;
+    id: string;
   };
 }
 
 @ApiTags('Subscriptions')
-@Controller('v1/subscription')
+@Controller('subscription')
 export class SubscriptionController {
-  constructor(private readonly subscriptionService: SubscriptionService) {}
+  constructor(
+    @Inject(SubscriptionService) private readonly subscriptionService: SubscriptionService
+  ) {}
 
   @Get('plans')
   @UseGuards(RateLimitGuard)
@@ -49,7 +53,7 @@ export class SubscriptionController {
   }
 
   @Post('plans')
-  @UseGuards(AuthGuard('jwt'), AdminGuard, RateLimitGuard)
+  @UseGuards(AdminGuard, RateLimitGuard)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new subscription plan (admin only)' })
@@ -60,8 +64,36 @@ export class SubscriptionController {
     return this.subscriptionService.createPlan(dto);
   }
 
+  @Put('plans/:id')
+  @UseGuards(AdminGuard, RateLimitGuard)
+  @RateLimit(10, 3600000)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a subscription plan (admin only)' })
+  @ApiResponse({ status: 200, description: 'Plan updated' })
+  @ApiResponse({ status: 404, description: 'Plan not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
+  async updatePlan(
+    @Param('id') id: string,
+    @Body() dto: Partial<CreateSubscriptionPlanDto>
+  ): Promise<SubscriptionPlan> {
+    return this.subscriptionService.updatePlan(id, dto);
+  }
+
+  @Delete('plans/:id')
+  @UseGuards(AdminGuard, RateLimitGuard)
+  @RateLimit(5, 3600000)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a subscription plan (admin only)' })
+  @ApiResponse({ status: 200, description: 'Plan deleted' })
+  @ApiResponse({ status: 404, description: 'Plan not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
+  async deletePlan(@Param('id') id: string): Promise<{ message: string }> {
+    await this.subscriptionService.deletePlan(id);
+    return { message: 'Plan deleted successfully' };
+  }
+
   @Post('subscribe')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Subscribe to a plan' })
@@ -75,8 +107,23 @@ export class SubscriptionController {
     return this.subscriptionService.subscribe(req.user.id, dto);
   }
 
+  @Post('renew/:id')
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(subscriptionFlags.dunning)
+  @RateLimit(5, 3600000)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Manually renew an active subscription (deducts from wallet)' })
+  @ApiResponse({ status: 200, description: 'Subscription renewed' })
+  @ApiResponse({ status: 404, description: 'Subscription not found' })
+  @ApiResponse({ status: 400, description: 'Cannot renew' })
+  async renewSubscription(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string
+  ): Promise<Subscription> {
+    return this.subscriptionService.renewSubscription(req.user.id, id);
+  }
+
   @Get('current')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user subscription' })
   @ApiResponse({ status: 200, description: 'Current subscription' })
@@ -86,7 +133,7 @@ export class SubscriptionController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel subscription' })
@@ -101,7 +148,6 @@ export class SubscriptionController {
   }
 
   @Get('history')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get subscription history' })
   @ApiResponse({ status: 200, description: 'Subscription history' })
@@ -117,10 +163,6 @@ export class SubscriptionController {
     const safePage = Math.max(1, Math.floor(Number(page) || 1));
     const safeLimit = Math.min(100, Math.max(1, Math.floor(Number(limit) || 20)));
 
-    return this.subscriptionService.getSubscriptionHistory(
-      req.user.id,
-      safePage,
-      safeLimit
-    );
+    return this.subscriptionService.getSubscriptionHistory(req.user.id, safePage, safeLimit);
   }
 }

@@ -1,16 +1,23 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
-import { APP_GUARD } from '@nestjs/core';
-import { AuthModule } from './modules/auth/auth.module';
-import { AuditModule } from './modules/audit/audit.module';
-import { AdminModule } from './modules/admin/admin.module';
-import { RedisService } from './common/services/redis.service';
-import { RateLimitGuard } from './common/guards/rate-limit.guard';
-import { CommonModule } from './common/common.module';
-import { MetricsModule } from './modules/metrics/metrics.module';
-import { HealthModule } from './modules/health/health.module';
-import { CacheModule } from '@azeebo/shared-services';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { AuditModule } from './modules/audit/audit.module.js';
+import { AdminModule } from './modules/admin/admin.module.js';
+import { DeviceModule } from './modules/device/device.module.js';
+import { CacheModule, RedisModule } from '@azeebo/shared-services';
+import { CommonModule } from './common/common.module.js';
+import { MetricsModule } from './modules/metrics/metrics.module.js';
+import { HealthModule } from './modules/health/health.module.js';
+import { RateLimiterModule, ServiceAuthGuard, SecurityModule } from '@azeebo/security';
+import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { ObservabilityModule } from '@azeebo/observability';
+import { FeatureFlagModule } from '@azeebo/feature-flags';
+import { authFlags, subscriptionFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { SocialAuthModule } from './modules/social-auth/social-auth.module.js';
+import { DeviceLinkModule } from './modules/device-link/device-link.module.js';
 
 @Module({
   imports: [
@@ -18,20 +25,57 @@ import { CacheModule } from '@azeebo/shared-services';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    RedisModule,
+    RateLimiterModule.forRoot(),
+    SecurityModule,
     TerminusModule,
     AuditModule,
     AuthModule,
     AdminModule,
+    DeviceModule,
     CommonModule,
     MetricsModule,
     HealthModule,
     CacheModule,
+    ObservabilityModule,
+    // Auth kill-switches: social providers + OTP channels default ON so ops can
+    // disable a provider/channel instantly; MFA + passwordless default OFF until
+    // rolled out; refresh-token rotation defaults ON.
+    FlagMetricsModule.register({ service: 'auth-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('auth-service'),
+      defaultFlags: {
+        [authFlags.socialGoogle]: true,
+        [authFlags.socialApple]: true,
+        [authFlags.mfaTotp]: false,
+        [authFlags.mfaRequiredForAdmins]: false,
+        [authFlags.otpEmail]: true,
+        [authFlags.otpSms]: true,
+        [authFlags.passwordlessMagicLink]: false,
+        [authFlags.deviceLimits]: false,
+        // Device-link TV sign-in: default OFF until the /link activation page
+        // and TV sign-in screen ship to users.
+        [authFlags.deviceLink]: false,
+        [authFlags.refreshRotation]: true,
+        [authFlags.emailVerificationRequired]: false,
+        [authFlags.roleSelect]: true,
+        // subscription_device_limits: when on, the device cap comes from the
+        // user's subscription plan (maxDevices) instead of the env default.
+        [subscriptionFlags.deviceLimits]: false,
+      },
+    }),
+    SocialAuthModule,
+    DeviceLinkModule,
   ],
   providers: [
-    RedisService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseWrapperInterceptor,
+    },
     {
       provide: APP_GUARD,
-      useClass: RateLimitGuard,
+      useClass: ServiceAuthGuard,
     },
   ],
 })

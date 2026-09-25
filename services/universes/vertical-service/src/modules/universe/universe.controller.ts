@@ -1,23 +1,40 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { UniverseService } from './universe.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 
 @ApiTags('Universe')
-@Controller('v1/vertical/universes')
+@Controller('vertical/universes')
 export class UniverseController {
-  constructor(private readonly universeService: UniverseService) {}
+  constructor(@Inject(UniverseService) private readonly universeService: UniverseService) {}
 
   @Get()
+  @Get('featured')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
-  @ApiOperation({ summary: 'Get all universes' })
+  @ApiOperation({ summary: 'Get all universes / featured' })
   @ApiResponse({ status: 200, description: 'List of universes' })
   async getUniverses(@Query('page') page = 1, @Query('limit') limit = 20): Promise<unknown> {
     return this.universeService.getUniverses(Number(page), Number(limit));
+  }
+
+  @Get('genres')
+  @ApiOperation({ summary: 'Get vertical genres' })
+  @ApiResponse({ status: 200, description: 'List of genres' })
+  async getGenres(): Promise<unknown> {
+    return this.universeService.getCategories();
   }
 
   @Get('map/:slug')
@@ -42,23 +59,18 @@ export class UniverseController {
   }
 
   @Post('locations')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create new location' })
   @ApiResponse({ status: 201, description: 'Location created' })
-  async createLocation(
-    @Body() data: CreateLocationDto
-  ): Promise<unknown> {
+  async createLocation(@Body() data: CreateLocationDto): Promise<unknown> {
     return this.universeService.createLocation(data);
   }
 
   @Patch('locations/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Update location' })
   @ApiResponse({ status: 200, description: 'Location updated' })
-  async updateLocation(
-    @Param('id') id: string,
-    @Body() data: UpdateLocationDto
-  ): Promise<unknown> {
+  async updateLocation(@Param('id') id: string, @Body() data: UpdateLocationDto): Promise<unknown> {
     return this.universeService.updateLocation(id, data);
   }
 

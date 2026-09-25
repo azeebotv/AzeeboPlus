@@ -1,87 +1,141 @@
-'use client';
-import React from 'react';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import type { Metadata } from 'next';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ShieldCheck, Lock, Database, Globe, UserCheck, Mail } from 'lucide-react';
 
-export default function PrivacyPage(): React.JSX.Element {
+export const metadata: Metadata = {
+  title: 'Privacy Policy - Azeebo+',
+  description: 'Data privacy disclosures, user rights, and retention practices on Azeebo+',
+};
+
+export default function PrivacyPolicyPage() {
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 700,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Privacy Policy</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Last updated: January 2026</p>
+    <PageShell activeNav="Support">
+      <PageHero
+        badge="Data Protection & NDPR Compliance"
+        title="Privacy Disclosures"
+        subtitle="Transparent information on how Azeebo+ securely collects, encrypts, and processes your streaming and account data."
+        accentColor="orange"
+      />
 
-        <div className="az-glass" style={{ padding: 32, borderRadius: 20, lineHeight: 1.8 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            1. Information We Collect
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            We collect information you provide directly: account details (name, email, phone
-            number), payment information, content you upload, and communications with us. We also
-            collect usage data including device information, IP address, and browsing activity on
-            the Platform.
-          </p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-20 space-y-8">
+        <div className="flex items-center justify-between pb-4 border-b border-white/10">
+          <span className="text-xs text-white/50 uppercase tracking-widest font-mono font-bold">
+            Nigeria Data Protection Act (NDPA) & GDPR Compliant
+          </span>
+          <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-bold">
+            <ShieldCheck size={14} />
+            <span>256-Bit Encrypted Data Vault</span>
+          </div>
+        </div>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            2. How We Use Your Information
+        {/* 1. Introduction */}
+        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-3">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+            <Globe size={18} className="text-orange-400" />
+            <span>1. Introduction & Operating Entity</span>
           </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            We use your information to provide and improve the Platform, process transactions, send
-            notifications, personalize your experience, ensure security, and comply with legal
-            obligations.
-          </p>
-
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            3. Information Sharing
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            We do not sell your personal information. We may share information with payment
-            processors, analytics providers, and law enforcement when required by law. Creator
-            earnings information may be visible to other users if the creator enables this setting.
-          </p>
-
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            4. Data Security
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            We implement industry-standard security measures including encryption, secure
-            authentication, and regular security audits. However, no method of transmission over the
-            Internet is 100% secure.
-          </p>
-
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            5. Your Rights
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            You have the right to access, correct, or delete your personal data. You can manage most
-            settings through your account. For data deletion requests, contact our support team.
-          </p>
-
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            6. Cookies
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            We use cookies and similar technologies to maintain your session, remember preferences,
-            and analyze usage patterns. You can control cookie settings in your browser.
-          </p>
-
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            7. Contact Us
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14 }}>
-            For questions about this Privacy Policy, contact us at privacy@azeeboplus.com.
+          <p className="text-sm text-white/60 leading-relaxed">
+            Virtual Media Network Limited (&quot;Azeebo+&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) respects your privacy and is deeply committed to safeguarding your personal data. This Privacy Policy details how we collect, store, utilize, and protect your information across our web portals, smart TV applications, and mobile interfaces.
           </p>
         </div>
-      </main>
-      <AppFooter />
-    </div>
+
+        {/* 2. Data Collection */}
+        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-4">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+            <Database size={18} className="text-orange-400" />
+            <span>2. Categories of Information Collected</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-white/60">
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <h3 className="font-bold text-white text-sm mb-1.5">Direct Information</h3>
+              <p>Account email, encrypted password hashes, display name, user avatar, and voluntary survey or challenge submissions.</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <h3 className="font-bold text-white text-sm mb-1.5">Usage & Viewing Telemetry</h3>
+              <p>Watch history, playback resume timestamps, audio/subtitle preferences, search queries, and reality voting event inputs.</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <h3 className="font-bold text-white text-sm mb-1.5">Device & Network Metadata</h3>
+              <p>Operating system, browser fingerprint, screen resolution, connection bitrate, and broad city-level IP geolocation.</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <h3 className="font-bold text-white text-sm mb-1.5">Payment Tokenization</h3>
+              <p>CBN-authorized payment gateway tokens. We never store raw debit/credit card CVV or full PIN credentials.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Retention Table */}
+        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-4">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+            <Lock size={18} className="text-orange-400" />
+            <span>3. Data Retention Lifecycle</span>
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead>
+                <tr className="border-b border-white/10 text-white/50 uppercase tracking-wider">
+                  <th className="py-3 px-2">Data Classification</th>
+                  <th className="py-3 px-2">Retention Duration</th>
+                  <th className="py-3 px-2">Primary Purpose</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-white/70">
+                <tr>
+                  <td className="py-3 px-2 font-semibold text-white">Active Account Profile</td>
+                  <td className="py-3 px-2">Duration of account active life + 30 days</td>
+                  <td className="py-3 px-2">Service delivery & authentication</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-2 font-semibold text-white">Watch History & Telemetry</td>
+                  <td className="py-3 px-2">12 Months rolling</td>
+                  <td className="py-3 px-2">Personalized recommendations & codex unlocks</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-2 font-semibold text-white">Azeebo Pay & Banking Ledger</td>
+                  <td className="py-3 px-2">7 Years (CBN & FIRS statutory mandate)</td>
+                  <td className="py-3 px-2">Tax compliance & dispute verification</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-2 font-semibold text-white">Temporary Device Downloads</td>
+                  <td className="py-3 px-2">Up to 30 days or manual deletion</td>
+                  <td className="py-3 px-2">Offline player media cache</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 4. User Rights */}
+        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-3">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+            <UserCheck size={18} className="text-orange-400" />
+            <span>4. Your Privacy Rights (NDPA & GDPR)</span>
+          </h2>
+          <p className="text-sm text-white/60 leading-relaxed">
+            You hold the right to request a full portable copy of your account data, demand correction of inaccurate records, request permanent deletion of your profile, or withdraw consent for analytical telemetry. Contact our Data Protection Officer at privacy@azeeboplus.com to execute these requests.
+          </p>
+        </div>
+
+        {/* Contact DPO */}
+        <div className="az-glass p-8 rounded-3xl border border-white/10 text-center shadow-xl">
+          <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center mx-auto mb-3 border border-orange-500/20">
+            <Mail size={22} />
+          </div>
+          <h3 className="text-base font-bold text-white mb-1">Data Protection Officer</h3>
+          <p className="text-xs text-white/50 max-w-sm mx-auto mb-4">
+            Virtual Media Network Limited • Legal & Privacy Compliance Unit, Lagos, Nigeria.
+          </p>
+          <a
+            href="mailto:privacy@azeeboplus.com"
+            className="az-btn-primary inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold"
+          >
+            <span>Contact Privacy Office</span>
+          </a>
+        </div>
+      </div>
+    </PageShell>
   );
 }
+

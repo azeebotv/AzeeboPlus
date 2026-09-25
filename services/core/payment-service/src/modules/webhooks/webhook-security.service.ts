@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '@azeebo/shared-services';
 
 @Injectable()
 export class WebhookSecurityService {
@@ -12,8 +12,8 @@ export class WebhookSecurityService {
   private readonly replayPrefix = 'webhook_replay:';
 
   constructor(
-    private readonly redisService: RedisService,
-    private readonly configService: ConfigService
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.idempotencyTTL = this.configService.get<number>('WEBHOOK_IDEMPOTENCY_TTL', 86400);
     this.maxAge = this.configService.get<number>('WEBHOOK_MAX_AGE', 300);
@@ -36,39 +36,69 @@ export class WebhookSecurityService {
   }
 
   async isDuplicate(reference: string): Promise<boolean> {
-    const key = `${this.idempotencyPrefix}${reference}`;
-    return this.redisService.exists(key);
+    try {
+      const key = `${this.idempotencyPrefix}${reference}`;
+      return (await this.redisService.exists(key)) === 1;
+    } catch (error) {
+      this.logger.error(`Failed to check duplicate webhook ${reference}`, (error as Error).stack);
+      throw error;
+    }
   }
 
   async markAsProcessed(reference: string): Promise<void> {
-    const key = `${this.idempotencyPrefix}${reference}`;
-    await this.redisService.set(key, '1', this.idempotencyTTL);
-    this.logger.log(`Webhook marked as processed: ${reference}`);
+    try {
+      const key = `${this.idempotencyPrefix}${reference}`;
+      await this.redisService.set(key, '1', this.idempotencyTTL);
+      this.logger.log(`Webhook marked as processed: ${reference}`);
+    } catch (error) {
+      this.logger.error(`Failed to mark webhook as processed ${reference}`, (error as Error).stack);
+      throw error;
+    }
   }
 
   async isReplay(reference: string, timestamp: number): Promise<boolean> {
-    const now = Math.floor(Date.now() / 1000);
-    if (now - timestamp > this.maxAge) {
-      this.logger.warn(`Webhook event too old: ${reference} (age: ${now - timestamp}s)`);
-      return true;
-    }
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      if (now - timestamp > this.maxAge) {
+        this.logger.warn(`Webhook event too old: ${reference} (age: ${now - timestamp}s)`);
+        return true;
+      }
 
-    const key = `${this.replayPrefix}${reference}`;
-    const exists = await this.redisService.exists(key);
-    return exists;
+      const key = `${this.replayPrefix}${reference}`;
+      const exists = (await this.redisService.exists(key)) === 1;
+      return exists;
+    } catch (error) {
+      this.logger.error(`Failed to check replay for webhook ${reference}`, (error as Error).stack);
+      throw error;
+    }
   }
 
   async recordInReplayWindow(reference: string): Promise<void> {
-    const key = `${this.replayPrefix}${reference}`;
-    await this.redisService.set(key, '1', this.maxAge);
+    try {
+      const key = `${this.replayPrefix}${reference}`;
+      await this.redisService.set(key, '1', this.maxAge);
+    } catch (error) {
+      this.logger.error(
+        `Failed to record replay window for webhook ${reference}`,
+        (error as Error).stack
+      );
+      throw error;
+    }
   }
 
   private constantTimeCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) {
-      return false;
-    }
     const bufferA = Buffer.from(a, 'utf8');
     const bufferB = Buffer.from(b, 'utf8');
+
+    if (bufferA.length !== bufferB.length) {
+      const maxLen = Math.max(bufferA.length, bufferB.length);
+      const paddedA = Buffer.alloc(maxLen, 0);
+      const paddedB = Buffer.alloc(maxLen, 0);
+      bufferA.copy(paddedA);
+      bufferB.copy(paddedB);
+      return timingSafeEqual(paddedA, paddedB);
+    }
+
     return timingSafeEqual(bufferA, bufferB);
   }
 }

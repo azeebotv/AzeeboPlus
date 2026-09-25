@@ -1,13 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AuthService } from '../src/modules/auth/auth.service';
-import { RedisService } from '../src/common/services/redis.service';
+import { RedisService } from '@azeebo/shared-services';
 import { PrismaService } from '../src/modules/database/prisma.service';
 
 describe('Auth E2E', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockAuthService = {
     register: jest.fn(),
@@ -47,9 +48,11 @@ describe('Auth E2E', () => {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
-      }),
+      })
     );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -84,10 +87,7 @@ describe('Auth E2E', () => {
         },
       });
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/auth/signup')
-        .send(dto)
-        .expect(201);
+      const res = await request(baseUrl).post('/v1/auth/signup').send(dto).expect(201);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.user.email).toBe('newuser@example.com');
@@ -109,10 +109,7 @@ describe('Auth E2E', () => {
         message: 'Email already registered',
       });
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/auth/signup')
-        .send(dto)
-        .expect(409);
+      const res = await request(baseUrl).post('/v1/auth/signup').send(dto).expect(409);
 
       expect(res.body.message).toBe('Email already registered');
     });
@@ -124,10 +121,7 @@ describe('Auth E2E', () => {
         displayName: 'Bad Email',
       };
 
-      await request(app.getHttpServer())
-        .post('/v1/auth/signup')
-        .send(dto)
-        .expect(400);
+      await request(baseUrl).post('/v1/auth/signup').send(dto).expect(400);
 
       expect(mockAuthService.register).not.toHaveBeenCalled();
     });
@@ -139,10 +133,7 @@ describe('Auth E2E', () => {
         displayName: 'Weak Pass',
       };
 
-      await request(app.getHttpServer())
-        .post('/v1/auth/signup')
-        .send(dto)
-        .expect(400);
+      await request(baseUrl).post('/v1/auth/signup').send(dto).expect(400);
 
       expect(mockAuthService.register).not.toHaveBeenCalled();
     });
@@ -153,19 +144,13 @@ describe('Auth E2E', () => {
         password: 'StrongP@ssw0rd!',
       };
 
-      await request(app.getHttpServer())
-        .post('/v1/auth/signup')
-        .send(dto)
-        .expect(400);
+      await request(baseUrl).post('/v1/auth/signup').send(dto).expect(400);
 
       expect(mockAuthService.register).not.toHaveBeenCalled();
     });
 
     it('should reject registration with empty body', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/auth/signup')
-        .send({})
-        .expect(400);
+      await request(baseUrl).post('/v1/auth/signup').send({}).expect(400);
 
       expect(mockAuthService.register).not.toHaveBeenCalled();
     });
@@ -194,10 +179,7 @@ describe('Auth E2E', () => {
         },
       });
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/auth/login')
-        .send(dto)
-        .expect(200);
+      const res = await request(baseUrl).post('/v1/auth/login').send(dto).expect(200);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.user.email).toBe('user@example.com');
@@ -217,10 +199,7 @@ describe('Auth E2E', () => {
         message: 'Invalid email or password',
       });
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/auth/login')
-        .send(dto)
-        .expect(401);
+      const res = await request(baseUrl).post('/v1/auth/login').send(dto).expect(401);
 
       expect(res.body.message).toBe('Invalid email or password');
     });
@@ -231,10 +210,7 @@ describe('Auth E2E', () => {
         password: 'ValidP@ss1!',
       };
 
-      await request(app.getHttpServer())
-        .post('/v1/auth/login')
-        .send(dto)
-        .expect(400);
+      await request(baseUrl).post('/v1/auth/login').send(dto).expect(400);
 
       expect(mockAuthService.login).not.toHaveBeenCalled();
     });
@@ -244,19 +220,13 @@ describe('Auth E2E', () => {
         email: 'user@example.com',
       };
 
-      await request(app.getHttpServer())
-        .post('/v1/auth/login')
-        .send(dto)
-        .expect(400);
+      await request(baseUrl).post('/v1/auth/login').send(dto).expect(400);
 
       expect(mockAuthService.login).not.toHaveBeenCalled();
     });
 
     it('should reject login with empty body', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/auth/login')
-        .send({})
-        .expect(400);
+      await request(baseUrl).post('/v1/auth/login').send({}).expect(400);
 
       expect(mockAuthService.login).not.toHaveBeenCalled();
     });
@@ -279,10 +249,7 @@ describe('Auth E2E', () => {
         },
       });
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/auth/refresh')
-        .send(dto)
-        .expect(200);
+      const res = await request(baseUrl).post('/v1/auth/refresh').send(dto).expect(200);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.access_token).toBeDefined();
@@ -301,25 +268,19 @@ describe('Auth E2E', () => {
         message: 'Invalid refresh token',
       });
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/auth/refresh')
-        .send(dto)
-        .expect(401);
+      const res = await request(baseUrl).post('/v1/auth/refresh').send(dto).expect(401);
 
       expect(res.body.message).toBe('Invalid refresh token');
     });
 
     it('should reject refresh with missing refreshToken field', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/auth/refresh')
-        .send({})
-        .expect(400);
+      await request(baseUrl).post('/v1/auth/refresh').send({}).expect(400);
 
       expect(mockAuthService.refreshToken).not.toHaveBeenCalled();
     });
 
     it('should reject refresh with non-string refreshToken', async () => {
-      await request(app.getHttpServer())
+      await request(baseUrl)
         .post('/v1/auth/refresh')
         .send({ refreshToken: 12345 })
         .expect(400);

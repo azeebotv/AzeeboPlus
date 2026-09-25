@@ -11,7 +11,12 @@ RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Ret
 
 COPY services/core/media-service/src ./services/core/media-service/src
 COPY services/core/media-service/tsconfig*.json ./services/core/media-service/
+COPY services/core/media-service/prisma ./services/core/media-service/prisma
 
+# Generate the Prisma client before building. The schema's generator output is
+# "../src/generated/prisma", so this must run before tsc or the import
+# '../../generated/prisma' in prisma.service.ts fails to resolve.
+RUN cd services/core/media-service && npx prisma generate
 RUN pnpm --filter @azeebo/media-service run build
 
 FROM node:22.16.0-alpine AS runner

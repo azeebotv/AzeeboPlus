@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class SupportDashboardService {
   private readonly logger = new Logger(SupportDashboardService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getStats() {
     try {
@@ -38,7 +38,7 @@ export class SupportDashboardService {
         pendingDisputes,
         activeSuspensions,
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getStats failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -120,12 +120,16 @@ export class SupportDashboardService {
           userId: a.userId,
           createdAt: a.createdAt,
         })),
-      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      ]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 20);
 
       return { activities };
-    } catch (_err) {
-      this.logger.error(`getRecentActivity failed: ${(error as Error).message}`, (error as Error).stack);
+    } catch (error) {
+      this.logger.error(
+        `getRecentActivity failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -146,12 +150,21 @@ export class SupportDashboardService {
       let totalResponseMs = 0;
       let totalResolutionMs = 0;
       let withinSla = 0;
+      let responseCount = 0;
       const slaTargetMs = 24 * 60 * 60 * 1000; // 24 hours
 
       for (const ticket of resolvedTickets) {
         const resolutionMs = ticket.resolvedAt!.getTime() - ticket.createdAt.getTime();
         totalResolutionMs += resolutionMs;
-        totalResponseMs += resolutionMs; // Approximate response time as resolution time
+
+        // Use firstResponseAt if available, otherwise approximate from resolution
+        const responseMs = (ticket as Record<string, unknown>).firstResponseAt
+          ? ((ticket as Record<string, unknown>).firstResponseAt as Date).getTime() -
+            ticket.createdAt.getTime()
+          : resolutionMs;
+        totalResponseMs += responseMs;
+        responseCount++;
+
         if (resolutionMs <= slaTargetMs) {
           withinSla++;
         }
@@ -159,12 +172,15 @@ export class SupportDashboardService {
 
       const count = resolvedTickets.length;
       return {
-        avgResponseTime: Math.round(totalResponseMs / count),
+        avgResponseTime: responseCount > 0 ? Math.round(totalResponseMs / responseCount) : 0,
         avgResolutionTime: Math.round(totalResolutionMs / count),
         slaCompliance: Math.round((withinSla / count) * 100),
       };
-    } catch (_err) {
-      this.logger.error(`getSlaMetrics failed: ${(error as Error).message}`, (error as Error).stack);
+    } catch (error) {
+      this.logger.error(
+        `getSlaMetrics failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }

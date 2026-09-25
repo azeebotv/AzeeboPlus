@@ -3,10 +3,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiClient } from '../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { analytics } from '../src/utils/analytics';
+import { defaultImages, colors } from '../src/theme';
 
-const PLACEHOLDER_IMAGE = '';
+const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
 
 interface TitleData {
   id: string;
@@ -84,6 +86,7 @@ export default function VerticalTitleScreen() {
         apiClient.get<TimelineItem[]>(`/vertical/titles/${id}/timeline`),
       ]);
       setTitleData(titleRes);
+      analytics.verticalTitleViewed(titleRes.id);
       setCharacters(charsRes);
       setLoreData(loreRes);
       setTimeline(timelineRes);
@@ -377,7 +380,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
   },
   followButtonActive: {
     backgroundColor: '#E8420A',
@@ -404,7 +407,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 8,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -414,7 +417,7 @@ const styles = StyleSheet.create({
   tabsContainer: {
     backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.bg.tertiary,
   },
   tabs: {
     flexDirection: 'row',
@@ -431,7 +434,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E8420A',
   },
   tabText: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -468,7 +471,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -480,7 +483,7 @@ const styles = StyleSheet.create({
   },
   castName: {
     fontSize: 12,
-    color: '#888',
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   charactersList: {
@@ -497,7 +500,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -520,12 +523,12 @@ const styles = StyleSheet.create({
   },
   characterActor: {
     fontSize: 12,
-    color: '#888',
+    color: colors.text.secondary,
     marginBottom: 6,
   },
   characterDescription: {
     fontSize: 13,
-    color: '#aaa',
+    color: colors.neutral[400],
     lineHeight: 18,
   },
   loreList: {
@@ -559,7 +562,7 @@ const styles = StyleSheet.create({
   },
   loreText: {
     fontSize: 13,
-    color: '#888',
+    color: colors.text.secondary,
     lineHeight: 20,
   },
   timeline: {},
@@ -579,7 +582,7 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     marginVertical: 8,
   },
   timelineContent: {
@@ -598,7 +601,7 @@ const styles = StyleSheet.create({
   },
   timelineYear: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   timelineTitle: {
     fontSize: 15,
@@ -607,6 +610,6 @@ const styles = StyleSheet.create({
   },
   timelineDescription: {
     fontSize: 13,
-    color: '#888',
+    color: colors.text.secondary,
   },
 });

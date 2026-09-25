@@ -11,10 +11,13 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi, walletApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi, walletApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { analytics } from '../../src/utils/analytics';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
-import { votePackages as defaultVotePackages } from '../../src/config/prices';
+import { getVotePackages } from '../../src/config/prices';
+import type { VotePackage } from '@azeebo/react-data/types/api';
+import { colors } from '../../src/theme';
 
 interface Contestant {
   id: string;
@@ -22,15 +25,6 @@ interface Contestant {
   avatar: string;
   votes: number;
   rank: number;
-}
-
-interface VotePackage {
-  id: string;
-  name: string;
-  votes: number;
-  price: number;
-  description: string;
-  isPopular?: boolean;
 }
 
 export default function SuperVoteScreen() {
@@ -46,10 +40,15 @@ export default function SuperVoteScreen() {
   const [isVoting, setIsVoting] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
 
-  const votePackages: VotePackage[] = defaultVotePackages.superVote;
+  const [votePackages, setVotePackages] = useState<VotePackage[]>([]);
 
   useEffect(() => {
     loadData();
+    getVotePackages('superVote')
+      .then((pkgs) => setVotePackages(pkgs))
+      .catch(() => {
+        /* non-critical: vote packages are optional UI enhancement */
+      });
   }, [episodeId]);
 
   const loadData = async () => {
@@ -122,6 +121,13 @@ export default function SuperVoteScreen() {
         voteCount: package_.votes,
       });
 
+      analytics.realitySupervoteCreated(
+        episodeId,
+        selectedContestant!,
+        package_.votes,
+        package_.price
+      );
+
       Alert.alert(
         'Success!',
         `Your ${package_.votes} Super Vote(s) have been submitted! Each vote counts as 2x.`,
@@ -137,7 +143,10 @@ export default function SuperVoteScreen() {
         ]
       );
     } catch (error: unknown) {
-      Alert.alert('Error', error?.message || 'Failed to submit super vote');
+      Alert.alert(
+        'Error',
+        (error instanceof Error ? error.message : null) || 'Failed to submit super vote'
+      );
     } finally {
       setIsVoting(false);
     }
@@ -259,7 +268,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -275,7 +284,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   headerContent: {
     flex: 1,
@@ -283,7 +292,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   subtitle: {
     fontSize: 14,
@@ -294,12 +303,12 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   balanceValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   section: {
     padding: 24,
@@ -307,12 +316,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   contestantCard: {
     width: 140,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 12,
     marginRight: 12,
@@ -331,15 +340,15 @@ const styles = StyleSheet.create({
   contestantName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   contestantRank: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   packageCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -351,7 +360,7 @@ const styles = StyleSheet.create({
   },
   packageCardPopular: {
     borderColor: '#E8420A',
-    backgroundColor: '#2d1f5e',
+    backgroundColor: colors.bg.deepRaised,
   },
   popularBadge: {
     position: 'absolute',
@@ -375,12 +384,12 @@ const styles = StyleSheet.create({
   packageName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   packageDescription: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   packagePrice: {
     fontSize: 18,

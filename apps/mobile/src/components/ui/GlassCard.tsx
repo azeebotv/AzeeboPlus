@@ -1,6 +1,6 @@
 import { StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { colors, radius, shadows, spring } from '../../theme';
+import Animated from 'react-native-reanimated';
+import { colors, radius, shadows } from '../../theme';
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -8,6 +8,7 @@ interface GlassCardProps {
   variant?: 'default' | 'strong' | 'subtle';
   padding?: number;
   animated?: boolean;
+  testID?: string;
 }
 
 const AnimatedView = Animated.createAnimatedComponent(Animated.View);
@@ -17,32 +18,16 @@ export function GlassCard({
   style,
   variant = 'default',
   padding = 16,
-  animated = false,
+  testID,
 }: GlassCardProps) {
-  const scale = useSharedValue(1);
-
-  const _handlePressIn = () => {
-    if (!animated) return;
-    scale.value = withSpring(0.98, spring.snappy);
-  };
-
-  const _handlePressOut = () => {
-    if (!animated) return;
-    scale.value = withSpring(1, spring.gentle);
-  };
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
   return (
     <AnimatedView
+      testID={testID}
       style={[
         styles.card,
         variant === 'strong' && styles.cardStrong,
         variant === 'subtle' && styles.cardSubtle,
         { padding },
-        animated && animatedStyle,
         style,
       ]}
       accessibilityRole="none"

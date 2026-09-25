@@ -1,5 +1,7 @@
 generator client {
   provider   = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  output     = "../src/prisma/client"
 }
 
 datasource db {
@@ -43,6 +45,7 @@ model UserRole {
   role      String
   grantedBy String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("user_roles")
   @@unique([userId, role])
@@ -55,6 +58,7 @@ model UserPreferences {
   darkMode        Boolean  @default(false)
   notifications   Json?    @default("{}")
   contentPreferences Json?  @default("[]")
+  featurePreferences Json?  @default("{}")
   privacySettings Json?    @default("{\"isPrivate\":false,\"showActivity\":true,\"allowMessages\":true,\"twoFactorEnabled\":false}")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -71,6 +75,7 @@ model WatchHistory {
   universe   String   @default("unknown")
   watchedAt  DateTime @default(now())
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("watch_history")
   @@unique([userId, contentId])
@@ -85,6 +90,7 @@ model SavedItem {
   userId    String
   contentId String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("saved_items")
   @@unique([userId, contentId])
@@ -98,6 +104,7 @@ model Following {
   followerId   String
   followingId  String
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@map("following")
   @@unique([followerId, followingId])
@@ -151,6 +158,7 @@ model AuditLog {
   ipAddress  String?
   userAgent  String?
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("audit_logs")
   @@index([actorId])
@@ -158,4 +166,20 @@ model AuditLog {
   @@index([action])
   @@index([targetType])
   @@index([createdAt])
+}
+
+model DataDeletionRequest {
+  id          String    @id @default(uuid())
+  userId      String
+  reason      String?
+  status      String    @default("scheduled") // scheduled, in_progress, completed, failed
+  scheduledAt DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("data_deletion_requests")
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledAt])
 }

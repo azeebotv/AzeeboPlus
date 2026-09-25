@@ -1,0 +1,44 @@
+# Azeebo+ Code Owners
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything
+* @azeebotv/team
+
+# Apps
+/apps/mobile/ @azeebotv/mobile-team
+/apps/web/ @azeebotv/web-team
+/apps/admin/ @azeebotv/backend-team
+/apps/creator/ @azeebotv/backend-team
+
+# Core Services
+/services/core/ @azeebotv/backend-team
+
+# Universe Services
+/services/universes/ @azeebotv/backend-team
+
+# Engagement Services
+/services/engagement/ @azeebotv/backend-team
+
+# Operations Services
+/services/operations/ @azeebotv/backend-team
+
+# Intelligence Services
+/services/intelligence/ @azeebotv/data-team
+
+# Gateway
+/services/gateway/ @azeebotv/backend-team
+
+# Shared Packages
+/packages/ui/ @azeebotv/mobile-team @azeebotv/web-team
+/packages/design-tokens/ @azeebotv/design-team
+/packages/shared-types/ @azeebotv/backend-team @azeebotv/mobile-team @azeebotv/web-team
+
+# Infrastructure
+/infra/ @azeebotv/devops-team
+/deploy/ @azeebotv/devops-team
+/.github/ @azeebotv/devops-team
+/Dockerfile.all-in-one @azeebotv/devops-team
+
+# Documentation
+/docs/ @azeebotv/product-team
+/CLAUDE.md @azeebotv/engineering-leads

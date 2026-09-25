@@ -1,8 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SportsService } from './sports.service';
-import { PrismaService } from '../database/prisma.service';
+import { SportsService } from './sports.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -28,7 +32,7 @@ describe('SportsService', () => {
               findMany: jest.fn(),
               update: jest.fn(),
             },
-            wallet: { findUnique: jest.fn() },
+            // wallet is accessed via HTTP to wallet-service, not Prisma
             contest: { findUnique: jest.fn(), findMany: jest.fn() },
             contestEntry: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn() },
             fanBoard: { findMany: jest.fn() },
@@ -37,7 +41,15 @@ describe('SportsService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('test-value'),
+            // Fee keys must resolve to NUMBERS or the service's balance check
+            // (Number(balance) < fee) silently no-ops — NaN comparisons are
+            // always false — and tests only pass via later crashes.
+            get: jest.fn(
+              (key: string) =>
+                ({ PREDICTION_FEE: 10, CONTEST_ENTRY_FEE: 50 })[
+                  key as 'PREDICTION_FEE' | 'CONTEST_ENTRY_FEE'
+                ] ?? 'test-value'
+            ),
             getOrThrow: jest.fn().mockReturnValue('test-value'),
           },
         },
@@ -86,7 +98,7 @@ describe('SportsService', () => {
 
       (prismaService.sportsEvent.findUnique as jest.Mock).mockResolvedValue(mockEvent);
       (prismaService.predictionEntry.findFirst as jest.Mock).mockResolvedValue(null);
-      (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
+      mockedAxios.get.mockResolvedValue({ data: mockWallet });
       mockedAxios.post.mockResolvedValue({ data: { balance: 90 } });
       (prismaService.predictionEntry.create as jest.Mock).mockResolvedValue(mockPredictionEntry);
 
@@ -135,7 +147,7 @@ describe('SportsService', () => {
 
       (prismaService.sportsEvent.findUnique as jest.Mock).mockResolvedValue(mockEvent);
       (prismaService.predictionEntry.findFirst as jest.Mock).mockResolvedValue(null);
-      (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
+      mockedAxios.get.mockResolvedValue({ data: mockWallet });
 
       await expect(service.submitPrediction(userId, predictionBody)).rejects.toThrow(
         BadRequestException
@@ -148,14 +160,16 @@ describe('SportsService', () => {
 
       (prismaService.sportsEvent.findUnique as jest.Mock).mockResolvedValue(mockEvent);
       (prismaService.predictionEntry.findFirst as jest.Mock).mockResolvedValue(null);
-      (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
+      mockedAxios.get.mockResolvedValue({ data: mockWallet });
       mockedAxios.post
         .mockResolvedValueOnce({ data: { balance: 90 } })
         .mockRejectedValueOnce(new Error('DB error'));
       (prismaService.predictionEntry.create as jest.Mock).mockRejectedValue(new Error('DB error'));
 
       await expect(service.submitPrediction(userId, predictionBody)).rejects.toThrow(
-        BadRequestException
+        // A Prisma failure after the wallet debit is a server fault (the saga
+        // compensates either way) — mapAndThrow maps it honestly to 500.
+        InternalServerErrorException
       );
 
       expect(mockedAxios.post).toHaveBeenCalledTimes(2);
@@ -173,7 +187,7 @@ describe('SportsService', () => {
 
       (prismaService.contest.findUnique as jest.Mock).mockResolvedValue(mockContest);
       (prismaService.contestEntry.findUnique as jest.Mock).mockResolvedValue(null);
-      (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
+      mockedAxios.get.mockResolvedValue({ data: mockWallet });
       mockedAxios.post.mockResolvedValue({ data: { balance: 50 } });
       (prismaService.contestEntry.create as jest.Mock).mockResolvedValue(mockEntry);
 
@@ -189,7 +203,7 @@ describe('SportsService', () => {
       const mockExistingEntry = { id: 'existing-entry-1', userId, contestId };
 
       (prismaService.contest.findUnique as jest.Mock).mockResolvedValue(mockContest);
-      (prismaService.contestEntry.findFirst as jest.Mock).mockResolvedValue(mockExistingEntry);
+      (prismaService.contestEntry.findUnique as jest.Mock).mockResolvedValue(mockExistingEntry);
 
       const result = await service.enterContest(userId, contestId);
 

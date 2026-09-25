@@ -1,6 +1,18 @@
-import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { AdminService } from './admin.service';
+import { AdminService } from './admin.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { AdminGuard } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
@@ -8,7 +20,10 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 @Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    @Inject(AdminService) private readonly adminService: AdminService,
+    @Inject(NotificationsService) private readonly notificationsService: NotificationsService
+  ) {}
 
   @Get('stats')
   @ApiOperation({ summary: 'Get notification service stats (admin)' })
@@ -36,6 +51,15 @@ export class AdminController {
     return this.adminService.getNotifications({ page, limit, type, status });
   }
 
+  @Post('digest/send')
+  @ApiOperation({ summary: 'Send daily digests (admin; notification_digest flag)' })
+  @ApiResponse({ status: 200, description: 'Digest run completed' })
+  @ApiResponse({ status: 403, description: 'Digest flag off, or forbidden' })
+  async sendDigest(@Query('userId') userId?: string) {
+    const result = await this.notificationsService.sendDailyDigest(userId);
+    return ApiResponseWrapper.success(result);
+  }
+
   @Post('notifications')
   @ApiOperation({ summary: 'Send system-wide notification (admin)' })
   @ApiResponse({ status: 200, description: 'System notification sent' })
@@ -45,5 +69,60 @@ export class AdminController {
   ) {
     const result = await this.adminService.sendSystemNotification(body);
     return ApiResponseWrapper.success(result);
+  }
+
+  // Template CRUD
+  @Get('templates')
+  async getTemplates(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.adminService.getTemplates({ page, limit });
+  }
+
+  @Post('templates')
+  async createTemplate(
+    @Body()
+    body: {
+      key: string;
+      channel: string;
+      subject?: string;
+      body: string;
+      variables?: string[];
+    }
+  ) {
+    return this.adminService.createTemplate(body);
+  }
+
+  @Put('templates/:id')
+  async updateTemplate(@Param('id') id: string, @Body() body: Record<string, unknown>) {
+    return this.adminService.updateTemplate(id, body);
+  }
+
+  @Delete('templates/:id')
+  async deleteTemplate(@Param('id') id: string) {
+    return this.adminService.deleteTemplate(id);
+  }
+
+  // Campaign CRUD
+  @Get('campaigns')
+  async getCampaigns(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.adminService.getCampaigns({ page, limit });
+  }
+
+  @Post('campaigns')
+  async createCampaign(
+    @Body()
+    body: {
+      name: string;
+      templateKey: string;
+      channel: string;
+      audience?: Record<string, unknown>;
+      scheduledAt?: string;
+    }
+  ) {
+    return this.adminService.createCampaign(body);
+  }
+
+  @Post('campaigns/:id/send')
+  async sendCampaign(@Param('id') id: string) {
+    return this.adminService.sendCampaign(id);
   }
 }

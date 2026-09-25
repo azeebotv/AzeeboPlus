@@ -1,42 +1,76 @@
 'use client';
-import React from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
-import { api, ContentItem } from '@/lib/api';
+import { api, ContentItem, Category } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
+import { Laugh, Theater, Mic, Smile, Flame, type LucideIcon } from 'lucide-react';
+import analytics from '@/lib/analytics';
 
-export default function ComedyPage(): React.JSX.Element {
+const comedyIcons: Record<string, LucideIcon> = {
+  standup: Mic,
+  'stand-up': Mic,
+  skits: Laugh,
+  parody: Theater,
+  improv: Smile,
+  trending: Flame,
+};
+
+function ComedyPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('comedy');
+  }, []);
+
+  const universesQuery = useUniversesQuery();
+
+  const comedyUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'comedy');
+
+  const categoriesQuery = useQuery<Category[]>({
+    queryKey: ['categories', comedyUniverse?.id],
+    queryFn: async () => {
+      const res = await api.content.getCategories();
+      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load categories');
+      return res.data;
+    },
+    staleTime: 300000,
+  });
+
   const {
     data: clips = [],
     isLoading,
     error,
     refetch,
   } = useQuery<ContentItem[], Error>({
-    queryKey: ['comedy-content'],
+    queryKey: ['comedy-content', comedyUniverse?.id],
     queryFn: async () => {
-      const result = await api.content.getContentByUniverse(
-        'u0000001-0000-0000-0000-000000000005',
-        1,
-        20
-      );
+      if (!comedyUniverse?.id) throw new Error('Comedy universe not found');
+      const result = await api.content.getContentByUniverse(comedyUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
       throw new Error(result.message || 'Failed to load comedy content.');
     },
     staleTime: 60000,
+    enabled: !!comedyUniverse?.id,
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-      <AppHeader />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Comedy" logoVariant="light" />
 
       {/* Hero Section */}
       <section
         className="relative py-16"
-        style={{ background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' }}
+        style={{
+          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -46,23 +80,23 @@ export default function ComedyPage(): React.JSX.Element {
               specials.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <button
-                type="button"
-                className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
+              <Link
+                href="/browse?category=comedy"
+                className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all inline-block"
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.2)',
                   border: '1px solid rgba(255,255,255,0.3)',
                 }}
               >
                 Browse Comedy
-              </button>
-              <button
-                type="button"
-                className="px-6 py-3 rounded-full text-sm font-semibold text-[#E8420A] transition-all"
-                style={{ backgroundColor: '#fff' }}
+              </Link>
+              <Link
+                href="/creators/upload"
+                className="px-6 py-3 rounded-full text-sm font-semibold text-[var(--brand-orange)] transition-all inline-block"
+                style={{ backgroundColor: 'white' }}
               >
                 Submit Your Clip
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -77,7 +111,7 @@ export default function ComedyPage(): React.JSX.Element {
           </div>
           <Link
             href="/browse"
-            className="text-sm font-medium text-[#E8420A] hover:text-[#CC1C1C] transition-colors"
+            className="text-sm font-medium text-[var(--brand-orange)] hover:text-[var(--brand-red)] transition-colors"
           >
             View All
           </Link>
@@ -110,18 +144,20 @@ export default function ComedyPage(): React.JSX.Element {
                   style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
                 >
                   <div className="relative">
-                    <img
+                    <OptimizedImage
                       src={clip.thumbnail}
                       alt={clip.title}
+                      width={400}
+                      height={160}
                       className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 via-transparent to-transparent" />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <div
                         className="w-14 h-14 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
                       >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#1A0A0A">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#0b090e">
                           <polygon points="5,3 19,12 5,21" />
                         </svg>
                       </div>
@@ -153,33 +189,36 @@ export default function ComedyPage(): React.JSX.Element {
 
         <div
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
-          role="listbox"
+          role="group"
           aria-label="Comedy categories"
         >
-          {[
-            { name: 'Skits', icon: '🎭' },
-            { name: 'Stand-up', icon: '🎤' },
-            { name: 'Improv', icon: '🎨' },
-            { name: 'Parodies', icon: '🎬' },
-            { name: 'Roasts', icon: '🔥' },
-            { name: 'Comedy Series', icon: '📺' },
-          ].map((category) => (
+          {(categoriesQuery.data || []).slice(0, 6).map((category) => (
             <button
-              key={category.name}
+              key={category.id}
               type="button"
-              role="option"
-              className="az-glass text-center cursor-pointer transition-all hover:scale-[1.02]"
+              aria-label={category.name}
+              className="az-glass p-4 rounded-2xl text-center cursor-pointer transition-all hover:scale-[1.02] group flex flex-col items-center justify-center border border-white/10 hover:border-amber-500/30"
             >
-              <div className="p-4">
-                <span className="text-3xl mb-2 block">{category.icon}</span>
-                <h4 className="font-medium text-sm text-white">{category.name}</h4>
-              </div>
+              {(() => {
+                const Icon =
+                  comedyIcons[category.slug?.toLowerCase() || ''] ||
+                  comedyIcons[category.name?.toLowerCase() || ''] ||
+                  Laugh;
+                return (
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-3 group-hover:scale-110 group-hover:bg-amber-500/20 transition-all">
+                    <Icon size={22} strokeWidth={1.75} />
+                  </div>
+                );
+              })()}
+              <h4 className="font-medium text-xs sm:text-sm text-white">{category.name}</h4>
             </button>
           ))}
         </div>
       </section>
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }
+
+export default ComedyPageContent;

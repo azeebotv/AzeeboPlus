@@ -45,16 +45,16 @@ export type DesignTokens = {
 
 export const colors = {
   primary: {
-    50: '#f5f3ff',
-    100: '#ede9fe',
-    200: '#ddd6fe',
-    300: '#c4b5fd',
-    400: '#a78bfa',
-    500: '#8b5cf6',
-    600: '#7c3aed',
-    700: '#6d28d9',
-    800: '#5b21b6',
-    900: '#4c1d95',
+    50: '#fef3ec',
+    100: '#fde2d1',
+    200: '#fbc5a3',
+    300: '#f89e6b',
+    400: '#f46e2e',
+    500: '#e8420a',
+    600: '#c83a08',
+    700: '#a33007',
+    800: '#7e2505',
+    900: '#5a1a03',
   },
   secondary: {
     50: '#eff6ff',
@@ -135,7 +135,7 @@ export const colors = {
   text: {
     primary: '#F3F4F6',
     secondary: '#9CA3AF',
-    tertiary: '#6B7280',
+    tertiary: '#9CA3AF',
     inverse: '#111827',
   },
   bg: {
@@ -147,7 +147,7 @@ export const colors = {
   border: {
     default: '#4B5563',
     light: '#374151',
-    focus: '#6366F1',
+    focus: '#E8420A',
   },
 };
 
@@ -161,6 +161,9 @@ export const spacing = {
   '3xl': 48,
   '4xl': 64,
 };
+
+/** @deprecated Use `spacing` instead. This was a duplicate for React Native. */
+export const spacingNative = spacing;
 
 export const typography = {
   fontSizes: {
@@ -191,6 +194,18 @@ export const typography = {
   },
 };
 
+/** @deprecated Use `typography.fontSizes` instead. This was a duplicate for React Native. */
+export const fontSizeNative = typography.fontSizes;
+
+export const fontWeightNative = {
+  thin: '300' as const,
+  normal: '400' as const,
+  medium: '500' as const,
+  semibold: '600' as const,
+  bold: '700' as const,
+  extrabold: '800' as const,
+};
+
 export const borderRadius = {
   none: 0,
   sm: 4,
@@ -209,7 +224,7 @@ export const shadows = {
   lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
   xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
   '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-  glow: '0 0 20px rgba(139, 92, 246, 0.4)',
+  glow: '0 0 20px rgba(232, 66, 10, 0.4)',
   goldGlow: '0 0 20px rgba(251, 191, 36, 0.4)',
 };
 
@@ -257,4 +272,4 @@ export const themes = {
 /**
  * Animation definitions
  */
-export { easing, duration, animation } from './animations';
+export { easing, duration, animation, generateAnimationsCSS } from './animations';

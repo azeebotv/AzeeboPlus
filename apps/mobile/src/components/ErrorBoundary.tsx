@@ -1,7 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { colors } from '@azeebo/design-tokens';
-import { logger } from '../utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 interface Props {
   children: ReactNode;
@@ -33,25 +33,47 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <View style={styles.container}>
-          <Text style={styles.title}>Something went wrong</Text>
-          <Text style={styles.message}>
-            {this.state.error?.message || 'An unexpected error occurred'}
-          </Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={this.handleRetry}
-            accessibilityRole="button"
-            accessibilityLabel="Try Again"
-          >
-            <Text style={styles.buttonText}>Try Again</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorBoundaryContent
+          onRetry={this.handleRetry}
+          errorMessage={__DEV__ ? this.state.error?.message : undefined}
+        />
       );
     }
 
     return this.props.children;
   }
+}
+
+function ErrorBoundaryContent({
+  onRetry,
+  errorMessage,
+}: {
+  onRetry: () => void;
+  errorMessage?: string;
+}) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  return (
+    <View
+      style={[styles.container, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}
+    >
+      <Text style={[styles.title, { color: isDark ? colors.dark[100] : colors.light[900] }]}>
+        Something went wrong
+      </Text>
+      <Text style={[styles.message, { color: isDark ? colors.dark[400] : colors.light[600] }]}>
+        {errorMessage || 'An unexpected error occurred'}
+      </Text>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: colors.primary[600] }]}
+        onPress={onRetry}
+        accessibilityRole="button"
+        accessibilityLabel="Try Again"
+      >
+        <Text style={[styles.buttonText, { color: colors.light[50] }]}>Try Again</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -60,28 +82,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: colors.neutral[50],
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: colors.neutral[900],
   },
   message: {
     fontSize: 14,
-    color: colors.neutral[600],
     textAlign: 'center',
     marginBottom: 20,
   },
   button: {
-    backgroundColor: colors.primary[600],
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
   },
   buttonText: {
-    color: colors.neutral[50],
     fontSize: 16,
     fontWeight: '600',
   },

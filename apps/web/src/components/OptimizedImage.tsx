@@ -1,4 +1,6 @@
 import Image from 'next/image';
+import { useState, useCallback } from 'react';
+import type { CSSProperties } from 'react';
 
 interface OptimizedImageProps {
   src: string;
@@ -7,10 +9,25 @@ interface OptimizedImageProps {
   height?: number;
   fill?: boolean;
   className?: string;
+  style?: CSSProperties;
   priority?: boolean;
   sizes?: string;
   placeholder?: 'blur' | 'empty';
   blurDataURL?: string;
+}
+
+const FALLBACK_SRC = 'https://placehold.co/800x600/1a1a1a/ffffff?text=Azeebo%2B';
+
+// URLs that should bypass Next.js image optimization (SVG or already optimized)
+const UNOPTIMIZED_HOSTS = ['placehold.co'];
+
+function isUnoptimizedUrl(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname;
+    return UNOPTIMIZED_HOSTS.some((host) => hostname.includes(host));
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -19,6 +36,8 @@ interface OptimizedImageProps {
  * - Lazy loading by default
  * - Responsive sizing
  * - Blur placeholder support
+ * - Error handling with fallback placeholder
+ * - Bypasses optimization for SVG/placeholder URLs
  */
 export function OptimizedImage({
   src,
@@ -27,25 +46,41 @@ export function OptimizedImage({
   height,
   fill = false,
   className,
+  style,
   priority = false,
   sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
   placeholder = 'empty',
   blurDataURL,
 }: OptimizedImageProps) {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  const handleError = useCallback(() => {
+    if (!hasError) {
+      setImgSrc(FALLBACK_SRC);
+      setHasError(true);
+    }
+  }, [hasError]);
+
+  const shouldUnoptimize = hasError || isUnoptimizedUrl(imgSrc);
+
   return (
     <Image
-      src={src}
+      src={imgSrc}
       alt={alt}
       width={fill ? undefined : width || 800}
       height={fill ? undefined : height || 600}
       fill={fill}
       className={className}
+      style={style}
       priority={priority}
       sizes={sizes}
       placeholder={placeholder}
       blurDataURL={blurDataURL}
       loading={priority ? 'eager' : 'lazy'}
       quality={85}
+      onError={handleError}
+      unoptimized={shouldUnoptimize}
     />
   );
 }

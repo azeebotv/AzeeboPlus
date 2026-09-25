@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiClient } from '../../../src/api/client';
-import { logger } from '../../../src/utils/logger';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../../src/theme';
 
 interface SecurityOption {
   id: string;
@@ -307,12 +308,12 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   section: {
     marginBottom: 32,
@@ -320,7 +321,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   optionCard: {
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -353,12 +354,12 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   optionDescription: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   optionAction: {
     alignItems: 'center',
@@ -366,11 +367,11 @@ const styles = StyleSheet.create({
   },
   arrowText: {
     fontSize: 24,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   valueText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   dangerText: {
     color: '#EF4444',

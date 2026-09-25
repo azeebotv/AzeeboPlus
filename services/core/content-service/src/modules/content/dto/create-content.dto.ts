@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUUID, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsUUID, IsEnum, IsBoolean, IsArray } from 'class-validator';
 
 export enum ContentStatus {
   DRAFT = 'draft',
@@ -23,6 +23,18 @@ export class CreateContentDto {
 
   @IsUUID()
   universeId!: string;
+
+  @IsString()
+  @IsOptional()
+  type?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isPremium?: boolean;
+
+  @IsArray()
+  @IsOptional()
+  tags?: string[];
 
   @IsEnum(ContentStatus)
   @IsOptional()

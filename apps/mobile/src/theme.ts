@@ -1,33 +1,42 @@
 /**
  * Azeebo+ Brand Theme for React Native
- * Matches the web design system in design prompt.md
+ * Extends @azeebo/design-tokens with mobile-specific overrides.
+ * Mobile uses warmer brand colors; web uses Tailwind + design-tokens CSS vars.
  */
+
+// Re-export base tokens from design-tokens package for consistency
+export { zIndex, themes } from '@azeebo/design-tokens';
 
 // ── Brand Colors ──────────────────────────────────────────────
 export const colors = {
   // Primary brand
   primaryColor: '#E8420A', // Azeebo Orange — CTAs, logo accent, highlights
   primaryDark: '#C83A08', // Darker orange for pressed states
+  secondary: '#1A1A1A', // Secondary surface color
   red: '#CC1C1C', // Deep Red — buttons, active states, glow
   redDark: '#B91818', // Darker red for pressed states
 
   // Backgrounds
   bg: {
-    primary: '#1A0A0A', // Warm near-black — main background
-    secondary: '#0A0A0A', // Cool near-black
-    tertiary: '#2A1A1A', // Elevated surface
-    surface: '#2A2A2A', // Card backgrounds, input fields
-    surfaceInput: '#1E1E1E', // Input field backgrounds
-    glass: 'rgba(255,255,255,0.08)', // Frosted glass panels
-    glassBorder: 'rgba(255,255,255,0.2)', // Glass panel borders
-    green: '#0D3B2E', // Forest green — marketing/hero backgrounds
+    primary: '#0B090E', // Page root: near-black with warm purple tint (matching web --hp-bg)
+    secondary: '#100E14', // Alternating section background (--hp-bg-alt)
+    tertiary: '#201C28', // Elevated surface
+    surface: '#18151E', // Card backgrounds, input fields (--hp-card-bg)
+    surfaceInput: '#18151E', // Input field backgrounds
+    surfaceLight: '#fafafa', // Light card/paper surface (light-scheme panels)
+    deep: '#0A0A1A', // Deep-space universe hero surfaces
+    deepRaised: '#2d1f5e', // Elevated deep-surface (violet dusk)
+    glass: 'rgba(255,255,255,0.06)', // Frosted glass panels
+    glassBorder: 'rgba(255,255,255,0.12)', // Glass panel borders
+    green: '#0D3B2E', // Forest green — legacy compatibility
   },
 
   // Text
   text: {
     primary: '#FFFFFF', // White — primary text
     secondary: '#9A8A7A', // Warm grey — secondary text
-    tertiary: '#6B5B4B', // Muted grey — hints, captions
+    tertiary: '#9A8A7A', // Warm grey — hints, captions (meets WCAG AA contrast >= 4.5:1)
+    muted: '#9A8A7A', // Alias for tertiary
     inverse: '#0A0A0A', // Dark text on light backgrounds
     accent: '#E8420A', // Orange accent text
     link: '#E8420A', // Link color
@@ -35,36 +44,111 @@ export const colors = {
 
   // Semantic
   primary: {
-    50: '#FEF3EC', 100: '#FDE2D1', 200: '#FBC5A3', 300: '#F89E6B',
-    400: '#F46E2E', 500: '#E8420A', 600: '#C83A08', 700: '#A33007',
-    800: '#7E2505', 900: '#5A1A03',
+    50: '#FEF3EC',
+    100: '#FDE2D1',
+    200: '#FBC5A3',
+    300: '#F89E6B',
+    400: '#F46E2E',
+    500: '#E8420A',
+    600: '#C83A08',
+    700: '#A33007',
+    800: '#7E2505',
+    900: '#5A1A03',
   },
   success: {
-    50: '#F0FDF4', 100: '#DCFCE7', 200: '#BBF7D0', 300: '#86EFAC',
-    400: '#4ADE80', 500: '#22C55E', 600: '#16A34A', 700: '#15803D',
-    800: '#166534', 900: '#14532D',
+    50: '#F0FDF4',
+    100: '#DCFCE7',
+    200: '#BBF7D0',
+    300: '#86EFAC',
+    400: '#4ADE80',
+    500: '#22C55E',
+    600: '#16A34A',
+    700: '#15803D',
+    800: '#166534',
+    900: '#14532D',
   },
   warning: {
-    50: '#FFFBEB', 100: '#FEF3C7', 200: '#FDE68A', 300: '#FCD34D',
-    400: '#FBBF24', 500: '#F59E0B', 600: '#D97706', 700: '#B45309',
-    800: '#92400E', 900: '#78350F',
+    50: '#FFFBEB',
+    100: '#FEF3C7',
+    200: '#FDE68A',
+    300: '#FCD34D',
+    400: '#FBBF24',
+    500: '#F59E0B',
+    600: '#D97706',
+    700: '#B45309',
+    800: '#92400E',
+    900: '#78350F',
   },
   error: {
-    50: '#FEF2F2', 100: '#FEE2E2', 200: '#FECACA', 300: '#FCA5A5',
-    400: '#F87171', 500: '#CC1C1C', 600: '#B91818', 700: '#991B1B',
-    800: '#7F1D1D', 900: '#611111',
+    50: '#FEF2F2',
+    100: '#FEE2E2',
+    200: '#FECACA',
+    300: '#FCA5A5',
+    400: '#F87171',
+    500: '#CC1C1C',
+    600: '#B91818',
+    700: '#991B1B',
+    800: '#7F1D1D',
+    900: '#611111',
   },
   info: {
-    50: '#EFF6FF', 100: '#DBEAFE', 200: '#BFDBFE', 300: '#93C5FD',
-    400: '#60A5FA', 500: '#3B82F6', 600: '#2563EB', 700: '#1D4ED8',
-    800: '#1E40AF', 900: '#1E3A8A',
+    50: '#EFF6FF',
+    100: '#DBEAFE',
+    200: '#BFDBFE',
+    300: '#93C5FD',
+    400: '#60A5FA',
+    500: '#3B82F6',
+    600: '#2563EB',
+    700: '#1D4ED8',
+    800: '#1E40AF',
+    900: '#1E3A8A',
   },
 
   // Borders
   border: {
     default: 'rgba(255,255,255,0.2)',
+    primary: 'rgba(255,255,255,0.2)',
     focus: '#E8420A',
     subtle: 'rgba(255,255,255,0.04)',
+  },
+
+  // Canonical neutral ramp — Tailwind-coincident cool greys. Text-tier
+  // greys live in text.*; these serve borders, disabled fills, and
+  // light-surface UI.
+  neutral: {
+    100: '#f0f0f0',
+    200: '#e5e5e5',
+    300: '#ccc',
+    400: '#aaa',
+    500: '#888',
+    600: '#666',
+    700: '#444',
+    800: '#333',
+    900: '#222',
+    950: '#111',
+  },
+
+  // Decorative category hues — badges, chips, tags, stat fills that carry
+  // vertical identity (games, comedy, sports, creators). These are the one
+  // deliberately non-semantic group: they encode category color-coding.
+  category: {
+    highlight: '#FFEAA7', // warm gold
+    amber: '#F39C12',
+    mint: '#96CEB4',
+    teal: '#4ECDC4',
+    blue: '#45B7D1',
+    indigo: '#6366F1',
+    purple: '#DDA0DD',
+    green: '#10B911',
+    cocoa: '#6B5B4B',
+  },
+
+  // Pre-multiplied alpha washes (8-digit hex) for tints and glows.
+  alpha: {
+    primary20: '#E8420A20',
+    danger20: '#CC1C1C20',
+    success25: '#22C55E25',
+    violet20: '#8B5CF620',
   },
 
   // Overlays
@@ -131,6 +215,7 @@ export const universeColors: Record<string, string> = {
   games: '#06b6d4',
   comedy: '#fbbf24',
   sports: '#22c55e',
+  music: '#d946ef',
   cinemaxis: '#0A1A3B',
 };
 
@@ -240,4 +325,11 @@ export const depth = {
   overlay: 10,
   modal: 100,
   toast: 200,
+} as const;
+
+// ── Default Images ──────────────────────────────────────────
+export const defaultImages = {
+  thumbnail: 'https://placehold.co/800x600/1a1a1a/ffffff?text=Azeebo%2B',
+  avatar: 'https://placehold.co/200x200/1a1a1a/ffffff?text=U',
+  banner: 'https://placehold.co/1200x400/1a1a1a/ffffff?text=Azeebo%2B',
 } as const;

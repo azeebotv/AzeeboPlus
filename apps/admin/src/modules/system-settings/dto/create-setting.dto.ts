@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsBoolean, IsObject, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsObject,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Prisma } from '../../../generated/prisma';
@@ -632,7 +639,10 @@ export class BulkCreateSettingsDto {
 export class ImportSettingsDto {
   @ApiProperty({ description: 'Settings to import (JSON)' })
   @IsObject()
-  data!: Record<string, Record<string, { value?: Prisma.InputJsonValue; description?: string; isPublic?: boolean }>>;
+  data!: Record<
+    string,
+    Record<string, { value?: Prisma.InputJsonValue; description?: string; isPublic?: boolean }>
+  >;
 
   @ApiPropertyOptional({ description: 'Merge strategy: replace or merge' })
   @IsOptional()

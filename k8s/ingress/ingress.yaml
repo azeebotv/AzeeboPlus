@@ -1,0 +1,86 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: azeebo-ingress
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - azeebo.com
+        - www.azeebo.com
+        - api.azeebo.com
+        - admin.azeebo.com
+        - creator.azeebo.com
+      secretName: azeebo-tls
+  rules:
+    # Main web app
+    - host: azeebo.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: azeebo-web
+                port:
+                  number: 4000
+    - host: www.azeebo.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: azeebo-web
+                port:
+                  number: 4000
+
+    # API Gateway
+    - host: api.azeebo.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 3013
+
+    # Admin panel
+    - host: admin.azeebo.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: azeebo-admin
+                port:
+                  number: 4016
+
+    # Creator panel
+    - host: creator.azeebo.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: azeebo-creator
+                port:
+                  number: 4014

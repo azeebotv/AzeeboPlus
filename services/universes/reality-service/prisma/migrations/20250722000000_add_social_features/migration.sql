@@ -1,0 +1,2 @@
+-- Social features (likes, comments, shares) are included in the init migration.
+-- This migration is a no-op to avoid duplicate table/index creation errors.

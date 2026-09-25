@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   output   = "../src/prisma/client"
 }
 
@@ -34,17 +35,38 @@ model Prediction {
   userId      String
   contentId   String
   prediction  String
+  category    String?  // prediction category (e.g., "winner", "score", "event")
+  metadata    Json?    // additional prediction data
   points      Int      @default(0)
   isCorrect   Boolean?
   result      String?
+  status      String   @default("active") // active, resolved, cancelled
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
   @@index([contentId])
   @@index([isCorrect])
+  @@index([category])
+  @@index([status])
   @@index([createdAt])
   @@map("predictions")
+}
+
+model RankingHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  category    String
+  score       Int      @default(0)
+  rank        Int      @default(0)
+  period      String
+  recordedAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([category])
+  @@index([period])
+  @@index([recordedAt])
+  @@map("ranking_history")
 }
 
 model Ranking {

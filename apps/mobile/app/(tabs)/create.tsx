@@ -8,24 +8,44 @@ import {
   Alert,
   TextInput,
   useColorScheme,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { universeApi, contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
+import { apiClient, contentApi, mediaApi } from '@azeebo/react-data';
+import { mediaFingerprint } from '@azeebo/react-data/utils/mediaCache';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
-
-interface UniverseOption {
-  id: string;
-  name: string;
-  icon: string;
-}
+import { colors } from '../../src/theme';
 
 const uploadOptions = [
-  { id: 'video', name: 'Video', icon: '📹', color: '#FF6B6B' },
-  { id: 'image', name: 'Image', icon: '📷', color: '#4ECDC4' },
-  { id: 'live', name: 'Live Stream', icon: '🎥', color: '#45B7D1' },
-  { id: 'story', name: 'Story', icon: '📖', color: '#96CEB4' },
+  { id: 'video', name: 'Video', icon: '📹', color: colors.error[500] },
+  { id: 'image', name: 'Image', icon: '📷', color: colors.category.teal },
+  { id: 'live', name: 'Live Stream', icon: '🎥', color: colors.category.blue },
+  { id: 'story', name: 'Story', icon: '📖', color: colors.category.mint },
 ];
+
+// Privacy options map onto the content service's create DTO: "public" is the
+// default published state, "premium" sets isPremium (premium window gating),
+// "private"/"unlisted" keep the item out of public feeds via metadata.
+// NOTE: the backend treats these as a soft signal for now (no ACL column
+// yet) — see content.repository.create, which persists isPremium only.
+const privacyOptions = [
+  { id: 'public', name: 'Public' },
+  { id: 'premium', name: 'Premium' },
+  { id: 'private', name: 'Private' },
+  { id: 'unlisted', name: 'Unlisted' },
+];
+
+interface SelectedFile {
+  uri: string;
+  name: string;
+  type: string;
+  size?: number;
+}
+
+
 
 export default function CreateScreen() {
   const colorScheme = useColorScheme();
@@ -33,6 +53,9 @@ export default function CreateScreen() {
   const [selectedUniverse, setSelectedUniverse] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [privacy, setPrivacy] = useState('public');
+  const [tags, setTags] = useState('');
+  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [universeOptions, setUniverseOptions] = useState<
     { id: string; name: string; icon: string }[]
@@ -44,13 +67,21 @@ export default function CreateScreen() {
     setIsLoadingUniverses(true);
     setUniversesError(null);
     try {
-      const res = await universeApi.getUniverses();
-      if (res.success && res.data) {
+      // Content creation requires a UUID universeId that the content-service
+      // recognizes, so this list comes from GET /v1/public/universes (enabled
+      // universes with their real ids) — NOT the vertical-service universeMap
+      // endpoint, whose slug ids the content DB doesn't know about. This is
+      // the same source the web upload page uses.
+      const res = await apiClient.get<{
+        success: boolean;
+        data: { id: string; name: string; displayName: string; icon?: string | null }[];
+      }>('/v1/public/universes');
+      if (res.success && Array.isArray(res.data)) {
         setUniverseOptions(
-          res.data.items.map((u: Record<string, unknown>) => ({
-            id: (u.slug || u.id) as string,
-            name: u.name as string,
-            icon: '🌐',
+          res.data.map((u) => ({
+            id: u.id,
+            name: u.displayName || u.name,
+            icon: u.icon || '🌐',
           }))
         );
       }
@@ -65,6 +96,42 @@ export default function CreateScreen() {
     fetchUniverses();
   }, []);
 
+  const pickFile = async () => {
+    try {
+      if (selectedType === 'image') {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          quality: 0.8,
+        });
+        if (!result.canceled && result.assets[0]) {
+          const asset = result.assets[0];
+          setSelectedFile({
+            uri: asset.uri,
+            name: asset.fileName || `image.${asset.uri.split('.').pop() || 'jpg'}`,
+            type: asset.mimeType || 'image/jpeg',
+          });
+        }
+      } else {
+        const result = await DocumentPicker.getDocumentAsync({
+          type: selectedType === 'video' ? 'video/*' : '*/*',
+          copyToCacheDirectory: true,
+        });
+        if (!result.canceled && result.assets[0]) {
+          const asset = result.assets[0];
+          setSelectedFile({
+            uri: asset.uri,
+            name: asset.name,
+            type: asset.mimeType || 'application/octet-stream',
+            size: asset.size,
+          });
+        }
+      }
+    } catch (err) {
+      logger.error('File picker error:', err);
+      Alert.alert('Error', 'Could not open file picker');
+    }
+  };
+
   const handleUpload = async () => {
     if (!selectedUniverse) {
       Alert.alert('Error', 'Please select a universe');
@@ -74,35 +141,103 @@ export default function CreateScreen() {
       Alert.alert('Error', 'Please enter a title');
       return;
     }
+    if (!selectedFile) {
+      Alert.alert('Error', 'Please select a file to upload');
+      return;
+    }
 
     setIsUploading(true);
     try {
-      const result = await contentApi.createContent({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        universe: selectedUniverse,
-        contentType: selectedType,
-      });
+      const isPremium = privacy === 'premium';
+      const isPublicFeed = privacy === 'public' || privacy === 'premium';
+      // The create endpoint always stores drafts; the item is published right
+      // after so it lands in the public feeds (unless visibility-restricted).
+      const metadata = isPublicFeed ? undefined : { visibility: privacy };
+      const tagList = tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
 
-      if (result.success) {
-        Alert.alert(
-          'Success',
-          'Content created! Note: File upload is not yet available in the mobile app. Please use the web app to upload media files.',
-          [{ text: 'OK' }]
-        );
-        setTitle('');
-        setDescription('');
-        setSelectedUniverse(null);
+      // Images are `immutable` on the media service: uploading the same image
+      // again (retry after a failure, or re-publishing the same file) skips
+      // the network upload entirely via the media cache and reuses the cached
+      // object URL. Videos/stories/live go through the multipart helper.
+      let publishedId: string | null = null;
+      if (selectedType === 'image') {
+        const formData = new FormData();
+        formData.append('file', {
+          uri: selectedFile.uri,
+          type: selectedFile.type,
+          name: selectedFile.name,
+        } as unknown as Blob);
+        const upload = await mediaApi.uploadImage(formData, {
+          fingerprint: mediaFingerprint(selectedFile),
+        });
+        if (!upload.success || !upload.data) {
+          throw new Error((upload.error as unknown as string) || 'Failed to upload image');
+        }
+        const contentResult = await contentApi.createContent({
+          title: title.trim(),
+          description: description.trim() || undefined,
+          universe: selectedUniverse,
+          contentType: 'image',
+          mediaUrl: upload.data.url,
+          isPremium,
+          tags: tagList,
+          metadata,
+        });
+        if (!contentResult.success || !contentResult.data) {
+          throw new Error(contentResult.message || 'Failed to publish content');
+        }
+        publishedId = contentResult.data.id;
       } else {
-        Alert.alert('Error', result.error || 'Failed to create content');
+        const result = await contentApi.createContentWithFile({
+          title: title.trim(),
+          description: description.trim() || undefined,
+          universe: selectedUniverse,
+          contentType: selectedType,
+          fileUri: selectedFile.uri,
+          fileType: selectedFile.type,
+          fileName: selectedFile.name,
+        });
+        if (!result.success || !result.data) {
+          Alert.alert(
+            'Upload Failed',
+            (result.error as unknown as string) || 'Failed to upload content'
+          );
+          return;
+        }
+        publishedId = result.data.id;
       }
+
+      // Visibility-restricted items keep the draft status (they are excluded
+      // from the public home/watch feeds, which list published content).
+      if (publishedId && isPublicFeed) {
+        const publishResult = await contentApi.publishContentItem(publishedId);
+        if (!publishResult.success) {
+          logger.warn('Content created but publish failed', undefined, { contentId: publishedId });
+        }
+      }
+
+      Alert.alert('Success', 'Content published successfully!', [{ text: 'OK' }]);
+      setTitle('');
+      setDescription('');
+      setSelectedUniverse(null);
+      setSelectedFile(null);
+      setPrivacy('public');
+      setTags('');
     } catch (err) {
       logger.error('Failed to upload content:', err);
-      Alert.alert('Error', 'Failed to upload content. Please try again.');
+      Alert.alert(
+        'Upload Error',
+        err instanceof Error ? err.message : 'Failed to upload content. Please try again.'
+      );
     } finally {
       setIsUploading(false);
     }
   };
+
+  const removeFile = () => setSelectedFile(null);
 
   if (isLoadingUniverses) {
     return (
@@ -134,35 +269,28 @@ export default function CreateScreen() {
     );
   }
 
+  const isDark = colorScheme === 'dark';
+  const bgColor = isDark ? '#1A0A0A' : '#ffffff';
+  const textColor = isDark ? '#ffffff' : '#1A0A0A';
+  const inputBg = isDark ? '#1a1a1a' : '#f5f5f5';
+
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' }]}
-    >
-      <ScrollView
-        style={[
-          styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
-        ]}
-      >
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: bgColor }]}>
+      <ScrollView style={[styles.container, { backgroundColor: bgColor }]}>
         <View style={styles.header}>
-          <Text
-            style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-          >
-            Create
-          </Text>
+          <Text style={[styles.headerTitle, { color: textColor }]}>Create</Text>
         </View>
 
         <View style={styles.uploadTypeSection}>
-          <Text
-            style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-          >
-            Select Type
-          </Text>
+          <Text style={[styles.sectionLabel, { color: textColor }]}>Select Type</Text>
           <View style={styles.uploadOptionsGrid}>
             {uploadOptions.map((option) => (
               <TouchableOpacity
                 key={option.id}
-                onPress={() => setSelectedType(option.id)}
+                onPress={() => {
+                  setSelectedType(option.id);
+                  setSelectedFile(null);
+                }}
                 style={[
                   styles.uploadOption,
                   selectedType === option.id && {
@@ -172,50 +300,49 @@ export default function CreateScreen() {
                 ]}
               >
                 <Text style={styles.uploadIcon}>{option.icon}</Text>
-                <Text
-                  style={[
-                    styles.uploadName,
-                    { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
-                  ]}
-                >
-                  {option.name}
-                </Text>
+                <Text style={[styles.uploadName, { color: textColor }]}>{option.name}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
         <View style={styles.uploadArea}>
-          <View style={styles.uploadButton}>
-            <Text style={styles.uploadIconLarge}>📤</Text>
-            <Text
-              style={[styles.uploadText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-            >
-              {selectedType === 'video' ? 'Video' : selectedType === 'image' ? 'Image' : 'Content'}{' '}
-              Upload
-            </Text>
-            <Text style={styles.uploadHint}>
-              File upload is currently only available on the web app.
-            </Text>
-            <Text style={styles.uploadHint}>Use the web app to upload media files.</Text>
-          </View>
+          {selectedFile ? (
+            <View style={styles.selectedFileContainer}>
+              <Text style={styles.selectedFileIcon}>
+                {selectedType === 'video' ? '🎬' : selectedType === 'image' ? '🖼️' : '📄'}
+              </Text>
+              <Text style={styles.selectedFileName} numberOfLines={1}>
+                {selectedFile.name}
+              </Text>
+              {selectedFile.size && (
+                <Text style={styles.selectedFileSize}>
+                  {(selectedFile.size / 1024 / 1024).toFixed(1)} MB
+                </Text>
+              )}
+              <TouchableOpacity onPress={removeFile} style={styles.removeFileButton}>
+                <Text style={styles.removeFileText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity onPress={pickFile} style={styles.uploadButton}>
+              <Text style={styles.uploadIconLarge}>📤</Text>
+              <Text style={[styles.uploadText, { color: textColor }]}>
+                Tap to Select{' '}
+                {selectedType === 'video' ? 'Video' : selectedType === 'image' ? 'Image' : 'File'}
+              </Text>
+              <Text style={styles.uploadHint}>
+                {selectedType === 'image' ? 'From gallery' : 'From device storage'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.formSection}>
           <View style={styles.formGroup}>
-            <Text
-              style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-            >
-              Title
-            </Text>
+            <Text style={[styles.formLabel, { color: textColor }]}>Title</Text>
             <TextInput
-              style={[
-                styles.formInput,
-                {
-                  backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                  color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A',
-                },
-              ]}
+              style={[styles.formInput, { backgroundColor: inputBg, color: textColor }]}
               placeholder="Enter title..."
               placeholderTextColor="#888"
               value={title}
@@ -224,19 +351,9 @@ export default function CreateScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text
-              style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-            >
-              Description
-            </Text>
+            <Text style={[styles.formLabel, { color: textColor }]}>Description</Text>
             <TextInput
-              style={[
-                styles.formInput,
-                {
-                  backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                  color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A',
-                },
-              ]}
+              style={[styles.formInput, { backgroundColor: inputBg, color: textColor }]}
               placeholder="Add description..."
               placeholderTextColor="#888"
               value={description}
@@ -247,11 +364,19 @@ export default function CreateScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text
-              style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-            >
-              Universe
-            </Text>
+            <Text style={[styles.formLabel, { color: textColor }]}>Tags (comma separated)</Text>
+            <TextInput
+              style={[styles.formInput, { backgroundColor: inputBg, color: textColor }]}
+              placeholder="e.g. comedy, nollywood, music"
+              placeholderTextColor="#888"
+              value={tags}
+              onChangeText={setTags}
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={[styles.formLabel, { color: textColor }]}>Universe</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -284,42 +409,52 @@ export default function CreateScreen() {
         </View>
 
         <View style={styles.privacySection}>
-          <Text
-            style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-          >
-            Privacy Settings
-          </Text>
+          <Text style={[styles.sectionLabel, { color: textColor }]}>Privacy Settings</Text>
           <View style={styles.privacyOptions}>
-            {['Public', 'Private', 'Unlisted'].map((option) => (
+            {privacyOptions.map((option) => (
               <TouchableOpacity
-                key={option}
+                key={option.id}
+                onPress={() => setPrivacy(option.id)}
                 style={[
                   styles.privacyButton,
-                  option === 'Public' && { backgroundColor: '#E8420A' },
+                  privacy === option.id && { backgroundColor: '#E8420A' },
                 ]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: privacy === option.id }}
               >
-                <Text style={[styles.privacyText, option === 'Public' && { color: '#ffffff' }]}>
-                  {option}
+                <Text
+                  style={[styles.privacyText, privacy === option.id && { color: '#ffffff' }]}
+                >
+                  {option.name}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
+          <Text style={[styles.privacyHint, { color: colors.text.secondary }]}>
+            {privacy === 'public' && 'Visible to everyone in feeds and search.'}
+            {privacy === 'premium' && 'Only subscribers with a premium window can watch.'}
+            {privacy === 'private' && 'Only you can see this content.'}
+            {privacy === 'unlisted' && 'Only people with the link can find this content.'}
+          </Text>
         </View>
 
         <TouchableOpacity
           onPress={handleUpload}
           disabled={isUploading}
-          style={[styles.submitButton, isUploading && { backgroundColor: '#ccc' }]}
+          style={[styles.submitButton, isUploading && { backgroundColor: colors.neutral[600] }]}
         >
-          <Text style={styles.submitButtonText}>{isUploading ? 'Uploading...' : 'Publish'}</Text>
+          {isUploading ? (
+            <View style={styles.uploadingRow}>
+              <ActivityIndicator color="#ffffff" size="small" />
+              <Text style={styles.submitButtonText}> Uploading...</Text>
+            </View>
+          ) : (
+            <Text style={styles.submitButtonText}>Publish</Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.tipsSection}>
-          <Text
-            style={[styles.tipsTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
-          >
-            💡 Tips for Creators
-          </Text>
+          <Text style={[styles.tipsTitle, { color: textColor }]}>Tips for Creators</Text>
           <View style={styles.tipsList}>
             <Text style={styles.tipItem}>• Use high-quality video for better engagement</Text>
             <Text style={styles.tipItem}>• Add relevant tags to reach more viewers</Text>
@@ -370,7 +505,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#e0e0e0',
-    backgroundColor: '#fafafa',
+    backgroundColor: colors.bg.surfaceLight,
   },
   uploadIcon: {
     fontSize: 24,
@@ -389,7 +524,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 32,
     alignItems: 'center',
-    backgroundColor: '#f5f0ff',
+    backgroundColor: colors.bg.surfaceLight,
   },
   uploadIconLarge: {
     fontSize: 48,
@@ -402,7 +537,42 @@ const styles = StyleSheet.create({
   },
   uploadHint: {
     fontSize: 12,
-    color: '#888',
+    color: colors.text.secondary,
+  },
+  selectedFileContainer: {
+    borderWidth: 2,
+    borderColor: colors.category.teal,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    backgroundColor: colors.bg.surfaceLight,
+  },
+  selectedFileIcon: {
+    fontSize: 36,
+    marginBottom: 8,
+  },
+  selectedFileName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.neutral[800],
+    marginBottom: 4,
+    maxWidth: '80%',
+  },
+  selectedFileSize: {
+    fontSize: 12,
+    color: colors.text.tertiary,
+    marginBottom: 12,
+  },
+  removeFileButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: colors.error[500],
+  },
+  removeFileText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   formSection: {
     marginBottom: 20,
@@ -432,7 +602,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.neutral[100],
   },
   universeIcon: {
     fontSize: 16,
@@ -440,7 +610,7 @@ const styles = StyleSheet.create({
   universeName: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#333',
+    color: colors.neutral[800],
   },
   privacySection: {
     marginBottom: 24,
@@ -453,13 +623,17 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.neutral[100],
     alignItems: 'center',
   },
   privacyText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: colors.neutral[800],
+  },
+  privacyHint: {
+    fontSize: 12,
+    marginTop: 8,
   },
   submitButton: {
     backgroundColor: '#E8420A',
@@ -473,8 +647,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  uploadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   tipsSection: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.bg.surfaceLight,
     borderRadius: 12,
     padding: 16,
   },
@@ -488,7 +667,7 @@ const styles = StyleSheet.create({
   },
   tipItem: {
     fontSize: 13,
-    color: '#666',
-    lineHeight: 1.5,
+    color: colors.text.tertiary,
+    lineHeight: 20,
   },
 });

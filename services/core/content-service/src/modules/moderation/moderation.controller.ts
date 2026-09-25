@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -10,20 +11,20 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { ModerationService } from './moderation.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { ResolveModerationDto, ModerationDecisionDto } from './dto/moderation.dto';
+import { ModerationService } from './moderation.service.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { Roles } from '../../common/decorators/roles.decorator.js';
+import { ResolveModerationDto, ModerationDecisionDto } from './dto/moderation.dto.js';
 
 @ApiTags('Moderation')
 @ApiBearerAuth()
-@Controller('v1/moderation')
+@Controller('moderation')
+@UseGuards(RolesGuard)
+@Roles('moderator', 'admin')
 export class ModerationController {
-  constructor(private readonly moderationService: ModerationService) {}
+  constructor(@Inject(ModerationService) private readonly moderationService: ModerationService) {}
 
   @Post('scan/:contentId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Scan content for policy violations' })
   @ApiResponse({ status: 201, description: 'Content scan initiated' })
@@ -31,7 +32,7 @@ export class ModerationController {
   async scanContent(
     @Param('contentId') contentId: string,
     @Body('type')
-    type:
+    _type:
       | 'malware'
       | 'nsfw'
       | 'hate_speech'
@@ -40,11 +41,10 @@ export class ModerationController {
       | 'spam'
       | 'misinformation' = 'malware'
   ): Promise<unknown> {
-    return this.moderationService.scanContent(contentId, type);
+    return this.moderationService.scanContent(contentId, _type);
   }
 
   @Get('risk/:contentId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Assess content risk' })
   @ApiResponse({ status: 200, description: 'Risk assessment' })
@@ -53,7 +53,6 @@ export class ModerationController {
   }
 
   @Get('scans/:contentId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get content scan history' })
   @ApiResponse({ status: 200, description: 'Scan history' })
@@ -62,7 +61,7 @@ export class ModerationController {
   }
 
   @Post('cases')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create moderation case' })
@@ -83,17 +82,17 @@ export class ModerationController {
   }
 
   @Get('cases')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get moderation cases' })
   @ApiResponse({ status: 200, description: 'Cases list' })
   async getCases(
     @Query('status') status?: 'open' | 'under_review' | 'resolved' | 'escalated' | 'dismissed',
-    @Query('assignedTo') assignedTo?: string,
-    @Query('priority') priority?: 'low' | 'medium' | 'high',
-    @Query('page') page?: string,
-    @Query('limit') limit?: string
+    @Query('assignedTo') _assignedTo?: string,
+    @Query('priority') _priority?: 'low' | 'medium' | 'high',
+    @Query('page') _page?: string,
+    @Query('limit') _limit?: string
   ): Promise<unknown> {
     return this.moderationService.getCases({
       status,
@@ -101,7 +100,7 @@ export class ModerationController {
   }
 
   @Get('cases/:caseId')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get moderation case by ID' })
@@ -111,20 +110,20 @@ export class ModerationController {
   }
 
   @Patch('cases/:caseId/assign')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Assign case to moderator' })
   @ApiResponse({ status: 200, description: 'Case assigned' })
   async assignCase(
     @Param('caseId') caseId: string,
-    @Request() req: { user: { userId: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.moderationService.assignCase(caseId, req.user.id);
   }
 
   @Patch('cases/:caseId/resolve')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Resolve moderation case' })
@@ -132,7 +131,7 @@ export class ModerationController {
   async resolveCase(
     @Param('caseId') caseId: string,
     @Body() body: ResolveModerationDto,
-    @Request() req: { user: { userId: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.moderationService.resolveCase(caseId, {
       resolution: body.resolution,
@@ -142,7 +141,7 @@ export class ModerationController {
   }
 
   @Post('actions')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Execute safety action' })
@@ -163,7 +162,7 @@ export class ModerationController {
       reason: string;
       durationDays?: number;
     },
-    @Request() req: { user: { userId: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.moderationService.executeAction({
       ...data,
@@ -172,7 +171,7 @@ export class ModerationController {
   }
 
   @Get('actions/case/:caseId')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get safety actions for case' })
@@ -182,7 +181,6 @@ export class ModerationController {
   }
 
   @Post('appeals')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Submit appeal' })
   @ApiResponse({ status: 201, description: 'Appeal submitted' })
@@ -194,7 +192,7 @@ export class ModerationController {
       reason: string;
       evidence?: Record<string, unknown>;
     },
-    @Request() req: { user: { userId: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.moderationService.submitAppeal({
       caseId: data.caseId,
@@ -204,7 +202,7 @@ export class ModerationController {
   }
 
   @Patch('appeals/:appealId/review')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Review appeal' })
@@ -212,7 +210,7 @@ export class ModerationController {
   async reviewAppeal(
     @Param('appealId') appealId: string,
     @Body() body: ModerationDecisionDto,
-    @Request() req: { user: { userId: string } }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.moderationService.reviewAppeal(
       appealId,
@@ -223,7 +221,6 @@ export class ModerationController {
   }
 
   @Get('trust/:userId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user trust score' })
   @ApiResponse({ status: 200, description: 'Trust score' })
@@ -232,7 +229,7 @@ export class ModerationController {
   }
 
   @Patch('trust/:userId')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update user trust score' })
@@ -245,7 +242,7 @@ export class ModerationController {
   }
 
   @Get('stats')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('moderator', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get moderation statistics' })

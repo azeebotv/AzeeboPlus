@@ -1,20 +1,18 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import axios from 'axios';
 
 @Injectable()
 export class TranscodingService {
   private readonly logger = new Logger(TranscodingService.name);
   private s3Client: S3Client;
   private bucketName: string;
-  private transcodedBaseUrl: string;
 
-  constructor(private configService: ConfigService) {
-    this.bucketName = this.configService.get('S3_BUCKET_NAME') || '';
-    this.transcodedBaseUrl =
-      this.configService.get('S3_TRANSCODED_BASE_URL') ||
-      `https://${this.bucketName}.s3.amazonaws.com/transcoded`;
+  constructor(@Inject(ConfigService) private configService: ConfigService) {
+    this.bucketName = this.configService.get('AWS_S3_BUCKET') || '';
     this.s3Client = new S3Client({
       region: this.configService.get('AWS_REGION') || 'us-east-1',
       credentials: {
@@ -50,6 +48,38 @@ export class TranscodingService {
 
       const jobId = `transcode_${Date.now()}_${mediaAssetId}`;
 
+      // Delegate to media-service for actual transcoding
+      const mediaServiceUrl = this.configService.get<string>('MEDIA_SERVICE_URL');
+      if (mediaServiceUrl) {
+        try {
+          await axios.post(
+            `${mediaServiceUrl}/v1/upload/transcode`,
+            {
+              jobId,
+              inputKey: key,
+              mediaAssetId,
+              formats: options.formats || ['mp4'],
+              resolutions: options.resolutions || ['720p', '480p', '360p'],
+            },
+            {
+              timeout: 10000,
+              headers: {
+                'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
+              },
+            }
+          );
+          this.logger.log(`Transcoding job ${jobId} delegated to media-service`);
+        } catch (delegateError) {
+          this.logger.warn(
+            `Failed to delegate to media-service: ${(delegateError as Error).message} — job created but may not process`
+          );
+        }
+      } else {
+        this.logger.warn(
+          `No MEDIA_SERVICE_URL configured — transcoding job ${jobId} created but won't be processed`
+        );
+      }
+
       this.logger.log('Transcoding job started:', {
         jobId,
         mediaAssetId,
@@ -62,14 +92,29 @@ export class TranscodingService {
         status: 'pending',
         message: 'Transcoding job started',
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error('Error starting transcoding job:', error);
-      throw new BadRequestException('Failed to start transcoding job');
+      mapAndThrow(error, 'starting transcoding job');
     }
   }
 
   async getTranscodingJobStatus(jobId: string): Promise<unknown> {
     this.logger.log('Getting transcoding job status:', jobId);
+
+    const mediaServiceUrl = this.configService.get<string>('MEDIA_SERVICE_URL');
+    if (mediaServiceUrl) {
+      try {
+        const response = await axios.get(`${mediaServiceUrl}/v1/upload/transcoding/${jobId}`, {
+          timeout: 5000,
+          headers: { 'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', '') },
+        });
+        return response.data?.data || response.data;
+      } catch (error) {
+        this.logger.warn(
+          `Failed to fetch transcoding status from media-service: ${(error as Error).message}`
+        );
+      }
+    }
 
     return {
       jobId,
@@ -96,9 +141,9 @@ export class TranscodingService {
         expiresIn,
       });
       return signedUrl;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error('Error generating signed URL for transcoded media:', error);
-      throw new BadRequestException('Failed to generate signed URL');
+      mapAndThrow(error, 'generating transcoded media URL');
     }
   }
 }

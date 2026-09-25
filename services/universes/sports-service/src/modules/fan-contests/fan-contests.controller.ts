@@ -1,17 +1,30 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
-import { FanContestsService } from './fan-contests.service';
+import { FeatureFlag, FeatureFlagGuard, sportsFlags } from '@azeebo/feature-flags';
+import { FanContestsService } from './fan-contests.service.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
-import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto';
+import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto.js';
 
 @ApiTags('Fan Contests')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
-@Controller('v1/sports/fan-contests')
+@FeatureFlag(sportsFlags.fanContests)
+@UseGuards(FeatureFlagGuard)
+@Controller('sports/fan-contests')
 export class FanContestsController {
-  constructor(private readonly fanContestsService: FanContestsService) {}
+  constructor(
+    @Inject(FanContestsService) private readonly fanContestsService: FanContestsService
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get contests' })
@@ -37,7 +50,7 @@ export class FanContestsController {
     @Body() body: JoinContestDto,
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.fanContestsService.enterContest(req.user.sub, contestId, body.entryData);
+    return this.fanContestsService.enterContest(req.user.id, contestId, body.entryData);
   }
 
   @Post(':id/score')
@@ -47,7 +60,7 @@ export class FanContestsController {
     @Body() body: SubmitContestScoreDto,
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.fanContestsService.updateEntryScore(req.user.sub, contestId, body.score);
+    return this.fanContestsService.updateEntryScore(req.user.id, contestId, body.score);
   }
 
   @Get(':id/leaderboard')

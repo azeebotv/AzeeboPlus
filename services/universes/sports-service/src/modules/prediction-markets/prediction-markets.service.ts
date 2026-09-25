@@ -1,18 +1,47 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagService, sportsFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 @Injectable()
 export class PredictionMarketsService {
   private readonly logger = new Logger(PredictionMarketsService.name);
   private readonly walletServiceBaseUrl: string;
+  private readonly userServiceBaseUrl: string;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    private readonly featureFlagService: FeatureFlagService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+    this.userServiceBaseUrl = this.configService.getOrThrow<string>('USER_SERVICE_URL');
+  }
+
+  private async getWalletByUserId(userId: string): Promise<{ id: string; balance: number } | null> {
+    try {
+      const response = await axios.get(`${this.walletServiceBaseUrl}/wallet/user/${userId}`, {
+        timeout: 10000,
+      });
+      const data = response.data?.data ?? response.data;
+      return { id: data.id, balance: Number(data.balance) };
+    } catch {
+      return null;
+    }
+  }
+
+  private async getUserById(
+    userId: string
+  ): Promise<{ id: string; displayName: string; avatar: string } | null> {
+    try {
+      const response = await axios.get(`${this.userServiceBaseUrl}/users/${userId}`, {
+        timeout: 10000,
+      });
+      return response.data;
+    } catch {
+      return null;
+    }
   }
 
   async getPredictionMarkets(
@@ -75,7 +104,6 @@ export class PredictionMarketsService {
             },
           },
           entries: {
-            include: { user: { select: { id: true, displayName: true, avatar: true } } },
             orderBy: { createdAt: 'desc' },
             take: 50,
           },
@@ -111,12 +139,16 @@ export class PredictionMarketsService {
         throw new BadRequestException('Market already exists for this event');
       }
 
+      // sports_odds_feeds: third-party odds ingestion is off until the flag is
+      // on — odds payloads are dropped at ingestion so no external odds data
+      // lands in markets.
+      const oddsFeedsEnabled = await this.featureFlagService.isEnabled(sportsFlags.oddsFeeds);
       const market = await this.prisma.predictionMarket.create({
         data: {
           eventId,
           question,
           options: JSON.parse(JSON.stringify(options)),
-          odds: odds ? JSON.parse(JSON.stringify(odds)) : undefined,
+          odds: oddsFeedsEnabled && odds ? JSON.parse(JSON.stringify(odds)) : undefined,
         },
       });
 
@@ -163,7 +195,7 @@ export class PredictionMarketsService {
         throw new BadRequestException('Already placed a prediction in this market');
       }
 
-      const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+      const wallet = await this.getWalletByUserId(userId);
       if (!wallet) {
         throw new NotFoundException('Wallet not found');
       }
@@ -187,34 +219,61 @@ export class PredictionMarketsService {
           { timeout: 10000 }
         )
         .catch((error: unknown) => {
-          const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
+          const errorMessage =
+            error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
           throw new BadRequestException(errorMessage);
         });
 
-      await this.prisma.predictionMarket.update({
-        where: { id: marketId },
-        data: { totalPool: { increment: stakeAmount } },
-      });
+      let entryId: string;
+      try {
+        await this.prisma.predictionMarket.update({
+          where: { id: marketId },
+          data: { totalPool: { increment: stakeAmount } },
+        });
 
-      const entry = await this.prisma.predictionEntry.create({
-        data: {
-          userId,
-          eventId: market.eventId,
-          prediction: { selectedOption, stake: stakeAmount } as unknown as Record<
-            string,
-            string | number | boolean | null
-          >,
-          predictionMarketId: marketId,
-        },
-      });
+        const entry = await this.prisma.predictionEntry.create({
+          data: {
+            userId,
+            eventId: market.eventId,
+            prediction: { selectedOption, stake: stakeAmount } as unknown as Record<
+              string,
+              string | number | boolean | null
+            >,
+            predictionMarketId: marketId,
+          },
+        });
+        entryId = entry.id;
+      } catch (dbError) {
+        // Compensate: credit wallet back if DB write fails after debit
+        await axios
+          .post(
+            `${this.walletServiceBaseUrl}/wallet/credit`,
+            {
+              walletId: wallet.id,
+              amount: stakeAmount,
+              description: `Refund: prediction market stake failed for ${marketId}`,
+              reference: `compensate:${idempotencyKey}`,
+            },
+            { timeout: 10000 }
+          )
+          .catch((compensateError: unknown) => {
+            this.logger.error(
+              'Failed to compensate wallet after prediction market DB failure:',
+              compensateError
+            );
+          });
+        throw dbError;
+      }
 
       return {
         success: true,
-        data: { entryId: entry.id, message: 'Prediction placed successfully' },
+        data: { entryId, message: 'Prediction placed successfully' },
       };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
-      this.logger.error(`Failed to place prediction for user ${userId} in market ${marketId}: ${error}`);
+      this.logger.error(
+        `Failed to place prediction for user ${userId} in market ${marketId}: ${error}`
+      );
       throw error;
     }
   }
@@ -250,29 +309,30 @@ export class PredictionMarketsService {
             where: { id: winner.id },
             data: { points: 100 },
           });
-
-          const wallet = await tx.wallet.findUnique({
-            where: { userId: winner.userId },
-          });
-          if (wallet) {
-            await axios
-              .post(
-                `${this.walletServiceBaseUrl}/wallet/credit`,
-                {
-                  walletId: wallet.id,
-                  amount: 100,
-                  description: `Prediction market winning: ${marketId}`,
-                },
-                { timeout: 10000 }
-              )
-              .catch((error: unknown) => {
-                this.logger.error(`Failed to credit wallet for user ${winner.userId}:`, error);
-              });
-          }
-
-          totalDistributed += 100;
         }
       });
+
+      for (const winner of winners) {
+        const wallet = await this.getWalletByUserId(winner.userId);
+        if (wallet) {
+          await axios
+            .post(
+              `${this.walletServiceBaseUrl}/wallet/credit`,
+              {
+                walletId: wallet.id,
+                amount: 100,
+                description: `Prediction market winning: ${marketId}`,
+                reference: `prediction-win:${marketId}:${winner.userId}`,
+              },
+              { timeout: 10000 }
+            )
+            .catch((error: unknown) => {
+              this.logger.error(`Failed to credit wallet for user ${winner.userId}:`, error);
+            });
+        }
+
+        totalDistributed += 100;
+      }
 
       return {
         success: true,
@@ -327,10 +387,7 @@ export class PredictionMarketsService {
 
       const leaderboard = await Promise.all(
         entries.map(async (entry, index) => {
-          const user = await this.prisma.user.findUnique({
-            where: { id: entry.userId },
-            select: { id: true, displayName: true, avatar: true },
-          });
+          const user = await this.getUserById(entry.userId);
           return {
             rank: index + 1,
             userId: entry.userId,

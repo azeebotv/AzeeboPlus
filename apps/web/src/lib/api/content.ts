@@ -62,10 +62,24 @@ export function createContentMethods(client: RequestClient) {
       );
     },
 
+    /** Feed an accepted 'did you mean' correction back into the search
+     * service's typo dictionary (POST /v1/search/log). Requires auth —
+     * anonymous sessions get a 401 that callers should swallow. */
+    logSearchCorrection: async (
+      query: string,
+      correction: string
+    ): Promise<ApiResponse<{ message: string }>> => {
+      return client.request<{ message: string }>('/api/v1/search/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, correction, accepted: true, resultsCount: 0 }),
+      });
+    },
+
     getSignedUrl: async (
       contentId: string
-    ): Promise<ApiResponse<{ url: string; expiresIn: number }>> => {
-      return client.request<{ url: string; expiresIn: number }>(
+    ): Promise<ApiResponse<{ signedUrl: string; expiresIn: number; mediaAssetId: string }>> => {
+      return client.request<{ signedUrl: string; expiresIn: number; mediaAssetId: string }>(
         `/api/v1/content/${contentId}/media/signed-url`
       );
     },
@@ -159,6 +173,40 @@ export function createContentMethods(client: RequestClient) {
       return client.request<PaginatedResponse<ContentItem>>(
         `/api/v1/content/me?${searchParams.toString()}`
       );
+    },
+
+    getFeaturedSlides: async (limit = 5): Promise<ApiResponse<ContentItem[]>> => {
+      return client.request<ContentItem[]>(`/api/v1/content/featured-slides?limit=${limit}`);
+    },
+
+    getContentList: async (
+      params: { page?: number; limit?: number } = {}
+    ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
+      const searchParams = new URLSearchParams();
+      if (params.page) searchParams.append('page', params.page.toString());
+      if (params.limit) searchParams.append('limit', params.limit.toString());
+
+      return client.request<PaginatedResponse<ContentItem>>(
+        `/api/v1/content?${searchParams.toString()}`
+      );
+    },
+
+    getNewReleases: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {
+      return client.request<ContentItem[]>(`/api/v1/content/new-releases?limit=${limit}`);
+    },
+
+    getPopularInRegion: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {
+      return client.request<ContentItem[]>(`/api/v1/content/popular-region?limit=${limit}`);
+    },
+
+    getHomeFeed: async (): Promise<
+      ApiResponse<{ trending: ContentItem[]; recommended: ContentItem[]; latest: ContentItem[] }>
+    > => {
+      return client.request<{
+        trending: ContentItem[];
+        recommended: ContentItem[];
+        latest: ContentItem[];
+      }>('/api/v1/content/home');
     },
   };
 }

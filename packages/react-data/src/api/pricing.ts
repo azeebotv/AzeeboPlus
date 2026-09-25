@@ -1,0 +1,48 @@
+import { apiClient } from './client';
+import type { ApiResponse, VotePackage, SubscriptionPlan } from '../types/api';
+
+export type { VotePackage, SubscriptionPlan } from '../types/api';
+
+export interface MoviePricing {
+  rent48h: { id: string; type: string; price: number; currency: string };
+  buy: { id: string; type: string; price: number; currency: string };
+  pass: { id: string; type: string; price: number; currency: string; period: string };
+}
+
+export interface WalletPricing {
+  presetAmounts: number[];
+  limits: {
+    minDeposit: number;
+    maxDeposit: number;
+    minWithdrawal: number;
+  };
+  withdrawalQuickAmounts: number[];
+}
+
+export interface PassPricing {
+  daily: { id: string; name: string; price: number; currency: string; duration: string };
+  weekly: { id: string; name: string; price: number; currency: string; duration: string };
+  monthly: { id: string; name: string; price: number; currency: string; duration: string };
+}
+
+export const pricingApi = {
+  getMoviePricing: async (): Promise<ApiResponse<MoviePricing>> => {
+    return apiClient.get<ApiResponse<MoviePricing>>('/pricing/movie');
+  },
+
+  getVotePackages: async (type: string): Promise<ApiResponse<VotePackage[]>> => {
+    return apiClient.get<ApiResponse<VotePackage[]>>(`/pricing/vote-packages/${type}`);
+  },
+
+  getSubscriptionPlans: async (): Promise<ApiResponse<Record<string, SubscriptionPlan>>> => {
+    return apiClient.get<ApiResponse<Record<string, SubscriptionPlan>>>('/pricing/subscriptions');
+  },
+
+  getWalletPricing: async (): Promise<ApiResponse<WalletPricing>> => {
+    return apiClient.get<ApiResponse<WalletPricing>>('/pricing/wallet');
+  },
+
+  getPassesPricing: async (): Promise<ApiResponse<PassPricing>> => {
+    return apiClient.get<ApiResponse<PassPricing>>('/pricing/passes');
+  },
+};

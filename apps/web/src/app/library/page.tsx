@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
-import AppHeader from '../../components/layout/AppHeader';
-import AppFooter from '../../components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { OptimizedImage } from '../../components/OptimizedImage';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface ContentItem {
   id: string;
@@ -28,24 +30,19 @@ interface LibraryData {
 }
 
 export default function LibraryPage(): React.JSX.Element {
-  const { user: _user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<'watchlist' | 'history' | 'favorites'>(
     'watchlist'
   );
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<LibraryData, Error>({
+  const { data, isLoading, error, refetch } = useQuery<LibraryData, Error>({
     queryKey: ['library'],
     queryFn: async () => {
       const [watchlistRes, historyRes, favoritesRes] = await Promise.all([
-        apiFetch<ContentItem[]>('/interactions/watchlist'),
-        apiFetch<ContentItem[]>('/interactions/history'),
-        apiFetch<ContentItem[]>('/interactions/favorites'),
+        apiFetch<ContentItem[]>('/interactions/watchlist', {}, { maxRetries: 2, timeoutMs: 10000 }),
+        apiFetch<ContentItem[]>('/interactions/history', {}, { maxRetries: 2, timeoutMs: 10000 }),
+        apiFetch<ContentItem[]>('/interactions/favorites', {}, { maxRetries: 2, timeoutMs: 10000 }),
       ]);
       return {
         watchlist:
@@ -82,35 +79,47 @@ export default function LibraryPage(): React.JSX.Element {
     { id: 'favorites', name: 'Favorites', items: favorites },
   ];
 
-  const removeFromWatchlist = useCallback(async (contentId: string) => {
-    try {
-      const response = await apiFetch<{ removed: boolean }>(`/interactions/watchlist/${contentId}`, {
-        method: 'DELETE',
-      });
-      if (response.success) {
-        queryClient.setQueryData<LibraryData>(['library'], (old) =>
-          old ? { ...old, watchlist: old.watchlist.filter((item) => item.id !== contentId) } : old
+  const removeFromWatchlist = useCallback(
+    async (contentId: string) => {
+      try {
+        const response = await apiFetch<{ removed: boolean }>(
+          `/interactions/watchlist/${contentId}`,
+          {
+            method: 'DELETE',
+          }
         );
+        if (response.success) {
+          queryClient.setQueryData<LibraryData>(['library'], (old) =>
+            old ? { ...old, watchlist: old.watchlist.filter((item) => item.id !== contentId) } : old
+          );
+        }
+      } catch (err) {
+        /* intentionally minimal */
       }
-    } catch (err) {
-      /* intentionally minimal */
-    }
-  }, [queryClient]);
+    },
+    [queryClient]
+  );
 
-  const removeFromHistory = useCallback(async (contentId: string) => {
-    try {
-      const response = await apiFetch<{ removed: boolean }>(`/interactions/history/${contentId}`, {
-        method: 'DELETE',
-      });
-      if (response.success) {
-        queryClient.setQueryData<LibraryData>(['library'], (old) =>
-          old ? { ...old, history: old.history.filter((item) => item.id !== contentId) } : old
+  const removeFromHistory = useCallback(
+    async (contentId: string) => {
+      try {
+        const response = await apiFetch<{ removed: boolean }>(
+          `/interactions/history/${contentId}`,
+          {
+            method: 'DELETE',
+          }
         );
+        if (response.success) {
+          queryClient.setQueryData<LibraryData>(['library'], (old) =>
+            old ? { ...old, history: old.history.filter((item) => item.id !== contentId) } : old
+          );
+        }
+      } catch (err) {
+        /* intentionally minimal */
       }
-    } catch (err) {
-      /* intentionally minimal */
-    }
-  }, [queryClient]);
+    },
+    [queryClient]
+  );
 
   const toggleFavorite = useCallback(
     async (contentId: string) => {
@@ -132,9 +141,7 @@ export default function LibraryPage(): React.JSX.Element {
             const item =
               old.watchlist.find((i) => i.id === contentId) ||
               old.history.find((i) => i.id === contentId);
-            return item
-              ? { ...old, favorites: [...old.favorites, item] }
-              : old;
+            return item ? { ...old, favorites: [...old.favorites, item] } : old;
           });
         }
       } catch (err) {
@@ -147,42 +154,37 @@ export default function LibraryPage(): React.JSX.Element {
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen az-nollywood-bg">
-        <AppHeader />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <PageShell glowColor="rgba(232,66,10,0.15)">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <motion.div
-            className="az-glass p-8 sm:p-10 text-center"
+            className="az-glass p-10 text-center rounded-3xl border border-white/10 max-w-md mx-auto shadow-2xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4">
+            <h2 className="text-2xl font-extrabold text-white mb-3 tracking-tight">
               Sign in to access your library
             </h2>
-            <p className="text-white/50 text-sm sm:text-base">
-              Save content to watch later, track your progress, and more
+            <p className="text-white/50 text-sm">
+              Save Nollywood blockbusters, resume streaming history, and manage your favorites.
             </p>
           </motion.div>
         </main>
-        <AppFooter />
-      </div>
+      </PageShell>
     );
   }
 
   const currentSection = sections.find((s) => s.id === activeSection);
 
   return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Library" />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <motion.h1
-          className="az-headline text-white text-3xl sm:text-4xl mb-6 sm:mb-8"
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          My Library
-        </motion.h1>
+    <PageShell glowColor="rgba(232,66,10,0.12)">
+      <PageHero
+        badge="Media Hub"
+        title="My Library"
+        description="Your personal cinema vault: curated watchlists, streaming playback history, and favorited Nollywood titles."
+      />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 -mt-4">
 
         {/* Section Tabs */}
         <motion.div
@@ -253,33 +255,36 @@ export default function LibraryPage(): React.JSX.Element {
           ) : currentSection?.items.length === 0 ? (
             <motion.div
               key="empty"
-              className="az-glass p-10 sm:p-12 text-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4 }}
             >
-              <span className="text-4xl sm:text-5xl mb-4 block">
-                {activeSection === 'watchlist'
-                  ? '\u{1F4E6}'
-                  : activeSection === 'history'
-                    ? '\u{1F552}'
-                    : '\u2764\uFE0F'}
-              </span>
-              <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
-                {activeSection === 'watchlist'
-                  ? 'Your watchlist is empty'
-                  : activeSection === 'history'
-                    ? 'No watch history'
-                    : 'No favorites yet'}
-              </h3>
-              <p className="text-white/50 text-xs sm:text-sm">
-                {activeSection === 'watchlist'
-                  ? 'Add content to watch later'
-                  : activeSection === 'history'
-                    ? 'Start watching content to build your history'
-                    : 'Save your favorite content here'}
-              </p>
+              <EmptyState
+                icon={
+                  activeSection === 'watchlist'
+                    ? 'Package'
+                    : activeSection === 'history'
+                      ? 'Clock'
+                      : 'Heart'
+                }
+                title={
+                  activeSection === 'watchlist'
+                    ? 'Your watchlist is empty'
+                    : activeSection === 'history'
+                      ? 'No watch history'
+                      : 'No favorites yet'
+                }
+                description={
+                  activeSection === 'watchlist'
+                    ? 'Add content to watch later'
+                    : activeSection === 'history'
+                      ? 'Start watching content to build your history'
+                      : 'Save your favorite content here'
+                }
+                dark
+                className="az-glass p-10 sm:p-12"
+              />
             </motion.div>
           ) : (
             <motion.div
@@ -303,20 +308,32 @@ export default function LibraryPage(): React.JSX.Element {
                 >
                   <a href={`/watch/${item.id}`} className="block relative h-44">
                     {item.thumbnail ? (
-                      <img
+                      <OptimizedImage
                         src={item.thumbnail}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
                       <div
-                        className="w-full h-full flex items-center justify-center"
+                        className="w-full h-full flex items-center justify-center text-white/40"
                         style={{
                           background:
-                            'linear-gradient(135deg, rgba(232,66,10,0.3), rgba(13,59,46,0.4))',
+                            'linear-gradient(135deg, rgba(232,66,10,0.15), rgba(24,21,30,0.8))',
                         }}
                       >
-                        <span style={{ fontSize: 48 }}>&#x1F3AC;</span>
+                        <svg
+                          className="w-12 h-12"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={1.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75 0V5.625m0 12.75a1.125 1.125 0 001.125 1.125m0 0h1.5m-2.625-1.125V5.625m0 0A1.125 1.125 0 013.375 4.5h17.25c.621 0 1.125.504 1.125 1.125v12.75c0 .621-.504 1.125-1.125 1.125m-17.25-13.875h17.25"
+                          />
+                        </svg>
                       </div>
                     )}
                     {item.progress != null && item.progress > 0 && (
@@ -328,7 +345,7 @@ export default function LibraryPage(): React.JSX.Element {
                           className="h-full"
                           style={{
                             width: `${Math.min(item.progress, 100)}%`,
-                            background: '#E8420A',
+                            background: 'var(--brand-orange)',
                           }}
                         />
                       </div>
@@ -336,7 +353,7 @@ export default function LibraryPage(): React.JSX.Element {
                     {item.duration && (
                       <span
                         className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold"
-                        style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}
+                        style={{ background: 'rgba(0,0,0,0.7)', color: 'var(--brand-white)' }}
                       >
                         {Math.floor(item.duration / 60)}m
                       </span>
@@ -344,7 +361,7 @@ export default function LibraryPage(): React.JSX.Element {
                   </a>
                   <div className="p-4">
                     <a href={`/watch/${item.id}`}>
-                      <h3 className="font-bold text-white text-sm mb-1 group-hover:text-[#E8420A] transition-colors line-clamp-1">
+                      <h3 className="font-bold text-white text-sm mb-1 group-hover:text-[var(--brand-orange)] transition-colors line-clamp-1">
                         {item.title}
                       </h3>
                     </a>
@@ -354,6 +371,7 @@ export default function LibraryPage(): React.JSX.Element {
                     <div className="flex items-center gap-2">
                       {activeSection === 'watchlist' && (
                         <button
+                          aria-label={`Remove ${item.title} from watchlist`}
                           onClick={() => removeFromWatchlist(item.id)}
                           className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white transition-colors"
                           style={{ border: '1px solid rgba(255,255,255,0.15)' }}
@@ -363,6 +381,7 @@ export default function LibraryPage(): React.JSX.Element {
                       )}
                       {activeSection === 'history' && (
                         <button
+                          aria-label={`Clear ${item.title} from history`}
                           onClick={() => removeFromHistory(item.id)}
                           className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white transition-colors"
                           style={{ border: '1px solid rgba(255,255,255,0.15)' }}
@@ -371,11 +390,36 @@ export default function LibraryPage(): React.JSX.Element {
                         </button>
                       )}
                       <button
+                        aria-label={
+                          favorites.some((f) => f.id === item.id)
+                            ? `Remove ${item.title} from favorites`
+                            : `Add ${item.title} to favorites`
+                        }
                         onClick={() => toggleFavorite(item.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${favorites.some((f) => f.id === item.id) ? 'text-[#E8420A]' : 'text-white/60 hover:text-white'}`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-center ${favorites.some((f) => f.id === item.id) ? 'text-[var(--brand-orange)]' : 'text-white/60 hover:text-white'}`}
                         style={{ border: '1px solid rgba(255,255,255,0.15)' }}
                       >
-                        {favorites.some((f) => f.id === item.id) ? '\u2764\uFE0F' : '\u2661'}
+                        {favorites.some((f) => f.id === item.id) ? (
+                          <svg
+                            className="w-4 h-4 fill-current"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                          </svg>
+                        ) : (
+                          <svg
+                            className="w-4 h-4 fill-none stroke-current stroke-2"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+                            />
+                          </svg>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -385,7 +429,6 @@ export default function LibraryPage(): React.JSX.Element {
           )}
         </AnimatePresence>
       </main>
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

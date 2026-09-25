@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../src/theme';
 
 interface Contestant {
   id: string;
@@ -60,7 +61,7 @@ export default function ContestantProfileScreen() {
           name: response.data.name,
           age: 0,
           location: '',
-          bio: response.data.description,
+          bio: response.data.description || '',
           avatar: response.data.avatar,
           coverImage: '',
           socialLinks: {},
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   errorContainer: {
@@ -256,7 +257,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     marginBottom: 16,
   },
@@ -312,16 +313,16 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   location: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 4,
   },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginTop: 24,
@@ -337,7 +338,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 4,
   },
   statDivider: {
@@ -365,25 +366,25 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 12,
   },
   bio: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     lineHeight: 22,
   },
   socialLinks: {
     gap: 8,
   },
   socialButton: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
   },
   socialButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },

@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { fetchAgbalaStoryworlds } from '../api';
+import type { AgbalaStoryworld } from '../types';
 
 export function useAgbalaStoryworlds() {
-  const [storyworlds, setStoryworlds] = useState<any[]>([]);
+  const [storyworlds, setStoryworlds] = useState<AgbalaStoryworld[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

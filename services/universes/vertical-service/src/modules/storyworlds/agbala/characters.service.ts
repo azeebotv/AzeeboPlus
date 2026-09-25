@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CacheService } from './cache.service';
 import { buildOffsetPagination } from './pagination.helper';
@@ -54,29 +54,48 @@ export class AgbalaCharactersService {
   private readonly logger = new Logger(AgbalaCharactersService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private cache: CacheService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private cache: CacheService
   ) {}
 
   async getCharacters(
     page = 1,
     limit = 20,
-    universeSlug?: string
+    universeSlug?: string,
+    search?: string
   ): Promise<PaginatedResponse<Character>> {
     try {
-      const cacheKey = `characters:list:${universeSlug || 'all'}:${page}:${limit}`;
-      const cached = this.cache.get<PaginatedResponse<Character>>(cacheKey);
+      const trimmed = search?.trim();
+      const cacheKey = `characters:list:${universeSlug || 'all'}:${page}:${limit}:${trimmed || 'none'}`;
+      const cached = await this.cache.get<PaginatedResponse<Character>>(cacheKey);
       if (cached) return cached;
 
-      const where: { universeId?: string } = {};
+      const where: {
+        universeId?: string;
+        OR?: Array<
+          | { name: { contains: string; mode: 'insensitive' } }
+          | { description: { contains: string; mode: 'insensitive' } }
+        >;
+      } = {};
 
       if (universeSlug) {
-        const universe = await this.prisma.universeMap.findUnique({
-          where: { slug: universeSlug },
-        });
-        if (universe) {
-          where.universeId = universe.id;
+        // The admin panel passes the storyworld ID; the public route passes a
+        // slug. Accept either — and if NEITHER matches a universe, return an
+        // honest empty page instead of silently listing every character.
+        const universe =
+          (await this.prisma.universeMap.findUnique({ where: { id: universeSlug } })) ??
+          (await this.prisma.universeMap.findUnique({ where: { slug: universeSlug } }));
+        if (!universe) {
+          return this.emptyPage(page, limit);
         }
+        where.universeId = universe.id;
+      }
+
+      if (trimmed) {
+        where.OR = [
+          { name: { contains: trimmed, mode: 'insensitive' } },
+          { description: { contains: trimmed, mode: 'insensitive' } },
+        ];
       }
 
       const pagination = buildOffsetPagination(page, limit);
@@ -116,12 +135,20 @@ export class AgbalaCharactersService {
         },
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       this.logger.error(`Failed to fetch characters: ${error}`);
       throw error;
     }
+  }
+
+  /** Honest empty page for a filter value that matches no universe. */
+  private emptyPage(page: number, limit: number): PaginatedResponse<Character> {
+    return {
+      success: true,
+      data: { items: [], total: 0, page, limit, totalPages: 0 },
+    };
   }
 
   async getCharacterBySlug(
@@ -130,7 +157,9 @@ export class AgbalaCharactersService {
     try {
       const cacheKey = `characters:detail:${slug}`;
       const cached =
-        this.cache.get<SingleResponse<Character & { relationships: Relationship[] }>>(cacheKey);
+        await this.cache.get<SingleResponse<Character & { relationships: Relationship[] }>>(
+          cacheKey
+        );
       if (cached) return cached;
 
       const character = await this.prisma.character.findUnique({
@@ -180,7 +209,7 @@ export class AgbalaCharactersService {
         },
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -192,7 +221,7 @@ export class AgbalaCharactersService {
   async getCharacterRelationships(slug: string): Promise<ListResponse<Relationship>> {
     try {
       const cacheKey = `characters:relationships:${slug}`;
-      const cached = this.cache.get<ListResponse<Relationship>>(cacheKey);
+      const cached = await this.cache.get<ListResponse<Relationship>>(cacheKey);
       if (cached) return cached;
 
       const character = await this.prisma.character.findUnique({
@@ -224,7 +253,7 @@ export class AgbalaCharactersService {
         data: formattedRelationships,
       };
 
-      this.cache.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
       return response;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -272,7 +301,7 @@ export class AgbalaCharactersService {
         createdAt: character.createdAt.toISOString(),
       };
 
-      this.cache.invalidate('characters:');
+      await this.cache.invalidate('characters:');
       return { success: true, data: formattedCharacter };
     } catch (error) {
       this.logger.error(`Failed to create character: ${error}`);
@@ -313,7 +342,7 @@ export class AgbalaCharactersService {
         createdAt: character.createdAt.toISOString(),
       };
 
-      this.cache.invalidate('characters:');
+      await this.cache.invalidate('characters:');
       return { success: true, data: formattedCharacter };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -354,8 +383,8 @@ export class AgbalaCharactersService {
         isOfficial: relationship.isOfficial,
       };
 
-      this.cache.invalidate(`characters:relationships:${fromCharacter.slug}`);
-      this.cache.invalidate(`characters:relationships:${toCharacter.slug}`);
+      await this.cache.invalidate(`characters:relationships:${fromCharacter.slug}`);
+      await this.cache.invalidate(`characters:relationships:${toCharacter.slug}`);
       return { success: true, data: formattedRelationship };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

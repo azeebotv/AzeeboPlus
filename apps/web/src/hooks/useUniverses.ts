@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import type { Universe } from '../lib/api/base';
 
 const STORAGE_KEY = 'azeebo:selected_universe';
 const CACHE_KEY = 'azeebo:universes_cache';
@@ -11,6 +13,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 export interface UniverseOption {
   id: string;
   name: string;
+  displayName?: string;
   description?: string;
   icon?: string;
   contentCount?: number;
@@ -23,6 +26,7 @@ interface CachedUniverses {
 }
 
 function readStoredId(): string | null {
+  if (typeof window === 'undefined') return null;
   try {
     return localStorage.getItem(STORAGE_KEY);
   } catch {
@@ -31,14 +35,16 @@ function readStoredId(): string | null {
 }
 
 function writeStoredId(id: string): void {
+  if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, id);
   } catch {
-    // localStorage unavailable (SSR, private browsing quota, etc.)
+    // localStorage unavailable (private browsing quota, etc.)
   }
 }
 
 function readCache(): UniverseOption[] | null {
+  if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
@@ -51,12 +57,38 @@ function readCache(): UniverseOption[] | null {
 }
 
 function writeCache(data: UniverseOption[]): void {
+  if (typeof window === 'undefined') return;
   try {
     const payload: CachedUniverses = { data, timestamp: Date.now() };
     localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
   } catch {
     // ignore
   }
+}
+
+/**
+ * React Query wrapper for the enabled-universes list, shared by universe
+ * landing pages (`/sports`, `/comedy`, `/reality`, …).
+ *
+ * Guards against non-array payloads so a malformed API response surfaces as
+ * a query error instead of crashing `.find()` callers.
+ *
+ * Uses a distinct cache key from the legacy `['universes']` key, which older
+ * builds may have poisoned with a non-array payload (staleTime of 5 minutes
+ * kept the bad value cached across navigations).
+ */
+export function useUniversesQuery(staleTime = 5 * 60 * 1000) {
+  return useQuery<Universe[]>({
+    queryKey: ['universes', 'enabled'],
+    queryFn: async () => {
+      const res = await api.universe.getUniverses();
+      if (!res.success || !Array.isArray(res.data)) {
+        throw new Error(res.message || 'Failed to load universes');
+      }
+      return res.data;
+    },
+    staleTime,
+  });
 }
 
 export interface UseUniversesReturn {
@@ -168,10 +200,12 @@ export function useUniverses(): UseUniversesReturn {
 
   const refetch = useCallback(() => {
     // Clear cache before re-fetching
-    try {
-      localStorage.removeItem(CACHE_KEY);
-    } catch {
-      // ignore
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(CACHE_KEY);
+      } catch {
+        // ignore
+      }
     }
     fetchUniverses();
   }, [fetchUniverses]);
@@ -192,15 +226,33 @@ export function useUniverses(): UseUniversesReturn {
   );
 
   const hasFeature = useCallback(
-    (_universeName: string, _featureKey: string) => {
-      // Feature flags are not yet available in the new API response.
-      // Default to true for backwards compatibility.
+    (universeName: string, featureKey: string) => {
+      const universe = getUniverse(universeName);
+      if (!universe) return false;
+      // Check if the universe has the requested feature enabled
+      // Feature flags are stored in the universe's metadata or config
+      const universeData = universe as unknown as Record<string, unknown>;
+      const features = universeData.features as Record<string, boolean> | undefined;
+      if (features && featureKey in features) {
+        return features[featureKey];
+      }
+      // Default to true for backwards compatibility when feature not explicitly set
       return true;
     },
-    []
+    [getUniverse]
   );
 
-  return { universes, selected, isLoading, error, select, refetch, getUniverse, isUniverseEnabled, hasFeature };
+  return {
+    universes,
+    selected,
+    isLoading,
+    error,
+    select,
+    refetch,
+    getUniverse,
+    isUniverseEnabled,
+    hasFeature,
+  };
 }
 
 /**

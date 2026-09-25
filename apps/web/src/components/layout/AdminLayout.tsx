@@ -1,27 +1,30 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import AppHeader from './AppHeader';
 
 const ADMIN_NAV = [
-  { href: '/admin', label: 'Dashboard', icon: '📊' },
-  { href: '/admin/overview', label: 'Overview', icon: '📈' },
-  { href: '/admin/users', label: 'Users', icon: '👥' },
-  { href: '/admin/content', label: 'Content', icon: '🎬' },
-  { href: '/admin/content-review', label: 'Review Queue', icon: '✅' },
-  { href: '/admin/creators', label: 'Creators', icon: '✨' },
-  { href: '/admin/reality', label: 'Reality Shows', icon: '🎭' },
-  { href: '/admin/universes', label: 'Universes', icon: '🌍' },
-  { href: '/admin/wallets', label: 'Wallets', icon: '👛' },
-  { href: '/admin/financial', label: 'Financial', icon: '💰' },
-  { href: '/admin/payment-gateways', label: 'Payments', icon: '💳' },
-  { href: '/admin/engagement', label: 'Engagement', icon: '🔥' },
-  { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
-  { href: '/admin/announcements', label: 'Announcements', icon: '📢' },
-  { href: '/admin/audit-logs', label: 'Audit Logs', icon: '📋' },
-  { href: '/admin/reports', label: 'Reports', icon: '📊' },
-  { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
+  { href: '/admin', label: 'Dashboard', icon: 'BarChart3' },
+  { href: '/admin/overview', label: 'Overview', icon: 'TrendingUp' },
+  { href: '/admin/users', label: 'Users', icon: 'Users' },
+  { href: '/admin/content', label: 'Content', icon: 'Film' },
+  { href: '/admin/content-review', label: 'Review Queue', icon: 'CheckCircle' },
+  { href: '/admin/creators', label: 'Creators', icon: 'Sparkles' },
+  { href: '/admin/reality', label: 'Reality Shows', icon: 'Drama' },
+  { href: '/admin/universes', label: 'Universes', icon: 'Globe' },
+  { href: '/admin/wallets', label: 'Wallets', icon: 'Wallet' },
+  { href: '/admin/financial', label: 'Financial', icon: 'DollarSign' },
+  { href: '/admin/payment-gateways', label: 'Payments', icon: 'CreditCard' },
+  { href: '/admin/engagement', label: 'Engagement', icon: 'Flame' },
+  { href: '/admin/notifications', label: 'Notifications', icon: 'Bell' },
+  { href: '/admin/announcements', label: 'Announcements', icon: 'Volume2' },
+  { href: '/admin/audit-logs', label: 'Audit Logs', icon: 'ClipboardList' },
+  { href: '/admin/reports', label: 'Reports', icon: 'BarChart3' },
+  { href: '/admin/settings', label: 'Settings', icon: 'Settings' },
+  { href: '/admin/ai-provenance', label: 'AI Provenance', icon: 'Bot' },
+  { href: '/admin/dual-control', label: 'Dual Control', icon: 'Lock' },
+  { href: '/admin/talent-clearance', label: 'Talent Clearance', icon: 'Star' },
 ];
 
 export default function AdminLayout({
@@ -44,20 +47,39 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (isLoading) return;
-    if (!isAuthenticated || !user || user.role !== 'admin') {
+    const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+    if (!isAuthenticated || !user || !isAdmin) {
       router.push('/auth/login');
     }
   }, [isLoading, isAuthenticated, user, router]);
 
   if (isLoading) {
     return (
-      <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <div
+        style={{
+          backgroundColor: 'var(--brand-near-black)',
+          minHeight: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            border: '3px solid #2A1A1A',
+            borderTopColor: 'var(--brand-orange)',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }}
+        />
       </div>
     );
   }
 
-  if (!isAuthenticated || !user || user.role !== 'admin') {
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  if (!isAuthenticated || !user || !isAdmin) {
     return <></>;
   }
 
@@ -67,7 +89,13 @@ export default function AdminLayout({
   };
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+    <div
+      style={{
+        backgroundColor: 'var(--brand-near-black)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
       <AppHeader />
       <div style={{ display: 'flex', paddingTop: 72, minHeight: '100vh' }}>
         {/* Mobile sidebar toggle */}
@@ -82,15 +110,15 @@ export default function AdminLayout({
             width: 48,
             height: 48,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
+            color: 'var(--brand-white)',
             border: 'none',
             fontSize: 20,
             cursor: 'pointer',
             boxShadow: '0 4px 20px rgba(232,66,10,0.4)',
           }}
         >
-          {sidebarOpen ? '✕' : '☰'}
+          {sidebarOpen ? 'X' : 'Menu'}
         </button>
 
         {/* Sidebar */}
@@ -99,7 +127,7 @@ export default function AdminLayout({
           style={{
             width: 260,
             flexShrink: 0,
-            backgroundColor: '#140808',
+            backgroundColor: 'var(--bg-tertiary)',
             borderRight: '1px solid #2A1A1A',
             position: 'sticky',
             top: 72,
@@ -135,7 +163,7 @@ export default function AdminLayout({
                   textDecoration: 'none',
                   fontSize: 14,
                   fontWeight: 500,
-                  color: isActive(item.href) ? '#E8420A' : '#9A8A7A',
+                  color: isActive(item.href) ? 'var(--brand-orange)' : 'var(--text-secondary)',
                   backgroundColor: isActive(item.href) ? 'rgba(232,66,10,0.1)' : 'transparent',
                   transition: 'all 0.2s ease',
                 }}

@@ -1,11 +1,11 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getPayments(options?: { page?: number; limit?: number; status?: string }) {
     try {
@@ -30,7 +30,10 @@ export class AdminService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get payments: ${error}`);
-      return { success: false, error: { code: 'GET_PAYMENTS_FAILED', message: 'Failed to retrieve payments' } };
+      return {
+        success: false,
+        error: { code: 'GET_PAYMENTS_FAILED', message: 'Failed to retrieve payments' },
+      };
     }
   }
 
@@ -44,7 +47,10 @@ export class AdminService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get payment by id: ${error}`);
-      return { success: false, error: { code: 'GET_PAYMENT_FAILED', message: 'Failed to retrieve payment' } };
+      return {
+        success: false,
+        error: { code: 'GET_PAYMENT_FAILED', message: 'Failed to retrieve payment' },
+      };
     }
   }
 
@@ -72,7 +78,10 @@ export class AdminService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get payment intents: ${error}`);
-      return { success: false, error: { code: 'GET_INTENTS_FAILED', message: 'Failed to retrieve payment intents' } };
+      return {
+        success: false,
+        error: { code: 'GET_INTENTS_FAILED', message: 'Failed to retrieve payment intents' },
+      };
     }
   }
 
@@ -100,7 +109,10 @@ export class AdminService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get refunds: ${error}`);
-      return { success: false, error: { code: 'GET_REFUNDS_FAILED', message: 'Failed to retrieve refunds' } };
+      return {
+        success: false,
+        error: { code: 'GET_REFUNDS_FAILED', message: 'Failed to retrieve refunds' },
+      };
     }
   }
 
@@ -127,7 +139,10 @@ export class AdminService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get webhook events: ${error}`);
-      return { success: false, error: { code: 'GET_WEBHOOK_EVENTS_FAILED', message: 'Failed to retrieve webhook events' } };
+      return {
+        success: false,
+        error: { code: 'GET_WEBHOOK_EVENTS_FAILED', message: 'Failed to retrieve webhook events' },
+      };
     }
   }
 
@@ -157,7 +172,10 @@ export class AdminService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get payment stats: ${error}`);
-      return { success: false, error: { code: 'GET_STATS_FAILED', message: 'Failed to retrieve payment stats' } };
+      return {
+        success: false,
+        error: { code: 'GET_STATS_FAILED', message: 'Failed to retrieve payment stats' },
+      };
     }
   }
 }

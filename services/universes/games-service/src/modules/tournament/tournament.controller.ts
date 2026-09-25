@@ -1,18 +1,32 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { TournamentService } from './tournament.service';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, gamesFlags } from '@azeebo/feature-flags';
+import { TournamentService } from './tournament.service.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
-import { JoinTournamentDto, SubmitScoreDto } from './dto/tournament.dto';
+import { JoinTournamentDto, SubmitScoreDto } from './dto/tournament.dto.js';
 
 @ApiTags('Tournament')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
-@Controller('v1/games/tournaments')
+@Controller('games/tournaments')
+@FeatureFlag(gamesFlags.tournamentsEnabled)
+@UseGuards(FeatureFlagGuard)
 export class TournamentController {
-  constructor(private readonly tournamentService: TournamentService) {}
+  constructor(@Inject(TournamentService) private readonly tournamentService: TournamentService) {}
 
   @Get()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get tournaments' })
   @ApiResponse({ status: 200, description: 'Tournaments list' })
   async getTournaments(
@@ -24,6 +38,8 @@ export class TournamentController {
   }
 
   @Get(':id')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get tournament by id' })
   @ApiResponse({ status: 200, description: 'Tournament details' })
   async getTournament(@Param('id') id: string): Promise<unknown> {
@@ -31,6 +47,8 @@ export class TournamentController {
   }
 
   @Post(':id/enter')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Enter tournament' })
   @ApiResponse({ status: 201, description: 'Entered' })
   async enterTournament(
@@ -42,6 +60,8 @@ export class TournamentController {
   }
 
   @Post(':id/score')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Update score' })
   @ApiResponse({ status: 200, description: 'Score updated' })
   async updateScore(
@@ -53,6 +73,8 @@ export class TournamentController {
   }
 
   @Get(':id/leaderboard')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get leaderboard' })
   @ApiResponse({ status: 200, description: 'Leaderboard' })
   async getLeaderboard(
@@ -64,6 +86,8 @@ export class TournamentController {
   }
 
   @Get(':id/rank/:userId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get user rank' })
   @ApiResponse({ status: 200, description: 'User rank' })
   async getUserRank(

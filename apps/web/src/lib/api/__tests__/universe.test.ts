@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createUniverseMethods } from '../universe';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 describe('Universe API Methods', () => {
@@ -17,8 +17,8 @@ describe('Universe API Methods', () => {
 
   it('getUniverses should GET /api/v1/public/universes', async () => {
     const mockUniverses = [
-      { id: 'movie', name: 'Movies', icon: '🎬', contentCount: 100 },
-      { id: 'music', name: 'Music', icon: '🎵', contentCount: 50 },
+      { id: 'movie', name: 'Movies', icon: 'Film', contentCount: 100 },
+      { id: 'music', name: 'Music', icon: 'Music2', contentCount: 50 },
     ];
     client.request.mockResolvedValue({ success: true, data: mockUniverses });
 

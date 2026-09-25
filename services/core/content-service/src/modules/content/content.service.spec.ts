@@ -1,12 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ContentService } from './content.service';
-import { PrismaService } from '../database/prisma.service';
-import { MediaService } from '../media/media.service';
-import { TranscodingService } from '../media/transcoding.service';
-import { ContentRepository } from './content.repository';
+import { ContentService } from './content.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { MediaService } from '../media/media.service.js';
+import { TranscodingService } from '../media/transcoding.service.js';
+import { ContentRepository } from './content.repository.js';
+import { ContentFeedService } from './content-feed.service.js';
+import { ContentModerationService } from './content-moderation.service.js';
+import { ContentRelationshipService } from './content-relationship.service.js';
+import { ContentCategoryService } from './content-category.service.js';
+import { ContentIngestionService } from './content-ingestion.service.js';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { RedisService } from '../../cache/redis.service';
+import { RedisService } from '../../cache/redis.service.js';
+import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('ContentService', () => {
   let service: ContentService;
@@ -54,6 +61,12 @@ describe('ContentService', () => {
     transcode: jest.fn(),
   };
 
+  const mockFlagService = {
+    isEnabled: jest.fn().mockResolvedValue(true),
+    getFlag: jest.fn().mockResolvedValue(null),
+    setFlag: jest.fn().mockResolvedValue(undefined),
+  };
+
   const mockContentRepository = {
     findAll: jest.fn(),
     findById: jest.fn(),
@@ -63,6 +76,7 @@ describe('ContentService', () => {
     search: jest.fn(),
     getComments: jest.fn(),
     addComment: jest.fn(),
+    findCommentById: jest.fn(),
     getAnalytics: jest.fn(),
     findTrending: jest.fn(),
     findRecommended: jest.fn(),
@@ -71,6 +85,7 @@ describe('ContentService', () => {
   };
 
   const mockConfigService = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     get: jest.fn((key: string, defaultValue?: any) => {
       switch (key) {
         case 'MODERATION_SERVICE_URL':
@@ -121,6 +136,100 @@ describe('ContentService', () => {
           provide: RedisService,
           useValue: mockRedisService,
         },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(undefined),
+            deleteByPattern: jest.fn().mockResolvedValue(undefined),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: mockFlagService,
+        },
+        {
+          provide: ContentFeedService,
+          useValue: {
+            getHomeFeed: jest.fn().mockResolvedValue({
+              success: true,
+              data: { trending: [], latest: [], recommended: [] },
+            }),
+            getWatchFeed: jest.fn().mockResolvedValue({ success: true, data: [] }),
+            getFeatured: jest.fn().mockResolvedValue({ success: true, data: [] }),
+            getTrending: jest.fn().mockResolvedValue({ success: true, data: [] }),
+            getNewReleases: jest.fn().mockResolvedValue({ success: true, data: [] }),
+            getFeaturedSlides: jest.fn().mockResolvedValue({ success: true, data: [] }),
+            getPopularInRegion: jest.fn().mockResolvedValue({ success: true, data: [] }),
+            getRecommended: jest.fn().mockResolvedValue({ success: true, data: [] }),
+          },
+        },
+        {
+          provide: ContentModerationService,
+          useValue: {
+            moderateContent: jest.fn().mockResolvedValue({ approved: true }),
+            checkContentSafety: jest.fn().mockResolvedValue({ isSafe: true }),
+            scanContentForSafety: jest.fn().mockResolvedValue({ isSafe: true }),
+            reportContent: jest.fn().mockResolvedValue({
+              success: true,
+              data: { message: 'Content reported successfully' },
+            }),
+            getContentModerationStatus: jest.fn().mockResolvedValue({ status: 'approved' }),
+          },
+        },
+        {
+          provide: ContentRelationshipService,
+          useValue: {
+            getRelatedContent: jest.fn().mockResolvedValue([]),
+            getCollaborations: jest.fn().mockResolvedValue([]),
+            addContentRelationship: jest.fn().mockResolvedValue({ success: true }),
+            removeContentRelationship: jest.fn().mockResolvedValue({ success: true }),
+            getContentRelationships: jest.fn().mockResolvedValue([]),
+            getContentByRelationship: jest.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: ContentCategoryService,
+          useValue: {
+            getCategories: jest.fn().mockResolvedValue({ success: true, data: [] }),
+            getCategoryById: jest.fn().mockResolvedValue(null),
+            createCategory: jest.fn().mockResolvedValue({
+              success: true,
+              data: { id: 'cat-1', name: 'Comedy', slug: 'comedy' },
+            }),
+            updateCategory: jest.fn().mockResolvedValue({
+              success: true,
+              data: { id: 'cat-1', name: 'Updated', slug: 'updated' },
+            }),
+            deleteCategory: jest
+              .fn()
+              .mockResolvedValue({ success: true, data: { message: 'Deleted' } }),
+            createTag: jest.fn().mockResolvedValue({
+              success: true,
+              data: { id: 'tag-1', name: 'Test', description: '' },
+            }),
+            updateTag: jest.fn().mockResolvedValue({
+              success: true,
+              data: { id: 'tag-1', name: 'Updated', description: '' },
+            }),
+            deleteTag: jest.fn().mockResolvedValue({ success: true, data: { message: 'Deleted' } }),
+            getTags: jest.fn().mockResolvedValue({ success: true, data: [] }),
+            addCategoryToContent: jest.fn().mockResolvedValue({ success: true }),
+            removeCategoryFromContent: jest.fn().mockResolvedValue({ success: true }),
+            addTagToContent: jest.fn().mockResolvedValue({ success: true }),
+            removeTagFromContent: jest.fn().mockResolvedValue({ success: true }),
+            getContentByCategory: jest.fn().mockResolvedValue([]),
+            getContentByTag: jest.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: ContentIngestionService,
+          useValue: {
+            ingestContent: jest.fn().mockResolvedValue({ id: 'new-content' }),
+          },
+        },
       ],
     }).compile();
 
@@ -138,20 +247,12 @@ describe('ContentService', () => {
 
   describe('getHomeFeed', () => {
     it('should return home feed with trending, recommended, and latest content', async () => {
-      const mockTrending = [{ id: '1', title: 'Trending 1' }];
-      const mockLatest = [{ id: '2', title: 'Latest 1' }];
-
-      mockRedisService.get.mockResolvedValue(null);
-      mockPrismaService.watchHistory.findMany.mockResolvedValue([]);
-      mockPrismaService.contentItem.findMany
-        .mockResolvedValueOnce(mockTrending)
-        .mockResolvedValueOnce(mockLatest);
-
       const result = await service.getHomeFeed();
 
       expect(result.success).toBe(true);
-      expect(result.data.trending).toEqual(mockTrending);
-      expect(result.data.latest).toEqual(mockLatest);
+      expect(result.data).toHaveProperty('trending');
+      expect(result.data).toHaveProperty('latest');
+      expect(result.data).toHaveProperty('recommended');
     });
 
     it('should return recommended content for logged-in user', async () => {
@@ -173,24 +274,10 @@ describe('ContentService', () => {
 
   describe('getWatchFeed', () => {
     it('should return published content for watch feed', async () => {
-      const mockContent = [
-        { id: '1', title: 'Video 1', status: 'published' },
-        { id: '2', title: 'Video 2', status: 'published' },
-      ];
-
-      mockPrismaService.contentItem.findMany.mockResolvedValue(mockContent);
-
       const result = await service.getWatchFeed();
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockContent);
-      expect(mockPrismaService.contentItem.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { status: 'published' },
-          orderBy: { viewCount: 'desc' },
-          take: 50,
-        })
-      );
+      expect(result.data).toEqual([]);
     });
   });
 
@@ -245,17 +332,10 @@ describe('ContentService', () => {
 
   describe('getTrending', () => {
     it('should return trending content', async () => {
-      const mockContent = [
-        { id: '1', title: 'Trending 1', viewCount: 1000 },
-        { id: '2', title: 'Trending 2', viewCount: 800 },
-      ];
-
-      mockPrismaService.contentItem.findMany.mockResolvedValue(mockContent);
-
       const result = await service.getTrending();
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockContent);
+      expect(result.data).toEqual([]);
     });
   });
 
@@ -331,7 +411,7 @@ describe('ContentService', () => {
       const result = await service.deleteContent(userId, contentId);
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Content soft deleted successfully');
+      expect(result.data!.message).toBe('Content soft deleted successfully');
     });
 
     it('should throw NotFoundException if content not found', async () => {
@@ -452,107 +532,61 @@ describe('ContentService', () => {
 
   describe('categories', () => {
     it('should create a category', async () => {
-      const mockCategory = { id: 'cat-1', name: 'Comedy', slug: 'comedy' };
-
-      mockPrismaService.category.create.mockResolvedValue(mockCategory);
-
       const result = await service.createCategory('Comedy', 'comedy');
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockCategory);
+      expect(result.data).toEqual({ id: 'cat-1', name: 'Comedy', slug: 'comedy' });
     });
 
     it('should get all categories', async () => {
-      const mockCategories = [
-        { id: 'cat-1', name: 'Comedy' },
-        { id: 'cat-2', name: 'Drama' },
-      ];
-
-      mockPrismaService.category.findMany.mockResolvedValue(mockCategories);
-
       const result = await service.getCategories();
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockCategories);
+      expect(result.data).toEqual([]);
     });
 
     it('should update a category', async () => {
-      const categoryId = 'cat-1';
-      const existingCategory = { id: categoryId, name: 'Old Name', slug: 'old' };
-      const updatedCategory = { ...existingCategory, name: 'New Name' };
-
-      mockPrismaService.category.findUnique.mockResolvedValue(existingCategory);
-      mockPrismaService.category.update.mockResolvedValue(updatedCategory);
-
-      const result = await service.updateCategory(categoryId, 'New Name');
+      const result = await service.updateCategory('cat-1', 'New Name');
 
       expect(result.success).toBe(true);
-      expect(result.data.name).toBe('New Name');
+      expect(result.data.name).toBe('Updated');
     });
 
     it('should delete a category', async () => {
-      const categoryId = 'cat-1';
-
-      mockPrismaService.category.findUnique.mockResolvedValue({ id: categoryId });
-      mockPrismaService.category.delete.mockResolvedValue({ id: categoryId });
-
-      const result = await service.deleteCategory(categoryId);
+      const result = await service.deleteCategory('cat-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Category deleted successfully');
+      expect(result.data.message).toBe('Deleted');
     });
   });
 
   describe('tags', () => {
     it('should create a tag', async () => {
-      const mockTag = { id: 'tag-1', name: 'Funny' };
-
-      mockPrismaService.tag.create.mockResolvedValue(mockTag);
-
       const result = await service.createTag('Funny');
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockTag);
+      expect(result.data).toEqual({ id: 'tag-1', name: 'Test', description: '' });
     });
 
     it('should get all tags', async () => {
-      const mockTags = [
-        { id: 'tag-1', name: 'Funny' },
-        { id: 'tag-2', name: 'Action' },
-      ];
-
-      mockPrismaService.tag.findMany.mockResolvedValue(mockTags);
-
       const result = await service.getTags();
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockTags);
+      expect(result.data).toEqual([]);
     });
 
     it('should update a tag', async () => {
-      const tagId = 'tag-1';
-      const existingTag = { id: tagId, name: 'Old Tag' };
-      const updatedTag = { ...existingTag, name: 'New Tag' };
-
-      mockPrismaService.tag.findUnique.mockResolvedValue(existingTag);
-      mockPrismaService.tag.update.mockResolvedValue(updatedTag);
-
-      const result = await service.updateTag(tagId, 'New Tag');
+      const result = await service.updateTag('tag-1', 'New Tag');
 
       expect(result.success).toBe(true);
-      expect(result.data.name).toBe('New Tag');
+      expect(result.data.name).toBe('Updated');
     });
 
     it('should delete a tag', async () => {
-      const tagId = 'tag-1';
-
-      mockPrismaService.tag.findUnique.mockResolvedValue({ id: tagId });
-      mockPrismaService.tag.delete.mockResolvedValue({ id: tagId });
-
-      const result = await service.deleteTag(tagId);
+      const result = await service.deleteTag('tag-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Tag deleted successfully');
+      expect(result.data.message).toBe('Deleted');
     });
   });
 
@@ -575,6 +609,63 @@ describe('ContentService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockAnalytics);
+    });
+  });
+
+  describe('threaded comments (content_comments_v2)', () => {
+    it('accepts a parentId and stores a reply while the flag is on', async () => {
+      mockFlagService.isEnabled.mockResolvedValue(true);
+      mockContentRepository.findCommentById.mockResolvedValue({
+        id: 'comment-1',
+        contentId: 'content-1',
+        userId: 'user-a',
+        text: 'parent',
+      });
+      mockContentRepository.addComment.mockResolvedValue({
+        id: 'comment-2',
+        contentId: 'content-1',
+        userId: 'user-123',
+        text: 'reply',
+        parentId: 'comment-1',
+      });
+
+      const result = await service.addCommentToContent(
+        'user-123',
+        'content-1',
+        'reply',
+        'comment-1'
+      );
+
+      expect(mockContentRepository.addComment).toHaveBeenCalledWith(
+        'content-1',
+        'user-123',
+        'reply',
+        'comment-1'
+      );
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects a parentId while the flag is off (threads unavailable)', async () => {
+      mockFlagService.isEnabled.mockResolvedValue(false);
+
+      await expect(
+        service.addCommentToContent('user-123', 'content-1', 'reply', 'comment-1')
+      ).rejects.toThrow(BadRequestException);
+      expect(mockContentRepository.addComment).not.toHaveBeenCalled();
+    });
+
+    it('rejects a parent comment from a different content item', async () => {
+      mockFlagService.isEnabled.mockResolvedValue(true);
+      mockContentRepository.findCommentById.mockResolvedValue({
+        id: 'comment-1',
+        contentId: 'other-content',
+        userId: 'user-a',
+        text: 'parent',
+      });
+
+      await expect(
+        service.addCommentToContent('user-123', 'content-1', 'reply', 'comment-1')
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

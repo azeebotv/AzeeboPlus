@@ -60,7 +60,7 @@ ALL_DATABASES=(
   azeebo_referral
   azeebo_subscription
   azeebo_admin
-  azeebo_creator_portal
+  azeebo_creator
 )
 
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')

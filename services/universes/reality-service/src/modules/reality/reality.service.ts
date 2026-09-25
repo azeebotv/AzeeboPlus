@@ -1,17 +1,20 @@
 import {
+  Inject,
   Injectable,
   NotFoundException,
   ConflictException,
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
-import { RealityResponse } from './interfaces/reality-response.interface';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
+import { RealityResponse } from './interfaces/reality-response.interface.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { sanitizeInput } from '@azeebo/validation';
 
 interface VoteWithQuantity {
   contestantId: string;
@@ -37,9 +40,9 @@ export class RealityService {
   private readonly voteCost: number;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-    private readonly cache: CacheService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(CacheService) private readonly cache: CacheService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
@@ -47,58 +50,66 @@ export class RealityService {
     this.voteCost = this.configService.get<number>('VOTE_COST', 1);
   }
 
-  private async trackAnalyticsEvent(
+  private async trackEvent(
     eventName: string,
     userId: string,
-    metadata: Record<string, unknown>
+    metadata: Record<string, unknown> = {}
   ): Promise<void> {
     try {
-      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, {
-        eventName,
-        userId,
-        universe: 'reality',
-        metadata,
-        timestamp: new Date().toISOString(),
-      }, { timeout: 10000 });
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/v1/analytics/events`,
+        {
+          type: eventName,
+          userId,
+          universe: 'reality',
+          metadata,
+          timestamp: new Date().toISOString(),
+        },
+        { timeout: 10000 }
+      );
     } catch (error) {
       this.logger.error('Failed to track analytics event:', error);
     }
   }
 
-  private premiumExtras: PremiumExtra[] = [
-    {
-      id: '1',
-      name: 'Early Voting',
-      description: 'Vote before regular voting opens',
-      price: 5,
-      type: 'feature',
-      duration: 7,
-    },
-    {
-      id: '2',
-      name: 'Vote Multiplier',
-      description: 'Your votes count double',
-      price: 20,
-      type: 'feature',
-      duration: 3,
-    },
-    {
-      id: '3',
-      name: 'Exclusive Content',
-      description: 'Access behind-the-scenes footage',
-      price: 15,
-      type: 'content',
-      duration: 30,
-    },
-    {
-      id: '4',
-      name: 'Live Chat',
-      description: 'Join exclusive live chats with contestants',
-      price: 10,
-      type: 'feature',
-      duration: 7,
-    },
-  ];
+  // Premium extras loaded from config with sensible defaults
+  // Prices are configurable via environment variables to avoid hardcoded values
+  private getPremiumExtrasData(): PremiumExtra[] {
+    return [
+      {
+        id: '1',
+        name: 'Early Voting',
+        description: 'Vote before regular voting opens',
+        price: this.configService.get<number>('PREMIUM_EXTRA_EARLY_VOTING_PRICE', 5),
+        type: 'feature',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_EARLY_VOTING_DURATION', 7),
+      },
+      {
+        id: '2',
+        name: 'Vote Multiplier',
+        description: 'Your votes count double',
+        price: this.configService.get<number>('PREMIUM_EXTRA_VOTE_MULTIPLIER_PRICE', 20),
+        type: 'feature',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_VOTE_MULTIPLIER_DURATION', 3),
+      },
+      {
+        id: '3',
+        name: 'Exclusive Content',
+        description: 'Access behind-the-scenes footage',
+        price: this.configService.get<number>('PREMIUM_EXTRA_EXCLUSIVE_CONTENT_PRICE', 15),
+        type: 'content',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_EXCLUSIVE_CONTENT_DURATION', 30),
+      },
+      {
+        id: '4',
+        name: 'Live Chat',
+        description: 'Join exclusive live chats with contestants',
+        price: this.configService.get<number>('PREMIUM_EXTRA_LIVE_CHAT_PRICE', 10),
+        type: 'feature',
+        duration: this.configService.get<number>('PREMIUM_EXTRA_LIVE_CHAT_DURATION', 7),
+      },
+    ];
+  }
 
   async listShows(): Promise<RealityResponse> {
     const cacheK = cacheKey('reality', 'shows:list');
@@ -208,7 +219,24 @@ export class RealityService {
       orderBy: { name: 'asc' },
     });
 
-    const result = { contestants: contestants as unknown };
+    // Vote rows are quantity-weighted (multi-vote packs): surface the summed
+    // quantity as `votes` instead of the raw row count, which undercounts
+    // heavily for contestants with bulk votes.
+    const voteTotals = await this.prisma.vote.groupBy({
+      by: ['contestantId'],
+      where: { showId },
+      _sum: { quantity: true },
+    });
+    const totalByContestant = new Map(
+      voteTotals.map((row) => [row.contestantId, row._sum.quantity ?? 0])
+    );
+
+    const enriched = contestants.map((c) => ({
+      ...c,
+      votes: totalByContestant.get(c.id) ?? 0,
+    }));
+
+    const result = { contestants: enriched as unknown };
     await this.cache.set(cacheK, result, 30);
 
     return {
@@ -258,30 +286,32 @@ export class RealityService {
   ): Promise<RealityResponse> {
     const { contestantId, showId } = body;
 
-    const existingVote = await this.prisma.vote.findUnique({
-      where: {
-        userId_contestantId: { userId, contestantId },
-      },
-    });
-
-    if (existingVote) {
-      throw new ConflictException('User has already voted for this contestant');
-    }
-
     const vote = await this.prisma.$transaction(async (tx) => {
-      const newVote = await tx.vote.create({
+      const existingVote = await tx.vote.findUnique({
+        where: {
+          userId_contestantId: { userId, contestantId },
+        },
+      });
+
+      if (existingVote) {
+        throw new ConflictException('User has already voted for this contestant');
+      }
+
+      return tx.vote.create({
         data: {
           userId,
           contestantId,
           showId,
         },
       });
-
-      return newVote;
     });
 
-    await this.cache.invalidate(`reality:*`);
-    await this.trackAnalyticsEvent('vote_submitted', userId, {
+    await Promise.all([
+      this.cache.invalidate(`reality:show:${showId}`),
+      this.cache.invalidate(`reality:contestants:${showId}`),
+      this.cache.invalidate('reality:shows:list'),
+    ]);
+    await this.trackEvent('vote_submitted', userId, {
       voteId: vote.id,
       contestantId,
       showId,
@@ -302,17 +332,10 @@ export class RealityService {
   ): Promise<RealityResponse> {
     const { contestantId, showId } = body;
 
-    const existingSupervote = await this.prisma.supervote.findUnique({
-      where: {
-        userId_contestantId: { userId, contestantId },
-      },
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
     });
-
-    if (existingSupervote) {
-      throw new ConflictException('User has already supervoted for this contestant');
-    }
-
-    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException(`Wallet not found for user`);
     }
@@ -324,19 +347,34 @@ export class RealityService {
     const idempotencyKey = randomUUID();
 
     const debitResult = await axios
-      .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-        walletId: wallet.id,
-        amount: this.supervoteCost,
-        description: `Supervote for contestant ${contestantId} on show ${showId}`,
-        idempotencyKey,
-      }, { timeout: 10000 })
+      .post(
+        `${this.walletServiceBaseUrl}/wallet/debit`,
+        {
+          walletId: wallet.id,
+          amount: this.supervoteCost,
+          description: `Supervote for contestant ${contestantId} on show ${showId}`,
+          idempotencyKey,
+        },
+        { timeout: 10000 }
+      )
       .catch((error: unknown) => {
-        const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
+        const errorMessage =
+          error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
         throw new ConflictException(errorMessage);
       });
 
     try {
       const supervote = await this.prisma.$transaction(async (tx) => {
+        const existingSupervote = await tx.supervote.findUnique({
+          where: {
+            userId_contestantId: { userId, contestantId },
+          },
+        });
+
+        if (existingSupervote) {
+          throw new ConflictException('User has already supervoted for this contestant');
+        }
+
         return tx.supervote.create({
           data: {
             userId,
@@ -347,8 +385,12 @@ export class RealityService {
         });
       });
 
-      await this.cache.invalidate(`reality:*`);
-      await this.trackAnalyticsEvent('supervote_submitted', userId, {
+      await Promise.all([
+        this.cache.invalidate(`reality:show:${showId}`),
+        this.cache.invalidate(`reality:contestants:${showId}`),
+        this.cache.invalidate('reality:shows:list'),
+      ]);
+      await this.trackEvent('supervote_submitted', userId, {
         supervoteId: supervote.id,
         contestantId,
         showId,
@@ -363,22 +405,25 @@ export class RealityService {
           message: `Supervote submitted successfully. ${this.supervoteCost} NGN has been deducted from your wallet.`,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       await axios
-        .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-          walletId: wallet.id,
-          amount: this.supervoteCost,
-          description: `Compensation for failed supervote: ${idempotencyKey}`,
-          reference: `compensate:${idempotencyKey}`,
-        }, { timeout: 10000 })
+        .post(
+          `${this.walletServiceBaseUrl}/wallet/credit`,
+          {
+            walletId: wallet.id,
+            amount: this.supervoteCost,
+            description: `Compensation for failed supervote: ${idempotencyKey}`,
+            reference: `compensate:${idempotencyKey}`,
+          },
+          { timeout: 10000 }
+        )
         .catch((compensateError: unknown) => {
           this.logger.error(
             'Failed to compensate wallet after supervote failure:',
             compensateError
           );
         });
-      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to submit supervote';
-      throw new ConflictException(errorMessage);
+      mapAndThrow(error, 'submitting supervote');
     }
   }
 
@@ -396,7 +441,7 @@ export class RealityService {
       },
     });
 
-    await this.trackAnalyticsEvent('prediction_placed', userId, {
+    await this.trackEvent('prediction_placed', userId, {
       predictionId: predictionRecord.id,
       showId,
       predictionType: Object.keys(prediction)[0] || 'unknown',
@@ -414,15 +459,6 @@ export class RealityService {
   async getPredictionDashboard(userId: string, showId: string): Promise<RealityResponse> {
     const predictions = await this.prisma.prediction.findMany({
       where: { showId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            displayName: true,
-            avatar: true,
-          },
-        },
-      },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
@@ -440,12 +476,72 @@ export class RealityService {
     };
   }
 
+  async listVotesForShow(showId: string, page: number, limit: number): Promise<RealityResponse> {
+    const skip = (page - 1) * limit;
+
+    const [votes, total] = await Promise.all([
+      this.prisma.vote.findMany({
+        where: { showId },
+        include: {
+          contestant: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.vote.count({ where: { showId } }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        votes: votes as unknown,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    };
+  }
+
+  async listPredictionsForShow(
+    showId: string,
+    page: number,
+    limit: number
+  ): Promise<RealityResponse> {
+    const skip = (page - 1) * limit;
+
+    const [predictions, total] = await Promise.all([
+      this.prisma.prediction.findMany({
+        where: { showId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.prediction.count({ where: { showId } }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        predictions: predictions as unknown,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    };
+  }
+
   async getClips(showId?: string): Promise<RealityResponse> {
     const clips = await this.prisma.realityClip.findMany({
       where: showId ? { showId } : {},
       include: {
         show: true,
-        creator: true,
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -472,7 +568,10 @@ export class RealityService {
       throw new NotFoundException('Contestant not found');
     }
 
-    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
+    });
+    const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
     }
@@ -485,38 +584,50 @@ export class RealityService {
     const idempotencyKey = randomUUID();
 
     const debitResult = await axios
-      .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-        walletId: wallet.id,
-        amount: totalCost,
-        description: `${quantity} votes for contestant ${contestantId}`,
-        idempotencyKey,
-      }, { timeout: 10000 })
+      .post(
+        `${this.walletServiceBaseUrl}/wallet/debit`,
+        {
+          walletId: wallet.id,
+          amount: totalCost,
+          description: `${quantity} votes for contestant ${contestantId}`,
+          idempotencyKey,
+        },
+        { timeout: 10000 }
+      )
       .catch((error: unknown) => {
-        const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
+        const errorMessage =
+          error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
         throw new ConflictException(errorMessage);
       });
 
     try {
-      const votes = await this.prisma.$transaction(async (tx) => {
-        const createdVotes = [];
+      const vote = await this.prisma.$transaction(async (tx) => {
+        // Use upsert to either create a new vote or increment quantity on existing
+        const result = await tx.vote.upsert({
+          where: {
+            userId_contestantId: { userId, contestantId },
+          },
+          create: {
+            userId,
+            contestantId,
+            showId,
+            quantity,
+          },
+          update: {
+            quantity: { increment: quantity },
+          },
+        });
 
-        for (let i = 0; i < quantity; i++) {
-          const vote = await tx.vote.create({
-            data: {
-              userId,
-              contestantId,
-              showId,
-            },
-          });
-          createdVotes.push(vote);
-        }
-
-        return createdVotes;
+        return result;
       });
 
-      await this.cache.invalidate(`reality:*`);
-      await this.trackAnalyticsEvent('vote_submitted', userId, {
-        voteIds: votes.map((v) => v.id),
+      await Promise.all([
+        this.cache.invalidate(`reality:show:${showId}`),
+        this.cache.invalidate(`reality:contestants:${showId}`),
+        this.cache.invalidate('reality:shows:list'),
+      ]);
+      await this.trackEvent('vote_submitted', userId, {
+        voteId: vote.id,
         contestantId,
         showId,
         voteType: 'bulk',
@@ -527,39 +638,37 @@ export class RealityService {
       return {
         success: true,
         data: {
-          voteIds: votes.map((v) => v.id),
-          quantity,
+          voteId: vote.id,
+          quantity: vote.quantity,
           totalCost,
           balance: debitResult.data?.balance,
           message: `${quantity} votes submitted successfully`,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       await axios
-        .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-          walletId: wallet.id,
-          amount: totalCost,
-          description: `Compensation for failed votes: ${idempotencyKey}`,
-          reference: `compensate:${idempotencyKey}`,
-        }, { timeout: 10000 })
+        .post(
+          `${this.walletServiceBaseUrl}/wallet/credit`,
+          {
+            walletId: wallet.id,
+            amount: totalCost,
+            description: `Compensation for failed votes: ${idempotencyKey}`,
+            reference: `compensate:${idempotencyKey}`,
+          },
+          { timeout: 10000 }
+        )
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet after votes failure:', compensateError);
         });
-      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to submit votes';
-      throw new ConflictException(errorMessage);
+      mapAndThrow(error, 'submitting votes');
     }
   }
 
   async getWalletBalance(userId: string): Promise<RealityResponse> {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { userId },
-      include: {
-        transactions: {
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-        },
-      },
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
     });
+    const wallet = walletResponse.data?.wallet || walletResponse.data;
 
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
@@ -572,7 +681,7 @@ export class RealityService {
         bonusBalance: wallet.bonusBalance,
         promoBalance: wallet.promoBalance,
         currency: wallet.currency,
-        recentTransactions: wallet.transactions,
+        recentTransactions: wallet.transactions || [],
       },
     };
   }
@@ -583,7 +692,7 @@ export class RealityService {
       data: {
         voteCost: this.voteCost,
         supervoteCost: this.supervoteCost,
-        premiumExtras: this.premiumExtras,
+        premiumExtras: this.getPremiumExtrasData(),
       },
     };
   }
@@ -591,17 +700,20 @@ export class RealityService {
   async getPremiumExtras(): Promise<RealityResponse> {
     return {
       success: true,
-      data: { premiumExtras: this.premiumExtras },
+      data: { premiumExtras: this.getPremiumExtrasData() },
     };
   }
 
   async purchasePremiumExtra(userId: string, extraId: string): Promise<RealityResponse> {
-    const extra = this.premiumExtras.find((e) => e.id === extraId);
+    const extra = this.getPremiumExtrasData().find((e) => e.id === extraId);
     if (!extra) {
       throw new NotFoundException('Premium extra not found');
     }
 
-    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    const walletResponse = await axios.get(`${this.walletServiceBaseUrl}/wallets/user/${userId}`, {
+      timeout: 10000,
+    });
+    const wallet = walletResponse.data?.wallet || walletResponse.data;
     if (!wallet) {
       throw new NotFoundException('Wallet not found');
     }
@@ -613,14 +725,39 @@ export class RealityService {
     const idempotencyKey = randomUUID();
 
     try {
-      await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-        walletId: wallet.id,
-        amount: extra.price,
-        description: `Purchase premium extra: ${extra.name}`,
-        idempotencyKey,
-      }, { timeout: 10000 });
+      await axios.post(
+        `${this.walletServiceBaseUrl}/wallet/debit`,
+        {
+          walletId: wallet.id,
+          amount: extra.price,
+          description: `Purchase premium extra: ${extra.name}`,
+          idempotencyKey,
+        },
+        { timeout: 10000 }
+      );
 
-      await this.trackAnalyticsEvent('premium_extra_purchased', userId, {
+      // Create a PremiumPurchase record in the database after wallet debit
+      const expiresAt = new Date();
+      if (extra.duration) {
+        expiresAt.setDate(expiresAt.getDate() + extra.duration);
+      }
+
+      await this.prisma.premiumPurchase.create({
+        data: {
+          userId,
+          extraId: extra.id,
+          extraName: extra.name,
+          extraType: extra.type,
+          price: extra.price,
+          duration: extra.duration,
+          purchaseId: idempotencyKey,
+          purchasedAt: new Date(),
+          expiresAt: extra.duration ? expiresAt : null,
+          status: 'active',
+        },
+      });
+
+      await this.trackEvent('premium_extra_purchased', userId, {
         purchaseId: idempotencyKey,
         extraId,
         extraName: extra.name,
@@ -637,10 +774,8 @@ export class RealityService {
           message: `Successfully purchased ${extra.name}`,
         },
       };
-    } catch (_err) {
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to purchase premium extra';
-      throw new ConflictException(errorMessage);
+    } catch (error) {
+      mapAndThrow(error, 'purchasing premium extra');
     }
   }
 
@@ -662,24 +797,35 @@ export class RealityService {
       take: 10,
     });
 
-    const contestants = await Promise.all(
-      votesByContestant.map(async (v) => {
-        const contestant = await this.prisma.contestant.findUnique({
-          where: { id: v.contestantId },
-        });
-        return {
-          contestantId: v.contestantId,
-          name: contestant?.name || 'Unknown',
-          voteCount: v._count.id,
-        };
-      })
-    );
+    // Fetch recent activity events from analytics-service
+    let recentActivity: unknown[] = [];
+    try {
+      const activityResponse = await axios.get(`${this.analyticsServiceBaseUrl}/analytics/events`, {
+        params: {
+          universe: 'reality',
+          limit: 10,
+        },
+        timeout: 5000,
+      });
+      if (activityResponse.data?.success && activityResponse.data?.data) {
+        recentActivity = activityResponse.data.data;
+      }
+    } catch (error) {
+      this.logger.warn('Failed to fetch activity events from analytics-service:', error);
+      // Return empty array on failure - non-critical
+    }
 
-    const recentActivity = await this.prisma.productEvent.findMany({
-      where: { metadata: { path: ['showId'], equals: showId } },
-      orderBy: { timestamp: 'desc' },
-      take: 50,
+    const contestantIds = votesByContestant.map((v) => v.contestantId);
+    const contestants = await this.prisma.contestant.findMany({
+      where: { id: { in: contestantIds } },
     });
+    const contestantMap = new Map(contestants.map((c) => [c.id, c]));
+
+    const votesByContestantWithNames = votesByContestant.map((v) => ({
+      contestantId: v.contestantId,
+      name: contestantMap.get(v.contestantId)?.name || 'Unknown',
+      voteCount: v._count.id,
+    }));
 
     return {
       success: true,
@@ -690,7 +836,7 @@ export class RealityService {
         totalSupervotes: supervoteCount,
         totalPredictions: predictionCount,
         totalClips: clipCount,
-        contestants,
+        contestants: votesByContestantWithNames,
         recentActivity,
       },
     };
@@ -773,7 +919,10 @@ export class RealityService {
       data,
     });
 
-    await this.cache.invalidate(`reality:*`);
+    await Promise.all([
+      this.cache.invalidate(`reality:show:${showId}`),
+      this.cache.invalidate('reality:shows:list'),
+    ]);
 
     return {
       success: true,
@@ -791,7 +940,11 @@ export class RealityService {
     }
 
     await this.prisma.realityShow.delete({ where: { id: showId } });
-    await this.cache.invalidate(`reality:*`);
+    await Promise.all([
+      this.cache.invalidate(`reality:show:${showId}`),
+      this.cache.invalidate(`reality:contestants:${showId}`),
+      this.cache.invalidate('reality:shows:list'),
+    ]);
 
     return {
       success: true,
@@ -985,6 +1138,30 @@ export class RealityService {
     };
   }
 
+  async getEpisode(episodeId: string): Promise<RealityResponse> {
+    const episode = await this.prisma.episode.findUnique({
+      where: { id: episodeId },
+      include: {
+        show: true,
+        _count: {
+          select: {
+            votes: true,
+            predictions: true,
+          },
+        },
+      },
+    });
+
+    if (!episode) {
+      throw new NotFoundException('Episode not found');
+    }
+
+    return {
+      success: true,
+      data: { episode: episode as unknown },
+    };
+  }
+
   async createSeason(
     showId: string,
     data: { title: string; number: number; description?: string; startDate?: Date; endDate?: Date }
@@ -1015,49 +1192,16 @@ export class RealityService {
   }
 
   async confirmReward(userId: string, showId: string): Promise<RealityResponse> {
-    const rewardAccount = await this.prisma.rewardAccount.findUnique({ where: { userId } });
-    if (!rewardAccount) {
-      throw new NotFoundException('Reward account not found');
-    }
-
-    const existingClaim = await this.prisma.pointsLedger.findFirst({
-      where: {
-        userId,
-        reason: `Reward for participation in show ${showId}`,
-      },
-    });
-
-    if (existingClaim) {
-      return {
-        success: true,
-        data: {
-          pointsEarned: 0,
-          message: 'Reward already claimed for this show',
-        },
-      };
-    }
-
+    // Reward accounting (RewardAccount / PointsLedger) is owned by reward-service and is
+    // not part of reality-service's schema. Points are computed here from this service's
+    // own vote/supervote records and the reward event is emitted to analytics-service.
     const votes = await this.prisma.vote.count({ where: { userId, showId } });
     const supervotes = await this.prisma.supervote.count({ where: { userId, showId } });
 
     const pointsEarned = votes + supervotes * 10;
 
     if (pointsEarned > 0) {
-      await this.prisma.rewardAccount.update({
-        where: { userId },
-        data: { points: { increment: pointsEarned } },
-      });
-
-      await this.prisma.pointsLedger.create({
-        data: {
-          userId,
-          points: pointsEarned,
-          type: 'credit',
-          reason: `Reward for participation in show ${showId}`,
-        },
-      });
-
-      await this.trackAnalyticsEvent('reward_earned', userId, {
+      await this.trackEvent('reward_earned', userId, {
         showId,
         pointsEarned,
         votes,
@@ -1107,10 +1251,7 @@ export class RealityService {
       riskLevel: 'low' as 'low' | 'medium' | 'high' | 'critical',
     };
 
-    if (
-      fraudIndicators.rapidVoters > 5 ||
-      fraudIndicators.topContestantConcentration > 0
-    ) {
+    if (fraudIndicators.rapidVoters > 5 || fraudIndicators.topContestantConcentration > 0) {
       fraudIndicators.riskLevel = 'high';
     } else if (fraudIndicators.rapidVoters > 0) {
       fraudIndicators.riskLevel = 'medium';
@@ -1265,6 +1406,139 @@ export class RealityService {
         supervoteFraudRisk: supervoteRisk,
         predictionFraudRisk: predictionRisk,
         recommendations,
+      },
+    };
+  }
+
+  // Social Features
+
+  async likeShow(userId: string, showId: string): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const existingLike = await this.prisma.showLike.findUnique({
+      where: { userId_showId: { userId, showId } },
+    });
+
+    if (existingLike) {
+      await this.prisma.showLike.delete({
+        where: { id: existingLike.id },
+      });
+
+      await this.trackEvent('show_unliked', userId, { showId });
+
+      return {
+        success: true,
+        data: { liked: false, message: 'Show unliked successfully' },
+      };
+    }
+
+    await this.prisma.showLike.create({
+      data: { userId, showId },
+    });
+
+    await this.trackEvent('show_liked', userId, { showId });
+
+    return {
+      success: true,
+      data: { liked: true, message: 'Show liked successfully' },
+    };
+  }
+
+  async getLikeCount(showId: string): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const count = await this.prisma.showLike.count({ where: { showId } });
+
+    return {
+      success: true,
+      data: { showId, likeCount: count },
+    };
+  }
+
+  async addComment(userId: string, showId: string, content: string): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const sanitizedContent = sanitizeInput(content) as string;
+    const comment = await this.prisma.showComment.create({
+      data: { userId, showId, content: sanitizedContent },
+    });
+
+    await this.trackEvent('comment_added', userId, {
+      showId,
+      commentId: comment.id,
+    });
+
+    return {
+      success: true,
+      data: {
+        comment,
+        message: 'Comment added successfully',
+      },
+    };
+  }
+
+  async getComments(showId: string, page: number, limit: number): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [comments, total] = await Promise.all([
+      this.prisma.showComment.findMany({
+        where: { showId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.showComment.count({ where: { showId } }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        comments,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    };
+  }
+
+  async shareShow(userId: string, showId: string, platform?: string): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const share = await this.prisma.showShare.create({
+      data: { userId, showId, platform },
+    });
+
+    await this.trackEvent('show_shared', userId, {
+      showId,
+      shareId: share.id,
+      platform,
+    });
+
+    return {
+      success: true,
+      data: {
+        shareId: share.id,
+        message: 'Show shared successfully',
       },
     };
   }

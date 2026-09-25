@@ -1,7 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 import {
   SupportTicketCategory,
   SupportTicketPriority,
@@ -11,11 +13,18 @@ import {
 @Injectable()
 export class TicketService {
   private readonly logger = new Logger(TicketService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
-    private prisma: PrismaService,
-    private readonly cache: CacheService
-  ) {}
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
 
   async createTicket(data: {
     userId: string;
@@ -42,10 +51,30 @@ export class TicketService {
 
       await this.cache.invalidate('support:tickets:list:*');
 
+      this.trackAnalyticsEvent('support_ticket_created', data.userId, {
+        ticketId: result.id,
+        category: data.category,
+      });
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`createTicket failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
+    }
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
     }
   }
 
@@ -72,8 +101,11 @@ export class TicketService {
         await this.cache.set(cacheK, result, 120);
       }
       return result;
-    } catch (_err) {
-      this.logger.error(`getTicketById failed: ${(error as Error).message}`, (error as Error).stack);
+    } catch (error) {
+      this.logger.error(
+        `getTicketById failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -86,10 +118,19 @@ export class TicketService {
       page?: number;
       limit?: number;
     }
-  ) {
+  ): Promise<
+    | {
+        tickets: unknown[];
+        meta: { page: number; limit: number; total: number; totalPages: number };
+      }
+    | { success: boolean; error: string }
+  > {
     try {
       const cacheK = cacheKey('support', `tickets:list:${userId}:${JSON.stringify(options || {})}`);
-      const cached = await this.cache.get(cacheK);
+      const cached = await this.cache.get<{
+        tickets: unknown[];
+        meta: { page: number; limit: number; total: number; totalPages: number };
+      }>(cacheK);
       if (cached) return cached;
 
       const page = options?.page || 1;
@@ -125,22 +166,35 @@ export class TicketService {
 
       await this.cache.set(cacheK, result, 120);
       return result;
-    } catch (_err) {
-      this.logger.error(`getUserTickets failed: ${(error as Error).message}`, (error as Error).stack);
+    } catch (error) {
+      this.logger.error(
+        `getUserTickets failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
 
   async getTickets(options?: {
     status?: SupportTicketStatus;
+    priority?: SupportTicketPriority;
     category?: SupportTicketCategory;
     assignedTo?: string;
     page?: number;
     limit?: number;
-  }) {
+  }): Promise<
+    | {
+        tickets: unknown[];
+        meta: { page: number; limit: number; total: number; totalPages: number };
+      }
+    | { success: boolean; error: string }
+  > {
     try {
       const cacheK = cacheKey('support', `tickets:list:${JSON.stringify(options || {})}`);
-      const cached = await this.cache.get(cacheK);
+      const cached = await this.cache.get<{
+        tickets: unknown[];
+        meta: { page: number; limit: number; total: number; totalPages: number };
+      }>(cacheK);
       if (cached) return cached;
 
       const page = options?.page || 1;
@@ -149,6 +203,7 @@ export class TicketService {
 
       const where = {
         ...(options?.status && { status: options.status }),
+        ...(options?.priority && { priority: options.priority }),
         ...(options?.category && { category: options.category }),
         ...(options?.assignedTo && { assignedTo: options.assignedTo }),
       };
@@ -176,7 +231,7 @@ export class TicketService {
 
       await this.cache.set(cacheK, result, 120);
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getTickets failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -201,11 +256,14 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (_err) {
+    } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error(`updateTicketStatus failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `updateTicketStatus failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -213,7 +271,7 @@ export class TicketService {
   async addMessage(
     ticketId: string,
     senderId: string,
-    senderType: 'USER' | 'ADMIN' | 'SYSTEM',
+    senderType: 'USER' | 'AGENT' | 'SYSTEM',
     message: string,
     isInternal = false
   ) {
@@ -231,7 +289,7 @@ export class TicketService {
       await this.cache.invalidate(`support:tickets:${ticketId}`);
 
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`addMessage failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -251,7 +309,7 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`assignTicket failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -271,8 +329,11 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (_err) {
-      this.logger.error(`escalateTicket failed: ${(error as Error).message}`, (error as Error).stack);
+    } catch (error) {
+      this.logger.error(
+        `escalateTicket failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -291,7 +352,7 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`closeTicket failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -303,14 +364,111 @@ export class TicketService {
       const cached = await this.cache.get(cacheK);
       if (cached) return { success: true, data: cached };
 
-      const articles = await this.prisma.faqArticle.findMany({
-        where: { category, published: true },
-        orderBy: { sortOrder: 'asc' },
-      });
+      // Seed FAQ data with common questions
+      const faqData: Record<
+        string,
+        Array<{ id: string; question: string; answer: string; category: string }>
+      > = {
+        general: [
+          {
+            id: 'faq-1',
+            question: 'What is Azeebo+?',
+            answer:
+              'Azeebo+ is a multi-service entertainment platform offering movies, reality TV, comedy, sports, games, and more across Africa.',
+            category: 'general',
+          },
+          {
+            id: 'faq-2',
+            question: 'How do I create an account?',
+            answer:
+              'Download the Azeebo+ app or visit our website, click "Sign Up", and follow the registration process with your email or phone number.',
+            category: 'general',
+          },
+          {
+            id: 'faq-3',
+            question: 'Is Azeebo+ available on my device?',
+            answer:
+              'Azeebo+ is available on iOS, Android, and web browsers. Download from the App Store or Google Play Store.',
+            category: 'general',
+          },
+        ],
+        payments: [
+          {
+            id: 'faq-4',
+            question: 'How do I add funds to my wallet?',
+            answer:
+              'Go to Wallet > Add Funds, select your payment method (card, bank transfer, or USSD), and follow the prompts.',
+            category: 'payments',
+          },
+          {
+            id: 'faq-5',
+            question: 'What payment methods are accepted?',
+            answer:
+              'We accept debit/credit cards, bank transfers, USSD payments, and mobile money through Paystack and Flutterwave.',
+            category: 'payments',
+          },
+          {
+            id: 'faq-6',
+            question: 'How do I request a refund?',
+            answer:
+              'Contact our support team through the Help & Support section with your transaction details. Refunds are processed within 5-7 business days.',
+            category: 'payments',
+          },
+        ],
+        content: [
+          {
+            id: 'faq-7',
+            question: 'How do I become a creator?',
+            answer:
+              'Apply through the Creator Portal on our website. You need to verify your identity and agree to our creator terms.',
+            category: 'content',
+          },
+          {
+            id: 'faq-8',
+            question: 'How do I report inappropriate content?',
+            answer:
+              'Click the three-dot menu on any content and select "Report". Choose the reason and submit. Our moderation team will review within 24 hours.',
+            category: 'content',
+          },
+          {
+            id: 'faq-9',
+            question: 'Can I download content for offline viewing?',
+            answer:
+              'Premium subscribers can download select content for offline viewing. Look for the download icon on supported content.',
+            category: 'content',
+          },
+        ],
+        account: [
+          {
+            id: 'faq-10',
+            question: 'How do I change my password?',
+            answer:
+              'Go to Settings > Security > Change Password. Enter your current password and new password to update.',
+            category: 'account',
+          },
+          {
+            id: 'faq-11',
+            question: 'How do I delete my account?',
+            answer:
+              'Go to Settings > Account > Delete Account. This action is irreversible and will remove all your data within 30 days.',
+            category: 'account',
+          },
+          {
+            id: 'faq-12',
+            question: 'How do I enable two-factor authentication?',
+            answer:
+              'Go to Settings > Security > Two-Factor Authentication and follow the setup instructions.',
+            category: 'account',
+          },
+        ],
+      };
+
+      const articles =
+        category && category !== 'all' ? faqData[category] || [] : Object.values(faqData).flat();
 
       await this.cache.set(cacheK, articles, 600);
       return { success: true, data: articles };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getFaq failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }

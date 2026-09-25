@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -14,28 +15,32 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit, Public, AdminGuard } from '@azeebo/security';
 import { CacheInterceptor, Cache } from '@azeebo/shared-services';
 
-import { ContentService } from './content.service';
-import { AccessControlService } from './access-control.service';
-import { CreateContentDto } from './dto/create-content.dto';
-import { UpdateContentDto } from './dto/update-content.dto';
-import { CreateMediaAssetDto } from './dto/create-media-asset.dto';
-import { UpdateMediaAssetDto } from './dto/update-media-asset.dto';
-import { VoteDto } from './dto/vote.dto';
-import { SuperVoteDto } from './dto/super-vote.dto';
-import { ContentResponse } from './interfaces/content-response.interface';
+import { ContentService } from './content.service.js';
+import { AccessControlService } from './access-control.service.js';
+import { ContentReleaseSchedulerService } from './content-release-scheduler.service.js';
+import { ContentVersioningService } from './content-versioning.service.js';
+import { ACDPValidationService } from './content-acdp-validation.service.js';
+import { CreateContentDto } from './dto/create-content.dto.js';
+import { UpdateContentDto } from './dto/update-content.dto.js';
+import { CreateMediaAssetDto } from './dto/create-media-asset.dto.js';
+import { UpdateMediaAssetDto } from './dto/update-media-asset.dto.js';
+import { ContentResponse } from './interfaces/content-response.interface.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @ApiTags('Content')
-@Controller('v1/content')
+@Controller('content')
 @UseInterceptors(CacheInterceptor)
 export class ContentController {
   constructor(
-    private readonly contentService: ContentService,
-    private readonly accessControlService: AccessControlService
+    @Inject(ContentService) private readonly contentService: ContentService,
+    @Inject(AccessControlService) private readonly accessControlService: AccessControlService,
+    @Inject(ContentReleaseSchedulerService)
+    private readonly releaseScheduler: ContentReleaseSchedulerService,
+    @Inject(ContentVersioningService) private readonly versioningService: ContentVersioningService,
+    @Inject(ACDPValidationService) private readonly acdpValidation: ACDPValidationService
   ) {}
 
   // ========================
@@ -65,8 +70,8 @@ export class ContentController {
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get home feed content' })
   @ApiResponse({ status: 200, description: 'Home feed' })
-  async getHomeFeed(@Request() req: { user?: { sub: string } | null }): Promise<ContentResponse> {
-    return this.contentService.getHomeFeed(req?.user?.sub);
+  async getHomeFeed(@Request() req: { user?: { id: string } | null }): Promise<ContentResponse> {
+    return this.contentService.getHomeFeed(req?.user?.id);
   }
 
   @Public()
@@ -76,8 +81,8 @@ export class ContentController {
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get watch hub feed' })
   @ApiResponse({ status: 200, description: 'Watch hub feed' })
-  async getWatchFeed(@Request() req: { user?: { sub: string } | null }): Promise<ContentResponse> {
-    return this.contentService.getWatchFeed(req?.user?.sub);
+  async getWatchFeed(@Request() req: { user?: { id: string } | null }): Promise<ContentResponse> {
+    return this.contentService.getWatchFeed(req?.user?.id);
   }
 
   @Public()
@@ -148,21 +153,19 @@ export class ContentController {
 
   @Get('recommended')
   @Cache({ key: 'content:recommended:{userId}', ttl: 1800 })
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get recommended content' })
   @ApiResponse({ status: 200, description: 'Recommended content' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getRecommended(@Request() req: { user: { sub: string } }): Promise<ContentResponse> {
+  async getRecommended(@Request() req: { user: { id: string } }): Promise<ContentResponse> {
     return this.contentService.getRecommended(req.user.id);
   }
 
   @Get('accessible')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get accessible content for user' })
   @ApiResponse({ status: 200, description: 'Accessible content list' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getAccessibleContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Query('universeId') universeId?: string,
     @Query('windowType') windowType?: string,
     @Query('page') page?: number,
@@ -178,12 +181,11 @@ export class ContentController {
   }
 
   @Get('passes/access')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Check pass access for user' })
   @ApiResponse({ status: 200, description: 'Pass access check result' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async checkPassAccess(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Query('universeId') universeId?: string
   ) {
     const result = await this.accessControlService.checkPassAccess(req.user.id, universeId);
@@ -191,12 +193,11 @@ export class ContentController {
   }
 
   @Get('rentals/:contentId/access')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Check rental access for content' })
   @ApiResponse({ status: 200, description: 'Rental access check result' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async checkRentalAccess(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('contentId') contentId: string
   ) {
     const result = await this.accessControlService.checkRentalAccess(req.user.id, contentId);
@@ -204,12 +205,11 @@ export class ContentController {
   }
 
   @Get('screenings/:screeningId/access')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Check screening access' })
   @ApiResponse({ status: 200, description: 'Screening access check result' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async checkScreeningAccess(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('screeningId') screeningId: string
   ) {
     const result = await this.accessControlService.checkScreeningAccess(req.user.id, screeningId);
@@ -217,12 +217,11 @@ export class ContentController {
   }
 
   @Get('extras/:extraId/access')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Check locked extra access' })
   @ApiResponse({ status: 200, description: 'Locked extra access check result' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async checkLockedExtraAccess(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('extraId') extraId: string
   ) {
     const result = await this.accessControlService.checkLockedExtraAccess(req.user.id, extraId);
@@ -230,6 +229,9 @@ export class ContentController {
   }
 
   // Category endpoints
+  // Categories are rendered on the public /browse page for logged-out
+  // visitors (featured + universes already are) — reads must be public too.
+  @Public()
   @Get('categories')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
@@ -239,7 +241,10 @@ export class ContentController {
     return this.contentService.getCategories();
   }
 
+  @Public()
   @Get('categories/:id/content')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get content by category' })
   @ApiResponse({ status: 200, description: 'Content list' })
   async getContentByCategory(@Param('id') id: string): Promise<ContentResponse> {
@@ -265,6 +270,7 @@ export class ContentController {
   // Parameterized GET routes (more specific patterns before :id catch-all)
   // ========================
 
+  @Public()
   @Get('universe/:universeId')
   @Cache({ key: 'content:universe:{universeId}:{page}:{limit}', ttl: 600 })
   @UseGuards(RateLimitGuard)
@@ -279,6 +285,7 @@ export class ContentController {
     return this.contentService.listContent({ universe: universeId }, page, limit);
   }
 
+  @Public()
   @Get('category/:categoryId')
   @Cache({ key: 'content:category:{categoryId}:{page}:{limit}', ttl: 600 })
   @UseGuards(RateLimitGuard)
@@ -287,34 +294,36 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Content list for category' })
   async getContentByCategoryParam(
     @Param('categoryId') categoryId: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number
+    @Query('page') _page?: number,
+    @Query('limit') _limit?: number
   ): Promise<ContentResponse> {
     return this.contentService.getContentByCategory(categoryId);
   }
 
   @Get('me')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: "Get current user's content" })
   async getMyContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Query('status') status?: string,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20
   ): Promise<ContentResponse> {
-    return this.contentService.listContent({ creatorId: req.user.id, status }, page, limit);
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
+    return this.contentService.listContent({ creatorId: req.user.id, status }, page, safeLimit);
   }
 
   @Get('creator/:creatorId')
   @ApiOperation({ summary: "Get creator's content" })
   async getContentByCreator(
     @Param('creatorId') creatorId: string,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20
   ): Promise<ContentResponse> {
-    return this.contentService.listContent({ creatorId }, page, limit);
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
+    return this.contentService.listContent({ creatorId }, page, safeLimit);
   }
 
+  // Wildcard GET routes MUST come after all static GET routes
   @Public()
   @Get(':id')
   @Cache({ key: 'content:{id}', ttl: 300 })
@@ -342,7 +351,6 @@ export class ContentController {
   }
 
   @Get(':id/analytics')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get content analytics' })
   @ApiResponse({ status: 200, description: 'Analytics data' })
   @ApiResponse({ status: 404, description: 'Content not found' })
@@ -350,9 +358,9 @@ export class ContentController {
   @ApiResponse({ status: 403, description: 'Forbidden - not content owner' })
   async getContentAnalytics(
     @Param('id') id: string,
-    @Request() req: { user?: { sub?: string; id?: string } }
+    @Request() req: { user?: { id: string } }
   ): Promise<ContentResponse> {
-    const userId = req.user?.sub || req.user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
@@ -377,34 +385,30 @@ export class ContentController {
   }
 
   @Get(':id/access-check')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Check if user can access content' })
   @ApiResponse({ status: 200, description: 'Access check result' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async checkContentAccess(
-    @Request() req: { user: { sub: string } },
-    @Param('id') id: string
-  ) {
+  async checkContentAccess(@Request() req: { user: { id: string } }, @Param('id') id: string) {
     const result = await this.accessControlService.checkContentAccess(req.user.id, id);
     return ApiResponseWrapper.success(result);
   }
 
   @Get(':id/playback-url')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get media playback URL with access check' })
   @ApiResponse({ status: 200, description: 'Playback URL' })
   @ApiResponse({ status: 403, description: 'Access denied' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMediaPlaybackUrl(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
-    @Query('expiresIn') expiresIn: number = 3600
+    @Query('expiresIn') _expiresIn: number = 3600
   ) {
     const result = await this.accessControlService.checkMediaPlaybackAccess(req.user.id, id);
     return ApiResponseWrapper.success(result);
   }
 
   @Get(':id/relationships')
+  @Public()
   @ApiOperation({ summary: 'Get content relationships' })
   @ApiResponse({ status: 200, description: 'Relationships list' })
   async getContentRelationships(@Param('id') id: string): Promise<ContentResponse> {
@@ -417,29 +421,31 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Related content list' })
   async getContentByRelationship(
     @Param('id') id: string,
-    @Query('type') type?: string
+    @Query('type') _type?: string
   ): Promise<ContentResponse> {
-    return this.contentService.getContentByRelationship(id, type);
+    return this.contentService.getContentByRelationship(id, _type);
   }
 
-  @Public()
   @Get(':id/media')
   @ApiOperation({ summary: 'Get media asset for content' })
   @ApiResponse({ status: 200, description: 'Media asset details' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
-  async getMediaAsset(@Param('id') id: string): Promise<ContentResponse> {
-    return this.contentService.getMediaAsset(id);
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async getMediaAsset(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string
+  ): Promise<ContentResponse> {
+    return this.contentService.getMediaAsset(id, req.user.id);
   }
 
   @Get(':id/media/signed-url')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get signed URL for media asset' })
   @ApiResponse({ status: 200, description: 'Signed URL generated' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Premium content requires subscription' })
   async getSignedMediaUrl(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Query('expiresIn') expiresIn: number = 3600
   ): Promise<ContentResponse> {
@@ -447,34 +453,41 @@ export class ContentController {
   }
 
   @Get(':id/transcode/:jobId/status')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get transcoding job status' })
   @ApiResponse({ status: 200, description: 'Transcoding job status' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   async getTranscodingStatus(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Param('jobId') jobId: string
   ): Promise<ContentResponse> {
-    return this.contentService.getTranscodingStatus(id, jobId);
+    return this.contentService.getTranscodingStatus(id, jobId, req.user.id);
   }
 
   @Get(':id/transcode/:jobId/url')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get transcoded media URL' })
   @ApiResponse({ status: 200, description: 'Transcoded media URL' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   async getTranscodedMediaUrl(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Param('jobId') jobId: string,
     @Query('format') format: string,
     @Query('resolution') resolution: string,
     @Query('expiresIn') expiresIn: number = 3600
   ): Promise<ContentResponse> {
-    return this.contentService.getTranscodedMediaUrl(id, jobId, format, resolution, expiresIn);
+    return this.contentService.getTranscodedMediaUrl(
+      id,
+      jobId,
+      format,
+      resolution,
+      expiresIn,
+      req.user.id
+    );
   }
 
   // ========================
@@ -482,26 +495,27 @@ export class ContentController {
   // ========================
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Create content' })
   @ApiResponse({ status: 201, description: 'Content created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Body() createContentDto: CreateContentDto
   ): Promise<ContentResponse> {
     return this.contentService.createContent(req.user.id, createContentDto);
   }
 
   @Post('categories')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create category (admin only)' })
   @ApiResponse({ status: 201, description: 'Category created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async createCategory(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { id: string } },
     @Body()
     body: { name: string; slug: string; description?: string; icon?: string; color?: string }
   ): Promise<ContentResponse> {
@@ -515,58 +529,106 @@ export class ContentController {
   }
 
   @Post('tags')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create tag (admin only)' })
   @ApiResponse({ status: 201, description: 'Tag created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async createTag(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { id: string } },
     @Body() body: { name: string; description?: string }
   ): Promise<ContentResponse> {
     return this.contentService.createTag(body.name, body.description);
   }
 
   @Post(':id/comments')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Add comment to content' })
   @ApiResponse({ status: 201, description: 'Comment added' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addCommentToContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
-    @Body() body: { text?: string; content?: string }
+    @Body() body: { text?: string; content?: string; parentId?: string }
   ): Promise<ContentResponse> {
     return this.contentService.addCommentToContent(
       req.user.id,
       id,
-      body.text || body.content || ''
+      body.text || body.content || '',
+      body.parentId
     );
   }
 
   @Post(':id/media')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RateLimitGuard)
+  @RateLimit(20, 60000)
   @ApiOperation({ summary: 'Create media asset for content' })
   @ApiResponse({ status: 201, description: 'Media asset created' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createMediaAsset(
-    @Request() req: { user: { sub: string; role?: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string,
     @Body() createMediaAssetDto: CreateMediaAssetDto
   ): Promise<ContentResponse> {
-    return this.contentService.createMediaAsset(req.user.id, id, createMediaAssetDto, req.user.role);
+    return this.contentService.createMediaAsset(
+      req.user.id,
+      id,
+      createMediaAssetDto,
+      req.user.role
+    );
+  }
+
+  @Post(':id/media/upload-url')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Get a presigned upload URL for content media' })
+  @ApiResponse({ status: 201, description: 'Upload URL created' })
+  @ApiResponse({ status: 404, description: 'Content not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createMediaUploadUrl(
+    @Request() req: { user: { id: string; role?: string } },
+    @Param('id') id: string,
+    @Body() body: { fileName: string; fileSize: number; contentType: string }
+  ): Promise<{
+    success: boolean;
+    data: { signedUrl: string; mediaAssetId: string };
+  }> {
+    return this.contentService.createMediaUploadUrl(req.user.id, id, body, req.user.role);
+  }
+
+  @Post(':id/media/complete')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Complete a direct upload and register the media asset' })
+  @ApiResponse({ status: 201, description: 'Media asset registered' })
+  @ApiResponse({ status: 400, description: 'Upload not found in storage' })
+  @ApiResponse({ status: 404, description: 'Content not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async completeMediaUpload(
+    @Request() req: { user: { id: string; role?: string } },
+    @Param('id') id: string,
+    @Body() body: { mediaAssetId: string }
+  ): Promise<ContentResponse> {
+    return this.contentService.completeMediaUpload(
+      req.user.id,
+      id,
+      body.mediaAssetId,
+      req.user.role
+    );
   }
 
   @Post(':id/media/thumbnail')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Generate thumbnail for media asset' })
   @ApiResponse({ status: 200, description: 'Thumbnail generated' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generateThumbnail(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { id: string } },
     @Param('id') id: string,
     @Body() body: { width?: number; height?: number; quality?: number }
   ): Promise<ContentResponse> {
@@ -574,39 +636,36 @@ export class ContentController {
   }
 
   @Post(':id/publish')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Publish content' })
   @ApiResponse({ status: 200, description: 'Content published' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async publishContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.publishContent(req.user.id, id);
+    return this.contentService.publishContent(req.user.id, id, req.user.role);
   }
 
   @Post(':id/unpublish')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Unpublish content' })
   @ApiResponse({ status: 200, description: 'Content unpublished' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unpublishContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.unpublishContent(req.user.id, id);
+    return this.contentService.unpublishContent(req.user.id, id, req.user.role);
   }
 
   @Post(':id/report')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Report content' })
   @ApiResponse({ status: 200, description: 'Content reported' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async reportContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Body() body: { type: string; reason: string }
   ): Promise<ContentResponse> {
@@ -614,13 +673,12 @@ export class ContentController {
   }
 
   @Post(':id/transcode')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Start media transcoding' })
   @ApiResponse({ status: 200, description: 'Transcoding job started' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async startTranscoding(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { id: string } },
     @Param('id') id: string,
     @Body() body: { formats?: string[]; resolutions?: string[]; bitrates?: number[] }
   ): Promise<ContentResponse> {
@@ -628,27 +686,22 @@ export class ContentController {
   }
 
   @Post(':id/scan')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Scan content for safety issues before publication' })
   @ApiResponse({ status: 200, description: 'Scan result' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async scanContentForSafety(
-    @Request() req: { user: { sub: string } },
-    @Param('id') id: string
-  ) {
+  async scanContentForSafety(@Request() _req: { user: { id: string } }, @Param('id') id: string) {
     const result = await this.contentService.scanContentForSafety(id);
     return ApiResponseWrapper.success(result);
   }
 
   @Post(':id/categories/:categoryId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Add category to content' })
   @ApiResponse({ status: 200, description: 'Category added' })
   @ApiResponse({ status: 404, description: 'Content or category not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addCategoryToContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Param('categoryId') categoryId: string
   ): Promise<ContentResponse> {
@@ -656,13 +709,12 @@ export class ContentController {
   }
 
   @Post(':id/tags/:tagId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Add tag to content' })
   @ApiResponse({ status: 200, description: 'Tag added' })
   @ApiResponse({ status: 404, description: 'Content or tag not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addTagToContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Param('tagId') tagId: string
   ): Promise<ContentResponse> {
@@ -670,13 +722,12 @@ export class ContentController {
   }
 
   @Post(':id/relationships')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Add content relationship' })
   @ApiResponse({ status: 201, description: 'Relationship created' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addContentRelationship(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Body() body: { relatedContentId: string; type: string }
   ): Promise<ContentResponse> {
@@ -693,41 +744,44 @@ export class ContentController {
   // ========================
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update content' })
   @ApiResponse({ status: 200, description: 'Content updated' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string,
     @Body() updateContentDto: UpdateContentDto
   ): Promise<ContentResponse> {
-    return this.contentService.updateContent(req.user.id, id, updateContentDto);
+    return this.contentService.updateContent(req.user.id, id, updateContentDto, req.user.role);
   }
 
   @Patch(':id/media')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update media asset for content' })
   @ApiResponse({ status: 200, description: 'Media asset updated' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateMediaAsset(
-    @Request() req: { user: { sub: string; role?: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string,
     @Body() updateMediaAssetDto: UpdateMediaAssetDto
   ): Promise<ContentResponse> {
-    return this.contentService.updateMediaAsset(req.user.id, id, updateMediaAssetDto, req.user.role);
+    return this.contentService.updateMediaAsset(
+      req.user.id,
+      id,
+      updateMediaAssetDto,
+      req.user.role
+    );
   }
 
   @Patch('categories/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Update category' })
   @ApiResponse({ status: 200, description: 'Category updated' })
   @ApiResponse({ status: 404, description: 'Category not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateCategory(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { id: string } },
     @Param('id') id: string,
     @Body()
     body: { name?: string; slug?: string; description?: string; icon?: string; color?: string }
@@ -743,13 +797,13 @@ export class ContentController {
   }
 
   @Patch('tags/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Update tag' })
   @ApiResponse({ status: 200, description: 'Tag updated' })
   @ApiResponse({ status: 404, description: 'Tag not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateTag(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { id: string } },
     @Param('id') id: string,
     @Body() body: { name?: string; description?: string }
   ): Promise<ContentResponse> {
@@ -761,39 +815,36 @@ export class ContentController {
   // ========================
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Delete content' })
   @ApiResponse({ status: 200, description: 'Content soft deleted' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.deleteContent(req.user.id, id);
+    return this.contentService.deleteContent(req.user.id, id, req.user.role);
   }
 
   @Delete(':id/media')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Delete media asset for content' })
   @ApiResponse({ status: 200, description: 'Media asset deleted' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteMediaAsset(
-    @Request() req: { user: { sub: string; role?: string } },
+    @Request() req: { user: { id: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteMediaAsset(req.user.id, id, req.user.role);
   }
 
   @Delete(':id/categories/:categoryId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Remove category from content' })
   @ApiResponse({ status: 200, description: 'Category removed' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeCategoryFromContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Param('categoryId') categoryId: string
   ): Promise<ContentResponse> {
@@ -801,13 +852,12 @@ export class ContentController {
   }
 
   @Delete(':id/tags/:tagId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Remove tag from content' })
   @ApiResponse({ status: 200, description: 'Tag removed' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeTagFromContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Param('tagId') tagId: string
   ): Promise<ContentResponse> {
@@ -815,13 +865,12 @@ export class ContentController {
   }
 
   @Delete(':id/relationships/:relatedContentId')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Remove content relationship' })
   @ApiResponse({ status: 200, description: 'Relationship removed' })
   @ApiResponse({ status: 404, description: 'Content or relationship not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeContentRelationship(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { id: string } },
     @Param('id') id: string,
     @Param('relatedContentId') relatedContentId: string
   ): Promise<ContentResponse> {
@@ -829,30 +878,160 @@ export class ContentController {
   }
 
   @Delete('categories/:id')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Delete category (admin only)' })
   @ApiResponse({ status: 200, description: 'Category soft deleted' })
   @ApiResponse({ status: 404, description: 'Category not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async deleteCategory(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { id: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteCategory(id);
   }
 
   @Delete('tags/:id')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Delete tag (admin only)' })
   @ApiResponse({ status: 200, description: 'Tag soft deleted' })
   @ApiResponse({ status: 404, description: 'Tag not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async deleteTag(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { id: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteTag(id);
+  }
+
+  // ========================
+  // Versioning endpoints
+  // ========================
+
+  @Get(':id/versions')
+  @ApiOperation({ summary: 'Get content version history' })
+  @ApiResponse({ status: 200, description: 'Version history' })
+  async getVersionHistory(@Param('id') id: string) {
+    const versions = await this.versioningService.getVersionHistory(id);
+    return ApiResponseWrapper.success(versions);
+  }
+
+  @Get(':id/versions/:versionNumber')
+  @ApiOperation({ summary: 'Get specific content version' })
+  @ApiResponse({ status: 200, description: 'Version detail' })
+  async getVersion(@Param('id') id: string, @Param('versionNumber') versionNumber: string) {
+    const version = await this.versioningService.getVersion(id, Number(versionNumber));
+    return ApiResponseWrapper.success(version);
+  }
+
+  @Post(':id/versions')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Create content version snapshot (admin)' })
+  @ApiResponse({ status: 201, description: 'Version created' })
+  async createVersionSnapshot(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string,
+    @Body() body: { changeNote?: string }
+  ) {
+    const version = await this.versioningService.createSnapshot(id, req.user.id, body.changeNote);
+    return ApiResponseWrapper.success(version);
+  }
+
+  @Post(':id/versions/:versionNumber/rollback')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Rollback content to specific version (admin)' })
+  @ApiResponse({ status: 200, description: 'Rollback successful' })
+  async rollbackToVersion(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string,
+    @Param('versionNumber') versionNumber: string
+  ) {
+    const result = await this.versioningService.rollbackToVersion(
+      id,
+      Number(versionNumber),
+      req.user.id
+    );
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get(':id/versions/compare')
+  @ApiOperation({ summary: 'Compare two content versions' })
+  @ApiResponse({ status: 200, description: 'Version comparison' })
+  async compareVersions(
+    @Param('id') id: string,
+    @Query('a') versionA: string,
+    @Query('b') versionB: string
+  ) {
+    const result = await this.versioningService.compareVersions(
+      id,
+      Number(versionA),
+      Number(versionB)
+    );
+    return ApiResponseWrapper.success(result);
+  }
+
+  // ========================
+  // Release window validation
+  // ========================
+
+  @Post('validate/release-window')
+  @ApiOperation({ summary: 'Validate release window constraints' })
+  @ApiResponse({ status: 200, description: 'Validation result' })
+  async validateReleaseWindow(
+    @Body()
+    body: {
+      releaseDate?: string;
+      theatricalReleaseDate?: string;
+      streamingReleaseDate?: string;
+      windowEndDate?: string;
+      windowType?: string;
+    }
+  ) {
+    const result = this.releaseScheduler.validateReleaseWindow({
+      releaseDate: body.releaseDate ? new Date(body.releaseDate) : undefined,
+      theatricalReleaseDate: body.theatricalReleaseDate
+        ? new Date(body.theatricalReleaseDate)
+        : undefined,
+      streamingReleaseDate: body.streamingReleaseDate
+        ? new Date(body.streamingReleaseDate)
+        : undefined,
+      windowEndDate: body.windowEndDate ? new Date(body.windowEndDate) : undefined,
+      windowType: body.windowType,
+    });
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get('available')
+  @Public()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get content with active streaming windows' })
+  @ApiResponse({ status: 200, description: 'Available content IDs' })
+  async getAvailableContent(@Query('universeId') universeId?: string) {
+    const ids = await this.releaseScheduler.getAvailableContent(universeId);
+    return ApiResponseWrapper.success(ids);
+  }
+
+  // ========================
+  // ACDP validation
+  // ========================
+
+  @Post('validate/acdp')
+  @ApiOperation({ summary: 'Validate content metadata against ACDP requirements' })
+  @ApiResponse({ status: 200, description: 'ACDP validation result' })
+  async validateACDP(@Body() body: Record<string, unknown>) {
+    const result = this.acdpValidation.validateContentMetadata(body);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Post('validate/universe-fit')
+  @ApiOperation({ summary: 'Validate content fits target universe age rating' })
+  @ApiResponse({ status: 200, description: 'Universe fit validation' })
+  async validateUniverseFit(
+    @Body() body: { content: Record<string, unknown>; universeName: string }
+  ) {
+    const result = this.acdpValidation.validateUniverseFit(body.content, body.universeName);
+    return ApiResponseWrapper.success(result);
   }
 }

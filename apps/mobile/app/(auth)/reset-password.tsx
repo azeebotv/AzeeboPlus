@@ -9,12 +9,14 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useRouter, useLocalSearchParams, Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { authApi } from '../../src/api';
+import { authApi } from '@azeebo/react-data';
 import { PasswordInput } from '../../src/components/PasswordInput';
 import { PasswordStrengthMeter } from '../../src/components/PasswordStrengthMeter';
+import { colors } from '../../src/theme';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -69,7 +71,8 @@ export default function ResetPasswordScreen() {
         },
       ]);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to reset password. Please try again.';
+      const message =
+        error instanceof Error ? error.message : 'Failed to reset password. Please try again.';
       Alert.alert('Error', message);
     } finally {
       setIsLoading(false);
@@ -87,7 +90,12 @@ export default function ResetPasswordScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={styles.logo}>AZEEBO+</Text>
+            <Image
+              source={require('../../assets/logo-white.png')}
+              style={{ width: 140, height: 34, marginBottom: 12 }}
+              resizeMode="contain"
+              accessibilityLabel="Azeebo+ Logo"
+            />
             <Text style={styles.title}>Reset Password</Text>
             <Text style={styles.subtitle}>Create a new strong password for your account</Text>
           </View>
@@ -180,12 +188,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     textAlign: 'center',
   },
   form: {
@@ -213,7 +221,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   footerText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   loginLink: {

@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -17,13 +18,11 @@ import { SystemSettingsService } from './system-settings.service';
 import { AuditLogService } from '../audit/audit.service';
 import {
   CreateSettingDto,
-  BulkCreateSettingsDto,
   ImportSettingsDto,
   SaveDraftDto,
   SubscriptionPlanDto,
   AdminUserDto,
   EmailTemplateDto,
-  IntegrationSettingsDto,
 } from './dto/create-setting.dto';
 import {
   UpdateSettingDto,
@@ -49,13 +48,13 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @ApiBearerAuth()
 @Controller('admin/settings')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class SystemSettingsController {
   private readonly logger = new Logger(SystemSettingsController.name);
 
   constructor(
-    private readonly systemSettingsService: SystemSettingsService,
-    private readonly auditLogService: AuditLogService,
+    @Inject(SystemSettingsService) private readonly systemSettingsService: SystemSettingsService,
+    @Inject(AuditLogService) private readonly auditLogService: AuditLogService
   ) {}
 
   private getActorId(req: { user?: { sub: string; id?: string } }): string | undefined {
@@ -99,7 +98,10 @@ export class SystemSettingsController {
 
   @Post('import')
   @ApiOperation({ summary: 'Import settings from JSON' })
-  async importSettings(@Body() data: ImportSettingsDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async importSettings(
+    @Body() data: ImportSettingsDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log('Importing settings');
     const result = await this.systemSettingsService.importSettings(data.data, {
       strategy: data.strategy,
@@ -118,7 +120,10 @@ export class SystemSettingsController {
 
   @Post('bulk')
   @ApiOperation({ summary: 'Bulk create/update settings' })
-  async bulkSettings(@Body() body: { settings: CreateSettingDto[] } | CreateSettingDto[], @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async bulkSettings(
+    @Body() body: { settings: CreateSettingDto[] } | CreateSettingDto[],
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     const settings = Array.isArray(body) ? body : body.settings;
     this.logger.log(`Bulk processing ${settings.length} settings`);
     const result = await this.systemSettingsService.bulkCreateSettings(settings);
@@ -134,7 +139,10 @@ export class SystemSettingsController {
 
   @Post('save-draft')
   @ApiOperation({ summary: 'Auto-save a draft setting' })
-  async saveDraft(@Body() data: SaveDraftDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async saveDraft(
+    @Body() data: SaveDraftDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     const result = await this.systemSettingsService.saveDraft(data.key, data.value, data.category);
     await this.auditLogService.log({
       actorId: this.getActorId(req),
@@ -155,7 +163,10 @@ export class SystemSettingsController {
 
   @Delete('draft/:key')
   @ApiOperation({ summary: 'Delete a draft setting' })
-  async deleteDraft(@Param('key') key: string, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async deleteDraft(
+    @Param('key') key: string,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     const result = await this.systemSettingsService.deleteDraft(key);
     await this.auditLogService.log({
       actorId: this.getActorId(req),
@@ -181,7 +192,10 @@ export class SystemSettingsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a setting' })
-  async createSetting(@Body() data: CreateSettingDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async createSetting(
+    @Body() data: CreateSettingDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log(`Creating setting: ${data.key}`);
     const result = await this.systemSettingsService.createSetting(data);
     await this.auditLogService.log({
@@ -197,7 +211,11 @@ export class SystemSettingsController {
 
   @Put(':key')
   @ApiOperation({ summary: 'Update a setting' })
-  async updateSetting(@Param('key') key: string, @Body() data: UpdateSettingDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async updateSetting(
+    @Param('key') key: string,
+    @Body() data: UpdateSettingDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log(`Updating setting: ${key}`);
     const result = await this.systemSettingsService.updateSetting(key, data, this.getActorId(req));
     await this.auditLogService.log({
@@ -213,7 +231,10 @@ export class SystemSettingsController {
 
   @Delete(':key')
   @ApiOperation({ summary: 'Delete a setting' })
-  async deleteSetting(@Param('key') key: string, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async deleteSetting(
+    @Param('key') key: string,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log(`Deleting setting: ${key}`);
     const result = await this.systemSettingsService.deleteSetting(key, this.getActorId(req));
     await this.auditLogService.log({
@@ -238,9 +259,15 @@ export class SystemSettingsController {
 
   @Put('branding')
   @ApiOperation({ summary: 'Update branding settings' })
-  async updateBranding(@Body() data: UpdateBrandingDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async updateBranding(
+    @Body() data: UpdateBrandingDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log('Updating branding settings');
-    const result = await this.systemSettingsService.updateBrandingSettings(data as Record<string, Prisma.InputJsonValue>, this.getActorId(req));
+    const result = await this.systemSettingsService.updateBrandingSettings(
+      data as Record<string, Prisma.InputJsonValue>,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.branding.updated',
@@ -263,7 +290,10 @@ export class SystemSettingsController {
 
   @Post('subscriptions/plans')
   @ApiOperation({ summary: 'Create subscription plan' })
-  async createSubscriptionPlan(@Body() data: SubscriptionPlanDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async createSubscriptionPlan(
+    @Body() data: SubscriptionPlanDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log(`Creating subscription plan: ${data.name}`);
     const result = await this.systemSettingsService.createSubscriptionPlan(data);
     await this.auditLogService.log({
@@ -281,10 +311,14 @@ export class SystemSettingsController {
   async updateSubscriptionPlan(
     @Param('id') id: string,
     @Body() data: UpdateSubscriptionPlanDto,
-    @Req() req: { user?: { sub: string; id?: string }; ip?: string },
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
   ) {
     this.logger.log(`Updating subscription plan: ${id}`);
-    const result = await this.systemSettingsService.updateSubscriptionPlan(id, data, this.getActorId(req));
+    const result = await this.systemSettingsService.updateSubscriptionPlan(
+      id,
+      data,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'subscription_plan.updated',
@@ -297,9 +331,15 @@ export class SystemSettingsController {
 
   @Delete('subscriptions/plans/:id')
   @ApiOperation({ summary: 'Delete subscription plan' })
-  async deleteSubscriptionPlan(@Param('id') id: string, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async deleteSubscriptionPlan(
+    @Param('id') id: string,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log(`Deleting subscription plan: ${id}`);
-    const result = await this.systemSettingsService.deleteSubscriptionPlan(id, this.getActorId(req));
+    const result = await this.systemSettingsService.deleteSubscriptionPlan(
+      id,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'subscription_plan.deleted',
@@ -322,9 +362,15 @@ export class SystemSettingsController {
 
   @Put('site')
   @ApiOperation({ summary: 'Update site settings' })
-  async updateSiteSettings(@Body() data: UpdateSiteSettingsDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async updateSiteSettings(
+    @Body() data: UpdateSiteSettingsDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log('Updating site settings');
-    const result = await this.systemSettingsService.updateSiteSettings(data as Record<string, Prisma.InputJsonValue>, this.getActorId(req));
+    const result = await this.systemSettingsService.updateSiteSettings(
+      data as Record<string, Prisma.InputJsonValue>,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.site.updated',
@@ -347,9 +393,17 @@ export class SystemSettingsController {
 
   @Put('access/roles/:role')
   @ApiOperation({ summary: 'Update role permissions' })
-  async updateRole(@Param('role') role: string, @Body() data: UpdateRoleDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async updateRole(
+    @Param('role') role: string,
+    @Body() data: UpdateRoleDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log(`Updating role: ${role}`);
-    const result = await this.systemSettingsService.updateRole(role, data as unknown as Record<string, Prisma.InputJsonValue>, this.getActorId(req));
+    const result = await this.systemSettingsService.updateRole(
+      role,
+      data as unknown as Record<string, Prisma.InputJsonValue>,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.role.updated',
@@ -368,7 +422,10 @@ export class SystemSettingsController {
 
   @Post('access/admins')
   @ApiOperation({ summary: 'Create admin user' })
-  async createAdmin(@Body() data: AdminUserDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async createAdmin(
+    @Body() data: AdminUserDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log(`Creating admin user: ${data.email}`);
     const result = await this.systemSettingsService.createAdminUser(data);
     await this.auditLogService.log({
@@ -383,7 +440,10 @@ export class SystemSettingsController {
 
   @Delete('access/admins/:id')
   @ApiOperation({ summary: 'Remove admin user' })
-  async removeAdmin(@Param('id') id: string, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async removeAdmin(
+    @Param('id') id: string,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log(`Removing admin user: ${id}`);
     const result = await this.systemSettingsService.removeAdminUser(id, this.getActorId(req));
     await this.auditLogService.log({
@@ -408,9 +468,15 @@ export class SystemSettingsController {
 
   @Put('performance')
   @ApiOperation({ summary: 'Update performance settings' })
-  async updatePerformance(@Body() data: UpdatePerformanceDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async updatePerformance(
+    @Body() data: UpdatePerformanceDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log('Updating performance settings');
-    const result = await this.systemSettingsService.updatePerformanceSettings(data as Record<string, Prisma.InputJsonValue>, this.getActorId(req));
+    const result = await this.systemSettingsService.updatePerformanceSettings(
+      data as Record<string, Prisma.InputJsonValue>,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.performance.updated',
@@ -433,9 +499,15 @@ export class SystemSettingsController {
 
   @Put('notifications')
   @ApiOperation({ summary: 'Update notification settings' })
-  async updateNotifications(@Body() data: UpdateNotificationSettingsDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async updateNotifications(
+    @Body() data: UpdateNotificationSettingsDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log('Updating notification settings');
-    const result = await this.systemSettingsService.updateNotificationSettings(data as Record<string, Prisma.InputJsonValue>, this.getActorId(req));
+    const result = await this.systemSettingsService.updateNotificationSettings(
+      data as Record<string, Prisma.InputJsonValue>,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.notifications.updated',
@@ -454,7 +526,10 @@ export class SystemSettingsController {
 
   @Post('notifications/templates')
   @ApiOperation({ summary: 'Create email template' })
-  async createEmailTemplate(@Body() data: EmailTemplateDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async createEmailTemplate(
+    @Body() data: EmailTemplateDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log(`Creating email template: ${data.name}`);
     const result = await this.systemSettingsService.createEmailTemplate(data);
     await this.auditLogService.log({
@@ -472,10 +547,14 @@ export class SystemSettingsController {
   async updateEmailTemplate(
     @Param('id') id: string,
     @Body() data: UpdateEmailTemplateDto,
-    @Req() req: { user?: { sub: string; id?: string }; ip?: string },
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
   ) {
     this.logger.log(`Updating email template: ${id}`);
-    const result = await this.systemSettingsService.updateEmailTemplate(id, data, this.getActorId(req));
+    const result = await this.systemSettingsService.updateEmailTemplate(
+      id,
+      data,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.email_template.updated',
@@ -488,7 +567,10 @@ export class SystemSettingsController {
 
   @Delete('notifications/templates/:id')
   @ApiOperation({ summary: 'Delete email template' })
-  async deleteEmailTemplate(@Param('id') id: string, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async deleteEmailTemplate(
+    @Param('id') id: string,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log(`Deleting email template: ${id}`);
     const result = await this.systemSettingsService.deleteEmailTemplate(id, this.getActorId(req));
     await this.auditLogService.log({
@@ -516,10 +598,14 @@ export class SystemSettingsController {
   async updateIntegration(
     @Param('provider') provider: string,
     @Body() data: UpdateIntegrationDto,
-    @Req() req: { user?: { sub: string; id?: string }; ip?: string },
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
   ) {
     this.logger.log(`Updating integration: ${provider}`);
-    const result = await this.systemSettingsService.updateIntegration(provider, data as unknown as Record<string, Prisma.InputJsonValue>, this.getActorId(req));
+    const result = await this.systemSettingsService.updateIntegration(
+      provider,
+      data as unknown as Record<string, Prisma.InputJsonValue>,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.integration.updated',
@@ -532,7 +618,10 @@ export class SystemSettingsController {
 
   @Post('integrations/:provider/test')
   @ApiOperation({ summary: 'Test integration connection' })
-  async testIntegration(@Param('provider') provider: string, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async testIntegration(
+    @Param('provider') provider: string,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log(`Testing integration: ${provider}`);
     const result = await this.systemSettingsService.testIntegration(provider);
     await this.auditLogService.log({
@@ -557,9 +646,15 @@ export class SystemSettingsController {
 
   @Put('compliance')
   @ApiOperation({ summary: 'Update compliance settings' })
-  async updateCompliance(@Body() data: UpdateComplianceDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async updateCompliance(
+    @Body() data: UpdateComplianceDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log('Updating compliance settings');
-    const result = await this.systemSettingsService.updateComplianceSettings(data as Record<string, Prisma.InputJsonValue>, this.getActorId(req));
+    const result = await this.systemSettingsService.updateComplianceSettings(
+      data as Record<string, Prisma.InputJsonValue>,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.compliance.updated',
@@ -578,9 +673,15 @@ export class SystemSettingsController {
 
   @Put('compliance/data-retention')
   @ApiOperation({ summary: 'Update data retention policies' })
-  async updateDataRetention(@Body() data: UpdateDataRetentionDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async updateDataRetention(
+    @Body() data: UpdateDataRetentionDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log('Updating data retention policies');
-    const result = await this.systemSettingsService.updateDataRetentionSettings(data as Record<string, Prisma.InputJsonValue>, this.getActorId(req));
+    const result = await this.systemSettingsService.updateDataRetentionSettings(
+      data as Record<string, Prisma.InputJsonValue>,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.data_retention.updated',
@@ -603,9 +704,15 @@ export class SystemSettingsController {
 
   @Put('localization')
   @ApiOperation({ summary: 'Update localization settings' })
-  async updateLocalization(@Body() data: UpdateLocalizationDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async updateLocalization(
+    @Body() data: UpdateLocalizationDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log('Updating localization settings');
-    const result = await this.systemSettingsService.updateLocalizationSettings(data as Record<string, Prisma.InputJsonValue>, this.getActorId(req));
+    const result = await this.systemSettingsService.updateLocalizationSettings(
+      data as Record<string, Prisma.InputJsonValue>,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.localization.updated',
@@ -628,9 +735,15 @@ export class SystemSettingsController {
 
   @Put('security')
   @ApiOperation({ summary: 'Update security settings' })
-  async updateSecurity(@Body() data: UpdateSecurityDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async updateSecurity(
+    @Body() data: UpdateSecurityDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log('Updating security settings');
-    const result = await this.systemSettingsService.updateSecuritySettings(data as Record<string, Prisma.InputJsonValue>, this.getActorId(req));
+    const result = await this.systemSettingsService.updateSecuritySettings(
+      data as Record<string, Prisma.InputJsonValue>,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.security.updated',
@@ -649,9 +762,15 @@ export class SystemSettingsController {
 
   @Put('security/ip-rules')
   @ApiOperation({ summary: 'Update IP rules' })
-  async updateIpRules(@Body() data: UpdateIpRulesDto, @Req() req: { user?: { sub: string; id?: string }; ip?: string }) {
+  async updateIpRules(
+    @Body() data: UpdateIpRulesDto,
+    @Req() req: { user?: { sub: string; id?: string }; ip?: string }
+  ) {
     this.logger.log('Updating IP rules');
-    const result = await this.systemSettingsService.updateIpRules(data as Record<string, Prisma.InputJsonValue>, this.getActorId(req));
+    const result = await this.systemSettingsService.updateIpRules(
+      data as Record<string, Prisma.InputJsonValue>,
+      this.getActorId(req)
+    );
     await this.auditLogService.log({
       actorId: this.getActorId(req),
       action: 'settings.ip_rules.updated',

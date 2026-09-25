@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '../../prisma/client/index.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 export interface AnalyticsEvent {
   eventName: string;
@@ -68,7 +69,7 @@ export const EVENT_NAMES = {
 @Injectable()
 export class AnalyticsInstrumentationService {
   private readonly logger = new Logger(AnalyticsInstrumentationService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async track(event: AnalyticsEvent): Promise<{ id: string }> {
     try {
@@ -82,7 +83,7 @@ export class AnalyticsInstrumentationService {
           timestamp: event.timestamp || new Date(),
           appVersion: event.appVersion,
           experimentFlags: event.experimentFlags ?? undefined,
-          metadata: event.metadata ?? undefined,
+          metadata: (event.metadata ?? undefined) as Prisma.InputJsonValue,
         },
       });
 
@@ -106,7 +107,7 @@ export class AnalyticsInstrumentationService {
       }
 
       return { id: eventRecord.id };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`track failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message } as unknown as { id: string };
     }
@@ -126,13 +127,13 @@ export class AnalyticsInstrumentationService {
               timestamp: event.timestamp || new Date(),
               appVersion: event.appVersion,
               experimentFlags: event.experimentFlags ?? undefined,
-              metadata: event.metadata ?? undefined,
+              metadata: (event.metadata ?? undefined) as Prisma.InputJsonValue,
             },
           })
         )
       );
       return { ingested: results.length };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`trackBatch failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message } as unknown as { ingested: number };
     }

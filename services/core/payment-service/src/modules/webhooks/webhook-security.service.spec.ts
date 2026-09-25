@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WebhookSecurityService } from './webhook-security.service';
-import { RedisService } from '../../common/services/redis.service';
+import { WebhookSecurityService } from './webhook-security.service.js';
+import { RedisService } from '@azeebo/shared-services';
 import { ConfigService } from '@nestjs/config';
 import { createHmac } from 'crypto';
 
@@ -95,7 +95,7 @@ describe('WebhookSecurityService', () => {
 
   describe('isDuplicate', () => {
     it('should return true when reference exists in Redis', async () => {
-      mockRedisService.exists.mockResolvedValue(true);
+      mockRedisService.exists.mockResolvedValue(1);
 
       const result = await service.isDuplicate('test-ref');
 
@@ -104,7 +104,7 @@ describe('WebhookSecurityService', () => {
     });
 
     it('should return false when reference does not exist in Redis', async () => {
-      mockRedisService.exists.mockResolvedValue(false);
+      mockRedisService.exists.mockResolvedValue(0);
 
       const result = await service.isDuplicate('test-ref');
 
@@ -131,7 +131,7 @@ describe('WebhookSecurityService', () => {
 
     it('should return true when reference exists in replay window', async () => {
       const recentTimestamp = Math.floor(Date.now() / 1000) - 10;
-      mockRedisService.exists.mockResolvedValue(true);
+      mockRedisService.exists.mockResolvedValue(1);
 
       const result = await service.isReplay('test-ref', recentTimestamp);
 
@@ -141,7 +141,7 @@ describe('WebhookSecurityService', () => {
 
     it('should return false when reference is not in replay window', async () => {
       const recentTimestamp = Math.floor(Date.now() / 1000) - 10;
-      mockRedisService.exists.mockResolvedValue(false);
+      mockRedisService.exists.mockResolvedValue(0);
 
       const result = await service.isReplay('test-ref', recentTimestamp);
 

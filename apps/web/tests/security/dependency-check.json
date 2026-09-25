@@ -1,0 +1,23 @@
+{
+  "name": "azeebo-security-scan",
+  "version": "1.0.0",
+  "description": "Dependency vulnerability scanning configuration",
+  "scripts": {
+    "audit": "npm audit --audit-level=moderate",
+    "audit:fix": "npm audit fix",
+    "audit:critical": "npm audit --audit-level=critical",
+    "safety": "safety check --json",
+    "snyk": "snyk test --severity-threshold=high",
+    "better-npm-audit": "better-npm-audit audit"
+  },
+  "devDependencies": {
+    "better-npm-audit": "^3.7.3"
+  },
+  "better-npm-audit": {
+    "config": {
+      "minSeverity": "moderate",
+      "whitelist": [],
+      "ignore": []
+    }
+  }
+}

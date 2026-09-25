@@ -1,12 +1,15 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 
 @Injectable()
 export class FixturesService {
   private readonly logger = new Logger(FixturesService.name);
 
-  constructor(private prisma: PrismaService, private cache: CacheService) {}
+  constructor(
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private cache: CacheService
+  ) {}
 
   async getFixtures(
     page = 1,
@@ -15,10 +18,13 @@ export class FixturesService {
     status?: string,
     fromDate?: string,
     toDate?: string
-  ): Promise<{ success: boolean; data?: unknown }> {
+  ): Promise<{ success: boolean; data?: unknown; error?: { code: string; message: string } }> {
     try {
       const dateKey = fromDate || toDate || 'all';
-      const cacheK = cacheKey('sports', `fixtures:${dateKey}:${page}:${limit}:${sport || 'all'}:${status || 'all'}`);
+      const cacheK = cacheKey(
+        'sports',
+        `fixtures:${dateKey}:${page}:${limit}:${sport || 'all'}:${status || 'all'}`
+      );
       const cached = await this.cache.get<{ success: boolean; data?: unknown }>(cacheK);
       if (cached) return cached;
 
@@ -63,7 +69,9 @@ export class FixturesService {
     }
   }
 
-  async getFixtureById(eventId: string): Promise<{ success: boolean; data?: unknown }> {
+  async getFixtureById(
+    eventId: string
+  ): Promise<{ success: boolean; data?: unknown; error?: { code: string; message: string } }> {
     try {
       const cacheK = cacheKey('sports', `predictions:${eventId}`);
       const cached = await this.cache.get<{ success: boolean; data?: unknown }>(cacheK);
@@ -105,7 +113,11 @@ export class FixturesService {
       broadcast?: string[];
       stats?: unknown;
     }
-  ): Promise<{ success: boolean; data?: { metadataId: string } }> {
+  ): Promise<{
+    success: boolean;
+    data?: { metadataId: string };
+    error?: { code: string; message: string };
+  }> {
     try {
       const event = await this.prisma.sportsEvent.findUnique({ where: { id: eventId } });
       if (!event) {
@@ -156,14 +168,21 @@ export class FixturesService {
   async updateEventResult(
     eventId: string,
     teams: { teamId: string; score: number }[]
-  ): Promise<{ success: boolean; data?: { message: string } }> {
+  ): Promise<{
+    success: boolean;
+    data?: { message: string };
+    error?: { code: string; message: string };
+  }> {
     try {
-      for (const team of teams) {
-        await this.prisma.eventTeam.update({
-          where: { id: team.teamId },
-          data: { score: team.score },
-        });
-      }
+      // Batch update team scores in a single transaction (fixes N+1)
+      await this.prisma.$transaction(
+        teams.map((team) =>
+          this.prisma.eventTeam.update({
+            where: { id: team.teamId },
+            data: { score: team.score },
+          })
+        )
+      );
 
       await this.prisma.sportsEvent.update({
         where: { id: eventId },
@@ -182,7 +201,11 @@ export class FixturesService {
     }
   }
 
-  async getSports(): Promise<{ success: boolean; data?: string[] }> {
+  async getSports(): Promise<{
+    success: boolean;
+    data?: string[];
+    error?: { code: string; message: string };
+  }> {
     try {
       const events = await this.prisma.sportsEvent.findMany({
         select: { sport: true },

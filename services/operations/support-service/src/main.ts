@@ -3,7 +3,8 @@ import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import helmet from 'helmet';
+import { createHelmetConfig, configureCors } from '@azeebo/security';
+
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { validateEnvironment } from '@azeebo/shared-types';
@@ -18,37 +19,7 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-          scriptSrc: ["'self'"],
-          connectSrc: ["'self'"],
-          fontSrc: ["'self'"],
-          objectSrc: ["'none'"],
-          mediaSrc: ["'self'"],
-          frameSrc: ["'none'"],
-        },
-      },
-      crossOriginEmbedderPolicy: true,
-      crossOriginOpenerPolicy: true,
-      crossOriginResourcePolicy: { policy: 'same-origin' },
-      dnsPrefetchControl: { allow: false },
-      frameguard: { action: 'deny' },
-      hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true,
-      },
-      ieNoOpen: true,
-      noSniff: true,
-      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-      xssFilter: true,
-    })
-  );
+  app.use(createHelmetConfig());
 
   const allowedOrigins = configService
     .get<string>('ALLOWED_ORIGINS')
@@ -58,8 +29,8 @@ async function bootstrap() {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
 
-  app.enableCors({
-    origin: allowedOrigins,
+  configureCors(app, {
+    allowedOrigins,
     credentials: true,
   });
 
@@ -88,7 +59,7 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
   }
 
-  const port = process.env.PORT || 3020;
+  const port = process.env.PORT || 3028;
   await app.listen(port);
   Logger.log(`Support service running on port ${port}`);
 }

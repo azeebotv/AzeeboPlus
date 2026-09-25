@@ -12,8 +12,10 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -32,7 +34,7 @@ export default function EpisodePlayerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const episodeId = params.id as string;
-  const _contentId = params.contentId as string;
+  const showId = params.showId as string;
 
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,6 +47,9 @@ export default function EpisodePlayerScreen() {
 
   useEffect(() => {
     loadEpisode();
+    if (showId && episodeId) {
+      analytics.realityEpisodeViewed(showId, episodeId);
+    }
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -143,7 +148,12 @@ export default function EpisodePlayerScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Episode not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back" accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -156,7 +166,12 @@ export default function EpisodePlayerScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.playerContainer}>
-        <TouchableOpacity style={styles.backButtonAbsolute} onPress={() => router.back()} accessibilityLabel="Go back" accessibilityRole="button">
+        <TouchableOpacity
+          style={styles.backButtonAbsolute}
+          onPress={() => router.back()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
 
@@ -173,7 +188,12 @@ export default function EpisodePlayerScreen() {
               <View style={styles.playingBar3} />
             </View>
           ) : (
-            <TouchableOpacity style={styles.playButton} onPress={handlePlayPause} accessibilityLabel="Play" accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.playButton}
+              onPress={handlePlayPause}
+              accessibilityLabel="Play"
+              accessibilityRole="button"
+            >
               <Text style={styles.playButtonText}>▶</Text>
             </TouchableOpacity>
           )}
@@ -191,25 +211,50 @@ export default function EpisodePlayerScreen() {
           </View>
 
           <View style={styles.controls}>
-            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(-10)} accessibilityLabel="Seek backward 10 seconds" accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => handleSeek(-10)}
+              accessibilityLabel="Seek backward 10 seconds"
+              accessibilityRole="button"
+            >
               <Text style={styles.controlButtonText}>⏪</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.controlButtonLarge} onPress={handlePlayPause} accessibilityLabel={isPlaying ? 'Pause' : 'Play'} accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.controlButtonLarge}
+              onPress={handlePlayPause}
+              accessibilityLabel={isPlaying ? 'Pause' : 'Play'}
+              accessibilityRole="button"
+            >
               <Text style={styles.controlButtonTextLarge}>{isPlaying ? '⏸' : '▶'}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(10)} accessibilityLabel="Seek forward 10 seconds" accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => handleSeek(10)}
+              accessibilityLabel="Seek forward 10 seconds"
+              accessibilityRole="button"
+            >
               <Text style={styles.controlButtonText}>⏩</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.actionButton} onPress={() => setShowSubtitles(true)} accessibilityLabel="Open subtitles" accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => setShowSubtitles(true)}
+              accessibilityLabel="Open subtitles"
+              accessibilityRole="button"
+            >
               <Text style={styles.actionButtonText}>💬 Subtitles</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton} onPress={handleVote} accessibilityLabel="Vote for contestant" accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleVote}
+              accessibilityLabel="Vote for contestant"
+              accessibilityRole="button"
+            >
               <Text style={styles.actionButtonText}>🗳 Vote</Text>
             </TouchableOpacity>
           </View>
@@ -231,7 +276,11 @@ export default function EpisodePlayerScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Subtitles</Text>
-              <TouchableOpacity onPress={() => setShowSubtitles(false)} accessibilityLabel="Close subtitles menu" accessibilityRole="button">
+              <TouchableOpacity
+                onPress={() => setShowSubtitles(false)}
+                accessibilityLabel="Close subtitles menu"
+                accessibilityRole="button"
+              >
                 <Text style={styles.modalClose}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -289,7 +338,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   errorContainer: {
@@ -298,7 +347,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     marginBottom: 16,
   },
@@ -336,13 +385,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   videoTitle: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 8,
   },
   videoSubtitle: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
     marginBottom: 24,
   },
@@ -390,7 +439,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 4,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 2,
     marginBottom: 8,
   },
@@ -404,7 +453,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   timeText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 12,
   },
   controls: {
@@ -418,7 +467,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -445,12 +494,12 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 8,
     alignItems: 'center',
   },
   actionButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -460,13 +509,13 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   episodeTitle: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 8,
   },
   episodeDescription: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
     lineHeight: 20,
   },
@@ -476,7 +525,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     maxHeight: '50%',
@@ -490,12 +539,12 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   modalTitle: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     fontWeight: 'bold',
   },
   modalClose: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 24,
   },
   subtitleOption: {
@@ -507,7 +556,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   subtitleText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 16,
   },
   subtitleCheck: {

@@ -1,12 +1,52 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { PrismaService } from '../database/prisma.service';
-import { RecommendationController } from './recommendation.controller';
-import { RecommendationService } from './recommendation.service';
+import { PrismaService } from '../database/prisma.service.js';
+import { RecommendationController } from './recommendation.controller.js';
+import { RecommendationService } from './recommendation.service.js';
+import { RateLimitGuard } from '@azeebo/security';
+
+jest.mock('zod', () => {
+  const chainable = () => {
+    const obj: Record<string, jest.Mock> = {};
+    const methods = [
+      'optional',
+      'default',
+      'url',
+      'email',
+      'min',
+      'max',
+      'positive',
+      'transform',
+      'regex',
+      'nullable',
+      'trim',
+      'safeParse',
+    ];
+    methods.forEach((m) => {
+      obj[m] = jest.fn().mockReturnValue(obj);
+    });
+    return obj;
+  };
+  const z = {
+    string: jest.fn(() => chainable()),
+    number: jest.fn(() => chainable()),
+    boolean: jest.fn(() => chainable()),
+    array: jest.fn(() => chainable()),
+    object: jest.fn(() => chainable()),
+    enum: jest.fn(() => chainable()),
+    record: jest.fn(() => chainable()),
+    literal: jest.fn(() => chainable()),
+    union: jest.fn(() => chainable()),
+    any: jest.fn(() => chainable()),
+    coerce: { string: jest.fn(() => chainable()), number: jest.fn(() => chainable()) },
+  };
+  return { z, ZodError: class ZodError extends Error {} };
+});
 
 describe('Recommendation Service Integration Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockRecommendationService = {
     getContentRecommendations: jest.fn(),
@@ -35,10 +75,28 @@ describe('Recommendation Service Integration Tests', () => {
           useValue: mockPrismaService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     app = moduleFixture.createNestApplication();
+    app.use(
+      (
+        req: { headers: { authorization?: string }; user?: unknown },
+        _res: unknown,
+        next: () => void
+      ) => {
+        if (req.headers.authorization) {
+          const r = req as { headers: { authorization?: string }; user?: Record<string, string> };
+          r.user = { id: 'user-123' };
+        }
+        next();
+      }
+    );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -75,7 +133,7 @@ describe('Recommendation Service Integration Tests', () => {
         ],
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/recommendation/content')
         .query({ userId: 'user-123', limit: '10' });
 
@@ -109,7 +167,7 @@ describe('Recommendation Service Integration Tests', () => {
         ],
       });
 
-      const response = await request(app.getHttpServer()).get('/recommendation/content');
+      const response = await request(baseUrl).get('/recommendation/content');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -130,8 +188,9 @@ describe('Recommendation Service Integration Tests', () => {
         ],
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/recommendation/creators')
+        .set('Authorization', 'Bearer test-token')
         .query({ userId: 'user-123' });
 
       expect(response.status).toBe(200);
@@ -165,8 +224,9 @@ describe('Recommendation Service Integration Tests', () => {
         ],
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/recommendation/cross-universe')
+        .set('Authorization', 'Bearer test-token')
         .query({ userId: 'user-123' });
 
       expect(response.status).toBe(200);
@@ -200,8 +260,9 @@ describe('Recommendation Service Integration Tests', () => {
         ],
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/recommendation/personalized-feed')
+        .set('Authorization', 'Bearer test-token')
         .query({ userId: 'user-123' });
 
       expect(response.status).toBe(200);
@@ -215,7 +276,7 @@ describe('Recommendation Service Integration Tests', () => {
         new Error('Recommendation engine unavailable')
       );
 
-      const response = await request(app.getHttpServer()).get('/recommendation/content');
+      const response = await request(baseUrl).get('/recommendation/content');
 
       expect(response.status).toBe(500);
     });
@@ -228,7 +289,7 @@ describe('Recommendation Service Integration Tests', () => {
 
       const promises = Array(3)
         .fill(null)
-        .map(() => request(app.getHttpServer()).get('/recommendation/content'));
+        .map(() => request(baseUrl).get('/recommendation/content'));
 
       const results = await Promise.all(promises);
 

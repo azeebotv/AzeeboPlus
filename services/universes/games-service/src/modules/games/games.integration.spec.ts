@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GamesService } from './games.service';
-import { PrismaService } from '../database/prisma.service';
+import { GamesService } from './games.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
@@ -48,6 +48,7 @@ describe('GamesService Integration', () => {
             },
             tournament: {
               findMany: jest.fn(),
+              findUnique: jest.fn(),
             },
             scoreEntry: {
               findMany: jest.fn(),
@@ -61,6 +62,7 @@ describe('GamesService Integration', () => {
             },
             question: {
               findUnique: jest.fn(),
+              findMany: jest.fn(),
             },
             tournamentEntry: {
               findUnique: jest.fn(),
@@ -133,6 +135,9 @@ describe('GamesService Integration', () => {
     it('should submit correct answer', async () => {
       (prisma.challenge.findFirst as jest.Mock).mockResolvedValue(mockChallenge);
       (prisma.gameSession.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.question.findMany as jest.Mock).mockResolvedValue([
+        { id: 'q-1', text: 'What is 2+2?', correctAnswer: '4', answer: '4', points: 100, order: 1 },
+      ]);
       (prisma.gameSession.create as jest.Mock).mockResolvedValue(mockSession);
 
       const result = await service.submitDailyChallenge('user-123', '4');
@@ -145,6 +150,9 @@ describe('GamesService Integration', () => {
     it('should submit incorrect answer', async () => {
       (prisma.challenge.findFirst as jest.Mock).mockResolvedValue(mockChallenge);
       (prisma.gameSession.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.question.findMany as jest.Mock).mockResolvedValue([
+        { id: 'q-1', text: 'What is 2+2?', correctAnswer: '4', answer: '4', points: 100, order: 1 },
+      ]);
       (prisma.gameSession.create as jest.Mock).mockResolvedValue({
         ...mockSession,
         status: 'failed',
@@ -191,7 +199,10 @@ describe('GamesService Integration', () => {
 
   describe('submitAnswer', () => {
     it('should submit correct answer', async () => {
-      (prisma.gameSession.findUnique as jest.Mock).mockResolvedValue(mockSession);
+      (prisma.gameSession.findUnique as jest.Mock).mockResolvedValue({
+        ...mockSession,
+        questionId: 'q-1',
+      });
       (prisma.question.findUnique as jest.Mock).mockResolvedValue({
         id: 'q-1',
         answer: '4',
@@ -274,6 +285,12 @@ describe('GamesService Integration', () => {
 
   describe('enterTournament', () => {
     it('should enter tournament', async () => {
+      (prisma.tournament.findUnique as jest.Mock).mockResolvedValue({
+        id: 'tournament-1',
+        name: 'Weekly Tournament',
+        status: 'active',
+        prizes: [],
+      });
       (prisma.tournamentEntry.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.tournamentEntry.create as jest.Mock).mockResolvedValue({
         id: 'entry-1',
@@ -287,6 +304,12 @@ describe('GamesService Integration', () => {
     });
 
     it('should throw BadRequestException if already entered', async () => {
+      (prisma.tournament.findUnique as jest.Mock).mockResolvedValue({
+        id: 'tournament-1',
+        name: 'Weekly Tournament',
+        status: 'active',
+        prizes: [],
+      });
       (prisma.tournamentEntry.findUnique as jest.Mock).mockResolvedValue({ id: 'entry-1' });
 
       await expect(service.enterTournament('user-123', 'tournament-1')).rejects.toThrow(

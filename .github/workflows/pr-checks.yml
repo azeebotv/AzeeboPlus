@@ -8,20 +8,19 @@ env:
   NODE_VERSION: '22.16.0'
   PNPM_VERSION: '10.33.2'
 
+# PR-title validation and other PR-facing steps call the pull-requests API;
+# without an explicit grant the default token is read/write-contents only and
+# the calls fail with "Resource not accessible by integration".
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   pr-validation:
     name: PR Validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
       - name: Validate PR title
         uses: amannn/action-semantic-pull-request@v5
         env:
@@ -43,9 +42,13 @@ jobs:
       - name: Check for secrets
         run: |
           echo "Checking for accidentally committed secrets..."
-          if grep -r "password\|secret\|token\|key" --include="*.env" . 2>/dev/null; then
-            echo "WARNING: Potential secrets found in .env files"
+          FOUND=$(grep -r "password\|secret\|token\|key" --include="*.env" . 2>/dev/null | grep -v ".env.example" | grep -v ".env.prod.example" || true)
+          if [ -n "$FOUND" ]; then
+            echo "::error::Potential secrets found in committed .env files:"
+            echo "$FOUND"
+            exit 1
           fi
+          echo "✅ No secrets found in .env files"
 
   lint-pr:
     name: Lint PR
@@ -61,6 +64,319 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
+      # Ratchet: per-rule, per-workspace warning baselines from
+      # scripts/promotion-rules.json. require-map-and-throw is fully gated
+      # (error, baseline 0 = canary — see the script header for both postures);
+      # the gate also floors any future warn-while-migrating rule.
+      - run: pnpm run check:lint-ratchet
+      # Tripwire: every rule in scripts/promotion-rules.json must resolve to
+      # 'error' severity for every service — fails if the rule is downgraded,
+      # scope-exceptioned, or left unconfigured for a service.
+      - run: pnpm run check:rule-promotion
+
+  conventions-pr:
+    name: Flag & Swagger Conventions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/check-flag-conventions.mjs
+      - run: node scripts/check-prisma-find-first.mjs
+      # Every service's start:dev must route through the shared dev runner
+      # (scripts/start-dev-service.sh) and every service's build through the
+      # shared build runner (scripts/build-service.sh) — exact-string wiring,
+      # no per-service wrappers or inline chains. The start:dev drift caused
+      # the live-event phantom-dir guard and the knowledge-service bypass;
+      # 28 identical inline build chains were the same drift class. The check
+      # also self-tests that each expected wiring's relative path actually
+      # resolves to its runner from services/<group>/<svc>.
+      - run: node scripts/check-dev-wiring.mjs
+      # The Dockerfile.all-in-one build chain must topologically match the real
+      # workspace dependency graph (dist-exporting deps built before their
+      # consumers; nothing missing). Wrong order/missing entries only surfaced
+      # as ~15-minute container build failures before this check existed.
+      - run: node scripts/check-build-chain.mjs
+      # The pre-commit hook (scripts/hooks/pre-commit) only runs on clones
+      # that opted in via core.hooksPath, so CI is the only place that can
+      # catch it being deleted, left untracked, committed without its
+      # executable bit, or rewritten without the stale-client check.
+      - run: node scripts/check-git-hooks.mjs
+      # Fails when .env.example omits a key the code reads via getOrThrow,
+      # or the shared env validator requires — i.e. a service that cannot
+      # boot when someone follows .env.example verbatim.
+      - run: node scripts/check-env-consistency.mjs
+      # Every seeder media URL must route through the shared host registry
+      # (scripts/seeders/seed-image-hosts.ts) and every registered host must
+      # be allowlisted in apps/web/next.config.js — a seed host missing from
+      # the allowlist crashes next/image at render time (the
+      # cdn.azeebo.test incident).
+      - run: node scripts/check-seed-image-hosts.mjs
+      - run: node --test scripts/__tests__/*.test.mjs
+      - run: node scripts/check-swagger-consistency.mjs
+      # Client apps call gateway routes via /api/v1/{service}/...; this check
+      # extracts those calls (string + template literals, query strings)
+      # and diffs them against SERVICE_CONFIGS in the gateway. A client call
+      # with no gateway entry 404s at runtime (and only in environments the
+      # developer didn't try), so new mismatches must surface at PR time.
+      # Known debt is frozen in scripts/route-contracts-baseline.json (ratchet,
+      # may only shrink); endpoints no client calls are listed as advisory
+      # dead routes. Run locally: pnpm check:route-contracts
+      - run: node scripts/check-route-contracts.mjs
+      # Expo Router dead-link gate: every router.push/replace/navigate and
+      # href target in apps/mobile + apps/tv must resolve to a route file in
+      # that app's app/ directory. A push to a route that doesn't exist throws
+      # "Unhandled route" at runtime — the user taps a visible button and
+      # nothing happens (found across several screens in the live pass that
+      # created /music/[id], /music/genres/[slug] and /creators/[creatorId]).
+      - run: node scripts/check-expo-routes.mjs
+      - run: node scripts/sweep-flag-usage.mjs
+      - run: node scripts/generate-flag-registry-table.mjs --check
+
+  pool-budget-pr:
+    name: Postgres Pool Budget
+    runs-on: ubuntu-latest
+    # The gate recomputes the worst-case Prisma pool budget from COMMITTED
+    # sources (one entry per prisma/schema.prisma workspace, sized by the
+    # tier map in scripts/database/apply-pool-limits.mjs) and compares it to
+    # a live Postgres max_connections. It also verifies every workspace has a
+    # sizing DECISION on record: an explicit LIMITS entry or a documented
+    # QUIET_TIER_WORKSPACES opt-in — an unclassified workspace fails with
+    # exit 4 BEFORE any DB access, so a new service can never silently
+    # inherit the quiet default. This blocks a new service from merging with
+    # a default/oversized pool when the sum would push past the 80% safety
+    # margin — the exact path that produced the 2026-09-18
+    # connection-exhaustion incident. .env files are gitignored so the
+    # runtime caps live in apply-pool-limits.mjs itself; --ci fails closed
+    # (exit 3) if Postgres is unreachable, so a broken service container
+    # can never green-light the gate.
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: azeebo
+          POSTGRES_PASSWORD: azeebo_test_2024
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      # psql for the max_connections read (postgres:15 image in the same
+      # job provides nothing to the runner; the runner needs its own client).
+      - name: Install postgres client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+      # LaunchAgent contract gate: every service plist must be a pure
+      # manifest emission — no inline DATABASE_URL/secrets in
+      # EnvironmentVariables, --env-file forced for every DB-backed service.
+      # This is the structural fix for the 2026-09-21 incident where 11
+      # service plists carried inline direct-5432 DATABASE_URLs that launchd
+      # injected OVER the pooler --env-file, silently bypassing pgbouncer.
+      # Runs before the pool budget gate so the review sees both violations
+      # in one look. Machine-independent: emits to a temp dir, no plutil,
+      # no ~/Library/LaunchAgents, no .env files needed.
+      - name: Check service plist contract
+        run: node scripts/launchd/gen-service-plists.mjs --ci
+      # Every Ops Health PROBED_SERVICES entry must have a launchd manifest
+      # entry (join key: port). When the 15 newer services were added to the
+      # prober they were missing from the manifest entirely — Ops Health
+      # reported them down with no way to fix it, since nothing would ever
+      # start them. Static regex parse of committed sources, no DB/launchd
+      # needed; fails loud on unparseable blocks so a refactor can't silently
+      # void the check. Runs right after the plist contract check so the
+      # review sees both manifest violations in one look.
+      - name: Check Ops Health prober has launchd coverage for every service
+        run: node scripts/launchd/prober-coverage-gate.mjs
+      - name: Check pool budget against 80% safety margin
+        run: node scripts/database/apply-pool-limits.mjs --ci
+        env:
+          POOL_CHECK_DATABASE_URL: postgresql://azeebo:azeebo_test_2024@localhost:5432/postgres
+      # Forecast comment on top of the gate: posts the NIGHTLY ACTUALS
+      # (per-database connection counts recorded by schema-lock-nightly.yml →
+      # pool-actuals) with a trend forecast of when the 80% margin is
+      # crossed. The gate blocks worst-case overruns; this shows reviewers
+      # what the fleet really holds so the tier map can be right-sized with
+      # evidence. Same bot identity as the drift comment (App comments don't
+      # retrigger workflows; upserted by marker so re-runs replace). Always()
+      # so the comment still posts on a RED gate — that's when it matters.
+      - name: Check drift bot configured
+        id: pool-forecast-bot-config
+        if: always()
+        env:
+          DRIFT_BOT_APP_ID_SET: ${{ vars.DRIFT_BOT_APP_ID != '' }}
+          DRIFT_BOT_KEY_SET: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY != '' }}
+        run: echo "configured=${{ env.DRIFT_BOT_APP_ID_SET == 'true' && env.DRIFT_BOT_KEY_SET == 'true' }}" >> "$GITHUB_OUTPUT"
+      - name: Mint azeebo-drift-bot App token
+        id: pool-forecast-app-token
+        if: always() && steps.pool-forecast-bot-config.outputs.configured == 'true'
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.DRIFT_BOT_APP_ID }}
+          private-key: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - name: Post pool-budget forecast comment on the PR
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ steps.pool-forecast-app-token.outputs.token }}
+        run: node scripts/database/connection-forecast.mjs --forecast
+
+  prisma-migrations-pr:
+    name: Prisma Migrations Drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Identity: PR comments come from the azeebo-drift-bot GitHub App, not
+    # the workflow's own identity — workflow-created comments stop enforcing
+    # branch protection / retriggering CI loops; App comments don't (App
+    # comments are exempt from those triggers). create-github-app-token mints
+    # a short-lived installation token for the App (Actions: read to fetch the
+    # nightly live-report artifacts, Pull requests: write to upsert its
+    # comment). This JOB's own github.token keeps only contents: read — it
+    # never calls the API.
+    # When vars.DRIFT_BOT_APP_ID / secrets.DRIFT_BOT_APP_PRIVATE_KEY are not
+    # configured yet, the token step is skipped and the bot skip-loudly's —
+    # gates still run and still fail the PR; only the comment is missing.
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: azeebo
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # Fails the PR when any service's prisma/migrations no longer produce
+      # the schema.prisma shape (hand-edited/missing migrations) or can't
+      # replay from an empty database (broken for fresh deploys).
+      - name: Replay migrations into shadow DB and diff against schema
+        run: node scripts/check-prisma-migrations.mjs
+        env:
+          SHADOW_DB_URL: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432/postgres
+      # Schema lock: migrate deploy into a throwaway DB per service, then diff
+      # the DEPLOYED database against schema.prisma. Fails on ANY diff —
+      # catches resolve-marked/rolled-back ledger rows and edited migrations
+      # that the folder-shape replay above cannot see.
+      - name: Deploy migrations and diff deployed DB against schema (schema lock)
+        run: node scripts/check-deployed-schema.mjs
+        env:
+          SHADOW_DB_URL: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432/postgres
+      # PR comment bot: upserts a per-service drift table (matched by a stable
+      # marker) so reviewers see which service broke without opening
+      # artifacts. Each gate writes report.json next to its diff artifacts;
+      # the bot renders whatever reports exist, adds the nightly
+      # live-environment section when it can fetch it (App token has
+      # actions: read), and no-ops silently on non-PR triggers. Comments post
+      # under the azeebo-drift-bot App identity. --no-live would skip the
+      # live section entirely.
+      # always() so a failed gate run still mints a token and still posts —
+      # red runs are the whole point of the comment bot.
+      # secrets.* is FORBIDDEN in if: conditionals (GitHub rejects the whole
+      # workflow file — zero jobs, run named by file path), so the guard runs
+      # as a step whose output gates the token step.
+      - name: Check drift bot configured
+        id: drift-bot-config
+        if: always()
+        env:
+          DRIFT_BOT_APP_ID_SET: ${{ vars.DRIFT_BOT_APP_ID != '' }}
+          DRIFT_BOT_KEY_SET: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY != '' }}
+        run: echo "configured=${{ env.DRIFT_BOT_APP_ID_SET == 'true' && env.DRIFT_BOT_KEY_SET == 'true' }}" >> "$GITHUB_OUTPUT"
+      - name: Mint azeebo-drift-bot App token
+        id: app-token
+        if: always() && steps.drift-bot-config.outputs.configured == 'true'
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.DRIFT_BOT_APP_ID }}
+          private-key: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - name: Post drift report comment on the PR
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: node scripts/post-drift-pr-comment.mjs
+      - name: Upload drift artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prisma-drift-diffs
+          path: |
+            .check-prisma-drift-out/
+            .check-prisma-deploy-diff-out/
+          retention-days: 7
+
+  # Companion to prisma-migrations-pr: provisions each service's database
+  # from its own migrations, then diffs the provisioned DB against
+  # schema.prisma (the CI form of the local drift-live-db sweep). Advisory:
+  # reports drift without blocking the PR; diffs are uploaded as artifacts
+  # for review.
+  prisma-live-drift-pr:
+    name: Prisma Live Drift (provision + diff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: azeebo
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Provision DBs from migrations and diff against schema (advisory)
+        run: node scripts/drift-live-db.mjs --seed --advisory
+        env:
+          LIVE_DB_URL_BASE: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432
+      - name: Upload drift report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prisma-live-drift-diffs
+          path: .drift-live-out/
+          retention-days: 7
 
   typecheck-pr:
     name: Type Check PR
@@ -76,17 +392,71 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run prisma:generate --if-present
+      # Post-generate assertion: every schema's embedded client copy must
+      # match the schema. Catches silent generation drift (generate writing
+      # somewhere the schema does not declare, or a skipped rewrite) that
+      # would otherwise only surface as confusing type errors below.
+      - run: node scripts/check-prisma-client-stale.mjs
+      # Repo-root tsc peaked past the runner's default heap on this branch
+      # (exit 134 / OOM); give it explicit headroom.
       - run: pnpm run typecheck
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+
+  tv-bundle-pr:
+    name: TV Metro Graph Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # Expo Router needs typed routes during export; apps/tv generates them
+      # into .expo/types at build time (gitignored). This also populates any
+      # other repo prisma clients the packages' type graph references.
+      - run: pnpm run prisma:generate --if-present
+      # The TV tsconfig resolves @azeebo/feature-flags/registries (and the
+      # @azeebo/* fallback) from packages/*/dist — a fresh checkout has no
+      # dist, so build the packages first (same as test-pr).
+      - run: pnpm --filter './packages/**' run build
+      # Typed routes (experiments.typedRoutes) put the route union in
+      # .expo/types/router.d.ts, which is gitignored — a fresh checkout has
+      # none, and expo-router's Href then silently degrades to plain `string`
+      # (tsc passes but enforces nothing). Generate it for both Expo apps
+      # before any typecheck. `expo customize tsconfig.json` regenerates the
+      # route types without modifying the committed tsconfig (verified).
+      - run: pnpm --filter @azeebo/mobile exec expo customize tsconfig.json
+      - run: pnpm --filter @azeebo/tv exec expo customize tsconfig.json
+      # (1) Both TS projects: app, src, types — the root `typecheck` only
+      # covers apps/web, so without this job a mobile/TV-only regression ships
+      # uncaught on every PR. With router.d.ts present, tsc also rejects any
+      # router.push/replace/href target that isn't a real route in that app's
+      # app/ directory (typed routes) — no `as never` escape hatches.
+      - run: pnpm --filter @azeebo/mobile run typecheck
+      - run: pnpm --filter @azeebo/tv run typecheck
+      # (2) Compile the real Metro graph (expo-router entries, package exports
+      # maps, asset resolution) to Hermes bytecode. Catches the class of
+      # breakage tsc cannot see: a bad exports map, an import only Metro
+      # resolves, a malformed screen. Verifies what a TV device would
+      # actually download.
+      - run: pnpm --filter @azeebo/tv run bundle:check
 
   test-pr:
     name: Test PR
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     services:
       postgres:
         image: postgres:15
         env:
           POSTGRES_USER: azeebo
-          POSTGRES_PASSWORD: azeebo_test_2024
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
           POSTGRES_DB: azeebo_test
         ports:
           - 5432:5432
@@ -115,13 +485,96 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run prisma:generate --if-present
-      - run: pnpm run test --if-present
+      # Same serial sweep as local `pnpm test:sweep`: prisma:generate first,
+      # then every workspace's jest/vitest suite serially (--runInBand). Direct
+      # jest invocation dodges the pnpm 10 `--` leak that `pnpm -r run test`
+      # suffers, so CI and local runs exercise the exact same suites/flags.
+      # CI opts into --fail-fast (abort at the first failing workspace) and
+      # writes the JSON summary; local runs keep the full report by default.
+      # Workspace packages must be dist-built first (feature-flags,
+      # shared-services, ...): ts-jest resolves them via package.json main,
+      # which points at dist/ that a fresh checkout does not have.
+      - run: pnpm --filter './packages/**' run build
+      - name: Full serial test sweep
+        run: pnpm run test:sweep -- --fail-fast --json-out=/tmp/test-sweep-summary.json
+      - name: Surface sweep summary
+        if: always()
+        run: |
+          if [ -f /tmp/test-sweep-summary.json ]; then
+            node -e 'const fs=require("fs"); const s=JSON.parse(fs.readFileSync("/tmp/test-sweep-summary.json","utf8")); console.log("workspaces: "+s.workspaces.total+" (failed: "+s.workspaces.failed+", skipped: "+s.workspaces.skipped+")"); console.log("tests: "+s.totals.tests+" passed, "+s.totals.skipped+" skipped, "+s.totals.failed+" failed"); if (s.failedWorkspaces.length) console.log("failed: "+s.failedWorkspaces.join(", "));'
+          fi
+      - name: Detect leaked clients (auth-service open handles)
+        timeout-minutes: 3
+        run: pnpm --filter @azeebo/auth-service test:openhandles
       - run: pnpm run contracts --if-present
+      - name: Upload sweep artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-sweep-artifacts
+          path: |
+            /tmp/codebuff-test-sweep.log
+            /tmp/test-sweep-summary.json
+
+  integration-test-pr:
+    name: Integration Tests PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: azeebo
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
+          POSTGRES_DB: azeebo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run prisma:generate --if-present
+      - name: Run integration tests
+        run: |
+          pnpm run test -- --testPathPattern="integration" --forceExit
 
   build-pr:
     name: Build PR
     runs-on: ubuntu-latest
-    needs: [pr-validation, lint-pr, typecheck-pr, test-pr]
+    timeout-minutes: 30
+    needs:
+      [
+        pr-validation,
+        lint-pr,
+        conventions-pr,
+        prisma-migrations-pr,
+        prisma-live-drift-pr,
+        typecheck-pr,
+        tv-bundle-pr,
+        test-pr,
+        integration-test-pr,
+      ]
+
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

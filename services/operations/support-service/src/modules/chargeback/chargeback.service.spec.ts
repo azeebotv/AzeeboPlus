@@ -5,14 +5,14 @@ import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 
-jest.mock('@azeebo/api-client', () => ({
-  createApiClient: jest.fn().mockReturnValue({
-    get: jest.fn().mockResolvedValue({ data: {} }),
-    post: jest.fn().mockResolvedValue({ data: { id: 'txn-123' } }),
-    put: jest.fn().mockResolvedValue({ data: {} }),
-    delete: jest.fn().mockResolvedValue({ data: {} }),
-  }),
-  noopTokenStorage: {},
+jest.mock('@azeebo/http-client', () => ({
+  ServiceClient: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue({}),
+    post: jest.fn().mockResolvedValue({ id: 'txn-123' }),
+    put: jest.fn().mockResolvedValue({}),
+    patch: jest.fn().mockResolvedValue({}),
+    delete: jest.fn().mockResolvedValue({}),
+  })),
 }));
 
 describe('ChargebackService', () => {
@@ -30,6 +30,15 @@ describe('ChargebackService', () => {
   };
 
   const mockConfigService = {
+    get: jest.fn((key: string, defaultValue?: string) => {
+      const config: Record<string, string> = {
+        PAYMENT_SERVICE_URL: 'http://localhost:3003',
+        WALLET_SERVICE_URL: 'http://localhost:3002',
+        MODERATION_SERVICE_URL: 'http://localhost:3022',
+        INTERNAL_API_KEY: 'test-key',
+      };
+      return config[key] || defaultValue;
+    }),
     getOrThrow: jest.fn().mockReturnValue('http://mock-url'),
   };
 

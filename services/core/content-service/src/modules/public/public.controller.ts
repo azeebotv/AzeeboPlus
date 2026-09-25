@@ -1,16 +1,25 @@
-import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  NotFoundException,
+  InternalServerErrorException,
+  UseGuards,
+} from '@nestjs/common';
 import { Public, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 
 @ApiTags('Public')
 @Public()
 @UseGuards(RateLimitGuard)
-@Controller('v1/public')
+@Controller('public')
 export class PublicController {
   private readonly logger = new Logger(PublicController.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   @Get('universes')
   @RateLimit(100, 60000)
@@ -52,11 +61,7 @@ export class PublicController {
       };
     } catch (error) {
       this.logger.error('Failed to fetch enabled universes', error);
-      return {
-        success: false,
-        message: 'Failed to fetch universes',
-        error: error instanceof Error ? (error as Error).message : 'Unknown error',
-      };
+      throw new InternalServerErrorException('Failed to fetch universes');
     }
   }
 
@@ -81,11 +86,7 @@ export class PublicController {
       };
     } catch (error) {
       this.logger.error('Failed to fetch public settings', error);
-      return {
-        success: false,
-        message: 'Failed to fetch settings',
-        error: error instanceof Error ? (error as Error).message : 'Unknown error',
-      };
+      throw new InternalServerErrorException('Failed to fetch settings');
     }
   }
 
@@ -94,7 +95,7 @@ export class PublicController {
   @ApiOperation({ summary: 'Get a public setting by key' })
   @ApiResponse({ status: 200, description: 'Setting retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Setting not found or not public' })
-  async getPublicSetting(key: string) {
+  async getPublicSetting(@Param('key') key: string) {
     try {
       const setting = await this.prisma.systemSettings.findFirst({
         where: {
@@ -104,10 +105,7 @@ export class PublicController {
       });
 
       if (!setting) {
-        return {
-          success: false,
-          message: 'Setting not found or not public',
-        };
+        throw new NotFoundException('Setting not found or not public');
       }
 
       return {
@@ -118,12 +116,9 @@ export class PublicController {
         },
       };
     } catch (error) {
+      if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to fetch setting ${key}`, error);
-      return {
-        success: false,
-        message: 'Failed to fetch setting',
-        error: error instanceof Error ? (error as Error).message : 'Unknown error',
-      };
+      throw new InternalServerErrorException('Failed to fetch setting');
     }
   }
 
@@ -132,7 +127,7 @@ export class PublicController {
   @ApiOperation({ summary: 'Get feature flags for a universe' })
   @ApiResponse({ status: 200, description: 'Features retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Universe not found or disabled' })
-  async getUniverseFeatures(name: string) {
+  async getUniverseFeatures(@Param('name') name: string) {
     try {
       const universe = await this.prisma.universe.findUnique({
         where: { name },
@@ -148,10 +143,7 @@ export class PublicController {
       });
 
       if (!universe || !universe.isEnabled) {
-        return {
-          success: false,
-          message: 'Universe not found or disabled',
-        };
+        throw new NotFoundException('Universe not found or disabled');
       }
 
       const features: Record<string, unknown> = {};
@@ -170,12 +162,9 @@ export class PublicController {
         },
       };
     } catch (error) {
+      if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to fetch features for universe ${name}`, error);
-      return {
-        success: false,
-        message: 'Failed to fetch features',
-        error: error instanceof Error ? (error as Error).message : 'Unknown error',
-      };
+      throw new InternalServerErrorException('Failed to fetch features');
     }
   }
 }

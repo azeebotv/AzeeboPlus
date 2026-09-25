@@ -1,6 +1,13 @@
-import { CanActivate, ExecutionContext, Injectable, Optional, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Optional,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { timingSafeEqual } from 'crypto';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 /**
@@ -26,10 +33,10 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 export class ServiceAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    @Optional() private readonly jwtService?: JwtService,
+    @Optional() private readonly jwtService?: JwtService
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     // 1. Check @Public() decorator on class or method
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
@@ -52,7 +59,7 @@ export class ServiceAuthGuard implements CanActivate {
     const authHeader = request.headers['authorization'];
 
     // 4. Validate identity is present
-    if (!userId && !authHeader) {
+    if (!userId && !authHeader && !request.cookies?.access_token) {
       throw new UnauthorizedException(
         'Authentication required. No user identity found in request.'
       );
@@ -71,13 +78,20 @@ export class ServiceAuthGuard implements CanActivate {
           'Gateway authentication not configured. Requests with x-user-* headers require a valid x-gateway-secret.'
         );
       }
-      if (gatewaySecret !== expectedSecret) {
+      // Use timing-safe comparison to prevent timing side-channel attacks
+      const secretBuffer = Buffer.from(gatewaySecret || '');
+      const expectedBuffer = Buffer.from(expectedSecret);
+      if (
+        secretBuffer.length !== expectedBuffer.length ||
+        !timingSafeEqual(secretBuffer, expectedBuffer)
+      ) {
         throw new UnauthorizedException(
           'Gateway authentication required. Requests with x-user-* headers must include a valid x-gateway-secret.'
         );
       }
 
       request.user = {
+        id: userId,
         sub: userId,
         role: userRole || 'user',
         email: userEmail || '',
@@ -96,17 +110,53 @@ export class ServiceAuthGuard implements CanActivate {
       }
 
       try {
-        const payload = this.jwtService.verify<{ sub: string; role?: string; email?: string }>(token, {
-          audience: 'azeebo-api',
-          issuer: 'azeebo-auth',
-        });
+        const payload = this.jwtService.verify<{ sub: string; role?: string; email?: string }>(
+          token,
+          {
+            audience: 'azeebo-api',
+            issuer: 'azeebo-auth',
+          }
+        );
 
         request.user = {
+          id: payload.sub,
           sub: payload.sub,
           role: payload.role || 'user',
           email: payload.email || '',
         };
       } catch {
+        // allowed-fabricated-4xx: token verification is pure client-input
+        // handling — every failure shape gets the same uniform 401
+        // (anti-enumeration); the cause cannot vary beyond a failed verify.
+        throw new UnauthorizedException('Invalid or expired token.');
+      }
+    } else if (request.cookies?.access_token) {
+      // Fallback: read JWT from httpOnly cookie (standalone admin/creator apps)
+      if (!this.jwtService) {
+        throw new UnauthorizedException(
+          'JWT verification unavailable. This service does not have JwtModule configured for direct token authentication.'
+        );
+      }
+
+      try {
+        const payload = this.jwtService.verify<{ sub: string; role?: string; email?: string }>(
+          request.cookies.access_token,
+          {
+            audience: 'azeebo-api',
+            issuer: 'azeebo-auth',
+          }
+        );
+
+        request.user = {
+          id: payload.sub,
+          sub: payload.sub,
+          role: payload.role || 'user',
+          email: payload.email || '',
+        };
+      } catch {
+        // allowed-fabricated-4xx: token verification is pure client-input
+        // handling — every failure shape gets the same uniform 401
+        // (anti-enumeration); the cause cannot vary beyond a failed verify.
         throw new UnauthorizedException('Invalid or expired token.');
       }
     }

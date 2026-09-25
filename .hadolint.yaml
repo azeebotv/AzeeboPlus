@@ -1,0 +1,15 @@
+# hadolint configuration for Dockerfile.all-in-one (see .github/workflows/lint.yml).
+#
+# DL3008 (pin apt package versions) is disabled by policy: the image installs
+# Debian security patches opportunistically (`postgresql-15`, `redis-server`,
+# `nginx`, ...) so every build picks up current CVE fixes. Pinning would freeze
+# the image on a stale, vulnerable snapshot until someone hand-edits versions.
+# Base images are pinned instead (node:22.16.0-bookworm-slim), which is where
+# reproducibility matters most for this build.
+ignored:
+  - DL3008
+  # DL3064 (secrets in ARG/ENV): fires on NEXT_PUBLIC_FIREBASE_API_KEY and
+  # NEXT_PUBLIC_SENTRY_DSN. These are Next.js *public* env vars — by design they
+  # are compiled into the client bundle and visible to every browser user, so
+  # they are not credentials. Real secrets never enter the image via ARG/ENV.
+  - DL3064

@@ -1,0 +1,16 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "declaration": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "types": ["jest", "node"],
+    "paths": {
+      "@azeebo/*": ["../../../packages/*/dist"]
+    },
+    "forceConsistentCasingInFileNames": false
+  }
+}

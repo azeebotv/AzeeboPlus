@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,13 +9,20 @@ import {
   Alert,
   useColorScheme,
   ActivityIndicator,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { notificationApi, type NotificationPreferences } from '../../src/api';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
+import { notificationApi, type NotificationPreferences } from '@azeebo/react-data';
 import { useBiometric } from '../../src/hooks/useBiometric';
 import Constants from 'expo-constants';
+import { colors } from '../../src/theme';
+import * as Linking from 'expo-linking';
+import { changeLanguage, LANGUAGES, type SupportedLanguage } from '../../src/i18n';
 
 // Type declaration for expo-constants
 const safeConstants = Constants as unknown as { expoConfig?: { version?: string; name?: string } };
@@ -23,7 +30,26 @@ const safeConstants = Constants as unknown as { expoConfig?: { version?: string;
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isEnabled: isFlagEnabled } = useFlags();
+  // mobile_biometric_auth (off by default): the security section (biometric
+  // sign-in) is hidden until ops enables the flag.
+  const biometricAuthEnabled = isFlagEnabled('mobile_biometric_auth');
+  const { t, i18n } = useTranslation();
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>(
+    (i18n.language as SupportedLanguage) || 'en'
+  );
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setCurrentLanguage((i18n.language as SupportedLanguage) || 'en');
+  }, [i18n.language]);
+
+  const handleLanguageChange = useCallback(async (lang: SupportedLanguage) => {
+    await changeLanguage(lang);
+    setCurrentLanguage(lang);
+    setLanguageModalVisible(false);
+  }, []);
   const {
     isAvailable,
     biometricType,
@@ -34,10 +60,7 @@ export default function SettingsScreen() {
   } = useBiometric();
   const [isBiometricToggling, setIsBiometricToggling] = useState(false);
 
-  const {
-    data: preferences,
-    isLoading: isPreferencesLoading,
-  } = useQuery({
+  const { data: preferences, isLoading: _isPreferencesLoading } = useQuery({
     queryKey: ['notification', 'preferences'],
     queryFn: async () => {
       const response = await notificationApi.getPreferences();
@@ -174,7 +197,10 @@ export default function SettingsScreen() {
   if (authLoading) {
     return (
       <SafeAreaView
-        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' },
+        ]}
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
@@ -187,12 +213,20 @@ export default function SettingsScreen() {
   if (!isAuthenticated) {
     return (
       <SafeAreaView
-        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' },
+        ]}
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
           <Text style={styles.lockIcon}>🔒</Text>
-          <Text style={[styles.lockText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+          <Text
+            style={[
+              styles.lockText,
+              { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+            ]}
+          >
             Please log in to access settings
           </Text>
         </View>
@@ -202,12 +236,17 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#fff' },
+      ]}
       edges={['top']}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+          <Text
+            style={[styles.title, { color: colorScheme === 'dark' ? colors.text.primary : '#000' }]}
+          >
             Settings
           </Text>
         </View>
@@ -227,14 +266,17 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>🔔</Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                  style={[
+                    styles.settingLabel,
+                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                  ]}
                 >
                   Push Notifications
                 </Text>
@@ -252,14 +294,17 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>📧</Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                  style={[
+                    styles.settingLabel,
+                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                  ]}
                 >
                   Email Notifications
                 </Text>
@@ -277,14 +322,17 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>📱</Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                  style={[
+                    styles.settingLabel,
+                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                  ]}
                 >
                   SMS Notifications
                 </Text>
@@ -300,47 +348,164 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Language Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
-            Security
+            {t('settings.language')}
           </Text>
 
-          <View
+          <TouchableOpacity
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
+            onPress={() => setLanguageModalVisible(true)}
+            accessibilityLabel={t('settings.selectLanguage')}
           >
             <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>
-                {biometricType === 'face' ? '👤' : biometricType === 'fingerprint' ? '👆' : '🔐'}
-              </Text>
+              <Text style={styles.settingIcon}>🌐</Text>
               <View>
                 <Text
-                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                  style={[
+                    styles.settingLabel,
+                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                  ]}
                 >
-                  {getBiometricLabel()}
+                  {t('settings.language')}
                 </Text>
                 <Text style={styles.settingDescription}>
-                  {isAvailable
-                    ? `Use ${getBiometricLabel().toLowerCase()} to sign in quickly`
-                    : 'Not available on this device'}
+                  {LANGUAGES.find((l) => l.code === currentLanguage)?.nativeName || 'English'}
                 </Text>
               </View>
             </View>
-            {isBiometricToggling ? (
-              <ActivityIndicator size="small" color="#E8420A" />
-            ) : (
-              <Switch
-                value={isEnabled}
-                onValueChange={handleBiometricToggle}
-                trackColor={{ false: '#333', true: '#E8420A' }}
-                thumbColor="#fff"
-                disabled={!isAvailable || isBiometricToggling}
-              />
-            )}
-          </View>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
         </View>
+
+        {/* Language Selection Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={languageModalVisible}
+          onRequestClose={() => setLanguageModalVisible(false)}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setLanguageModalVisible(false)}>
+            <Pressable
+              style={[
+                styles.modalContent,
+                { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#fff' },
+              ]}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text
+                style={[
+                  styles.modalTitle,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
+              >
+                {t('settings.selectLanguage')}
+              </Text>
+
+              {LANGUAGES.map((lang) => (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={[
+                    styles.languageOption,
+                    currentLanguage === lang.code && {
+                      backgroundColor:
+                        colorScheme === 'dark' ? 'rgba(232,66,10,0.15)' : 'rgba(232,66,10,0.08)',
+                    },
+                  ]}
+                  onPress={() => handleLanguageChange(lang.code)}
+                  accessibilityLabel={`${t('settings.selectLanguage')}: ${lang.name}`}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.languageEmoji}>
+                    {lang.code === 'en'
+                      ? '🇬🇧'
+                      : lang.code === 'fr'
+                        ? '🇫🇷'
+                        : lang.code === 'pt'
+                          ? '🇵🇹'
+                          : lang.code === 'ha'
+                            ? '🇳🇬'
+                            : lang.code === 'yo'
+                              ? '🇳🇬'
+                              : '🇳🇬'}
+                  </Text>
+                  <View style={styles.languageInfo}>
+                    <Text
+                      style={[
+                        styles.languageName,
+                        { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                      ]}
+                    >
+                      {lang.name}
+                    </Text>
+                    <Text style={styles.languageNative}>{lang.nativeName}</Text>
+                  </View>
+                  {currentLanguage === lang.code && <Text style={styles.languageCheck}>✓</Text>}
+                </TouchableOpacity>
+              ))}
+
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setLanguageModalVisible(false)}
+              >
+                <Text style={styles.modalCloseText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        {biometricAuthEnabled ? (
+          <View style={styles.section}>
+            <Text
+              style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}
+            >
+              Security
+            </Text>
+
+            <View
+              style={[
+                styles.settingItem,
+                { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
+              ]}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingIcon}>
+                  {biometricType === 'face' ? '👤' : biometricType === 'fingerprint' ? '👆' : '🔐'}
+                </Text>
+                <View>
+                  <Text
+                    style={[
+                      styles.settingLabel,
+                      { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                    ]}
+                  >
+                    {getBiometricLabel()}
+                  </Text>
+                  <Text style={styles.settingDescription}>
+                    {isAvailable
+                      ? `Use ${getBiometricLabel().toLowerCase()} to sign in quickly`
+                      : 'Not available on this device'}
+                  </Text>
+                </View>
+              </View>
+              {isBiometricToggling ? (
+                <ActivityIndicator size="small" color="#E8420A" />
+              ) : (
+                <Switch
+                  value={isEnabled}
+                  onValueChange={handleBiometricToggle}
+                  trackColor={{ false: '#333', true: '#E8420A' }}
+                  thumbColor="#fff"
+                  disabled={!isAvailable || isBiometricToggling}
+                />
+              )}
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
@@ -350,13 +515,16 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>📺</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 New Content
               </Text>
@@ -372,13 +540,16 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>💬</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 Comments
               </Text>
@@ -394,13 +565,16 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>👍</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 Likes
               </Text>
@@ -416,13 +590,16 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>👥</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 Followers
               </Text>
@@ -438,13 +615,16 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>⚙️</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 System Updates
               </Text>
@@ -460,13 +640,16 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>💰</Text>
               <Text
-                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.settingLabel,
+                  { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                ]}
               >
                 Payments
               </Text>
@@ -488,11 +671,14 @@ export default function SettingsScreen() {
           <View
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              style={[
+                styles.settingLabel,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
             >
               Version
             </Text>
@@ -502,11 +688,15 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
+            onPress={() => Linking.openURL('https://azeebo.plus/terms')}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              style={[
+                styles.settingLabel,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
             >
               Terms of Service
             </Text>
@@ -516,11 +706,15 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
+            onPress={() => Linking.openURL('https://azeebo.plus/privacy')}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              style={[
+                styles.settingLabel,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
             >
               Privacy Policy
             </Text>
@@ -530,11 +724,14 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[
               styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
             ]}
           >
             <Text
-              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              style={[
+                styles.settingLabel,
+                { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+              ]}
             >
               Licenses
             </Text>
@@ -616,18 +813,78 @@ const styles = StyleSheet.create({
   },
   settingDescription: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
     marginTop: 2,
   },
   settingValue: {
     fontSize: 16,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   menuArrow: {
-    color: '#666',
+    color: colors.text.tertiary,
     fontSize: 24,
   },
   bottomPadding: {
     height: 24,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 16,
+    maxHeight: '70%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+  languageEmoji: {
+    fontSize: 28,
+    marginRight: 14,
+  },
+  languageInfo: {
+    flex: 1,
+  },
+  languageName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  languageNative: {
+    fontSize: 13,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  languageCheck: {
+    fontSize: 20,
+    color: '#E8420A',
+    fontWeight: '700',
+  },
+  modalCloseButton: {
+    marginTop: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: 'rgba(232,66,10,0.1)',
+    borderRadius: 12,
+  },
+  modalCloseText: {
+    color: '#E8420A',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

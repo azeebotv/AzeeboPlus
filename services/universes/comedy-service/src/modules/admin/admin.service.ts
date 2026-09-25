@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getStats() {
     try {
@@ -58,8 +58,36 @@ export class AdminService {
 
       return { comedians, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
     } catch (error) {
-      this.logger.error(`Failed to get comedians: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get comedians: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
+  }
+
+  // Write operations
+  async updateClip(id: string, data: { title?: string; description?: string }) {
+    const existing = await this.prisma.comedyClip.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Clip not found');
+    return this.prisma.comedyClip.update({ where: { id }, data: data as never });
+  }
+
+  async deleteClip(id: string) {
+    const existing = await this.prisma.comedyClip.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Clip not found');
+    return this.prisma.comedyClip.delete({ where: { id } });
+  }
+
+  async updateComedian(id: string, data: { name?: string; stageName?: string; bio?: string }) {
+    const existing = await this.prisma.comedianProfile.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Comedian not found');
+    return this.prisma.comedianProfile.update({ where: { id }, data: data as never });
+  }
+
+  async deleteComedian(id: string) {
+    const existing = await this.prisma.comedianProfile.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Comedian not found');
+    return this.prisma.comedianProfile.delete({ where: { id } });
   }
 }

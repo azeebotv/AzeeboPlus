@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { DeviceController } from './device.controller';
-import { DeviceService } from './device.service';
-import { DatabaseModule } from '../../database/database.module';
+import { DeviceController } from './device.controller.js';
+import { DeviceService } from './device.service.js';
+import { DatabaseModule } from '../../database/database.module.js';
 
 @Module({
   imports: [DatabaseModule],

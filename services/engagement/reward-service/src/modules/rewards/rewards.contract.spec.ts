@@ -1,10 +1,49 @@
+jest.mock('@azeebo/shared-services', () => {
+  const NestCommon = require('@nestjs/common');
+  class MockJwtConfigModule {}
+  NestCommon.Module({})(MockJwtConfigModule);
+  return {
+    CacheService: 'CacheService',
+    cacheKey: (...args: unknown[]) => args.join(':'),
+    JwtConfigModule: MockJwtConfigModule,
+  };
+});
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: class MockRateLimitGuard {
+    canActivate(context: { switchToHttp: () => { getRequest: () => Record<string, unknown> } }) {
+      const request = context.switchToHttp().getRequest();
+      request.user = { sub: 'user-123', id: 'user-123', email: 'test@example.com', role: 'user' };
+      return true;
+    }
+  },
+  ServiceAuthGuard: class MockServiceAuthGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  },
+  RateLimit: () => () => {},
+}));
+jest.mock('class-validator', () => ({
+  IsString: () => () => {},
+  IsNotEmpty: () => () => {},
+  IsNumber: () => () => {},
+  IsOptional: () => () => {},
+  IsEnum: () => () => {},
+  Min: () => () => {},
+  ValidateNested: () => () => {},
+  IsArray: () => () => {},
+  IsBoolean: () => () => {},
+}));
+jest.mock('class-transformer', () => ({
+  Type: () => () => {},
+  plainToInstance: (_cls: unknown, obj: unknown) => obj,
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext } from '@nestjs/common';
+import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/common';
 import request from 'supertest';
-import { RewardsModule } from './rewards.module';
-import { RewardsService } from './rewards.service';
-import { PrismaService } from '../database/prisma.service';
-import { JwtService } from '@nestjs/jwt';
+import { RewardsModule } from './rewards.module.js';
+import { RewardsService } from './rewards.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagGuard } from '@azeebo/feature-flags';
 import { AuthGuard } from '@nestjs/passport';
 
 class MockAuthGuard {
@@ -17,6 +56,7 @@ class MockAuthGuard {
 
 describe('Rewards Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockPrismaService = {
     rewardAccount: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
@@ -25,7 +65,7 @@ describe('Rewards Controller Contract Tests', () => {
     badge: { findMany: jest.fn() },
     reward: { findUnique: jest.fn() },
     rewardRedemption: { create: jest.fn() },
-    level: { findFirst: jest.fn() },
+    level: { findUnique: jest.fn() },
     pointsLedger: { create: jest.fn(), findMany: jest.fn(), count: jest.fn() },
     $transaction: jest.fn((operations: unknown[]) => Promise.all(operations as Promise<unknown>[])),
   };
@@ -38,6 +78,8 @@ describe('Rewards Controller Contract Tests', () => {
     })
       .overrideProvider(PrismaService)
       .useValue(mockPrismaService)
+      .overrideGuard(FeatureFlagGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .overrideProvider(RewardsService)
       .useValue({
         getRewardAccount: jest.fn(),
@@ -57,7 +99,10 @@ describe('Rewards Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -72,13 +117,29 @@ describe('Rewards Controller Contract Tests', () => {
         success: true,
         data: {
           missions: [
-            { id: 'm1', title: 'Daily Login', description: null, points: 10, type: 'daily', isActive: true, isCompleted: false },
-            { id: 'm2', title: 'Watch Video', description: null, points: 5, type: 'daily', isActive: true, isCompleted: false },
+            {
+              id: 'm1',
+              title: 'Daily Login',
+              description: null,
+              points: 10,
+              type: 'daily',
+              isActive: true,
+              isCompleted: false,
+            },
+            {
+              id: 'm2',
+              title: 'Watch Video',
+              description: null,
+              points: 5,
+              type: 'daily',
+              isActive: true,
+              isCompleted: false,
+            },
           ],
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/rewards/missions');
+      const response = await request(baseUrl).get('/v1/rewards/missions');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -110,7 +171,7 @@ describe('Rewards Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/rewards/redeem')
         .set('Authorization', 'Bearer valid-token')
         .send({ rewardId: 'reward-1' });
@@ -133,12 +194,19 @@ describe('Rewards Controller Contract Tests', () => {
         success: true,
         data: {
           balance: 500,
-          level: { id: 'level-2', name: 'Intermediate', rank: 2, minPoints: 200, icon: null, color: null },
+          level: {
+            id: 'level-2',
+            name: 'Intermediate',
+            rank: 2,
+            minPoints: 200,
+            icon: null,
+            color: null,
+          },
           userId: 'user-123',
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/v1/rewards/balance')
         .set('Authorization', 'Bearer valid-token');
 

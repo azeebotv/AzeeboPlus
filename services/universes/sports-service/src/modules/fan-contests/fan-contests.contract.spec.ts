@@ -1,13 +1,33 @@
+jest.mock('libphonenumber-js/max', () => ({
+  parsePhoneNumber: jest.fn(),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
-import { FanContestsModule } from './fan-contests.module';
-import { FanContestsService } from './fan-contests.service';
-import { PrismaService } from '../database/prisma.service';
+import { FanContestsModule } from './fan-contests.module.js';
+import { FanContestsService } from './fan-contests.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { RateLimitGuard } from '@azeebo/security';
+import { FeatureFlagGuard } from '@azeebo/feature-flags';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+  RolesGuard: jest.fn(),
+  Roles: () => () => {},
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn(),
+  RateLimit: () => () => {},
+  AdminGuard: jest.fn(),
+  RateLimitService: jest.fn(),
+}));
 
 describe('Fan Contests Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let fanContestsService: FanContestsService;
 
   beforeAll(async () => {
@@ -15,6 +35,18 @@ describe('Fan Contests Controller Contract Tests', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [FanContestsModule],
+      providers: [
+        {
+          provide: APP_GUARD,
+          useFactory: () => ({
+            canActivate: (context: ExecutionContext) => {
+              const req = context.switchToHttp().getRequest();
+              req.user = { sub: 'user-123', role: 'ADMIN' };
+              return true;
+            },
+          }),
+        },
+      ],
     })
       .overrideProvider(FanContestsService)
       .useValue({
@@ -33,11 +65,16 @@ describe('Fan Contests Controller Contract Tests', () => {
       })
       .overrideGuard(RateLimitGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(FeatureFlagGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     fanContestsService = moduleFixture.get(FanContestsService);
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -68,7 +105,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/fan-contests');
+      const response = await request(baseUrl).get('/v1/sports/fan-contests');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -105,7 +142,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/fan-contests/contest-1');
+      const response = await request(baseUrl).get('/v1/sports/fan-contests/contest-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -124,9 +161,10 @@ describe('Fan Contests Controller Contract Tests', () => {
           code: 'CONTEST_NOT_FOUND',
           message: 'Contest not found',
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/fan-contests/nonexistent');
+      const response = await request(baseUrl).get('/v1/sports/fan-contests/nonexistent');
 
       expect([404, 200]).toContain(response.status);
       expect(response.body).toEqual({
@@ -149,9 +187,10 @@ describe('Fan Contests Controller Contract Tests', () => {
           status: 'active',
           enteredAt: new Date(),
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/fan-contests/contest-1/enter')
         .send({
           userId: 'user-123',
@@ -188,7 +227,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/fan-contests/contest-1/leaderboard');
+      const response = await request(baseUrl).get('/v1/sports/fan-contests/contest-1/leaderboard');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -220,7 +259,7 @@ describe('Fan Contests Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get(
+      const response = await request(baseUrl).get(
         '/v1/sports/fan-contests/contest-1/rank/user-123'
       );
 

@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   output   = "../src/prisma/client"
 }
 
@@ -27,6 +28,9 @@ model RealityShow {
   supervotes  Supervote[]
   predictions Prediction[]
   clips       RealityClip[]
+  likes       ShowLike[]
+  comments    ShowComment[]
+  shares      ShowShare[]
 
   @@map("reality_shows")
   @@index([universeId])
@@ -44,6 +48,7 @@ model Season {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  show     RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
   episodes Episode[]
 
   @@map("reality_seasons")
@@ -64,6 +69,8 @@ model Episode {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  show        RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  season      Season?     @relation(fields: [seasonId], references: [id], onDelete: SetNull)
   votes       Vote[]
   predictions Prediction[]
 
@@ -83,6 +90,7 @@ model Contestant {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  show        RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
   votes       Vote[]
   supervotes  Supervote[]
   predictions Prediction[]
@@ -97,11 +105,13 @@ model Vote {
   contestantId String
   showId       String
   episodeId    String?
+  quantity     Int      @default(1)
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   contestant Contestant  @relation(fields: [contestantId], references: [id], onDelete: Cascade)
   show       RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
-  episode    Episode?    @relation(fields: [episodeId], references: [id])
+  episode    Episode?    @relation(fields: [episodeId], references: [id], onDelete: SetNull)
 
   @@unique([userId, contestantId])
   @@index([userId])
@@ -118,6 +128,7 @@ model Supervote {
   showId       String
   amount       Decimal  @default(10) @db.Decimal(18, 2)
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   contestant Contestant  @relation(fields: [contestantId], references: [id], onDelete: Cascade)
   show       RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
@@ -137,9 +148,10 @@ model Prediction {
   episodeId     String?
   contestantId  String?
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   show         RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
-  episode      Episode?    @relation(fields: [episodeId], references: [id])
+  episode      Episode?    @relation(fields: [episodeId], references: [id], onDelete: SetNull)
   contestant   Contestant? @relation(fields: [contestantId], references: [id])
 
   @@map("reality_predictions")
@@ -161,9 +173,89 @@ model RealityClip {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  show RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  show    RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  creator User?       @relation(fields: [creatorId], references: [id], onDelete: Restrict)
 
   @@map("reality_clips")
   @@index([showId])
   @@index([creatorId])
+}
+
+model PremiumPurchase {
+  id          String   @id @default(uuid())
+  userId      String
+  extraId     String
+  extraName   String
+  extraType   String
+  price       Decimal  @db.Decimal(18, 2)
+  duration    Int?
+  purchaseId  String   @unique
+  purchasedAt DateTime @default(now())
+  expiresAt   DateTime?
+  status      String   @default("active") // active, expired, cancelled
+
+  @@map("reality_premium_purchases")
+  @@index([userId])
+  @@index([extraId])
+  @@index([purchaseId])
+  @@index([status])
+}
+
+model ShowLike {
+  id        String   @id @default(uuid())
+  userId    String
+  showId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  show RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, showId])
+  @@map("reality_show_likes")
+  @@index([userId])
+  @@index([showId])
+}
+
+model ShowComment {
+  id        String   @id @default(uuid())
+  userId    String
+  showId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  show RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  @@map("reality_show_comments")
+  @@index([userId])
+  @@index([showId])
+  @@index([createdAt])
+}
+
+model ShowShare {
+  id        String   @id @default(uuid())
+  userId    String
+  showId    String
+  platform  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  show RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  @@map("reality_show_shares")
+  @@index([userId])
+  @@index([showId])
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  realityClips RealityClip[]
+
+  @@map("users")
 }

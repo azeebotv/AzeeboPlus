@@ -1,6 +1,8 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
 
 interface Event {
   id: string;
@@ -98,11 +100,34 @@ interface WhereClause {
 @Injectable()
 export class EventsService {
   private readonly logger = new Logger(EventsService.name);
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
-    private prisma: PrismaService,
-    private readonly cache: CacheService
-  ) {}
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService,
+    private readonly configService: ConfigService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
+  }
 
   async getEvents(
     page = 1,
@@ -111,7 +136,10 @@ export class EventsService {
     status = 'published'
   ): Promise<EventResponse> {
     try {
-      const cacheK = cacheKey('lifestyle', `events:${page}:${limit}:${category || 'all'}:${status}`);
+      const cacheK = cacheKey(
+        'lifestyle',
+        `events:${page}:${limit}:${category || 'all'}:${status}`
+      );
       const cached = await this.cache.get<EventResponse['data']>(cacheK);
       if (cached) {
         return { success: true, data: cached };
@@ -130,7 +158,7 @@ export class EventsService {
       const [items, total] = await Promise.all([
         this.prisma.event.findMany({
           where,
-          include: { category: true, creator: true },
+          include: { category: true },
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { startDate: 'desc' },
@@ -155,7 +183,7 @@ export class EventsService {
         categoryId: event.categoryId || '',
         categoryName: event.category?.name || '',
         creatorId: event.creatorId,
-        creatorName: event.creator.displayName || event.creator.username,
+        creatorName: '',
         viewCount: event.viewCount,
         rsvpCount: event.rsvpCount,
         publishedAt: event.publishedAt?.toISOString() || '',
@@ -232,7 +260,7 @@ export class EventsService {
           status: 'published',
           startDate: { gt: now },
         },
-        include: { category: true, creator: true },
+        include: { category: true },
         take: limit,
         orderBy: { startDate: 'asc' },
       });
@@ -254,7 +282,7 @@ export class EventsService {
         categoryId: event.categoryId || '',
         categoryName: event.category?.name || '',
         creatorId: event.creatorId,
-        creatorName: event.creator.displayName || event.creator.username,
+        creatorName: '',
         viewCount: event.viewCount,
         rsvpCount: event.rsvpCount,
         publishedAt: event.publishedAt?.toISOString() || '',
@@ -286,22 +314,32 @@ export class EventsService {
 
       const event = await this.prisma.event.findUnique({
         where: { slug },
-        include: { category: true, creator: true, rsvps: true },
+        include: { category: true, rsvps: true },
       });
 
       if (!event) {
         throw new NotFoundException(`Event not found: ${slug}`);
       }
 
-      const formattedRsvps: Rsvp[] = event.rsvps.map((rsvp) => ({
-        id: rsvp.id,
-        userId: rsvp.userId,
-        eventId: rsvp.eventId,
-        status: rsvp.status,
-        guests: rsvp.guests,
-        note: rsvp.note || '',
-        createdAt: rsvp.createdAt.toISOString(),
-      }));
+      const formattedRsvps: Rsvp[] = event.rsvps.map(
+        (rsvp: {
+          id: string;
+          userId: string;
+          eventId: string;
+          status: string;
+          guests: number;
+          note: string | null;
+          createdAt: Date;
+        }) => ({
+          id: rsvp.id,
+          userId: rsvp.userId,
+          eventId: rsvp.eventId,
+          status: rsvp.status,
+          guests: rsvp.guests,
+          note: rsvp.note || '',
+          createdAt: rsvp.createdAt.toISOString(),
+        })
+      );
 
       const formattedEvent: Event & { rsvps: Rsvp[] } = {
         id: event.id,
@@ -320,7 +358,7 @@ export class EventsService {
         categoryId: event.categoryId || '',
         categoryName: event.category?.name || '',
         creatorId: event.creatorId,
-        creatorName: event.creator.displayName || event.creator.username,
+        creatorName: '',
         viewCount: event.viewCount,
         rsvpCount: event.rsvpCount,
         publishedAt: event.publishedAt?.toISOString() || '',
@@ -373,7 +411,7 @@ export class EventsService {
           rsvpCount: 0,
           publishedAt: null,
         },
-        include: { category: true, creator: true },
+        include: { category: true },
       });
 
       const formattedEvent: Event = {
@@ -393,7 +431,7 @@ export class EventsService {
         categoryId: event.categoryId || '',
         categoryName: event.category?.name || 'General',
         creatorId: event.creatorId,
-        creatorName: event.creator.displayName || event.creator.username,
+        creatorName: '',
         viewCount: event.viewCount,
         rsvpCount: event.rsvpCount,
         publishedAt: event.publishedAt?.toISOString() || '',
@@ -450,7 +488,7 @@ export class EventsService {
       const updated = await this.prisma.event.update({
         where: { id },
         data: updateData,
-        include: { category: true, creator: true },
+        include: { category: true },
       });
 
       const formatted: Event = {
@@ -470,7 +508,7 @@ export class EventsService {
         categoryId: updated.categoryId || '',
         categoryName: updated.category?.name || '',
         creatorId: updated.creatorId,
-        creatorName: updated.creator.displayName || updated.creator.username,
+        creatorName: '',
         viewCount: updated.viewCount,
         rsvpCount: updated.rsvpCount,
         publishedAt: updated.publishedAt?.toISOString() || '',
@@ -517,50 +555,53 @@ export class EventsService {
 
   async rsvpEvent(eventId: string, userId: string, data: RsvpData): Promise<EventResponse> {
     try {
-      const event = await this.prisma.event.findUnique({
-        where: { id: eventId },
-        include: { rsvps: true },
-      });
-      if (!event) throw new NotFoundException(`Event not found: ${eventId}`);
+      const result = await this.prisma.$transaction(async (tx) => {
+        const event = await tx.event.findUnique({
+          where: { id: eventId },
+        });
+        if (!event) throw new NotFoundException(`Event not found: ${eventId}`);
 
-      const existing = await this.prisma.eventRsvp.findUnique({
-        where: { userId_eventId: { userId, eventId } },
-      });
-      if (existing) {
-        throw new BadRequestException('Already RSVPed to this event!');
-      }
+        const existing = await tx.eventRsvp.findUnique({
+          where: { userId_eventId: { userId, eventId } },
+        });
+        if (existing) {
+          throw new BadRequestException('Already RSVPed to this event!');
+        }
 
-      if (event.maxAttendees && event.rsvpCount >= event.maxAttendees) {
-        throw new BadRequestException('Event is fully booked!');
-      }
+        if (event.maxAttendees && event.rsvpCount >= event.maxAttendees) {
+          throw new BadRequestException('Event is fully booked!');
+        }
 
-      const rsvp = await this.prisma.eventRsvp.create({
-        data: {
-          userId,
-          eventId,
-          status: data.status || 'attending',
-          guests: data.guests || 0,
-          note: data.note,
-        },
-        include: { event: true },
-      });
+        const rsvp = await tx.eventRsvp.create({
+          data: {
+            userId,
+            eventId,
+            status: data.status || 'attending',
+            guests: data.guests || 0,
+            note: data.note,
+          },
+        });
 
-      await this.prisma.event.update({
-        where: { id: eventId },
-        data: { rsvpCount: { increment: 1 } },
+        await tx.event.update({
+          where: { id: eventId },
+          data: { rsvpCount: { increment: 1 } },
+        });
+
+        return rsvp;
       });
 
       const formattedRsvp: Rsvp = {
-        id: rsvp.id,
-        userId: rsvp.userId,
-        eventId: rsvp.eventId,
-        status: rsvp.status,
-        guests: rsvp.guests,
-        note: rsvp.note || '',
-        createdAt: rsvp.createdAt.toISOString(),
+        id: result.id,
+        userId: result.userId,
+        eventId: result.eventId,
+        status: result.status,
+        guests: result.guests,
+        note: result.note || '',
+        createdAt: result.createdAt.toISOString(),
       };
 
       await this.cache.invalidate('lifestyle:events:*');
+      this.trackAnalyticsEvent('event_rsvp_created', userId, { eventId });
 
       return {
         success: true,
@@ -597,6 +638,8 @@ export class EventsService {
 
       await this.cache.invalidate('lifestyle:events:*');
 
+      this.trackAnalyticsEvent('event_rsvp_cancelled', userId, { eventId });
+
       return {
         success: true,
         data: { message: 'RSVP cancelled successfully' },
@@ -607,6 +650,56 @@ export class EventsService {
       return {
         success: false,
         error: { code: 'CANCEL_FAILED', message: 'Failed to cancel RSVP' },
+      };
+    }
+  }
+
+  async getAttendees(
+    eventId: string,
+    page = 1,
+    limit = 20
+  ): Promise<{ success: boolean; data: unknown; error?: { code: string; message: string } }> {
+    try {
+      const event = await this.prisma.event.findUnique({ where: { id: eventId } });
+      if (!event) throw new NotFoundException(`Event not found: ${eventId}`);
+
+      const [rsvps, total] = await Promise.all([
+        this.prisma.eventRsvp.findMany({
+          where: { eventId, status: 'attending' },
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { createdAt: 'asc' },
+        }),
+        this.prisma.eventRsvp.count({ where: { eventId, status: 'attending' } }),
+      ]);
+
+      const attendees = rsvps.map((rsvp) => ({
+        id: rsvp.userId,
+        userId: rsvp.userId,
+        eventId: rsvp.eventId,
+        status: rsvp.status,
+        guests: rsvp.guests,
+        note: rsvp.note || '',
+        createdAt: rsvp.createdAt.toISOString(),
+      }));
+
+      return {
+        success: true,
+        data: {
+          items: attendees,
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get attendees: ${error}`);
+      return {
+        success: false,
+        data: undefined,
+        error: { code: 'FETCH_FAILED', message: 'Failed to get attendees' },
       };
     }
   }

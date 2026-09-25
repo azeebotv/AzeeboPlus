@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async getStats() {
     try {
@@ -78,5 +78,30 @@ export class AdminService {
       this.logger.error(`Failed to get users: ${error}`);
       throw error;
     }
+  }
+
+  // Write operations
+  async updateStory(id: string, data: { title?: string; status?: string; content?: string }) {
+    const existing = await this.prisma.cultureStory.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Story not found');
+    return this.prisma.cultureStory.update({ where: { id }, data: data as never });
+  }
+
+  async deleteStory(id: string) {
+    const existing = await this.prisma.cultureStory.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Story not found');
+    return this.prisma.cultureStory.delete({ where: { id } });
+  }
+
+  async updateEvent(id: string, data: { title?: string; status?: string; description?: string }) {
+    const existing = await this.prisma.event.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Event not found');
+    return this.prisma.event.update({ where: { id }, data: data as never });
+  }
+
+  async deleteEvent(id: string) {
+    const existing = await this.prisma.event.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Event not found');
+    return this.prisma.event.delete({ where: { id } });
   }
 }

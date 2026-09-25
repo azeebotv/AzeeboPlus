@@ -1,10 +1,11 @@
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import type { StackNavigationProp } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
 import { AgbalaQuizQuestion } from '../components/AgbalaQuizQuestion';
 import { colors, typography, spacing } from '../../../../theme';
 import type { AgbalaStackParamList } from '../types';
 
-type NavigationProp = StackNavigationProp<AgbalaStackParamList, 'AgbalaQuiz'>;
+type QuizNavigationProp = NavigationProp<AgbalaStackParamList, 'AgbalaQuiz'>;
 
 const SAMPLE_QUESTIONS = [
   {
@@ -33,7 +34,7 @@ const SAMPLE_QUESTIONS = [
   },
 ];
 
-export default function AgbalaQuizScreen({ navigation }: { navigation: NavigationProp }) {
+export default function AgbalaQuizScreen({ navigation }: { navigation: QuizNavigationProp }) {
   const [currentQuestion, setCurrentQuestion] = React.useState(0);
   const [answers, setAnswers] = React.useState<number[]>([]);
 
@@ -58,8 +59,16 @@ export default function AgbalaQuizScreen({ navigation }: { navigation: Navigatio
 
       <AgbalaQuizQuestion
         question={SAMPLE_QUESTIONS[currentQuestion].question}
-        options={SAMPLE_QUESTIONS[currentQuestion].options}
-        onAnswer={handleAnswer}
+        questionNumber={currentQuestion + 1}
+        totalQuestions={SAMPLE_QUESTIONS.length}
+        options={SAMPLE_QUESTIONS[currentQuestion].options.map((text, index) => ({
+          id: `opt-${currentQuestion}-${index}`,
+          text,
+        }))}
+        onOptionSelect={(optionId) => {
+          const index = parseInt(optionId.split('-').pop() || '0', 10);
+          handleAnswer(index);
+        }}
       />
     </ScrollView>
   );
@@ -68,7 +77,7 @@ export default function AgbalaQuizScreen({ navigation }: { navigation: Navigatio
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.primary,
+    backgroundColor: colors.bg.primary,
   },
   progress: {
     padding: spacing.xl,

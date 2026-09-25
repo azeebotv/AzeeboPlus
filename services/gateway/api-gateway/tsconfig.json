@@ -1,19 +1,30 @@
 {
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
-    "module": "Node16",
-    "types": ["jest", "node", "supertest"],
+    "types": [
+      "jest",
+      "node",
+      "supertest"
+    ],
     "declaration": true,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
-    "paths": {
-      "@azeebo/*": ["../../../packages/*/dist"]
-    }
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": true,
+    "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

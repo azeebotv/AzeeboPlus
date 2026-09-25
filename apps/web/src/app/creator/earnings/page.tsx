@@ -1,10 +1,13 @@
 'use client';
-import { useRouter } from 'next/navigation';
+
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { DollarSign, Wallet, Clock, TrendingUp, Sparkles, ArrowUpRight } from 'lucide-react';
 
 interface EarningsData {
   totalEarnings: number;
@@ -20,235 +23,211 @@ interface EarningsData {
   revenueBreakdown: { subscriptions: number; tips: number; ads: number; superVotes: number };
 }
 
-export default function EarningsDashboardPage(): React.JSX.Element {
-  const router = useRouter();
+export default function CreatorEarningsPage(): React.JSX.Element {
+  const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
-  const { data: earnings, isLoading, error } = useQuery({
-    queryKey: ['creator', 'earnings'],
+  const {
+    data: earnings,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['creator', 'earnings', period],
     queryFn: async () => {
-      const result = await apiFetch<{ success: boolean; data: Record<string, unknown> }>('/v1/creators/earnings');
-      if (result.success && result.data) {
-        const d = result.data as Record<string, unknown>;
-        return {
-          totalEarnings: Number(d.totalEarnings ?? d.total ?? 0),
-          availableBalance: Number(d.availableBalance ?? d.pending ?? 0),
-          pendingEarnings: Number(d.pendingEarnings ?? d.pending ?? 0),
-          lifetimeEarnings: Number(d.lifetimeEarnings ?? d.totalEarnings ?? 0),
-          earningsHistory: Array.isArray(d.earningsHistory)
-            ? (d.earningsHistory as Array<Record<string, unknown>>).map((h) => ({
-                date: String(h.date || h.createdAt || ''),
-                amount: Number(h.amount || 0),
-                source: String(h.source || 'unknown'),
-                status: String(h.status || 'completed') as 'completed' | 'pending' | 'failed',
-              }))
-            : [],
-          revenueBreakdown: d.revenueBreakdown || {
-            subscriptions: 0,
-            tips: 0,
-            ads: 0,
-            superVotes: 0,
-          },
-        } as EarningsData;
-      }
-      return null;
+      const res = await apiFetch<EarningsData>(`/v1/creators/earnings?range=${period}`);
+      if (res.success && res.data) return res.data;
+      return {
+        totalEarnings: 0,
+        availableBalance: 0,
+        pendingEarnings: 0,
+        lifetimeEarnings: 0,
+        earningsHistory: [],
+        revenueBreakdown: { subscriptions: 0, tips: 0, ads: 0, superVotes: 0 },
+      };
     },
   });
 
-  const formatCurrency = (amount: number): string =>
-    `₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const getStatusStyle = (status: string): { color: string } => {
-    switch (status) {
-      case 'completed':
-        return { color: '#22C55E' };
-      case 'pending':
-        return { color: '#EAB308' };
-      case 'failed':
-        return { color: '#EF4444' };
-      default:
-        return { color: 'rgba(255,255,255,0.4)' };
-    }
-  };
-
-  if (isLoading) {
+  if (error) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-        <AppHeader />
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <Skeleton width="120px" height="20px" className="mb-2" />
-            <Skeleton width="200px" height="32px" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="az-glass p-6">
-                <Skeleton width="60%" height="14px" className="mb-2" />
-                <Skeleton width="80%" height="28px" />
-              </div>
-            ))}
-          </div>
+      <PageShell glowColor="rgba(232,66,10,0.12)">
+        <div className="max-w-xl mx-auto py-20 px-4">
+          <ErrorState
+            title="Failed to load earnings"
+            description="Unable to sync royalty ledgers from the treasury."
+            onButtonPress={() => refetch()}
+          />
         </div>
-      </div>
+      </PageShell>
     );
   }
-
-  if (error || !earnings) {
-    return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-        <AppHeader />
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <ErrorState title="Failed to load earnings" description="Please try again later" onButtonPress={() => router.refresh()} />
-        </div>
-      </div>
-    );
-  }
-
-  const _totalBreakdown =
-    earnings.revenueBreakdown.subscriptions +
-      earnings.revenueBreakdown.tips +
-      earnings.revenueBreakdown.ads +
-      earnings.revenueBreakdown.superVotes || 1;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-      <AppHeader />
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-white/50 hover:text-white mb-2 flex items-center gap-2 transition-colors"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>{' '}
-            Back
-          </button>
-          <h1 className="text-3xl font-bold text-white">Earnings Dashboard</h1>
+    <PageShell glowColor="rgba(232,66,10,0.14)">
+      <PageHero
+        badge="Treasury & Settlement"
+        title="Royalties & Earnings"
+        description="Comprehensive accounting of streaming payouts, tip micro-transactions, and ad revenues across the universe."
+      />
+
+      <div className="max-w-5xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Period Selector */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-mono uppercase tracking-wider text-white/50">
+            Accounting Horizon
+          </span>
+          <div className="flex items-center gap-1.5 p-1 rounded-full az-glass border border-white/10">
+            {(['7d', '30d', '90d'] as const).map((p) => {
+              const isActive = period === p;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPeriod(p)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-[var(--brand-orange)] text-white shadow-lg'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  {p.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[
-            {
-              label: 'Available Balance',
-              value: formatCurrency(earnings.availableBalance),
-              accent: true,
-            },
-            {
-              label: 'Pending Earnings',
-              value: formatCurrency(earnings.pendingEarnings),
-              accent: false,
-            },
-            {
-              label: 'Total Earnings',
-              value: formatCurrency(earnings.totalEarnings),
-              accent: false,
-            },
-            {
-              label: 'Lifetime Earnings',
-              value: formatCurrency(earnings.lifetimeEarnings),
-              accent: false,
-            },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className={`az-glass p-6 ${stat.accent ? 'ring-1' : ''}`}
-              style={stat.accent ? { boxShadow: '0 0 20px rgba(232,66,10,0.2)' } : undefined}
-            >
-              <p className="text-sm text-white/50 mb-1">{stat.label}</p>
-              <p
-                className="text-2xl font-bold"
-                style={stat.accent ? { color: '#E8420A' } : { color: '#fff' }}
-              >
-                {stat.value}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="az-glass p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Revenue Breakdown</h2>
-            <div className="space-y-4">
-              {[
-                {
-                  label: 'Subscriptions',
-                  amount: earnings.revenueBreakdown.subscriptions,
-                  color: '#E8420A',
-                },
-                { label: 'Tips', amount: earnings.revenueBreakdown.tips, color: '#CC1C1C' },
-                { label: 'Ads', amount: earnings.revenueBreakdown.ads, color: '#0D3B2E' },
-                {
-                  label: 'Super Votes',
-                  amount: earnings.revenueBreakdown.superVotes,
-                  color: '#EAB308',
-                },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-white">{item.label}</span>
+        {/* Primary Metric Cards */}
+        <ScrollReveal>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              {
+                label: 'Total Earnings',
+                value: `₦${earnings?.totalEarnings.toLocaleString() || '0'}`,
+                icon: DollarSign,
+                color: 'text-[var(--brand-orange)]',
+                border: 'hover:border-[var(--brand-orange)]/40',
+              },
+              {
+                label: 'Available Balance',
+                value: `₦${earnings?.availableBalance.toLocaleString() || '0'}`,
+                icon: Wallet,
+                color: 'text-emerald-400',
+                border: 'hover:border-emerald-500/40',
+              },
+              {
+                label: 'Pending In Transit',
+                value: `₦${earnings?.pendingEarnings.toLocaleString() || '0'}`,
+                icon: Clock,
+                color: 'text-amber-400',
+                border: 'hover:border-amber-500/40',
+              },
+              {
+                label: 'Lifetime Accrual',
+                value: `₦${earnings?.lifetimeEarnings.toLocaleString() || '0'}`,
+                icon: TrendingUp,
+                color: 'text-purple-400',
+                border: 'hover:border-purple-500/40',
+              },
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className={`az-glass p-5 sm:p-6 rounded-2xl border border-white/10 ${stat.border} transition-all`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-white/40">
+                      {stat.label}
+                    </span>
+                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                      <Icon className={`w-4 h-4 ${stat.color}`} />
+                    </div>
                   </div>
-                  <span className="font-semibold text-white">{formatCurrency(item.amount)}</span>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <p className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                      {stat.value}
+                    </p>
+                  )}
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
+        </ScrollReveal>
 
-          <div className="az-glass p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
-            <div className="space-y-3">
-              <button
-                onClick={() => router.push('/wallet/withdraw')}
-                className="w-full py-3 rounded-full font-semibold transition-all az-btn-primary"
-              >
-                Withdraw Funds
-              </button>
-              <button
-                onClick={() => router.push('/wallet/transactions')}
-                className="w-full py-3 rounded-full font-semibold transition-colors"
-                style={{
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  color: '#fff',
-                }}
-              >
-                View Transactions
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="az-glass p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Earnings History</h2>
-          <div className="space-y-3">
-            {earnings.earningsHistory.map((entry, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between py-3"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
-              >
-                <div>
-                  <p className="font-medium text-white">{entry.source}</p>
-                  <p className="text-sm text-white/50">
-                    {new Date(entry.date).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-white">+{formatCurrency(entry.amount)}</p>
-                  <p className="text-sm capitalize" style={getStatusStyle(entry.status)}>
-                    {entry.status}
-                  </p>
-                </div>
+        {/* Revenue Breakdown */}
+        {earnings && (
+          <ScrollReveal delay={0.1}>
+            <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+              <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[var(--brand-orange)]" />
+                Revenue Stream Decomposition
+              </h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {Object.entries(earnings.revenueBreakdown).map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="p-4 rounded-xl bg-white/[0.03] border border-white/5"
+                  >
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-white/40 block mb-1">
+                      {key.replace(/([A-Z])/g, ' $1')}
+                    </span>
+                    <p className="text-xl font-bold text-white tracking-tight">
+                      ₦{value.toLocaleString()}
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+          </ScrollReveal>
+        )}
+
+        {/* Recent Payout History */}
+        <ScrollReveal delay={0.2}>
+          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+            <h2 className="text-lg font-bold text-white mb-6">Recent Settlement Ledger</h2>
+            {!earnings || earnings.earningsHistory.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-sm text-white/40">No earnings recorded for this timeframe.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {earnings.earningsHistory.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 flex items-center justify-between transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                        <ArrowUpRight className="w-4 h-4 text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{item.source}</p>
+                        <p className="text-xs text-white/40">{item.date}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-emerald-400">
+                        +₦{item.amount.toLocaleString()}
+                      </p>
+                      <span
+                        className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full ${
+                          item.status === 'completed'
+                            ? 'bg-emerald-500/10 text-emerald-400'
+                            : 'bg-amber-500/10 text-amber-400'
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        </ScrollReveal>
       </div>
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

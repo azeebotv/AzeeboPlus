@@ -10,9 +10,9 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { supportApi } from '../src/api/support';
-import { apiClient } from '../src/api';
-import { logger } from '../src/utils/logger';
+import { supportApi } from '@azeebo/react-data/api/support';
+import { apiClient } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors } from '../src/theme';
 
@@ -137,7 +137,12 @@ export default function SupportScreen() {
       >
         <ScrollView style={styles.scrollView}>
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary }]}>
+            <Text
+              style={[
+                styles.title,
+                { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
+              ]}
+            >
               How can we help you? 👋
             </Text>
             <Text style={styles.subtitle}>
@@ -156,7 +161,10 @@ export default function SupportScreen() {
                 key={index}
                 style={[
                   styles.quickLinkCard,
-                  { backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50] },
+                  {
+                    backgroundColor:
+                      colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                  },
                 ]}
                 accessibilityLabel={item.label}
                 accessibilityRole="button"
@@ -188,7 +196,10 @@ export default function SupportScreen() {
                 key={faq.id}
                 style={[
                   styles.faqCard,
-                  { backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50] },
+                  {
+                    backgroundColor:
+                      colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                  },
                 ]}
                 onPress={() => toggleFAQ(faq.id)}
                 accessibilityLabel={`Frequently asked question: ${faq.question}`}
@@ -225,7 +236,10 @@ export default function SupportScreen() {
               <View
                 style={[
                   styles.successCard,
-                  { backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50] },
+                  {
+                    backgroundColor:
+                      colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                  },
                 ]}
               >
                 <Text style={styles.successIcon}>✅</Text>
@@ -262,7 +276,8 @@ export default function SupportScreen() {
                     style={[
                       styles.input,
                       {
-                        backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                        backgroundColor:
+                          colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
                         color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary,
                       },
                     ]}
@@ -321,7 +336,8 @@ export default function SupportScreen() {
                     style={[
                       styles.textArea,
                       {
-                        backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                        backgroundColor:
+                          colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
                         color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary,
                       },
                     ]}
@@ -335,7 +351,12 @@ export default function SupportScreen() {
                   />
                 </View>
 
-                <TouchableOpacity onPress={handleSubmit} style={styles.submitButton} accessibilityLabel="Submit support ticket" accessibilityRole="button">
+                <TouchableOpacity
+                  onPress={handleSubmit}
+                  style={styles.submitButton}
+                  accessibilityLabel="Submit support ticket"
+                  accessibilityRole="button"
+                >
                   <Text style={styles.submitButtonText}>📤 Submit Ticket</Text>
                 </TouchableOpacity>
               </View>

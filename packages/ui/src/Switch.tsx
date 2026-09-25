@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { colors } from '@azeebo/design-tokens';
 
 export interface SwitchProps {
   checked: boolean;
@@ -32,7 +33,7 @@ export const Switch: React.FC<SwitchProps> = ({
         onClick={() => handleChange?.(!checked)}
         className={`
           relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-          ${checked ? 'bg-primary' : 'bg-gray-300'}
+          ${checked ? `bg-[${colors.primary[500]}]` : `bg-[${colors.dark[300]}]`}
           ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
         `}
       >

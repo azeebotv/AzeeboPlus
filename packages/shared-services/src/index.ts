@@ -1,3 +1,8 @@
+// Feature flags
+/** Convenience wrapper around `@azeebo/feature-flags` FeatureFlagModule. */
+export { FeatureFlagsModule, FeatureFlagModule } from './feature-flags/feature-flags.module';
+export type { FeatureFlagConfig } from './feature-flags/feature-flags.module';
+
 // Redis
 /** NestJS wrapper around the ioredis client with lifecycle management. */
 export { RedisService } from './redis/redis.service';
@@ -43,9 +48,62 @@ export * from './auth';
 export { AuditService } from './audit/audit.service';
 export { AuditModule } from './audit/audit.module';
 export { AuditInterceptor } from './audit/audit.interceptor';
-export { Audit } from './audit/audit.decorator';
+export { AuditLog } from './audit/audit.decorator';
+
+// Firebase
+/** Firebase Cloud Messaging service and module. */
+export { FirebaseService } from './firebase/firebase.service';
+export { FirebaseModule } from './firebase/firebase.module';
+
+// Email
+/** SendGrid email service with Handlebars templates and module. */
+export { EmailService } from './email/email.service';
+export { EmailModule } from './email/email.module';
+
+// SMS
+/** Twilio SMS service and module. */
+export { SmsService } from './sms/sms.service';
+export { SmsModule } from './sms/sms.module';
+
+// Sentry
+/** Sentry error tracking service and module. */
+export { SentryService } from './sentry/sentry.service';
+export { SentryModule } from './sentry/sentry.module';
 
 // Prisma
 /** Prisma ORM service and module for database access. */
 export { PrismaService } from './prisma/prisma.service';
 export { PrismaModule } from './prisma/prisma.module';
+
+// JWT
+/** Shared JWT configuration module - replaces per-service JwtModule.registerAsync boilerplate. */
+export { JwtConfigModule } from './jwt/jwt-config.module';
+
+// Observability
+/** Health check service for database, Redis, and external service checks. */
+export {
+  HealthCheckService,
+  HealthCheckResult,
+  ComponentCheck,
+  HealthMetrics,
+  ServiceHealth,
+} from './observability/health-check.service';
+/** In-memory metrics service supporting counters, gauges, histograms, and periodic export. */
+export {
+  MetricsService,
+  Metric,
+  MetricValue,
+  Counter,
+  Gauge,
+  Histogram,
+} from './observability/metrics.service';
+
+// Database query monitoring
+export {
+  SlowQueryLogger,
+  SlowQueryConfig,
+  QueryMetrics,
+  SLOW_QUERY_THRESHOLD,
+  createSlowQueryExtension,
+  createSlowQueryCallback,
+} from './database/slow-query-logger';

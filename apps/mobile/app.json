@@ -3,7 +3,7 @@
     "name": "Azeebo+",
     "slug": "azeebo-plus",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "all",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -19,7 +19,8 @@
       "infoPlist": {
         "CFBundleURLSchemes": [
           "azeebo"
-        ]
+        ],
+        "NSFaceIDUsageDescription": "Use Face ID to quickly and securely sign in to Azeebo+."
       }
     },
     "android": {
@@ -51,14 +52,20 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-screen-orientation",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Use Face ID to quickly and securely sign in to Azeebo+."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "owner": "iamdeprof",
     "extra": {
-      "apiBaseURL": "http://localhost:3013",
       "eas": {
         "projectId": "3627eb83-fb81-4f76-bae5-668a14102705"
       },

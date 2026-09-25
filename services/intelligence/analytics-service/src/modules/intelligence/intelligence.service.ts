@@ -1,37 +1,87 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 
 @Injectable()
 export class IntelligenceService {
   private readonly logger = new Logger(IntelligenceService.name);
-  constructor(private prisma: PrismaService) {}
+  private readonly userServiceUrl: string;
+  private readonly contentServiceUrl: string;
+
+  constructor(
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService
+  ) {
+    this.userServiceUrl = this.configService.get<string>(
+      'USER_SERVICE_URL',
+      'http://user-service:3001'
+    );
+    this.contentServiceUrl = this.configService.get<string>(
+      'CONTENT_SERVICE_URL',
+      'http://content-service:3004'
+    );
+  }
+
+  private async getUserById(
+    userId: string
+  ): Promise<{ id: string; displayName?: string; email?: string } | null> {
+    try {
+      const response = await axios.get<{
+        data?: { id: string; displayName?: string; email?: string };
+      }>(`${this.userServiceUrl}/users/${userId}`, { timeout: 5000 });
+      return response.data?.data || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getContentByIds(ids: string[]): Promise<{ id: string; universe?: string }[]> {
+    try {
+      const response = await axios.get<{ data?: { items?: { id: string; universe?: string }[] } }>(
+        `${this.contentServiceUrl}/content`,
+        { params: { ids: ids.join(','), limit: 100 }, timeout: 5000 }
+      );
+      return response.data?.data?.items || [];
+    } catch {
+      return [];
+    }
+  }
+
+  private async getContentByCreator(
+    creatorId: string
+  ): Promise<{ id: string; viewCount: number }[]> {
+    try {
+      const response = await axios.get<{ data?: { items?: { id: string; viewCount: number }[] } }>(
+        `${this.contentServiceUrl}/content/creator/${creatorId}`,
+        { timeout: 5000 }
+      );
+      return response.data?.data?.items || [];
+    } catch {
+      return [];
+    }
+  }
 
   async getPersonalization(userId: string): Promise<{ success: boolean; data?: unknown }> {
     try {
-      const [watchHistory, preferences, rewardAccount] = await Promise.all([
+      const [watchHistory, , rewardAccount] = await Promise.all([
         this.prisma.watchHistory.findMany({
           where: { userId },
-          orderBy: { watchedAt: 'desc' },
+          orderBy: { createdAt: 'desc' },
           take: 100,
         }),
-        this.prisma.user.findUnique({
-          where: { id: userId },
-          select: { preferences: true },
-        }),
+        this.getUserById(userId),
         this.prisma.rewardAccount.findUnique({
           where: { userId },
         }),
       ]);
 
       const contentIds = watchHistory.map((h) => h.contentId);
-      const watchedContent = await this.prisma.contentItem.findMany({
-        where: { id: { in: contentIds } },
-        include: { universe: true },
-      });
+      const watchedContent = await this.getContentByIds(contentIds);
 
       const universePreferences = watchedContent.reduce(
         (acc, c) => {
-          const universe = c.universe?.name || 'unknown';
+          const universe = c.universe || 'unknown';
           acc[universe] = (acc[universe] || 0) + 1;
           return acc;
         },
@@ -43,19 +93,42 @@ export class IntelligenceService {
         .slice(0, 3)
         .map(([name]) => name);
 
+      // Extract recent categories from watched content
+      const recentCategories = [
+        ...new Set(watchedContent.map((c) => c.universe).filter(Boolean)),
+      ].slice(0, 5);
+
+      // Build preferences from watch history patterns
+      const preferences: Record<string, unknown> = {
+        topUniverses,
+        avgWatchDuration:
+          watchHistory.length > 0
+            ? watchHistory.reduce(
+                (sum, h) =>
+                  sum + (((h as unknown as Record<string, unknown>).duration as number) || 0),
+                0
+              ) / watchHistory.length
+            : 0,
+        totalWatched: watchHistory.length,
+        engagementLevel: rewardAccount ? 'active' : 'new',
+      };
+
       return {
         success: true,
         data: {
           userId,
           topUniverses,
-          recentCategories: [],
+          recentCategories,
           engagementLevel: rewardAccount ? 'active' : 'new',
-          preferences: preferences?.preferences || {},
+          preferences,
         },
       };
-    } catch (_err) {
-      this.logger.error(`getPersonalization failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getPersonalization failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -63,9 +136,12 @@ export class IntelligenceService {
     try {
       const segments = await this.prisma.audienceSegment.findMany();
       return { success: true, data: segments };
-    } catch (_err) {
-      this.logger.error(`getAudienceSegments failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getAudienceSegments failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -104,8 +180,14 @@ export class IntelligenceService {
       const where: Record<string, unknown> = {};
       if (criteria.signupDateFrom || criteria.signupDateTo) {
         where.createdAt = {};
-        if (criteria.signupDateFrom) (where.createdAt as Record<string, unknown>).gte = new Date(criteria.signupDateFrom as string);
-        if (criteria.signupDateTo) (where.createdAt as Record<string, unknown>).lte = new Date(criteria.signupDateTo as string);
+        if (criteria.signupDateFrom)
+          (where.createdAt as Record<string, unknown>).gte = new Date(
+            criteria.signupDateFrom as string
+          );
+        if (criteria.signupDateTo)
+          (where.createdAt as Record<string, unknown>).lte = new Date(
+            criteria.signupDateTo as string
+          );
       }
       // Behavioral criteria (minViewCount, maxViewCount, minWatchTime, maxWatchTime, engagementLevel)
       // require joins on engagement tables and cannot be directly mapped to User model fields.
@@ -125,13 +207,16 @@ export class IntelligenceService {
       });
 
       return { success: true, data: { id: segment.id } };
-    } catch (_err) {
-      this.logger.error(`createAudienceSegment failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `createAudienceSegment failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
-  async getCreatorScores(universe?: string): Promise<{ success: boolean; data?: unknown }> {
+  async getCreatorScores(_universe?: string): Promise<{ success: boolean; data?: unknown }> {
     try {
       const scores = await this.prisma.creatorScore.findMany({
         orderBy: { overallScore: 'desc' },
@@ -139,17 +224,18 @@ export class IntelligenceService {
       });
 
       return { success: true, data: scores };
-    } catch (_err) {
-      this.logger.error(`getCreatorScores failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getCreatorScores failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
   async calculateCreatorScore(creatorId: string): Promise<{ success: boolean; data?: unknown }> {
     try {
-      const contentItems = await this.prisma.contentItem.findMany({
-        where: { creatorId },
-      });
+      const contentItems = await this.getContentByCreator(creatorId);
 
       const totalViews = contentItems.reduce(
         (sum: number, c: { viewCount: number }) => sum + c.viewCount,
@@ -180,9 +266,12 @@ export class IntelligenceService {
       });
 
       return { success: true, data: score };
-    } catch (_err) {
-      this.logger.error(`calculateCreatorScore failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `calculateCreatorScore failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -195,20 +284,23 @@ export class IntelligenceService {
       });
 
       return { success: true, data: risks };
-    } catch (_err) {
-      this.logger.error(`getChurnRisks failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getChurnRisks failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
   async calculateChurnRisk(userId: string): Promise<{ success: boolean; data?: unknown }> {
     try {
       const [user, rewardAccount, watchHistory] = await Promise.all([
-        this.prisma.user.findUnique({ where: { id: userId } }),
+        this.getUserById(userId),
         this.prisma.rewardAccount.findUnique({ where: { userId } }),
         this.prisma.watchHistory.findMany({
           where: { userId },
-          orderBy: { watchedAt: 'desc' },
+          orderBy: { createdAt: 'desc' },
           take: 30,
         }),
       ]);
@@ -217,7 +309,7 @@ export class IntelligenceService {
         return { success: true, data: { error: 'User not found' } };
       }
 
-      const lastActivity = watchHistory[0]?.watchedAt;
+      const lastActivity = watchHistory[0]?.createdAt;
       const daysSinceActivity = lastActivity
         ? Math.floor((Date.now() - lastActivity.getTime()) / (1000 * 60 * 60 * 24))
         : 999;
@@ -280,9 +372,12 @@ export class IntelligenceService {
       });
 
       return { success: true, data: churnRisk };
-    } catch (_err) {
-      this.logger.error(`calculateChurnRisk failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `calculateChurnRisk failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -296,9 +391,12 @@ export class IntelligenceService {
       });
 
       return { success: true, data: detections };
-    } catch (_err) {
-      this.logger.error(`getFraudDetections failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getFraudDetections failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -319,9 +417,9 @@ export class IntelligenceService {
       });
 
       return { success: true, data: { id: detection.id } };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`detectFraud failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -337,9 +435,12 @@ export class IntelligenceService {
       });
 
       return { success: true, data: { message: `Detection ${status}` } };
-    } catch (_err) {
-      this.logger.error(`reviewFraudDetection failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `reviewFraudDetection failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -377,9 +478,12 @@ export class IntelligenceService {
           retentionByWeek,
         },
       };
-    } catch (_err) {
-      this.logger.error(`getRetentionMetrics failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getRetentionMetrics failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -390,7 +494,7 @@ export class IntelligenceService {
       const [watchHistory, rewardAccount] = await Promise.all([
         this.prisma.watchHistory.findMany({
           where: { userId },
-          orderBy: { watchedAt: 'desc' },
+          orderBy: { createdAt: 'desc' },
           take: 50,
         }),
         this.prisma.rewardAccount.findUnique({ where: { userId } }),
@@ -400,7 +504,7 @@ export class IntelligenceService {
 
       const watchedContent = await this.prisma.contentItem.findMany({
         where: { id: { in: contentIds } },
-        include: { universe: true },
+        // universe is a string field, not a relation
       });
 
       const contentById = new Map(watchedContent.map((c) => [c.id, c]));
@@ -408,9 +512,8 @@ export class IntelligenceService {
       const universePreferences: Record<string, number> = {};
       for (const history of watchHistory) {
         const content = contentById.get(history.contentId);
-        if (content?.universe?.name) {
-          universePreferences[content.universe.name] =
-            (universePreferences[content.universe.name] || 0) + 1;
+        if (content?.universe) {
+          universePreferences[content.universe] = (universePreferences[content.universe] || 0) + 1;
         }
       }
 
@@ -419,34 +522,51 @@ export class IntelligenceService {
         .slice(0, 3)
         .map(([name]) => name);
 
-      const allUniverses = [
-        'reality',
-        'creator',
-        'lifestyle',
-        'games',
-        'comedy',
-        'sports',
-        'movie',
-        'vertical',
-      ];
+      // Get all universes from database instead of hardcoding
+      let allUniverses: string[];
+      try {
+        const universes = await this.prisma.universe.findMany({
+          select: { name: true },
+        });
+        allUniverses = universes.map((u) => u.name);
+      } catch {
+        // Fall back to hardcoded list if universe table doesn't exist
+        allUniverses = [
+          'reality',
+          'creator',
+          'lifestyle',
+          'games',
+          'comedy',
+          'sports',
+          'movie',
+          'vertical',
+        ];
+      }
       const unexploredUniverses = allUniverses.filter((u) => !topUniverses.includes(u));
 
       const recommendedContent: Record<string, unknown[]> = {};
 
-      for (const universe of unexploredUniverses.slice(0, 3)) {
-        const content = await this.prisma.contentItem.findMany({
-          where: { universe: { name: universe } },
+      // Batch fetch content for all unexplored universes in one query (fixes N+1)
+      const unexploredSlice = unexploredUniverses.slice(0, 3);
+      if (unexploredSlice.length > 0) {
+        const batchContent = await this.prisma.contentItem.findMany({
+          where: { universe: { in: unexploredSlice } },
           orderBy: { viewCount: 'desc' },
-          take: 5,
-          include: { universe: true },
+          take: unexploredSlice.length * 5,
         });
-        if (content.length > 0) {
-          recommendedContent[universe] = content.map((c) => ({
-            id: c.id,
-            title: c.title,
-            universe: c.universe?.displayName,
-            viewCount: c.viewCount,
-          }));
+        // Group by universe
+        for (const c of batchContent) {
+          if (!recommendedContent[c.universe]) {
+            recommendedContent[c.universe] = [];
+          }
+          if ((recommendedContent[c.universe] as unknown[]).length < 5) {
+            (recommendedContent[c.universe] as unknown[]).push({
+              id: c.id,
+              title: c.title,
+              universe: c.universe,
+              viewCount: c.viewCount,
+            });
+          }
         }
       }
 
@@ -460,9 +580,12 @@ export class IntelligenceService {
           recommendationReason: 'Based on your viewing patterns, you might enjoy these universes',
         },
       };
-    } catch (_err) {
-      this.logger.error(`getCrossUniverseRecommendations failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getCrossUniverseRecommendations failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -486,7 +609,9 @@ export class IntelligenceService {
           voteByUserSession.set(key, (voteByUserSession.get(key) || 0) + 1);
         }
       }
-      const rapidVotes = Array.from(voteByUserSession.values()).filter((count) => count > 20).length;
+      const rapidVotes = Array.from(voteByUserSession.values()).filter(
+        (count) => count > 20
+      ).length;
 
       const rapidPredictionEvents = await this.prisma.productEvent.count({
         where: {
@@ -558,9 +683,12 @@ export class IntelligenceService {
             .length,
         },
       };
-    } catch (_err) {
-      this.logger.error(`analyzeFraudPatterns failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `analyzeFraudPatterns failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -622,9 +750,12 @@ export class IntelligenceService {
           ],
         },
       };
-    } catch (_err) {
-      this.logger.error(`getSegmentationInsights failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getSegmentationInsights failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 }

@@ -1,11 +1,34 @@
+jest.mock('libphonenumber-js/max', () => ({
+  parsePhoneNumber: jest.fn(),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, UnauthorizedException } from '@nestjs/common';
+import {
+  INestApplication,
+  ExecutionContext,
+  UnauthorizedException,
+  VersioningType,
+} from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
-import { SportsController } from './sports.controller';
-import { SportsService } from './sports.service';
+import { FeatureFlagService } from '@azeebo/feature-flags';
+import { SportsController } from './sports.controller.js';
+import { SportsService } from './sports.service.js';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn(),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
+jest.mock('@azeebo/security', () => ({
+  RateLimitGuard: jest.fn(),
+  RateLimit: () => () => {},
+  AdminGuard: jest.fn(),
+  RateLimitService: jest.fn(),
+}));
 
 const mockAuthGuard = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   canActivate: jest.fn().mockImplementation((context: any) => {
     const req = context.switchToHttp().getRequest();
     if (!req.headers.authorization) {
@@ -18,6 +41,7 @@ const mockAuthGuard = {
 
 describe('Sports Service Validation Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockSportsService = {
     getHome: jest.fn().mockResolvedValue({ success: true, data: {} }),
@@ -49,6 +73,20 @@ describe('Sports Service Validation Tests', () => {
           provide: 'JWT',
           useValue: mockAuthGuard,
         },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+        },
+        {
+          provide: APP_GUARD,
+          useFactory: () => ({
+            canActivate: (context: ExecutionContext) => {
+              const req = context.switchToHttp().getRequest();
+              req.user = { sub: 'user-123', role: 'ADMIN' };
+              return true;
+            },
+          }),
+        },
       ],
     })
       .overrideGuard(AuthGuard('jwt'))
@@ -56,7 +94,10 @@ describe('Sports Service Validation Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -65,6 +106,7 @@ describe('Sports Service Validation Tests', () => {
 
   beforeEach(() => {
     mockAuthGuard.canActivate.mockClear();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockAuthGuard.canActivate.mockImplementation((context: any) => {
       const req = context.switchToHttp().getRequest();
       if (!req.headers.authorization) {
@@ -77,7 +119,7 @@ describe('Sports Service Validation Tests', () => {
 
   describe('Validation - POST /v1/sports/predictions', () => {
     it('should accept valid prediction data', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/predictions')
         .set('Authorization', 'Bearer test-token')
         .send({
@@ -91,7 +133,7 @@ describe('Sports Service Validation Tests', () => {
     });
 
     it('should reject prediction with missing eventId', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/predictions')
         .set('Authorization', 'Bearer test-token')
         .send({
@@ -103,7 +145,7 @@ describe('Sports Service Validation Tests', () => {
     });
 
     it('should reject prediction with missing prediction field', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/predictions')
         .set('Authorization', 'Bearer test-token')
         .send({
@@ -115,7 +157,7 @@ describe('Sports Service Validation Tests', () => {
     });
 
     it('should reject prediction with negative stake', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/predictions')
         .set('Authorization', 'Bearer test-token')
         .send({
@@ -128,7 +170,7 @@ describe('Sports Service Validation Tests', () => {
     });
 
     it('should accept prediction without optional stake field', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/predictions')
         .set('Authorization', 'Bearer test-token')
         .send({
@@ -140,7 +182,7 @@ describe('Sports Service Validation Tests', () => {
     });
 
     it('should reject prediction with empty eventId', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/predictions')
         .set('Authorization', 'Bearer test-token')
         .send({
@@ -154,7 +196,7 @@ describe('Sports Service Validation Tests', () => {
 
   describe('Validation - POST /v1/sports/fan-contests/:id/enter', () => {
     it('should accept valid contest entry', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/fan-contests/contest-123/enter')
         .set('Authorization', 'Bearer test-token')
         .send({
@@ -166,7 +208,7 @@ describe('Sports Service Validation Tests', () => {
     });
 
     it('should reject contest entry with missing contestId', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/fan-contests/contest-123/enter')
         .set('Authorization', 'Bearer test-token')
         .send({});
@@ -175,7 +217,7 @@ describe('Sports Service Validation Tests', () => {
     });
 
     it('should reject contest entry with empty contestId', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/fan-contests/contest-123/enter')
         .set('Authorization', 'Bearer test-token')
         .send({

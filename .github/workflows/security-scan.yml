@@ -24,12 +24,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Run pnpm audit
         run: pnpm audit --audit-level=high
-        continue-on-error: true
 
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
     permissions:
+      contents: read # checkout of a private repo; a permissions block with
+                     # only security-events: write strips the default contents grant
       security-events: write
     steps:
       - uses: actions/checkout@v4
@@ -39,6 +40,16 @@ jobs:
           languages: javascript-typescript
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+
+  env-secrets-check:
+    name: Placeholder Secret Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for placeholder secrets in .env files
+        run: bash .github/ci-scripts/check-env-secrets.sh
 
   secret-scan:
     name: Secret Scan

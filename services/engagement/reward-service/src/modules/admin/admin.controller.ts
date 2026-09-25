@@ -1,14 +1,13 @@
-import { Controller, Get, Post, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AdminService } from './admin.service';
-import { AuthGuard } from '@nestjs/passport';
+import { AdminService } from './admin.service.js';
 import { AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
 
 @ApiTags('Admin - Reward Service')
 @Controller('admin')
-@UseGuards(AuthGuard('jwt'), AdminGuard, RateLimitGuard)
+@UseGuards(AdminGuard, RateLimitGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
 
   @Get('stats')
   @RateLimit(50, 60000)
@@ -93,5 +92,66 @@ export class AdminController {
     }
   ) {
     return this.adminService.updateMission(id, body);
+  }
+
+  // Badge CRUD
+  @Get('badges')
+  @RateLimit(50, 60000)
+  async getBadges(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.adminService.getBadges({ page, limit });
+  }
+
+  @Post('badges')
+  @RateLimit(50, 60000)
+  async createBadge(
+    @Body()
+    body: {
+      name: string;
+      description?: string;
+      icon: string;
+      criteria?: string;
+      points: number;
+    }
+  ) {
+    return this.adminService.createBadge(body);
+  }
+
+  @Post('badges/:id/assign')
+  @RateLimit(50, 60000)
+  async assignBadge(@Param('id') id: string, @Body() body: { userId: string; reason?: string }) {
+    return this.adminService.assignBadge(id, body.userId, body.reason);
+  }
+
+  // Level CRUD
+  @Get('levels')
+  @RateLimit(50, 60000)
+  async getLevels() {
+    return this.adminService.getLevels();
+  }
+
+  @Post('levels')
+  @RateLimit(50, 60000)
+  async createLevel(
+    @Body()
+    body: {
+      name: string;
+      rank: number;
+      minPoints: number;
+      maxPoints?: number;
+      icon?: string;
+      color?: string;
+      perks?: string;
+    }
+  ) {
+    return this.adminService.createLevel(body);
+  }
+
+  @Put('levels/:id')
+  @RateLimit(50, 60000)
+  async updateLevel(
+    @Param('id') id: string,
+    @Body() body: { name?: string; minPoints?: number; maxPoints?: number; perks?: string }
+  ) {
+    return this.adminService.updateLevel(id, body);
   }
 }

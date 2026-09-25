@@ -1,6 +1,18 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 import { InfluencerService } from './influencer.service';
 
 interface CreateInfluencerData {
@@ -35,9 +47,11 @@ interface UpdateInfluencerData {
 }
 
 @ApiTags('Influencer')
-@Controller('v1/lifestyle/influencers')
+@FeatureFlag(lifestyleFlags.influencerVerification)
+@UseGuards(FeatureFlagGuard)
+@Controller('lifestyle/influencers')
 export class InfluencerController {
-  constructor(private readonly influencerService: InfluencerService) {}
+  constructor(@Inject(InfluencerService) private readonly influencerService: InfluencerService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get influencers' })
@@ -80,7 +94,8 @@ export class InfluencerController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create influencer entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
   async createEntry(@Body() body: CreateInfluencerData): Promise<unknown> {
@@ -88,7 +103,8 @@ export class InfluencerController {
   }
 
   @Post('collaborations')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create collaboration' })
   @ApiResponse({ status: 201, description: 'Collaboration created' })
   async createCollaboration(@Body() body: CreateCollaborationData): Promise<unknown> {
@@ -96,7 +112,8 @@ export class InfluencerController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update influencer entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
   async updateEntry(@Param('id') id: string, @Body() body: UpdateInfluencerData): Promise<unknown> {
@@ -104,7 +121,8 @@ export class InfluencerController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
   @ApiOperation({ summary: 'Delete influencer entry' })
   @ApiResponse({ status: 200, description: 'Entry deleted' })
   async deleteEntry(@Param('id') id: string): Promise<unknown> {

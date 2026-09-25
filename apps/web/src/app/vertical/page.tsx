@@ -1,36 +1,45 @@
 'use client';
-import React from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
+import analytics from '@/lib/analytics';
 
-export default function VerticalPage(): React.JSX.Element {
+function VerticalPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('vertical');
+  }, []);
+
+  const universesQuery = useUniversesQuery();
+
+  const verticalUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'vertical');
+
   const {
     data: series = [],
     isLoading,
     error,
     refetch,
   } = useQuery<ContentItem[], Error>({
-    queryKey: ['vertical-content'],
+    queryKey: ['vertical-content', verticalUniverse?.id],
     queryFn: async () => {
-      const result = await api.content.getContentByUniverse(
-        'u0000001-0000-0000-0000-000000000009',
-        1,
-        20
-      );
+      if (!verticalUniverse?.id) throw new Error('Vertical universe not found');
+      const result = await api.content.getContentByUniverse(verticalUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
       throw new Error(result.message || 'Failed to load content.');
     },
     staleTime: 60000,
+    enabled: !!verticalUniverse?.id,
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Vertical" />
 
       {/* Hero Section */}
@@ -47,23 +56,25 @@ export default function VerticalPage(): React.JSX.Element {
           </div>
         ) : series.length > 0 ? (
           <div className="relative h-[500px]">
-            <img
+            <OptimizedImage
               src={series[0].thumbnail}
               alt={series[0].title}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <div className="flex items-center gap-2 mb-4">
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
                 >
                   Premium
                 </span>
                 <span
                   className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                  style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
                 >
                   {series[0].contentType || 'Vertical'}
                 </span>
@@ -80,16 +91,16 @@ export default function VerticalPage(): React.JSX.Element {
                     Start Watching
                   </button>
                 </Link>
-                <button
-                  type="button"
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
+                <Link
+                  href={`/vertical/lore`}
+                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all inline-block"
                   style={{
                     border: '1px solid rgba(255,255,255,0.2)',
                     backgroundColor: 'rgba(255,255,255,0.08)',
                   }}
                 >
                   Character Lore
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -130,22 +141,30 @@ export default function VerticalPage(): React.JSX.Element {
                   style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
                 >
                   <div className="relative">
-                    <img
+                    <OptimizedImage
                       src={show.thumbnail}
                       alt={show.title}
+                      width={400}
+                      height={192}
                       className="w-full h-48 object-cover"
                     />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: '#E8420A', color: '#fff' }}
+                      style={{
+                        backgroundColor: 'var(--brand-orange)',
+                        color: 'var(--brand-white)',
+                      }}
                     >
                       Premium
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                        style={{
+                          backgroundColor: 'rgba(232,66,10,0.2)',
+                          color: 'var(--brand-orange)',
+                        }}
                       >
                         {show.contentType || 'Vertical'}
                       </span>
@@ -171,5 +190,21 @@ export default function VerticalPage(): React.JSX.Element {
 
       <AppFooter />
     </div>
+  );
+}
+
+const LazyVerticalPage = lazy(() => Promise.resolve({ default: VerticalPageContent }));
+
+export default function VerticalPage(): React.JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
+          <p className="text-white/50 text-lg">Loading...</p>
+        </div>
+      }
+    >
+      <LazyVerticalPage />
+    </Suspense>
   );
 }

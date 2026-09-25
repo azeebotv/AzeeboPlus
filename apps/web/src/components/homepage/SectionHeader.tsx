@@ -1,11 +1,8 @@
 'use client';
 
-import React from 'react';
-
 interface SectionHeaderProps {
   title: string;
   subtitle?: string;
-  action?: { label: string; href: string };
 }
 
 export default function SectionHeader({ title, subtitle }: SectionHeaderProps): React.JSX.Element {

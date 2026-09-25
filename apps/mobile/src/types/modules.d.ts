@@ -1,9 +1,22 @@
 declare module 'react-i18next' {
   export function useTranslation(): {
-    t: (key: string, fallback?: string) => string;
+    t: (key: string, fallbackOrOptions?: string | Record<string, unknown>) => string;
     i18n: { language: string };
   };
+  export const I18nextProvider: (props: {
+    i18n: unknown;
+    children?: React.ReactNode;
+  }) => React.ReactElement;
   export function Trans(props: { i18nKey: string; children?: React.ReactNode }): React.ReactElement;
+  export function initReactI18next(): {
+    type: string;
+    init: (options: {
+      resources: unknown;
+      lng: string;
+      fallbackLng: string;
+      interpolation: { escapeValue: boolean };
+    }) => void;
+  };
 }
 
 declare module '@expo/vector-icons' {
@@ -15,29 +28,48 @@ declare module '@expo/vector-icons' {
 
 declare module '@expo/vector-icons/Ionicons' {
   import { ComponentType } from 'react';
-  const Ionicons: ComponentType<{ name: string; size?: number; color?: string; style?: any }>;
+  import { StyleProp, TextStyle } from 'react-native';
+  const Ionicons: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
   export default Ionicons;
 }
 
 declare module '@expo/vector-icons/MaterialIcons' {
   import { ComponentType } from 'react';
-  const MaterialIcons: ComponentType<{ name: string; size?: number; color?: string; style?: any }>;
+  import { StyleProp, TextStyle } from 'react-native';
+  const MaterialIcons: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
   export default MaterialIcons;
 }
 
 declare module '@expo/vector-icons/FontAwesome' {
   import { ComponentType } from 'react';
-  const FontAwesome: ComponentType<{ name: string; size?: number; color?: string; style?: any }>;
+  import { StyleProp, TextStyle } from 'react-native';
+  const FontAwesome: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
   export default FontAwesome;
 }
 
 declare module '@expo/vector-icons/MaterialCommunityIcons' {
   import { ComponentType } from 'react';
+  import { StyleProp, TextStyle } from 'react-native';
   const MaterialCommunityIcons: ComponentType<{
     name: string;
     size?: number;
     color?: string;
-    style?: any;
+    style?: StyleProp<TextStyle>;
   }>;
   export default MaterialCommunityIcons;
 }

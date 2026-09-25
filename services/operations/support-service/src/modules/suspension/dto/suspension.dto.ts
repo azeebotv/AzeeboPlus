@@ -1,18 +1,21 @@
-import { IsString, IsOptional, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, Length } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSuspensionDto {
   @ApiProperty()
   @IsString()
+  @Length(1, 100)
   ticketId: string = '';
 
   @ApiProperty()
   @IsString()
+  @Length(1, 100)
   userId: string = '';
 
   @ApiProperty()
   @IsString()
+  @Length(1, 500)
   reason: string = '';
 
   @ApiPropertyOptional()

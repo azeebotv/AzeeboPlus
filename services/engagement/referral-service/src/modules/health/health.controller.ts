@@ -1,13 +1,13 @@
-import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
+import { Inject, Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { Public } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 
 @ApiTags('Health')
 @Public()
 @Controller('health')
 export class HealthController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   @Get()
   @ApiOperation({ summary: 'Health check' })
@@ -21,7 +21,10 @@ export class HealthController {
         service: 'referral-service',
       };
     } catch {
-      throw new HttpException({ status: 'error', database: 'disconnected' }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { status: 'error', database: 'disconnected' },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 

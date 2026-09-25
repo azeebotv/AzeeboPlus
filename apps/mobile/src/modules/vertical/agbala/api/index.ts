@@ -1,63 +1,64 @@
-import { ApiClient } from '@azeebo/api-client';
+import { apiClient, gatewayPath } from '@azeebo/react-data/api/client';
 import type { AgbalaStoryworld, AgbalaQuiz, AgbalaTheory, AgbalaRoom } from '../types';
-
-const apiClient = new ApiClient({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3013',
-  tokenStorage: {
-    getToken: async () => null,
-    setToken: async () => {},
-    removeToken: async () => {},
-  },
-});
 
 export const agbalaApi = {
   async getStoryworlds(): Promise<AgbalaStoryworld[]> {
     const response = await apiClient.get<{ items: AgbalaStoryworld[] }>(
-      '/v1/vertical/agbala/storyworlds'
+      gatewayPath('/v1/vertical/agbala/storyworlds')
     );
-    return response.data.items;
+    return response.items;
   },
 
   async getStoryworld(id: string): Promise<AgbalaStoryworld> {
-    const response = await apiClient.get<AgbalaStoryworld>(`/v1/vertical/agbala/storyworlds/${id}`);
-    return response.data;
+    const response = await apiClient.get<AgbalaStoryworld>(
+      gatewayPath(`/v1/vertical/agbala/storyworlds/${id}`)
+    );
+    return response;
   },
 
   async getQuizzes(): Promise<AgbalaQuiz[]> {
-    const response = await apiClient.get<{ items: AgbalaQuiz[] }>('/v1/vertical/agbala/quizzes');
-    return response.data.items;
+    const response = await apiClient.get<{ items: AgbalaQuiz[] }>(
+      gatewayPath('/v1/vertical/agbala/quizzes')
+    );
+    return response.items;
   },
 
   async getQuiz(id: string): Promise<AgbalaQuiz> {
-    const response = await apiClient.get<AgbalaQuiz>(`/v1/vertical/agbala/quizzes/${id}`);
-    return response.data;
+    const response = await apiClient.get<AgbalaQuiz>(
+      gatewayPath(`/v1/vertical/agbala/quizzes/${id}`)
+    );
+    return response;
   },
 
   async submitQuizAnswer(quizId: string, questionId: string, answerIndex: number) {
-    const response = await apiClient.post(`/v1/vertical/agbala/quizzes/${quizId}/answer`, {
-      questionId,
-      answerIndex,
-    });
-    return response.data;
+    const response = await apiClient.post(
+      gatewayPath(`/v1/vertical/agbala/quizzes/${quizId}/answer`),
+      { questionId, answerIndex }
+    );
+    return response;
   },
 
   async getTheories(): Promise<AgbalaTheory[]> {
-    const response = await apiClient.get<{ items: AgbalaTheory[] }>('/v1/vertical/agbala/theories');
-    return response.data.items;
+    const response = await apiClient.get<{ items: AgbalaTheory[] }>(
+      gatewayPath('/v1/vertical/agbala/theories')
+    );
+    return response.items;
   },
 
   async createTheory(data: { title: string; content: string }) {
-    const response = await apiClient.post('/v1/vertical/agbala/theories', data);
-    return response.data;
+    const response = await apiClient.post(gatewayPath('/v1/vertical/agbala/theories'), data);
+    return response;
   },
 
   async getRooms(): Promise<AgbalaRoom[]> {
-    const response = await apiClient.get<{ items: AgbalaRoom[] }>('/v1/vertical/agbala/rooms');
-    return response.data.items;
+    const response = await apiClient.get<{ items: AgbalaRoom[] }>(
+      gatewayPath('/v1/vertical/agbala/rooms')
+    );
+    return response.items;
   },
 
   async joinRoom(roomId: string) {
-    const response = await apiClient.post(`/v1/vertical/agbala/rooms/${roomId}/join`);
-    return response.data;
+    const response = await apiClient.post(gatewayPath(`/v1/vertical/agbala/rooms/${roomId}/join`));
+    return response;
   },
 };

@@ -1,29 +1,34 @@
-import React from 'react';
+import Image from 'next/image';
 
 type BrandLogoProps = {
-  /** Color of the "azeebo" wordmark. Use white on dark/near-black, orange on green. */
+  /** Color of the wordmark (for compatibility). */
   variant?: 'light' | 'orange';
   className?: string;
+  width?: number;
+  height?: number;
 };
 
 /**
- * Azeebo+ wordmark — custom "azeebo" wordmark with an orange "+" superscript.
- * Slightly rounded, bold sans-serif (Montserrat).
+ * Azeebo+ Brand Logo — renders the official vector SVG brand logomark.
  */
 export default function BrandLogo({
   variant = 'light',
   className = '',
+  width = 115,
+  height = 28,
 }: BrandLogoProps): React.JSX.Element {
-  const wordmarkColor = variant === 'orange' ? '#E8420A' : '#FFFFFF';
+  const logoSrc = variant === 'orange' ? '/images/logo-primary.png' : '/images/logo-white.png';
 
   return (
-    <span
-      className={`az-wordmark ${className}`}
-      style={{ color: wordmarkColor, fontSize: '1.5rem' }}
-      aria-label="Azeebo+"
-      role="img"
-    >
-      azeebo<span className="az-wordmark__plus">+</span>
+    <span className={`inline-flex items-center ${className}`} role="img" aria-label="Azeebo+">
+      <Image
+        src={logoSrc}
+        alt="Azeebo+"
+        width={width}
+        height={height}
+        className="h-6 sm:h-7 w-auto object-contain transition-all"
+        priority
+      />
     </span>
   );
 }

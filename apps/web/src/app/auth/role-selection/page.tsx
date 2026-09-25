@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { webLogger } from '@/lib/logger';
 import { apiFetch } from '@/lib/api';
@@ -18,21 +18,21 @@ const ROLES: {
   {
     id: 'user',
     title: 'Regular User',
-    emoji: '👨‍👩‍👧‍👦',
+    emoji: 'Users',
     description: 'Enjoy premium Nigerian contents',
     sub: 'Discover music, movie, creator and entertainment',
   },
   {
     id: 'creator',
     title: 'Creator',
-    emoji: '🎬',
+    emoji: 'Film',
     description: 'Build your audience and brand',
     sub: 'Showcase your talent, reach millions and connect',
   },
   {
     id: 'both',
     title: 'Creator & User',
-    emoji: '💻',
+    emoji: 'Laptop',
     description: 'Experience the best of both worlds',
     sub: 'Consume content and create your journey',
   },
@@ -69,14 +69,14 @@ export default function RoleSelectionPage(): React.JSX.Element {
   return (
     <div
       className="relative min-h-screen w-full overflow-hidden p-6 sm:p-10"
-      style={{ backgroundColor: '#1A0A0A' }}
+      style={{ backgroundColor: 'var(--brand-near-black)' }}
     >
       {/* Lagos-at-night blurred ambient background */}
       <div
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-25 pointer-events-none"
         style={{
           backgroundImage:
-            'radial-gradient(circle at 20% 30%, rgba(232,66,10,0.3), transparent 40%), radial-gradient(circle at 80% 70%, rgba(13,59,46,0.5), transparent 50%), linear-gradient(180deg, #0a0a0a, #1A0A0A)',
+            'radial-gradient(circle at 20% 30%, rgba(232,66,10,0.25), transparent 40%), radial-gradient(circle at 80% 70%, rgba(168,85,247,0.18), transparent 50%), linear-gradient(180deg, var(--bg-secondary), var(--bg-primary))',
         }}
       />
 

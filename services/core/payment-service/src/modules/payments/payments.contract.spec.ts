@@ -1,14 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, VersioningType } from '@nestjs/common';
 import request from 'supertest';
-import { PaymentsController } from './payments.controller';
-import { PaymentsService } from './payments.service';
+import { PaymentsController } from './payments.controller.js';
+import { PaymentsService } from './payments.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
 import { ExecutionContext } from '@nestjs/common';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('Payments Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockPaymentsService = {
     initializePayment: jest.fn(),
@@ -36,7 +38,10 @@ describe('Payments Controller Contract Tests', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [PaymentsController],
-      providers: [{ provide: PaymentsService, useValue: mockPaymentsService }],
+      providers: [
+        { provide: PaymentsService, useValue: mockPaymentsService },
+        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
+      ],
     })
       .overrideGuard(AuthGuard('jwt'))
       .useValue(createMockAuthGuard(true))
@@ -45,7 +50,17 @@ describe('Payments Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+    // Mock ServiceAuthGuard behavior
+    app.use((req: { user?: unknown }, _res: unknown, next: () => void) => {
+      if (!req.user) {
+        req.user = { id: 'test-user-id', sub: 'test-user-id', role: 'user' };
+      }
+      next();
+    });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -68,7 +83,7 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -90,7 +105,7 @@ describe('Payments Controller Contract Tests', () => {
         new (require('@nestjs/common').BadRequestException)('Amount must be greater than 0')
       );
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
         .send({ amount: 50, currency: 'NGN' })
@@ -109,7 +124,7 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/verify')
         .set('Authorization', 'Bearer valid-token')
         .send({ transactionId: 'ref-123' })
@@ -136,7 +151,7 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/payments/history')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -161,7 +176,7 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/payments/pay-abc123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -173,7 +188,7 @@ describe('Payments Controller Contract Tests', () => {
 
   describe('error responses', () => {
     it('should return 400 for invalid request body', () => {
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
         .send({})

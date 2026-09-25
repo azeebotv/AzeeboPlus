@@ -1,10 +1,11 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { apiFetch, Transaction } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
+import { ArrowLeft, ArrowDownLeft, ArrowUpRight, CheckCircle2, Clock, AlertCircle, Filter, Wallet } from 'lucide-react';
 
 interface TransactionFilters {
   type: 'all' | 'credit' | 'debit';
@@ -13,7 +14,6 @@ interface TransactionFilters {
 }
 
 export default function TransactionsPage(): React.JSX.Element {
-  const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [filters, setFilters] = useState<TransactionFilters>({
@@ -47,162 +47,159 @@ export default function TransactionsPage(): React.JSX.Element {
   }, [loadTransactions]);
 
   const formatDate = (dateString: string): string =>
-    new Date(dateString).toLocaleDateString('en-US', {
+    new Date(dateString).toLocaleDateString('en-NG', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
-  const getStatusStyle = (status: string): { backgroundColor: string; color: string } => {
-    switch (status) {
-      case 'completed':
-        return { backgroundColor: 'rgba(34,197,94,0.2)', color: '#22C55E' };
-      case 'pending':
-        return { backgroundColor: 'rgba(234,179,8,0.2)', color: '#EAB308' };
-      case 'failed':
-        return { backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' };
-      default:
-        return { backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' };
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-        <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
-          <div className="text-center">
-            <div
-              className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
-            />
-            <p className="mt-4 text-white/60">Loading transactions...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
-      <AppHeader />
-      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-white/50 hover:text-white mb-2 flex items-center gap-2 transition-colors"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>{' '}
-            Back
-          </button>
-          <h1 className="text-3xl font-bold text-white">Transaction History</h1>
-        </div>
+    <PageShell activeNav="Wallet">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
+        <Link
+          href="/wallet"
+          className="inline-flex items-center gap-2 text-xs font-bold text-white/50 hover:text-white transition-colors mb-6 group"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          <span>Back to Wallet</span>
+        </Link>
+      </div>
 
-        <div className="flex flex-wrap gap-4 mb-6">
-          <div className="flex gap-2" role="listbox" aria-label="Transaction type">
-            {(['all', 'credit', 'debit'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setFilters((prev) => ({ ...prev, type: t }))}
-                role="option"
-                aria-selected={filters.type === t}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filters.type === t ? 'az-btn-primary' : ''}`}
-                style={
-                  filters.type !== t
-                    ? {
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: '#fff',
-                      }
-                    : undefined
-                }
-              >
-                {t === 'all' ? 'All' : t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-2" role="listbox" aria-label="Transaction status">
-            {(['all', 'completed', 'pending', 'failed'] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setFilters((prev) => ({ ...prev, status: s }))}
-                role="option"
-                aria-selected={filters.status === s}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filters.status === s ? 'az-btn-primary' : ''}`}
-                style={
-                  filters.status !== s
-                    ? {
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: '#fff',
-                      }
-                    : undefined
-                }
-              >
-                {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
+      <PageHero
+        badge="Audit Ledger"
+        title="Transaction History"
+        subtitle="Complete record of your Azeebo Pay deposits, withdrawals, voting passes, and subscriptions."
+        accentColor="orange"
+      />
 
-        <div className="space-y-4">
-          {transactions.map((tx) => (
-            <div key={tx.id} className="az-glass p-4 flex items-center gap-4">
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center"
-                style={{
-                  backgroundColor:
-                    tx.type === 'credit' ? 'rgba(34,197,94,0.2)' : 'rgba(232,66,10,0.2)',
-                }}
-              >
-                <span className="text-xl">{tx.type === 'credit' ? '⬆️' : '⬇️'}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white truncate">{tx.description || 'Transaction'}</p>
-                <p className="text-sm text-white/50">{formatDate(tx.createdAt)}</p>
-              </div>
-              <div className="text-right">
-                <p
-                  className="font-bold text-lg"
-                  style={{ color: tx.type === 'credit' ? '#22C55E' : '#fff' }}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-20">
+        {/* Filter controls */}
+        <div className="az-glass p-5 rounded-2xl border border-white/10 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Filter size={15} className="text-orange-400 flex-shrink-0" />
+            <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Type:</span>
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-none" role="listbox" aria-label="Transaction type">
+              {(['all', 'credit', 'debit'] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setFilters((prev) => ({ ...prev, type: t }))}
+                  role="option"
+                  aria-selected={filters.type === t}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                    filters.type === t
+                      ? 'bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-500/20'
+                      : 'bg-white/5 hover:bg-white/10 text-white/70 border-white/10'
+                  }`}
                 >
-                  {tx.type === 'credit' ? '+' : '-'}₦{tx.amount.toLocaleString()}
-                </p>
-                <span
-                  className="inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize"
-                  style={getStatusStyle(tx.status)}
-                >
-                  {tx.status}
-                </span>
-              </div>
+                  {t === 'all' ? 'All Types' : t === 'credit' ? 'Deposits' : 'Debits'}
+                </button>
+              ))}
             </div>
-          ))}
-          {transactions.length === 0 && (
-            <div className="az-glass p-8 text-center">
-              <p className="text-white/50 text-lg">No transactions found</p>
-              <button
-                onClick={() => router.push('/wallet/add-funds')}
-                className="mt-4 az-btn-primary"
-                style={{ width: 'auto', paddingInline: '1.5rem' }}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Status:</span>
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-none" role="listbox" aria-label="Transaction status">
+              {(['all', 'completed', 'pending', 'failed'] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setFilters((prev) => ({ ...prev, status: s }))}
+                  role="option"
+                  aria-selected={filters.status === s}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                    filters.status === s
+                      ? 'bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-500/20'
+                      : 'bg-white/5 hover:bg-white/10 text-white/70 border-white/10'
+                  }`}
+                >
+                  {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Transactions List */}
+        <div className="az-glass rounded-3xl border border-white/10 overflow-hidden shadow-xl">
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <div className="w-10 h-10 rounded-full border-2 border-orange-500/20 border-t-orange-500 animate-spin mx-auto mb-3" />
+              <p className="text-white/60 text-sm">Querying ledger records...</p>
+            </div>
+          ) : transactions.length > 0 ? (
+            <div className="divide-y divide-white/5">
+              {transactions.map((tx) => {
+                const isCredit = tx.type === 'credit';
+                return (
+                  <div
+                    key={tx.id}
+                    className="p-4 sm:p-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div
+                        className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 border ${
+                          isCredit
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                        }`}
+                      >
+                        {isCredit ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-white text-sm truncate">
+                          {tx.description || (isCredit ? 'Wallet Deposit' : 'Wallet Debit')}
+                        </p>
+                        <p className="text-xs text-white/40 mt-0.5">{formatDate(tx.createdAt)}</p>
+                      </div>
+                    </div>
+
+                    <div className="text-right flex-shrink-0 ml-4">
+                      <p
+                        className={`font-black text-base sm:text-lg ${
+                          isCredit ? 'text-emerald-400' : 'text-white'
+                        }`}
+                      >
+                        {isCredit ? '+' : '-'}₦{(tx.amount ?? 0).toLocaleString()}
+                      </p>
+                      <span
+                        className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mt-0.5 ${
+                          tx.status === 'completed'
+                            ? 'bg-emerald-500/15 text-emerald-400'
+                            : tx.status === 'pending'
+                              ? 'bg-amber-500/15 text-amber-400'
+                              : 'bg-red-500/15 text-red-400'
+                        }`}
+                      >
+                        {tx.status === 'completed' && <CheckCircle2 size={11} />}
+                        {tx.status === 'pending' && <Clock size={11} />}
+                        {tx.status === 'failed' && <AlertCircle size={11} />}
+                        <span>{tx.status}</span>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-12 text-center">
+              <Wallet size={40} className="mx-auto text-white/20 mb-3" />
+              <h3 className="text-white font-bold text-base mb-1">No transactions found</h3>
+              <p className="text-white/40 text-xs max-w-sm mx-auto mb-6">
+                No ledger activity matches your filter criteria.
+              </p>
+              <Link
+                href="/wallet/add-funds"
+                className="az-btn-primary inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold"
               >
-                Add Funds
-              </button>
+                <span>Deposit Funds</span>
+              </Link>
             </div>
           )}
         </div>
       </div>
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
+

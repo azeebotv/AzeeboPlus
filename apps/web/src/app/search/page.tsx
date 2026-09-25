@@ -1,10 +1,14 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'next/navigation';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@azeebo/ui/web';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, api } from '../../lib/api';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
+import analytics from '@/lib/analytics';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface SearchResult {
   id: string;
@@ -12,10 +16,26 @@ interface SearchResult {
   description?: string;
   thumbnail?: string;
   duration?: number;
-  category?: string;
+  /** Category names from the indexed content_categories relation. */
+  categories?: string[];
   creator?: { name: string };
   universe?: { name: string; icon?: string };
   type?: string;
+  /** Fuzzy relevance (0–1) from the search-service — present only on
+   * typo-tolerant (search_typo_tolerance) results; drives the rank badge. */
+  score?: number;
+  /** Explainable components of the blended score (fuzzy path only):
+   * Levenshtein character similarity and pg_trgm n-gram overlap. Rendered
+   * as the 'matched because' breakdown on hover. */
+  fuzzyScore?: number;
+  trigramScore?: number;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
 }
 
 interface SearchFilters {
@@ -30,18 +50,77 @@ interface HistoryItem {
   timestamp: Date;
 }
 
-interface SearchResponse {
-  results?: SearchResult[];
+/** Shape of the search-service universal search response (via /v1/search). */
+interface UniversalSearchContent {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+  contentType?: string;
+  universe?: string;
+  thumbnail?: string;
+  duration?: number;
+  categories?: string[];
+  creatorName?: string | null;
+  score?: number;
+  fuzzyScore?: number;
+  trigramScore?: number;
 }
+
+interface UniversalSearchResponse {
+  query?: string;
+  /** 'Did you mean' hint: best-scoring content title when the top match is a
+   * typo-correction (score < 0.85). Present only on fuzzy (typo-tolerant)
+   * searches. */
+  suggestedQuery?: string;
+  results?: {
+    content: UniversalSearchContent[];
+    creators: unknown[];
+    universes: unknown[];
+  };
+  /** Pagination over the *content* results (what this page renders). */
+  pagination?: SearchPagination;
+  /** Exact per-surface totals for creators and universes — rendered as
+   * section headers ('N creators · M universes'). */
+  creatorsPagination?: SearchPagination;
+  universesPagination?: SearchPagination;
+}
+
+/** Pagination object returned by /v1/search — pages the content results. */
+interface SearchPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+/** One page of fetched + mapped results (the infinite query's unit). */
+interface SearchPageData {
+  items: SearchResult[];
+  pagination?: SearchPagination;
+  creatorsPagination?: SearchPagination;
+  universesPagination?: SearchPagination;
+}
+
+/** Page size requested from /v1/search; the service clamps limit to [1,100]. */
+const RESULTS_PER_PAGE = 20;
 
 interface SuggestionsResponse {
   suggestions?: string[];
 }
 
 export default function SearchPage(): React.JSX.Element {
-  const [query, setQuery] = useState('');
-  const [activeQuery, setActiveQuery] = useState('');
-  const [hasSearched, setHasSearched] = useState(false);
+  // Deep-link support: AppHeader pushes /search?q=…, so seed both the input
+  // and the executed query from the URL — previously the param was ignored and
+  // users landed on an empty search shell.
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get('q') ?? '';
+  const [query, setQuery] = useState(urlQuery);
+  const [activeQuery, setActiveQuery] = useState(urlQuery);
+  const [hasSearched, setHasSearched] = useState(urlQuery.trim().length > 0);
   const [filters, setFilters] = useState<SearchFilters>({
     type: 'all',
     category: 'all',
@@ -51,9 +130,24 @@ export default function SearchPage(): React.JSX.Element {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchHistory, setSearchHistory] = useState<HistoryItem[]>([]);
+  const [suggestedQuery, setSuggestedQuery] = useState<string | undefined>(undefined);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  // Guards the correction-impression event so it fires once per suggestion
+  // (not on every re-render); pairs with the accepted event for the rate.
+  const trackedSuggestionRef = useRef<string | null>(null);
+  // Sentinel observed for infinite scroll — the bottom of the result list.
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const categoriesQuery = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await api.content.getCategories();
+      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load categories');
+      return res.data;
+    },
+    staleTime: 300000,
+  });
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('searchHistory') : null;
@@ -72,6 +166,13 @@ export default function SearchPage(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
+    if (suggestedQuery && trackedSuggestionRef.current !== suggestedQuery) {
+      trackedSuggestionRef.current = suggestedQuery;
+      analytics.contentSearchCorrectionShown(activeQuery, suggestedQuery);
+    }
+  }, [suggestedQuery, activeQuery]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent): void => {
       if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
@@ -82,38 +183,98 @@ export default function SearchPage(): React.JSX.Element {
   }, []);
 
   const {
-    data: results = [],
+    data: searchData,
     isLoading,
-  } = useQuery<SearchResult[], Error>({
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery<SearchPageData, Error>({
     queryKey: ['search', activeQuery, filters],
-    queryFn: async () => {
-      if (!activeQuery.trim()) return [];
+    queryFn: async ({ pageParam = 1 }) => {
+      if (!activeQuery.trim()) return { items: [], pagination: undefined };
+      // Universal search (search-service): fuzzy typo-tolerant matching with
+      // per-result relevance scores and a 'did you mean' hint. The whole page
+      // runs on this endpoint — thumbnails, duration, type, and universe come
+      // from the indexed content_items. Type/category/duration are filtered
+      // client-side; sort and paging are pushed to the API.
       const params = new URLSearchParams({
         q: activeQuery,
-        type: filters.type,
-        category: filters.category,
-        duration: filters.duration,
-        sortBy: filters.sortBy,
+        page: String(pageParam),
+        limit: String(RESULTS_PER_PAGE),
       });
-      const response = await apiFetch<SearchResponse | SearchResult[]>(
-        `/content/search?${params.toString()}`
-      );
-      if (response.success && response.data) {
-        const data = response.data;
-        return Array.isArray(data) ? data : (data as SearchResponse).results || [];
+      if (filters.sortBy === 'date') params.set('sort', 'newest');
+      else if (filters.sortBy === 'rating') params.set('sort', 'rating');
+      else if (filters.sortBy === 'views') params.set('sort', 'popular');
+      const response = await apiFetch<UniversalSearchResponse>(`/v1/search?${params.toString()}`);
+      setSuggestedQuery((prev) => {
+        const next = response.data?.suggestedQuery;
+        return prev === next ? prev : next;
+      });
+      if (response.success && response.data?.results?.content) {
+        return {
+          items: response.data.results.content.map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description ?? undefined,
+            thumbnail: item.thumbnail ?? undefined,
+            duration: item.duration ?? undefined,
+            categories: item.categories ?? [],
+            creator: item.creatorName ? { name: item.creatorName } : undefined,
+            universe: item.universe ? { name: item.universe } : undefined,
+            type: item.contentType,
+            score: item.score,
+            fuzzyScore: item.fuzzyScore,
+            trigramScore: item.trigramScore,
+          })),
+          pagination: response.data.pagination,
+          creatorsPagination: response.data.creatorsPagination,
+          universesPagination: response.data.universesPagination,
+        };
       }
-      return [];
+      return {
+        items: [],
+        pagination: undefined,
+        creatorsPagination: undefined,
+        universesPagination: undefined,
+      };
+    },
+    initialPageParam: 1,
+    // 'Load more' is driven by the /v1/search pagination object: there is a
+    // next page exactly while page < totalPages.
+    getNextPageParam: (lastPage) => {
+      const pagination = lastPage.pagination;
+      if (!pagination) return undefined;
+      return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined;
     },
     enabled: !!activeQuery.trim(),
     staleTime: 60000,
   });
+
+  // Infinite scroll: when the sentinel at the bottom of the result list enters
+  // the viewport, fetch the next page. hasNextPage comes from the /v1/search
+  // pagination object (page < totalPages); the Load more button below is the
+  // manual/accessible fallback.
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel || !hasNextPage) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: '200px 0px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const { data: suggestionsData } = useQuery<string[], Error>({
     queryKey: ['suggestions', query],
     queryFn: async () => {
       if (query.length < 2) return [];
       const response = await apiFetch<SuggestionsResponse | string[]>(
-        `/content/suggestions?q=${encodeURIComponent(query)}`
+        `/v1/content/suggestions?q=${encodeURIComponent(query)}`
       );
       if (response.success && response.data) {
         return Array.isArray(response.data)
@@ -132,32 +293,27 @@ export default function SearchPage(): React.JSX.Element {
     }
   }, [suggestionsData]);
 
-  const handleQueryChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setQuery(value);
-    },
-    []
-  );
+  const handleQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+  }, []);
 
-  const handleSearch = useCallback(
-    (searchQuery: string) => {
-      if (!searchQuery.trim()) return;
-      setActiveQuery(searchQuery);
-      setHasSearched(true);
-      setShowSuggestions(false);
-      const newHistoryItem = { query: searchQuery, timestamp: new Date() };
-      setSearchHistory((prev) => {
-        const updated = [
-          newHistoryItem,
-          ...prev.filter((item) => item.query !== searchQuery),
-        ].slice(0, 10);
-        localStorage.setItem('searchHistory', JSON.stringify(updated));
-        return updated;
-      });
-    },
-    []
-  );
+  const handleSearch = useCallback((searchQuery: string) => {
+    if (!searchQuery.trim()) return;
+    setActiveQuery(searchQuery);
+    setHasSearched(true);
+    setShowSuggestions(false);
+    setSuggestedQuery(undefined); // cleared until the new response reports one
+    const newHistoryItem = { query: searchQuery, timestamp: new Date() };
+    setSearchHistory((prev) => {
+      const updated = [newHistoryItem, ...prev.filter((item) => item.query !== searchQuery)].slice(
+        0,
+        10
+      );
+      localStorage.setItem('searchHistory', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,9 +372,37 @@ export default function SearchPage(): React.JSX.Element {
     localStorage.removeItem('searchHistory');
   };
 
+  // Flatten the fetched pages into one list. Pagination metadata comes from
+  // the first page — /v1/search's pagination object counts *content* rows
+  // (what this page renders).
+  const results = searchData?.pages.flatMap((page) => page.items) ?? [];
+  const serverPagination = searchData?.pages[0]?.pagination;
+  // Exact creator/universe totals from the API's per-surface pagination,
+  // rendered as section headers ('N creators · M universes').
+  const serverCreatorsTotal = searchData?.pages[0]?.creatorsPagination?.total;
+  const serverUniversesTotal = searchData?.pages[0]?.universesPagination?.total;
+  const surfaceCountHeader =
+    (serverCreatorsTotal ?? 0) + (serverUniversesTotal ?? 0) > 0
+      ? `${serverCreatorsTotal ?? 0} creators · ${serverUniversesTotal ?? 0} universes`
+      : undefined;
+
+  const hasActiveClientFilters =
+    filters.type !== 'all' || filters.category !== 'all' || filters.duration !== 'all';
+
+  // The category select carries slugs; the search index stores category
+  // names — resolve the selected slug to its name before matching.
+  const selectedCategoryName =
+    filters.category !== 'all'
+      ? categoriesQuery.data?.find((c) => c.slug === filters.category)?.name
+      : undefined;
+
   const filteredResults = results.filter((result) => {
     if (filters.type !== 'all' && result.type !== filters.type) return false;
-    if (filters.category !== 'all' && result.category !== filters.category) return false;
+    if (
+      filters.category !== 'all' &&
+      (!selectedCategoryName || !result.categories?.includes(selectedCategoryName))
+    )
+      return false;
     if (filters.duration !== 'all') {
       if (filters.duration === 'short' && (result.duration || 0) > 60) return false;
       if (
@@ -231,8 +415,15 @@ export default function SearchPage(): React.JSX.Element {
     return true;
   });
 
+  // The server total is exact for the raw query, but type/category/duration
+  // are filtered client-side — so the honest count is the filtered total when
+  // a client filter is active, and the server total otherwise.
+  const totalCount = hasActiveClientFilters
+    ? filteredResults.length
+    : (serverPagination?.total ?? filteredResults.length);
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader active="Search" />
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Header */}
@@ -295,6 +486,12 @@ export default function SearchPage(): React.JSX.Element {
                 role="listbox"
                 aria-label="Search suggestions"
                 className="absolute top-full left-0 right-0 mt-2 az-glass p-2 z-50 max-h-80 overflow-y-auto"
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setShowSuggestions(false);
+                    searchInputRef.current?.focus();
+                  }
+                }}
               >
                 {suggestions.length > 0 ? (
                   <div>
@@ -303,7 +500,7 @@ export default function SearchPage(): React.JSX.Element {
                     </p>
                     {suggestions.map((suggestion, index) => (
                       <button
-                        key={index}
+                        key={suggestion}
                         role="option"
                         onClick={() => {
                           setQuery(suggestion);
@@ -337,14 +534,14 @@ export default function SearchPage(): React.JSX.Element {
                       </p>
                       <button
                         onClick={clearHistory}
-                        className="text-xs text-[#E8420A] hover:text-[#CC1C1C] transition-colors"
+                        className="text-xs text-[var(--brand-orange)] hover:text-[var(--brand-red)] transition-colors"
                       >
                         Clear
                       </button>
                     </div>
                     {searchHistory.map((item, index) => (
                       <button
-                        key={index}
+                        key={`${item.query}-${item.timestamp.getTime()}`}
                         role="option"
                         onClick={() => {
                           setQuery(item.query);
@@ -415,10 +612,11 @@ export default function SearchPage(): React.JSX.Element {
                   className="az-input w-full"
                 >
                   <option value="all">All Categories</option>
-                  <option value="drama">Drama</option>
-                  <option value="comedy">Comedy</option>
-                  <option value="action">Action</option>
-                  <option value="romance">Romance</option>
+                  {(categoriesQuery.data || []).map((cat) => (
+                    <option key={cat.id} value={cat.slug}>
+                      {cat.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -460,6 +658,33 @@ export default function SearchPage(): React.JSX.Element {
           </div>
         )}
 
+        {/* Did-you-mean banner: the search-service flags a typo-correction
+            when the best fuzzy match scores below the decisive anchor. */}
+        {suggestedQuery && suggestedQuery !== activeQuery && (
+          <div className="mb-4 az-glass px-4 py-3 flex items-center gap-2 text-sm">
+            <span className="text-white/60">Did you mean</span>
+            <button
+              type="button"
+              onClick={() => {
+                analytics.contentSearchCorrectionAccepted(activeQuery, suggestedQuery);
+                // Feed the accepted correction back into the search service's
+                // typo dictionary (POST /v1/search/log) so popular corrections
+                // get learned. Fire-and-forget — requires auth, anonymous
+                // sessions 401 (swallowed).
+                void api.content
+                  .logSearchCorrection(activeQuery, suggestedQuery)
+                  .catch(() => undefined);
+                setQuery(suggestedQuery);
+                handleSearch(suggestedQuery);
+              }}
+              className="font-bold text-[var(--brand-orange)] hover:underline cursor-pointer"
+            >
+              {suggestedQuery}
+            </button>
+            <span className="text-white/30 text-xs ml-auto hidden sm:inline">Click to search</span>
+          </div>
+        )}
+
         {/* Results */}
         <div role="region" aria-label="Search results" aria-live="polite">
           {isLoading ? (
@@ -475,11 +700,24 @@ export default function SearchPage(): React.JSX.Element {
                 </div>
               ))}
             </div>
-          ) : results.length > 0 ? (
+          ) : filteredResults.length > 0 ? (
             <div className="space-y-4">
-              <p className="text-sm text-white/50 mb-4">
-                Found {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''}
-              </p>
+              <div className="flex items-baseline justify-between gap-3 mb-4">
+                <p className="text-sm text-white/50">
+                  Found {totalCount} result{totalCount !== 1 ? 's' : ''}
+                  {hasActiveClientFilters && serverPagination
+                    ? ` (filtered from ${serverPagination.total})`
+                    : ''}
+                </p>
+                {surfaceCountHeader && (
+                  <p
+                    className="text-xs text-white/40 whitespace-nowrap"
+                    aria-label="Creators and universes matching this search"
+                  >
+                    {surfaceCountHeader}
+                  </p>
+                )}
+              </div>
               {filteredResults.map((result) => (
                 <a
                   key={result.id}
@@ -494,9 +732,10 @@ export default function SearchPage(): React.JSX.Element {
                     }}
                   >
                     {result.thumbnail ? (
-                      <img
+                      <OptimizedImage
                         src={result.thumbnail}
                         alt={result.title}
+                        fill
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -508,9 +747,58 @@ export default function SearchPage(): React.JSX.Element {
                     )}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-white text-sm group-hover:text-[#E8420A] transition-colors">
-                      {result.title}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-white text-sm group-hover:text-[var(--brand-orange)] transition-colors">
+                        {result.title}
+                      </h3>
+                      {typeof result.score === 'number' && (
+                        <span className="relative inline-block group/badge">
+                          <span
+                            title={`Fuzzy relevance match — ${Math.round(result.score * 100)}%`}
+                            className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold leading-none whitespace-nowrap"
+                            style={{
+                              background: 'rgba(34,197,94,0.15)',
+                              color: 'var(--brand-green)',
+                            }}
+                          >
+                            {Math.round(result.score * 100)}% match
+                          </span>
+                          {/* 'Matched because' breakdown — the two explainable
+                              components of the blended score (fuzzy path
+                              only, where the service returns them). */}
+                          {typeof result.fuzzyScore === 'number' &&
+                            typeof result.trigramScore === 'number' && (
+                              <span
+                                role="tooltip"
+                                className="pointer-events-none invisible absolute bottom-full left-1/2 z-30 mb-2 w-52 -translate-x-1/2 rounded-lg px-3 py-2 text-left opacity-0 transition-opacity duration-150 group-hover/badge:visible group-hover/badge:opacity-100"
+                                style={{
+                                  background: 'rgba(20,10,10,0.97)',
+                                  border: '1px solid rgba(232,66,10,0.35)',
+                                  boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+                                }}
+                              >
+                                <span className="mb-1 block text-[11px] font-bold text-white/90">
+                                  Matched because
+                                </span>
+                                <span className="block text-[10px] leading-5 text-white/70">
+                                  <span className="text-white/50">Spelling match:</span>{' '}
+                                  {Math.round(result.fuzzyScore * 100)}%
+                                </span>
+                                <span className="block text-[10px] leading-5 text-white/70">
+                                  <span className="text-white/50">Character patterns:</span>{' '}
+                                  {Math.round(result.trigramScore * 100)}%
+                                </span>
+                                <span className="mt-0.5 block text-[10px] leading-5 text-white/70">
+                                  <span className="text-white/50">Overall:</span>{' '}
+                                  <span style={{ color: 'var(--brand-green)' }}>
+                                    {Math.round(result.score * 100)}% match
+                                  </span>
+                                </span>
+                              </span>
+                            )}
+                        </span>
+                      )}
+                    </div>
                     {result.description && (
                       <p className="text-xs text-white/45 mt-1 line-clamp-2">
                         {result.description}
@@ -520,7 +808,10 @@ export default function SearchPage(): React.JSX.Element {
                       {result.universe && (
                         <span
                           className="px-2 py-0.5 rounded"
-                          style={{ background: 'rgba(232,66,10,0.15)', color: '#E8420A' }}
+                          style={{
+                            background: 'rgba(232,66,10,0.15)',
+                            color: 'var(--brand-orange)',
+                          }}
                         >
                           {result.universe.name}
                         </span>
@@ -531,21 +822,58 @@ export default function SearchPage(): React.JSX.Element {
                   </div>
                 </a>
               ))}
+              {(hasNextPage || isFetchingNextPage) && (
+                <div ref={loadMoreRef} className="pt-4 flex flex-col items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="az-glass px-6 py-2.5 text-sm font-bold text-white/80 hover:text-white hover:bg-white/5 transition-colors rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isFetchingNextPage ? 'Loading more…' : 'Load more results'}
+                  </button>
+                  {serverPagination && !hasActiveClientFilters && (
+                    <p className="text-xs text-white/30">
+                      Showing {results.length} of {serverPagination.total} results
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           ) : hasSearched ? (
             <div className="text-center py-12">
-              <span className="text-5xl mb-4 block">&#x1F50D;</span>
-              <h3 className="text-xl font-bold text-white mb-2">No results found</h3>
-              <p className="text-white/50 text-sm">Try different keywords or adjust your filters</p>
+              <EmptyState
+                icon="Search"
+                title={
+                  results.length > 0 ? 'No results match your filters yet' : 'No results found'
+                }
+                description={
+                  results.length > 0
+                    ? 'Load more results or adjust your filters'
+                    : 'Try different keywords or adjust your filters'
+                }
+                dark
+              />
+              {hasNextPage && (
+                <div ref={loadMoreRef} className="mt-6 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="az-glass px-6 py-2.5 text-sm font-bold text-white/80 hover:text-white hover:bg-white/5 transition-colors rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isFetchingNextPage ? 'Loading more…' : 'Load more results'}
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <span className="text-5xl mb-4 block">&#x1F3AC;</span>
-              <h3 className="text-xl font-bold text-white mb-2">Start exploring</h3>
-              <p className="text-white/50 text-sm">
-                Search for your favorite content, creators, or genres
-              </p>
-            </div>
+            <EmptyState
+              icon="Film"
+              title="Start exploring"
+              description="Search for your favorite content, creators, or genres"
+              dark
+            />
           )}
         </div>
       </main>

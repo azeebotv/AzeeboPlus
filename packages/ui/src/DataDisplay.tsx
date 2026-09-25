@@ -81,10 +81,10 @@ export function Table<T>({
     return <Icon name="ChevronsUpDown" size="sm" />;
   };
 
-  const getKey = (row: T, index: number) => {
+  const getKey = (row: T, index: number): React.Key => {
     if (getRowKey) return getRowKey(row);
     const id = (row as Record<string, unknown>)?.id;
-    if (id != null) return id;
+    if (id != null) return String(id);
     return index;
   };
 

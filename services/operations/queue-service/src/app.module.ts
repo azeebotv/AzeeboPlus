@@ -1,14 +1,17 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
+import { ResponseWrapperInterceptor } from '@azeebo/logger';
+import { EmailModule, FirebaseModule, JwtConfigModule, SmsModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, queueFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { JOB_RETENTION_POLICY } from '@azeebo/queue-policy';
 import { DatabaseModule } from './modules/database/database.module';
-import { EmailModule } from './modules/email/email.module';
-import { FirebaseModule } from './modules/firebase/firebase.module';
-import { SmsModule } from './modules/sms/sms.module';
-import { PaymentProviderModule } from './modules/payments/providers/payment-provider.module';
 import { HealthModule } from './modules/health/health.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
+import { QueueModule } from './modules/queue/queue.module';
 import { NotificationProcessor } from './processors/notification.processor';
 import { PaymentProcessor } from './processors/payment.processor';
 import { EmailProcessor } from './processors/email.processor';
@@ -57,28 +60,60 @@ const QUEUE_CONFIG = {
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    RateLimiterModule.forRoot(),
     DatabaseModule,
     EmailModule,
     FirebaseModule,
     SmsModule,
-    PaymentProviderModule,
+    JwtConfigModule,
     HealthModule,
+    MetricsModule,
+    QueueModule,
+    // Queue processor kill-switches: pausing a processor flag stops that
+    // worker from draining its queue; jobs stay queued until re-enabled.
+    FlagMetricsModule.register({ service: 'queue-service', path: 'flag-metrics' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('queue-service'),
+      defaultFlags: {
+        [queueFlags.processNotifications]: true,
+        [queueFlags.processPayments]: true,
+        [queueFlags.processEmails]: true,
+        [queueFlags.processAnalytics]: true,
+        [queueFlags.processContent]: true,
+        [queueFlags.dlqRetry]: true,
+        // Per-queue DLQ toggles: listed in the admin UI (default on = follow
+        // the shared queue_dlq_retry switch). They only take effect once
+        // explicitly toggled — until then the shared switch governs.
+        [queueFlags.dlqRetryPayments]: true,
+        [queueFlags.dlqRetryNotifications]: true,
+        [queueFlags.dlqRetryEmails]: true,
+      },
+      // Numeric tuning knobs: worker concurrency for the payments queue, and
+      // the dead-letter retry policy (max passes + exponential base delay in
+      // ms) so ops can tune retry behavior at runtime without a deploy. The
+      // per-queue variants carry the same defaults for admin visibility; they
+      // are evaluated only when explicitly stored (they override the shared
+      // flag for that queue), so the shared flags keep working until then.
+      defaultValues: {
+        [queueFlags.concurrencyPayments]: 5,
+        [queueFlags.dlqRetryMaxPasses]: 3,
+        [queueFlags.dlqRetryBaseDelayMs]: 30000,
+        [queueFlags.dlqRetryMaxPassesPayments]: 3,
+        [queueFlags.dlqRetryBaseDelayMsPayments]: 30000,
+        [queueFlags.dlqRetryMaxPassesNotifications]: 3,
+        [queueFlags.dlqRetryBaseDelayMsNotifications]: 30000,
+        [queueFlags.dlqRetryMaxPassesEmails]: 3,
+        [queueFlags.dlqRetryBaseDelayMsEmails]: 30000,
+      },
+    }),
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379'),
         password: process.env.REDIS_PASSWORD,
       },
-      defaultJobOptions: {
-        removeOnComplete: {
-          age: 86400,
-          count: 1000,
-        },
-        removeOnFail: {
-          age: 604800,
-          count: 5000,
-        },
-      },
+      defaultJobOptions: JOB_RETENTION_POLICY,
     }),
     BullModule.registerQueue(
       { name: 'notifications', ...QUEUE_CONFIG.notifications },
@@ -89,6 +124,10 @@ const QUEUE_CONFIG = {
     ),
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseWrapperInterceptor,
+    },
     { provide: APP_GUARD, useClass: ServiceAuthGuard },
     NotificationProcessor,
     PaymentProcessor,

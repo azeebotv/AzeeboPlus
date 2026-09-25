@@ -1,44 +1,43 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
-import { createApiClient, ApiClient, noopTokenStorage } from '@azeebo/api-client';
+import { Prisma } from '../../prisma/client/index.js';
+import { ServiceClient } from '@azeebo/http-client';
 
-// NOTE: All API clients below use noopTokenStorage for inter-service communication.
-// This should be replaced with proper service-to-service auth tokens (e.g., JWT or
-// shared secret via ServiceAuthGuard) to ensure authenticated and authorized requests.
 @Injectable()
 export class RefundService {
   private readonly logger = new Logger(RefundService.name);
-  private paymentServiceClient!: ApiClient;
-  private walletServiceClient!: ApiClient;
-  private auditServiceClient!: ApiClient;
-  private notificationServiceClient!: ApiClient;
+  private paymentServiceClient!: ServiceClient;
+  private walletServiceClient!: ServiceClient;
+  private auditServiceClient!: ServiceClient;
+  private notificationServiceClient!: ServiceClient;
 
   constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService
   ) {
     const timeout = parseInt(this.configService.get<string>('DEFAULT_API_TIMEOUT') || '30000', 10);
-    this.paymentServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL'),
+    const apiKey = this.configService.get<string>('INTERNAL_API_KEY', '');
+    this.paymentServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL'),
       timeout,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
-    this.walletServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('WALLET_SERVICE_URL'),
+    this.walletServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('WALLET_SERVICE_URL'),
       timeout,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
-    this.auditServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
+    this.auditServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
       timeout,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
-    this.notificationServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('NOTIFICATION_SERVICE_URL'),
+    this.notificationServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('NOTIFICATION_SERVICE_URL'),
       timeout,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
   }
 
@@ -108,7 +107,7 @@ export class RefundService {
     const refund = await this.prisma.$transaction(async (tx) => {
       const locked = await tx.$queryRaw<
         { id: string; status: string }[]
-      >`SELECT id, status FROM "Refund" WHERE id = ${id} FOR UPDATE`;
+      >`SELECT id, status FROM "refunds" WHERE id = ${id} FOR UPDATE`;
 
       if (!locked || locked.length === 0) {
         throw new NotFoundException('Refund not found');
@@ -145,22 +144,24 @@ export class RefundService {
         processedBy,
       });
 
-      const walletResponse = await this.walletServiceClient.post('/api/wallet/credit', {
-        userId: refund.userId,
-        amount: refund.amount.toNumber(),
-        currency: refund.currency,
-        description: `Refund for payment ${refund.paymentId}`,
-        reference: refundReference,
-        transactionType: 'refund',
-      });
+      const walletData = await this.walletServiceClient.post<{ id?: string }>(
+        '/api/wallet/credit',
+        {
+          userId: refund.userId,
+          amount: refund.amount.toNumber(),
+          currency: refund.currency,
+          description: `Refund for payment ${refund.paymentId}`,
+          reference: refundReference,
+          transactionType: 'refund',
+        }
+      );
 
-      const walletData = walletResponse.data as { id?: string };
       this.logger.log(
         `Refund processed: payment ${refund.paymentId}, wallet txn: ${walletData?.id}`
       );
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Failed to process refund ${id}: ${(error as Error).message}`);
-      throw new BadRequestException('Failed to process refund');
+      mapAndThrow(error, 'processing refund');
     }
 
     const updatedRefund = await this.prisma.refund.update({
@@ -209,7 +210,7 @@ export class RefundService {
         ...event,
         timestamp: new Date().toISOString(),
       });
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
     }
   }
@@ -248,7 +249,7 @@ export class RefundService {
           priority: 'high',
         });
       }
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Failed to send refund notification: ${(error as Error).message}`);
     }
   }

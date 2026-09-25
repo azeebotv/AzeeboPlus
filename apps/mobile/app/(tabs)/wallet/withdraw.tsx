@@ -12,9 +12,10 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AmountInput } from '../../../src/components/AmountInput';
-import { walletApi } from '../../../src/api';
+import { walletApi } from '@azeebo/react-data';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
 import { walletPresetAmounts, walletLimits } from '../../../src/config/prices';
+import { colors } from '../../../src/theme';
 
 const PRESET_AMOUNTS = walletPresetAmounts;
 
@@ -40,7 +41,7 @@ export default function WithdrawFundsScreen() {
         setBalance(res.data.balance);
       }
     } catch (err: unknown) {
-      setBalanceError(err.message || 'Failed to load balance');
+      setBalanceError((err instanceof Error ? err.message : null) || 'Failed to load balance');
     } finally {
       setIsLoadingBalance(false);
     }
@@ -103,7 +104,7 @@ export default function WithdrawFundsScreen() {
         setAccountName('');
         setErrors((prev) => ({
           ...prev,
-          accountName: result.error?.message || 'Could not verify account',
+          accountName: (result.error as unknown as string) || 'Could not verify account',
         }));
       }
     } catch {
@@ -138,7 +139,11 @@ export default function WithdrawFundsScreen() {
                 { text: 'OK', onPress: () => router.back() },
               ]);
             } catch (error: unknown) {
-              Alert.alert('Error', error?.message || 'Failed to withdraw funds. Please try again.');
+              Alert.alert(
+                'Error',
+                (error instanceof Error ? error.message : null) ||
+                  'Failed to withdraw funds. Please try again.'
+              );
             } finally {
               setIsLoading(false);
             }
@@ -311,8 +316,9 @@ export default function WithdrawFundsScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>ℹ️ Information</Text>
             <Text style={styles.infoText}>
-              • Minimum withdrawal: ₦{walletLimits.minimumWithdrawal.toLocaleString()}{'\n'}• Processing time: 1-3 business days{'\n'}• Withdrawal
-              fees may apply{'\n'}• Ensure account details are correct
+              • Minimum withdrawal: ₦{walletLimits.minimumWithdrawal.toLocaleString()}
+              {'\n'}• Processing time: 1-3 business days{'\n'}• Withdrawal fees may apply{'\n'}•
+              Ensure account details are correct
             </Text>
           </View>
         </View>
@@ -340,12 +346,12 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   form: {
     flex: 1,
@@ -355,7 +361,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
     fontWeight: '500',
   },
@@ -363,7 +369,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.neutral[700],
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -373,8 +379,8 @@ const styles = StyleSheet.create({
     borderColor: '#EF4444',
   },
   readOnlyInput: {
-    backgroundColor: '#111',
-    color: '#9CA3AF',
+    backgroundColor: colors.neutral[950],
+    color: colors.light[400],
   },
   errorText: {
     color: '#EF4444',
@@ -395,14 +401,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.neutral[700],
   },
   presetButtonSelected: {
     backgroundColor: '#E8420A',
     borderColor: '#E8420A',
   },
   presetText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -471,13 +477,13 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontWeight: '500',
     marginBottom: 8,
   },
   infoText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     lineHeight: 20,
   },
 });

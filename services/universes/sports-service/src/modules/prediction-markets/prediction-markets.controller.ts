@@ -1,20 +1,35 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
-import { PredictionMarketsService } from './prediction-markets.service';
+import { FeatureFlag, FeatureFlagGuard, sportsFlags } from '@azeebo/feature-flags';
+import { PredictionMarketsService } from './prediction-markets.service.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import {
   CreatePredictionDto,
   SubmitPredictionDto,
   ResolvePredictionDto,
-} from './dto/prediction.dto';
+} from './dto/prediction.dto.js';
 
 @ApiTags('Prediction Markets')
 @ApiBearerAuth()
-@Controller('v1/sports/predictions')
+@FeatureFlag(sportsFlags.predictionMarkets)
+@UseGuards(FeatureFlagGuard)
+@Controller('sports/predictions')
 export class PredictionMarketsController {
-  constructor(private readonly predictionMarketsService: PredictionMarketsService) {}
+  constructor(
+    @Inject(PredictionMarketsService)
+    private readonly predictionMarketsService: PredictionMarketsService
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get prediction markets' })
@@ -41,7 +56,6 @@ export class PredictionMarketsController {
   }
 
   @Get('my')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user predictions' })
   async getUserPredictions(
     @Request() req: { user: { id: string } },
@@ -64,7 +78,7 @@ export class PredictionMarketsController {
   }
 
   @Post('create')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create prediction market (admin)' })
   async createMarket(@Body() body: CreatePredictionDto): Promise<unknown> {
@@ -77,7 +91,6 @@ export class PredictionMarketsController {
   }
 
   @Post(':id/predict')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Place prediction' })
   async placePrediction(
     @Param('id') marketId: string,
@@ -93,7 +106,7 @@ export class PredictionMarketsController {
   }
 
   @Post(':id/settle')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Settle market (admin)' })
   async settleMarket(

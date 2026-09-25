@@ -1,9 +1,10 @@
 'use client';
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState, useTransition } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api, ContentItem } from '../../lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import { Skeleton } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
@@ -12,13 +13,16 @@ import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
+import analytics from '@/lib/analytics';
 
 interface Contestant {
   id: string;
   name: string;
-  avatar: string;
-  votes: number;
-  status: 'safe' | 'danger' | 'eliminated';
+  avatar?: string;
+  /** API embeds the raw row; votes live under _count.votes. */
+  votes?: number;
+  _count?: { votes?: number; predictions?: number };
+  status?: 'safe' | 'danger' | 'eliminated';
 }
 
 const staggerContainer = {
@@ -35,16 +39,12 @@ const staggerItem = {
   },
 };
 
-export default function RealityPage(): React.JSX.Element {
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (res.data) return res.data;
-      throw new Error(res.message || 'Failed to load universes');
-    },
-    staleTime: 300000,
-  });
+function RealityPageContent(): React.JSX.Element {
+  useEffect(() => {
+    analytics.pageView('reality');
+  }, []);
+
+  const universesQuery = useUniversesQuery();
 
   const realityUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'reality');
 
@@ -52,7 +52,7 @@ export default function RealityPage(): React.JSX.Element {
     queryKey: ['reality-shows', realityUniverse?.id],
     queryFn: async () => {
       if (!realityUniverse?.id) throw new Error('Reality universe not found');
-      const res = await api.content.getContentByUniverse(realityUniverse.id, 12, 50);
+      const res = await api.content.getContentByUniverse(realityUniverse.id, 1, 12);
       if (res.success && res.data) {
         const items = Array.isArray(res.data)
           ? res.data
@@ -73,7 +73,18 @@ export default function RealityPage(): React.JSX.Element {
     queryFn: async () => {
       if (!selectedShow?.id) throw new Error('No show selected');
       const res = await api.reality.getContestants(selectedShow.id);
-      if (res.success && res.data) return res.data;
+      if (res.success && res.data) {
+        // The endpoint wraps the list: { contestants: [...] } — and older
+        // builds returned a bare array. Unwrap either shape; a raw object
+        // falling through used to crash `.map` into the error boundary.
+        const payload = res.data as unknown;
+        const list = Array.isArray(payload)
+          ? payload
+          : Array.isArray((payload as { contestants?: Contestant[] } | null)?.contestants)
+            ? (payload as { contestants: Contestant[] }).contestants
+            : [];
+        return list;
+      }
       throw new Error(res.message || 'Failed to load contestants');
     },
     enabled: !!selectedShow?.id,
@@ -81,14 +92,43 @@ export default function RealityPage(): React.JSX.Element {
   });
 
   const contestants: Contestant[] = contestantsQuery.data ?? [];
-  const safeContestants = contestants || [];
-  const maxVotes = Math.max(0, ...safeContestants.map((c) => c.votes));
+  const safeContestants = Array.isArray(contestants) ? contestants : [];
+  const maxVotes = Math.max(
+    0,
+    ...safeContestants.map((c) => Number(c.votes ?? c._count?.votes) || 0)
+  );
 
   const isLoading = universesQuery.isLoading || showsQuery.isLoading;
 
+  const queryClient = useQueryClient();
+  const [votingId, setVotingId] = useState<string | null>(null);
+  const [isVoting, startVoting] = useTransition();
+  const [voteNotice, setVoteNotice] = useState<string | null>(null);
+
+  const scrollToVoting = () => {
+    document.getElementById('voting')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleVote = (contestantId: string) => {
+    if (!selectedShow?.id || isVoting) return;
+    setVotingId(contestantId);
+    startVoting(async () => {
+      const res = await api.reality.castVote(selectedShow.id, contestantId);
+      setVoteNotice(res.success ? 'Vote submitted!' : (res.message ?? 'Vote failed'));
+      if (res.success) {
+        await queryClient.invalidateQueries({ queryKey: ['reality-contestants', selectedShow.id] });
+      }
+      setTimeout(() => setVoteNotice(null), 4000);
+      setVotingId(null);
+    });
+  };
+
   return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Reality" />
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+    >
+      <AppHeader active="Reality" logoVariant="light" />
 
       {/* Hero Section */}
       <section className="relative">
@@ -97,12 +137,18 @@ export default function RealityPage(): React.JSX.Element {
         ) : selectedShow ? (
           <div className="relative h-[400px] sm:h-[500px]">
             <OptimizedImage
-              src={selectedShow.thumbnail}
+              src={selectedShow.thumbnail || '/images/posters/poster_34.jpg'}
               alt={selectedShow.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
-            <AmbientGlow color="rgba(204,28,28,0.3)" size={500} className="bottom-0 right-0" />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(11,9,14,1) 0%, rgba(11,9,14,0.6) 40%, rgba(11,9,14,0.2) 100%)',
+              }}
+            />
+            <AmbientGlow color="rgba(232,66,10,0.25)" size={550} className="bottom-0 right-0" />
 
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
               <motion.h2
@@ -140,6 +186,7 @@ export default function RealityPage(): React.JSX.Element {
                 </Link>
                 <motion.button
                   type="button"
+                  onClick={scrollToVoting}
                   className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
                   style={{
                     border: '1px solid rgba(255,255,255,0.2)',
@@ -157,7 +204,7 @@ export default function RealityPage(): React.JSX.Element {
       </section>
 
       {/* Shows Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section id="voting" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <ScrollReveal>
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
@@ -179,11 +226,14 @@ export default function RealityPage(): React.JSX.Element {
                     alt={show.title}
                     className="w-full h-44 sm:h-48 object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
                     <span
                       className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                      style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                      style={{
+                        backgroundColor: 'rgba(232,66,10,0.2)',
+                        color: 'var(--brand-orange)',
+                      }}
                     >
                       {show.contentType || 'Reality'}
                     </span>
@@ -213,7 +263,7 @@ export default function RealityPage(): React.JSX.Element {
 
       {/* Leaderboard */}
       {safeContestants.length > 0 && (
-        <section className="py-10 sm:py-12" style={{ backgroundColor: '#0d0505' }}>
+        <section className="py-10 sm:py-12" style={{ backgroundColor: 'var(--bg-primary)' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ScrollReveal>
               <div className="flex items-center justify-between mb-6 sm:mb-8">
@@ -225,7 +275,7 @@ export default function RealityPage(): React.JSX.Element {
                 </div>
                 <Link
                   href="/reality/results"
-                  className="text-sm font-medium text-[#E8420A] hover:text-[#CC1C1C] transition-colors"
+                  className="text-sm font-medium text-[var(--brand-orange)] hover:text-[var(--brand-red)] transition-colors"
                 >
                   View All
                 </Link>
@@ -262,7 +312,7 @@ export default function RealityPage(): React.JSX.Element {
                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-xs sm:text-sm"
                             style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
                           >
-                            {contestant.avatar?.charAt(0) || contestant.name.charAt(0)}
+                            {contestant.avatar?.charAt(0) || contestant.name?.charAt(0) || '?'}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
@@ -271,7 +321,8 @@ export default function RealityPage(): React.JSX.Element {
                               {contestant.name}
                             </span>
                             <span className="text-xs sm:text-sm text-white/50 flex-shrink-0 ml-2">
-                              {contestant.votes.toLocaleString()} votes
+                              {(contestant.votes ?? contestant._count?.votes ?? 0).toLocaleString()}{' '}
+                              votes
                             </span>
                           </div>
                           <div
@@ -282,7 +333,7 @@ export default function RealityPage(): React.JSX.Element {
                               className="h-full rounded-full"
                               initial={{ width: 0 }}
                               whileInView={{
-                                width: `${(contestant.votes / (maxVotes || 1)) * 100}%`,
+                                width: `${((contestant.votes ?? contestant._count?.votes ?? 0) / (maxVotes || 1)) * 100}%`,
                               }}
                               viewport={{ once: true }}
                               transition={{ duration: 0.8, delay: index * 0.1, ease: 'easeOut' }}
@@ -300,10 +351,24 @@ export default function RealityPage(): React.JSX.Element {
                         {contestant.status === 'danger' && (
                           <span
                             className="px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[10px] sm:text-xs font-semibold flex-shrink-0"
-                            style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
+                            style={{
+                              backgroundColor: 'rgba(239,68,68,0.2)',
+                              color: 'var(--color-error-500)',
+                            }}
                           >
                             Danger
                           </span>
+                        )}
+                        {contestant.status !== 'eliminated' && selectedShow?.id && (
+                          <button
+                            type="button"
+                            onClick={() => handleVote(contestant.id)}
+                            disabled={isVoting && votingId === contestant.id}
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold text-white flex-shrink-0 transition-all az-btn-primary"
+                            style={{ width: 'auto' }}
+                          >
+                            {isVoting && votingId === contestant.id ? 'Voting…' : 'Vote'}
+                          </button>
                         )}
                         {contestant.status === 'eliminated' && (
                           <span
@@ -319,14 +384,15 @@ export default function RealityPage(): React.JSX.Element {
                       </motion.div>
                     ))}
                   </motion.div>
-                  <motion.button
-                    type="button"
-                    className="az-btn-primary w-full mt-6"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Vote Now
-                  </motion.button>
+                  {voteNotice && (
+                    <p
+                      role="status"
+                      className="text-sm mt-3 text-center"
+                      style={{ color: 'var(--brand-orange)' }}
+                    >
+                      {voteNotice}
+                    </p>
+                  )}
                 </div>
               </ScrollReveal>
 
@@ -374,23 +440,65 @@ export default function RealityPage(): React.JSX.Element {
                     <div className="p-4 space-y-3">
                       {[
                         {
-                          icon: '\u{1F4A1}',
                           title: 'Supervote Power',
                           desc: 'Use supervotes to multiply your impact',
+                          icon: (
+                            <svg
+                              className="w-5 h-5 text-[var(--brand-orange)]"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+                              />
+                            </svg>
+                          ),
                         },
                         {
-                          icon: '\u{1F381}',
                           title: 'Daily Rewards',
                           desc: 'Vote daily to earn bonus points',
+                          icon: (
+                            <svg
+                              className="w-5 h-5 text-amber-400"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H4.5a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"
+                              />
+                            </svg>
+                          ),
                         },
                         {
-                          icon: '\u{1F3C6}',
                           title: 'Leaderboard Bonus',
                           desc: 'Top voters get exclusive perks',
+                          icon: (
+                            <svg
+                              className="w-5 h-5 text-yellow-400"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871a3.375 3.375 0 00-3.375-3.375H12m4.5 7.875H12M9 18.75V15.375c0-.621.504-1.125 1.125-1.125h.871M12 7.5A3.75 3.75 0 008.25 3.75h7.5A3.75 3.75 0 0012 7.5z"
+                              />
+                            </svg>
+                          ),
                         },
                       ].map((tip) => (
                         <div key={tip.title} className="flex items-start gap-3">
-                          <span className="text-base sm:text-lg">{tip.icon}</span>
+                          <span className="flex-shrink-0 mt-0.5">{tip.icon}</span>
                           <div>
                             <p className="font-medium text-xs sm:text-sm text-white">{tip.title}</p>
                             <p className="text-[10px] sm:text-xs text-white/50">{tip.desc}</p>
@@ -406,7 +514,9 @@ export default function RealityPage(): React.JSX.Element {
         </section>
       )}
 
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }
+
+export default RealityPageContent;

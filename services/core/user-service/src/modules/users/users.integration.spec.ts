@@ -1,30 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UsersService } from './users.service';
-import { PrismaService } from '../database/prisma.service';
+import { UsersService } from './users.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { CacheService } from '@azeebo/shared-services';
+import { ConfigService } from '@nestjs/config';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { NotFoundException } from '@nestjs/common';
-import { User, WatchHistory, SavedItem } from '@prisma/client';
 
 jest.mock('../database/prisma.service');
+
+interface WatchHistory {
+  id: string;
+  userId: string;
+  contentId: string;
+  contentType: string;
+  universe: string;
+  watchedAt: Date;
+  createdAt: Date;
+}
 
 describe('UsersService Integration', () => {
   let service: UsersService;
   let prisma: PrismaService;
-
-  const mockUser: User = {
-    id: 'user-123',
-    email: 'test@example.com',
-    password: '',
-    displayName: 'Test User',
-    avatar: null,
-    role: 'user',
-    preferences: { interests: ['reality', 'sports'] },
-    isVerified: false,
-    mfaEnabled: false,
-    mfaSecret: null,
-    mfaBackupCodes: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -62,6 +58,34 @@ describe('UsersService Integration', () => {
               findMany: jest.fn(),
             },
             $transaction: jest.fn(),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            delete: jest.fn().mockResolvedValue(0),
+            invalidate: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3040';
+              return defaultValue;
+            }),
+            getOrThrow: jest.fn().mockImplementation((key: string) => {
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3040';
+              return '';
+            }),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn().mockResolvedValue(false),
           },
         },
       ],
@@ -117,7 +141,7 @@ describe('UsersService Integration', () => {
     it('should update universe affinity for user', async () => {
       const userId = 'user-123';
       const dto = {
-        interests: ['reality', 'movies'],
+        interests: ['reality', 'movie'],
       };
 
       (prisma.userPreferences.findUnique as jest.Mock).mockResolvedValue({

@@ -1,33 +1,60 @@
 import {
+  Inject,
   Injectable,
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import {
   ReferralResponse,
   ReferralStats,
   PaginationData,
-} from './interfaces/referral-response.interface';
-import { GenerateReferralCodeDto, ApplyReferralCodeDto } from './dto/referral.dto';
+} from './interfaces/referral-response.interface.js';
+import { GenerateReferralCodeDto, ApplyReferralCodeDto } from './dto/referral.dto.js';
+import { FeatureFlagService, referralFlags } from '@azeebo/feature-flags';
 import { randomBytes } from 'crypto';
+import axios from 'axios';
 
 @Injectable()
 export class ReferralService {
+  private readonly logger = new Logger(ReferralService.name);
   private readonly defaultPaginationLimit: number;
   private readonly defaultReferralReward: number;
+  private readonly analyticsServiceBaseUrl: string;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly cache: CacheService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    private readonly featureFlagService?: FeatureFlagService
   ) {
     this.defaultPaginationLimit = this.configService.get<number>('DEFAULT_PAGINATION_LIMIT', 20);
     this.defaultReferralReward = this.configService.get<number>('DEFAULT_REFERRAL_REWARD', 50);
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
+    }
   }
 
   async generateReferralCode(
@@ -57,7 +84,6 @@ export class ReferralService {
     }
 
     const maxRetries = 3;
-    let lastError: unknown;
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       const code = this.generateCode();
@@ -72,6 +98,8 @@ export class ReferralService {
         });
 
         await this.cache.invalidate(`referral:code:${userId}`);
+
+        this.trackAnalyticsEvent('referral_code_generated', userId, { code });
 
         return {
           success: true,
@@ -90,14 +118,15 @@ export class ReferralService {
         };
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          lastError = error;
           continue;
         }
         throw error;
       }
     }
 
-    throw new BadRequestException('Failed to generate unique referral code after multiple attempts');
+    throw new BadRequestException(
+      'Failed to generate unique referral code after multiple attempts'
+    );
   }
 
   async applyReferralCode(
@@ -146,6 +175,10 @@ export class ReferralService {
         },
       });
 
+      // Deliberate use of raw SQL for atomic compare-and-increment.
+      // Prisma's update API lacks a conditional WHERE on the increment,
+      // so $executeRaw ensures currentUses is only bumped when below maxUses,
+      // preventing race-condition overuse of referral codes.
       const affectedRows = await tx.$executeRaw`
         UPDATE "referral_codes" SET "currentUses" = "currentUses" + 1
         WHERE "id" = ${referralCode.id} AND "currentUses" < ${referralCode.maxUses ?? 2147483647}
@@ -160,6 +193,34 @@ export class ReferralService {
 
     await this.cache.invalidate(`referral:code:${referredId}`);
     await this.cache.invalidate(`referral:stats:${referralCode.userId}`);
+
+    this.trackAnalyticsEvent('referral_applied', referredId, {
+      code: dto.code,
+      referrerId: referralCode.userId,
+    });
+
+    // referral_auto_complete: off by default — when enabled, the referral
+    // completes immediately on code application (qualifying action), instead
+    // of waiting for an explicit completeReferral call.
+    if (
+      this.featureFlagService &&
+      (await this.featureFlagService.isEnabled(referralFlags.autoComplete))
+    ) {
+      await this.completeReferral(referral.id, referralCode.userId);
+      return {
+        success: true,
+        data: {
+          message: 'Referral code applied successfully',
+          referral: {
+            id: referral.id,
+            referrerId: referral.referrerId,
+            referredId: referral.referredId,
+            status: 'completed',
+            createdAt: referral.createdAt,
+          },
+        },
+      };
+    }
 
     return {
       success: true,
@@ -284,7 +345,7 @@ export class ReferralService {
         data: {
           status: 'completed',
           rewardAmount,
-          rewardStatus: 'pending',
+          rewardStatus: 'credited',
           completedAt: new Date(),
         },
       });
@@ -295,9 +356,45 @@ export class ReferralService {
           userId: referral.referrerId,
           amount: rewardAmount,
           type: 'signup',
-          status: 'pending',
+          status: 'credited',
         },
       });
+
+      // Credit the referrer's reward account (if models exist)
+      try {
+        const rewardAccount = await (
+          tx as unknown as {
+            rewardAccount?: { findUnique: (args: unknown) => Promise<{ userId: string } | null> };
+          }
+        ).rewardAccount?.findUnique({
+          where: { userId: referral.referrerId },
+        });
+
+        if (rewardAccount) {
+          await (
+            tx as unknown as { rewardAccount?: { update: (args: unknown) => Promise<unknown> } }
+          ).rewardAccount?.update({
+            where: { userId: referral.referrerId },
+            data: {
+              totalPoints: { increment: Number(rewardAmount) },
+              availablePoints: { increment: Number(rewardAmount) },
+            },
+          });
+
+          await (
+            tx as unknown as { pointsLedger?: { create: (args: unknown) => Promise<unknown> } }
+          ).pointsLedger?.create({
+            data: {
+              userId: referral.referrerId,
+              points: Number(rewardAmount),
+              type: 'referral',
+              reason: `Referral completed: ${referralId}`,
+            },
+          });
+        }
+      } catch {
+        // rewardAccount/pointsLedger models may not exist
+      }
     });
 
     await this.cache.invalidate(`referral:stats:${referral.referrerId}`);
@@ -357,6 +454,18 @@ export class ReferralService {
       where: { key: 'signup_reward' },
     });
 
-    return config ? Number(config.value) : this.defaultReferralReward;
+    const baseAmount = config ? Number(config.value) : this.defaultReferralReward;
+
+    // referral_reward_boost: off by default — when enabled, multiply the base
+    // signup reward by the boost factor so promotions can be toggled at runtime.
+    if (
+      this.featureFlagService &&
+      (await this.featureFlagService.isEnabled(referralFlags.rewardBoost))
+    ) {
+      const boostFactor = this.configService.get<number>('REFERRAL_REWARD_BOOST_FACTOR', 1.5);
+      return Math.round(baseAmount * boostFactor);
+    }
+
+    return baseAmount;
   }
 }

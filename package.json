@@ -1,5 +1,5 @@
 {
-  "name": "@azeebo/scripts",
+  "name": "@azeebo/monorepo",
   "version": "1.0.0",
   "description": "Automation scripts for Azeebo+ platform",
   "packageManager": "pnpm@10.33.2",
@@ -8,28 +8,68 @@
     "pnpm": ">=10.33.2"
   },
   "scripts": {
+    "prepare": "if [ -f scripts/install-git-hooks.sh ]; then bash scripts/install-git-hooks.sh; fi",
     "lint": "pnpm -r run lint",
+    "check:flags": "node scripts/check-flag-conventions.mjs",
+    "check:lint-ratchet": "node scripts/check-lint-warning-ratchet.mjs",
+    "check:rule-promotion": "node scripts/check-rule-promotion.mjs",
+    "lint-scorecard": "node scripts/lint-scorecard.mjs",
+    "check:prisma": "node scripts/check-prisma-find-first.mjs",
+    "check:prisma-client": "node scripts/check-prisma-client-stale.mjs",
+    "check:dev-wiring": "node scripts/check-dev-wiring.mjs",
+    "check:git-hooks": "node scripts/check-git-hooks.mjs",
+    "check:ci-dark": "node scripts/ci-dark-watchdog.mjs",
+    "check:seed-image-hosts": "node scripts/check-seed-image-hosts.mjs",
+    "check:build-chain": "node scripts/check-build-chain.mjs",
+    "check:prisma-migrations": "node scripts/check-prisma-migrations.mjs",
+    "check:deployed-schema": "node scripts/check-deployed-schema.mjs",
+    "check:live-schema-lock": "node scripts/check-live-schema-lock.mjs",
+    "check:live-drift": "node scripts/drift-live-db.mjs",
+    "reconcile:ledger": "node scripts/reconcile-prisma-ledger.mjs",
+    "check:env": "node scripts/check-env-consistency.mjs",
+    "check:upstreams": "node scripts/check-gateway-upstreams.mjs",
+    "check:route-contracts": "node scripts/check-route-contracts.mjs",
+    "check:expo-routes": "node scripts/check-expo-routes.mjs",
+    "drift:live-db": "node scripts/drift-live-db.mjs",
+    "smoke:gateway": "node scripts/smoke-gateway-get.mjs",
+    "seed:flags": "node scripts/seed-dev-flags.mjs",
+    "test:flag-conventions": "node --test scripts/__tests__/*.test.mjs",
+    "sweep:flags": "node scripts/sweep-flag-usage.mjs",
+    "generate:flags:docs": "node scripts/generate-flag-registry-table.mjs",
+    "check:flags:docs": "node scripts/generate-flag-registry-table.mjs --check",
     "typecheck": "tsc --noEmit",
-    "test": "pnpm -r run test",
+    "prisma:generate": "bash scripts/generate-prisma-clients.sh",
+    "test": "pnpm run prisma:generate && pnpm -r run test",
+    "test:sweep": "node scripts/test-sweep.mjs",
     "build": "pnpm -r run build",
     "docs-sync": "ts-node --project tsconfig.scripts.json scripts/docs-sync.ts",
     "docs-sync:watch": "nodemon --watch services --exec ts-node --project tsconfig.scripts.json scripts/docs-sync.ts",
     "coverage-analyze": "ts-node --project tsconfig.scripts.json scripts/coverage-analyzer.ts",
     "contracts": "pnpm --filter @azeebo/contract-tests test:contracts",
-    "contracts:watch": "pnpm --filter @azeebo/contract-tests test:watch"
+    "contracts:watch": "pnpm --filter @azeebo/contract-tests test:watch",
+    "test:flags:redis": "docker compose -f docker-compose.test.yml up -d --wait redis-test && pnpm --filter @azeebo/admin test:redis && docker compose -f docker-compose.test.yml down",
+    "test:payments:failover": "docker compose -f docker-compose.test.yml up -d --wait redis-test postgres-test paystack-mock flutterwave-mock && pnpm --filter @azeebo/payment-service test:e2e:failover && docker compose -f docker-compose.test.yml down",
+    "test:e2e:pgtrgm": "docker compose -f docker-compose.test.yml up -d --wait redis-test postgres-test && pnpm --filter @azeebo/search-service test:e2e:pgtrgm && docker compose -f docker-compose.test.yml down"
   },
   "dependencies": {
     "glob": "^13.0.6",
     "js-yaml": "^4.2.0"
   },
   "devDependencies": {
+    "@nestjs/cli": "^11.0.23",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^25.9.3",
-    "eslint": "^10.5.0",
+    "@types/pg": "^8.20.0",
+    "ajv": "6",
+    "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
     "globals": "^17.6.0",
     "nodemon": "^3.1.14",
+    "pg": "^8.22.0",
+    "tailwindcss": "^4.3.3",
     "ts-node": "^10.9.2",
+    "tsx": "^4.23.0",
     "typescript": "^5.8.4",
     "typescript-eslint": "^8.61.1"
   },
@@ -45,7 +85,28 @@
       "msgpackr-extract",
       "protobufjs",
       "sharp",
-      "unrs-resolver"
-    ]
+      "unrs-resolver",
+      "@swc/core"
+    ],
+    "overrides": {
+      "protobufjs": ">=8.6.0",
+      "underscore": ">=1.13.8",
+      "tmp": ">=0.2.6",
+      "postcss": ">=8.5.10",
+      "uuid": ">=11.1.1",
+      "@opentelemetry/core": ">=2.8.0",
+      "@opentelemetry/sdk-trace-base": ">=2.7.1",
+      "@opentelemetry/sdk-trace-node": ">=2.7.1",
+      "@opentelemetry/context-async-hooks": ">=2.7.1",
+      "@opentelemetry/resources": ">=2.7.1",
+      "@babel/core": "^7.29.7",
+      "multer": ">=2.2.0",
+      "js-yaml@>=4.0.0": ">=4.2.0",
+      "js-yaml@<4.0.0": ">=3.15.0"
+    },
+    "patchedDependencies": {
+      "@react-native/gradle-plugin@0.85.3": "patches/@react-native__gradle-plugin@0.85.3.patch",
+      "expo-web-browser@14.0.2": "patches/expo-web-browser@14.0.2.patch"
+    }
   }
 }

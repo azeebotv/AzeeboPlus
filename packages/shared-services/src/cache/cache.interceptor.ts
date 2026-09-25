@@ -46,7 +46,11 @@ export class CacheInterceptor implements NestInterceptor {
 
   private resolveCacheKey(
     pattern: string,
-    request: { params?: Record<string, string>; query?: Record<string, string> }
+    request: {
+      params?: Record<string, string>;
+      query?: Record<string, string>;
+      headers?: Record<string, string | string[] | undefined>;
+    }
   ): string {
     let key = pattern;
 
@@ -54,7 +58,10 @@ export class CacheInterceptor implements NestInterceptor {
     if (paramMatches) {
       for (const match of paramMatches) {
         const paramName = match.replace(/[{}]/g, '');
-        const paramValue = request.params?.[paramName] || request.query?.[paramName];
+        const paramValue =
+          request.params?.[paramName] ||
+          request.query?.[paramName] ||
+          this.resolveFromHeaders(paramName, request.headers);
         if (paramValue) {
           key = key.replace(match, paramValue);
         }
@@ -62,5 +69,22 @@ export class CacheInterceptor implements NestInterceptor {
     }
 
     return `cache:${key}`;
+  }
+
+  /**
+   * Identity placeholders ({userId}) usually come from the gateway-injected
+   * x-user-id header, not from route params/query. Without this fallback the
+   * placeholder stays literal and every caller shares one cache entry — a
+   * cross-user data leak on per-user endpoints.
+   */
+  private resolveFromHeaders(
+    paramName: string,
+    headers?: Record<string, string | string[] | undefined>
+  ): string | undefined {
+    if (paramName !== 'userId' || !headers) {
+      return undefined;
+    }
+    const value = headers['x-user-id'];
+    return Array.isArray(value) ? value[0] : value;
   }
 }

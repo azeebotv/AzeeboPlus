@@ -1,27 +1,28 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { createApiClient, noopTokenStorage } from '@azeebo/api-client';
+import { ServiceClient } from '@azeebo/http-client';
 
 @Injectable()
 export class SuspensionService {
   private readonly logger = new Logger(SuspensionService.name);
-  private readonly notificationServiceClient;
-  private readonly auditServiceClient;
+  private readonly notificationServiceClient: ServiceClient;
+  private readonly auditServiceClient: ServiceClient;
 
   constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService
   ) {
-    this.notificationServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('NOTIFICATION_SERVICE_URL'),
+    const apiKey = this.configService.get<string>('INTERNAL_API_KEY', '');
+    this.notificationServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('NOTIFICATION_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
-    this.auditServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
+    this.auditServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
   }
 
@@ -200,12 +201,16 @@ export class SuspensionService {
       },
     });
 
-    for (const suspension of expired) {
-      await this.prisma.userSuspension.update({
-        where: { id: suspension.id },
+    // Batch update all expired suspensions in one query (fixes N+1)
+    if (expired.length > 0) {
+      await this.prisma.userSuspension.updateMany({
+        where: { id: { in: expired.map((s) => s.id) } },
         data: { status: 'EXPIRED' },
       });
+    }
 
+    // Send notifications and audit events (must be per-item due to audit trail)
+    for (const suspension of expired) {
       await Promise.all([
         this.sendReinstatementNotification(suspension.userId, { ...suspension, status: 'EXPIRED' }),
         this.createAuditEvent({
@@ -236,7 +241,7 @@ export class SuspensionService {
         metadata: { suspensionId: suspension.id },
         priority: 'high',
       });
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Failed to send suspension notification: ${(error as Error).message}`);
     }
   }
@@ -259,7 +264,7 @@ export class SuspensionService {
         metadata: { suspensionId: suspension.id, status: suspension.status },
         priority: 'high',
       });
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Failed to send reinstatement notification: ${(error as Error).message}`);
     }
   }
@@ -279,7 +284,7 @@ export class SuspensionService {
         ...event,
         timestamp: new Date().toISOString(),
       });
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
     }
   }

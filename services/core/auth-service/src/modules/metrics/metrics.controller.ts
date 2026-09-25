@@ -1,13 +1,13 @@
-import { Controller, Get, Header } from '@nestjs/common';
+import { Inject, Controller, Get, Header } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
-import { MetricsService } from './metrics.service';
+import { MetricsService } from './metrics.service.js';
 
 @Public()
 @ApiTags('Metrics')
 @Controller('metrics')
 export class MetricsController {
-  constructor(private readonly metricsService: MetricsService) {}
+  constructor(@Inject(MetricsService) private readonly metricsService: MetricsService) {}
 
   @Get()
   @Header('Content-Type', 'text/plain')

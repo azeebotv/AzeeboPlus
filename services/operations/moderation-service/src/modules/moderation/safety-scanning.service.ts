@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import type { SafetyScan } from '@prisma/client';
+import type { SafetyScan } from '../../prisma/client/index.js';
 import axios from 'axios';
 
 export interface ScanResult {
@@ -29,13 +29,23 @@ export class SafetyScanningService {
   private readonly scanningEnabled: boolean;
   private readonly useMockScanning: boolean;
 
+  // Circuit breaker state
+  private malwareFailures = 0;
+  private contentSafetyFailures = 0;
+  private copyrightFailures = 0;
+  private static readonly CIRCUIT_BREAKER_THRESHOLD = 5;
+  private static readonly CIRCUIT_BREAKER_RESET_MS = 60000; // 1 minute
+  private malwareCircuitOpenUntil = 0;
+  private contentSafetyCircuitOpenUntil = 0;
+  private copyrightCircuitOpenUntil = 0;
+
   private readonly malwareApiConfig: SafetyApiConfig;
   private readonly contentSafetyApiConfig: SafetyApiConfig;
   private readonly copyrightApiConfig: SafetyApiConfig;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.scanningEnabled = this.configService.get<boolean>('SAFETY_SCANNING_ENABLED', true);
     this.useMockScanning = this.configService.get<boolean>('USE_MOCK_SCANNING', false);
@@ -76,6 +86,43 @@ export class SafetyScanningService {
 
     if (this.useMockScanning) {
       this.logger.warn('WARNING: Mock scanning is enabled - this must not be used in production');
+    }
+  }
+
+  /**
+   * Validates a URL to prevent SSRF attacks before forwarding to external scanning APIs.
+   * Only allows HTTPS URLs and rejects private/internal IP ranges.
+   */
+  private validateMediaUrl(url: string): void {
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      // allowed-fabricated-4xx: the only fallible call is `new URL(url)` — a
+      // pure client-input parse whose single failure shape is a malformed URL.
+      // mapAndThrow would escalate it to a 500; a 400 is the correct answer.
+      throw new BadRequestException('Invalid media URL format');
+    }
+
+    if (parsed.protocol !== 'https:') {
+      throw new BadRequestException('Only HTTPS URLs are allowed for external scanning');
+    }
+
+    const hostname = parsed.hostname;
+    const privatePatterns = [
+      /^127\./,
+      /^10\./,
+      /^172\.(1[6-9]|2\d|3[01])\./,
+      /^192\.168\./,
+      /^169\.254\./,
+      /^0\./,
+      /^localhost$/i,
+      /^\[::1\]$/,
+      /^::1$/,
+    ];
+
+    if (privatePatterns.some((pattern) => pattern.test(hostname))) {
+      throw new BadRequestException(' URLs pointing to private/internal networks are not allowed');
     }
   }
 
@@ -121,7 +168,7 @@ export class SafetyScanningService {
       });
 
       return { scanId: scanRecord.id, result };
-    } catch (_err) {
+    } catch (error) {
       await this.prisma.safetyScan.update({
         where: { id: scanRecord.id },
         data: {
@@ -136,50 +183,69 @@ export class SafetyScanningService {
   }
 
   async getScanById(scanId: string): Promise<SafetyScan | null> {
-    return this.prisma.safetyScan.findUnique({
-      where: { id: scanId },
-    });
+    try {
+      return await this.prisma.safetyScan.findUnique({
+        where: { id: scanId },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to get scan by ID ${scanId}: ${(error as Error).message}`);
+      return null;
+    }
   }
 
   async getScansByContentId(contentId: string): Promise<SafetyScan[]> {
-    return this.prisma.safetyScan.findMany({
-      where: { contentId },
-      orderBy: { createdAt: 'desc' },
-    });
+    try {
+      return await this.prisma.safetyScan.findMany({
+        where: { contentId },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to get scans for content ${contentId}: ${(error as Error).message}`
+      );
+      return [];
+    }
   }
 
   async checkContentSafety(
     contentId: string
   ): Promise<{ isSafe: boolean; lastScan?: SafetyScan; issues: string[] }> {
-    const scans = await this.getScansByContentId(contentId);
+    try {
+      const scans = await this.getScansByContentId(contentId);
 
-    if (scans.length === 0) {
-      return { isSafe: false, issues: ['No safety scan found'] };
+      if (scans.length === 0) {
+        return { isSafe: false, issues: ['No safety scan found'] };
+      }
+
+      const lastScan = scans[0];
+
+      if (lastScan.status !== 'completed') {
+        return { isSafe: false, lastScan, issues: ['Scan not completed'] };
+      }
+
+      if (lastScan.result === 'blocked') {
+        return {
+          isSafe: false,
+          lastScan,
+          issues: [`Content blocked: ${lastScan.threatLevel || 'unknown threat'}`],
+        };
+      }
+
+      if (lastScan.result === 'flagged') {
+        return {
+          isSafe: false,
+          lastScan,
+          issues: [`Content flagged: ${lastScan.threatLevel || 'potential issue'}`],
+        };
+      }
+
+      return { isSafe: true, lastScan, issues: [] };
+    } catch (error) {
+      this.logger.error(
+        `Failed to check content safety for ${contentId}: ${(error as Error).message}`
+      );
+      return { isSafe: false, issues: ['Failed to check content safety'] };
     }
-
-    const lastScan = scans[0];
-
-    if (lastScan.status !== 'completed') {
-      return { isSafe: false, lastScan, issues: ['Scan not completed'] };
-    }
-
-    if (lastScan.result === 'blocked') {
-      return {
-        isSafe: false,
-        lastScan,
-        issues: [`Content blocked: ${lastScan.threatLevel || 'unknown threat'}`],
-      };
-    }
-
-    if (lastScan.result === 'flagged') {
-      return {
-        isSafe: false,
-        lastScan,
-        issues: [`Content flagged: ${lastScan.threatLevel || 'potential issue'}`],
-      };
-    }
-
-    return { isSafe: true, lastScan, issues: [] };
   }
 
   private async performScan(scanType: string, mediaUrl: string): Promise<ScanResult> {
@@ -215,6 +281,13 @@ export class SafetyScanningService {
   private async performMalwareScan(mediaUrl: string): Promise<ScanResult> {
     this.logger.debug('Performing real malware scan');
 
+    if (this.isCircuitOpen('malware')) {
+      this.logger.warn('Malware scan circuit breaker OPEN — returning pending status');
+      return { result: 'flagged', threatLevel: 'low', categories: ['scan_circuit_open'] };
+    }
+
+    this.validateMediaUrl(mediaUrl);
+
     if (!this.malwareApiConfig.apiKey) {
       this.logger.warn('Malware scan API key not configured, falling back to mock');
       return this.mockMalwareScan();
@@ -231,6 +304,7 @@ export class SafetyScanningService {
       );
 
       const data = response.data;
+      this.recordSuccess('malware');
 
       if (data.data.attributes.last_analysis_stats.malicious > 0) {
         return {
@@ -258,7 +332,8 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (_err) {
+    } catch (error) {
+      this.recordFailure('malware');
       this.logger.error(`Malware scan failed: ${(error as Error).message}`);
       return this.mockMalwareScan();
     }
@@ -266,6 +341,13 @@ export class SafetyScanningService {
 
   private async performContentSafetyScan(mediaUrl: string): Promise<ScanResult> {
     this.logger.debug('Performing real content safety scan');
+
+    if (this.isCircuitOpen('content_safety')) {
+      this.logger.warn('Content safety scan circuit breaker OPEN — returning pending status');
+      return { result: 'flagged', threatLevel: 'low', categories: ['scan_circuit_open'] };
+    }
+
+    this.validateMediaUrl(mediaUrl);
 
     if (!this.contentSafetyApiConfig.apiKey) {
       this.logger.warn('Content safety API key not configured, falling back to mock');
@@ -290,6 +372,7 @@ export class SafetyScanningService {
       );
 
       const annotations = response.data.responses[0].safeSearchAnnotation;
+      this.recordSuccess('content_safety');
       const categories: string[] = [];
       const threatLevels: string[] = [];
 
@@ -349,7 +432,8 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (_err) {
+    } catch (error) {
+      this.recordFailure('content_safety');
       this.logger.error(`Content safety scan failed: ${(error as Error).message}`);
       return this.mockContentSafetyScan();
     }
@@ -357,6 +441,13 @@ export class SafetyScanningService {
 
   private async performCopyrightScan(mediaUrl: string): Promise<ScanResult> {
     this.logger.debug('Performing real copyright scan');
+
+    if (this.isCircuitOpen('copyright')) {
+      this.logger.warn('Copyright scan circuit breaker OPEN — returning pending status');
+      return { result: 'flagged', threatLevel: 'low', categories: ['scan_circuit_open'] };
+    }
+
+    this.validateMediaUrl(mediaUrl);
 
     if (!this.copyrightApiConfig.apiKey) {
       this.logger.warn('Copyright API key not configured, falling back to mock');
@@ -373,6 +464,7 @@ export class SafetyScanningService {
       });
 
       const matches = response.data.matches || [];
+      this.recordSuccess('copyright');
 
       if (matches.length > 0 && matches.some((m: { confidence: number }) => m.confidence > 0.9)) {
         return {
@@ -403,25 +495,68 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (_err) {
+    } catch (error) {
+      this.recordFailure('copyright');
       this.logger.error(`Copyright scan failed: ${(error as Error).message}`);
       return this.mockCopyrightScan();
     }
   }
 
   private mockMalwareScan(): ScanResult {
-    this.logger.debug('Performing mock malware scan');
-    return { result: 'clean' };
+    this.logger.warn('Malware scan unavailable — content pending manual review');
+    return { result: 'flagged', threatLevel: 'low', categories: ['scan_pending'] };
   }
 
   private mockContentSafetyScan(): ScanResult {
-    this.logger.debug('Performing mock content safety scan');
-    return { result: 'clean' };
+    this.logger.warn('Content safety scan unavailable — content pending manual review');
+    return { result: 'flagged', threatLevel: 'low', categories: ['scan_pending'] };
   }
 
   private mockCopyrightScan(): ScanResult {
-    this.logger.debug('Performing mock copyright scan');
-    return { result: 'clean' };
+    this.logger.warn('Copyright scan unavailable — content pending manual review');
+    return { result: 'flagged', threatLevel: 'low', categories: ['scan_pending'] };
+  }
+
+  private isCircuitOpen(type: 'malware' | 'content_safety' | 'copyright'): boolean {
+    const now = Date.now();
+    if (type === 'malware') return now < this.malwareCircuitOpenUntil;
+    if (type === 'content_safety') return now < this.contentSafetyCircuitOpenUntil;
+    return now < this.copyrightCircuitOpenUntil;
+  }
+
+  private recordFailure(type: 'malware' | 'content_safety' | 'copyright'): void {
+    const now = Date.now();
+    if (type === 'malware') {
+      this.malwareFailures++;
+      if (this.malwareFailures >= SafetyScanningService.CIRCUIT_BREAKER_THRESHOLD) {
+        this.malwareCircuitOpenUntil = now + SafetyScanningService.CIRCUIT_BREAKER_RESET_MS;
+        this.logger.warn(
+          `Malware scan circuit breaker OPEN — ${this.malwareFailures} consecutive failures`
+        );
+      }
+    } else if (type === 'content_safety') {
+      this.contentSafetyFailures++;
+      if (this.contentSafetyFailures >= SafetyScanningService.CIRCUIT_BREAKER_THRESHOLD) {
+        this.contentSafetyCircuitOpenUntil = now + SafetyScanningService.CIRCUIT_BREAKER_RESET_MS;
+        this.logger.warn(
+          `Content safety scan circuit breaker OPEN — ${this.contentSafetyFailures} consecutive failures`
+        );
+      }
+    } else {
+      this.copyrightFailures++;
+      if (this.copyrightFailures >= SafetyScanningService.CIRCUIT_BREAKER_THRESHOLD) {
+        this.copyrightCircuitOpenUntil = now + SafetyScanningService.CIRCUIT_BREAKER_RESET_MS;
+        this.logger.warn(
+          `Copyright scan circuit breaker OPEN — ${this.copyrightFailures} consecutive failures`
+        );
+      }
+    }
+  }
+
+  private recordSuccess(type: 'malware' | 'content_safety' | 'copyright'): void {
+    if (type === 'malware') this.malwareFailures = 0;
+    else if (type === 'content_safety') this.contentSafetyFailures = 0;
+    else this.copyrightFailures = 0;
   }
 
   private aggregateResults(results: ScanResult[]): ScanResult {

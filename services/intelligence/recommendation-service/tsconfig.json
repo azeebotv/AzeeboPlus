@@ -1,28 +1,54 @@
 {
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
-    "module": "Node16",
     "baseUrl": ".",
     "declaration": true,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
-    "strict": true,
-    "noImplicitReturns": true,
-    "types": ["jest", "node", "supertest"],
+    "types": [
+      "jest",
+      "node",
+      "supertest"
+    ],
     "paths": {
-      "@prisma/client": ["./src/prisma/client"],
-      "@azeebo/*": ["../../../packages/*/dist"],
-      "@recommendation/*": ["./*"],
-      "@/*": ["src/*"],
-      "@modules/*": ["src/modules/*"],
-      "@config/*": ["src/config/*"],
-      "@common/*": ["src/common/*"]
-    }
+      "@azeebo/*": [
+        "../../../packages/*/dist"
+      ],
+      "@prisma/client": [
+        "./src/prisma/client"
+      ],
+      "@recommendation/*": [
+        "./*"
+      ],
+      "@/*": [
+        "src/*"
+      ],
+      "@modules/*": [
+        "src/modules/*"
+      ],
+      "@config/*": [
+        "src/config/*"
+      ],
+      "@common/*": [
+        "src/common/*"
+      ]
+    },
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": true,
+    "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

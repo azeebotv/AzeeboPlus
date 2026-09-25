@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 interface ContestantResult {
   id: string;
@@ -46,47 +48,40 @@ export default function ResultsScreen() {
 
   useEffect(() => {
     loadResults();
+    analytics.realityLeaderboardViewed(contentId);
   }, [contentId]);
 
   const loadResults = async () => {
     try {
       const response = await contentApi.getResults(contentId);
 
-      if (response.success && response.data) {
+      if (response.success && response.data && response.data.length > 0) {
         const data = response.data;
-        // Map VoteResult[] to EpisodeResult[]
-        setResults(
-          data.map((vote, index) => ({
-            id: vote.contestantId ?? `id-${index}`,
+        const contestants: ContestantResult[] = data.map((v) => ({
+          id: v.contestantId ?? `id-${v.rank ?? 0}`,
+          name: v.contestantName ?? `Contestant ${v.rank ?? 0}`,
+          avatar: '',
+          votes: v.totalVotes ?? 0,
+          percentage: v.percentage ?? 0,
+          rank: v.rank ?? 0,
+        }));
+
+        const topRanked = [...contestants].sort((a, b) => a.rank - b.rank);
+        const bottomRanked = [...contestants].sort((a, b) => b.rank - a.rank);
+
+        setResults([
+          {
+            id: contentId,
             episodeNumber: 1,
             seasonNumber: 1,
-            title: `Episode ${index + 1}`,
+            title: 'Current Episode',
             date: new Date().toISOString(),
-            contestants: data.map((v, i) => ({
-              id: v.contestantId ?? `id-${i}`,
-              name: v.contestantName ?? `Contestant ${i + 1}`,
-              avatar: '',
-              votes: v.totalVotes ?? 0,
-              percentage: v.percentage ?? 0,
-              rank: v.rank ?? i + 1,
-            })),
-            winner:
-              data.length > 0
-                ? {
-                    id: data[0].contestantId ?? 'id-0',
-                    name: data[0].contestantName ?? 'Winner',
-                    avatar: '',
-                    votes: data[0].totalVotes ?? 0,
-                    percentage: data[0].percentage ?? 0,
-                    rank: data[0].rank ?? 1,
-                    isWinner: true,
-                  }
-                : undefined,
-          }))
-        );
-        if (data.length > 0) {
-          setSelectedEpisode(data[0].contestantId ?? 'id-0');
-        }
+            contestants,
+            winner: topRanked.length > 0 ? { ...topRanked[0], isWinner: true } : undefined,
+            evicted: bottomRanked.length > 0 ? { ...bottomRanked[0], isEvicted: true } : undefined,
+          },
+        ]);
+        setSelectedEpisode(contentId);
       }
     } catch (error) {
       logger.error('Failed to load results', error);
@@ -238,7 +233,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -252,7 +247,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   headerContent: {
     flex: 1,
@@ -260,11 +255,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   episodeSelector: {
     paddingHorizontal: 24,
@@ -276,14 +271,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     marginRight: 8,
   },
   episodeButtonActive: {
     backgroundColor: '#E8420A',
   },
   episodeButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -299,15 +294,15 @@ const styles = StyleSheet.create({
   episodeTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   episodeDate: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   winnerCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -336,15 +331,15 @@ const styles = StyleSheet.create({
   winnerName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   winnerVotes: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   evictedCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -374,12 +369,12 @@ const styles = StyleSheet.create({
   evictedName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   evictedVotes: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   rankingsSection: {
     marginTop: 8,
@@ -387,13 +382,13 @@ const styles = StyleSheet.create({
   rankingsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   contestantRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -417,7 +412,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   rankText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -433,12 +428,12 @@ const styles = StyleSheet.create({
   contestantName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 2,
   },
   contestantVotes: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   badge: {
     fontSize: 24,

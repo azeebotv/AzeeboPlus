@@ -1,78 +1,55 @@
-'use client';
-import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { ShieldAlert, Home, HelpCircle } from 'lucide-react';
+import { PageShell } from '@/components/layout/PageShell';
+
+export const metadata: Metadata = {
+  title: 'Access Restricted - Azeebo+',
+  description: 'You do not have authorization to view this resource.',
+};
 
 export default function ForbiddenPage(): React.JSX.Element {
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
-      <AppHeader />
-      <main
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: 'calc(100vh - 200px)',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ textAlign: 'center', maxWidth: 400 }}>
-          <div
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: '50%',
-              background:
-                'linear-gradient(135deg, rgba(204,28,28,0.15) 0%, rgba(204,28,28,0.1) 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 24px',
-              fontSize: 36,
-            }}
-          >
-            🚫
+    <PageShell glowColor="rgba(204,28,28,0.15)">
+      <main className="min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-16">
+        <div className="az-glass p-8 sm:p-12 max-w-lg w-full text-center rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
+          {/* Ambient Top Glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-red-600/15 blur-3xl pointer-events-none" />
+
+          {/* Icon Badge */}
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-red-600 to-orange-600 flex items-center justify-center text-white mx-auto mb-6 shadow-[0_8px_32px_rgba(204,28,28,0.35)]">
+            <ShieldAlert className="w-10 h-10" />
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 12 }}>Access Denied</h1>
-          <p style={{ color: '#9A8A7A', marginBottom: 32, lineHeight: 1.6 }}>
-            You don&apos;t have permission to access this page. Contact support if you believe this
-            is an error.
+
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold mb-4">
+            Error 403 • Restricted Area
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-3 tracking-tight">
+            Access Denied
+          </h1>
+          <p className="text-white/60 text-sm mb-8 leading-relaxed max-w-sm mx-auto">
+            You do not have permission to view this resource or universe pass. If you believe this is an error, please check your subscription status or reach out to support.
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href="/"
-              style={{
-                padding: '14px 32px',
-                borderRadius: 999,
-                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: 16,
-                textDecoration: 'none',
-              }}
+              href="/home"
+              className="flex-1 flex items-center justify-center gap-2 az-btn-primary py-3.5 px-6 rounded-2xl font-bold text-sm tracking-wide shadow-lg hover:shadow-orange-500/20"
             >
-              Go Home
+              <Home className="w-4 h-4" />
+              Return Home
             </Link>
             <Link
               href="/support"
-              style={{
-                padding: '14px 32px',
-                borderRadius: 999,
-                border: '1px solid #2A1A1A',
-                background: 'transparent',
-                color: '#9A8A7A',
-                fontWeight: 600,
-                fontSize: 16,
-                textDecoration: 'none',
-              }}
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl font-semibold text-sm text-white/70 hover:text-white bg-white/10 hover:bg-white/15 border border-white/10 transition-colors"
             >
-              Contact Support
+              <HelpCircle className="w-4 h-4" />
+              Get Support
             </Link>
           </div>
         </div>
       </main>
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

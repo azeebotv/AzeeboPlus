@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 interface Crossover {
@@ -65,7 +65,7 @@ export interface CreateRecapData {
 export class CrossoversService {
   private readonly logger = new Logger(CrossoversService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   private formatCrossover(crossover: Record<string, unknown>): Crossover {
     return {
@@ -153,8 +153,14 @@ export class CrossoversService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get crossovers: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'CROSSOVERS_FETCH_ERROR', message: (error as Error).message } };
+      this.logger.error(
+        `Failed to get crossovers: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'CROSSOVERS_FETCH_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -193,9 +199,15 @@ export class CrossoversService {
 
       return { success: true, data: this.formatCrossover(formattedCrossover) };
     } catch (error) {
-      this.logger.error(`Failed to get crossover by slug: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get crossover by slug: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'CROSSOVER_FETCH_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'CROSSOVER_FETCH_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -248,8 +260,14 @@ export class CrossoversService {
 
       return { success: true, data: this.formatCrossover(formattedCrossover) };
     } catch (error) {
-      this.logger.error(`Failed to create crossover: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'CROSSOVER_CREATE_ERROR', message: (error as Error).message } };
+      this.logger.error(
+        `Failed to create crossover: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'CROSSOVER_CREATE_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -280,12 +298,20 @@ export class CrossoversService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get recaps: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'RECAPS_FETCH_ERROR', message: (error as Error).message } };
+      this.logger.error(
+        `Failed to get recaps: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'RECAPS_FETCH_ERROR', message: (error as Error).message },
+      };
     }
   }
 
-  async getRecapById(id: string): Promise<{ success: boolean; data?: Recap; error?: { code: string; message: string } }> {
+  async getRecapById(
+    id: string
+  ): Promise<{ success: boolean; data?: Recap; error?: { code: string; message: string } }> {
     try {
       const recap = await this.prisma.recap.findUnique({
         where: { id },
@@ -303,13 +329,21 @@ export class CrossoversService {
 
       return { success: true, data: this.formatRecap(recap) };
     } catch (error) {
-      this.logger.error(`Failed to get recap by id: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get recap by id: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'RECAP_FETCH_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'RECAP_FETCH_ERROR', message: (error as Error).message },
+      };
     }
   }
 
-  async createRecap(data: CreateRecapData): Promise<{ success: boolean; data?: Recap; error?: { code: string; message: string } }> {
+  async createRecap(
+    data: CreateRecapData
+  ): Promise<{ success: boolean; data?: Recap; error?: { code: string; message: string } }> {
     try {
       const recap = await this.prisma.recap.create({
         data: {
@@ -328,8 +362,14 @@ export class CrossoversService {
 
       return { success: true, data: this.formatRecap(recap) };
     } catch (error) {
-      this.logger.error(`Failed to create recap: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'RECAP_CREATE_ERROR', message: (error as Error).message } };
+      this.logger.error(
+        `Failed to create recap: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'RECAP_CREATE_ERROR', message: (error as Error).message },
+      };
     }
   }
 }

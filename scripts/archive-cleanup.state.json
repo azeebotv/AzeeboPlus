@@ -1,0 +1,30 @@
+{
+  "azeebo_notification.archive.users_20260908": {
+    "archivedAt": "2026-09-08",
+    "note": "fossil domain tables dropped during Sep-8 drift reconciliation (see docs/DEPRECATION_POLICY.md)"
+  },
+  "azeebo_notification.archive.payment_intents_20260908": {
+    "archivedAt": "2026-09-08",
+    "note": "fossil domain tables dropped during Sep-8 drift reconciliation (see docs/DEPRECATION_POLICY.md)"
+  },
+  "azeebo_notification.archive.refunds_20260908": {
+    "archivedAt": "2026-09-08",
+    "note": "fossil domain tables dropped during Sep-8 drift reconciliation (see docs/DEPRECATION_POLICY.md)"
+  },
+  "azeebo_notification.archive.saved_items_20260908": {
+    "archivedAt": "2026-09-08",
+    "note": "fossil domain tables dropped during Sep-8 drift reconciliation (see docs/DEPRECATION_POLICY.md)"
+  },
+  "azeebo_notification.archive.wallets_20260908": {
+    "archivedAt": "2026-09-08",
+    "note": "fossil domain tables dropped during Sep-8 drift reconciliation (see docs/DEPRECATION_POLICY.md)"
+  },
+  "azeebo_notification.archive.wallet_transactions_20260908": {
+    "archivedAt": "2026-09-08",
+    "note": "fossil domain tables dropped during Sep-8 drift reconciliation (see docs/DEPRECATION_POLICY.md)"
+  },
+  "azeebo_notification.archive.watch_history_20260908": {
+    "archivedAt": "2026-09-08",
+    "note": "fossil domain tables dropped during Sep-8 drift reconciliation (see docs/DEPRECATION_POLICY.md)"
+  }
+}

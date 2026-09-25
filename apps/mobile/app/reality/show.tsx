@@ -10,12 +10,13 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { realityApi } from '../../src/api';
-import { apiClient } from '../../src/api/client';
-import { useWallet } from '../../src/contexts/WalletContext';
+import { realityApi } from '@azeebo/react-data';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { useWallet } from '@azeebo/react-data/contexts/WalletContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { votePackages as defaultVotePackages } from '../../src/config/prices';
-import type { Contestant, RealityShow } from '../../src/types/api';
+import type { Contestant, RealityShow } from '@azeebo/react-data/types/api';
+import { colors } from '../../src/theme';
 
 const VOTE_PACKAGES = defaultVotePackages.reality;
 
@@ -25,7 +26,9 @@ export default function RealityShowPage() {
   const isDark = colorScheme === 'dark';
   const { wallet } = useWallet();
   const [contestants, setContestants] = useState<Contestant[]>([]);
-  const [chatMessages, _setChatMessages] = useState<{ id: string; user: string; message: string; color: string }[]>([]);
+  const [chatMessages, _setChatMessages] = useState<
+    { id: string; user: string; message: string; color: string }[]
+  >([]);
   const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
   const [selectedPackage, setSelectedPackage] = useState(VOTE_PACKAGES[0]);
   const [quantity, setQuantity] = useState(1);
@@ -33,6 +36,7 @@ export default function RealityShowPage() {
   const [showVoting, setShowVoting] = useState(false);
   const [showData, setShowData] = useState<RealityShow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const walletBalance = wallet?.balance || 0;
 
@@ -59,7 +63,11 @@ export default function RealityShowPage() {
         setContestants(contestantsRes.data);
       }
       if (showRes) {
-        setShowData(Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes));
+        setShowData(
+          Array.isArray(showRes)
+            ? showRes[0]
+            : ((showRes as unknown as { data?: unknown[] })?.data?.[0] ?? showRes)
+        );
       }
     } catch (err) {
       setError('Failed to load show data');
@@ -74,11 +82,38 @@ export default function RealityShowPage() {
     }
   };
 
-  const handleVote = () => {
-    if (!selectedContestant || !canAfford) return;
-    Alert.alert('Vote', `Voted ${totalVotes} times for ${selectedContestant.name}!`);
-    setSelectedContestant(null);
-    setShowVoting(false);
+  const handleVote = async () => {
+    if (!selectedContestant || !canAfford || !showData?.id) return;
+    setIsSubmitting(true);
+    try {
+      const response = await realityApi.submitVote({
+        showId: showData.id,
+        contestantId: selectedContestant.id,
+        votes: totalVotes,
+      });
+      if (response.success) {
+        Alert.alert(
+          'Vote Submitted!',
+          `You voted ${totalVotes} times for ${selectedContestant.name}!`,
+          [
+            {
+              text: 'Continue Voting',
+              onPress: () => {
+                setSelectedContestant(null);
+                setQuantity(1);
+              },
+            },
+            { text: 'Done', onPress: () => setShowVoting(false) },
+          ]
+        );
+      } else {
+        throw new Error(response.message || 'Vote submission failed');
+      }
+    } catch (err) {
+      Alert.alert('Vote Failed', err instanceof Error ? err.message : 'Failed to submit vote');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading) {
@@ -198,12 +233,14 @@ export default function RealityShowPage() {
             Live Chat
           </Text>
           <View style={styles.chatMessages}>
-            {chatMessages.map((msg: { id: string; user: string; message: string; color: string }) => (
-              <View key={msg.id} style={styles.chatMessage}>
-                <Text style={[styles.chatUser, { color: msg.color }]}>{msg.user}:</Text>
-                <Text style={styles.chatText}>{msg.message}</Text>
-              </View>
-            ))}
+            {chatMessages.map(
+              (msg: { id: string; user: string; message: string; color: string }) => (
+                <View key={msg.id} style={styles.chatMessage}>
+                  <Text style={[styles.chatUser, { color: msg.color }]}>{msg.user}:</Text>
+                  <Text style={styles.chatText}>{msg.message}</Text>
+                </View>
+              )
+            )}
           </View>
           <View style={styles.chatInput}>
             <TextInput
@@ -248,7 +285,9 @@ export default function RealityShowPage() {
                 >
                   <Text style={styles.packageVotes}>{pkg.votes.toLocaleString()} votes</Text>
                   <Text style={styles.packagePrice}>₦{pkg.price.toLocaleString()}</Text>
-                  {pkg.bonus > 0 && <Text style={styles.packageBonus}>+{pkg.bonus} bonus</Text>}
+                  {pkg.bonus != null && pkg.bonus > 0 && (
+                    <Text style={styles.packageBonus}>+{pkg.bonus} bonus</Text>
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -286,12 +325,12 @@ export default function RealityShowPage() {
             </View>
 
             <TouchableOpacity
-              style={[styles.voteNowButton, !canAfford && styles.disabledButton]}
+              style={[styles.voteNowButton, (!canAfford || isSubmitting) && styles.disabledButton]}
               onPress={handleVote}
-              disabled={!canAfford}
+              disabled={!canAfford || isSubmitting}
             >
               <Text style={styles.voteNowText}>
-                {canAfford ? 'Vote Now' : 'Insufficient Balance'}
+                {isSubmitting ? 'Submitting...' : canAfford ? 'Vote Now' : 'Insufficient Balance'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -317,7 +356,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -353,7 +392,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -406,14 +445,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   quickVoteLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 13,
     fontWeight: '600',
   },
   quickVoteButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -552,7 +591,7 @@ const styles = StyleSheet.create({
   },
   chatText: {
     fontSize: 13,
-    color: '#ccc',
+    color: colors.neutral[300],
     flex: 1,
   },
   chatInput: {
@@ -606,7 +645,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeButton: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 20,
   },
   walletBalanceText: {
@@ -624,7 +663,7 @@ const styles = StyleSheet.create({
   packageCard: {
     width: '48%',
     padding: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 10,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -666,7 +705,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -687,7 +726,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   summaryLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
   },
   summaryValue: {

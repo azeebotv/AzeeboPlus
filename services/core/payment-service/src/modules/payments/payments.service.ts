@@ -1,21 +1,31 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
-import { InitializePaymentDto } from './dto/initialize-payment.dto';
-import { PaystackProvider } from './providers/paystack.provider';
-import { FlutterwaveProvider } from './providers/flutterwave.provider';
-import { WebhookRetryService } from './webhook-retry.service';
-import { RedisService } from '../../common/services/redis.service';
-import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { PrismaService } from '../database/prisma.service.js';
+import { InitializePaymentDto } from './dto/initialize-payment.dto.js';
+import { PaystackProvider } from './providers/paystack.provider.js';
+import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
+import { WebhookRetryService } from './webhook-retry.service.js';
+import { RedisService, CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client/index.js';
 import {
   PaymentResponse,
   InitializePaymentResponse,
   VerifyPaymentResponse,
   TransactionHistoryResponse,
-} from './interfaces/payment-response.interface';
+} from './interfaces/payment-response.interface.js';
 import { toNumber } from '@azeebo/utils';
+import { mapAndThrow } from '@azeebo/security';
+import { FeatureFlagService, paymentFlags } from '@azeebo/feature-flags';
+import { tryUpdatePaymentIntent } from './payment-intent.optimistic-lock.js';
 
 interface ProviderResponse {
   reference: string;
@@ -37,13 +47,14 @@ export class PaymentsService {
   private readonly MIN_PAYMENT_AMOUNT_NGN: number;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly paystackProvider: PaystackProvider,
-    private readonly flutterwaveProvider: FlutterwaveProvider,
-    private readonly webhookRetryService: WebhookRetryService,
-    private readonly redisService: RedisService,
-    private readonly cache: CacheService,
-    private readonly configService: ConfigService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(PaystackProvider) private readonly paystackProvider: PaystackProvider,
+    @Inject(FlutterwaveProvider) private readonly flutterwaveProvider: FlutterwaveProvider,
+    @Inject(WebhookRetryService) private readonly webhookRetryService: WebhookRetryService,
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
@@ -52,6 +63,91 @@ export class PaymentsService {
 
   private getProvider(provider: PaymentProvider) {
     return provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;
+  }
+
+  /**
+   * Resolves the active payment gateway from feature flags. Both providers
+   * default ON so ops can fail over between gateways (or freeze both) without
+   * a deploy. Returns the fallback chain: paystack → flutterwave.
+   *
+   * The evaluation is rollout-aware: the user's id is passed as the bucketing
+   * key, so a stored `rolloutPercentage` on the provider flags performs an A/B
+   * traffic split between gateways (e.g. paystack at 50% routes that share of
+   * users to paystack and the rest to flutterwave, hash-bucketed per user).
+   * Targeted-user lists on the flags also take effect per user.
+   */
+  private async getActiveProvider(userId?: string): Promise<PaymentProvider> {
+    const [paystackEnabled, flutterwaveEnabled] = await Promise.all([
+      this.featureFlagService.isEnabled(paymentFlags.providerPaystack, userId),
+      this.featureFlagService.isEnabled(paymentFlags.providerFlutterwave, userId),
+    ]);
+    if (paystackEnabled) {
+      return 'paystack';
+    }
+    if (flutterwaveEnabled) {
+      return 'flutterwave';
+    }
+    throw new BadRequestException('Payment processing is temporarily unavailable');
+  }
+
+  /**
+   * Initializes a checkout with automatic provider failover.
+   *
+   * Tries the flag-preferred provider (the fallback chain is paystack →
+   * flutterwave); when the primary provider call fails (provider down / 5xx /
+   * circuit breaker open), falls back to the OTHER provider when its flag is
+   * also enabled for the user. The intent is only marked failed when both
+   * providers fail — the primary error is surfaced (not the fallback's) so
+   * the failure the user was actually routed to isn't masked.
+   *
+   * Every failover emits a `payment_provider_failover` analytics event
+   * ({from, to, reason, amount, currency}) so ops can see provider health
+   * degrade before customers do.
+   */
+  private async initializeWithFailover(
+    userId: string,
+    amount: number,
+    currency: string
+  ): Promise<{ provider: PaymentProvider; response: ProviderResponse }> {
+    const active = await this.getActiveProvider(userId);
+
+    try {
+      return {
+        provider: active,
+        response: await this.getProvider(active).initializePayment(amount, currency, userId),
+      };
+    } catch (error: unknown) {
+      const fallback: PaymentProvider = active === 'paystack' ? 'flutterwave' : 'paystack';
+      const fallbackFlag =
+        fallback === 'paystack' ? paymentFlags.providerPaystack : paymentFlags.providerFlutterwave;
+      const fallbackEnabled = await this.featureFlagService.isEnabled(fallbackFlag, userId);
+      if (!fallbackEnabled) {
+        throw error;
+      }
+
+      const reason = error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `Payment provider ${active} failed (${reason}); failing over to ${fallback}`
+      );
+      try {
+        const response = await this.getProvider(fallback).initializePayment(
+          amount,
+          currency,
+          userId
+        );
+        await this.trackAnalyticsEvent('payment_provider_failover', userId, {
+          from: active,
+          to: fallback,
+          reason,
+          amount,
+          currency,
+        });
+        return { provider: fallback, response };
+      } catch {
+        // Both providers down — surface the primary provider's error.
+        throw error;
+      }
+    }
   }
 
   private async trackAnalyticsEvent(
@@ -118,9 +214,19 @@ export class PaymentsService {
 
   async initializePayment(
     userId: string,
-    initializePaymentDto: InitializePaymentDto
+    initializePaymentDto: InitializePaymentDto,
+    kycVerified = false
   ): Promise<InitializePaymentResponse> {
     const { amount, currency, description, metadata, idempotencyKey } = initializePaymentDto;
+
+    // Deposit gating: when payment_kyc_required is on, unverified users are
+    // rejected before any intent is created. Fail-closed (no KYC claim in the
+    // JWT ⇒ blocked), so ops flips this only after KYC is rolled out.
+    if (await this.featureFlagService.isEnabled(paymentFlags.kycRequired, userId)) {
+      if (!kycVerified) {
+        throw new ForbiddenException('KYC verification required before payment');
+      }
+    }
 
     if (amount <= 0) {
       throw new BadRequestException('Amount must be greater than 0');
@@ -133,23 +239,147 @@ export class PaymentsService {
     }
 
     if (idempotencyKey) {
-      const existingPayment = await this.prisma.paymentIntent.findUnique({
-        where: { idempotencyKey },
-      });
-      if (existingPayment) {
+      // First check cache for speed, then DB for consistency
+      const cached = await this.cache.get(idempotencyKey);
+      if (cached) {
+        const existingPayment = await this.prisma.paymentIntent.findUnique({
+          where: { idempotencyKey },
+        });
         const existingStatus =
-          existingPayment.status === 'processing' ? 'pending' : existingPayment.status;
+          existingPayment?.status === 'processing' ? 'pending' : existingPayment?.status;
         return {
           success: true,
           data: {
-            paymentId: existingPayment.id,
+            paymentId: existingPayment?.id ?? '',
             provider: 'paystack',
             checkoutUrl: '',
-            reference: existingPayment.providerReference || '',
-            amount: toNumber(existingPayment.amount.toString()),
-            currency: existingPayment.currency,
+            reference: existingPayment?.providerReference ?? '',
+            amount: Number(existingPayment?.amount ?? 0),
+            currency: existingPayment?.currency ?? 'NGN',
             status: existingStatus as 'pending' | 'completed' | 'failed',
-            createdAt: existingPayment.createdAt.toISOString(),
+            createdAt: existingPayment?.createdAt.toISOString() ?? '',
+          },
+        };
+      }
+
+      // Store short-lived cache to prevent race conditions
+      await this.cache.set(idempotencyKey, 'true', 1800); // 30 min TTL
+    }
+
+    // New checkout flow: when payment_new_checkout_flow is on, the intent gets
+    // a 30-minute session expiry (stored in metadata) and the response carries
+    // it; verifyPayment rejects expired sessions.
+    const newCheckoutFlow = await this.featureFlagService.isEnabled(
+      paymentFlags.newCheckoutFlow,
+      userId
+    );
+    const checkoutExpiresAt = newCheckoutFlow
+      ? new Date(Date.now() + 30 * 60 * 1000).toISOString()
+      : undefined;
+
+    const paymentIntent = await this.prisma.paymentIntent.create({
+      data: {
+        userId,
+        amount,
+        currency: currency || 'NGN',
+        status: 'pending',
+        description,
+        // Prisma.InputJsonValue cast is required because Prisma's JSON type is overly restrictive
+        metadata: {
+          ...(metadata || {}),
+          ...(checkoutExpiresAt ? { checkoutExpiresAt } : {}),
+        } as Prisma.InputJsonValue,
+        idempotencyKey,
+      },
+    });
+
+    try {
+      const { provider: activeProvider, response: providerResponse } =
+        await this.initializeWithFailover(userId, amount, currency || 'NGN');
+
+      const marked = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
+          providerReference: providerResponse.reference,
+          status: 'processing',
+        }
+      );
+      if (!marked) {
+        // The intent was just created by this call, so a stale write means
+        // something else raced it — surface the conflict instead of proceeding.
+        throw new ConflictException(
+          'Payment intent was modified concurrently; retry initialization'
+        );
+      }
+
+      return {
+        success: true,
+        data: {
+          paymentId: paymentIntent.id,
+          provider: activeProvider,
+          checkoutUrl: providerResponse.authorizationUrl,
+          reference: providerResponse.reference,
+          amount,
+          currency: currency || 'NGN',
+          status: 'pending',
+          createdAt: paymentIntent.createdAt.toISOString(),
+          ...(checkoutExpiresAt ? { expiresAt: checkoutExpiresAt } : {}),
+        },
+      };
+    } catch (error: unknown) {
+      const markedFailed = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
+          status: 'failed',
+        }
+      );
+      if (!markedFailed) {
+        this.logger.warn(
+          `Payment intent ${paymentIntent.id} was modified concurrently; skipped failed-mark`
+        );
+      }
+
+      mapAndThrow(error, 'initializing payment');
+    }
+  }
+
+  /**
+   * Intents API (`payment_intents_api` flag): creates a payment intent WITHOUT
+   * calling the provider — deferred authorization. The client later confirms
+   * via confirmIntent to get the provider checkout URL. Fail-closed gate: the
+   * intent is only created when the flag is on.
+   */
+  async createIntent(
+    userId: string,
+    initializePaymentDto: InitializePaymentDto
+  ): Promise<PaymentResponse> {
+    const { amount, currency, description, metadata, idempotencyKey } = initializePaymentDto;
+
+    if (amount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    const intentsEnabled = await this.featureFlagService.isEnabled(paymentFlags.intentsApi, userId);
+    if (!intentsEnabled) {
+      throw new ForbiddenException('Payment intents API is not enabled');
+    }
+
+    if (idempotencyKey) {
+      const existing = await this.prisma.paymentIntent.findUnique({
+        where: { idempotencyKey },
+      });
+      if (existing) {
+        return {
+          success: true,
+          data: {
+            intentId: existing.id,
+            status: existing.status === 'processing' ? 'requires_confirmation' : existing.status,
+            amount: Number(existing.amount),
+            currency: existing.currency,
           },
         };
       }
@@ -160,7 +390,7 @@ export class PaymentsService {
         userId,
         amount,
         currency: currency || 'NGN',
-        status: 'pending',
+        status: 'requires_payment',
         description,
         // Prisma.InputJsonValue cast is required because Prisma's JSON type is overly restrictive
         metadata: (metadata || {}) as Prisma.InputJsonValue,
@@ -168,44 +398,75 @@ export class PaymentsService {
       },
     });
 
-    try {
-      const providerResponse: ProviderResponse = await this.paystackProvider.initializePayment(
-        amount,
-        currency || 'NGN',
-        userId
-      );
+    return {
+      success: true,
+      data: {
+        intentId: paymentIntent.id,
+        status: 'requires_payment',
+        amount: Number(paymentIntent.amount),
+        currency: paymentIntent.currency,
+        createdAt: paymentIntent.createdAt.toISOString(),
+      },
+    };
+  }
 
-      await this.prisma.paymentIntent.update({
-        where: { id: paymentIntent.id },
-        data: {
+  /**
+   * Intents API: confirms a previously created intent by calling the active
+   * provider, returning the checkout URL the client redirects to.
+   */
+  async confirmIntent(userId: string, intentId: string): Promise<PaymentResponse> {
+    const paymentIntent = await this.prisma.paymentIntent.findUnique({
+      where: { id: intentId },
+    });
+
+    if (!paymentIntent) {
+      throw new NotFoundException('Payment intent not found');
+    }
+    if (paymentIntent.userId !== userId) {
+      throw new BadRequestException('Invalid payment intent for user');
+    }
+    if (paymentIntent.status !== 'requires_payment') {
+      throw new BadRequestException('Payment intent is not awaiting confirmation');
+    }
+
+    try {
+      const { provider: activeProvider, response: providerResponse } =
+        await this.initializeWithFailover(
+          userId,
+          Number(paymentIntent.amount),
+          paymentIntent.currency
+        );
+
+      const marked = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
           providerReference: providerResponse.reference,
           status: 'processing',
-        },
-      });
+        }
+      );
+      if (!marked) {
+        // A concurrent confirm already transitioned this intent — reject the
+        // stale confirmation (the provider initialize call is idempotent, but
+        // the intent bookkeeping must not be double-written).
+        throw new ConflictException('Payment intent was modified concurrently; retry confirmation');
+      }
 
       return {
         success: true,
         data: {
-          paymentId: paymentIntent.id,
-          provider: 'paystack',
+          intentId: paymentIntent.id,
+          provider: activeProvider,
           checkoutUrl: providerResponse.authorizationUrl,
           reference: providerResponse.reference,
-          amount,
-          currency: currency || 'NGN',
-          status: 'pending',
-          createdAt: paymentIntent.createdAt.toISOString(),
+          status: 'requires_confirmation',
         },
       };
     } catch (error: unknown) {
-      await this.prisma.paymentIntent.update({
-        where: { id: paymentIntent.id },
-        data: {
-          status: 'failed',
-        },
-      });
-
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Payment initialization failed: ${errorMessage}`);
+      // mapAndThrow rethrows the in-try stale-write Conflict unchanged, so the
+      // client still retries against current state instead of a generic 400.
+      mapAndThrow(error, 'confirming payment intent');
     }
   }
 
@@ -220,6 +481,17 @@ export class PaymentsService {
 
     if (paymentIntent.userId !== userId) {
       throw new BadRequestException('Invalid payment for user');
+    }
+
+    // New checkout flow sessions expire 30 minutes after initialization.
+    const metadataJson = (paymentIntent.metadata ?? {}) as Record<string, unknown>;
+    if (metadataJson.checkoutExpiresAt) {
+      const expiresAt = new Date(metadataJson.checkoutExpiresAt as string).getTime();
+      if (Number.isNaN(expiresAt) || expiresAt < Date.now()) {
+        throw new BadRequestException(
+          'Checkout session has expired, please initialize a new payment'
+        );
+      }
     }
 
     if (paymentIntent.status === 'completed') {
@@ -238,13 +510,44 @@ export class PaymentsService {
       };
     }
 
+    // SECURITY: Use a distributed lock to prevent double-crediting from concurrent verify calls.
+    const lockKey = `payment_verify_lock:${paymentIntent.id}`;
+    const lockAcquired = await this.redisService.setIfNotExists(lockKey, '1', 60);
+    if (!lockAcquired) {
+      this.logger.warn(
+        `Payment ${paymentIntent.id} verification is being processed by another request, skipping`
+      );
+      // Re-check status after lock contention — another request may have completed it
+      const freshIntent = await this.prisma.paymentIntent.findUnique({
+        where: { id: paymentIntent.id },
+      });
+      if (freshIntent?.status === 'completed') {
+        return {
+          success: true,
+          data: {
+            paymentId: paymentIntent.id,
+            provider: 'paystack',
+            reference: freshIntent.providerReference || '',
+            status: 'completed',
+            amount: toNumber(freshIntent.amount.toString()),
+            currency: freshIntent.currency,
+            paidAt: freshIntent.completedAt?.toISOString(),
+            transactionId: freshIntent.providerReference || undefined,
+          },
+        };
+      }
+      throw new BadRequestException('Payment verification already in progress');
+    }
+
     try {
       const providerReference = paymentIntent.providerReference;
       if (!providerReference) {
         throw new BadRequestException('Payment provider reference not found');
       }
 
-      const providerResponse = await this.paystackProvider.verifyPayment(providerReference);
+      const activeProvider = await this.getActiveProvider(userId);
+      const providerResponse =
+        await this.getProvider(activeProvider).verifyPayment(providerReference);
 
       if (providerResponse.status === 'success') {
         await this.creditWallet(
@@ -254,15 +557,39 @@ export class PaymentsService {
           providerReference
         );
 
+        // Optimistic-concurrency claim on the version column: only the writer
+        // whose read is still current may transition to 'completed' (and thus
+        // be the one that reports success). A stale claim means a concurrent
+        // writer already transitioned the intent.
+        let claimed = false;
         await this.prisma.$transaction(async (tx) => {
-          await tx.paymentIntent.update({
-            where: { id: paymentIntent.id },
-            data: {
-              status: 'completed',
-              completedAt: new Date(),
-            },
+          claimed = await tryUpdatePaymentIntent(tx, paymentIntent.id, paymentIntent.version, {
+            status: 'completed',
+            completedAt: new Date(),
           });
         });
+        if (!claimed) {
+          const fresh = await this.prisma.paymentIntent.findUnique({
+            where: { id: paymentIntent.id },
+          });
+          if (fresh?.status === 'completed') {
+            // A concurrent request completed + credited it — idempotent success.
+            return {
+              success: true,
+              data: {
+                paymentId: fresh.id,
+                provider: 'paystack',
+                reference: fresh.providerReference || '',
+                status: 'completed',
+                amount: toNumber(fresh.amount.toString()),
+                currency: fresh.currency,
+                paidAt: fresh.completedAt?.toISOString(),
+                transactionId: fresh.providerReference || undefined,
+              },
+            };
+          }
+          throw new ConflictException('Payment was modified concurrently; retry verification');
+        }
 
         await this.trackAnalyticsEvent('payment_success', userId, {
           paymentId: paymentIntent.id,
@@ -290,15 +617,28 @@ export class PaymentsService {
 
       throw new BadRequestException('Payment verification failed');
     } catch (error: unknown) {
-      await this.prisma.paymentIntent.update({
-        where: { id: paymentIntent.id },
-        data: {
+      // A stale-write Conflict must not be swallowed by the generic failure
+      // path — and must not get a stale failed-mark either.
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      const markedFailed = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
           status: 'failed',
-        },
-      });
+        }
+      );
+      if (!markedFailed) {
+        this.logger.warn(
+          `Payment intent ${paymentIntent.id} was modified concurrently; skipped failed-mark`
+        );
+      }
 
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Payment verification failed: ${errorMessage}`);
+      mapAndThrow(error, 'verifying payment');
+    } finally {
+      await this.redisService.del(lockKey);
     }
   }
 
@@ -374,7 +714,7 @@ export class PaymentsService {
     }
 
     const paymentProvider = this.getProvider(provider);
-    const isValid = paymentProvider.verifyWebhookSignature(body, signature);
+    const isValid = paymentProvider.verifyWebhookSignature(JSON.stringify(body), signature);
 
     if (!isValid) {
       throw new BadRequestException('Invalid webhook signature');
@@ -517,7 +857,8 @@ export class PaymentsService {
     });
 
     try {
-      const providerResponse = await this.paystackProvider.processRefund(
+      const activeProvider = await this.getActiveProvider(userId);
+      const providerResponse = await this.getProvider(activeProvider).processRefund(
         paymentIntent.providerReference!,
         reason
       );
@@ -538,12 +879,12 @@ export class PaymentsService {
           },
         });
 
-        await tx.paymentIntent.update({
-          where: { id: paymentIntent.id },
-          data: {
-            refundAmount: paymentIntent.amount,
-          },
+        const marked = await tryUpdatePaymentIntent(tx, paymentIntent.id, paymentIntent.version, {
+          refundAmount: paymentIntent.amount,
         });
+        if (!marked) {
+          throw new ConflictException('Payment intent was modified concurrently; retry the refund');
+        }
       });
 
       await this.trackAnalyticsEvent('refund_completed', userId, {
@@ -572,8 +913,7 @@ export class PaymentsService {
         },
       });
 
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(`Refund failed: ${errorMessage}`);
+      mapAndThrow(error, 'processing refund');
     }
   }
 
@@ -623,15 +963,23 @@ export class PaymentsService {
         provider
       );
 
+      // Optimistic-concurrency claim: only the writer whose read is current
+      // may transition to 'completed'. The wallet credit above is idempotent
+      // (deduped by reference at the wallet service), so a stale claim just
+      // means a concurrent writer already completed this payment — skip.
+      let claimed = false;
       await this.prisma.$transaction(async (tx) => {
-        await tx.paymentIntent.update({
-          where: { id: paymentIntent.id },
-          data: {
-            status: 'completed',
-            completedAt: new Date(),
-          },
+        claimed = await tryUpdatePaymentIntent(tx, paymentIntent.id, paymentIntent.version, {
+          status: 'completed',
+          completedAt: new Date(),
         });
       });
+      if (!claimed) {
+        this.logger.warn(
+          `Payment ${paymentIntent.id} was completed by a concurrent writer; skipping`
+        );
+        return;
+      }
 
       await this.trackAnalyticsEvent('payment_success', paymentIntent.userId, {
         paymentId: paymentIntent.id,
@@ -654,12 +1002,22 @@ export class PaymentsService {
     });
 
     if (paymentIntent) {
-      await this.prisma.paymentIntent.update({
-        where: { id: paymentIntent.id },
-        data: {
+      const marked = await tryUpdatePaymentIntent(
+        this.prisma,
+        paymentIntent.id,
+        paymentIntent.version,
+        {
           status: 'failed',
-        },
-      });
+        }
+      );
+      if (!marked) {
+        // A concurrent writer (e.g. charge.success) already transitioned the
+        // intent — don't clobber a completed row with a stale failed-mark.
+        this.logger.warn(
+          `Payment intent ${paymentIntent.id} was modified concurrently; skipped failed-mark`
+        );
+        return;
+      }
 
       await this.trackAnalyticsEvent('payment_failed', paymentIntent.userId, {
         paymentId: paymentIntent.id,

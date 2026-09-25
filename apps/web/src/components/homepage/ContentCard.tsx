@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import type { ContentItem } from '@/lib/api';
 import analytics from '@/lib/analytics';
@@ -30,6 +31,7 @@ export default function ContentCard({
   showProgress = false,
   size = 'md',
 }: ContentCardProps): React.JSX.Element {
+  const { t } = useTranslation();
   const cardRef = useRef<HTMLDivElement>(null);
   const { width, height } = SIZE_MAP[size];
 
@@ -38,7 +40,9 @@ export default function ContentCard({
   };
 
   const thumbnailSrc =
-    item.mediaAsset?.thumbnailUrl || item.thumbnail || '/placeholder-content.png';
+    item.mediaAsset?.thumbnailUrl ||
+    item.thumbnail ||
+    'https://placehold.co/800x600/1a1a1a/ffffff?text=Azeebo%2B';
 
   return (
     <motion.div
@@ -52,15 +56,16 @@ export default function ContentCard({
       <Link
         href={`/watch/${item.id}`}
         onClick={handleClick}
-        className="block rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]"
-        aria-label={`Watch ${item.title}`}
+        className="block rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)] transition-all duration-300"
+        aria-label={t('content.watchLabel', { title: item.title })}
       >
         <div
-          className="relative overflow-hidden rounded-xl"
+          className="relative overflow-hidden rounded-xl border transition-all duration-300 group-hover:border-[rgba(232,66,10,0.5)] group-hover:shadow-[0_8px_30px_rgba(232,66,10,0.18)]"
           style={{
             width,
             height,
-            background: 'var(--brand-surface)',
+            background: 'var(--hp-card-bg)',
+            borderColor: 'var(--hp-card-border)',
           }}
         >
           <OptimizedImage
@@ -75,7 +80,10 @@ export default function ContentCard({
           {item.duration && (
             <span
               className="absolute bottom-2 right-2 text-xs font-semibold px-1.5 py-0.5 rounded bg-black/70 text-white"
-              aria-label={`${Math.floor(item.duration / 60)} minutes ${item.duration % 60} seconds`}
+              aria-label={t('content.durationAria', {
+                minutes: Math.floor(item.duration / 60),
+                seconds: item.duration % 60,
+              })}
             >
               {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
             </span>
@@ -85,7 +93,7 @@ export default function ContentCard({
           {item.universe?.icon && (
             <span
               className="absolute top-2 left-2 text-sm px-1.5 py-0.5 rounded-md bg-black/50"
-              aria-label={`Universe: ${item.universe.name}`}
+              aria-label={t('content.universeAria', { name: item.universe.name })}
             >
               {item.universe.icon}
             </span>
@@ -99,7 +107,7 @@ export default function ContentCard({
               aria-valuenow={Math.round(progress * 100)}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label={`${Math.round(progress * 100)}% watched`}
+              aria-label={t('content.watchedAria', { percent: Math.round(progress * 100) })}
             >
               <div
                 className="h-full rounded-r-full"

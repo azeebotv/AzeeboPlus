@@ -1,29 +1,16 @@
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+import { JwtConfigModule, RedisModule } from '@azeebo/shared-services';
 
-import { WalletController } from './wallet.controller';
-import { WalletService } from './wallet.service';
-import { WalletRepository } from './wallet.repository';
-import { DatabaseModule } from '../database/database.module';
+import { WalletController } from './wallet.controller.js';
+import { WalletService } from './wallet.service.js';
+import { WalletRepository } from './wallet.repository.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
-  imports: [
-    ConfigModule,
-    DatabaseModule,
-    PassportModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
-        },
-      }),
-      inject: [ConfigService],
-    }),
-  ],
+  // RedisModule is required so WalletService can inject RedisService (it is
+  // NOT global — CacheModule only re-exports CacheService/CacheInterceptor).
+  imports: [ConfigModule, DatabaseModule, JwtConfigModule, RedisModule],
   controllers: [WalletController],
   providers: [WalletService, WalletRepository],
   exports: [WalletService, WalletRepository, DatabaseModule],

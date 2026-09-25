@@ -1,23 +1,40 @@
 {
   "name": "@azeebo/feature-flags",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Feature flag system for Azeebo+ services",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js",
+      "require": "./dist/browser.js",
+      "default": "./dist/browser.js"
+    },
+    "./registries": {
+      "types": "./dist/registries.d.ts",
+      "import": "./dist/registries.js",
+      "require": "./dist/registries.js",
+      "default": "./dist/registries.js"
+    },
+    "./package.json": "./package.json",
+    "./*": "./dist/*.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "bash ../../scripts/build-package.sh",
     "clean": "rm -rf dist",
     "test": "jest --passWithNoTests",
     "lint": "eslint src"
   },
   "dependencies": {
+    "@azeebo/shared-types": "workspace:*",
     "ioredis": "^5.11.1"
   },
   "devDependencies": {
@@ -28,6 +45,7 @@
     "typescript": "^5.8.4"
   },
   "peerDependencies": {
-    "@nestjs/common": "^11.1.27"
+    "@nestjs/common": "^11.1.27",
+    "@nestjs/core": "^11.1.27"
   }
 }

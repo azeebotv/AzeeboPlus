@@ -6,8 +6,13 @@ module.exports = {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!uuid)',
+    '/node_modules/(?!.*\.pnpm/(htmlparser2|domhandler|domutils|dom-serializer|entities|sanitize-html|css-select|boolbase|css-what|nth-check)/)',
+    '/packages/validation(?!.*sanitize)',
   ],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^sanitize-html$': '<rootDir>/__mocks__/sanitize-html.ts',
+  },
   collectCoverageFrom: [
     '**/*.(t|j)s',
     '!main.ts',

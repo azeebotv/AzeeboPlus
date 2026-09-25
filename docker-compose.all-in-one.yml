@@ -2,7 +2,7 @@
 # Azeebo+ All-in-One — Coolify Deployment
 # ============================================================
 # Single container running everything: PostgreSQL, Redis,
-# PgBouncer, all 25+ microservices, and all 3 frontends.
+# PgBouncer, all 28 microservices, and all 4 frontends.
 #
 # Usage in Coolify:
 #   1. Create a new project → "Docker Compose" type
@@ -17,7 +17,13 @@
 services:
   azeebo:
     image: ghcr.io/azeebotv/azeebo-all-in-one:dev
-    pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile.all-in-one
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3013}
+        CACHEBUST: ${CACHEBUST:-local}
+    pull_policy: never
     container_name: azeebo-all-in-one
     labels:
       - "azeebo.service=all-in-one"
@@ -49,12 +55,15 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30m}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      GATEWAY_SECRET: ${GATEWAY_SECRET:-${INTERNAL_API_KEY}}
 
       # Payment
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
       PAYSTACK_WEBHOOK_SECRET: ${PAYSTACK_WEBHOOK_SECRET:-}
       FLW_SECRET_KEY: ${FLW_SECRET_KEY:-}
       FLW_WEBHOOK_SECRET: ${FLW_WEBHOOK_SECRET:-}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
 
       # Email
       SMTP_HOST: ${SMTP_HOST:-}
@@ -80,6 +89,22 @@ services:
       API_GATEWAY_URL: http://localhost:3013
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:80,https://localhost:443,https://app.azeeboplus.com}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:80,https://localhost:443,https://app.azeeboplus.com}
+
+      # Analytics (NEW - required for event tracking)
+      ANALYTICS_SERVICE_URL: http://localhost:3008
+
+      # WebSocket (NEW - required for messaging/realtime)
+      WS_CORS_ORIGIN: ${WS_CORS_ORIGIN:-https://app.azeeboplus.com}
+
+      # Feature Flags (NEW - required for content-service)
+      FEATURE_FLAG_REDIS_URL: redis://:${REDIS_PASSWORD}@localhost:6379
+
+      # Event Bus (NEW - required for wallet-service)
+      EVENT_BUS_REDIS_URL: redis://:${REDIS_PASSWORD}@localhost:6379
+
+      # OpenTelemetry (NEW - required for observability)
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://localhost:4318}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-azeebo-platform}
 
       # DB Passwords (all default to POSTGRES_PASSWORD if not set)
       AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-${POSTGRES_PASSWORD}}
@@ -108,28 +133,28 @@ services:
       MESSAGING_DB_PASSWORD: ${MESSAGING_DB_PASSWORD:-${POSTGRES_PASSWORD}}
       REFERRAL_DB_PASSWORD: ${REFERRAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}
       SUBSCRIPTION_DB_PASSWORD: ${SUBSCRIPTION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      LIVE_EVENT_DB_PASSWORD: ${LIVE_EVENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      KNOWLEDGE_DB_PASSWORD: ${KNOWLEDGE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
       ADMIN_DB_PASSWORD: ${ADMIN_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-      CREATOR_PORTAL_DB_PASSWORD: ${CREATOR_PORTAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}
 
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - redis-data:/var/lib/redis
 
-    # Restart policy: unless-stopped (not always) allows manual `docker stop`
-    # for maintenance without Docker auto-restarting the container.
-    # For critical infra (DB, Redis, nginx) in multi-service setups use
-    # restart: always, but in this all-in-one config the single container
-    # covers everything, so unless-stopped is the right trade-off.
     restart: unless-stopped
     shm_size: 1g
+    stop_grace_period: 60s
+
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3013/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 300s
+
     deploy:
       resources:
         limits:
-          # 12GB for the single container running PostgreSQL (~1GB), Redis (~500MB),
-          # Nginx (~50MB), PgBouncer (~50MB), and 27+ Node.js services each limited
-          # to 512MB heap via NODE_OPTIONS="--max-old-space-size=512" in service
-          # wrapper scripts. Actual RSS per Node service averages 150-300MB, with
-          # burst up to 512MB under load. 12GB provides comfortable headroom.
           memory: 12G
           cpus: "4.0"
 

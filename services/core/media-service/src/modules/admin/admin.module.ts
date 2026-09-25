@@ -1,26 +1,12 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtConfigModule } from '@azeebo/shared-services';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { UploadModule } from '../upload/upload.module';
 import { CommonModule } from '../../common/common.module';
 
 @Module({
-  imports: [
-    UploadModule,
-    CommonModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
-        },
-      }),
-      inject: [ConfigService],
-    }),
-  ],
+  imports: [UploadModule, CommonModule, JwtConfigModule],
   controllers: [AdminController],
   providers: [AdminService],
 })

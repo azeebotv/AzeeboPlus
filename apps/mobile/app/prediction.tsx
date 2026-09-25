@@ -12,14 +12,13 @@ import {
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '../src/theme';
-import { engagementApi, PredictionResult } from '../src/api/engagement';
-import type { RealityShow } from '../src/types/api';
-import { walletApi } from '../src/api/wallet';
-import { apiClient } from '../src/api/client';
-import { logger } from '../src/utils/logger';
+import { engagementApi, PredictionResult } from '@azeebo/react-data/api/engagement';
+import type { RealityShow } from '@azeebo/react-data/types/api';
+import { walletApi } from '@azeebo/react-data/api/wallet';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
-
-const _PLACEHOLDER_IMAGE = '';
+import { analytics } from '../src/utils/analytics';
 
 const leaderboardData = [
   { rank: 1, avatar: '👑', name: 'PredatorKing', points: 15000 },
@@ -69,7 +68,11 @@ export default function PredictionScreen() {
       }
 
       if (showRes) {
-        setShowData(Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes));
+        setShowData(
+          Array.isArray(showRes)
+            ? showRes[0]
+            : ((showRes as unknown as { data?: unknown[] })?.data?.[0] ?? showRes)
+        );
       }
     } catch (err) {
       logger.error('Failed to load prediction data:', err);
@@ -104,6 +107,7 @@ export default function PredictionScreen() {
       }
       setUserPoints((prev) => prev - betAmount);
       setBetSuccess(true);
+      analytics.realityPredictionSubmitted(showName, selectedOption || '');
       setTimeout(() => {
         setShowConfirmation(false);
         setBetSuccess(false);

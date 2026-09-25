@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
-import { CreateContentDto } from './dto/create-content.dto';
+import { Inject, Injectable } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service.js';
+import { Prisma } from '../../prisma/client/index.js';
+import { CreateContentDto } from './dto/create-content.dto.js';
 
 interface CommentEntity {
   id: string;
@@ -29,7 +29,7 @@ interface PaginatedResult<T> {
 
 @Injectable()
 export class ContentRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findAll(
     filters?: { universe?: string; creatorId?: string; status?: string },
@@ -93,7 +93,7 @@ export class ContentRepository {
     };
 
     return this.prisma.contentItem.create({
-      data: createData,
+      data: createData as Prisma.ContentItemUncheckedCreateInput,
       include: { universe: true },
     });
   }
@@ -144,14 +144,24 @@ export class ContentRepository {
     };
   }
 
-  async addComment(contentId: string, userId: string, text: string): Promise<CommentEntity> {
+  async addComment(
+    contentId: string,
+    userId: string,
+    text: string,
+    parentId?: string
+  ): Promise<CommentEntity> {
     return this.prisma.comment.create({
       data: {
         contentId,
         userId,
         text,
+        ...(parentId ? { parentId } : {}),
       },
     }) as Promise<CommentEntity>;
+  }
+
+  async findCommentById(id: string): Promise<CommentEntity | null> {
+    return this.prisma.comment.findUnique({ where: { id } }) as Promise<CommentEntity | null>;
   }
 
   async getAnalytics(contentId: string): Promise<AnalyticsResult> {

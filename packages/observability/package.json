@@ -7,16 +7,18 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "bash ../../scripts/build-package.sh",
     "clean": "rm -rf dist",
     "test": "jest",
     "test:cov": "jest --coverage",
-    "lint": "eslint src --fix"
+    "lint": "eslint src"
   },
   "dependencies": {},
   "peerDependencies": {
@@ -25,8 +27,6 @@
     "@nestjs/config": "^4.0.4"
   },
   "devDependencies": {
-    "@nestjs/common": "^11.1.27",
-    "@nestjs/config": "^4.0.4",
     "@types/jest": "^29.5.0",
     "@types/node": "^25.9.3",
     "jest": "^29.7.0",

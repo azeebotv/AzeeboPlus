@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { MediaService } from './media.service';
-import { TranscodingService } from './transcoding.service';
+import { MediaService } from './media.service.js';
+import { TranscodingService } from './transcoding.service.js';
 
 @Module({
   imports: [ConfigModule],

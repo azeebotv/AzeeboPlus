@@ -134,33 +134,36 @@ describe('CacheService', () => {
   describe('deleteByPattern', () => {
     it('should delete multiple keys matching pattern', async () => {
       const mockClient = {
-        keys: jest.fn().mockResolvedValue(['key1', 'key2', 'key3']),
+        scan: jest.fn().mockResolvedValue(['0', ['key1', 'key2', 'key3']]),
         del: jest.fn().mockResolvedValue(3),
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       redisService.getClient.mockResolvedValue(mockClient as any);
 
       await service.deleteByPattern('prefix:*');
 
-      expect(mockClient.keys).toHaveBeenCalledWith('prefix:*');
+      expect(mockClient.scan).toHaveBeenCalledWith('0', 'MATCH', 'prefix:*', 'COUNT', 100);
       expect(mockClient.del).toHaveBeenCalledWith('key1', 'key2', 'key3');
     });
 
     it('should handle empty key list', async () => {
       const mockClient = {
-        keys: jest.fn().mockResolvedValue([]),
+        scan: jest.fn().mockResolvedValue(['0', []]),
         del: jest.fn(),
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       redisService.getClient.mockResolvedValue(mockClient as any);
 
       await service.deleteByPattern('prefix:*');
 
-      expect(mockClient.keys).toHaveBeenCalled();
+      expect(mockClient.scan).toHaveBeenCalled();
       expect(mockClient.del).not.toHaveBeenCalled();
     });
   });
 
   describe('invalidate', () => {
     it('should call deleteByPattern', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const deleteByPatternSpy = jest.spyOn(service as any, 'deleteByPattern');
 
       await service.invalidate('prefix:*');

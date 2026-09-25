@@ -1,11 +1,16 @@
-import { IsString, IsOptional, IsBoolean, IsObject, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsArray, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Prisma } from '../../../generated/prisma';
 
 export class UpdateSettingDto {
-  @ApiPropertyOptional({ description: 'Setting value (can be any JSON-serializable value)' })
+  /**
+   * Any JSON-serializable value. Stored settings are scalars in practice
+   * (booleans like maintenance_mode, numbers like otp_expiry_minutes, plain
+   * strings) — the old @IsObject() decorator rejected every one of them,
+   * making ALL settings edits fail with 400 before this was relaxed.
+   */
+  @ApiPropertyOptional({ description: 'Setting value (any JSON-serializable value)' })
   @IsOptional()
-  @IsObject()
   value?: Prisma.InputJsonValue;
 
   @ApiPropertyOptional({ description: 'Category for grouping settings' })

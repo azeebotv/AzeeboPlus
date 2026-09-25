@@ -1,15 +1,20 @@
 name: Build & Push All-in-One Image
 
+# This workflow builds and pushes the all-in-one Docker image.
+# It triggers on Dev-Branch which is the integration branch used for
+# building the consolidated all-in-one image used in smoke tests and
+# staging pre-validation. This is intentional — it does NOT replace
+# the main CI/CD pipeline triggered from main/develop branches.
 on:
   push:
-    branches: [Dev-Branch]
+    branches: [Dev-Branch, Major-Upgrade]
   workflow_dispatch:
     inputs:
       no_cache:
         description: "Force full rebuild (skip all cache)"
         required: false
         type: boolean
-        default: false
+        default: true
 
 env:
   REGISTRY: ghcr.io
@@ -18,13 +23,26 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       packages: write
 
     steps:
+      - name: Free disk space
+        run: |
+          echo "==> Freeing disk space before build..."
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/share/swift
+          sudo apt-get clean
+          df -h
+
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@v4
 
       - name: Print build info
         run: |
@@ -33,10 +51,10 @@ jobs:
           echo "No-cache: ${{ inputs.no_cache || false }}"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc637b64a0f23d2c89 # v3.7.1
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -44,7 +62,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -53,46 +71,142 @@ jobs:
 
       - name: Build and push (cached)
         if: ${{ !inputs.no_cache }}
-        uses: docker/build-push-action@5cd11c3a4ced0cb55f796551abcdecee4a88e7de # v6.10.0
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.all-in-one
+          file: ./Dockerfile.all-in-one
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            CACHEBUST=${{ github.sha }}
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://app.azeeboplus.com' }}
-            NEXT_PUBLIC_BASE_URL=${{ vars.NEXT_PUBLIC_BASE_URL || '' }}
-            NEXT_PUBLIC_AUTH_URL=${{ vars.NEXT_PUBLIC_AUTH_URL || 'https://app.azeeboplus.com' }}
-            NEXT_PUBLIC_STRIPE_PUBLIC_KEY=${{ vars.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || '' }}
-            NEXT_PUBLIC_FIREBASE_API_KEY=${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY || '' }}
-            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '' }}
-            NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '' }}
-            NEXT_PUBLIC_SENTRY_DSN=${{ vars.NEXT_PUBLIC_SENTRY_DSN || '' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://staging.azeeboplus.com' }}
 
       - name: Build and push (no cache)
         if: ${{ inputs.no_cache }}
-        uses: docker/build-push-action@5cd11c3a4ced0cb55f796551abcdecee4a88e7de # v6.10.0
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.all-in-one
+          file: ./Dockerfile.all-in-one
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: ''
+          cache-to: ''
           no-cache: true
           build-args: |
-            CACHEBUST=${{ github.sha }}
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://app.azeeboplus.com' }}
-            NEXT_PUBLIC_BASE_URL=${{ vars.NEXT_PUBLIC_BASE_URL || '' }}
-            NEXT_PUBLIC_AUTH_URL=${{ vars.NEXT_PUBLIC_AUTH_URL || 'https://app.azeeboplus.com' }}
-            NEXT_PUBLIC_STRIPE_PUBLIC_KEY=${{ vars.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || '' }}
-            NEXT_PUBLIC_FIREBASE_API_KEY=${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY || '' }}
-            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '' }}
-            NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '' }}
-            NEXT_PUBLIC_SENTRY_DSN=${{ vars.NEXT_PUBLIC_SENTRY_DSN || '' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://staging.azeeboplus.com' }}
 
-      - name: Print image URI
-        run: echo "Image pushed to ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev"
+      - name: Print image info
+        run: |
+          echo "✅ Build complete!"
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev"
+          echo "Tags: ${{ steps.meta.outputs.tags }}"
+
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    timeout-minutes: 15
+    steps:
+      - name: Test image starts and health endpoint responds
+        run: |
+          echo "==> Pulling image..."
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev
+
+          echo "==> Starting container..."
+          JWT_ACCESS=$(openssl rand -hex 32)
+          JWT_REFRESH=$(openssl rand -hex 32)
+          GATEWAY_SEC=$(openssl rand -hex 32)
+          INTERNAL_KEY=$(openssl rand -hex 16)
+          docker run -d --name smoke-test \
+            -e NODE_ENV=production \
+            -e ALL_IN_ONE=true \
+            -e POSTGRES_PASSWORD=smoke_test_password \
+            -e REDIS_PASSWORD=smoke_test_password \
+            -e "JWT_ACCESS_SECRET=${JWT_ACCESS}" \
+            -e "JWT_REFRESH_SECRET=${JWT_REFRESH}" \
+            -e "GATEWAY_SECRET=${GATEWAY_SEC}" \
+            -e "INTERNAL_API_KEY=${INTERNAL_KEY}" \
+            -p 3013:3013 \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev"
+
+          echo "==> Waiting for container to initialize (polling up to 300s)..."
+          HEALTH_OK=""
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3013/health > /dev/null 2>&1; then
+              echo "✅ Health endpoint OK after ~$((i * 10))s"
+              HEALTH_OK=1
+              break
+            fi
+            echo "⏳ Attempt $i/30 — waiting for migrations + service startup... (${i}0s elapsed)"
+            sleep 10
+          done
+          if [ -z "$HEALTH_OK" ]; then
+            echo "❌ Health check failed after 300s"
+            docker logs smoke-test 2>&1 | tail -50
+            docker stop smoke-test
+            docker rm smoke-test
+            exit 1
+          fi
+
+      - name: Test API traffic through gateway
+        run: |
+          BASE="http://localhost:3013"
+          EMAIL="smoke.$(date +%s)@azeebotv.dev"
+          PASS="SmokeTest!2026"
+          fail() {
+            echo "❌ $1"
+            cat /tmp/smoke.out 2>/dev/null || true
+            echo "--- container logs (tail) ---"
+            docker logs smoke-test 2>&1 | tail -30
+            docker stop smoke-test > /dev/null
+            docker rm smoke-test > /dev/null
+            exit 1
+          }
+
+          echo "==> Bootstrapping CSRF cookie (GET /api/v1/content/home)..."
+          CODE=$(curl -s -c /tmp/cookies.txt -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/content/home")
+          [ "$CODE" = "200" ] || fail "content/home returned $CODE (expected 200)"
+          echo "✅ content/home 200"
+          CSRF=$(awk '$6=="_csrf" {print $7}' /tmp/cookies.txt)
+          [ -n "$CSRF" ] || fail "CSRF cookie not set by gateway"
+          echo "✅ CSRF cookie acquired"
+
+          echo "==> Testing public signup (POST /api/v1/auth/signup)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/api/v1/auth/signup" \
+            -H 'Content-Type: application/json' \
+            -H "X-CSRF-Token: $CSRF" \
+            -b /tmp/cookies.txt -c /tmp/cookies.txt \
+            -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\",\"displayName\":\"Smoke Test\"}")
+          [ "$CODE" = "201" ] || fail "signup returned $CODE (expected 201)"
+          echo "✅ signup 201"
+
+          echo "==> Testing login (POST /api/v1/auth/login)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/api/v1/auth/login" \
+            -H 'Content-Type: application/json' \
+            -H "X-CSRF-Token: $CSRF" \
+            -b /tmp/cookies.txt -c /tmp/cookies.txt \
+            -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\"}")
+          [ "$CODE" = "200" ] || fail "login returned $CODE (expected 200)"
+          TOKEN=$(jq -r '.data.access_token' /tmp/smoke.out)
+          [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] || fail "login response missing access_token"
+          echo "✅ login 200 + token"
+
+          echo "==> Testing authenticated profile (GET /api/v1/auth/me)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/auth/me" \
+            -H "Authorization: Bearer $TOKEN")
+          [ "$CODE" = "200" ] || fail "auth/me returned $CODE (expected 200)"
+          echo "✅ auth/me 200"
+
+          echo "==> Testing cross-service user profile (GET /api/v1/users/me)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/users/me" \
+            -H "Authorization: Bearer $TOKEN")
+          [ "$CODE" = "200" ] || fail "users/me returned $CODE (expected 200)"
+          echo "✅ users/me 200"
+
+          echo "✅ All API traffic checks passed"
+          docker logs smoke-test 2>&1 | tail -20
+          docker stop smoke-test
+          docker rm smoke-test

@@ -24,7 +24,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: moderation-service
-          image: ghcr.io/azeebotv/azeebo-moderation-service:latest
+          image: ghcr.io/azeebotv/azeebo-moderation-service:stable
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

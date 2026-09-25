@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -6,9 +6,9 @@ import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('admin/dashboard')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class DashboardController {
-  constructor(private readonly dashboardService: DashboardService) {}
+  constructor(@Inject(DashboardService) private readonly dashboardService: DashboardService) {}
 
   @Get('stats')
   async getDashboardStats(): Promise<unknown> {
@@ -43,5 +43,10 @@ export class DashboardController {
   @Get('platform-overview')
   async getPlatformOverview(): Promise<unknown> {
     return this.dashboardService.getPlatformOverview();
+  }
+
+  @Get('governance-summary')
+  async getGovernanceSummary(): Promise<unknown> {
+    return this.dashboardService.getGovernanceSummary();
   }
 }

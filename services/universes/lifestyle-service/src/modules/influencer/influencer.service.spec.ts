@@ -106,6 +106,7 @@ describe('InfluencerService', () => {
       const result = await service.getEntryBySlug('test-influencer');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).displayName).toBe('Test Influencer');
     });
 
@@ -140,6 +141,7 @@ describe('InfluencerService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).slug).toBe('test-influencer');
     });
   });
@@ -160,6 +162,7 @@ describe('InfluencerService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).displayName).toBe('Updated Influencer');
     });
 
@@ -182,6 +185,7 @@ describe('InfluencerService', () => {
       const result = await service.deleteEntry('influencer-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Entry deleted successfully');
     });
 

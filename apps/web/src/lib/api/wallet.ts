@@ -5,14 +5,20 @@ import type {
   PaginatedResponse,
   PaymentInitResponse,
   RequestClient,
+  RetryOptions,
   Transaction,
   WalletBalance,
 } from './base';
 
+// Read-only wallet operations skip retries to avoid connection pool exhaustion
+// when the wallet-service is temporarily down. Fail immediately so the UI can
+// show stale/default data instead of blocking for 7+ seconds on retry backoff.
+const WALLET_READ_RETRY: RetryOptions = { skipRetry: true };
+
 export function createWalletMethods(client: RequestClient) {
   return {
     getBalance: async (): Promise<ApiResponse<WalletBalance>> => {
-      return client.request<WalletBalance>('/api/v1/wallet');
+      return client.request<WalletBalance>('/api/v1/wallet', {}, WALLET_READ_RETRY);
     },
 
     getTransactions: async (
@@ -20,7 +26,9 @@ export function createWalletMethods(client: RequestClient) {
       limit = 20
     ): Promise<ApiResponse<PaginatedResponse<Transaction>>> => {
       return client.request<PaginatedResponse<Transaction>>(
-        `/api/v1/wallet/transactions?page=${page}&limit=${limit}`
+        `/api/v1/wallet/transactions?page=${page}&limit=${limit}`,
+        {},
+        WALLET_READ_RETRY
       );
     },
 
@@ -55,31 +63,11 @@ export function createWalletMethods(client: RequestClient) {
     },
 
     getTransaction: async (transactionId: string): Promise<ApiResponse<Transaction>> => {
-      return client.request<Transaction>(`/api/v1/wallet/transactions/${transactionId}`);
-    },
-
-    getEarnings: async (params: {
-      range: string;
-    }): Promise<
-      ApiResponse<{
-        totalEarnings: number;
-        pendingEarnings: number;
-        withdrawableBalance: number;
-        withdrawableChangePercentage: number;
-        avgEarningPerContent: number;
-        avgEarningChangePercentage: number;
-        earningsTrend: { date: string; amount: number }[];
-      }>
-    > => {
-      return client.request<{
-        totalEarnings: number;
-        pendingEarnings: number;
-        withdrawableBalance: number;
-        withdrawableChangePercentage: number;
-        avgEarningPerContent: number;
-        avgEarningChangePercentage: number;
-        earningsTrend: { date: string; amount: number }[];
-      }>(`/api/v1/wallet/earnings?range=${params.range}`);
+      return client.request<Transaction>(
+        `/api/v1/wallet/transactions/${transactionId}`,
+        {},
+        WALLET_READ_RETRY
+      );
     },
   };
 }

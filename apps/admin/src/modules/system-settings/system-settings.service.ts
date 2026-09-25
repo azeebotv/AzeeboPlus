@@ -1,7 +1,7 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
-import { CreateSettingDto, SubscriptionPlanDto, EmailTemplateDto, IntegrationSettingsDto } from './dto/create-setting.dto';
+import { CreateSettingDto, SubscriptionPlanDto, EmailTemplateDto } from './dto/create-setting.dto';
 import { UpdateSettingDto } from './dto/update-setting.dto';
 
 export interface SettingsVersion {
@@ -24,7 +24,7 @@ export interface AuditEntry {
 export class SystemSettingsService {
   private readonly logger = new Logger(SystemSettingsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   // ─── General CRUD ──────────────────────────────────────────────────────────────
 
@@ -151,7 +151,7 @@ export class SystemSettingsService {
         },
       });
 
-      await this.logAudit('update', key, previousValue, setting.value, actorId);
+      await this.logAudit(key, previousValue, setting.value, actorId);
       this.logger.log(`Updated setting: ${setting.key}`);
       return setting;
     } catch (error) {
@@ -168,7 +168,7 @@ export class SystemSettingsService {
         throw new NotFoundException(`Setting with key "${key}" not found`);
       }
 
-      await this.logAudit('delete', key, existing.value, null, actorId);
+      await this.logAudit(key, existing.value, null, actorId);
       await this.prisma.systemSettings.delete({ where: { key } });
       this.logger.log(`Deleted setting: ${key}`);
       return { message: 'Setting deleted successfully' };
@@ -198,7 +198,10 @@ export class SystemSettingsService {
     return results;
   }
 
-  async bulkUpdateSettings(settings: { key: string; value: Prisma.InputJsonValue }[], actorId?: string) {
+  async bulkUpdateSettings(
+    settings: { key: string; value: Prisma.InputJsonValue }[],
+    actorId?: string
+  ) {
     const results = [];
     for (const setting of settings) {
       try {
@@ -227,7 +230,10 @@ export class SystemSettingsService {
 
       const SENSITIVE_PATTERNS = /secret|password|token|key/i;
 
-      const exported: Record<string, Record<string, { value: Prisma.JsonValue; description: string | null; isPublic: boolean }>> = {};
+      const exported: Record<
+        string,
+        Record<string, { value: Prisma.JsonValue; description: string | null; isPublic: boolean }>
+      > = {};
       for (const s of settings) {
         if (SENSITIVE_PATTERNS.test(s.key)) continue;
         if (!exported[s.category]) exported[s.category] = {};
@@ -251,8 +257,11 @@ export class SystemSettingsService {
   }
 
   async importSettings(
-    data: Record<string, Record<string, { value?: Prisma.InputJsonValue; description?: string; isPublic?: boolean }>>,
-    options?: { strategy?: string; categories?: string[]; actorId?: string },
+    data: Record<
+      string,
+      Record<string, { value?: Prisma.InputJsonValue; description?: string; isPublic?: boolean }>
+    >,
+    options?: { strategy?: string; categories?: string[]; actorId?: string }
   ) {
     const strategy = options?.strategy || 'merge';
     const results = [];
@@ -267,7 +276,11 @@ export class SystemSettingsService {
           try {
             const existing = await this.prisma.systemSettings.findUnique({ where: { key } });
             const fullKey = `${category}.${key}`;
-            const settingData = rawSetting as { value?: Prisma.InputJsonValue; description?: string; isPublic?: boolean };
+            const settingData = rawSetting as {
+              value?: Prisma.InputJsonValue;
+              description?: string;
+              isPublic?: boolean;
+            };
             const value = settingData.value ?? settingData;
 
             if (existing) {
@@ -280,13 +293,13 @@ export class SystemSettingsService {
                     description: settingData.description,
                     isPublic: settingData.isPublic,
                   },
-                  options?.actorId,
+                  options?.actorId
                 );
                 results.push({ key: fullKey, action: 'updated', success: true, data: updated });
               } else {
                 const merged = this.deepMerge(
                   existing.value as Record<string, Prisma.InputJsonValue>,
-                  value as Record<string, Prisma.InputJsonValue>,
+                  value as Record<string, Prisma.InputJsonValue>
                 );
                 const updated = await this.updateSetting(key, { value: merged }, options?.actorId);
                 results.push({ key: fullKey, action: 'merged', success: true, data: updated });
@@ -402,11 +415,10 @@ export class SystemSettingsService {
   // ─── Audit Logging ─────────────────────────────────────────────────────────────
 
   private async logAudit(
-    action: string,
     key: string,
     previousValue: Prisma.JsonValue,
     newValue: Prisma.JsonValue,
-    actorId?: string,
+    actorId?: string
   ) {
     try {
       const versionKey = `_version_${key}_${Date.now()}`;
@@ -435,9 +447,15 @@ export class SystemSettingsService {
     for (const [key, value] of Object.entries(data)) {
       const settingKey = `branding.${key}`;
       try {
-        const existing = await this.prisma.systemSettings.findUnique({ where: { key: settingKey } });
+        const existing = await this.prisma.systemSettings.findUnique({
+          where: { key: settingKey },
+        });
         if (existing) {
-          const updated = await this.updateSetting(settingKey, { value, category: 'branding' }, actorId);
+          const updated = await this.updateSetting(
+            settingKey,
+            { value, category: 'branding' },
+            actorId
+          );
           results.push({ key: settingKey, success: true, data: updated });
         } else {
           const created = await this.createSetting({
@@ -449,7 +467,11 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
+        results.push({
+          key: settingKey,
+          success: false,
+          error: error instanceof Error ? (error as Error).message : 'Unknown',
+        });
       }
     }
     return results;
@@ -498,9 +520,15 @@ export class SystemSettingsService {
     for (const [key, value] of Object.entries(data)) {
       const settingKey = `site.${key}`;
       try {
-        const existing = await this.prisma.systemSettings.findUnique({ where: { key: settingKey } });
+        const existing = await this.prisma.systemSettings.findUnique({
+          where: { key: settingKey },
+        });
         if (existing) {
-          const updated = await this.updateSetting(settingKey, { value, category: 'site' }, actorId);
+          const updated = await this.updateSetting(
+            settingKey,
+            { value, category: 'site' },
+            actorId
+          );
           results.push({ key: settingKey, success: true, data: updated });
         } else {
           const created = await this.createSetting({
@@ -512,7 +540,11 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
+        results.push({
+          key: settingKey,
+          success: false,
+          error: error instanceof Error ? (error as Error).message : 'Unknown',
+        });
       }
     }
     return results;
@@ -564,7 +596,9 @@ export class SystemSettingsService {
 
   async removeAdminUser(id: string, actorId?: string) {
     const settings = await this.getSettingsByCategory('admins');
-    const admin = settings.find((s) => (s.value as Record<string, Prisma.JsonValue>)?.email === id || s.key === `admins.${id}`);
+    const admin = settings.find(
+      (s) => (s.value as Record<string, Prisma.JsonValue>)?.email === id || s.key === `admins.${id}`
+    );
     if (!admin) {
       throw new NotFoundException(`Admin user "${id}" not found`);
     }
@@ -582,9 +616,15 @@ export class SystemSettingsService {
     for (const [key, value] of Object.entries(data)) {
       const settingKey = `performance.${key}`;
       try {
-        const existing = await this.prisma.systemSettings.findUnique({ where: { key: settingKey } });
+        const existing = await this.prisma.systemSettings.findUnique({
+          where: { key: settingKey },
+        });
         if (existing) {
-          const updated = await this.updateSetting(settingKey, { value, category: 'performance' }, actorId);
+          const updated = await this.updateSetting(
+            settingKey,
+            { value, category: 'performance' },
+            actorId
+          );
           results.push({ key: settingKey, success: true, data: updated });
         } else {
           const created = await this.createSetting({
@@ -595,7 +635,11 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
+        results.push({
+          key: settingKey,
+          success: false,
+          error: error instanceof Error ? (error as Error).message : 'Unknown',
+        });
       }
     }
     return results;
@@ -612,9 +656,15 @@ export class SystemSettingsService {
     for (const [key, value] of Object.entries(data)) {
       const settingKey = `notifications.${key}`;
       try {
-        const existing = await this.prisma.systemSettings.findUnique({ where: { key: settingKey } });
+        const existing = await this.prisma.systemSettings.findUnique({
+          where: { key: settingKey },
+        });
         if (existing) {
-          const updated = await this.updateSetting(settingKey, { value, category: 'notifications' }, actorId);
+          const updated = await this.updateSetting(
+            settingKey,
+            { value, category: 'notifications' },
+            actorId
+          );
           results.push({ key: settingKey, success: true, data: updated });
         } else {
           const created = await this.createSetting({
@@ -625,7 +675,11 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
+        results.push({
+          key: settingKey,
+          success: false,
+          error: error instanceof Error ? (error as Error).message : 'Unknown',
+        });
       }
     }
     return results;
@@ -666,13 +720,21 @@ export class SystemSettingsService {
     return this.getSettingsByCategory('integrations');
   }
 
-  async updateIntegration(provider: string, data: Record<string, Prisma.InputJsonValue>, actorId?: string) {
+  async updateIntegration(
+    provider: string,
+    data: Record<string, Prisma.InputJsonValue>,
+    actorId?: string
+  ) {
     const key = `integrations.${provider}`;
     try {
       const existing = await this.prisma.systemSettings.findUnique({ where: { key } });
       if (existing) {
         const merged = { ...(existing.value as Record<string, Prisma.InputJsonValue>), ...data };
-        return this.updateSetting(key, { value: merged as Prisma.InputJsonValue, category: 'integrations' }, actorId);
+        return this.updateSetting(
+          key,
+          { value: merged as Prisma.InputJsonValue, category: 'integrations' },
+          actorId
+        );
       }
       return this.createSetting({
         key,
@@ -715,9 +777,15 @@ export class SystemSettingsService {
     for (const [key, value] of Object.entries(data)) {
       const settingKey = `compliance.${key}`;
       try {
-        const existing = await this.prisma.systemSettings.findUnique({ where: { key: settingKey } });
+        const existing = await this.prisma.systemSettings.findUnique({
+          where: { key: settingKey },
+        });
         if (existing) {
-          const updated = await this.updateSetting(settingKey, { value, category: 'compliance' }, actorId);
+          const updated = await this.updateSetting(
+            settingKey,
+            { value, category: 'compliance' },
+            actorId
+          );
           results.push({ key: settingKey, success: true, data: updated });
         } else {
           const created = await this.createSetting({
@@ -729,7 +797,11 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
+        results.push({
+          key: settingKey,
+          success: false,
+          error: error instanceof Error ? (error as Error).message : 'Unknown',
+        });
       }
     }
     return results;
@@ -738,8 +810,13 @@ export class SystemSettingsService {
   async getDataRetentionSettings() {
     const all = await this.getSettingsByCategory('compliance');
     const retentionKeys = [
-      'userDataDays', 'inactiveAccountDays', 'analyticsDays',
-      'auditLogDays', 'mediaDays', 'autoCleanupEnabled', 'cleanupSchedule',
+      'userDataDays',
+      'inactiveAccountDays',
+      'analyticsDays',
+      'auditLogDays',
+      'mediaDays',
+      'autoCleanupEnabled',
+      'cleanupSchedule',
     ];
     return all.filter((s) => retentionKeys.some((k) => s.key.endsWith(k)));
   }
@@ -749,9 +826,15 @@ export class SystemSettingsService {
     for (const [key, value] of Object.entries(data)) {
       const settingKey = `compliance.retention.${key}`;
       try {
-        const existing = await this.prisma.systemSettings.findUnique({ where: { key: settingKey } });
+        const existing = await this.prisma.systemSettings.findUnique({
+          where: { key: settingKey },
+        });
         if (existing) {
-          const updated = await this.updateSetting(settingKey, { value, category: 'compliance' }, actorId);
+          const updated = await this.updateSetting(
+            settingKey,
+            { value, category: 'compliance' },
+            actorId
+          );
           results.push({ key: settingKey, success: true, data: updated });
         } else {
           const created = await this.createSetting({
@@ -762,7 +845,11 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
+        results.push({
+          key: settingKey,
+          success: false,
+          error: error instanceof Error ? (error as Error).message : 'Unknown',
+        });
       }
     }
     return results;
@@ -779,9 +866,15 @@ export class SystemSettingsService {
     for (const [key, value] of Object.entries(data)) {
       const settingKey = `localization.${key}`;
       try {
-        const existing = await this.prisma.systemSettings.findUnique({ where: { key: settingKey } });
+        const existing = await this.prisma.systemSettings.findUnique({
+          where: { key: settingKey },
+        });
         if (existing) {
-          const updated = await this.updateSetting(settingKey, { value, category: 'localization' }, actorId);
+          const updated = await this.updateSetting(
+            settingKey,
+            { value, category: 'localization' },
+            actorId
+          );
           results.push({ key: settingKey, success: true, data: updated });
         } else {
           const created = await this.createSetting({
@@ -792,7 +885,11 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
+        results.push({
+          key: settingKey,
+          success: false,
+          error: error instanceof Error ? (error as Error).message : 'Unknown',
+        });
       }
     }
     return results;
@@ -809,9 +906,15 @@ export class SystemSettingsService {
     for (const [key, value] of Object.entries(data)) {
       const settingKey = `security.${key}`;
       try {
-        const existing = await this.prisma.systemSettings.findUnique({ where: { key: settingKey } });
+        const existing = await this.prisma.systemSettings.findUnique({
+          where: { key: settingKey },
+        });
         if (existing) {
-          const updated = await this.updateSetting(settingKey, { value, category: 'security' }, actorId);
+          const updated = await this.updateSetting(
+            settingKey,
+            { value, category: 'security' },
+            actorId
+          );
           results.push({ key: settingKey, success: true, data: updated });
         } else {
           const created = await this.createSetting({
@@ -822,7 +925,11 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
+        results.push({
+          key: settingKey,
+          success: false,
+          error: error instanceof Error ? (error as Error).message : 'Unknown',
+        });
       }
     }
     return results;
@@ -845,9 +952,15 @@ export class SystemSettingsService {
     for (const [key, value] of Object.entries(data)) {
       const settingKey = `security.ipRules.${key}`;
       try {
-        const existing = await this.prisma.systemSettings.findUnique({ where: { key: settingKey } });
+        const existing = await this.prisma.systemSettings.findUnique({
+          where: { key: settingKey },
+        });
         if (existing) {
-          const updated = await this.updateSetting(settingKey, { value, category: 'security' }, actorId);
+          const updated = await this.updateSetting(
+            settingKey,
+            { value, category: 'security' },
+            actorId
+          );
           results.push({ key: settingKey, success: true, data: updated });
         } else {
           const created = await this.createSetting({
@@ -858,7 +971,11 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
+        results.push({
+          key: settingKey,
+          success: false,
+          error: error instanceof Error ? (error as Error).message : 'Unknown',
+        });
       }
     }
     return results;
@@ -866,13 +983,16 @@ export class SystemSettingsService {
 
   // ─── Helpers ───────────────────────────────────────────────────────────────────
 
-  private deepMerge(target: Record<string, Prisma.InputJsonValue>, source: Record<string, Prisma.InputJsonValue>): Record<string, Prisma.InputJsonValue> {
+  private deepMerge(
+    target: Record<string, Prisma.InputJsonValue>,
+    source: Record<string, Prisma.InputJsonValue>
+  ): Record<string, Prisma.InputJsonValue> {
     const result = { ...target };
     for (const key of Object.keys(source)) {
       if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
         result[key] = this.deepMerge(
           (result[key] as Record<string, Prisma.InputJsonValue>) || {},
-          source[key] as Record<string, Prisma.InputJsonValue>,
+          source[key] as Record<string, Prisma.InputJsonValue>
         );
       } else {
         result[key] = source[key];

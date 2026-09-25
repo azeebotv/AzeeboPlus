@@ -1,9 +1,10 @@
 'use client';
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
+import { useToast } from '@/components/ToastProvider';
 
 interface EpisodeDetail {
   id: string;
@@ -19,17 +20,18 @@ interface EpisodeDetail {
 
 export default function EpisodePlayerPage(): React.JSX.Element {
   const router = useRouter();
+  const toast = useToast();
   const searchParams = useSearchParams();
   const episodeId = searchParams.get('id') || '';
-  const _contentId = searchParams.get('contentId') || '';
   const [episode, setEpisode] = useState<EpisodeDetail | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [showSubtitles, setShowSubtitles] = useState(false);
   const [selectedSubtitle, setSelectedSubtitle] = useState<string | null>(null);
   const [showVoteModal, setShowVoteModal] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const fetchEpisode = async () => {
@@ -42,20 +44,11 @@ export default function EpisodePlayerPage(): React.JSX.Element {
         if (result.success && result.data) {
           setEpisode(result.data);
         } else {
-          setEpisode({
-            id: episodeId,
-            title: 'Episode 1',
-            description: 'The first episode of this amazing show.',
-            seasonNumber: 1,
-            episodeNumber: 1,
-            duration: 3600,
-            thumbnail: '',
-            videoUrl: '',
-            subtitles: ['English', 'Yoruba', 'Hausa', 'Igbo'],
-          });
+          setError(result.message || 'Episode not found');
         }
       } catch (error) {
         webLogger.error('Failed to load episode', error);
+        setError('Failed to load episode');
       } finally {
         setIsLoading(false);
       }
@@ -100,21 +93,21 @@ export default function EpisodePlayerPage(): React.JSX.Element {
 
   const handleVote = async (isSuper: boolean): Promise<void> => {
     try {
-      const result = await apiFetch('/v1/content/vote', {
+      const result = await apiFetch('/reality/votes', {
         method: 'POST',
         body: JSON.stringify({ episodeId, isSuperVote: isSuper }),
       });
       if (!result.success) throw new Error(result.message || 'Failed to submit vote');
       setShowVoteModal(false);
-      alert(`Your ${isSuper ? 'Super ' : ''}vote has been submitted!`);
+      toast.showToast(`Your ${isSuper ? 'Super ' : ''}vote has been submitted!`, 'success');
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : 'Failed to submit vote');
+      toast.showToast(error instanceof Error ? error.message : 'Failed to submit vote', 'error');
     }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -123,7 +116,10 @@ export default function EpisodePlayerPage(): React.JSX.Element {
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+              style={{
+                border: '3px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--brand-orange)',
+              }}
             />
             <p className="mt-4 text-white/60">Loading episode...</p>
           </div>
@@ -134,7 +130,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
 
   if (!episode) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
         <AppHeader />
         <div
           className="flex items-center justify-center"
@@ -158,7 +154,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
   const progress = episode.duration > 0 ? (currentTime / episode.duration) * 100 : 0;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
       <AppHeader />
       <div className="max-w-6xl mx-auto pt-4 px-4">
         <button
@@ -185,14 +181,17 @@ export default function EpisodePlayerPage(): React.JSX.Element {
               </p>
               {isPlaying ? (
                 <div className="flex items-end gap-1 h-10 mt-4 justify-center">
-                  <div className="w-1 animate-pulse h-5" style={{ backgroundColor: '#E8420A' }} />
+                  <div
+                    className="w-1 animate-pulse h-5"
+                    style={{ backgroundColor: 'var(--brand-orange)' }}
+                  />
                   <div
                     className="w-1 animate-pulse h-8"
-                    style={{ backgroundColor: '#E8420A', animationDelay: '0.2s' }}
+                    style={{ backgroundColor: 'var(--brand-orange)', animationDelay: '0.2s' }}
                   />
                   <div
                     className="w-1 animate-pulse h-6"
-                    style={{ backgroundColor: '#E8420A', animationDelay: '0.4s' }}
+                    style={{ backgroundColor: 'var(--brand-orange)', animationDelay: '0.4s' }}
                   />
                 </div>
               ) : (
@@ -201,7 +200,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                   className="mt-4 w-20 h-20 rounded-full text-white text-4xl flex items-center justify-center transition-colors"
                   style={{ backgroundColor: 'rgba(232,66,10,0.8)' }}
                 >
-                  ▶
+                  Play
                 </button>
               )}
             </div>
@@ -216,7 +215,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
             >
               <div
                 className="h-full rounded-full transition-all"
-                style={{ width: `${progress}%`, backgroundColor: '#E8420A' }}
+                style={{ width: `${progress}%`, backgroundColor: 'var(--brand-orange)' }}
               />
             </div>
             <div className="flex justify-between text-sm text-white/50">
@@ -232,17 +231,17 @@ export default function EpisodePlayerPage(): React.JSX.Element {
               style={{
                 border: '1px solid rgba(255,255,255,0.2)',
                 backgroundColor: 'rgba(255,255,255,0.08)',
-                color: '#fff',
+                color: 'var(--brand-white)',
               }}
             >
-              ⏪
+              Rewind
             </button>
             <button
               onClick={handlePlayPause}
               className="w-16 h-16 rounded-full text-white text-2xl flex items-center justify-center transition-colors"
-              style={{ backgroundColor: '#E8420A' }}
+              style={{ backgroundColor: 'var(--brand-orange)' }}
             >
-              {isPlaying ? '⏸' : '▶'}
+              {isPlaying ? 'Pause' : 'Play'}
             </button>
             <button
               onClick={() => handleSeek(10)}
@@ -250,10 +249,10 @@ export default function EpisodePlayerPage(): React.JSX.Element {
               style={{
                 border: '1px solid rgba(255,255,255,0.2)',
                 backgroundColor: 'rgba(255,255,255,0.08)',
-                color: '#fff',
+                color: 'var(--brand-white)',
               }}
             >
-              ⏩
+              FastForward
             </button>
           </div>
 
@@ -264,16 +263,16 @@ export default function EpisodePlayerPage(): React.JSX.Element {
               style={{
                 border: '1px solid rgba(255,255,255,0.2)',
                 backgroundColor: 'rgba(255,255,255,0.08)',
-                color: '#fff',
+                color: 'var(--brand-white)',
               }}
             >
-              💬 Subtitles
+              MessageCircleSubtitles
             </button>
             <button
               onClick={() => setShowVoteModal(true)}
               className="flex-1 py-3 px-4 rounded-full font-medium transition-colors az-btn-primary"
             >
-              🗳 Vote
+              VoteVote
             </button>
           </div>
 
@@ -298,7 +297,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                 onClick={() => setShowSubtitles(false)}
                 className="text-white/50 hover:text-white text-2xl"
               >
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-2">
@@ -319,12 +318,12 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                       ? {
                           border: '1px solid rgba(255,255,255,0.2)',
                           backgroundColor: 'rgba(255,255,255,0.08)',
-                          color: '#fff',
+                          color: 'var(--brand-white)',
                         }
                       : undefined
                   }
                 >
-                  {sub === 'Off' ? '🚫 Subtitles Off' : sub}
+                  {sub === 'Off' ? 'Ban Subtitles Off' : sub}
                 </button>
               ))}
             </div>
@@ -349,7 +348,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
                 style={{
                   border: '1px solid rgba(255,255,255,0.2)',
                   backgroundColor: 'rgba(255,255,255,0.08)',
-                  color: '#fff',
+                  color: 'var(--brand-white)',
                 }}
               >
                 Regular Vote (1x)

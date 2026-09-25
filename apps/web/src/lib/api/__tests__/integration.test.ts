@@ -9,8 +9,8 @@ import { createCreatorMethods } from '../creator';
 import { createRecommendationMethods } from '../recommendation';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 describe('API Integration Tests', () => {
@@ -55,15 +55,27 @@ describe('API Integration Tests', () => {
       // Register
       client.request.mockResolvedValueOnce({
         success: true,
-        data: { access_token: 'tok', refresh_token: 'ref', user: { id: '1', email: 'a@b.com', name: 'New', role: 'user' } },
+        data: {
+          access_token: 'tok',
+          refresh_token: 'ref',
+          user: { id: '1', email: 'a@b.com', name: 'New', role: 'user' },
+        },
       });
-      const regResult = await auth.register({ displayName: 'New', email: 'a@b.com', password: 'pass' });
+      const regResult = await auth.register({
+        displayName: 'New',
+        email: 'a@b.com',
+        password: 'pass',
+      });
       expect(regResult.success).toBe(true);
 
       // Login
       client.request.mockResolvedValueOnce({
         success: true,
-        data: { access_token: 'tok2', refresh_token: 'ref2', user: { id: '1', email: 'a@b.com', name: 'New', role: 'user' } },
+        data: {
+          access_token: 'tok2',
+          refresh_token: 'ref2',
+          user: { id: '1', email: 'a@b.com', name: 'New', role: 'user' },
+        },
       });
       const loginResult = await auth.login({ email: 'a@b.com', password: 'pass' });
       expect(loginResult.success).toBe(true);
@@ -165,7 +177,14 @@ describe('API Integration Tests', () => {
       // Check transaction
       client.request.mockResolvedValueOnce({
         success: true,
-        data: { id: 'tx-1', type: 'credit' as const, amount: 1000, currency: 'NGN', status: 'completed' as const, createdAt: '2024-01-01' },
+        data: {
+          id: 'tx-1',
+          type: 'credit' as const,
+          amount: 1000,
+          currency: 'NGN',
+          status: 'completed' as const,
+          createdAt: '2024-01-01',
+        },
       });
       const tx = await wallet.getTransaction('tx-1');
       expect(tx.data?.amount).toBe(1000);

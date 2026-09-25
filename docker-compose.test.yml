@@ -1,0 +1,93 @@
+# ============================================================
+# Azeebo+ Test Infrastructure — Redis, Postgres, provider mocks
+# ============================================================
+# Purpose: real infra for integration e2es that must exercise
+# real servers instead of in-process fakes.
+#
+#   redis-test        — admin toggle -> Redis -> service chain
+#                      (feature-flags.redis-live.spec.ts)
+#   postgres-test     — payment service real-DB e2e
+#   paystack-mock     — Paystack stub, DEFAULT DOWN (503) so the
+#                      failover e2e exercises the real fallback
+#   flutterwave-mock  — Flutterwave stub, default UP (200)
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml up -d --wait redis-test
+#   pnpm --filter @azeebo/admin test:redis           # live flag chain
+#   docker compose -f docker-compose.test.yml up -d --wait \
+#     redis-test postgres-test paystack-mock flutterwave-mock
+#   pnpm --filter @azeebo/payment-service test:e2e:failover
+#   docker compose -f docker-compose.test.yml down   # add -v to wipe
+#
+# Or in one shot:
+#   pnpm test:flags:redis          # flag chain only
+#   pnpm test:payments:failover    # payment provider failover e2e
+#   pnpm test:e2e:pgtrgm           # search pg_trgm fuzzy e2e (real Postgres + Redis)
+#
+# Ports are deliberately NOT the dev defaults: Redis 6380 (dev 6379),
+# Postgres 5433 (dev 5432), mocks 8091/8092 — a local dev stack is
+# never touched or clobbered. Persistence is off; specs clean up
+# after themselves and `down -v` wipes anything left over.
+# ============================================================
+
+services:
+  redis-test:
+    image: redis:7-alpine
+    container_name: azeebo-test-redis
+    ports:
+      - "6380:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    restart: "no"
+    # No named volume: tests must start from a clean store; the spec
+    # deletes its own keys, and `down -v` wipes anything left over.
+
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: azeebo-test-postgres
+    environment:
+      POSTGRES_USER: azeebo_test
+      POSTGRES_PASSWORD: azeebo_test
+      POSTGRES_DB: azeebo_payment_test
+    ports:
+      - "5433:5432"
+    # Creates azeebo_search_test alongside the payment DB (search pg_trgm e2e).
+    volumes:
+      - ./test/postgres-init:/docker-entrypoint-initdb.d:ro
+    command: ["postgres", "-c", "fsync=off"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U azeebo_test -d azeebo_payment_test"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    restart: "no"
+
+  # Paystack stub: provider DOWN by default so the failover e2e starts
+  # from the real fallback path. Control endpoints flip it at runtime
+  # (see test/mocks/paystack-mock/server.js).
+  paystack-mock:
+    image: node:22-alpine
+    container_name: azeebo-test-paystack-mock
+    working_dir: /mock
+    volumes:
+      - ./test/mocks/paystack-mock:/mock
+    command: ["node", "/mock/server.js"]
+    ports:
+      - "8091:8091"
+    restart: "no"
+
+  # Flutterwave stub: provider UP by default (the healthy fallback).
+  flutterwave-mock:
+    image: node:22-alpine
+    container_name: azeebo-test-flutterwave-mock
+    working_dir: /mock
+    volumes:
+      - ./test/mocks/flutterwave-mock:/mock
+    command: ["node", "/mock/server.js"]
+    ports:
+      - "8092:8092"
+    restart: "no"

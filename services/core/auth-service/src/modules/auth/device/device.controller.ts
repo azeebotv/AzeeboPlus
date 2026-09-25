@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
@@ -9,12 +10,12 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
-import { DeviceService } from './device.service';
-import { UpdateDeviceInfoDto } from '../dto/device.dto';
+import { DeviceService } from './device.service.js';
+import { UpdateDeviceInfoDto } from '../dto/device.dto.js';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, authFlags } from '@azeebo/feature-flags';
 import { User, ApiResponseWrapper } from '@azeebo/shared-types';
 
 interface AuthRequest extends Request {
@@ -35,10 +36,11 @@ export interface DeviceInfo {
 
 @ApiTags('Devices')
 @ApiBearerAuth()
+@FeatureFlag(authFlags.deviceLimits)
 @Controller('auth/devices')
-@UseGuards(AuthGuard('jwt'), RateLimitGuard)
+@UseGuards(FeatureFlagGuard, RateLimitGuard)
 export class DeviceController {
-  constructor(private readonly deviceService: DeviceService) {}
+  constructor(@Inject(DeviceService) private readonly deviceService: DeviceService) {}
 
   @Get()
   @RateLimit(10, 60000)

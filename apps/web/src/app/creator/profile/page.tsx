@@ -1,12 +1,15 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/context/AuthContext';
-import { api } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
-import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { motion, AnimatePresence } from 'framer-motion';
+import { apiFetch } from '@/lib/api';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { Skeleton } from '@azeebo/ui/web';
+import { OptimizedImage } from '@/components/OptimizedImage';
+import { Camera, CheckCircle2, User, Save } from 'lucide-react';
 
 interface CreatorProfile {
   displayName: string;
@@ -16,277 +19,255 @@ interface CreatorProfile {
 }
 
 export default function CreatorProfilePage(): React.JSX.Element {
-  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [saved, setSaved] = useState(false);
-  const isEnabled = !authLoading && !!isAuthenticated && !!user;
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
+  const [youtube, setYoutube] = useState('');
+  const [twitter, setTwitter] = useState('');
+  const [instagram, setInstagram] = useState('');
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['creator', 'profile'],
     queryFn: async () => {
-      const response = await api.user.getProfile();
+      const response = await apiFetch<CreatorProfile>('/v1/creators/me');
       if (response.success && response.data) {
-        const d = response.data as { displayName?: string; name?: string; bio?: string; avatar?: string; socialLinks?: { youtube?: string; twitter?: string; instagram?: string } };
-        return {
-          displayName: d.displayName || d.name || '',
-          bio: d.bio || '',
-          avatar: d.avatar || '',
-          socialLinks: d.socialLinks || { youtube: '', twitter: '', instagram: '' },
-        } as CreatorProfile;
+        return response.data;
       }
-      return { displayName: '', bio: '', avatar: '', socialLinks: { youtube: '', twitter: '', instagram: '' } } as CreatorProfile;
+      return {
+        displayName: '',
+        bio: '',
+        avatar: '',
+        socialLinks: { youtube: '', twitter: '', instagram: '' },
+      };
     },
-    enabled: isEnabled,
   });
 
-  const [editProfile, setEditProfile] = useState<CreatorProfile | null>(null);
-  const form = editProfile || profile || { displayName: '', bio: '', avatar: '', socialLinks: { youtube: '', twitter: '', instagram: '' } };
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.displayName || '');
+      setBio(profile.bio || '');
+      setYoutube(profile.socialLinks?.youtube || '');
+      setTwitter(profile.socialLinks?.twitter || '');
+      setInstagram(profile.socialLinks?.instagram || '');
+    }
+  }, [profile]);
 
-  const saveMutation = useMutation({
-    mutationFn: (data: CreatorProfile) => api.user.updateProfile(data),
+  const updateMutation = useMutation({
+    mutationFn: (data: Partial<CreatorProfile>) =>
+      apiFetch('/v1/creators/me', {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['creator', 'profile'] });
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setSaved(false), 3000);
     },
   });
 
-  if (authLoading) return <></>;
-  if (!isAuthenticated || !user) return <></>;
+  const handleSave = () => {
+    updateMutation.mutate({
+      displayName,
+      bio,
+      socialLinks: { youtube, twitter, instagram },
+    });
+  };
 
   if (isLoading) {
     return (
-      <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
-        <AppHeader />
-        <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 700, margin: '0 auto', padding: '100px 24px 60px' }}>
-          <div style={{ marginBottom: 32 }}>
-            <Skeleton width="120px" height="20px" className="mb-4" />
-            <Skeleton width="200px" height="32px" />
-          </div>
-          <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} style={{ marginBottom: 20 }}>
-                <Skeleton width="100px" height="14px" className="mb-2" />
-                <Skeleton width="100%" height="44px" borderRadius="12px" />
-              </div>
-            ))}
-          </div>
-        </main>
-      </div>
+      <PageShell glowColor="rgba(232,66,10,0.15)">
+        <div className="max-w-2xl mx-auto py-20 px-4 space-y-6">
+          <Skeleton className="h-12 w-48 rounded-2xl" />
+          <Skeleton className="h-64 w-full rounded-3xl" />
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 700,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ marginBottom: 32 }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#9A8A7A',
-              cursor: 'pointer',
-              fontSize: 14,
-              marginBottom: 16,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span>←</span> Back
-          </button>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Creator Profile</h1>
-          <p style={{ color: '#9A8A7A', marginTop: 4 }}>
-            Manage how your profile appears to viewers
-          </p>
-        </div>
+    <PageShell glowColor="rgba(232,66,10,0.14)">
+      <PageHero
+        badge="Studio Identity"
+        title="Creator Profile"
+        description="Curate your public director persona, showcase social links, and update your artist bio."
+      />
 
-        <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  marginBottom: 6,
-                  color: '#9A8A7A',
-                }}
-              >
-                Display Name
-              </label>
-              <input
-                value={form.displayName}
-                onChange={(e) => setEditProfile({ ...(editProfile || profile!), displayName: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
-                  fontSize: 15,
-                }}
-              />
+      <div className="max-w-2xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
+        <ScrollReveal>
+          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-6">
+            {/* Avatar & Hero Info */}
+            <div className="flex items-center gap-5 pb-6 border-b border-white/10">
+              <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center group flex-shrink-0">
+                {profile?.avatar ? (
+                  <OptimizedImage
+                    src={profile.avatar}
+                    alt="Profile Avatar"
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <User className="w-8 h-8 text-white/40" />
+                )}
+                <label
+                  htmlFor="avatar-upload"
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity"
+                >
+                  <Camera className="w-5 h-5 text-white" />
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                  />
+                </label>
+              </div>
+
+              <div>
+                <h3 className="text-base font-bold text-white">
+                  {displayName || 'Verified Creator'}
+                </h3>
+                <p className="text-xs text-white/50 mt-0.5">
+                  Visible publicly across movie credits and channel headers.
+                </p>
+              </div>
             </div>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  marginBottom: 6,
-                  color: '#9A8A7A',
-                }}
-              >
-                Bio
-              </label>
-              <textarea
-                value={form.bio}
-                onChange={(e) => setEditProfile({ ...(editProfile || profile!), bio: e.target.value })}
-                rows={4}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
-                  fontSize: 15,
-                  resize: 'vertical',
-                }}
-              />
+
+            {/* Inputs */}
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="creator-name"
+                  className="text-white text-xs font-semibold mb-2 block"
+                >
+                  Display Name
+                </label>
+                <input
+                  id="creator-name"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="e.g. Kunle Afolayan"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[var(--brand-orange)] transition-colors"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="creator-bio"
+                  className="text-white text-xs font-semibold mb-2 block"
+                >
+                  Artist Bio
+                </label>
+                <textarea
+                  id="creator-bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Tell your audience about your cinematic voice and upcoming projects..."
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[var(--brand-orange)] transition-colors resize-y"
+                />
+              </div>
+
+              <div className="pt-2">
+                <span className="text-xs font-mono uppercase tracking-wider text-white/40 block mb-3">
+                  External Channels & Portfolios
+                </span>
+
+                <div className="space-y-3">
+                  <div>
+                    <label
+                      htmlFor="creator-youtube"
+                      className="text-white/60 text-xs font-medium mb-1 block"
+                    >
+                      YouTube Channel
+                    </label>
+                    <input
+                      id="creator-youtube"
+                      type="url"
+                      value={youtube}
+                      onChange={(e) => setYoutube(e.target.value)}
+                      placeholder="https://youtube.com/@yourchannel"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-xs focus:outline-none focus:border-[var(--brand-orange)]"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="creator-twitter"
+                      className="text-white/60 text-xs font-medium mb-1 block"
+                    >
+                      X / Twitter Profile
+                    </label>
+                    <input
+                      id="creator-twitter"
+                      type="url"
+                      value={twitter}
+                      onChange={(e) => setTwitter(e.target.value)}
+                      placeholder="https://x.com/yourhandle"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-xs focus:outline-none focus:border-[var(--brand-orange)]"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="creator-instagram"
+                      className="text-white/60 text-xs font-medium mb-1 block"
+                    >
+                      Instagram Profile
+                    </label>
+                    <input
+                      id="creator-instagram"
+                      type="url"
+                      value={instagram}
+                      onChange={(e) => setInstagram(e.target.value)}
+                      placeholder="https://instagram.com/yourhandle"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-xs focus:outline-none focus:border-[var(--brand-orange)]"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  marginBottom: 6,
-                  color: '#9A8A7A',
-                }}
-              >
-                YouTube
-              </label>
-              <input
-                value={form.socialLinks.youtube}
-                onChange={(e) =>
-                  setEditProfile({
-                    ...(editProfile || profile!),
-                    socialLinks: { ...(editProfile || profile!).socialLinks, youtube: e.target.value },
-                  })
-                }
-                placeholder="https://youtube.com/@..."
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
-                  fontSize: 15,
-                }}
-              />
+
+            <div className="flex items-center justify-between pt-4 border-t border-white/10">
+              <AnimatePresence>
+                {saved && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Profile Updated
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div className="ml-auto">
+                <motion.button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={updateMutation.isPending}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="az-btn-primary px-7 py-2.5 rounded-full text-xs font-bold flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  {updateMutation.isPending ? 'Saving...' : 'Save Profile'}
+                </motion.button>
+              </div>
             </div>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  marginBottom: 6,
-                  color: '#9A8A7A',
-                }}
-              >
-                Twitter
-              </label>
-              <input
-                value={form.socialLinks.twitter}
-                onChange={(e) =>
-                  setEditProfile({
-                    ...(editProfile || profile!),
-                    socialLinks: { ...(editProfile || profile!).socialLinks, twitter: e.target.value },
-                  })
-                }
-                placeholder="https://twitter.com/..."
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
-                  fontSize: 15,
-                }}
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  marginBottom: 6,
-                  color: '#9A8A7A',
-                }}
-              >
-                Instagram
-              </label>
-              <input
-                value={form.socialLinks.instagram}
-                onChange={(e) =>
-                  setEditProfile({
-                    ...(editProfile || profile!),
-                    socialLinks: { ...(editProfile || profile!).socialLinks, instagram: e.target.value },
-                  })
-                }
-                placeholder="https://instagram.com/..."
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  border: '1px solid #2A1A1A',
-                  backgroundColor: '#0D0505',
-                  color: '#F5F0EB',
-                  fontSize: 15,
-                }}
-              />
-            </div>
-            <button
-              onClick={() => saveMutation.mutate(form)}
-              disabled={saveMutation.isPending}
-              className="az-btn-primary"
-              style={{
-                width: '100%',
-                padding: '14px 0',
-                borderRadius: 999,
-                border: 'none',
-                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: 16,
-                cursor: 'pointer',
-                opacity: saveMutation.isPending ? 0.6 : 1,
-              }}
-            >
-              {saved ? '✓ Saved!' : saveMutation.isPending ? 'Saving...' : 'Save Profile'}
-            </button>
           </div>
-        </div>
-      </main>
-      <AppFooter />
-    </div>
+        </ScrollReveal>
+      </div>
+    </PageShell>
   );
 }

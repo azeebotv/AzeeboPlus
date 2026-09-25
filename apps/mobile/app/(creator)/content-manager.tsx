@@ -11,9 +11,10 @@ import {
 } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 interface ContentItem {
   id: string;
@@ -309,7 +310,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -325,13 +326,13 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   addButton: {
     width: 40,
@@ -359,14 +360,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     marginRight: 8,
   },
   filterButtonActive: {
     backgroundColor: '#E8420A',
   },
   filterButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
   },
   viewModeToggle: {
     flexDirection: 'row',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 8,
     padding: 2,
   },
@@ -389,7 +390,7 @@ const styles = StyleSheet.create({
   },
   viewModeText: {
     fontSize: 18,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   emptyState: {
     flex: 1,
@@ -404,12 +405,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
   },
   emptyDescription: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -430,7 +431,7 @@ const styles = StyleSheet.create({
   gridItem: {
     flex: 1,
     margin: 8,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -458,7 +459,7 @@ const styles = StyleSheet.create({
   gridTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
   },
   gridFooter: {
@@ -472,14 +473,14 @@ const styles = StyleSheet.create({
   },
   gridViews: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   listContainer: {
     padding: 16,
   },
   listItem: {
     flexDirection: 'row',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
@@ -502,7 +503,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginRight: 8,
   },
   listType: {
@@ -510,7 +511,7 @@ const styles = StyleSheet.create({
   },
   listDescription: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 8,
   },
   listFooter: {
@@ -538,7 +539,7 @@ const styles = StyleSheet.create({
   },
   listStats: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   publishButton: {
     backgroundColor: '#10B981',

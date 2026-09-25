@@ -15,7 +15,7 @@ export class SanitizeOutputInterceptor implements NestInterceptor {
     'message',
   ];
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(map((data) => this.sanitize(data)));
   }
 

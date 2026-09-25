@@ -1,36 +1,25 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
-import helmet from 'helmet';
+import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { createHelmetConfig, configureCors } from '@azeebo/security';
+
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { validateEnvironment } from '@azeebo/shared-types';
+
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   validateEnvironment(process.env);
 
   const app = await NestFactory.create(AppModule);
+  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-          scriptSrc: ["'self'"],
-        },
-      },
-      hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-      },
-    })
-  );
+  app.use(createHelmetConfig());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -43,11 +32,20 @@ async function bootstrap() {
   if (!process.env.ALLOWED_ORIGINS) {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
-  app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()),
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  });
+  const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
+  configureCors(app, { allowedOrigins, credentials: true });
+
+  const config = new DocumentBuilder()
+    .setTitle('Queue API')
+    .setDescription('Queue service API documentation')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  if (process.env.NODE_ENV !== 'production') {
+    SwaggerModule.setup('api', app, document);
+  }
 
   app.enableShutdownHooks();
 

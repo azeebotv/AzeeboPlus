@@ -1,6 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { FeatureFlagService, recommendationFlags } from '@azeebo/feature-flags';
+import axios from 'axios';
 
 interface RecommendationInput {
   userId?: string;
@@ -23,7 +26,10 @@ interface RecommendationOutput {
     reason: string;
   };
   freshnessScore: number;
+  algorithm: RecommendationAlgorithm;
 }
+
+type RecommendationAlgorithm = 'hybrid' | 'collaborative' | 'content_based';
 
 interface UserSegment {
   segmentId: string;
@@ -67,43 +73,163 @@ interface FraudRisk {
 @Injectable()
 export class RecommendationService {
   private readonly logger = new Logger(RecommendationService.name);
+  private readonly analyticsServiceBaseUrl: string;
+  private readonly realityServiceBaseUrl: string;
 
-  constructor(private prisma: PrismaService, private readonly cache: CacheService) {}
+  constructor(
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.get<string>(
+      'ANALYTICS_SERVICE_URL',
+      'http://analytics-service:3040'
+    );
+    this.realityServiceBaseUrl = this.configService.get<string>(
+      'REALITY_SERVICE_URL',
+      'http://reality-service:3012'
+    );
+  }
+
+  private async getSubscriptionCount(userId: string): Promise<number> {
+    try {
+      const baseUrl = this.configService.get<string>('SUBSCRIPTION_SERVICE_URL');
+      if (!baseUrl) return 0;
+      const res = await axios.get<{ pagination?: { total?: number } }>(
+        `${baseUrl}/v1/subscription/history`,
+        {
+          params: { userId, limit: 1 },
+          timeout: 5000,
+          headers: {
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
+          },
+        }
+      );
+      return res.data?.pagination?.total ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private async getFollowerCount(_creatorId: string): Promise<number> {
+    try {
+      const baseUrl = this.configService.get<string>('CREATOR_SERVICE_URL');
+      if (!baseUrl) return 0;
+      const res = await axios.get<{ data?: { followerCount?: number } }>(
+        `${baseUrl}/v1/creators/stats`,
+        {
+          timeout: 5000,
+          headers: {
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
+          },
+        }
+      );
+      return res.data?.data?.followerCount ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private async getCreatorContentCount(_creatorId: string): Promise<number> {
+    try {
+      const baseUrl = this.configService.get<string>('CREATOR_SERVICE_URL');
+      if (!baseUrl) return 0;
+      const res = await axios.get<{ data?: { contentCount?: number } }>(
+        `${baseUrl}/v1/creators/stats`,
+        {
+          timeout: 5000,
+          headers: {
+            'x-internal-api-key': this.configService.get<string>('INTERNAL_API_KEY', ''),
+          },
+        }
+      );
+      return res.data?.data?.contentCount ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  /**
+   * Resolves the active recommendation algorithm for a user.
+   *
+   * A/B bucketing: when multiple algorithm flags are enabled, the user is
+   * deterministically bucketed (stable hash of userId) so the same user always
+   * sees the same algorithm within a rollout. When exactly one is enabled that
+   * one wins; when none are enabled we fall back to hybrid.
+   */
+  private async resolveAlgorithm(userId?: string): Promise<RecommendationAlgorithm> {
+    const enabled: RecommendationAlgorithm[] = [];
+    if (await this.featureFlagService.isEnabled(recommendationFlags.collaborative)) {
+      enabled.push('collaborative');
+    }
+    if (await this.featureFlagService.isEnabled(recommendationFlags.contentBased)) {
+      enabled.push('content_based');
+    }
+    if (await this.featureFlagService.isEnabled(recommendationFlags.hybrid)) {
+      enabled.push('hybrid');
+    }
+    if (enabled.length === 0) return 'hybrid';
+    if (enabled.length === 1) return enabled[0];
+
+    const seed = userId ?? 'anonymous';
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+    }
+    return enabled[hash % enabled.length];
+  }
 
   async getContentRecommendations(
     input: RecommendationInput
   ): Promise<{ success: boolean; data?: RecommendationOutput[] }> {
     try {
       const { userId, limit = 20, universe, freshnessDays = 7 } = input;
+      const algorithm = await this.resolveAlgorithm(userId);
+      const cachingEnabled = await this.featureFlagService.isEnabled(recommendationFlags.caching);
+      const crossUniverseEnabled = await this.featureFlagService.isEnabled(
+        recommendationFlags.crossUniverse
+      );
+
+      const skipCache = !cachingEnabled;
 
       if (!userId) {
         const cacheK = cacheKey('recommendation', `popular:${universe || 'all'}`);
-        const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(cacheK);
+        const cached = !skipCache
+          ? await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(cacheK)
+          : null;
         if (cached) return cached;
 
         const result = await this.getFallbackRecommendations(limit, universe, freshnessDays);
         if (result.success && result.data) {
-          await this.cache.set(cacheK, result, 3600);
+          if (!skipCache) await this.cache.set(cacheK, result, 3600);
         }
         return result;
       }
 
-      const cacheK = cacheKey('recommendation', `user:${userId}:${limit}:${universe || 'all'}:${freshnessDays}`);
-      const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(cacheK);
+      const cacheK = cacheKey(
+        'recommendation',
+        `user:${userId}:${limit}:${universe || 'all'}:${freshnessDays}`
+      );
+      const cached = !skipCache
+        ? await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(cacheK)
+        : null;
       if (cached) return cached;
 
       const [watchHistory, rewardAccount] = await Promise.all([
-        this.prisma.watchHistory.findMany({
+        this.prisma.contentItem.findMany({
           where: { userId },
           orderBy: { watchedAt: 'desc' },
           take: 100,
         }),
-        this.prisma.rewardAccount.findUnique({
+        this.prisma.userSegment.findFirst({
           where: { userId },
         }),
       ]);
 
-      const watchedContentIds = watchHistory.map((h) => h.contentId);
+      const watchedContentIds = watchHistory
+        .map((h) => h.contentId)
+        .filter((id): id is string => !!id);
 
       if (watchedContentIds.length === 0) {
         return this.getFallbackRecommendations(limit, universe, freshnessDays);
@@ -111,12 +237,11 @@ export class RecommendationService {
 
       const watchedContent = await this.prisma.contentItem.findMany({
         where: { id: { in: watchedContentIds } },
-        include: { universe: true, categories: true },
       });
 
       const universeCounts = watchedContent.reduce(
         (acc, c) => {
-          const name = c.universe?.name || 'unknown';
+          const name = c.universe || 'unknown';
           acc[name] = (acc[name] || 0) + 1;
           return acc;
         },
@@ -125,8 +250,8 @@ export class RecommendationService {
 
       const categoryCounts = watchedContent.reduce(
         (acc, c) => {
-          c.categories?.forEach((cat) => {
-            acc[cat.name] = (acc[cat.name] || 0) + 1;
+          (Array.isArray(c.categories) ? c.categories : []).forEach((cat) => {
+            if (cat) acc[cat] = (acc[cat] || 0) + 1;
           });
           return acc;
         },
@@ -146,31 +271,49 @@ export class RecommendationService {
           status: 'published',
           id: { notIn: watchedContentIds },
           publishedAt: { gte: freshnessCutoff },
-          ...(universe && { universe: { name: universe } }),
-          ...(topUniverse && !universe && { universe: { name: topUniverse } }),
-        },
-        include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
-          universe: true,
-          categories: true,
+          ...(universe && { universe }),
+          ...(topUniverse && !universe && { universe: topUniverse }),
         },
         orderBy: { viewCount: 'desc' },
         take: limit * 3,
       });
 
+      const creatorIds = [
+        ...new Set(candidateContent.map((c) => c.creatorId).filter((id): id is string => !!id)),
+      ];
+      const creatorProfiles =
+        creatorIds.length > 0
+          ? await this.prisma.creatorProfile.findMany({ where: { userId: { in: creatorIds } } })
+          : [];
+      const creatorMap = new Map(creatorProfiles.map((cp) => [cp.userId, cp]));
+
       const scored = candidateContent.map((content) => {
         const factors: { name: string; weight: number }[] = [];
         let reason = '';
 
-        let baseScore = content.viewCount * 0.3;
+        let baseScore = 0;
 
-        if (content.universe?.name === topUniverse) {
+        // Algorithm A/B: collaborative weights popularity + co-watch affinity;
+        // content_based drops the popularity term (pure content signals);
+        // hybrid blends popularity + content signals (the legacy default).
+        if (algorithm === 'collaborative') {
+          baseScore += content.viewCount * 0.3;
+          factors.push({ name: 'collaborative_popularity', weight: content.viewCount * 0.3 });
+          reason = 'What the community is watching';
+        } else if (algorithm === 'hybrid') {
+          baseScore += content.viewCount * 0.3;
+          factors.push({ name: 'popularity', weight: content.viewCount * 0.3 });
+        } else {
+          reason = 'Matched to your interests';
+        }
+
+        if (content.universe === topUniverse) {
           baseScore += 30;
           factors.push({ name: 'universe_match', weight: 30 });
           reason = `You frequently watch ${topUniverse}`;
         }
 
-        const contentCategories = content.categories?.map((c) => c.name) || [];
+        const contentCategories = (content.categories || []).filter((c): c is string => !!c);
         const categoryMatches = contentCategories.filter((c) => topCategories.includes(c));
         if (categoryMatches.length > 0) {
           baseScore += categoryMatches.length * 10;
@@ -193,16 +336,16 @@ export class RecommendationService {
           id: content.id,
           title: content.title,
           description: content.description || '',
-          thumbnail: content.thumbnail,
+          thumbnail: content.thumbnail ?? '',
           creator: {
-            id: content.creator.id,
-            displayName: content.creator.displayName || '',
-            avatar: content.creator.avatar || '',
+            id: content.creatorId ?? '',
+            displayName: creatorMap.get(content.creatorId ?? '')?.displayName ?? '',
+            avatar: creatorMap.get(content.creatorId ?? '')?.avatar ?? '',
           },
           universe: {
-            id: content.universe.id,
-            name: content.universe.name,
-            slug: content.universe.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            id: content.universeId,
+            name: content.universe,
+            slug: content.universe.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
           },
           score: Math.round(baseScore * 100) / 100,
           explainability: {
@@ -210,25 +353,50 @@ export class RecommendationService {
             reason,
           },
           freshnessScore,
+          algorithm,
         };
       });
 
       const sorted = scored.sort((a, b) => b.score - a.score);
-      const crossUniverseDiversity = await this.ensureCrossUniverseDiversity(
-        sorted,
-        limit,
-        watchedContentIds
-      );
+      const crossUniverseDiversity = crossUniverseEnabled
+        ? await this.ensureCrossUniverseDiversity(sorted, limit, watchedContentIds)
+        : sorted;
 
-      const result = { success: true, data: crossUniverseDiversity.slice(0, limit) };
-      await this.cache.set(cacheK, result, 1800);
+      const result = {
+        success: true,
+        data: crossUniverseDiversity.slice(0, limit).map((item) => ({
+          ...item,
+          algorithm,
+        })),
+      };
+      if (!skipCache) await this.cache.set(cacheK, result, 1800);
+      this.trackAnalyticsEvent('recommendations_served', userId || 'anonymous', {
+        count: result.data.length,
+        algorithm,
+      });
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get content recommendations for user ${input.userId}`,
         error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
+    }
+  }
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.analyticsServiceBaseUrl}/analytics/track`,
+        { eventName, userId, metadata, timestamp: new Date().toISOString() },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to track analytics event: ${eventName}`);
     }
   }
 
@@ -244,15 +412,22 @@ export class RecommendationService {
         where: {
           status: 'published',
           publishedAt: { gte: freshnessCutoff },
-          ...(universe && { universe: { name: universe } }),
-        },
-        include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
-          universe: true,
+          ...(universe && { universe }),
         },
         orderBy: { viewCount: 'desc' },
         take: limit,
       });
+
+      const fallbackCreatorIds = [
+        ...new Set(trending.map((c) => c.creatorId).filter((id): id is string => !!id)),
+      ];
+      const fallbackCreators =
+        fallbackCreatorIds.length > 0
+          ? await this.prisma.creatorProfile.findMany({
+              where: { userId: { in: fallbackCreatorIds } },
+            })
+          : [];
+      const fallbackCreatorMap = new Map(fallbackCreators.map((cp) => [cp.userId, cp]));
 
       return {
         success: true,
@@ -260,16 +435,16 @@ export class RecommendationService {
           id: content.id,
           title: content.title,
           description: content.description || '',
-          thumbnail: content.thumbnail,
+          thumbnail: content.thumbnail ?? '',
           creator: {
-            id: content.creator.id,
-            displayName: content.creator.displayName || '',
-            avatar: content.creator.avatar || '',
+            id: content.creatorId ?? '',
+            displayName: fallbackCreatorMap.get(content.creatorId ?? '')?.displayName ?? '',
+            avatar: fallbackCreatorMap.get(content.creatorId ?? '')?.avatar ?? '',
           },
           universe: {
-            id: content.universe.id,
-            name: content.universe.name,
-            slug: content.universe.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            id: content.universeId,
+            name: content.universe,
+            slug: content.universe.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
           },
           score: content.viewCount,
           explainability: {
@@ -280,12 +455,14 @@ export class RecommendationService {
             ? Math.max(
                 0,
                 100 -
-                  Math.floor((Date.now() - content.publishedAt.getTime()) / (1000 * 60 * 60 * 24)) * 5
+                  Math.floor((Date.now() - content.publishedAt.getTime()) / (1000 * 60 * 60 * 24)) *
+                    5
               )
             : 0,
+          algorithm: 'hybrid' as const,
         })),
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         'Failed to get fallback recommendations',
         error instanceof Error ? (error as Error).message : String(error)
@@ -333,28 +510,27 @@ export class RecommendationService {
         where: {
           userId: { not: userId },
         },
-        include: {
-          user: { select: { id: true, displayName: true, avatar: true } },
-        },
         take: limit,
       });
 
       return {
         success: true,
-        data: recommendedCreators.map((creator) => ({
-          id: creator.id,
-          displayName: creator.user.displayName || '',
-          bio: creator.bio || '',
-          avatar: creator.user.avatar || '',
-          followerCount: 0,
-          contentCount: 0,
-          explainability: {
-            factors: [{ name: 'not_followed', weight: 1 }],
-            reason: 'Creators you might like',
-          },
-        })),
+        data: await Promise.all(
+          recommendedCreators.map(async (creator) => ({
+            id: creator.id,
+            displayName: creator.displayName || '',
+            bio: creator.bio || '',
+            avatar: creator.avatar || '',
+            followerCount: await this.getFollowerCount(creator.userId),
+            contentCount: await this.getCreatorContentCount(creator.userId),
+            explainability: {
+              factors: [{ name: 'not_followed', weight: 1 }],
+              reason: 'Creators you might like',
+            },
+          }))
+        ),
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get creator recommendations for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -367,20 +543,28 @@ export class RecommendationService {
     userId: string,
     limit = 10
   ): Promise<{ success: boolean; data?: RecommendationOutput[] }> {
+    // Kill-switch: cross-universe discovery defaults OFF until the signal is tuned.
+    if (!(await this.featureFlagService.isEnabled(recommendationFlags.crossUniverse))) {
+      return { success: true, data: [] };
+    }
     try {
       const cacheK = cacheKey('recommendation', `cross:${userId}:${limit}`);
-      const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(cacheK);
+      const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(
+        cacheK
+      );
       if (cached) return cached;
 
-      const watchHistory = await this.prisma.watchHistory.findMany({
+      const watchHistory = await this.prisma.contentItem.findMany({
         where: { userId },
         orderBy: { watchedAt: 'desc' },
         take: 50,
       });
 
       const watchedContent = await this.prisma.contentItem.findMany({
-        where: { id: { in: watchHistory.map((h) => h.contentId) } },
-        include: { universe: true },
+        where: {
+          id: { in: watchHistory.map((h) => h.contentId).filter((id): id is string => !!id) },
+        },
+        // universe is a string field
       });
 
       const watchedUniverseIds = watchedContent
@@ -394,15 +578,22 @@ export class RecommendationService {
           status: 'published',
           universeId: { notIn: watchedUniverseIds },
           publishedAt: { gte: freshnessCutoff },
-          id: { notIn: watchHistory.map((h) => h.contentId) },
-        },
-        include: {
-          creator: { select: { id: true, displayName: true, avatar: true } },
-          universe: true,
+          id: { notIn: watchHistory.map((h) => h.contentId).filter((id): id is string => !!id) },
         },
         orderBy: { viewCount: 'desc' },
         take: limit,
       });
+
+      const crossCreatorIds = [
+        ...new Set(recommendations.map((c) => c.creatorId).filter((id): id is string => !!id)),
+      ];
+      const crossCreators =
+        crossCreatorIds.length > 0
+          ? await this.prisma.creatorProfile.findMany({
+              where: { userId: { in: crossCreatorIds } },
+            })
+          : [];
+      const crossCreatorMap = new Map(crossCreators.map((cp) => [cp.userId, cp]));
 
       const result = {
         success: true,
@@ -410,16 +601,16 @@ export class RecommendationService {
           id: content.id,
           title: content.title,
           description: content.description || '',
-          thumbnail: content.thumbnail,
+          thumbnail: content.thumbnail ?? '',
           creator: {
-            id: content.creator.id,
-            displayName: content.creator.displayName || '',
-            avatar: content.creator.avatar || '',
+            id: content.creatorId ?? '',
+            displayName: crossCreatorMap.get(content.creatorId ?? '')?.displayName ?? '',
+            avatar: crossCreatorMap.get(content.creatorId ?? '')?.avatar ?? '',
           },
           universe: {
-            id: content.universe.id,
-            name: content.universe.name,
-            slug: content.universe.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            id: content.universeId,
+            name: content.universe,
+            slug: content.universe.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
           },
           score: content.viewCount,
           explainability: {
@@ -430,15 +621,17 @@ export class RecommendationService {
             ? Math.max(
                 0,
                 100 -
-                  Math.floor((Date.now() - content.publishedAt.getTime()) / (1000 * 60 * 60 * 24)) * 5
+                  Math.floor((Date.now() - content.publishedAt.getTime()) / (1000 * 60 * 60 * 24)) *
+                    5
               )
             : 0,
+          algorithm: 'hybrid' as const,
         })),
       };
 
       await this.cache.set(cacheK, result, 1800);
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get cross-universe recommendations for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -454,7 +647,7 @@ export class RecommendationService {
 
       const [user, watchHistory, payments, rewards] = await Promise.all([
         this.prisma.user.findUnique({ where: { id: userId } }),
-        this.prisma.watchHistory.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
+        this.prisma.contentItem.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
         this.prisma.paymentIntent.count({
           where: { userId, status: 'completed', createdAt: { gte: thirtyDaysAgo } },
         }),
@@ -463,7 +656,7 @@ export class RecommendationService {
           where: { userId, type: 'credit', createdAt: { gte: thirtyDaysAgo } },
         }),
       ]);
-      const subscriptions = 0; // Subscription model not available in this service
+      const subscriptions = await this.getSubscriptionCount(userId);
 
       const totalPoints = rewards._sum.points || 0;
       const daysSinceSignup = Math.floor(
@@ -535,7 +728,7 @@ export class RecommendationService {
       }
 
       return { success: true, data: segment };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get user segment for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -545,6 +738,13 @@ export class RecommendationService {
   }
 
   async getCreatorScore(creatorId: string): Promise<{ success: boolean; data?: CreatorScore }> {
+    // Kill-switch: creator score defaults OFF until calibrated.
+    if (!(await this.featureFlagService.isEnabled(recommendationFlags.creatorScore))) {
+      return {
+        success: true,
+        data: { creatorId, score: 0, factors: [], tier: 'new' },
+      };
+    }
     try {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -554,14 +754,14 @@ export class RecommendationService {
         this.prisma.contentItem.count({ where: { creatorId } }),
         this.prisma.productEvent.count({
           where: {
-            type: 'content_view',
+            eventName: 'content_view',
             metadata: { path: ['creatorId'], equals: creatorId },
-            timestamp: { gte: thirtyDaysAgo },
+            createdAt: { gte: thirtyDaysAgo },
           },
         }),
       ]);
-      const followers = 0; // Follower model not available in this service
-      const subscriptions = 0; // Subscription model not available in this service
+      const followers = await this.getFollowerCount(creatorId);
+      const subscriptions = await this.getSubscriptionCount(creatorId);
       const tips = await this.prisma.paymentIntent.count({
         where: { userId: creatorId, status: 'completed', createdAt: { gte: thirtyDaysAgo } },
       });
@@ -591,7 +791,7 @@ export class RecommendationService {
           tier,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get creator score for creator ${creatorId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -601,6 +801,19 @@ export class RecommendationService {
   }
 
   async getChurnRisk(userId: string): Promise<{ success: boolean; data?: ChurnRisk }> {
+    // Kill-switch: churn model defaults OFF until calibrated.
+    if (!(await this.featureFlagService.isEnabled(recommendationFlags.churnModel))) {
+      return {
+        success: true,
+        data: {
+          userId,
+          riskScore: 0,
+          riskLevel: 'low',
+          contributingFactors: [],
+          recommendations: [],
+        },
+      };
+    }
     try {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -609,17 +822,17 @@ export class RecommendationService {
 
       const [user, recentActivity, lastActivity, payments, rewards] = await Promise.all([
         this.prisma.user.findUnique({ where: { id: userId } }),
-        this.prisma.productEvent.count({ where: { userId, timestamp: { gte: sevenDaysAgo } } }),
-        this.prisma.productEvent.findFirst({ where: { userId }, orderBy: { timestamp: 'desc' } }),
+        this.prisma.productEvent.count({ where: { userId, createdAt: { gte: sevenDaysAgo } } }),
+        this.prisma.productEvent.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } }),
         this.prisma.paymentIntent.count({ where: { userId, status: 'completed' } }),
         this.prisma.pointsLedger.count({
           where: { userId, type: 'credit', createdAt: { gte: thirtyDaysAgo } },
         }),
       ]);
-      const subscriptions = 0; // Subscription model not available in this service
+      const subscriptions = await this.getSubscriptionCount(userId);
 
       const daysSinceLastActivity = lastActivity
-        ? Math.floor((Date.now() - lastActivity.timestamp.getTime()) / (1000 * 60 * 60 * 24))
+        ? Math.floor((Date.now() - lastActivity.createdAt.getTime()) / (1000 * 60 * 60 * 24))
         : 999;
 
       const factors: string[] = [];
@@ -667,7 +880,8 @@ export class RecommendationService {
       else riskLevel = 'low';
 
       const recommendations: string[] = [];
-      if (daysSinceLastActivity > 7) recommendations.push('Send personalized content recommendation');
+      if (daysSinceLastActivity > 7)
+        recommendations.push('Send personalized content recommendation');
       if (payments === 0) recommendations.push('Offer a welcome discount');
       if (subscriptions === 0) recommendations.push('Promote subscription benefits');
       if (rewards === 0) recommendations.push('Highlight rewards program');
@@ -682,7 +896,7 @@ export class RecommendationService {
           recommendations,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get churn risk for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -703,14 +917,14 @@ export class RecommendationService {
           _sum: { amount: true },
           where: { userId, status: 'completed' },
         }),
-        this.prisma.watchHistory.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
+        this.prisma.contentItem.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
         this.prisma.pointsLedger.aggregate({
           _sum: { points: true },
           where: { userId, type: 'credit' },
         }),
         this.prisma.user.findUnique({ where: { id: userId } }),
       ]);
-      const subscriptions = 0; // Subscription model not available in this service
+      const subscriptions = await this.getSubscriptionCount(userId);
 
       const totalSpent = Number(payments._sum.amount) || 0;
       const totalPoints = rewards._sum.points || 0;
@@ -774,7 +988,7 @@ export class RecommendationService {
           segment,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get monetization insights for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -789,6 +1003,13 @@ export class RecommendationService {
     transactionId?: string;
     voteActivity?: unknown;
   }): Promise<{ success: boolean; data?: FraudRisk }> {
+    // Kill-switch: fraud model defaults OFF until calibrated.
+    if (!(await this.featureFlagService.isEnabled(recommendationFlags.fraudModel))) {
+      return {
+        success: true,
+        data: { ...data, riskScore: 0, riskLevel: 'low', indicators: [] },
+      };
+    }
     try {
       const { userId, contentId, transactionId } = data;
 
@@ -810,7 +1031,31 @@ export class RecommendationService {
           });
         }
 
-        // Vote model not available in this service - skipping vote-based risk
+        // Vote-based fraud detection via reality-service
+        try {
+          const voteResponse = await axios.get(
+            `${this.realityServiceBaseUrl}/v1/reality/votes/user/${userId}`,
+            { params: { limit: 100 }, timeout: 5000 }
+          );
+          const votes = voteResponse.data?.data || [];
+          // Check for rapid voting patterns (many votes in short time)
+          if (votes.length > 20) {
+            const recentVotes = votes.filter(
+              (v: { createdAt: string }) =>
+                Date.now() - new Date(v.createdAt).getTime() < 60 * 60 * 1000
+            );
+            if (recentVotes.length > 10) {
+              riskScore += 20;
+              indicators.push({
+                name: 'rapid_voting',
+                score: 20,
+                description: `${recentVotes.length} votes in the last hour`,
+              });
+            }
+          }
+        } catch {
+          // Reality-service unavailable — skip vote-based risk
+        }
 
         const paymentCount = await this.prisma.paymentIntent.count({
           where: { userId, createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
@@ -828,15 +1073,18 @@ export class RecommendationService {
       if (contentId) {
         const content = await this.prisma.contentItem.findUnique({
           where: { id: contentId },
-          include: { creator: true },
+          // creator is a string field
         });
-        if (content && content.createdAt && content.creator) {
+        if (content && content.createdAt && content.creatorId) {
           const hoursSinceUpload = Math.floor(
             (Date.now() - content.createdAt.getTime()) / (1000 * 60 * 60)
           );
           if (hoursSinceUpload < 1) {
             const viewCount = await this.prisma.productEvent.count({
-              where: { type: 'content_view', metadata: { path: ['contentId'], equals: contentId } },
+              where: {
+                eventName: 'content_view',
+                metadata: { path: ['contentId'], equals: contentId },
+              },
             });
             if (viewCount > 100) {
               riskScore += 30;
@@ -881,7 +1129,7 @@ export class RecommendationService {
           indicators,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         'Failed to assess fraud risk',
         error instanceof Error ? (error as Error).message : String(error)
@@ -894,6 +1142,10 @@ export class RecommendationService {
     userId: string,
     limit = 20
   ): Promise<{ success: boolean; data?: RecommendationOutput[] }> {
+    // Kill-switch: personalized feed defaults OFF — fall back to plain content recs.
+    if (!(await this.featureFlagService.isEnabled(recommendationFlags.personalizedFeed))) {
+      return this.getContentRecommendations({ userId, limit });
+    }
     try {
       const [segmentResult, churnResult] = await Promise.all([
         this.getUserSegment(userId),
@@ -922,7 +1174,7 @@ export class RecommendationService {
       }
 
       return recommendations;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get personalized feed for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)

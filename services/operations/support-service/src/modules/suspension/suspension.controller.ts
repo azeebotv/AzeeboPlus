@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SuspensionService } from './suspension.service';
 import { CreateSuspensionDto, SuspensionQueryDto } from './dto/suspension.dto';
@@ -18,7 +28,7 @@ interface AuthenticatedRequest {
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class SuspensionController {
-  constructor(private suspensionService: SuspensionService) {}
+  constructor(@Inject(SuspensionService) private suspensionService: SuspensionService) {}
 
   @Post()
   @ApiOperation({ summary: 'Suspend user (admin)' })

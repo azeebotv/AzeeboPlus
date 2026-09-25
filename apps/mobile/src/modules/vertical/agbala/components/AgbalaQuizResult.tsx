@@ -2,25 +2,30 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, typography, spacing, radius } from '../../../../theme';
 
 interface AgbalaQuizResultProps {
-  orisaAlignment: string;
+  orisaAlignment?: string;
+  path?: string;
+  title?: string;
   description: string;
   icon?: string;
-  onContinue: () => void;
+  onContinue?: () => void;
   onRetakeQuiz?: () => void;
 }
 
 export const AgbalaQuizResult: React.FC<AgbalaQuizResultProps> = ({
   orisaAlignment,
+  path,
+  title,
   description,
   icon,
   onContinue,
   onRetakeQuiz,
 }) => {
+  const alignment = orisaAlignment || title || path || '';
   return (
     <View
       style={styles.container}
       accessibilityRole="summary"
-      accessibilityLabel={`Quiz complete. Your Orisa alignment is ${orisaAlignment}. ${description}`}
+      accessibilityLabel={`Quiz complete. Your Orisa alignment is ${alignment}. ${description}`}
       accessibilityLiveRegion="polite"
     >
       <View style={styles.header} accessibilityRole="header">
@@ -28,7 +33,7 @@ export const AgbalaQuizResult: React.FC<AgbalaQuizResultProps> = ({
           <Text
             style={styles.icon}
             accessibilityRole="image"
-            accessibilityLabel={`Icon representing ${orisaAlignment}`}
+            accessibilityLabel={`Icon representing ${alignment}`}
           >
             {icon}
           </Text>
@@ -39,9 +44,9 @@ export const AgbalaQuizResult: React.FC<AgbalaQuizResultProps> = ({
         <Text
           style={styles.alignment}
           accessibilityRole="header"
-          accessibilityLabel={`You are aligned with ${orisaAlignment}`}
+          accessibilityLabel={`You are aligned with ${alignment}`}
         >
-          {orisaAlignment}
+          {alignment}
         </Text>
       </View>
 

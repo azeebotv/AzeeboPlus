@@ -1,113 +1,123 @@
-'use client';
-import React from 'react';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import type { Metadata } from 'next';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
+import { ShieldCheck, HeartHandshake, Film, Vote, Award, Flag, Copyright, Lock, AlertTriangle, Scale } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Community Guidelines - Azeebo+',
+  description: 'Community conduct, creator integrity, and voting standards on Azeebo+',
+};
+
+const GUIDELINES = [
+  {
+    num: '01',
+    title: 'Mutual Respect & Inclusive Culture',
+    icon: HeartHandshake,
+    body: 'Treat all fans, creators, and cast members with dignity. Harassment, targeted bullying, hate speech, and discriminatory attacks are strictly prohibited across all community chatrooms, voting comments, and live event threads.',
+  },
+  {
+    num: '02',
+    title: 'Cinema & Streaming Content Standards',
+    icon: Film,
+    body: 'All media, trailers, and fan-submitted material must comply with Nigerian NBC regulations and global safety laws. Prohibited material includes non-consensual content, gratuitous real-world violence, disinformation, and unlawful commercial solicitation.',
+  },
+  {
+    num: '03',
+    title: 'Fair Voting & Eviction Integrity',
+    icon: Vote,
+    body: 'Azeebo reality voting uses tamper-evident audit ledger logging. The use of automated scripts, headless bots, emulator farms, or payment manipulation to inflate contestant votes will result in disqualification of votes and permanent wallet forfeiture.',
+  },
+  {
+    num: '04',
+    title: 'Creator Transparency & Originality',
+    icon: Award,
+    body: 'Verified studio creators and independent filmmakers must uphold authenticity. Misleading thumbnails, stolen footage, artificial engagement farms, and deceptive monetization claims trigger immediate loss of creator monetization privileges.',
+  },
+  {
+    num: '05',
+    title: 'Proactive Moderation & In-App Reporting',
+    icon: Flag,
+    body: 'If you witness guideline infractions in comments, live chat, or universe forums, utilize the instant reporting tool. Our 24/7 human Trust & Safety team investigates all reports with swift warning strikes or bans.',
+  },
+  {
+    num: '06',
+    title: 'Intellectual Property & Nollywood Copyright',
+    icon: Copyright,
+    body: 'Respect original film scores, screenplays, and footage rights. Unauthorized rebroadcasting, stream ripping, or re-uploading copyrighted Azeebo+ originals onto external video portals will trigger immediate DMCA takedowns and statutory remedies.',
+  },
+  {
+    num: '07',
+    title: 'Privacy & Personal Data Safeguards',
+    icon: Lock,
+    body: 'Do not publish personal phone numbers, physical addresses, real names, or private correspondence of creators or members without explicit consent. Protect your login credentials and enable two-factor authentication.',
+  },
+  {
+    num: '08',
+    title: 'Graduated Enforcement & Penalties',
+    icon: Scale,
+    body: 'Depending on infraction severity, enforcement actions range from content demotion and temporary chat mutes to full account termination, wallet freeze, and legal referrals for criminal conduct.',
+  },
+];
 
 export default function GuidelinesPage(): React.JSX.Element {
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 700,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Community Guidelines</h1>
-        <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Last updated: July 2026</p>
+    <PageShell activeNav="Support">
+      <PageHero
+        badge="Trust & Safety Standards"
+        title="Community Guidelines"
+        subtitle="Our code of conduct ensuring a safe, thrilling, and respectful cinematic community for African creators and global audiences."
+        accentColor="orange"
+      />
 
-        <div className="az-glass" style={{ padding: 32, borderRadius: 20, lineHeight: 1.8 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            1. Be Respectful
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            Treat all community members with respect. Harassment, bullying, hate speech, and
-            personal attacks are not tolerated. Engage in constructive conversations and
-            celebrate the diversity of our community.
-          </p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-20">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
+          <span className="text-xs text-white/50 uppercase tracking-widest font-mono font-bold">
+            Policy Version 4.2 • Effective July 2026
+          </span>
+          <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-bold">
+            <ShieldCheck size={14} />
+            <span>Verified Safety Protocol</span>
+          </div>
+        </div>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            2. Content Standards
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            All content shared on Azeebo+ must comply with applicable laws and regulations.
-            Prohibited content includes but is not limited to: explicit sexual material, violence,
-            gore, hate symbols, misinformation, and content that infringes on intellectual property
-            rights.
-          </p>
+        <div className="space-y-4">
+          {GUIDELINES.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.num}
+                className="az-glass p-6 sm:p-7 rounded-3xl border border-white/10 hover:border-orange-500/30 transition-all duration-300 group"
+              >
+                <div className="flex items-start gap-4 sm:gap-5">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center flex-shrink-0 border border-orange-500/20 group-hover:scale-105 transition-transform">
+                    <Icon size={22} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-xs font-black text-orange-400 tracking-widest font-mono">
+                        {item.num}
+                      </span>
+                      <h2 className="text-base sm:text-lg font-bold text-white group-hover:text-orange-400 transition-colors">
+                        {item.title}
+                      </h2>
+                    </div>
+                    <p className="text-sm text-white/60 leading-relaxed">{item.body}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            3. Fair Voting
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            Voting on reality shows and content should be fair and genuine. Do not use automated
-            tools, bots, or any form of manipulation to artificially inflate vote counts. Each
-            user should vote based on their genuine preferences.
-          </p>
-
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            4. Creator Responsibilities
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            Creators are expected to produce original content, properly credit sources, and
-            maintain transparency with their audience. Misleading claims, fake engagement, and
-            deceptive practices will result in account suspension.
-          </p>
-
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            5. Reporting and Moderation
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            If you encounter content or behavior that violates these guidelines, please report it
-            using the in-app reporting tools. Our moderation team reviews all reports and takes
-            appropriate action, which may include content removal, warnings, or account suspension.
-          </p>
-
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            6. Intellectual Property
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            Respect the intellectual property rights of others. Do not upload content that you do
-            not own or have the right to distribute. Copyright infringement may result in content
-            removal and account termination.
-          </p>
-
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            7. Privacy and Safety
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            Do not share personal information of others without their consent. This includes but
-            is not limited to: real names, addresses, phone numbers, and private communications.
-            Protect your own privacy and the privacy of others.
-          </p>
-
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            8. Enforcement
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            Violations of these guidelines may result in:
-          </p>
-          <ul style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24, paddingLeft: 20 }}>
-            <li style={{ marginBottom: 8 }}>Content removal or demotion</li>
-            <li style={{ marginBottom: 8 }}>Temporary or permanent account suspension</li>
-            <li style={{ marginBottom: 8 }}>Restriction from voting or creator features</li>
-            <li style={{ marginBottom: 8 }}>Legal action in severe cases</li>
-          </ul>
-
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#E8420A' }}>
-            9. Changes to Guidelines
-          </h2>
-          <p style={{ color: '#D4C8B8', fontSize: 14, marginBottom: 24 }}>
-            We reserve the right to update these guidelines at any time. Users will be notified
-            of significant changes. Continued use of the Platform after changes constitutes
-            acceptance of the updated guidelines.
+        <div className="mt-12 az-glass p-8 rounded-3xl border border-white/10 text-center">
+          <AlertTriangle size={24} className="text-orange-400 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-white mb-1">Notice of Policy Evolution</h3>
+          <p className="text-xs text-white/50 max-w-lg mx-auto">
+            Azeebo+ updates these safety standards periodically as new participatory features, reality formats, and community tools launch. Significant modifications are communicated via member push notifications.
           </p>
         </div>
-      </main>
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }
+

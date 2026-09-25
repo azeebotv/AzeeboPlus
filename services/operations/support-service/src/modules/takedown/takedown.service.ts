@@ -1,28 +1,29 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
-import { createApiClient, noopTokenStorage } from '@azeebo/api-client';
+import { Prisma } from '../../prisma/client/index.js';
+import { ServiceClient } from '@azeebo/http-client';
 
 @Injectable()
 export class TakedownService {
   private readonly logger = new Logger(TakedownService.name);
-  private readonly contentServiceClient;
-  private readonly auditServiceClient;
+  private readonly contentServiceClient: ServiceClient;
+  private readonly auditServiceClient: ServiceClient;
 
   constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService
   ) {
-    this.contentServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('CONTENT_SERVICE_URL'),
+    const apiKey = this.configService.get<string>('INTERNAL_API_KEY', '');
+    this.contentServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('CONTENT_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
-    this.auditServiceClient = createApiClient({
-      baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
+    this.auditServiceClient = new ServiceClient({
+      baseURL: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
       timeout: 30000,
-      tokenStorage: noopTokenStorage,
+      apiKey,
     });
   }
 
@@ -77,7 +78,7 @@ export class TakedownService {
           headers: { 'x-admin-user-id': decidedBy },
         });
         this.logger.log(`Content ${takedown.contentId} removed via content-service`);
-      } catch (_err) {
+      } catch (error) {
         this.logger.error(
           `Failed to remove content ${takedown.contentId}: ${(error as Error).message}`
         );
@@ -88,7 +89,7 @@ export class TakedownService {
           restoredBy: decidedBy,
         });
         this.logger.log(`Content ${takedown.contentId} restored via content-service`);
-      } catch (_err) {
+      } catch (error) {
         this.logger.error(
           `Failed to restore content ${takedown.contentId}: ${(error as Error).message}`
         );
@@ -120,7 +121,7 @@ export class TakedownService {
   }) {
     try {
       await this.auditServiceClient.post('/api/moderation/audit', event);
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
     }
   }

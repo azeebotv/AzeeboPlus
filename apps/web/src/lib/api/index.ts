@@ -1,7 +1,13 @@
 // ApiClient – assembled from domain-specific modules
 // Re-exports everything for backward compatibility with `import { api, apiFetch, ... } from '../lib/api'`
 
-import { resolvedApiUrl, RETRY_CONFIG, gatewayPath } from './base';
+import {
+  resolvedApiUrl,
+  RETRY_CONFIG,
+  gatewayPath,
+  generateCorrelationId,
+  generateIdempotencyKey,
+} from './base';
 import type { RetryOptions } from './base';
 import { createAuthMethods } from './auth';
 import { createUserMethods } from './user';
@@ -13,15 +19,38 @@ import { createRecommendationMethods } from './recommendation';
 import { createUniverseMethods } from './universe';
 import { createCreatorMethods } from './creator';
 import { createModerationMethods } from './moderation';
-import { createAdminMethods } from './admin';
+
 import { createEngagementMethods } from './engagement';
+import { createBundleMethods } from './bundle';
 
 import type { ApiResponse } from './base';
 import type { ApiError } from './base';
+import { createWebLogger } from '../logger';
+
+const logger = createWebLogger('ApiClient');
 
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
-const USER_KEY = 'azeebo_user';
+
+/**
+ * Plant the httpOnly refresh_token cookie (7 days) through a Next route.
+ * lib/api/base.ts's cookie-first auth recovery POSTs /auth/refresh with no
+ * body and relies on this cookie; without it, apiFetch-based pages 401
+ * forever once the 15-min access cookie expires.
+ */
+export async function plantRefreshCookie(refreshToken: string): Promise<void> {
+  if (typeof window === 'undefined' || !refreshToken) return;
+  try {
+    await fetch('/api/auth/refresh-cookie', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: refreshToken, refresh_token: refreshToken }),
+      credentials: 'include',
+    });
+  } catch {
+    logger.error('Failed to plant refresh cookie via API');
+  }
+}
 
 export async function setAuthCookie(value: string, maxAge: number = 30 * 60): Promise<void> {
   if (typeof window !== 'undefined') {
@@ -33,9 +62,9 @@ export async function setAuthCookie(value: string, maxAge: number = 30 * 60): Pr
         credentials: 'include',
       });
     } catch {
-      // Fallback: set non-HttpOnly cookie for middleware compatibility
-      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-      document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
+      // SECURITY: Never use document.cookie fallback — it creates non-HttpOnly cookies
+      // vulnerable to XSS. The /api/auth/cookie endpoint is the only way to set auth cookies.
+      logger.error('Failed to set auth cookie via API');
     }
   }
 }
@@ -48,9 +77,9 @@ export async function clearAuthCookie(): Promise<void> {
         credentials: 'include',
       });
     } catch {
-      // Fallback
-      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-      document.cookie = `auth=; path=/; max-age=0; SameSite=Lax${secure}`;
+      // SECURITY: Never use document.cookie fallback — it creates non-HttpOnly cookies
+      // vulnerable to XSS. The /api/auth/cookie endpoint is the only way to clear auth cookies.
+      logger.error('Failed to clear auth cookie via API');
     }
   }
 }
@@ -61,6 +90,30 @@ class ApiClient {
   private refreshPromise: Promise<import('./base').RefreshTokensResponse | null> | null = null;
 
   auth: ReturnType<typeof createAuthMethods>;
+
+  private buildErrorResponse(data: Record<string, unknown>, statusCode: number): ApiError {
+    return {
+      success: false,
+      type: data.type as string,
+      title: data.title as string,
+      status: statusCode,
+      detail: data.detail as string,
+      instance: data.instance as string,
+      code: data.code as string,
+      message:
+        (data.message as string) ||
+        (Array.isArray((data.error as Record<string, unknown>)?.message)
+          ? ((data.error as Record<string, unknown>).message as string[]).join(', ')
+          : ((data.error as Record<string, unknown>)?.message as string)) ||
+        (data.detail as string) ||
+        'An error occurred',
+      error: data.error,
+      statusCode,
+      details: data.details,
+      timestamp: data.timestamp as string,
+      path: data.path as string,
+    } as ApiError;
+  }
   user: ReturnType<typeof createUserMethods>;
   content: ReturnType<typeof createContentMethods>;
   reality: ReturnType<typeof createRealityMethods>;
@@ -70,8 +123,8 @@ class ApiClient {
   universe: ReturnType<typeof createUniverseMethods>;
   creator: ReturnType<typeof createCreatorMethods>;
   moderation: ReturnType<typeof createModerationMethods>;
-  admin: ReturnType<typeof createAdminMethods>;
   engagement: ReturnType<typeof createEngagementMethods>;
+  bundle: ReturnType<typeof createBundleMethods>;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -96,8 +149,8 @@ class ApiClient {
     this.universe = createUniverseMethods(this);
     this.creator = createCreatorMethods(this);
     this.moderation = createModerationMethods(this);
-    this.admin = createAdminMethods(this);
     this.engagement = createEngagementMethods(this);
+    this.bundle = createBundleMethods(this);
   }
 
   setToken(token: string | null): void {
@@ -133,8 +186,11 @@ class ApiClient {
           localStorage.setItem(ACCESS_TOKEN_KEY, response.data.access_token);
           localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
 
-          // Update the middleware auth cookie with the new access token
+          // Update the middleware auth cookie with the new access token,
+          // and keep the httpOnly refresh cookie in sync with rotation so
+          // the cookie-first recovery in lib/api/base.ts keeps working.
           setAuthCookie(response.data.access_token);
+          void plantRefreshCookie(response.data.refresh_token);
           return response.data;
         }
         return null;
@@ -186,8 +242,19 @@ class ApiClient {
       ...(options.headers as Record<string, string>),
     };
 
+    // Correlation ID for request tracing (TAA §9)
+    if (!headers['x-correlation-id']) {
+      headers['x-correlation-id'] = generateCorrelationId();
+    }
+
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    // Idempotency key for state-changing methods (TAA §9)
+    const method = (options.method || 'GET').toUpperCase();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !headers['Idempotency-Key']) {
+      headers['Idempotency-Key'] = generateIdempotencyKey();
     }
 
     const controller = new AbortController();
@@ -207,29 +274,47 @@ class ApiClient {
 
       if (!response.ok) {
         // T-CORE: On 401, attempt automatic token refresh and retry the request
-        if (
-          response.status === 401 &&
-          !retryOptions?.skipAuthRetry &&
-          !endpoint.includes('/auth/refresh') &&
-          !endpoint.includes('/auth/login')
-        ) {
-          const refreshed = await this.attemptRefresh();
-          if (refreshed) {
-            // Retry the original request with the new token
-            return this.request<T>(endpoint, options, retryOptions, attempt);
+        // T-M15: When retryOn401 is set (e.g. refresh-token path), retry with
+        // backoff instead of triggering a full auth refresh cycle.
+        if (response.status === 401) {
+          if (
+            retryOptions?.retryOn401 &&
+            attempt < RETRY_CONFIG.maxRetries &&
+            !endpoint.includes('/auth/refresh') &&
+            !endpoint.includes('/auth/login')
+          ) {
+            const retryAfter = response.headers.get('Retry-After');
+            const delay = this.calculateDelay(attempt, retryAfter);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            return this.request<T>(endpoint, options, retryOptions, attempt + 1);
           }
-          // Refresh failed — redirect to login page
-          if (typeof window !== 'undefined') {
-            const loginUrl = new URL('/auth/login', window.location.origin);
-            loginUrl.searchParams.set('redirect', window.location.pathname);
-            window.location.href = loginUrl.toString();
+
+          if (
+            !retryOptions?.skipAuthRetry &&
+            !endpoint.includes('/auth/refresh') &&
+            !endpoint.includes('/auth/login')
+          ) {
+            const refreshed = await this.attemptRefresh();
+            if (refreshed) {
+              // Retry the original request with the new token
+              return this.request<T>(endpoint, options, retryOptions, attempt);
+            }
+            // Refresh failed — redirect to login page
+            if (typeof window !== 'undefined') {
+              const loginUrl = new URL('/auth/login', window.location.origin);
+              loginUrl.searchParams.set('redirect', window.location.pathname);
+              window.location.href = loginUrl.toString();
+            }
           }
         }
 
         // T-M15: retry on standard retryable codes, but skip retry for auth/refresh
         // to prevent generating multiple refresh requests that hit rate limits
+        // T-M16: skipRetry option allows callers to fail immediately on server errors
         const retryable =
-          this.isRetryableError(response.status) && !endpoint.includes('/auth/refresh');
+          !retryOptions?.skipRetry &&
+          this.isRetryableError(response.status) &&
+          !endpoint.includes('/auth/refresh');
 
         if (retryable && attempt < RETRY_CONFIG.maxRetries) {
           const retryAfter = response.headers.get('Retry-After');
@@ -238,35 +323,27 @@ class ApiClient {
           return this.request<T>(endpoint, options, retryOptions, attempt + 1);
         }
 
-        return {
-          success: false,
-          // RFC 7807 fields (passthrough from backend)
-          type: data.type,
-          title: data.title,
-          status: response.status,
-          detail: data.detail,
-          instance: data.instance,
-          // Application-level fields
-          code: data.code,
-          message:
-            data.message ||
-            (Array.isArray(data.error?.message)
-              ? data.error.message.join(', ')
-              : data.error?.message) ||
-            data.detail ||
-            'An error occurred',
-          error: data.error,
-          statusCode: response.status,
-          details: data.details,
-          timestamp: data.timestamp,
-          path: data.path,
-        } as ApiError;
+        return this.buildErrorResponse(data, response.status);
       }
 
+      // T-FIX: Some upstream controllers return HTTP 200 with an error
+      // envelope ({ success: false, ... }). Honor that instead of treating
+      // the whole envelope as payload data (which broke pages calling
+      // .find()/.map() on the result).
+      if (
+        data &&
+        typeof data === 'object' &&
+        'success' in data &&
+        (data as Record<string, unknown>).success === false
+      ) {
+        return this.buildErrorResponse(data as Record<string, unknown>, response.status);
+      }
+
+      const body = data as Record<string, unknown>;
       return {
         success: true,
-        data: data.data || data,
-        message: data.message,
+        data: body.data !== undefined ? body.data : data,
+        message: body.message as string | undefined,
       };
     } catch (error) {
       clearTimeout(timeoutId);
@@ -286,7 +363,10 @@ class ApiClient {
       }
 
       if (
-        this.isRetryableError(undefined, error instanceof Error ? (error as Error).message : undefined) &&
+        this.isRetryableError(
+          undefined,
+          error instanceof Error ? (error as Error).message : undefined
+        ) &&
         attempt < RETRY_CONFIG.maxRetries
       ) {
         const delay = this.calculateDelay(attempt);

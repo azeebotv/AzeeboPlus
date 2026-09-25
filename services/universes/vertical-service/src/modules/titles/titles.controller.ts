@@ -1,14 +1,25 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '@azeebo/security';
 import { TitlesService } from './titles.service';
 import { CreateTitleData, CreateChapterData } from './titles.service';
 import { UpdateTitleDto } from './dto/update-title.dto';
 
 @ApiTags('Titles')
-@Controller('v1/vertical/titles')
+@Controller('vertical/titles')
 export class TitlesController {
-  constructor(private readonly titlesService: TitlesService) {}
+  constructor(@Inject(TitlesService) private readonly titlesService: TitlesService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get titles' })
@@ -38,7 +49,7 @@ export class TitlesController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create title' })
   @ApiResponse({ status: 201, description: 'Title created' })
   async createTitle(@Body() body: CreateTitleData): Promise<unknown> {
@@ -46,18 +57,15 @@ export class TitlesController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Update title' })
   @ApiResponse({ status: 200, description: 'Title updated' })
-  async updateTitle(
-    @Param('id') id: string,
-    @Body() body: UpdateTitleDto
-  ): Promise<unknown> {
+  async updateTitle(@Param('id') id: string, @Body() body: UpdateTitleDto): Promise<unknown> {
     return this.titlesService.updateTitle(id, body);
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Delete title' })
   @ApiResponse({ status: 200, description: 'Title deleted' })
   async deleteTitle(@Param('id') id: string): Promise<unknown> {
@@ -65,7 +73,7 @@ export class TitlesController {
   }
 
   @Post(':titleId/chapters')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create chapter' })
   @ApiResponse({ status: 201, description: 'Chapter created' })
   async createChapter(

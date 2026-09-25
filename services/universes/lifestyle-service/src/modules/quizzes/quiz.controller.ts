@@ -1,27 +1,38 @@
 import {
+  Inject,
   Controller,
   Get,
   Post,
-  UseGuards,
   Request,
   Body,
   Param,
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
+import { Public, ServiceAuthGuard } from '@azeebo/security';
+import { ensureUser } from '../../common/user-provisioning';
+import { PrismaService } from '../database/prisma.service';
 
 import { QuizService } from './quiz.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { SubmitQuizDto } from './dto/submit-quiz.dto';
 
 @ApiTags('Quizzes')
+@UseGuards(ServiceAuthGuard)
+@FeatureFlag(lifestyleFlags.quizzesEnabled)
+@UseGuards(FeatureFlagGuard)
 @Controller('quizzes')
 export class QuizController {
-  constructor(private readonly quizService: QuizService) {}
+  constructor(
+    @Inject(QuizService) private readonly quizService: QuizService,
+    @Inject(PrismaService) private readonly prisma: PrismaService
+  ) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'List quizzes' })
   @ApiResponse({ status: 200, description: 'List of quizzes' })
@@ -39,6 +50,7 @@ export class QuizController {
     );
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get quiz details' })
   @ApiResponse({ status: 200, description: 'Quiz details' })
@@ -48,38 +60,33 @@ export class QuizController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a quiz' })
   @ApiResponse({ status: 201, description: 'Quiz created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async createQuiz(@Request() req: { user: { sub: string } }, @Body() data: CreateQuizDto) {
+  async createQuiz(@Request() req: { user: { id: string } }, @Body() data: CreateQuizDto) {
+    await ensureUser(this.prisma, req.user);
     return this.quizService.createQuiz(req.user.id, data);
   }
 
   @Post(':id/start')
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Start a quiz' })
   @ApiResponse({ status: 200, description: 'Quiz started' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async startQuiz(@Request() req: { user: { sub: string } }, @Param('id') quizId: string) {
+  async startQuiz(@Request() req: { user: { id: string } }, @Param('id') quizId: string) {
+    await ensureUser(this.prisma, req.user);
     return this.quizService.startQuiz(quizId, req.user.id);
   }
 
   @Post('attempts/:attemptId/submit')
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Submit quiz answers' })
   @ApiResponse({ status: 200, description: 'Quiz submitted' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async submitQuiz(
-    @Request() req: { user: { sub: string } },
-    @Param('attemptId') attemptId: string,
-    @Body() body: SubmitQuizDto
-  ) {
+  async submitQuiz(@Param('attemptId') attemptId: string, @Body() body: SubmitQuizDto) {
     return this.quizService.submitQuiz(attemptId, body.answers);
   }
 

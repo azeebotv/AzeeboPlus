@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   output   = "../src/prisma/client"
 }
 
@@ -41,6 +42,7 @@ model Referral {
   updatedAt     DateTime @updatedAt
 
   referralCode  ReferralCode @relation(fields: [referralCodeId], references: [id])
+  reward        ReferralReward?
 
   @@map("referrals")
   @@index([referrerId])
@@ -61,6 +63,8 @@ model ReferralReward {
   creditedAt    DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  referral Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
 
   @@map("referral_rewards")
   @@index([userId])

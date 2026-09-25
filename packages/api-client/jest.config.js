@@ -13,4 +13,7 @@ module.exports = {
   ],
   coverageDirectory: '../coverage',
   verbose: true,
+  moduleNameMapper: {
+    '^@azeebo/http-client$': '<rootDir>/../../http-client/src/index.ts',
+  },
 };

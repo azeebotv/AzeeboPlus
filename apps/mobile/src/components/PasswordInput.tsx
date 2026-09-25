@@ -28,7 +28,7 @@ export function PasswordInput({
         <TextInput
           style={styles.input}
           placeholder={placeholder}
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.text.tertiary}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={!showPassword}
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border.default,
   },
   inputError: {
-    borderColor: colors.error,
+    borderColor: colors.error[500],
   },
   input: {
     flex: 1,
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   errorText: {
-    color: colors.error,
+    color: colors.error[500],
     fontSize: 12,
     marginTop: 4,
   },

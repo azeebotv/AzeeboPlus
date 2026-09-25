@@ -1,11 +1,66 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreatorsService } from './creators.service';
-import { PrismaService } from '../database/prisma.service';
+import { CreatorsService } from './creators.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
+jest.mock('zod', () => {
+  const chainable = () => {
+    const obj: Record<string, jest.Mock> = {};
+    const methods = [
+      'optional',
+      'default',
+      'url',
+      'email',
+      'min',
+      'max',
+      'positive',
+      'transform',
+      'regex',
+      'nullable',
+      'trim',
+      'safeParse',
+    ];
+    methods.forEach((m) => {
+      obj[m] = jest.fn().mockReturnValue(obj);
+    });
+    return obj;
+  };
+  const z = {
+    string: jest.fn(() => chainable()),
+    number: jest.fn(() => chainable()),
+    boolean: jest.fn(() => chainable()),
+    array: jest.fn(() => chainable()),
+    object: jest.fn(() => chainable()),
+    enum: jest.fn(() => chainable()),
+    record: jest.fn(() => chainable()),
+    literal: jest.fn(() => chainable()),
+    union: jest.fn(() => chainable()),
+    any: jest.fn(() => chainable()),
+    coerce: { string: jest.fn(() => chainable()), number: jest.fn(() => chainable()) },
+  };
+  return { z, ZodError: class ZodError extends Error {} };
+});
+
+jest.mock('firebase-admin/app', () => ({ initializeApp: jest.fn(), cert: jest.fn() }));
+jest.mock('firebase-admin/messaging', () => ({}));
 jest.mock('../database/prisma.service');
 jest.mock('axios');
+
+import { CacheService } from '@azeebo/shared-services';
+
+jest.mock('@azeebo/shared-services', () => ({
+  CacheService: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    delete: jest.fn().mockResolvedValue(1),
+    invalidate: jest.fn().mockResolvedValue(1),
+  })),
+  FirebaseService: jest.fn().mockImplementation(() => ({
+    sendPushNotification: jest.fn().mockResolvedValue({ success: true }),
+  })),
+  cacheKey: jest.fn((...parts: string[]) => parts.join(':')),
+}));
 
 describe('CreatorsService Integration', () => {
   let service: CreatorsService;
@@ -47,7 +102,16 @@ describe('CreatorsService Integration', () => {
               if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service';
               return '';
             }),
-            get: jest.fn((key: string, defaultValue?: string) => defaultValue),
+            get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue('OK'),
+            delete: jest.fn().mockResolvedValue(1),
+            invalidate: jest.fn().mockResolvedValue(1),
           },
         },
         {

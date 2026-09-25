@@ -8,9 +8,10 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { realityApi } from '../../../src/api';
-import { logger } from '../../../src/utils/logger';
+import { useLocalSearchParams } from 'expo-router';
+import { realityApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../../src/theme';
 
 interface PredictionResult {
   id: string;
@@ -32,7 +33,6 @@ interface PredictionResult {
 }
 
 export default function PredictionResultsScreen() {
-  
   const params = useLocalSearchParams();
   const predictionId = params.predictionId as string;
 
@@ -48,7 +48,7 @@ export default function PredictionResultsScreen() {
     try {
       const response = await realityApi.getPredictionResults(predictionId);
       if (response.success && response.data) {
-        setResult(response.data as PredictionResult);
+        setResult(response.data as unknown as PredictionResult);
       }
     } catch (error) {
       logger.error('Failed to load prediction results', error);
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 12,
   },
   errorText: {
@@ -184,10 +184,10 @@ const styles = StyleSheet.create({
   },
   question: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   resultCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   },
   resultLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   badge: {
     paddingHorizontal: 12,
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B98120',
   },
   badgeError: {
-    backgroundColor: '#EF444420',
+    backgroundColor: colors.alpha.danger20,
   },
   badgeText: {
     fontSize: 12,
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -250,10 +250,10 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   rewardsCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
   },

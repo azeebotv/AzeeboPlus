@@ -1,29 +1,16 @@
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtConfigModule } from '@azeebo/shared-services';
 
-import { SportsController } from './sports.controller';
-import { SportsService } from './sports.service';
-import { DatabaseModule } from '../database/database.module';
+import { SportsController } from './sports.controller.js';
+import { SportsService } from './sports.service.js';
+import { SportsGateway } from './sports.gateway.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { SportsDataSourcingService } from './sports-data-sourcing.service.js';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    PassportModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService): Promise<Record<string, unknown>> => ({
-        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
-        },
-      }),
-      inject: [ConfigService],
-    }),
-  ],
+  imports: [DatabaseModule, JwtConfigModule],
   controllers: [SportsController],
-  providers: [SportsService],
-  exports: [SportsService, DatabaseModule],
+  providers: [SportsService, SportsGateway, SportsDataSourcingService],
+  exports: [SportsService, SportsDataSourcingService, DatabaseModule, SportsGateway],
 })
 export class SportsModule {}

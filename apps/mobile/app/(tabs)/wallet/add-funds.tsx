@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,15 +8,19 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  Linking,
+  AppState,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AmountInput } from '../../../src/components/AmountInput';
-import { walletApi, paymentApi } from '../../../src/api';
+import { walletApi, paymentApi, useWallet } from '@azeebo/react-data';
+import { analytics } from '../../../src/utils/analytics';
 import { useAppleGooglePay } from '../../../src/hooks/useAppleGooglePay';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
-import { useAuth } from '../../../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { addFundsPresetAmounts, walletLimits } from '../../../src/config/prices';
+import { colors } from '../../../src/theme';
 
 const PRESET_AMOUNTS = addFundsPresetAmounts;
 
@@ -31,6 +35,7 @@ const PAYMENT_METHOD_META: Record<string, { name: string; icon: string; descript
 export default function AddFundsScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { getWallet } = useWallet();
   const {
     isAvailable: isAppleGooglePayAvailable,
     paymentMethodLabel,
@@ -52,17 +57,30 @@ export default function AddFundsScreen() {
     try {
       const res = await paymentApi.getProviders();
       if (res.success && res.data) {
-        setProviders(res.data);
+        if (res.data.length === 0) {
+          // success-with-empty-list is a server-side outage fallback, not a
+          // healthy catalog. Fail honestly instead of offering methods the
+          // backend cannot honor (parity with the TV fund screen).
+          setProvidersError(
+            'No payment providers are available right now. Please try again later.'
+          );
+        } else {
+          setProviders(res.data);
+        }
+      } else {
+        setProvidersError('Failed to load payment methods');
       }
     } catch (err: unknown) {
-      setProvidersError(err.message || 'Failed to load payment methods');
+      setProvidersError(
+        (err instanceof Error ? err.message : null) || 'Failed to load payment methods'
+      );
     } finally {
       setIsLoadingProviders(false);
     }
   };
 
   useEffect(() => {
-    fetchProviders();
+    void fetchProviders();
   }, []);
 
   const paymentMethods =
@@ -103,6 +121,112 @@ export default function AddFundsScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // ── Post-checkout verification ─────────────────────────────────────────
+  // Mirrors the TV fund screen: verify AFTER the user returns from the
+  // provider checkout (AppState → active), then poll every 3s (up to 5 min)
+  // until the payment settles. The previous flow verified while the user was
+  // still inside the provider webview, always reported "Payment Pending",
+  // and popped the screen out from under them.
+  const VERIFY_INTERVAL_MS = 3000;
+  const VERIFY_SESSION_MS = 5 * 60 * 1000;
+  const verifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionDeadlineRef = useRef(0);
+  const appStateSubRef = useRef<{ remove: () => void } | null>(null);
+
+  const stopVerification = useCallback(() => {
+    if (verifyTimerRef.current) {
+      clearTimeout(verifyTimerRef.current);
+      verifyTimerRef.current = null;
+    }
+    appStateSubRef.current?.remove();
+    appStateSubRef.current = null;
+  }, []);
+
+  useEffect(() => stopVerification, [stopVerification]);
+
+  const finishVerification = useCallback(
+    (outcome: 'success' | 'failed' | 'pending') => {
+      stopVerification();
+      if (outcome === 'success') {
+        void getWallet(); // refresh the header badge + wallet context (H5)
+        Alert.alert('Success', 'Wallet funded successfully!', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      } else if (outcome === 'failed') {
+        Alert.alert(
+          'Payment Failed',
+          'Your payment was not completed. No money was taken. You can safely try again.'
+        );
+      } else {
+        Alert.alert(
+          'Payment Pending',
+          'Your payment is still processing. If you completed it, check Transactions in a moment — the balance updates automatically once the provider confirms.'
+        );
+      }
+    },
+    [getWallet, router, stopVerification]
+  );
+
+  // Analytics wrapper: one event with the settled outcome per funding attempt.
+  // Declared before verifyOnce, which calls it.
+  const finishVerificationTracked = useCallback(
+    (outcome: 'success' | 'failed' | 'pending') => {
+      if (outcome === 'success') {
+        analytics.walletFunded(parseFloat(amount || '0'), selectedMethod);
+      } else if (outcome === 'failed') {
+        analytics.paymentFailed(
+          parseFloat(amount || '0'),
+          selectedMethod,
+          'provider_reported_failed'
+        );
+      }
+      finishVerification(outcome);
+    },
+    [amount, selectedMethod, finishVerification]
+  );
+
+  const verifyOnce = useCallback(
+    (reference: string) => {
+      void (async () => {
+        try {
+          const res = await paymentApi.verify(reference);
+          if (res.success && res.data) {
+            if (res.data.status === 'success') {
+              finishVerificationTracked('success');
+              return;
+            }
+            if (res.data.status === 'failed') {
+              finishVerificationTracked('failed');
+              return;
+            }
+          }
+        } catch {
+          // Network blip — verify is idempotent; keep polling.
+        }
+        if (Date.now() >= sessionDeadlineRef.current) {
+          finishVerificationTracked('pending');
+          return;
+        }
+        verifyTimerRef.current = setTimeout(() => verifyOnce(reference), VERIFY_INTERVAL_MS);
+      })();
+    },
+    [finishVerificationTracked]
+  );
+
+  const startVerification = useCallback(
+    (reference: string) => {
+      sessionDeadlineRef.current = Date.now() + VERIFY_SESSION_MS;
+      // Kick off immediately (covers instant-settle flows), then re-check
+      // every time the app returns to the foreground (user came back from
+      // the provider webview/browser) and on the interval timer.
+      verifyOnce(reference);
+      appStateSubRef.current = AppState.addEventListener('change', (state) => {
+        if (state === 'active') verifyOnce(reference);
+      });
+    },
+    [verifyOnce]
+  );
+
   const handleAddFunds = async () => {
     if (!validateForm()) {
       return;
@@ -122,23 +246,34 @@ export default function AddFundsScreen() {
       });
 
       if (response.success && response.data) {
-        const { authorizationUrl } = response.data;
+        const { authorizationUrl, reference } = response.data;
 
         if (authorizationUrl) {
-          Alert.alert('Payment Initiated', 'You will be redirected to complete your payment.', [
-            {
-              text: 'Continue',
-              onPress: () => {},
-            },
-          ]);
+          const supported = await Linking.canOpenURL(authorizationUrl);
+          if (!supported) {
+            Alert.alert('Error', 'Could not open payment URL');
+            return;
+          }
+          await Linking.openURL(authorizationUrl);
+          analytics.paymentInitialized(parseFloat(amount), selectedMethod, 'wallet_funding');
+          if (reference) {
+            // Verify when the user returns + poll until settle. The screen
+            // stays put (no router.back) so the outcome alerts land here.
+            startVerification(reference);
+          } else {
+            finishVerificationTracked('pending');
+          }
         } else {
-          Alert.alert('Success', 'Wallet funded successfully!', [
-            { text: 'OK', onPress: () => router.back() },
-          ]);
+          finishVerificationTracked('success');
         }
+      } else {
+        Alert.alert('Error', response.message || 'Failed to add funds. Please try again.');
       }
     } catch (error: unknown) {
-      Alert.alert('Error', error?.message || 'Failed to add funds. Please try again.');
+      Alert.alert(
+        'Error',
+        (error instanceof Error ? error.message : null) || 'Failed to add funds. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -150,6 +285,7 @@ export default function AddFundsScreen() {
     const result = await processPayment(numAmount, 'NGN', 'Wallet funding');
 
     if (result.success) {
+      void getWallet(); // refresh header badge + wallet context
       Alert.alert('Success', 'Wallet funded successfully!', [
         { text: 'OK', onPress: () => router.back() },
       ]);
@@ -201,6 +337,8 @@ export default function AddFundsScreen() {
                 }
               }}
               error={errors.amount}
+              minimumAmount={walletLimits.minimumDeposit}
+              maximumAmount={walletLimits.maximumDeposit}
             />
           </View>
 
@@ -276,8 +414,9 @@ export default function AddFundsScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>ℹ️ Information</Text>
             <Text style={styles.infoText}>
-              • Minimum deposit: ₦{walletLimits.minimumDeposit.toLocaleString()}{'\n'}• Maximum deposit: ₦{walletLimits.maximumDeposit.toLocaleString()}{'\n'}• Funds are added
-              instantly{'\n'}• Transaction fees may apply
+              • Minimum deposit: ₦{walletLimits.minimumDeposit.toLocaleString()}
+              {'\n'}• Maximum deposit: ₦{walletLimits.maximumDeposit.toLocaleString()}
+              {'\n'}• Funds are added instantly{'\n'}• Transaction fees may apply
             </Text>
           </View>
         </View>
@@ -305,12 +444,12 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   form: {
     flex: 1,
@@ -320,7 +459,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
     fontWeight: '500',
   },
@@ -338,14 +477,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.neutral[700],
   },
   presetButtonSelected: {
     backgroundColor: '#E8420A',
     borderColor: '#E8420A',
   },
   presetText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -360,17 +499,17 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.neutral[700],
   },
   methodCardSelected: {
     borderColor: '#E8420A',
-    backgroundColor: '#1f1f2e',
+    backgroundColor: colors.bg.deep,
   },
   methodIcon: {
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -384,19 +523,19 @@ const styles = StyleSheet.create({
   methodName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 2,
   },
   methodDescription: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   methodRadio: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#333',
+    borderColor: colors.neutral[700],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -433,13 +572,13 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontWeight: '500',
     marginBottom: 8,
   },
   infoText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     lineHeight: 20,
   },
 });

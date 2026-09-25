@@ -6,8 +6,62 @@ import { UniverseService } from './universe.service';
 import { PrismaService } from '../database/prisma.service';
 import { RateLimitGuard } from '@azeebo/security';
 
+jest.mock('@azeebo/security', () => {
+  class MockGuard {
+    canActivate = jest.fn().mockReturnValue(true);
+  }
+  return {
+    RateLimitGuard: MockGuard,
+    AdminGuard: MockGuard,
+    RateLimit: () => () => {},
+  };
+});
+
+jest.mock('class-validator', () => ({
+  IsString: () => () => {},
+  IsNotEmpty: () => () => {},
+  IsOptional: () => () => {},
+  IsNumber: () => () => {},
+  IsEmail: () => () => {},
+  IsBoolean: () => () => {},
+  IsArray: () => () => {},
+  ArrayNotEmpty: () => () => {},
+  ValidateNested: () => () => {},
+  Min: () => () => {},
+  Max: () => () => {},
+  IsUrl: () => () => {},
+  Matches: () => () => {},
+  Length: () => () => {},
+  IsInt: () => () => {},
+  IsPositive: () => () => {},
+  IsEnum: () => () => {},
+  IsDateString: () => () => {},
+  IsObject: () => () => {},
+  Validate: () => () => {},
+  registerDecorator: jest.fn(),
+  ValidationOptions: jest.fn(),
+  ValidationMetadata: jest.fn(),
+}));
+
+jest.mock('@nestjs/swagger', () => ({
+  ApiProperty: () => () => {},
+  ApiPropertyOptional: () => () => {},
+  ApiTags: () => () => {},
+  ApiOperation: () => () => {},
+  ApiBearerAuth: () => () => {},
+  ApiQuery: () => () => {},
+  ApiParam: () => () => {},
+  ApiBody: () => () => {},
+  ApiResponse: () => () => {},
+  OmitType: (t: unknown) => t,
+  PickType: (t: unknown) => t,
+  PartialType: (t: unknown) => t,
+  IntersectionType: (...t: unknown[]) => t[0],
+}));
+
 describe('Universe Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockUniverseService = {
     getUniverses: jest.fn(),
@@ -32,14 +86,22 @@ describe('Universe Controller Contract Tests', () => {
         $connect: jest.fn().mockResolvedValue(undefined),
         $disconnect: jest.fn().mockResolvedValue(undefined),
         universeMap: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
-        location: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+        location: {
+          findMany: jest.fn(),
+          findUnique: jest.fn(),
+          create: jest.fn(),
+          update: jest.fn(),
+        },
       })
       .overrideGuard(RateLimitGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('v1');
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -57,7 +119,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { items: [{ id: 'universe-1', name: 'Heroes' }], page: 1, limit: 20, total: 1 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes')
         .expect(200)
         .expect((res) => {
@@ -71,7 +133,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { items: [], page: 2, limit: 10, total: 0 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes?page=2&limit=10')
         .expect(200)
         .expect((res) => {
@@ -87,7 +149,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { id: 'map-1', slug: 'heroes', locations: [] },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes/map/heroes')
         .expect(200)
         .expect((res) => {
@@ -103,7 +165,7 @@ describe('Universe Controller Contract Tests', () => {
         data: [{ id: 'location-1', name: 'City' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes/locations')
         .expect(200)
         .expect((res) => {
@@ -117,7 +179,7 @@ describe('Universe Controller Contract Tests', () => {
         data: [{ id: 'location-1', universe: 'heroes' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes/locations?universe=heroes')
         .expect(200)
         .expect((res) => {
@@ -133,7 +195,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { id: 'location-1', slug: 'metropolis', name: 'Metropolis' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes/locations/metropolis')
         .expect(200)
         .expect((res) => {
@@ -149,7 +211,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { id: 'location-new', name: 'New City' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/vertical/universes/locations')
         .send({ name: 'New City', universeId: 'universe-1', description: 'A new city' })
         .expect(201)
@@ -166,7 +228,7 @@ describe('Universe Controller Contract Tests', () => {
         data: [{ id: 'category-1', name: 'Action' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes/categories')
         .expect(200)
         .expect((res) => {
@@ -182,7 +244,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { items: [], page: 1, limit: 20, total: 0 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes')
         .expect((res) => {
           expect(res.body).toHaveProperty('success');
@@ -198,7 +260,7 @@ describe('Universe Controller Contract Tests', () => {
         data: { items: [], page: 1, limit: 20, total: 0 },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/vertical/universes')
         .expect((res) => {
           expect(res.body.data).toHaveProperty('page');
@@ -212,9 +274,7 @@ describe('Universe Controller Contract Tests', () => {
     it('should return 404 for non-existent location', () => {
       mockUniverseService.getLocationBySlug.mockRejectedValue(new Error('Location not found'));
 
-      return request(app.getHttpServer())
-        .get('/v1/vertical/universes/locations/nonexistent')
-        .expect(500);
+      return request(baseUrl).get('/v1/vertical/universes/locations/nonexistent').expect(500);
     });
   });
 });

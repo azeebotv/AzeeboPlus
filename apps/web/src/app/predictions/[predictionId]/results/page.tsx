@@ -1,9 +1,10 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Check, ArrowLeft, BarChart3 } from 'lucide-react';
 
 export default function PredictionResultsPage(): React.JSX.Element {
   const { predictionId } = useParams();
@@ -25,7 +26,9 @@ export default function PredictionResultsPage(): React.JSX.Element {
 
   const loadResults = async () => {
     try {
-      const response = await apiFetch<{ success: boolean; data: PredictionResults }>(`/engagement/predictions/${predictionId}/results`);
+      const response = await apiFetch<PredictionResults>(
+        `/engagement/predictions/${predictionId}/results`
+      );
       if (response.success && response.data) setResults(response.data);
     } catch {
       /* ignore */
@@ -35,8 +38,14 @@ export default function PredictionResultsPage(): React.JSX.Element {
   };
 
   return (
-    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
-      <AppHeader />
+    <div
+      style={{
+        backgroundColor: 'var(--bg-primary)',
+        minHeight: '100vh',
+        color: 'var(--text-primary)',
+      }}
+    >
+      <AppHeader logoVariant="light" />
       <main
         style={{
           paddingTop: 100,
@@ -51,16 +60,16 @@ export default function PredictionResultsPage(): React.JSX.Element {
           style={{
             background: 'none',
             border: 'none',
-            color: '#9A8A7A',
+            color: 'rgba(255,255,255,0.6)',
             cursor: 'pointer',
             fontSize: 14,
-            marginBottom: 16,
-            display: 'flex',
+            marginBottom: 20,
+            display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
           }}
         >
-          <span>←</span> Back
+          <ArrowLeft size={16} /> Back
         </button>
 
         {isLoading ? (
@@ -69,25 +78,41 @@ export default function PredictionResultsPage(): React.JSX.Element {
               style={{
                 width: 40,
                 height: 40,
-                border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
+                border: '3px solid #18151e',
+                borderTopColor: 'var(--brand-orange, #E8420A)',
                 borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite',
               }}
             />
           </div>
         ) : !results ? (
-          <div className="az-glass" style={{ padding: 40, borderRadius: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
-            <h3 style={{ fontSize: 18 }}>Results not available yet</h3>
-            <p style={{ color: '#9A8A7A', marginTop: 8 }}>Check back after the prediction closes</p>
+          <div
+            className="az-glass"
+            style={{
+              padding: 48,
+              borderRadius: 20,
+              textAlign: 'center',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            <div className="w-16 h-16 rounded-2xl bg-orange-500/10 text-[var(--brand-orange)] flex items-center justify-center mx-auto mb-4">
+              <BarChart3 size={32} />
+            </div>
+            <h3 style={{ fontSize: 18, color: 'white', fontWeight: 600 }}>
+              Results not available yet
+            </h3>
+            <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: 8 }}>
+              Check back after the prediction closes
+            </p>
           </div>
         ) : (
           <>
-            <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: 'white' }}>
               {results.title || 'Prediction Results'}
             </h1>
-            <p style={{ color: '#9A8A7A', marginBottom: 32 }}>{results.description || ''}</p>
+            <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 32 }}>
+              {results.description || ''}
+            </p>
 
             {results.correctAnswer && (
               <div
@@ -96,26 +121,37 @@ export default function PredictionResultsPage(): React.JSX.Element {
                   padding: 24,
                   borderRadius: 20,
                   marginBottom: 20,
-                  border: '1px solid #0D3B2E',
+                  border: '1px solid rgba(16,185,129,0.3)',
+                  backgroundColor: 'rgba(16,185,129,0.08)',
                   textAlign: 'center',
                 }}
               >
-                <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 8 }}>Correct Answer</p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#0D3B2E' }}>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 8 }}>
+                  Correct Answer
+                </p>
+                <p style={{ fontSize: 24, fontWeight: 700, color: '#34D399' }}>
                   {results.correctAnswer}
                 </p>
               </div>
             )}
 
             {results.options && (
-              <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
-                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
+              <div
+                className="az-glass"
+                style={{
+                  padding: 24,
+                  borderRadius: 20,
+                  marginBottom: 20,
+                  border: '1px solid rgba(255,255,255,0.08)',
+                }}
+              >
+                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: 'white' }}>
                   Results Breakdown
                 </h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {results.options.map((opt, i) => {
                     const pct =
-                      results.totalVotes > 0
+                      results.totalVotes && results.totalVotes > 0
                         ? Math.round((opt.votes / results.totalVotes) * 100)
                         : 0;
                     const isCorrect = opt.text === results.correctAnswer;
@@ -132,12 +168,16 @@ export default function PredictionResultsPage(): React.JSX.Element {
                             style={{
                               fontWeight: 600,
                               fontSize: 14,
-                              color: isCorrect ? '#0D3B2E' : '#F5F0EB',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              color: isCorrect ? '#34D399' : 'white',
                             }}
                           >
-                            {opt.text} {isCorrect && '✓'}
+                            {opt.text}{' '}
+                            {isCorrect && <Check size={14} className="text-emerald-400" />}
                           </span>
-                          <span style={{ color: '#9A8A7A', fontSize: 13 }}>
+                          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
                             {pct}% ({opt.votes} votes)
                           </span>
                         </div>
@@ -145,7 +185,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
                           style={{
                             height: 8,
                             borderRadius: 4,
-                            backgroundColor: '#2A1A1A',
+                            backgroundColor: 'var(--bg-tertiary)',
                             overflow: 'hidden',
                           }}
                         >
@@ -155,8 +195,8 @@ export default function PredictionResultsPage(): React.JSX.Element {
                               width: `${pct}%`,
                               borderRadius: 4,
                               background: isCorrect
-                                ? 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)'
-                                : 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                                ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
+                                : 'linear-gradient(135deg, var(--brand-orange, #E8420A) 0%, var(--brand-red, #CC1C1C) 100%)',
                               transition: 'width 0.5s ease',
                             }}
                           />
@@ -165,7 +205,14 @@ export default function PredictionResultsPage(): React.JSX.Element {
                     );
                   })}
                 </div>
-                <p style={{ color: '#9A8A7A', fontSize: 13, marginTop: 16, textAlign: 'center' }}>
+                <p
+                  style={{
+                    color: 'rgba(255,255,255,0.5)',
+                    fontSize: 13,
+                    marginTop: 16,
+                    textAlign: 'center',
+                  }}
+                >
                   Total votes: {results.totalVotes}
                 </p>
               </div>
@@ -173,7 +220,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
           </>
         )}
       </main>
-      <AppFooter />
+      <AppFooter logoVariant="light" />
     </div>
   );
 }

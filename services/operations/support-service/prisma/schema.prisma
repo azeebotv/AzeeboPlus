@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   output   = "../src/prisma/client"
 }
 
@@ -80,6 +81,7 @@ model SupportMessage {
   message   String
   isInternal Boolean @default(false)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
@@ -247,4 +249,16 @@ model WebhookEvent {
   @@index([provider])
   @@index([type])
   @@map("webhook_events")
+}
+
+model SupportAnalyticsEvent {
+  id        String   @id @default(uuid())
+  event     String
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([event])
+  @@index([createdAt])
+  @@map("support_analytics_events")
 }
