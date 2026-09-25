@@ -42,6 +42,44 @@ import { readLedgerRows, psqlBin } from './pool-saturation-gate.mjs';
 // The zero case ("no pooler bypasses") must NOT match.
 const BYPASS_RE = /([0-9]+) repo process[(]es[)] bypassing pgbouncer: ?(.*)$/;
 
+// Matches the foreign-segment pool-audit.sh composes between saturation and
+// repo bypasses (the repo segment must stay LAST for BYPASS_RE's tail anchor):
+//   "foreign direct clients (context, not violations): /other/proj(node 1, 2 conns)"
+// The zero case (no foreign segment) must NOT match. The lazy capture stops
+// at the next known segment so the repo segment is never swallowed.
+export const FOREIGN_RE =
+  /foreign direct clients [(]context, not violations[)]: ?(.*?)(?=; (?:[0-9]+ repo process\(es\) bypassing pgbouncer|no pooler bypasses)|$)/;
+
+/**
+ * Extract the foreign (non-repo) direct Postgres clients a pass detail
+ * recorded: [{ workspace, conns }] — empty for passes that saw no foreign
+ * clients. Workspace identity is the absolute cwd path recorded by
+ * pool-audit (stable across restarts, unlike pids).
+ */
+export function parseForeignDirect(detail) {
+  const match = FOREIGN_RE.exec(detail ?? '');
+  if (!match) return [];
+  return match[1]
+    .split(';')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map(splitForeignItem);
+}
+
+/** Split one "workspace(cmd pid, N conns)" foreign item — same shape and
+ *  lastIndexOf logic as the repo bypass splitter (the fallback attribution
+ *  "(repo root)" is itself parenthesized). Foreign items carry no pid, so
+ *  the last number in the group is conns. */
+function splitForeignItem(item) {
+  const open = item.lastIndexOf('(');
+  if (open === -1) return { workspace: item.trim() || '(unknown)', conns: null, raw: item };
+  const close = item.lastIndexOf(')');
+  const inner = close > open ? item.slice(open + 1, close) : '';
+  const workspace = item.slice(0, open).trim() || item.slice(open, close + 1).trim() || '(unknown)';
+  const nums = (inner.match(/[0-9]+/g) ?? []).map(Number);
+  return { workspace, conns: nums[nums.length - 1] ?? null, raw: item };
+}
+
 /** Extract the bypass identities a pass detail flags: [{ workspace, pid, conns }]. */
 export function parseBypasses(detail) {
   const match = BYPASS_RE.exec(detail ?? '');
@@ -180,6 +218,138 @@ export function evaluateBypasses(rows, opts = {}) {
     longestSpanH: 0,
     worst: null,
   };
+}
+
+/**
+ * Decision core for FOREIGN (non-repo) direct Postgres dialers — the
+ * third pool-health kind, tracking-eligible like bypasses. A foreign
+ * workspace (another project on this host) dialing Postgres directly is
+ * someone else's bypass, but it lands in OUR connection budget, so a
+ * persistent dialer must be surfaced where a human owns it.
+ *
+ * Identical persistence semantics to evaluateBypasses (the code shape is
+ * deliberately parallel so the two always evolve together): the longest
+ * consecutive flagged run per workspace, consecutive = adjacent ledger rows,
+ * broken when the ledger goes quiet for that workspace longer than maxGapH;
+ * a run sustains at spanH >= minSpanH. Flags come from parseForeignDirect —
+ * the segment pool-audit records regardless of status.
+ *
+ * Distinct from the job-health gate's new-foreign alert: that one fires once
+ * on FIRST SIGHT vs a known baseline (an anvil for the nightly); this one
+ * tracks PERSISTENCE (24h+ of an unchanged dialer — the YCN fleet shape).
+ */
+export function evaluateForeignDialers(rows, opts = {}) {
+  const minSpanH = opts.minSpanH ?? 24;
+  const maxGapH = opts.maxGapH ?? 3;
+  // Approved dialers: workspaces whose persistence is KNOWN and accepted
+  // (e.g. a partner fleet with a standing agreement). They are still counted
+  // in foreignPasses/offenders (the budget impact is real) but can never be
+  // `sustained` — so the nightly tracker never opens/keeps a tracking issue
+  // for them. Matching is exact-path; POOL_FOREIGN_ALLOWLIST parses a
+  // comma-separated list with whitespace tolerated.
+  const allowSet =
+    opts.allowlist instanceof Set
+      ? opts.allowlist
+      : Array.isArray(opts.allowlist)
+        ? new Set(opts.allowlist)
+        : new Set(); // absent → empty allowlist (nothing approved)
+  const empty = { verdict: 'pass', reason: 'no pool-audit passes recorded in the window', foreignPasses: 0, offenders: [], sustained: [], longestSpanH: 0, worst: null };
+
+  if (!Array.isArray(rows) || rows.length === 0) return empty;
+
+  const timeOf = (r) => (r.ranAt instanceof Date ? r.ranAt.getTime() : Date.parse(r.ranAt));
+
+  // Group flagged passes per foreign workspace, preserving ledger order
+  // (newest-first), exactly like the repo-bypass grouping.
+  const byWorkspace = new Map();
+  let foreignPasses = 0;
+  for (const r of rows) {
+    const found = parseForeignDirect(r.detail);
+    if (found.length > 0) foreignPasses += 1;
+    for (const f of found) {
+      if (!byWorkspace.has(f.workspace)) byWorkspace.set(f.workspace, []);
+      byWorkspace.get(f.workspace).push({ ranAtMs: timeOf(r), status: r.status, conns: f.conns, raw: f.raw });
+    }
+  }
+
+  const sustained = [];
+  let worst = null;
+  for (const [workspace, passes] of byWorkspace) {
+    let best = { length: 0, spanH: 0, first: null, last: null };
+    let cur = [];
+    const consider = () => {
+      if (cur.length === 0) return;
+      const spanH = spanOf(cur.map((p) => p.ranAtMs));
+      if (cur.length > best.length || (cur.length === best.length && spanH > best.spanH)) {
+        best = { length: cur.length, spanH, first: cur[cur.length - 1], last: cur[0] };
+      }
+      cur = [];
+    };
+    for (let i = 0; i < passes.length; i++) {
+      if (i > 0) {
+        const a = passes[i].ranAtMs;
+        const b = passes[i - 1].ranAtMs;
+        const gapH = Number.isFinite(a) && Number.isFinite(b) ? Math.abs(a - b) / 3_600_000 : Infinity;
+        if (gapH > maxGapH) consider();
+      }
+      cur.push(passes[i]);
+    }
+    consider();
+    const allowed = allowSet.has(workspace);
+    if (best.spanH >= minSpanH - 1e-9 && !allowed) {
+      sustained.push({ workspace, length: best.length, spanH: best.spanH, conns: best.last?.conns ?? null });
+    }
+    if (!worst || best.spanH > worst.spanH || (best.spanH === worst.spanH && best.length > worst.length)) {
+      worst = { workspace, ...best };
+    }
+  }
+  sustained.sort((a, b) => a.workspace.localeCompare(b.workspace));
+
+  // Verdict: any sustained (non-approved) workspace fails — the fail subject
+  // is the worst SUSTAINED offender (max span, then pass count), which equals
+  // `worst` whenever nothing is allowlisted. An approved `worst` can never
+  // mask a real offender: approved workspaces are excluded from `sustained`,
+  // so they cannot reach this branch even when they hold the largest span.
+  if (sustained.length > 0) {
+    const subject = sustained.reduce((a, b) =>
+      b.spanH > a.spanH + 1e-9 || (Math.abs(b.spanH - a.spanH) <= 1e-9 && b.length > a.length) ? b : a
+    );
+    return {
+      verdict: 'fail',
+      reason: `sustained foreign direct-Postgres dialer: ${subject.workspace} flagged in ${subject.length} pass(es) spanning ${subject.spanH.toFixed(1)}h (threshold ${minSpanH}h)`,
+      foreignPasses,
+      offenders: [...byWorkspace.keys()],
+      sustained,
+      longestSpanH: worst?.spanH ?? subject.spanH,
+      worst,
+    };
+  }
+  if (worst && worst.spanH >= minSpanH - 1e-9) {
+    // The longest-spanning dialer is approved (sustained is empty, so every
+    // ≥threshold workspace passed the allowlist check) — pass, but say why
+    // (the budget impact is real; only the tracking is waived).
+    return {
+      verdict: 'pass',
+      reason: `foreign dialers seen in ${foreignPasses} pass(es); longest ${worst.workspace} run ${worst.length} pass(es), span ${worst.spanH.toFixed(1)}h — approved (allowlist), not tracked`,
+      foreignPasses,
+      offenders: [...byWorkspace.keys()],
+      sustained: [],
+      longestSpanH: worst.spanH,
+      worst,
+    };
+  }
+  if (foreignPasses > 0 && worst) {
+    return {
+      verdict: 'pass',
+      reason: `foreign dialers seen in ${foreignPasses} pass(es) but not sustained — longest ${worst.workspace} run ${worst.length} pass(es), span ${worst.spanH.toFixed(1)}h/${minSpanH}h`,
+      foreignPasses,
+      offenders: [...byWorkspace.keys()],
+      sustained: [],
+      longestSpanH: worst.spanH,
+      worst,
+    };
+  }
+  return { ...empty, reason: `no foreign direct-Postgres clients across ${rows.length} recent pass(es)` };
 }
 
 // ── CLI ─────────────────────────────────────────────────────────────────────

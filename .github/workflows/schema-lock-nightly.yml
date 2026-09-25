@@ -298,6 +298,21 @@ jobs:
           LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
         run: node scripts/database/job-health-gate.mjs
 
+      # ── Transport drill (service prober) ──────────────────────────────────
+      # Fails the nightly when the Ops Health service prober's contract
+      # breaks: it compiles the REAL service-probe.ts with the workspace
+      # tsc, binds a REAL v4-only listener on a spare port, probes it with
+      # the real probeAcrossTransports + real fetch (a family-narrow bind
+      # must NEVER read as down — the exact bug the prober was written to
+      # fix), and drives the real mergeTransportHistory core through a
+      # re-bind and a crossing-family flip (the banner's data path). No DB
+      # or services needed — sockets + tsc only — but runs inside the
+      # creds-gated leg so the drill only fires where the fleet legs run.
+      # Locally: node scripts/ops/transport-drill.mjs
+      - name: Transport drill (service prober contract)
+        if: steps.creds.outputs.have-creds == 'true'
+        run: node scripts/ops/transport-drill.mjs
+
       # Persistent home for pool-health violations: creates/updates/closes ONE
       # tracking issue (found by marker) under the azeebo-drift-bot App —
       # the same lifecycle as the production-drift tracker below. The bot

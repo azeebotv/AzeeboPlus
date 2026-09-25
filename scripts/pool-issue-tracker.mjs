@@ -1,13 +1,21 @@
 // ============================================================================
 // pool-issue-tracker.mjs — tracking-issue bot for sustained pooler
-// saturation and bypasses, mirroring the production-drift tracker.
+// saturation, repo bypasses, and foreign direct dialers, mirroring the
+// production-drift tracker.
 //
-// Every nightly run, both gates (pool-saturation-gate, pool-bypass-gate)
-// decide and exit. A gate that FAILS already blocks the nightly; this bot
-// adds the persistent home: ONE GitHub issue (found by marker) listing every
+// Every nightly run, three decision cores re-evaluate the pool-audit ledger:
+// pool-saturation-gate, pool-bypass-gate, and the foreign-dialer persistence
+// core. A gate that FAILS already blocks the nightly; this bot adds the
+// persistent home: ONE GitHub issue (found by marker) listing every
 // sustained violation — created when a violation first appears, updated only
-// when the (kind, identity) set changes, closed when both gates pass, and
-// reopened when a condition returns.
+// when the (kind, identity) set changes, closed when all pass, and reopened
+// when a condition returns.
+//
+// The foreign kind: another project on this host dialing Postgres directly
+// is someone else's bypass, but it lands in OUR connection budget. A dialer
+// persisting 24h+ (the YCN-fleet shape) gets its own tracking-issue row so
+// the coordination has an owner and a history. One sniff is never enough —
+// only sustained persistence tracks.
 //
 // Why re-evaluate instead of reading gate outputs: the gates must block and
 // this bot must describe, and neither may lie about the other. Reading gate
@@ -29,7 +37,8 @@
 // the gates own the blocking signal; the tracker just has nothing to sync.
 //
 // Env: GITHUB_REPOSITORY, GITHUB_TOKEN, LIVE_DB_URL_BASE, GITHUB_API_BASE_URL
-// (tests), POOL_GATE_* / POOL_BYPASS_* (same knobs as the gates).
+// (tests), POOL_GATE_* / POOL_BYPASS_* / POOL_FOREIGN_* (same knobs as the
+// gates; POOL_FOREIGN_MIN_SPAN_H defaults to 24 like the bypass span).
 // Exit codes: 0 success or intentional skip; 1 real API failure; 2 config error.
 // ============================================================================
 
@@ -42,15 +51,34 @@ import {
   poolBodyDiffers,
 } from './lib/drift-issue.mjs';
 import { evaluateSaturation, readLedgerRows, psqlBin, queryLedgerRows } from './database/pool-saturation-gate.mjs';
-import { evaluateBypasses as evaluateBypassesCore } from './database/pool-bypass-gate.mjs';
+import { evaluateBypasses as evaluateBypassesCore, evaluateForeignDialers } from './database/pool-bypass-gate.mjs';
 import { searchIssuesByMarker, createIssue, updateIssue, apiBaseFromEnv } from './lib/gh-issue-api.mjs';
 
 const DEFAULTS = {
   gateHours: 24, // POOL_GATE_HOURS — saturation window
-  bypassHours: 30, // POOL_BYPASS_GATE_HOURS — bypass window
+  bypassHours: 30, // POOL_BYPASS_GATE_HOURS — bypass/foreign window
 };
 
-/** Evaluate both gates against the live ledger. Throws on read failure. */
+/**
+ * Parse POOL_FOREIGN_ALLOWLIST: comma-separated exact workspace paths
+ * (whitespace tolerated; empty/absent → no approvals). Paths are matched
+ * exactly as pool-audit records them (absolute cwd, e.g.
+ * `/Users/me/partner-fleet/services/api`) — no globbing, so an entry can
+ * never accidentally approve a sibling path.
+ */
+export function parseAllowlist(raw) {
+  if (!raw || typeof raw !== 'string') return [];
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Evaluate all three pool-health conditions against the live ledger:
+ * saturation, repo bypasses, and foreign direct dialers. Throws on read
+ * failure (the caller degrades gracefully).
+ */
 export async function evaluateGates(psql, base, env = process.env) {
   const satHours = Number(env.POOL_GATE_HOURS ?? DEFAULTS.gateHours);
   const bpHours = Number(env.POOL_BYPASS_GATE_HOURS ?? DEFAULTS.bypassHours);
@@ -67,11 +95,27 @@ export async function evaluateGates(psql, base, env = process.env) {
     minSpanH: Number(env.POOL_BYPASS_MIN_SPAN_H ?? 24),
     maxGapH: Number(env.POOL_BYPASS_MAX_GAP_H ?? 3),
   });
-  return { sat, bp };
+  // Foreign dialers share the bypass window; the threshold is separate so
+  // tests can shrink it (the real YCN fleet would otherwise keep a real
+  // issue open) without touching bypass semantics. POOL_FOREIGN_ALLOWLIST
+  // (comma-separated exact workspace paths) marks APPROVED dialers: still
+  // counted — their budget impact is real — but never sustained, so the
+  // tracker never opens or keeps an issue for them.
+  const fw = evaluateForeignDialers(bpRows, {
+    minSpanH: Number(env.POOL_FOREIGN_MIN_SPAN_H ?? 24),
+    maxGapH: Number(env.POOL_FOREIGN_MAX_GAP_H ?? env.POOL_BYPASS_MAX_GAP_H ?? 3),
+    allowlist: parseAllowlist(env.POOL_FOREIGN_ALLOWLIST),
+  });
+  return { sat, bp, fw };
 }
 
-/** Combine both gate verdicts into the issue's open-violation rows. */
-export function violationsFromGates(sat, bp) {
+/**
+ * Combine all three gate verdicts into the issue's open-violation rows.
+ * Order: saturation (most urgent — our budget is the thing failing), then
+ * bypasses, then foreign dialers (someone else's client, but ours to
+ * surface), each alphabetically by workspace.
+ */
+export function violationsFromGates(sat, bp, fw) {
   const open = [];
   if (sat.verdict === 'fail') {
     open.push({ kind: 'saturation', workspace: null, reason: sat.reason });
@@ -85,8 +129,22 @@ export function violationsFromGates(sat, bp) {
       open.push({ kind: 'bypass', workspace: s.workspace, reason: `sustained pgbouncer bypass: ${s.workspace} flagged in ${s.length} pass(es) spanning ${s.spanH.toFixed(1)}h` });
     }
   }
-  // Saturation rows first (more urgent), then bypasses by workspace.
-  return open.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'saturation' ? -1 : 1));
+  if (fw?.verdict === 'fail') {
+    // Same sustained-only rule: a foreign workspace that sniffed Postgres
+    // once isn't a tracking-issue row; one that persisted 24h+ is.
+    for (const s of (fw.sustained ?? []).slice().sort((a, b) => a.workspace.localeCompare(b.workspace))) {
+      const conns = s.conns != null ? `, ${s.conns} conns at last sighting` : '';
+      open.push({ kind: 'foreign', workspace: s.workspace, reason: `sustained foreign direct-Postgres dialer: ${s.workspace} flagged in ${s.length} pass(es) spanning ${s.spanH.toFixed(1)}h${conns}` });
+    }
+  }
+  // Deterministic order: saturation → bypass → foreign, workspace-sorted
+  // within each kind.
+  const kindRank = { saturation: 0, bypass: 1, foreign: 2 };
+  return open.sort((a, b) =>
+    kindRank[a.kind] !== kindRank[b.kind]
+      ? kindRank[a.kind] - kindRank[b.kind]
+      : String(a.workspace ?? '').localeCompare(String(b.workspace ?? ''))
+  );
 }
 
 async function main() {
@@ -110,8 +168,8 @@ async function main() {
 
   if (base && psql) {
     try {
-      const { sat, bp } = await evaluateGates(psql, base);
-      open = violationsFromGates(sat, bp);
+      const { sat, bp, fw } = await evaluateGates(psql, base);
+      open = violationsFromGates(sat, bp, fw);
     } catch (err) {
       // Ledger outage: the gates already failed the run on their own; the
       // tracker has nothing honest to sync and must not fail the step too.

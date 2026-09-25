@@ -129,6 +129,13 @@ jobs:
       # may only shrink); endpoints no client calls are listed as advisory
       # dead routes. Run locally: pnpm check:route-contracts
       - run: node scripts/check-route-contracts.mjs
+      # Expo Router dead-link gate: every router.push/replace/navigate and
+      # href target in apps/mobile + apps/tv must resolve to a route file in
+      # that app's app/ directory. A push to a route that doesn't exist throws
+      # "Unhandled route" at runtime — the user taps a visible button and
+      # nothing happens (found across several screens in the live pass that
+      # created /music/[id], /music/genres/[slug] and /creators/[creatorId]).
+      - run: node scripts/check-expo-routes.mjs
       - run: node scripts/sweep-flag-usage.mjs
       - run: node scripts/generate-flag-registry-table.mjs --check
 
@@ -185,6 +192,16 @@ jobs:
       # no ~/Library/LaunchAgents, no .env files needed.
       - name: Check service plist contract
         run: node scripts/launchd/gen-service-plists.mjs --ci
+      # Every Ops Health PROBED_SERVICES entry must have a launchd manifest
+      # entry (join key: port). When the 15 newer services were added to the
+      # prober they were missing from the manifest entirely — Ops Health
+      # reported them down with no way to fix it, since nothing would ever
+      # start them. Static regex parse of committed sources, no DB/launchd
+      # needed; fails loud on unparseable blocks so a refactor can't silently
+      # void the check. Runs right after the plist contract check so the
+      # review sees both manifest violations in one look.
+      - name: Check Ops Health prober has launchd coverage for every service
+        run: node scripts/launchd/prober-coverage-gate.mjs
       - name: Check pool budget against 80% safety margin
         run: node scripts/database/apply-pool-limits.mjs --ci
         env:
@@ -408,9 +425,20 @@ jobs:
       # @azeebo/* fallback) from packages/*/dist — a fresh checkout has no
       # dist, so build the packages first (same as test-pr).
       - run: pnpm --filter './packages/**' run build
-      # (1) TV's own TS project: app, src, types — the root `typecheck` only
-      # covers apps/web, so without this job a TV-only regression ships
-      # uncaught on every PR.
+      # Typed routes (experiments.typedRoutes) put the route union in
+      # .expo/types/router.d.ts, which is gitignored — a fresh checkout has
+      # none, and expo-router's Href then silently degrades to plain `string`
+      # (tsc passes but enforces nothing). Generate it for both Expo apps
+      # before any typecheck. `expo customize tsconfig.json` regenerates the
+      # route types without modifying the committed tsconfig (verified).
+      - run: pnpm --filter @azeebo/mobile exec expo customize tsconfig.json
+      - run: pnpm --filter @azeebo/tv exec expo customize tsconfig.json
+      # (1) Both TS projects: app, src, types — the root `typecheck` only
+      # covers apps/web, so without this job a mobile/TV-only regression ships
+      # uncaught on every PR. With router.d.ts present, tsc also rejects any
+      # router.push/replace/href target that isn't a real route in that app's
+      # app/ directory (typed routes) — no `as never` escape hatches.
+      - run: pnpm --filter @azeebo/mobile run typecheck
       - run: pnpm --filter @azeebo/tv run typecheck
       # (2) Compile the real Metro graph (expo-router entries, package exports
       # maps, asset resolution) to Hermes bytecode. Catches the class of
