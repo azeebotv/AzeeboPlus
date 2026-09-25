@@ -10,6 +10,9 @@ interface ServiceHealth {
   port: number;
   status: 'healthy' | 'degraded' | 'down';
   latency: number;
+  /** Which loopback transport answered (backend tries localhost → [::1] →
+   * 127.0.0.1). 'ipv6' means a ::1-only listener — healthy, not an outage. */
+  transport?: 'localhost' | 'ipv6' | 'ipv4';
 }
 
 interface AgentStats {
@@ -113,6 +116,7 @@ function useServiceHealth() {
           port: number;
           status: ServiceHealth['status'];
           latencyMs: number;
+          transport?: ServiceHealth['transport'];
         }>;
         checkedAt: string;
       }>('/api/v1/admin/ops/services');
@@ -124,6 +128,7 @@ function useServiceHealth() {
         port: s.port,
         status: s.status,
         latency: s.latencyMs,
+        ...(s.transport !== undefined && { transport: s.transport }),
       }));
     },
     refetchInterval: 15_000,
@@ -384,6 +389,14 @@ export default function SystemHealthPage() {
                   </p>
                   <p style={{ fontSize: 10, color: 'var(--admin-text-muted)' }}>
                     :{svc.port} {svc.latency > 0 && `· ${svc.latency}ms`}
+                    {svc.transport === 'ipv6' && (
+                      <span
+                        style={{ color: 'var(--admin-amber)' }}
+                        title="IPv6-only listener ([::1]) — healthy; IPv4 dials to it are refused"
+                      >
+                        {' · IPv6-only'}
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

@@ -824,6 +824,7 @@ export const adminApi = {
   },
 
   getOpsStatus: () => apiFetch<OpsStatus>('/api/v1/admin/ops/status'),
+  getOpsServices: () => apiFetch<OpsServicesSnapshot>('/api/v1/admin/ops/services'),
   getOpsRunHistory: (hours?: number) =>
     apiFetch<OpsRunHistory>(`/api/v1/admin/ops/runs${hours ? `?hours=${hours}` : ''}`),
   getOpsPgbouncer: () => apiFetch<PgbouncerHealth>('/api/v1/admin/ops/pgbouncer'),
@@ -1161,6 +1162,40 @@ export interface OpsAlert {
   level: 'WARN' | 'ERROR';
   source: string;
   message: string;
+}
+
+/** Loopback transport that answered a health probe (mirrors backend). */
+export type LoopbackTransport = 'localhost' | 'ipv6' | 'ipv4';
+
+/** One service's fleet health probe result (mirrors backend shape). */
+export interface OpsServiceHealth {
+  name: string;
+  port: number;
+  status: 'healthy' | 'degraded' | 'down';
+  latencyMs: number;
+  dbStatus: 'up' | 'down' | 'unknown';
+  /** Which transport answered — 'ipv6' means a ::1-only listener (healthy). */
+  transport?: LoopbackTransport;
+  /** 'down' only: last transport failure code (e.g. ECONNREFUSED). */
+  errorDetail?: string;
+}
+
+/** A service's answering transport CHANGED between two probe sweeps —
+ * usually someone re-bound the service. familyChanged crosses ::1/127.0.0.1. */
+export interface OpsTransportFlip {
+  service: string;
+  port: number;
+  from: LoopbackTransport;
+  to: LoopbackTransport;
+  detectedAt: number;
+  familyChanged: boolean;
+}
+
+/** GET /admin/ops/services — fleet probe sweep + recent transport flips. */
+export interface OpsServicesSnapshot {
+  services: OpsServiceHealth[];
+  transportFlips: OpsTransportFlip[];
+  checkedAt: string;
 }
 
 export interface OpsStatus {

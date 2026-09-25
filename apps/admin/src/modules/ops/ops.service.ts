@@ -5,6 +5,13 @@ import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { PrismaService } from '../../database/prisma.service';
 import { buildServiceStampHeaders } from '../../common/upstream-auth.middleware';
+import {
+  probeAcrossTransports,
+  mergeTransportHistory,
+  type LoopbackTransport,
+  type TransportFlip,
+  type ProbeOutcome,
+} from './service-probe';
 
 /** pg is a transitive dependency via Prisma's engines; resolve defensively. */
 
@@ -88,6 +95,11 @@ export interface ServiceHealthResult {
   status: 'healthy' | 'degraded' | 'down';
   latencyMs: number;
   dbStatus: 'up' | 'down' | 'unknown';
+  /** Which loopback transport answered (omitted when down). admin-backend
+   * reports 'ipv6' — a [::1]-only listener, not an outage. */
+  transport?: LoopbackTransport;
+  /** 'down' only: last candidate's failure code (e.g. ECONNREFUSED). */
+  errorDetail?: string;
 }
 
 /** One database's client/server pool snapshot from pgbouncer SHOW POOLS. */
@@ -181,6 +193,12 @@ export const PROBED_SERVICES: Array<{ name: string; port: number }> = [
 ];
 
 const SERVICE_HEALTH_TIMEOUT_MS = 4_000;
+/** How long a detected transport flip stays in the API response after its last
+ * observation. Both admin pages poll the same endpoint on their own cadence
+ * (30s/10s), so one-shot flip lists race: whoever polls second sees an empty
+ * array and clears the banner. A hold window makes the alert last as long as
+ * it could plausibly matter, without any client-side state. */
+const TRANSPORT_FLIP_HOLD_MS = 10 * 60_000;
 
 /** Aggregated tipping stats for all creators (one upstream fan-out, server-side). */
 export interface CreatorTipSummary {
@@ -646,6 +664,14 @@ export interface RunJobOutcome {
 
 @Injectable()
 export class OpsService {
+  /** Last sweep's answering transport per service — the flip-detection
+   * baseline. In-memory by design: a backend restart reseeds it, and a flip
+   * is only defined between two observations from the same watcher. */
+  private transportBaseline: Record<string, LoopbackTransport> = {};
+  /** Most recent flip per service, kept until TRANSPORT_FLIP_HOLD_MS elapses
+   * without a new flip — so independent page polls can't clear each other's
+   * banner (one-shot lists race; hold windows don't). */
+  private transportFlipsRecent = new Map<string, TransportFlip>();
   private readonly logger = new Logger(OpsService.name);
   private runningJobs = new Set<string>();
   /**
@@ -1043,17 +1069,31 @@ export class OpsService {
    * Probe every service's health endpoint from the server. Fan-out is
    * concurrent with a per-probe timeout; failures degrade to 'down', never
    * throw — a half-asleep fleet is exactly the state this page must show.
+   *
+   * Transport flips: each sweep is compared against the previous sweep's
+   * answering transports (in-memory, per process — a backend restart reseeds
+   * the baseline, which is the honest behavior: a flip is only meaningful
+   * between two observations from the same watcher).
    */
-  async getServiceHealth(): Promise<{ services: ServiceHealthResult[]; checkedAt: string }> {
+  async getServiceHealth(): Promise<{
+    services: ServiceHealthResult[];
+    /** Services whose answering transport changed since the previous sweep —
+     * a family flip usually means someone re-bound the service. */
+    transportFlips: TransportFlip[];
+    checkedAt: string;
+  }> {
     const probes = PROBED_SERVICES.map(async (svc): Promise<ServiceHealthResult> => {
-      const start = Date.now();
       const healthPath = svc.name === 'live-event-service' ? '/health' : '/v1/health';
-      try {
-        const res = await fetch(`http://localhost:${svc.port}${healthPath}`, {
+      // Family-failover probe: tries localhost → [::1] → 127.0.0.1 so a
+      // healthy IPv6-only (or IPv4-only) listener is never reported down on
+      // transport alone. Which transport answered is surfaced on the card.
+      // The fetchLike parses the db status from the winning response in its
+      // closure — the body is read exactly once, no second request.
+      let dbStatus: ServiceHealthResult['dbStatus'] = 'unknown';
+      const outcome = await probeAcrossTransports(svc.port, healthPath, async (url) => {
+        const res = await fetch(url, {
           signal: AbortSignal.timeout(SERVICE_HEALTH_TIMEOUT_MS),
         });
-        const latencyMs = Date.now() - start;
-        let dbStatus: ServiceHealthResult['dbStatus'] = 'unknown';
         try {
           const body = (await res.json()) as {
             data?: { info?: { db?: { status?: string }; database?: { status?: string } } };
@@ -1065,24 +1105,42 @@ export class OpsService {
         } catch {
           // health body without db info is fine
         }
-        return {
-          name: svc.name,
-          port: svc.port,
-          status: res.ok ? 'healthy' : 'degraded',
-          latencyMs,
-          dbStatus,
-        };
-      } catch {
-        return {
-          name: svc.name,
-          port: svc.port,
-          status: 'down',
-          latencyMs: Date.now() - start,
-          dbStatus: 'unknown',
-        };
-      }
+        return res;
+      });
+      return {
+        name: svc.name,
+        port: svc.port,
+        status: outcome.status,
+        latencyMs: outcome.latencyMs,
+        dbStatus,
+        ...(outcome.transport !== undefined && { transport: outcome.transport }),
+        ...(outcome.errorDetail !== undefined && { errorDetail: outcome.errorDetail }),
+      };
     });
-    return { services: await Promise.all(probes), checkedAt: new Date().toISOString() };
+    const services = await Promise.all(probes);
+    // Flip detection against the previous sweep's baseline (stateless merge,
+    // seeded empty on process start — see the method doc above).
+    const { flips, next } = mergeTransportHistory(
+      this.transportBaseline,
+      services.map((s) => ({ name: s.name, port: s.port, outcome: s as ProbeOutcome }))
+    );
+    if (flips.length > 0) {
+      this.logger.warn(
+        `transport flips since previous probe sweep: ${flips
+          .map((f) => `${f.service} ${f.from}→${f.to}${f.familyChanged ? ' (family change)' : ''}`)
+          .join(', ')}`
+      );
+    }
+    this.transportBaseline = next;
+    for (const f of flips) this.transportFlipsRecent.set(f.service, f);
+    const holdCutoff = Date.now() - TRANSPORT_FLIP_HOLD_MS;
+    for (const [svc, f] of this.transportFlipsRecent) {
+      if (f.detectedAt < holdCutoff) this.transportFlipsRecent.delete(svc);
+    }
+    const transportFlips = [...this.transportFlipsRecent.values()].sort((a, b) =>
+      a.service.localeCompare(b.service)
+    );
+    return { services, transportFlips, checkedAt: new Date().toISOString() };
   }
 
   /**
@@ -1148,21 +1206,21 @@ export class OpsService {
       ledgerAlerts,
       logAlerts,
     ] = await Promise.all([
-        this.checkDb(),
-        this.checkFederation(),
-        this.checkJob(
-          'Freshness job',
-          FRESHNESS_LOG,
-          ['ok:', 'WARN:', 'ERROR:', 'RECOVERED:'],
-          /drill/i
-        ),
-        this.checkJob(
-          'Audit retention',
-          RETENTION_LOG,
-          ['ok:', 'deleted', 'ERROR:'],
-          undefined,
-          RETENTION_STALE_MINUTES
-        ),
+      this.checkDb(),
+      this.checkFederation(),
+      this.checkJob(
+        'Freshness job',
+        FRESHNESS_LOG,
+        ['ok:', 'WARN:', 'ERROR:', 'RECOVERED:'],
+        /drill/i
+      ),
+      this.checkJob(
+        'Audit retention',
+        RETENTION_LOG,
+        ['ok:', 'deleted', 'ERROR:'],
+        undefined,
+        RETENTION_STALE_MINUTES
+      ),
       this.checkJob(
         'Pool audit',
         POOL_AUDIT_LOG,
@@ -1178,8 +1236,8 @@ export class OpsService {
         PLIST_WATCHDOG_STALE_MINUTES
       ),
       this.checkLedgerCadence(),
-        this.recentAlerts(),
-      ]);
+      this.recentAlerts(),
+    ]);
     // Ledger-silence alerts render in the same Recent alerts table as the
     // log-derived entries (the table is source-agnostic); log-sourced alerts
     // stay primary so a genuine incident line outranks a cadence warning.

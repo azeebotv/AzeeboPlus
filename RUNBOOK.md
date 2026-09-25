@@ -111,6 +111,14 @@ while the service is perfectly healthy. When probing anything by port:
 - Grep / curl health checks in scripts must not hardcode `127.0.0.1` for a
   service whose bind family is unknown; use `localhost` or the three-candidate
   fallback.
+- The prober also tracks transport stability: if a service's answering
+  transport CHANGES between sweeps (e.g. `localhost` → `ipv4`), the backend
+  reports it in `transportFlips` (with a 10-minute hold window so polling
+  races can't swallow it), warns in its logs, and the Ops Health page shows
+  an amber transport-mismatch banner until the hold expires. A flip usually
+  means someone re-bound the service — check the plist/env before assuming
+  it's benign. A down→return on a new family does NOT flip: the baseline is
+  dropped while the service is down, since down→rebind is normal ops.
 - Scheduled jobs (freshness, retention, pool-audit, digest, drill) are NOT
   in the manifest — their scripts' own `install` modes remain their source
   of truth.
