@@ -129,6 +129,11 @@ while the server is perfectly healthy. When probing anything by port:
   cannot race past each other). Redis unreachable → the store fails OPEN to
   the old per-process semantics with a warn; health verdicts never depend
   on it. Point it at a non-default Redis with OPS_REDIS_URL/REDIS_URL.
+  The store reads a DEDICATED DB index: a bare URL is rewritten to
+  `…/1` (ops telemetry) so its keys never share DB 0 with the feature-
+  flag cache (a flag-side FLUSHDB would otherwise wipe baselines and
+  hold-window flips). An explicit index in the URL wins; OPS_REDIS_DB
+  overrides the default number.
 - Scheduled jobs (freshness, retention, pool-audit, digest, drill) are NOT
   in the manifest — their scripts' own `install` modes remain their source
   of truth.

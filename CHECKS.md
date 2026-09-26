@@ -538,7 +538,11 @@ changed all month". The Ops Health header carries a **store chip**
 baselines + hold-window flips are fleet-wide, `memory` (amber) when the
 store degraded and flip memory is per-process — a restart or a second
 replica loses the history, which is exactly why degraded is visible at
-a glance (mapping: `transportStoreStatus` in ops.service.ts). `OpsService.recordTransportSweep` (apps/admin/src/
+a glance (mapping: `transportStoreStatus` in ops.service.ts). The store
+reads a DEDICATED Redis DB index: `opsRedisUrl` (transport-store.ts)
+rewrites bare URLs to `…/1` so ops keys never share DB 0 with the
+feature-flag cache — an explicit index in OPS_REDIS_URL wins,
+OPS_REDIS_DB overrides the default number. `OpsService.recordTransportSweep` (apps/admin/src/
 modules/ops/ops.service.ts) fires on EVERY successful probe sweep —
 steady states included, so a gap in the ledger means "sweeps stopped",
 never "nothing happened" — and UPSERT-merges ONE row per (service, UTC

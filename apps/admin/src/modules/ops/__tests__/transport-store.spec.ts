@@ -18,7 +18,12 @@
  */
 import Redis from 'ioredis';
 
-import { RedisTransportStore, type TransportStore } from '../transport-store';
+import {
+  RedisTransportStore,
+  opsRedisUrl,
+  OPS_REDIS_DB_DEFAULT,
+  type TransportStore,
+} from '../transport-store';
 import type { TransportFlip } from '../service-probe';
 
 // ── fake ioredis: implements EVAL/HGETALL/HDEL/DEL with the same semantics ──
@@ -92,6 +97,64 @@ const flipOf = (over: Partial<TransportFlip>): TransportFlip => ({
 });
 
 // ── store contract via the fake ─────────────────────────────────────────────
+
+describe('opsRedisUrl (dedicated ops DB index)', () => {
+  it('rewrites a bare URL onto the default ops index', () => {
+    expect(opsRedisUrl('redis://localhost:6379')).toBe(
+      `redis://localhost:6379/${OPS_REDIS_DB_DEFAULT}`
+    );
+    expect(opsRedisUrl('redis://localhost:6379')).toBe('redis://localhost:6379/1');
+  });
+
+  it('preserves auth and TLS scheme while appending the index', () => {
+    expect(opsRedisUrl('redis://:s3cret@redis.internal:6379')).toBe(
+      'redis://:s3cret@redis.internal:6379/1'
+    );
+    expect(opsRedisUrl('rediss://redis.example.com')).toBe(
+      'rediss://redis.example.com/1'
+    );
+  });
+
+  it('leaves an explicit index untouched (operator choice wins)', () => {
+    expect(opsRedisUrl('redis://localhost:6379/0')).toBe('redis://localhost:6379/0');
+    expect(opsRedisUrl('redis://localhost:6379/7')).toBe('redis://localhost:6379/7');
+    expect(opsRedisUrl('redis://:p@h:6379/0?db=0')).toBe('redis://:p@h:6379/0?db=0');
+  });
+
+  it('honors the OPS_REDIS_DB override for bare URLs', () => {
+    expect(opsRedisUrl('redis://localhost:6379', '5')).toBe('redis://localhost:6379/5');
+  });
+
+  it('returns garbage as-is (fail-open owns bad targets, never throws)', () => {
+    expect(opsRedisUrl('not a url')).toBe('not a url');
+    expect(opsRedisUrl('')).toBe('');
+    // Non-redis schemes (e.g. someone points OPS_REDIS_URL at postgres by
+    // mistake) pass through untouched — the connect failure degrades.
+    expect(opsRedisUrl('postgresql://localhost:5432/azeebo')).toBe(
+      'postgresql://localhost:5432/azeebo'
+    );
+  });
+
+  it('resolves from env when called without args (store construction path)', () => {
+    const prevUrl = process.env.OPS_REDIS_URL;
+    const prevDb = process.env.OPS_REDIS_DB;
+    try {
+      delete process.env.OPS_REDIS_URL;
+      delete process.env.OPS_REDIS_DB;
+      process.env.REDIS_URL = 'redis://fleet.internal:6379';
+      expect(opsRedisUrl()).toBe('redis://fleet.internal:6379/1');
+      process.env.OPS_REDIS_URL = 'redis://ops.internal:6379';
+      process.env.OPS_REDIS_DB = '3';
+      expect(opsRedisUrl()).toBe('redis://ops.internal:6379/3');
+    } finally {
+      if (prevUrl === undefined) delete process.env.OPS_REDIS_URL;
+      else process.env.OPS_REDIS_URL = prevUrl;
+      if (prevDb === undefined) delete process.env.OPS_REDIS_DB;
+      else process.env.OPS_REDIS_DB = prevDb;
+      if (process.env.REDIS_URL === 'redis://fleet.internal:6379') delete process.env.REDIS_URL;
+    }
+  });
+});
 
 describe('RedisTransportStore (fake client)', () => {
   let fake: FakeRedis;
