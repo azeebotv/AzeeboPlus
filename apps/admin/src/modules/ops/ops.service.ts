@@ -783,6 +783,8 @@ const KNOWN_JOBS = [
 ] as const;
 export { KNOWN_JOBS };
 const MAX_RUNS_PER_JOB = 40;
+/** Newest flip events returned per trend read (older stay queryable in the ledger). */
+const EVENT_TREND_LIMIT = 25;
 
 /**
  * Transport-flip ledger shape (one row per (service, UTC day) — a service
@@ -814,6 +816,13 @@ export interface TransportFlipLedgerRow {
 export interface TransportFlipTrend {
   windowDays: number;
   rows: TransportFlipLedgerRow[];
+  /**
+   * Individual detected transitions (job `transport-flip-event` rows),
+   * newest first — the exact timestamps the per-day rows merge away. Capped
+   * at EVENT_TREND_LIMIT per read; older events live in the ledger forever
+   * (until retention) and remain queryable there.
+   */
+  events: TransportFlipEvent[];
   /** Distinct services that flipped at least once in the window. */
   servicesWithFlips: number;
   totalFlips: number;
@@ -821,9 +830,37 @@ export interface TransportFlipTrend {
   detail?: string;
 }
 
+/**
+ * One detected transport transition, persisted as its OWN job_runs row
+ * (job `transport-flip-event`) — unlike the per-(service, day)
+ * `transport-flip` rows, nothing is merged away: every flip keeps its
+ * timestamp, pair, and family flag, so "how many times did auth-service
+ * flip on the 24th, and exactly when" is one indexed query.
+ */
+export interface TransportFlipEvent {
+  service: string;
+  port: number;
+  from: LoopbackTransport;
+  to: LoopbackTransport;
+  familyChanged: boolean;
+  /** ISO of the probe sweep that observed the new transport. */
+  detectedAt: string;
+}
+
 /** One UTC day, YYYY-MM-DD. */
 function utcDay(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
+}
+
+/**
+ * Deterministic event-row id: one job_runs row per (service, flip
+ * observation). `atMs` is the detecting sweep's probe time, so a retried or
+ * concurrently-replayed sweep collides on the same id and the
+ * ON CONFLICT DO NOTHING write degrades to a no-op — exact-once without
+ * any read-before-write.
+ */
+function transportFlipEventId(service: string, atMs: number): string {
+  return `transport-flip-event:${service}:${new Date(atMs).toISOString()}`;
 }
 
 /**
@@ -854,6 +891,60 @@ export function renderTransportFlipDetail(row: {
     parts.push(`last=${row.lastFrom}->${row.lastTo}@${row.lastFlipAt}`);
   }
   return parts.join('; ');
+}
+
+/**
+ * Detail-line codec for transport-flip-EVENT ledger rows. The event's
+ * identity (service, pair, family flag) rides the detail exactly like the
+ * day rows; the timestamp is the row's own `ranAt` (events are written with
+ * ranAt = detectedAt, so nothing else needs encoding). Exported for tests.
+ */
+export function renderTransportFlipEventDetail(flip: {
+  service: string;
+  port: number;
+  from: LoopbackTransport;
+  to: LoopbackTransport;
+  familyChanged: boolean;
+}): string {
+  return [
+    `service=${flip.service}`,
+    `port=${flip.port}`,
+    `from=${flip.from}`,
+    `to=${flip.to}`,
+    `familyChanged=${flip.familyChanged}`,
+  ].join('; ');
+}
+
+/**
+ * Parse a transport-flip-event detail line back into its event. `ranAt`
+ * supplies `detectedAt` (the row is written with ranAt = detectedAt).
+ * Returns null for rows that don't parse — the trend skips them, never
+ * throws (same contract as parseTransportFlipDetail).
+ */
+export function parseTransportFlipEventDetail(
+  detail: string | null,
+  ranAt: Date | string
+): TransportFlipEvent | null {
+  if (!detail) return null;
+  const kv = new Map<string, string>();
+  for (const part of detail.split(';')) {
+    const eq = part.indexOf('=');
+    if (eq > 0) kv.set(part.slice(0, eq).trim(), part.slice(eq + 1).trim());
+  }
+  const service = kv.get('service');
+  const from = kv.get('from') as LoopbackTransport | undefined;
+  const to = kv.get('to') as LoopbackTransport | undefined;
+  if (!service || !from || !to) return null;
+  const port = Number(kv.get('port'));
+  const at = ranAt instanceof Date ? ranAt : new Date(ranAt);
+  return {
+    service,
+    port: Number.isFinite(port) ? port : 0,
+    from,
+    to,
+    familyChanged: kv.get('familyChanged') === 'true',
+    detectedAt: at.toISOString(),
+  };
 }
 
 /**
@@ -1343,6 +1434,28 @@ export class OpsService {
         if (!transport) continue; // down/unknown sweeps record nothing — the
         // baseline is dropped for down services; there is no transport to trend.
         const flip = flipByService.get(s.name) ?? null;
+        // Event ledger: THIS sweep's detected transition gets its own
+        // immutable job_runs row (job `transport-flip-event`), timestamped
+        // at the probe that observed it. The per-(service, day) row below
+        // merges sweeps into counters; this one keeps every flip distinct,
+        // so exact timestamps stay queryable after the 10-minute hold and
+        // beyond the day-row's last= pair. Most sweeps pass flip = null and
+        // write nothing. ON CONFLICT DO NOTHING: two replicas (or a retry)
+        // observing the same transition race to the same deterministic id
+        // and exactly one row wins.
+        if (flip) {
+          await this.prisma.$executeRaw`
+            INSERT INTO job_runs (id, job, status, detail, "ranAt")
+            VALUES (
+              ${transportFlipEventId(flip.service, flip.detectedAt)},
+              'transport-flip-event',
+              'warn',
+              ${renderTransportFlipEventDetail(flip)},
+              ${new Date(flip.detectedAt).toISOString()}::timestamptz
+            )
+            ON CONFLICT (id) DO NOTHING
+          `;
+        }
         // Deterministic id: one row per (service, UTC day). Whatever
         // transport the day ENDED on owns the row (the ON CONFLICT update
         // rewrites the id when the transport changed — the old steady row is
@@ -1423,18 +1536,33 @@ export class OpsService {
   async getTransportFlipTrend(windowDays = 14): Promise<TransportFlipTrend> {
     const days = Math.min(Math.max(windowDays, 1), 90);
     try {
-      const raw = await this.prisma.$queryRaw<Array<{ detail: string | null; ranAt: Date }>>`
-        SELECT detail, "ranAt"
-        FROM job_runs
-        WHERE job = 'transport-flip'
-          AND "ranAt" >= now() - ${`${days} days`}::interval
-        ORDER BY "ranAt" DESC`;
+      const [raw, rawEvents] = await Promise.all([
+        this.prisma.$queryRaw<Array<{ detail: string | null; ranAt: Date }>>`
+          SELECT detail, "ranAt"
+          FROM job_runs
+          WHERE job = 'transport-flip'
+            AND "ranAt" >= now() - ${`${days} days`}::interval
+        ORDER BY "ranAt" DESC`,
+        this.prisma.$queryRaw<Array<{ detail: string | null; ranAt: Date }>>`
+          SELECT detail, "ranAt"
+          FROM job_runs
+          WHERE job = 'transport-flip-event'
+            AND "ranAt" >= now() - ${`${days} days`}::interval
+        ORDER BY "ranAt" DESC
+        LIMIT ${EVENT_TREND_LIMIT}`,
+      ]);
       const rows = (raw ?? [])
         .map((r) => parseTransportFlipDetail(r.detail, r.ranAt))
         .filter((r): r is TransportFlipLedgerRow => r !== null);
+      const events = (rawEvents ?? [])
+        .map((r) => parseTransportFlipEventDetail(r.detail, r.ranAt))
+        .filter((r): r is TransportFlipEvent => r !== null)
+        .sort((a, b) => Date.parse(b.detectedAt) - Date.parse(a.detectedAt))
+        .slice(0, EVENT_TREND_LIMIT);
       return {
         windowDays: days,
         rows,
+        events,
         servicesWithFlips: new Set(rows.filter((r) => r.flips > 0).map((r) => r.service)).size,
         totalFlips: rows.reduce((n, r) => n + r.flips, 0),
         totalFamilyFlips: rows.reduce((n, r) => n + r.familyFlips, 0),
@@ -1443,6 +1571,7 @@ export class OpsService {
       return {
         windowDays: days,
         rows: [],
+        events: [],
         servicesWithFlips: 0,
         totalFlips: 0,
         totalFamilyFlips: 0,

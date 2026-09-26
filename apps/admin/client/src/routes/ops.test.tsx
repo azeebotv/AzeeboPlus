@@ -202,6 +202,7 @@ describe('Ops page transport-flip trend card', () => {
     stubWithTrend({
       windowDays: 14,
       rows: [trendRow, { ...trendRow, service: 'auth-service', flips: 1, familyFlips: 0 }],
+      events: [],
       servicesWithFlips: 2,
       totalFlips: 4,
       totalFamilyFlips: 1,
@@ -227,6 +228,7 @@ describe('Ops page transport-flip trend card', () => {
       rows: [
         { ...trendRow, flips: 0, familyFlips: 0, lastFlipAt: null, lastFrom: null, lastTo: null },
       ],
+      events: [],
       servicesWithFlips: 0,
       totalFlips: 0,
       totalFamilyFlips: 0,
@@ -240,6 +242,7 @@ describe('Ops page transport-flip trend card', () => {
     stubWithTrend({
       windowDays: 14,
       rows: [],
+      events: [],
       servicesWithFlips: 0,
       totalFlips: 0,
       totalFamilyFlips: 0,
@@ -248,5 +251,60 @@ describe('Ops page transport-flip trend card', () => {
     renderPage();
     await waitFor(() => expect(screen.getByText(/Flip trend unavailable/i)).toBeTruthy());
     expect(screen.getByText(/ledger read failed: boom/i)).toBeTruthy();
+  });
+
+  it('renders the recent flip-events table with exact timestamps and family flags', async () => {
+    stubWithTrend({
+      windowDays: 14,
+      rows: [trendRow],
+      events: [
+        {
+          service: 'payment-service',
+          port: 3014,
+          from: 'ipv6',
+          to: 'ipv4',
+          familyChanged: true,
+          detectedAt: '2026-09-24T08:11:00.000Z',
+        },
+        {
+          service: 'auth-service',
+          port: 3000,
+          from: 'ipv4',
+          to: 'ipv6',
+          familyChanged: false,
+          detectedAt: '2026-09-24T11:40:00.000Z',
+        },
+      ],
+      servicesWithFlips: 2,
+      totalFlips: 4,
+      totalFamilyFlips: 1,
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/Recent flip events/i)).toBeTruthy());
+    // Match event rows by service AND transition pair — bare service names
+    // also appear in other page tables (fleet services, trend rollup).
+    const rows = screen.getAllByRole('row').map((r) => r.textContent ?? '');
+    const paymentRow = rows.find((t) => t.includes('payment-service') && t.includes('ipv6→ipv4') && t.includes('crossed'));
+    expect(paymentRow).toBeTruthy();
+    const authRow = rows.find((t) => t.includes('auth-service') && t.includes('ipv4→ipv6') && t.includes('rebind'));
+    expect(authRow).toBeTruthy();
+    // Newest first: the payment event (08:11) must appear before auth (11:40).
+    expect(rows.findIndex((t) => t === paymentRow)).toBeLessThan(
+      rows.findIndex((t) => t === authRow)
+    );
+  });
+
+  it('hides the events table when the ledger has no flip events yet', async () => {
+    stubWithTrend({
+      windowDays: 14,
+      rows: [trendRow],
+      events: [],
+      servicesWithFlips: 1,
+      totalFlips: 3,
+      totalFamilyFlips: 1,
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/Transport flip trend/i)).toBeTruthy());
+    expect(screen.queryByText(/Recent flip events/i)).toBeNull();
   });
 });

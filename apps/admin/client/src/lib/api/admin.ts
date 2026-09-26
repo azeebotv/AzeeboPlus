@@ -1216,10 +1216,23 @@ export interface TransportFlipTrendRow {
 export interface TransportFlipTrend {
   windowDays: number;
   rows: TransportFlipTrendRow[];
+  /** Individual detected transitions (ledger events), newest first. */
+  events: TransportFlipEventRow[];
   servicesWithFlips: number;
   totalFlips: number;
   totalFamilyFlips: number;
   detail?: string;
+}
+
+/** One persisted transport transition (job_runs job `transport-flip-event`). */
+export interface TransportFlipEventRow {
+  service: string;
+  port: number;
+  from: string;
+  to: string;
+  familyChanged: boolean;
+  /** ISO of the probe sweep that observed the new transport. */
+  detectedAt: string;
 }
 
 export interface OpsStatus {

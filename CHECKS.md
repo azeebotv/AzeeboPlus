@@ -556,6 +556,25 @@ write is fire-and-forget: a failed write warns and never fails (or slows)
 the health sweep. Tests: `cd apps/admin && npx jest transport-flip`
 (codec) and the ops.test.tsx trend-card render tests.
 
+**Flip EVENTS** (job `transport-flip-event`): the per-day row keeps
+counters and only the day's LAST from→to pair; a service that flapped
+several times a day loses the intermediate timestamps. So every DETECTED
+transition is also written as its own immutable job_runs row, one per
+(service, detecting sweep) with a deterministic id
+(`transport-flip-event:<service>:<detectedAt ISO>`) and
+`ON CONFLICT DO NOTHING` — retried/concurrent sweeps of the same
+observation collapse to exactly one row without read-before-write.
+`ranAt` = the flip's `detectedAt` (the event IS its timestamp), detail
+carries `service=/port=/from=/to=/familyChanged=` via
+renderTransportFlipEventDetail. `getTransportFlipTrend` returns the
+newest 25 as `events` (rendered in the trend card's "Recent flip
+events" table), and the events stay queryable in the ledger far beyond
+the trend window. Deliberately NOT in KNOWN_JOBS (same reason as
+`transport-flip`: event-driven, silence is healthy). Index:
+`job_runs_transport_flip_event_idx` (federate-admin-db.sh, partial on
+the job). Same fire-and-forget contract: a failed event write warns and
+never fails the sweep.
+
 ### `prober-coverage-gate` — Ops Health fleet ⊆ launchd manifest (PR gate)
 
 **Invariant:** every entry in `PROBED_SERVICES`

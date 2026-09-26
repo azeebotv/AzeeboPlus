@@ -781,6 +781,66 @@ function TransportFlipTrendCard({ trend }: { trend?: TransportFlipTrend | null }
             crossing loopback families. A quiet window hides this card — steady-state sweeps are
             recorded in the ledger either way.
           </p>
+          {trend.events.length > 0 && (
+            <>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: 11,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: 'var(--admin-text-muted)',
+                  margin: '12px 0 2px',
+                }}
+              >
+                Recent flip events (every detected transition, newest first)
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 4 }}>
+                <thead>
+                  <tr style={{ color: 'var(--admin-text-muted)', textAlign: 'left' }}>
+                    {['When', 'Service', 'Transition', 'Family'].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          padding: '4px 8px 4px 0',
+                          fontSize: 10,
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {trend.events.map((e) => (
+                    <tr key={`${e.service}:${e.detectedAt}`}>
+                      <td style={{ padding: '5px 8px 5px 0', color: 'var(--admin-text-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                        {new Date(e.detectedAt).toLocaleString()}
+                      </td>
+                      <td style={{ padding: '5px 8px 5px 0', fontWeight: 600 }}>
+                        {e.service}
+                      </td>
+                      <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
+                        {e.from}→{e.to}
+                      </td>
+                      <td
+                        style={{
+                          padding: '5px 8px 5px 0',
+                          color: e.familyChanged ? 'var(--admin-amber)' : 'var(--admin-text-muted)',
+                          fontWeight: e.familyChanged ? 700 : 400,
+                        }}
+                      >
+                        {e.familyChanged ? 'crossed' : 'rebind'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
         </>
       )}
     </div>
