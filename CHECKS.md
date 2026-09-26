@@ -609,6 +609,31 @@ Tests: `node --test scripts/__tests__/prober-coverage-gate.test.mjs`
 and subprocess runs — the real fleet must pass at HEAD; fake-tree drills
 for every failure mode).
 
+### `vite-port-drift-gate` — SPA dev ports == launchd manifest (PR gate)
+
+**Invariant:** every launchd manifest `kind:'vite'` entry
+(`scripts/launchd/service-manifest.mjs`) equals the matching
+`<dir>/client/vite.config.ts` `server.port`, and every
+`apps/*/client/vite.config.ts` is manifest-covered — checked in BOTH
+directions so neither side can silently drop the other. The ports DID
+drift once: the admin SPA served 4100 (admin-backend's port, a latent
+bind conflict) while the manifest said 5173 (fixed in 9ca2b491); this
+gate makes that drift a PR failure instead of a broken dev boot. Same
+static-parse, fail-loud conventions as the prober-coverage gate: the
+manifest parser is line-based so a later entry's port can't bleed into
+an earlier one, the vite parser slices the `server:` block to its
+two-space closer so the proxy object can't swallow the match, and a
+config without a static numeric port (function form, env interpolation)
+FAILS rather than skips — the manifest contract needs a fixed number.
+Runs in `pr-checks.yml` right after the prober-coverage gate (both
+manifest violations visible in one review).
+
+Locally: `node scripts/launchd/vite-port-drift-gate.mjs`.
+Tests: `node --test scripts/__tests__/vite-port-drift-gate.test.mjs`
+(14 cases: line-based manifest parsing, server-block parsing, both-way
+coverage, and subprocess runs — the real repo must pass at HEAD;
+fake-tree drills for drift, missing config, and unparseable manifest).
+
 ---
 
 ## Prisma client & schema
