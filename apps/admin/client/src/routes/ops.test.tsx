@@ -11,7 +11,6 @@ import type {
   PgbouncerHealth,
   OpsServicesSnapshot,
 } from '@/lib/api/admin';
-
 /**
  * Render tests for the Ops Health page's transport-mismatch warning banner.
  *
@@ -72,6 +71,7 @@ const baseStatus: OpsStatus = {
 const baseSnapshot = (flips: unknown[]): OpsServicesSnapshot => ({
   services: [{ name: 'auth-service', port: 3000, status: 'healthy', latencyMs: 5, dbStatus: 'up' }],
   transportFlips: flips as OpsServicesSnapshot['transportFlips'],
+  transportStore: { mode: 'redis', detail: 'Fleet-wide Redis baseline' },
   checkedAt: new Date().toISOString(),
 });
 
@@ -306,5 +306,62 @@ describe('Ops page transport-flip trend card', () => {
     renderPage();
     await waitFor(() => expect(screen.getByText(/Transport flip trend/i)).toBeTruthy());
     expect(screen.queryByText(/Recent flip events/i)).toBeNull();
+  });
+
+  it('shows the store chip as redis when the transport store is healthy', async () => {
+    stubRoutes([]);
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/store: redis/i)).toBeTruthy());
+  });
+
+  it('shows the store chip as degraded memory with the detail tooltip', async () => {
+    const respond = (url: unknown) => {
+      const u = String(url);
+      if (u.includes('/admin/ops/services'))
+        return Promise.resolve({
+          success: true,
+          data: {
+            ...baseSnapshot([]),
+            transportStore: {
+              mode: 'memory',
+              detail: 'Redis unreachable — flip memory is per-process',
+            },
+          },
+        });
+      if (u.includes('/admin/ops/runs'))
+        return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+      if (u.includes('/admin/ops/pgbouncer'))
+        return Promise.resolve({ success: true, data: { available: true } });
+      if (u.includes('/admin/ops/status'))
+        return Promise.resolve({ success: true, data: baseStatus });
+      return Promise.resolve({ success: false, data: null });
+    };
+    vi.mocked(apiFetch).mockImplementation(respond as never);
+    renderPage();
+    const chip = await screen.findByText(/store: memory/i);
+    expect(chip).toBeTruthy();
+    // The degradation reason rides the title tooltip.
+    expect(chip.getAttribute('title')).toMatch(/per-process/i);
+  });
+
+  it('omits the chip entirely on old snapshots without a transportStore field', async () => {
+    const respond = (url: unknown) => {
+      const u = String(url);
+      if (u.includes('/admin/ops/services')) {
+        const { transportStore: _omit, ...rest } = baseSnapshot([]);
+        return Promise.resolve({ success: true, data: rest });
+      }
+      if (u.includes('/admin/ops/runs'))
+        return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+      if (u.includes('/admin/ops/pgbouncer'))
+        return Promise.resolve({ success: true, data: { available: true } });
+      if (u.includes('/admin/ops/status'))
+        return Promise.resolve({ success: true, data: baseStatus });
+      return Promise.resolve({ success: false, data: null });
+    };
+    vi.mocked(apiFetch).mockImplementation(respond as never);
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/All systems healthy/i)).toBeTruthy());
+    expect(screen.queryByText(/store: /i)).toBeNull();
   });
 });

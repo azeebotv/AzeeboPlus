@@ -786,6 +786,33 @@ const MAX_RUNS_PER_JOB = 40;
 /** Newest flip events returned per trend read (older stay queryable in the ledger). */
 const EVENT_TREND_LIMIT = 25;
 
+/** Which backing the transport store is currently using. */
+export type TransportStoreMode = 'redis' | 'memory';
+
+/**
+ * Transport-store status for the Ops Health chip: REDIS means baselines and
+ * hold-window flips are fleet-wide (cross-restart, cross-replica); MEMORY
+ * means the store degraded (Redis unreachable) and flip memory is
+ * per-process — flips still detect within one replica but a restart or a
+ * second replica loses the history. Pure + exported so the client contract
+ * and the chip render tests pin the mapping.
+ */
+export function transportStoreStatus(degraded: boolean | undefined): {
+  mode: TransportStoreMode;
+  detail: string;
+} {
+  return degraded
+    ? {
+        mode: 'memory',
+        detail:
+          'Redis unreachable — flip memory is per-process; baselines reset on restart and other replicas cannot see flips',
+      }
+    : {
+        mode: 'redis',
+        detail: 'Fleet-wide Redis baseline + hold-window flips (cross-restart, cross-replica)',
+      };
+}
+
 /**
  * Transport-flip ledger shape (one row per (service, UTC day) — a service
  * that flaps 40 times in a day still writes exactly one row, UPSERT-merged).
@@ -1682,14 +1709,16 @@ export class OpsService {
    * (transport-store.ts), which compares against the fleet-wide persisted
    * baseline atomically — flips survive restarts and are detected across
    * replicas. Redis unreachable → per-process fallback (fail-open).
-   */
-  async getServiceHealth(): Promise<{
+   */  async getServiceHealth(): Promise<{
     services: ServiceHealthResult[];
     /** Services whose answering transport changed since the previous sweep —
      * a family flip usually means someone re-bound the service. */
     transportFlips: TransportFlip[];
+    /** Backing of the transport store right now — drives the Ops Health
+     * header chip (Redis-backed vs degraded to per-process memory). */
+    transportStore: { mode: TransportStoreMode; detail: string };
     checkedAt: string;
-  }> {
+  }>{
     const probes = PROBED_SERVICES.map(async (svc): Promise<ServiceHealthResult> => {
       const healthPath = svc.name === 'live-event-service' ? '/health' : '/v1/health';
       // Family-failover probe: tries localhost → [::1] → 127.0.0.1 so a
@@ -1765,7 +1794,12 @@ export class OpsService {
         'transport store degraded: Redis unreachable, flip memory is per-process only'
       );
     }
-    return { services, transportFlips, checkedAt: new Date().toISOString() };
+    return {
+      services,
+      transportFlips,
+      transportStore: transportStoreStatus(this.transportStore.degraded),
+      checkedAt: new Date().toISOString(),
+    };
   }
 
   /**

@@ -1197,7 +1197,18 @@ export interface OpsTransportFlip {
 export interface OpsServicesSnapshot {
   services: OpsServiceHealth[];
   transportFlips: OpsTransportFlip[];
+  /** Backing of the transport store right now — drives the header chip. */
+  transportStore: TransportStoreStatus | null;
   checkedAt: string;
+}
+
+/** Backing of the ops transport store (baselines + flip hold window). */
+export type TransportStoreMode = 'redis' | 'memory';
+
+/** GET /admin/ops/services → transportStore — Redis-backed vs degraded memory. */
+export interface TransportStoreStatus {
+  mode: TransportStoreMode;
+  detail: string;
 }
 
 /** GET /admin/ops/transport-flips — ledger-backed flip persistence trend. */

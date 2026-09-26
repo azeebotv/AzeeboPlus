@@ -533,7 +533,12 @@ annotation; exit 2 only on environment errors (missing tsc). Locally:
 **Invariant:** a transport flip outlives its 10-minute hold window. The
 Redis flips hash (`ops:transport:flips`) answers "what changed just now"
 for the banner; the job_runs ledger (job `transport-flip`) answers "what
-changed all month". `OpsService.recordTransportSweep` (apps/admin/src/
+changed all month". The Ops Health header carries a **store chip**
+(GET /admin/ops/services → `transportStore`): `redis` (emerald) when
+baselines + hold-window flips are fleet-wide, `memory` (amber) when the
+store degraded and flip memory is per-process — a restart or a second
+replica loses the history, which is exactly why degraded is visible at
+a glance (mapping: `transportStoreStatus` in ops.service.ts). `OpsService.recordTransportSweep` (apps/admin/src/
 modules/ops/ops.service.ts) fires on EVERY successful probe sweep —
 steady states included, so a gap in the ledger means "sweeps stopped",
 never "nothing happened" — and UPSERT-merges ONE row per (service, UTC

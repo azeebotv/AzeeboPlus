@@ -11,6 +11,7 @@ import type {
   PgbouncerHealth,
   PgbouncerPoolRow,
   OpsServicesSnapshot,
+  TransportStoreStatus,
   OpsTransportFlip,
   TransportFlipTrend,
   TransportFlipTrendRow,
@@ -154,6 +155,21 @@ const PG_LEVEL: Record<
   ok: { label: 'OK', color: 'var(--admin-emerald)', bg: 'rgba(16,185,129,0.15)' },
   degraded: { label: 'DEGRADED', color: 'var(--admin-amber)', bg: 'rgba(245,158,11,0.15)' },
   critical: { label: 'CRITICAL', color: 'var(--admin-red)', bg: 'rgba(204,28,28,0.18)' },
+};
+
+/**
+ * Header-chip visuals for the transport store's backing. REDIS (emerald):
+ * baselines + hold-window flips are fleet-wide (cross-restart, cross-
+ * replica). MEMORY (amber): the store degraded to per-process memory —
+ * flips still detect within one replica, but a restart or a second replica
+ * loses the history, so degraded is worth seeing at a glance.
+ */
+const STORE_CHIP: Record<
+  TransportStoreStatus['mode'],
+  { label: string; color: string; bg: string }
+> = {
+  redis: { label: 'redis', color: 'var(--admin-emerald)', bg: 'rgba(16,185,129,0.15)' },
+  memory: { label: 'memory', color: 'var(--admin-amber)', bg: 'rgba(245,158,11,0.15)' },
 };
 
 /**
@@ -1240,6 +1256,8 @@ export default function OpsPage() {
   const liveFlips = (servicesSnapshot?.transportFlips ?? []).filter(
     (f) => !dismissedFlipKeys.has(`${f.service}:${f.detectedAt}`)
   );
+  // Header chip: is the transport store Redis-backed or degraded to memory?
+  const storeChip = servicesSnapshot?.transportStore ?? null;
   const queryClient = useQueryClient();
   const [runJobId, setRunJobId] = useState<string | null>(null);
   const [runOutcome, setRunOutcome] = useState<Record<string, RunOutcomeView>>({});
@@ -1315,6 +1333,21 @@ export default function OpsPage() {
         >
           {overall.label}
         </span>
+        {storeChip && (
+          <span
+            style={{
+              padding: '4px 14px',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 700,
+              color: STORE_CHIP[storeChip.mode].color,
+              background: STORE_CHIP[storeChip.mode].bg,
+            }}
+            title={storeChip.detail}
+          >
+            store: {STORE_CHIP[storeChip.mode].label}
+          </span>
+        )}
         <span style={{ color: 'var(--admin-text-muted)', fontSize: 12, marginLeft: 'auto' }}>
           auto-refreshes every 30s · checked {new Date(dataUpdatedAt).toLocaleTimeString()}
         </span>
