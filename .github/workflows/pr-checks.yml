@@ -202,15 +202,17 @@ jobs:
       # review sees both manifest violations in one look.
       - name: Check Ops Health prober has launchd coverage for every service
         run: node scripts/launchd/prober-coverage-gate.mjs
-      # SPA dev-port drift gate: every launchd manifest kind:'vite' entry
-      # must equal the matching vite.config.ts server.port, and every
-      # apps/*/client/vite.config.ts must be manifest-covered (both ways).
-      # The ports DID drift once — vite served admin-backend's 4100 while
-      # the manifest said 5173 (fixed in 9ca2b491) — so this makes the
-      # drift a PR failure instead of a broken dev boot. Same static-parse,
-      # fail-loud conventions as the prober-coverage gate above.
-      - name: Check vite dev ports match their launchd manifest entries
-        run: node scripts/launchd/vite-port-drift-gate.mjs
+      # App dev-port drift gate: every launchd manifest dev entry (kinds
+      # vite/next/expo) must equal the app config's pinned port, and every
+      # app dev config must be manifest-covered (both ways). The drift is
+      # real history — vite served admin-backend's 4100 while the manifest
+      # said 5173 (fixed in 9ca2b491), unpinned `next dev` defaults to 3000
+      # (auth-service's port), and two unpinned `expo start` dev servers
+      # collide on Metro 8081 — so this makes all such drift a PR failure
+      # instead of a broken dev boot. Same static-parse, fail-loud
+      # conventions as the prober-coverage gate above.
+      - name: Check app dev ports match their launchd manifest entries
+        run: node scripts/launchd/dev-port-drift-gate.mjs
       - name: Check pool budget against 80% safety margin
         run: node scripts/database/apply-pool-limits.mjs --ci
         env:

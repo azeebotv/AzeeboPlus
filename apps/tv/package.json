@@ -5,7 +5,7 @@
   "description": "Azeebo+ TV App (Android TV / Fire TV / tvOS)",
   "main": "expo-router/entry",
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --port 8082",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "android:tv": "expo run:android --device tv",

@@ -609,30 +609,35 @@ Tests: `node --test scripts/__tests__/prober-coverage-gate.test.mjs`
 and subprocess runs — the real fleet must pass at HEAD; fake-tree drills
 for every failure mode).
 
-### `vite-port-drift-gate` — SPA dev ports == launchd manifest (PR gate)
+### `dev-port-drift-gate` — app dev-server ports == launchd manifest (PR gate)
 
-**Invariant:** every launchd manifest `kind:'vite'` entry
-(`scripts/launchd/service-manifest.mjs`) equals the matching
-`<dir>/client/vite.config.ts` `server.port`, and every
-`apps/*/client/vite.config.ts` is manifest-covered — checked in BOTH
-directions so neither side can silently drop the other. The ports DID
-drift once: the admin SPA served 4100 (admin-backend's port, a latent
-bind conflict) while the manifest said 5173 (fixed in 9ca2b491); this
-gate makes that drift a PR failure instead of a broken dev boot. Same
-static-parse, fail-loud conventions as the prober-coverage gate: the
-manifest parser is line-based so a later entry's port can't bleed into
-an earlier one, the vite parser slices the `server:` block to its
-two-space closer so the proxy object can't swallow the match, and a
-config without a static numeric port (function form, env interpolation)
-FAILS rather than skips — the manifest contract needs a fixed number.
-Runs in `pr-checks.yml` right after the prober-coverage gate (both
-manifest violations visible in one review).
+**Invariant:** every launchd manifest dev entry (kinds `vite`/`next`/
+`expo` in `scripts/launchd/service-manifest.mjs`) equals the matching
+app dev config's pinned port, and every app dev config is
+manifest-covered — checked in BOTH directions so neither side can
+silently drop the other. Config shapes per kind: `vite` →
+`<dir>/client/vite.config.ts` `server.port`; `next` → `<dir>/package.json`
+`scripts.dev` (`-p`/`--port`); `expo` → `<dir>/package.json`
+`scripts.start` (`--port`). The drift is real history: the admin SPA
+served 4100 (admin-backend's port, a latent bind conflict) while the
+manifest said 5173 (fixed in 9ca2b491); unpinned `next dev` defaults
+to 3000 — auth-service's port; and two unpinned `expo start` dev
+servers (mobile + tv) collide on Metro 8081. The gate turns all of
+that into a PR failure. Same static-parse, fail-loud conventions as
+the prober-coverage gate: line-based manifest parsing, an unpinned dev
+script FAILS rather than skips (the manifest contract needs a fixed
+number), and apps are classified by their scripts (`next`/`expo`
+keywords), never cross-checked against the wrong kind's contract.
+Runs in `pr-checks.yml` right after the prober-coverage gate. The
+manifest's dev entries carry the port in the generated plist argv too,
+so the plist is independently correct even if package.json drifts.
 
-Locally: `node scripts/launchd/vite-port-drift-gate.mjs`.
-Tests: `node --test scripts/__tests__/vite-port-drift-gate.test.mjs`
-(14 cases: line-based manifest parsing, server-block parsing, both-way
-coverage, and subprocess runs — the real repo must pass at HEAD;
-fake-tree drills for drift, missing config, and unparseable manifest).
+Locally: `node scripts/launchd/dev-port-drift-gate.mjs`.
+Tests: `node --test scripts/__tests__/dev-port-drift-gate.test.mjs`
+(22 cases: per-kind parsing incl. the unpinned failure modes, both-way
+coverage, (dir, kind) join semantics, and subprocess runs — the real
+repo must pass at HEAD; fake-tree drills for vite drift, the unpinned-
+next 3000 trap, colliding unpinned Expo apps, and unparseable manifest).
 
 ---
 

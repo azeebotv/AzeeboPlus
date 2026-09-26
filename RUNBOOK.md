@@ -75,6 +75,11 @@ generator makes such a plist impossible to emit.
 # Regenerate after editing the manifest (service-manifest.mjs):
 node scripts/launchd/gen-service-plists.mjs
 
+# Check app dev-server ports against the manifest (also a PR gate):
+# manifest dev entries (vite/next/expo) must equal each app's pinned
+# dev port — web 4000, admin 5173, creator 5174, mobile 8081, tv 8082.
+node scripts/launchd/dev-port-drift-gate.mjs
+
 # Reload one service to pick up its new plist:
 launchctl bootout gui/$(id -u)/com.azeebo.<label>
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.azeebo.<label>.plist

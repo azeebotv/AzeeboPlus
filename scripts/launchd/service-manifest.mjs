@@ -78,6 +78,11 @@ export const SERVICES = [
   { label: 'creator-portal', dir: 'apps/creator', kind: 'tsx', entry: 'apps/creator/src/main.ts', wd: 'apps/creator', port: 4014 },
   { label: 'admin-vite', dir: 'apps/admin', kind: 'vite', entry: 'node_modules/vite/bin/vite.js', wd: 'apps/admin', port: 5173 },
   { label: 'creator-vite', dir: 'apps/creator', kind: 'vite', entry: 'apps/creator/node_modules/vite/bin/vite.js', wd: 'apps/creator', port: 5174 },
+  { label: 'web-dev', dir: 'apps/web', kind: 'next', entry: 'apps/web/node_modules/next/dist/bin/next', wd: 'apps/web', port: 4000 },
+  // CI=1: expo start shuts Metro down when stdin closes — and launchd gives
+  // the agent /dev/null. Non-interactive mode ignores stdin and stays up.
+  { label: 'mobile-dev', dir: 'apps/mobile', kind: 'expo', entry: 'apps/mobile/node_modules/expo/bin/cli', wd: 'apps/mobile', port: 8081, env: { CI: '1' } },
+  { label: 'tv-dev', dir: 'apps/tv', kind: 'expo', entry: 'apps/tv/node_modules/expo/bin/cli', wd: 'apps/tv', port: 8082, env: { CI: '1' } },
 
   // ---- gateway -----------------------------------------------------------
   { label: 'api-gateway', dir: 'services/gateway/api-gateway', kind: 'node', entry: 'services/gateway/api-gateway/dist/main.js', wd: 'services/gateway/api-gateway', port: 3013 },
@@ -157,6 +162,18 @@ export function programArgumentsFor(svc) {
     }
     case 'nest':
       return [NODE_BIN, repoEntry, 'start', `--env-file=${path.join(REPO_ROOT, svc.dir, '.env')}`];
+    case 'next':
+    case 'expo': {
+      // Dev-server CLIs (next dev / expo start). The port rides argv TOO so
+      // the plist is independently correct even if package.json drifts —
+      // dev-port-drift-gate keeps the two in sync. expo ships its bin
+      // extensionless (bin/cli), which node executes fine.
+      const args = [NODE_BIN];
+      if (DB_SERVICES.has(svc.label)) args.push(`--env-file=${path.join(REPO_ROOT, svc.dir, '.env')}`);
+      args.push(repoEntry);
+      args.push(svc.kind === 'next' ? 'dev' : 'start', '--port', String(svc.port));
+      return args;
+    }
     default:
       throw new Error(`unknown kind ${svc.kind} for ${svc.label}`);
   }
