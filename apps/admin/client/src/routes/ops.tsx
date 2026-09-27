@@ -243,6 +243,7 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
   const level = PG_LEVEL[health.level ?? 'ok'];
   return (
     <div
+      data-testid="pgbouncer-card"
       style={{
         flex: '1 1 100%',
         border: '1px solid var(--admin-card)',

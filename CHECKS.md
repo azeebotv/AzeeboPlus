@@ -64,7 +64,12 @@ Two conventions hold across all of them:
   per ~2h bucket over the card's window — computeForeignPassTrend in
   ops.service.ts; bars scale to the row's own peak, silent periods read
   as flat gaps, and history counts EVERY flagged pass in the window, not
-  just the best persistence run). The admin Ops Health card mirrors the
+  just the best persistence run). A Playwright browser sweep (apps/admin/
+  client/e2e/ops-pgbouncer.spec.ts, CI job test-admin-e2e) mounts the real
+  client against mocked /api/v1 endpoints and toMatchAriaSnapshot-locks the
+  card's five tables (pools, budgets, bypasses, foreign direct clients,
+  persistence) so JSX/typing regressions fail CI instead of shipping. The
+  admin Ops Health card mirrors the
   same list: approved rows show an "approved — not tracked" tag instead
   of "sustained — tracked nightly" (see apps/admin/src/modules/ops/
   ops.service.ts parseForeignAllowlist — a local copy; the admin build is
