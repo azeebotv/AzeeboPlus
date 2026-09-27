@@ -17,6 +17,7 @@
     "check:prisma": "node scripts/check-prisma-find-first.mjs",
     "check:prisma-client": "node scripts/check-prisma-client-stale.mjs",
     "check:dev-wiring": "node scripts/check-dev-wiring.mjs",
+    "smoke:ops": "node scripts/ops-smoke.mjs",
     "check:git-hooks": "node scripts/check-git-hooks.mjs",
     "check:ci-dark": "node scripts/ci-dark-watchdog.mjs",
     "check:seed-image-hosts": "node scripts/check-seed-image-hosts.mjs",

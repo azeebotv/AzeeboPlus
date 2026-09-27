@@ -231,6 +231,21 @@ jobs:
           JWT_AUDIENCE: azeebo-api
           SMOKE_SKIP_SERVICES: admin,creator
           SMOKE_CONCURRENCY: '2'
+      # Ops API contract smoke (REAL payload, unlike the mocked Playwright
+      # render sweep): /admin/ops/services + /admin/ops/transport-flips
+      # field-shape assertions — transport enum per answered service, flip
+      # counter invariants, store mode, trend totals. Mints the same dev JWT
+      # as the gateway smoke (the admin JwtStrategy is stateless), so no
+      # seeded user is needed in the container. Fails fast on payload drift:
+      # the Ops cards' fields changing shape breaks CI here instead of
+      # shipping blanks behind the mocked e2e.
+      - name: Ops API contract smoke (services + transport-flips)
+        run: node scripts/ops-smoke.mjs
+        env:
+          ADMIN_URL: http://localhost:4016
+          JWT_ACCESS_SECRET: smoke_jwt_access_secret_0123456789abcdef0123456789abcdef0123456789abcdef
+          JWT_ISSUER: azeebo-auth
+          JWT_AUDIENCE: azeebo-api
 
       - name: Dump container logs on failure
         if: failure()

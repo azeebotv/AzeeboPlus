@@ -401,6 +401,28 @@ Fails when:
 **Fix:** set the script to the exact value the error names. There is no
 per-workspace variant to choose — that's the point.
 
+### `smoke:ops` — ops API contract smoke (real payload)
+
+**Invariant:** against a REAL admin backend, `GET /admin/ops/services` and
+`GET /admin/ops/transport-flips` return `{ success: true, data }` envelopes
+whose fields match the shapes the Ops Health cards render — transport enum
+(`localhost|ipv6|ipv4`) on EVERY answered (non-down) service row, flip rows
+carrying epoch-ms `detectedAt` + boolean `familyChanged`, trend rows with
+`sweeps ≥ flips ≥ familyFlips` and `YYYY-MM-DD` days, `transportStore.mode`
+in `redis|memory`, and coherent `totalFlips ≥ totalFamilyFlips` totals.
+
+Fails when: non-200/auth failure (drifted route or guard), a missing or
+wrong-typed field the cards read, an out-of-enum transport/store value, or
+counter invariants broken (ledger UPSERT drift). The Playwright render sweep
+mocks these endpoints, so backend payload drift passes it silently — this is
+the real-payload half that fails fast instead.
+
+**Where:** dockerized-e2e.yml all-in-one-smoke job (mints the same dev JWT as
+the gateway-wide smoke — the admin JwtStrategy is stateless, so the unseeded
+container works) and locally via `pnpm smoke:ops` (defaults to
+`http://localhost:4016` + demo login; `ADMIN_EMAIL`/`ADMIN_PASSWORD` or
+`JWT_ACCESS_SECRET` override).
+
 ### `check:build-chain` — Docker build topology
 
 **Invariant (all-in-one):** the `Dockerfile.all-in-one` build chain
