@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { appendFile, readFile, writeFile } from 'node:fs/promises';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { PrismaService } from '../../database/prisma.service';
@@ -226,6 +226,13 @@ export interface ForeignPersistence {
   /** Sustained threshold applied (mirrors POOL_FOREIGN_MIN_SPAN_H default). */
   sustainedMinSpanHours: number;
   rows: ForeignPersistenceRow[];
+  /**
+   * URL of the nightly pool-health tracking issue (found by marker via the
+   * GitHub search API, cached 10 min), when one could be resolved — the
+   * card links SUSTAINED rows to it. Null when unresolvable (no token,
+   * repo unknown, search failed): the card degrades to plain badges.
+   */
+  trackingIssueUrl?: string | null;
   detail?: string;
 }
 
@@ -693,6 +700,86 @@ export interface GatewayRateLimitSnapshot {
 }
 
 /** Freshness/retention job logs and the shared alert-state file (dev paths). */
+/**
+ * Pool-health tracking-issue link resolution. The nightly tracker
+ * (scripts/pool-issue-tracker.mjs) owns ONE marker-scoped GitHub issue;
+ * the card links sustained dialers to it. Resolution order:
+ *   1. POOL_TRACKING_ISSUE_URL env override (ops can pin it explicitly);
+ *   2. live GitHub search for the marker (POOL_TRACKING_GITHUB_TOKEN,
+ *      else the standard GITHUB_TOKEN) — the same search the tracker's
+ *      lifecycle uses;
+ *   3. cached URL from a previous successful search (alert-state file
+ *      convention, refreshed on every successful search) so the link
+ *      survives token outages.
+ * Resolution is best-effort and never fails (or slows) the health payload:
+ * any error → cached value or null, and the card renders plain badges.
+ */
+const POOL_TRACKING_MARKER = '<!-- azeebo:pool-saturation-tracking -->';
+const POOL_TRACKING_CACHE_FILE =
+  process.env.POOL_TRACKING_CACHE_FILE ||
+  `${process.env.TMPDIR || '/tmp'}/azeebo-admin-pool-tracking-issue.json`;
+
+export async function resolvePoolTrackingIssueUrl(
+  env: {
+    POOL_TRACKING_ISSUE_URL?: string;
+    POOL_TRACKING_GITHUB_TOKEN?: string;
+    GITHUB_TOKEN?: string;
+    GITHUB_REPOSITORY?: string;
+    GITHUB_API_BASE_URL?: string;
+  } = process.env,
+  now = Date.now(),
+  cacheFile = POOL_TRACKING_CACHE_FILE
+): Promise<string | null> {
+  const override = env.POOL_TRACKING_ISSUE_URL?.trim();
+  if (override) return override;
+
+  const readCache = (): string | null => {
+    try {
+      const cached = JSON.parse(readFileSync(cacheFile, 'utf8')) as {
+        url?: string;
+        at?: number;
+      };
+      return typeof cached.url === 'string' && cached.url.startsWith('https://')
+        ? cached.url
+        : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const repo = env.GITHUB_REPOSITORY?.trim();
+  const token = env.POOL_TRACKING_GITHUB_TOKEN?.trim() || env.GITHUB_TOKEN?.trim() || null;
+  if (!repo || !token) return readCache();
+
+  try {
+    const apiBase = env.GITHUB_API_BASE_URL?.trim() || 'https://api.github.com';
+    const q = `"${POOL_TRACKING_MARKER}" in:body type:issue repo:${repo}`;
+    const res = await fetch(`${apiBase}/search/issues?q=${encodeURIComponent(q)}&per_page=1`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!res.ok) throw new Error(`search HTTP ${res.status}`);
+    const payload = (await res.json()) as { items?: Array<{ number: number; html_url?: string }> };
+    const hit = payload.items?.[0];
+    const url = hit?.html_url ?? (hit ? `${apiBase.replace(/\/+$/, '')}/${repo}/issues/${hit.number}` : null);
+    if (url) {
+      try {
+        writeFileSync(cacheFile, JSON.stringify({ url, at: now }), 'utf8');
+      } catch {
+        /* cache write is best-effort */
+      }
+      return url;
+    }
+    return readCache();
+  } catch {
+    return readCache();
+  }
+}
+
 const FRESHNESS_LOG = process.env.FRESHNESS_LOG || '/tmp/azeebo-admin-freshness.log';
 const RETENTION_LOG = process.env.RETENTION_LOG || '/tmp/azeebo-audit-retention.log';
 const ALERT_STATE_FILE =
@@ -1408,22 +1495,31 @@ export class OpsService {
           AND "ranAt" >= now() - ${`${hours} hours`}::interval
         ORDER BY "ranAt" DESC`;
       const sustainedMinSpanHours = Number(process.env.POOL_FOREIGN_MIN_SPAN_H ?? 24);
+      const rows = computeForeignPersistence(raw ?? [], {
+        minSpanHours: sustainedMinSpanHours,
+        // Same allowlist the nightly tracker applies — approved workspaces
+        // show on the card (budget impact is real) but never read as
+        // sustained, so card and tracker never disagree.
+        allowlist: parseForeignAllowlist(process.env.POOL_FOREIGN_ALLOWLIST),
+      });
+      // Tracking-issue link for the card's sustained rows: only resolved
+      // when a sustained dialer actually exists — a quiet window never pays
+      // for a GitHub round-trip. Best-effort; null degrades to plain badges.
+      const trackingIssueUrl = rows.some((r) => r.sustained)
+        ? await resolvePoolTrackingIssueUrl()
+        : null;
       return {
         windowHours: hours,
         sustainedMinSpanHours,
-        rows: computeForeignPersistence(raw ?? [], {
-          minSpanHours: sustainedMinSpanHours,
-          // Same allowlist the nightly tracker applies — approved workspaces
-          // show on the card (budget impact is real) but never read as
-          // sustained, so card and tracker never disagree.
-          allowlist: parseForeignAllowlist(process.env.POOL_FOREIGN_ALLOWLIST),
-        }),
+        rows,
+        trackingIssueUrl,
       };
     } catch (e) {
       return {
         windowHours: hours,
         sustainedMinSpanHours: Number(process.env.POOL_FOREIGN_MIN_SPAN_H ?? 24),
         rows: [],
+        trackingIssueUrl: null,
         detail: `ledger read failed: ${(e as Error).message.split('\n')[0]}`,
       };
     }

@@ -364,4 +364,77 @@ describe('Ops page transport-flip trend card', () => {
     await waitFor(() => expect(screen.getByText(/All systems healthy/i)).toBeTruthy());
     expect(screen.queryByText(/store: /i)).toBeNull();
   });
+
+  describe('foreign dialer persistence row links', () => {
+    const pgbouncerWithPersistence = (persistence: unknown) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({
+            success: true,
+            data: {
+              available: true,
+              level: 'ok',
+              foreignPersistence: persistence,
+            },
+          });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: baseSnapshot([]) });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    const baseRow = {
+      workspace: '/Users/partner/fleet',
+      passes: 30,
+      spanHours: 30,
+      lastSeen: new Date().toISOString(),
+      conns: 2,
+      approved: false,
+      sustained: true,
+    };
+
+    it('links a sustained row to the tracking issue when its URL resolved', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [baseRow],
+        trackingIssueUrl: 'https://github.com/azeebotv/AzeeboPlus/issues/42',
+      });
+      renderPage();
+      const link = await screen.findByText(/sustained — tracking issue/i);
+      expect(link.getAttribute('href')).toBe('https://github.com/azeebotv/AzeeboPlus/issues/42');
+      expect(link.getAttribute('target')).toBe('_blank');
+    });
+
+    it('keeps the plain badge when the URL could not be resolved (degrade)', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [baseRow],
+        trackingIssueUrl: null,
+      });
+      renderPage();
+      const badge = await screen.findByText(/sustained — tracked nightly/i);
+      expect(badge.getAttribute('href')).toBeNull();
+    });
+
+    it('approved rows never link (they are never tracked)', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [{ ...baseRow, approved: true, sustained: false }],
+        trackingIssueUrl: 'https://github.com/azeebotv/AzeeboPlus/issues/42',
+      });
+      renderPage();
+      const badge = await screen.findByText(/approved — not tracked/i);
+      expect(badge.getAttribute('href')).toBeNull();
+      expect(screen.queryByText(/sustained — tracking issue/i)).toBeNull();
+    });
+  });
 });

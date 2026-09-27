@@ -1325,6 +1325,9 @@ export interface PgbouncerHealth {
       sustained: boolean;
       approved: boolean;
     }>;
+    /** Pool-health tracking issue URL when resolvable — sustained rows link
+     * to it; null/unset degrades the card to plain badges. */
+    trackingIssueUrl?: string | null;
     detail?: string;
   };
   /** Present when the bypass scan itself failed (e.g. lsof unavailable). */

@@ -627,16 +627,33 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
                             approved — not tracked
                           </span>
                         ) : f.sustained ? (
-                          <span
-                            style={{
-                              color: 'var(--admin-amber)',
-                              fontWeight: 600,
-                              fontSize: 11,
-                            }}
-                            title={`At/over the ${health.foreignPersistence?.sustainedMinSpanHours}h threshold — the nightly pool-health tracker opens/updates its tracking issue for this dialer`}
-                          >
-                            sustained — tracked nightly
-                          </span>
+                          health.foreignPersistence?.trackingIssueUrl ? (
+                            <a
+                              href={health.foreignPersistence.trackingIssueUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                color: 'var(--admin-amber)',
+                                fontWeight: 600,
+                                fontSize: 11,
+                                textDecoration: 'underline',
+                              }}
+                              title={`At/over the ${health.foreignPersistence?.sustainedMinSpanHours}h threshold — this dialer is listed in the nightly pool-health tracking issue`}
+                            >
+                              sustained — tracking issue ↗
+                            </a>
+                          ) : (
+                            <span
+                              style={{
+                                color: 'var(--admin-amber)',
+                                fontWeight: 600,
+                                fontSize: 11,
+                              }}
+                              title={`At/over the ${health.foreignPersistence?.sustainedMinSpanHours}h threshold — the nightly pool-health tracker opens/updates its tracking issue for this dialer`}
+                            >
+                              sustained — tracked nightly
+                            </span>
+                          )
                         ) : (
                           <span
                             style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}

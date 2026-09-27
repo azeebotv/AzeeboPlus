@@ -50,8 +50,16 @@ Two conventions hold across all of them:
   impact is real) but can never read as `sustained`, so the tracker never
   opens, updates, or keeps an issue for it and the gate passes with an
   "approved (allowlist), not tracked" reason when the only ≥threshold
-  dialer is approved. Matching is exact-path (no globbing) so an entry can
-  never approve a sibling path. The admin Ops Health card mirrors the
+  dialer is approved. Matching is exact-path (no globbing) so an entry
+  can never approve a sibling path. The admin Ops Health card links
+  SUSTAINED rows to the tracking issue when its URL resolves
+  (foreignPersistence.trackingIssueUrl: POOL_TRACKING_ISSUE_URL env
+  override → GitHub marker search cached 10 min at
+  /tmp/azeebo-admin-pool-tracking-issue.json → cached value on failure;
+  resolvePoolTrackingIssueUrl in ops.service.ts — best-effort, never
+  throws into the health payload, only paid for when a sustained row
+  exists). Unresolvable URL → plain "sustained — tracked nightly"
+  badges. The admin Ops Health card mirrors the
   same list: approved rows show an "approved — not tracked" tag instead
   of "sustained — tracked nightly" (see apps/admin/src/modules/ops/
   ops.service.ts parseForeignAllowlist — a local copy; the admin build is
