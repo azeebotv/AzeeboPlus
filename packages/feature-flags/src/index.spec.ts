@@ -5,7 +5,65 @@ import {
   createFeatureFlagService,
   FEATURE_FLAG_KEY,
   universeFlagKey,
+  resolveFeatureFlagRedisUrl,
+  FEATURE_FLAG_REDIS_DB_DEFAULT,
 } from './index';
+
+describe('resolveFeatureFlagRedisUrl (dedicated flag-cache DB index)', () => {
+  // The flag cache claims its own DB index so DB 0 stays reserved for
+  // generic use and every consumer shares one namespace. Mirror of the
+  // opsRedisUrl tests in apps/admin (transport store, DB 1) — same rules,
+  // different default.
+  it('rewrites a bare URL onto the default flag-cache index', () => {
+    expect(resolveFeatureFlagRedisUrl('redis://localhost:6379')).toBe(
+      `redis://localhost:6379/${FEATURE_FLAG_REDIS_DB_DEFAULT}`
+    );
+    expect(FEATURE_FLAG_REDIS_DB_DEFAULT).toBe(2);
+  });
+
+  it('preserves auth and TLS scheme while appending the index', () => {
+    expect(resolveFeatureFlagRedisUrl('redis://:s3cret@redis.internal:6379')).toBe(
+      'redis://:s3cret@redis.internal:6379/2'
+    );
+    expect(resolveFeatureFlagRedisUrl('rediss://redis.example.com')).toBe(
+      'rediss://redis.example.com/2'
+    );
+  });
+
+  it('leaves an explicit index untouched (operator choice wins)', () => {
+    expect(resolveFeatureFlagRedisUrl('redis://localhost:6379/0')).toBe('redis://localhost:6379/0');
+    expect(resolveFeatureFlagRedisUrl('redis://localhost:6379/7')).toBe('redis://localhost:6379/7');
+    expect(resolveFeatureFlagRedisUrl('redis://:p@h:6379/0?db=0')).toBe('redis://:p@h:6379/0?db=0');
+  });
+
+  it('honors the FEATURE_FLAG_REDIS_DB override for bare URLs', () => {
+    expect(resolveFeatureFlagRedisUrl('redis://localhost:6379', '5')).toBe('redis://localhost:6379/5');
+    // Non-numeric / negative override → falls back to the default.
+    expect(resolveFeatureFlagRedisUrl('redis://localhost:6379', 'banana')).toBe(
+      'redis://localhost:6379/2'
+    );
+    expect(resolveFeatureFlagRedisUrl('redis://localhost:6379', '-1')).toBe(
+      'redis://localhost:6379/2'
+    );
+  });
+
+  it('prefers FEATURE_FLAG_REDIS_URL over REDIS_URL', () => {
+    expect(
+      resolveFeatureFlagRedisUrl('redis://flag-host:6379', undefined) ===
+        resolveFeatureFlagRedisUrl('redis://flag-host:6379')
+    ).toBe(true);
+  });
+
+  it('returns garbage as-is (the service error paths own bad targets, never throws)', () => {
+    expect(resolveFeatureFlagRedisUrl('not a url')).toBe('not a url');
+    expect(resolveFeatureFlagRedisUrl('')).toBe('');
+    // Non-redis schemes pass through untouched (e.g. someone points the
+    // env at postgres — the connection will fail loudly on its own).
+    expect(resolveFeatureFlagRedisUrl('postgresql://localhost:5432/db')).toBe(
+      'postgresql://localhost:5432/db'
+    );
+  });
+});
 
 /** Minimal in-memory Redis stand-in implementing the surface the service uses. */
 class FakeRedis {

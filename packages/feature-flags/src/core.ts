@@ -140,6 +140,50 @@ const DEFAULT_AUTO_DISABLE_AFTER_DAYS = 7;
 // admin publisher and the web/mobile clients.
 export { universeFlagKey } from '@azeebo/shared-types';
 
+/**
+ * Redis DB index the flag cache claims for itself. DB 0 stays RESERVED for
+ * generic/misc Redis use (session caches, ad-hoc keys), and every long-lived
+ * consumer owns a NAMED namespace: ops (transport store) moved to DB 1 via
+ * opsRedisUrl (apps/admin transport-store.ts), the flag cache claims DB 2
+ * here. Bare URLs are rewritten so every consumer — admin writer, gateway,
+ * every NestJS service — lands on the same index and sees the same flags.
+ * An explicit index in the URL always wins (the operator said so).
+ */
+export const FEATURE_FLAG_REDIS_DB_DEFAULT = 2;
+
+/**
+ * Resolve the flag cache's Redis target with an explicit DB index (mirror of
+ * apps/admin transport-store.ts opsRedisUrl — same semantics, different
+ * default, because DB 2 is the flag cache's namespace):
+ *
+ * - `redis://host:6379`        → `redis://host:6379/2`
+ * - `redis://:pass@host:6379`  → auth preserved, index appended
+ * - `rediss://host`            → TLS scheme preserved, index appended
+ * - `.../0`, `.../5`           → UNCHANGED (explicit index wins)
+ * - garbage input              → returned as-is (the service's fail-open/
+ *   fail-closed error paths own unreachable/malformed targets; resolution
+ *   must never throw)
+ *
+ * Exported for tests + reuse by direct-Redis consumers that write the flag
+ * keyspace (universe-management's publisher).
+ */
+export function resolveFeatureFlagRedisUrl(
+  raw = process.env.FEATURE_FLAG_REDIS_URL ?? process.env.REDIS_URL ?? 'redis://localhost:6379',
+  dbRaw = process.env.FEATURE_FLAG_REDIS_DB
+): string {
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'redis:' && url.protocol !== 'rediss:') return raw;
+    const hasExplicitDb = url.pathname.length > 1; // '' or '/' = no index given
+    if (hasExplicitDb) return raw;
+    const db = Number(dbRaw);
+    url.pathname = `/${Number.isFinite(db) && db >= 0 ? Math.trunc(db) : FEATURE_FLAG_REDIS_DB_DEFAULT}`;
+    return url.toString();
+  } catch {
+    return raw;
+  }
+}
+
 /** Metadata key used by the @FeatureFlag decorator (shared with the NestJS glue). */
 export const FEATURE_FLAG_KEY = 'feature_flag_key';
 
@@ -180,7 +224,12 @@ export class FeatureFlagService {
     if (!redisUrl && !config.redis && process.env.NODE_ENV === 'production') {
       throw new Error('FeatureFlagService: FEATURE_FLAG_REDIS_URL is required in production');
     }
-    this.redis = config.redis || new Redis(redisUrl || 'redis://localhost:6379');
+    // Bare URLs are rewritten onto the dedicated flag-cache DB index so DB 0
+    // stays reserved for generic use and every consumer (admin writer,
+    // gateway, all services) shares one namespace without per-consumer
+    // configuration. Explicit index in the URL wins; injected `config.redis`
+    // clients are the caller's connection and are NOT re-targeted.
+    this.redis = config.redis || new Redis(resolveFeatureFlagRedisUrl(redisUrl || 'redis://localhost:6379'));
     this.prefix = config.prefix || 'feature_flags:';
     this.defaultFlags = config.defaultFlags || {};
     this.defaultValues = config.defaultValues || {};

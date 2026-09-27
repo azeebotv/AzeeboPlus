@@ -789,3 +789,35 @@ upstream (scripted boots, CI).
 - A check that stops matching reality is worse than no check: when an
   invariant legitimately changes (e.g. a new export style), update the check
   *and* its tests in the same PR.
+
+---
+
+## Redis DB namespaces
+
+### Dedicated flag-cache DB index (`FEATURE_FLAG_REDIS_DB`, default 2)
+
+**Invariant:** the feature-flag cache connects to its own Redis DB index —
+DB 0 stays reserved/generic, DB 1 is the ops transport store
+(`OPS_REDIS_DB_DEFAULT = 1`), DB 2 is the flag cache
+(`FEATURE_FLAG_REDIS_DB_DEFAULT = 2`).
+
+`resolveFeatureFlagRedisUrl()` (exported from `@azeebo/feature-flags`)
+rewrites any bare `redis://host:port` URL by appending the resolved index
+(`/2`), preserves credentials and `rediss://` TLS, honors an explicit index
+already present in the URL, and returns unparseable input untouched (never
+throws). `FEATURE_FLAG_REDIS_URL` wins over `REDIS_URL`; `FEATURE_FLAG_REDIS_DB`
+overrides the index (non-numeric/negative → default).
+
+**Coupling:** the universe-flag publisher in admin's
+`universe-management.service` resolves its client through the same resolver —
+publisher and cache must land on the same DB or universe flag writes would be
+invisible to readers sharing the `feature_flags:*` keyspace.
+
+**Verified live:** a global-flag PUT on :4016 landed `feature_flags:<key>`
+on DB 2 and was removed via the same client; DB 0 held no `feature_flags:*`
+keys before or after.
+
+**Deploy note:** Redis is the store of record for flags — before/at rollout
+of this build, copy existing prod keys once:
+`node scripts/migrate-flag-keys-redis-db.mjs` (dry run) then `--apply`.
+GET/SET byte copy with TTL preserved; source keys are never deleted.

@@ -6,6 +6,7 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
+import { resolveFeatureFlagRedisUrl } from '@azeebo/feature-flags';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit.service';
 import { CreateUniverseDto } from './dto/create-universe.dto';
@@ -46,8 +47,12 @@ export class UniverseManagementService {
     if (this.redis) {
       return this.redis;
     }
-    const url =
-      process.env.FEATURE_FLAG_REDIS_URL || process.env.REDIS_URL || 'redis://localhost:6379';
+    // Same resolver the FeatureFlagService uses — the publisher MUST land on
+    // the same DB index as the cache or universe flags go invisible to every
+    // consumer (they share the feature_flags:* keyspace).
+    const url = resolveFeatureFlagRedisUrl(
+      process.env.FEATURE_FLAG_REDIS_URL || process.env.REDIS_URL || 'redis://localhost:6379'
+    );
     try {
       this.redis = new Redis(url, {
         lazyConnect: true,
