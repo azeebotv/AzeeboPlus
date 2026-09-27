@@ -1562,6 +1562,9 @@ export default function OpsPage() {
             title={storeChip.detail}
           >
             store: {STORE_CHIP[storeChip.mode].label}
+            {storeChip.redisDb !== null && (
+              <span style={{ fontWeight: 500, opacity: 0.85 }}> · db {storeChip.redisDb}</span>
+            )}
           </span>
         )}
         <span style={{ color: 'var(--admin-text-muted)', fontSize: 12, marginLeft: 'auto' }}>

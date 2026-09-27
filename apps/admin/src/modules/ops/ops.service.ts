@@ -968,19 +968,30 @@ export type TransportStoreMode = 'redis' | 'memory';
  * second replica loses the history. Pure + exported so the client contract
  * and the chip render tests pin the mapping.
  */
-export function transportStoreStatus(degraded: boolean | undefined): {
+export function transportStoreStatus(
+  degraded: boolean | undefined,
+  dbIndex?: number | null
+): {
   mode: TransportStoreMode;
   detail: string;
+  redisDb: number | null;
 } {
+  const validDb =
+    typeof dbIndex === 'number' && Number.isInteger(dbIndex) && dbIndex >= 0
+      ? dbIndex
+      : null;
+  const where =
+    validDb !== null ? `on Redis DB ${validDb}` : 'on an unconfirmed Redis DB';
   return degraded
     ? {
         mode: 'memory',
-        detail:
-          'Redis unreachable — flip memory is per-process; baselines reset on restart and other replicas cannot see flips',
+        detail: `Redis unreachable — flip memory is per-process; baselines reset on restart and other replicas cannot see flips. Last known backing: ${where}.`,
+        redisDb: validDb,
       }
     : {
         mode: 'redis',
-        detail: 'Fleet-wide Redis baseline + hold-window flips (cross-restart, cross-replica)',
+        detail: `Fleet-wide Redis baseline + hold-window flips (cross-restart, cross-replica) ${where}.`,
+        redisDb: validDb,
       };
 }
 
@@ -1919,7 +1930,12 @@ export class OpsService {
     transportFlips: TransportFlip[];
     /** Backing of the transport store right now — drives the Ops Health
      * header chip (Redis-backed vs degraded to per-process memory). */
-    transportStore: { mode: TransportStoreMode; detail: string };
+    transportStore: {
+      mode: TransportStoreMode;
+      detail: string;
+      /** Redis DB index the store writes to, when it could be resolved. */
+      redisDb: number | null;
+    };
     checkedAt: string;
   }>{
     const probes = PROBED_SERVICES.map(async (svc): Promise<ServiceHealthResult> => {
@@ -2000,7 +2016,10 @@ export class OpsService {
     return {
       services,
       transportFlips,
-      transportStore: transportStoreStatus(this.transportStore.degraded),
+      transportStore: transportStoreStatus(
+        this.transportStore.degraded,
+        this.transportStore.dbIndex
+      ),
       checkedAt: new Date().toISOString(),
     };
   }

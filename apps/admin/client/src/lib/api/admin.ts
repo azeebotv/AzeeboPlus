@@ -1209,6 +1209,8 @@ export type TransportStoreMode = 'redis' | 'memory';
 export interface TransportStoreStatus {
   mode: TransportStoreMode;
   detail: string;
+  /** Redis DB index the store writes to, or null when it couldn't be resolved. */
+  redisDb: number | null;
 }
 
 /** GET /admin/ops/transport-flips — ledger-backed flip persistence trend. */

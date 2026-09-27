@@ -71,7 +71,7 @@ const baseStatus: OpsStatus = {
 const baseSnapshot = (flips: unknown[]): OpsServicesSnapshot => ({
   services: [{ name: 'auth-service', port: 3000, status: 'healthy', latencyMs: 5, dbStatus: 'up' }],
   transportFlips: flips as OpsServicesSnapshot['transportFlips'],
-  transportStore: { mode: 'redis', detail: 'Fleet-wide Redis baseline' },
+  transportStore: { mode: 'redis', detail: 'Fleet-wide Redis baseline', redisDb: 1 },
   checkedAt: new Date().toISOString(),
 });
 
@@ -314,6 +314,14 @@ describe('Ops page transport-flip trend card', () => {
     await waitFor(() => expect(screen.getByText(/store: redis/i)).toBeTruthy());
   });
 
+  it('annotates the store chip with the resolved Redis DB index', async () => {
+    stubRoutes([]);
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/store: redis/i)).toBeTruthy());
+    // dbIndex rides as a quiet suffix on the chip face, not just the tooltip.
+    expect(screen.getByText(/· db 1/i)).toBeTruthy();
+  });
+
   it('shows the store chip as degraded memory with the detail tooltip', async () => {
     const respond = (url: unknown) => {
       const u = String(url);
@@ -325,6 +333,7 @@ describe('Ops page transport-flip trend card', () => {
             transportStore: {
               mode: 'memory',
               detail: 'Redis unreachable — flip memory is per-process',
+              redisDb: null,
             },
           },
         });
@@ -468,7 +477,7 @@ describe('Ops page transport-flip trend card', () => {
       withServicesSnapshot({
         services: fleetServices,
         transportFlips: [],
-        transportStore: { mode: 'redis', detail: 'fleet-wide' },
+        transportStore: { mode: 'redis', detail: 'fleet-wide', redisDb: 1 },
         checkedAt: new Date().toISOString(),
       });
       renderPage();
@@ -500,7 +509,7 @@ describe('Ops page transport-flip trend card', () => {
             familyChanged: true,
           },
         ],
-        transportStore: { mode: 'redis', detail: 'fleet-wide' },
+        transportStore: { mode: 'redis', detail: 'fleet-wide', redisDb: 1 },
         checkedAt: new Date().toISOString(),
       });
       renderPage();

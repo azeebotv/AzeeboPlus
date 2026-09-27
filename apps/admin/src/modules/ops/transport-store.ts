@@ -78,6 +78,24 @@ export function opsRedisUrl(
 }
 
 /**
+ * Pure: the DB index actually selected by a resolved Redis URL — the numeric
+ * path suffix, or null when there is none (non-redis scheme, garbage
+ * passthrough, bare URL). Parsed from the string opsRedisUrl() returned so
+ * callers show what the client will really select, explicit indexes and
+ * fallbacks included.
+ */
+export function redisDbFromUrl(raw: string): number | null {
+  try {
+    const url = new URL(raw);
+    if (!url.pathname || url.pathname === '/') return null;
+    const db = Number(url.pathname.slice(1));
+    return Number.isInteger(db) && db >= 0 ? db : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Atomic flip detection + baseline commit. Runs server-side (EVAL) so the
  * read-compare-write is one Redis operation no two replicas can interleave.
  *
@@ -138,6 +156,14 @@ export interface TransportStore {
   /** Degrade signal: true when Redis is unreachable and the fallback is active. */
   readonly degraded: boolean;
 
+  /**
+   * The Redis DB index this store writes to (parsed from the resolved URL),
+   * or null when unknown — injected client, degraded fallback, or an
+   * unparseable URL. Surfaced so the ops chip shows exactly where transport
+   * keys live.
+   */
+  readonly dbIndex: number | null;
+
   /** Test-only: clear all transport state. */
   flushForTests(): Promise<void>;
 
@@ -148,6 +174,7 @@ export interface TransportStore {
 export class RedisTransportStore implements TransportStore {
   private readonly redis: Redis | null;
   private readonly ownsClient: boolean;
+  private readonly _dbIndex: number | null;
   /** In-memory shadow of the store state. Written on EVERY commit (not just
    * degraded ones) so a mid-flight Redis failure degrades seamlessly: the
    * mirror always holds the last-known baseline and hold-window flips, and
@@ -160,12 +187,14 @@ export class RedisTransportStore implements TransportStore {
     if (client) {
       this.redis = client;
       this.ownsClient = false;
+      this._dbIndex = null;
       return;
     }
     // opsRedisUrl rewrites a bare URL onto the dedicated ops DB index (see
     // its docblock): ops telemetry never shares DB 0 with the feature-flag
     // cache, and an explicit index in OPS_REDIS_URL still wins.
     const url = opsRedisUrl();
+    this._dbIndex = redisDbFromUrl(url);
     try {
       this.redis = new Redis(url, {
         lazyConnect: false,
@@ -191,6 +220,10 @@ export class RedisTransportStore implements TransportStore {
 
   get degraded(): boolean {
     return this._degraded || this.redis === null;
+  }
+
+  get dbIndex(): number | null {
+    return this._dbIndex;
   }
 
   async commitTransport(

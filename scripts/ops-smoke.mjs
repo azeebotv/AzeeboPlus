@@ -195,6 +195,12 @@ function assertServicesSnapshot(data) {
       pass(`transportStore.mode = ${data.transportStore.mode}`);
     }
     if (!isStr(data.transportStore.detail)) fail('transportStore.detail', 'expected non-empty string');
+    const db = data.transportStore.redisDb;
+    if (db !== null && (typeof db !== 'number' || !Number.isInteger(db) || db < 0)) {
+      fail('transportStore.redisDb', `got ${JSON.stringify(db)}`);
+    } else {
+      pass(`transportStore.redisDb = ${JSON.stringify(db)}`);
+    }
   }
 
   if (!isDate(data.checkedAt)) fail('checkedAt', 'expected an ISO-ish date string');
