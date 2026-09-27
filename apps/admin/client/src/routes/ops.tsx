@@ -11,6 +11,7 @@ import type {
   PgbouncerHealth,
   PgbouncerPoolRow,
   OpsServicesSnapshot,
+  OpsServiceHealth,
   TransportStoreStatus,
   OpsTransportFlip,
   TransportFlipTrend,
@@ -949,6 +950,135 @@ function TransportFlipTrendCard({ trend }: { trend?: TransportFlipTrend | null }
   );
 }
 
+/** Per-row transport cell for the fleet table: label + color + tooltip. */
+function transportCell(s: {
+  status: OpsServiceHealth['status'];
+  transport?: OpsServiceHealth['transport'];
+  errorDetail?: string;
+}): { label: string; color: string; title?: string; weight?: number } {
+  if (s.status === 'down')
+    return {
+      label: 'unreachable',
+      color: 'var(--admin-red)',
+      title: s.errorDetail ? `last probe failure: ${s.errorDetail}` : 'probe sweep could not reach the service',
+    };
+  if (s.transport === undefined) return { label: '—', color: 'var(--admin-text-muted)' };
+  if (s.transport === 'localhost')
+    return {
+      label: 'dual-stack',
+      color: 'var(--admin-text-muted)',
+      title: 'Answered on localhost — the hostname may resolve to either loopback family, so no family is asserted.',
+    };
+  return {
+    label: s.transport === 'ipv6' ? 'IPv6-only' : 'IPv4-only',
+    color: 'var(--admin-amber)',
+    weight: 600,
+    title:
+      s.transport === 'ipv6'
+        ? 'Answered on [::1] — an IPv6-only listener (IPv4 dials are refused). Healthy; a refused 127.0.0.1 probe is never an outage.'
+        : 'Answered on 127.0.0.1 — an IPv4-only listener.',
+  };
+}
+
+/**
+ * Fleet transport table — one row per probed service with the loopback
+ * family that answered the latest sweep. Sits beside the flip trend so the
+ * CURRENT state is readable without cross-referencing history: a trend row
+ * plus this column answers "which family is it on right now?". localhost
+ * renders as dual-stack on purpose — hostname probes answer on either
+ * family, so calling one out would just re-label the normal case.
+ */
+function FleetTransportCard({ snapshot }: { snapshot?: OpsServicesSnapshot | null }) {
+  if (!snapshot || snapshot.services.length === 0) return null;
+  const healthy = snapshot.services.filter((s) => s.status === 'healthy').length;
+  return (
+    <div
+      data-testid="fleet-transport-card"
+      style={{
+        border: '1px solid var(--admin-card)',
+        borderRadius: 14,
+        backgroundColor: 'var(--admin-surface)',
+        padding: '16px 18px',
+        marginBottom: 28,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <Icon name="refresh" size={16} />
+        <span style={{ fontWeight: 600, fontSize: 14 }}>Fleet transport</span>
+        <span style={{ marginLeft: 'auto', color: 'var(--admin-text-muted)', fontSize: 11 }}>
+          {healthy}/{snapshot.services.length} answering · family flips this sweep:{' '}
+          {snapshot.transportFlips.length}
+        </span>
+      </div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <thead>
+          <tr style={{ color: 'var(--admin-text-muted)', textAlign: 'left' }}>
+            {['Service', 'Port', 'Status', 'Transport', 'Latency'].map((h) => (
+              <th
+                key={h}
+                style={{
+                  padding: '4px 8px 4px 0',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {snapshot.services.map((s) => {
+            const t = transportCell(s);
+            const statusColor =
+              s.status === 'healthy'
+                ? 'var(--admin-emerald)'
+                : s.status === 'degraded'
+                  ? 'var(--admin-amber)'
+                  : 'var(--admin-red)';
+            return (
+              <tr key={s.name}>
+                <td style={{ padding: '5px 8px 5px 0', fontWeight: 600 }}>{s.name}</td>
+                <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
+                  {s.port}
+                </td>
+                <td style={{ padding: '5px 8px 5px 0', color: statusColor }}>{s.status}</td>
+                <td
+                  style={{
+                    padding: '5px 8px 5px 0',
+                    color: t.color,
+                    fontWeight: t.weight,
+                    whiteSpace: 'nowrap',
+                  }}
+                  title={t.title}
+                >
+                  {t.label}
+                </td>
+                <td
+                  style={{
+                    padding: '5px 8px 5px 0',
+                    fontVariantNumeric: 'tabular-nums',
+                    color: 'var(--admin-text-muted)',
+                  }}
+                >
+                  {s.latencyMs} ms
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '4px 0 0' }}>
+        Transport is the loopback family that answered the latest probe sweep (dual-stack =
+        hostname probe, either family). Family changes land in the banner above and the flip
+        trend below; this column is where they landed.
+      </p>
+    </div>
+  );
+}
+
 function sPlural(n: number): string {
   return n === 1 ? '' : 's';
 }
@@ -1484,6 +1614,7 @@ export default function OpsPage() {
       <div style={{ marginTop: 16 }}>
         <TransportFlipTrendCard trend={flipTrend} />
       </div>
+      <FleetTransportCard snapshot={servicesSnapshot} />
 
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 28 }}>
         <CheckCard check={data.db} icon="activity" historyHours={historyHours} />

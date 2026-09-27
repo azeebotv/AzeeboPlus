@@ -587,7 +587,15 @@ job (no JOB_PROFILES entry). Row growth is bounded at ~(services × days
 in the window) by the UPSERT — no retention entry needed. The ledger
 write is fire-and-forget: a failed write warns and never fails (or slows)
 the health sweep. Tests: `cd apps/admin && npx jest transport-flip`
-(codec) and the ops.test.tsx trend-card render tests.
+(codec) and the ops.test.tsx trend-card render tests. The Ops page also
+renders the CURRENT family per service as a Fleet transport table
+(client-only: FleetTransportCard in ops.tsx — Service/Port/Status/
+Transport/Latency from the already-fetched services snapshot, colocated
+with the flip trend so "which family is it on right now?" needs no
+cross-reference; localhost renders as dual-stack, down rows show
+unreachable with the probe error in the tooltip, and the header counts
+answering services + flips this sweep). It is inside the e2e aria
+snapshot with all four row shapes mocked.
 
 **Flip EVENTS** (job `transport-flip-event`): the per-day row keeps
 counters and only the day's LAST from→to pair; a service that flapped

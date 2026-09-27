@@ -440,6 +440,77 @@ describe('Ops page transport-flip trend card', () => {
     });
   });
 
+  describe('fleet transport table', () => {
+    const withServicesSnapshot = (snapshot: unknown) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({ success: true, data: { available: false, detail: 'skipped' } });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: snapshot });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    const fleetServices = [
+      { name: 'auth-service', port: 3001, status: 'healthy', latencyMs: 4, dbStatus: 'up', transport: 'ipv6' },
+      { name: 'gateway', port: 3013, status: 'healthy', latencyMs: 9, dbStatus: 'up', transport: 'ipv4' },
+      { name: 'user-service', port: 3003, status: 'healthy', latencyMs: 6, dbStatus: 'up', transport: 'localhost' },
+      { name: 'search-service', port: 3004, status: 'down', latencyMs: 0, dbStatus: 'unknown', errorDetail: 'ECONNREFUSED' },
+    ];
+
+    it('renders one row per service with the family that answered', async () => {
+      withServicesSnapshot({
+        services: fleetServices,
+        transportFlips: [],
+        transportStore: { mode: 'redis', detail: 'fleet-wide' },
+        checkedAt: new Date().toISOString(),
+      });
+      renderPage();
+      const card = await screen.findByTestId('fleet-transport-card');
+      expect(card).toBeTruthy();
+      await screen.findByText('auth-service');
+      // Family labels, exactly as transportCell maps them.
+      expect(screen.getByText('IPv6-only')).toBeTruthy();
+      expect(screen.getByText('IPv4-only')).toBeTruthy();
+      // localhost is deliberately NOT a family claim: dual-stack.
+      expect(screen.getByText('dual-stack')).toBeTruthy();
+      // Down: never a family label — the sweep could not reach it. The
+      // failure detail rides the title attribute, not the cell text.
+      expect(screen.getByText('unreachable')).toBeTruthy();
+      expect(screen.getByTitle(/last probe failure: ECONNREFUSED/)).toBeTruthy();
+      expect(screen.getByText(/3\/4 answering/)).toBeTruthy();
+    });
+
+    it('a family flip from the sweep shows in the card header count', async () => {
+      withServicesSnapshot({
+        services: [fleetServices[0]],
+        transportFlips: [
+          {
+            service: 'auth-service',
+            port: 3001,
+            from: 'ipv4',
+            to: 'ipv6',
+            detectedAt: Date.now(),
+            familyChanged: true,
+          },
+        ],
+        transportStore: { mode: 'redis', detail: 'fleet-wide' },
+        checkedAt: new Date().toISOString(),
+      });
+      renderPage();
+      const card = await screen.findByTestId('fleet-transport-card');
+      // (the flip banner ALSO names the service — assert inside the card)
+      await screen.findByText(/family flips this sweep: 1/);
+      expect(card.textContent).toContain('auth-service');
+    });
+  });
+
   describe('foreign persistence pass-history sparkline', () => {
     const pgbouncerWithPersistence = (persistence: unknown) => {
       const respond = (url: unknown) => {

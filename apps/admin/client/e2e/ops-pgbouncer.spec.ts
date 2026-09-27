@@ -202,7 +202,15 @@ async function mockOpsEndpoints(page: Page, pgbouncerData: unknown) {
     json(
       route,
       ok({
-        services: [],
+        // Three families represented so the fleet table's per-family labels
+        // (IPv6-only / IPv4-only / dual-stack, plus one down row) are all
+        // inside the aria snapshot — a label regression fails the sweep.
+        services: [
+          { name: 'auth-service', port: 3001, status: 'healthy', latencyMs: 4, dbStatus: 'up', transport: 'ipv6' },
+          { name: 'gateway', port: 3013, status: 'healthy', latencyMs: 9, dbStatus: 'up', transport: 'ipv4' },
+          { name: 'user-service', port: 3003, status: 'healthy', latencyMs: 6, dbStatus: 'up', transport: 'localhost' },
+          { name: 'search-service', port: 3004, status: 'down', latencyMs: 0, dbStatus: 'unknown', errorDetail: 'ECONNREFUSED' },
+        ],
         transportFlips: [],
         transportStore: {
           mode: 'redis',
