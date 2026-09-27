@@ -1324,6 +1324,11 @@ export interface PgbouncerHealth {
       conns: number | null;
       sustained: boolean;
       approved: boolean;
+      /** Flagged passes per bucket over windowHours, oldest → newest —
+       * the row's sparkline. Fixed 24 buckets regardless of activity. */
+      history: number[];
+      /** Seconds per history bucket (windowHours / 24). */
+      bucketSeconds: number;
     }>;
     /** Pool-health tracking issue URL when resolvable — sustained rows link
      * to it; null/unset degrades the card to plain badges. */

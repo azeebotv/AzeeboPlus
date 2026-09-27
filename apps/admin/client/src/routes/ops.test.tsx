@@ -397,6 +397,8 @@ describe('Ops page transport-flip trend card', () => {
       conns: 2,
       approved: false,
       sustained: true,
+      history: [0, 1, 2, 0, 3],
+      bucketSeconds: 7200,
     };
 
     it('links a sustained row to the tracking issue when its URL resolved', async () => {
@@ -435,6 +437,77 @@ describe('Ops page transport-flip trend card', () => {
       const badge = await screen.findByText(/approved — not tracked/i);
       expect(badge.getAttribute('href')).toBeNull();
       expect(screen.queryByText(/sustained — tracking issue/i)).toBeNull();
+    });
+  });
+
+  describe('foreign persistence pass-history sparkline', () => {
+    const pgbouncerWithPersistence = (persistence: unknown) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({
+            success: true,
+            data: {
+              available: true,
+              level: 'ok',
+              foreignPersistence: persistence,
+            },
+          });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: baseSnapshot([]) });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    const sparkRow = {
+      workspace: '/Users/other/fleet',
+      passes: 8,
+      spanHours: 8,
+      lastSeen: new Date().toISOString(),
+      conns: 1,
+      approved: false,
+      sustained: false,
+      history: [1, 0, 2, 0, 5, 0, 0, 0],
+      bucketSeconds: 7200,
+    };
+
+    it('renders a per-row sparkline from the history buckets', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [sparkRow],
+        trackingIssueUrl: null,
+      });
+      renderPage();
+      const bars = await screen.findAllByRole('img', {
+        name: /Flagged passes per 2h bucket/i,
+      });
+      expect(bars).toHaveLength(1);
+      const bar = bars[0]!;
+      expect(bar.getAttribute('aria-label')).toMatch(/peak bucket: 5 passes/);
+      expect(bar.getAttribute('title')).toMatch(/last 48h/);
+      // One bar per history bucket.
+      expect(bar.children).toHaveLength(sparkRow.history.length);
+    });
+
+    it('a flat (silent) history renders with no peak callout', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [{ ...sparkRow, history: [0, 0, 0, 0] }],
+        trackingIssueUrl: null,
+      });
+      renderPage();
+      const bar = await screen.findByRole('img', {
+        name: /Flagged passes per 2h bucket/i,
+      });
+      expect(bar.getAttribute('aria-label')).toMatch(/\(oldest → newest\)$/);
+      expect(bar.getAttribute('aria-label')).not.toMatch(/peak bucket/i);
     });
   });
 });

@@ -173,6 +173,66 @@ const STORE_CHIP: Record<
 };
 
 /**
+ * Inline per-workspace sparkline: one bar per bucket of flagged passes over
+ * the ledger window (oldest → newest, fixed width — every row's buckets are
+ * directly comparable). Silent gap = quiet period; bar height scales to the
+ * row's own max (so a 1-pass/2h cadence stays visible on a 100-pass row).
+ * Pure CSS divs — no chart lib, no per-row SVG, nothing that matters at 6
+ * rows on a poll-heavy card.
+ */
+function PassTrendBars({
+  history,
+  bucketSeconds,
+  windowHours,
+}: {
+  history: number[];
+  bucketSeconds: number;
+  windowHours: number;
+}) {
+  const max = Math.max(...history);
+  const label =
+    `Flagged passes per ${bucketSeconds >= 3600
+      ? `${Math.round(bucketSeconds / 3600)}h`
+      : `${Math.round(bucketSeconds / 60)}m`} bucket, ` +
+    `last ${windowHours}h (oldest → newest)${
+      max === 0
+        ? ''
+        : ` — peak bucket: ${max} pass${max === 1 ? '' : 'es'}`
+    }`;
+  return (
+    <div
+      role="img"
+      title={label}
+      aria-label={label}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'flex-end',
+        gap: 2,
+        height: 14,
+        verticalAlign: 'middle',
+      }}
+    >
+      {history.map((n, i) => (
+        <div
+          key={i}
+          style={{
+            width: 4,
+            height: Math.max(2, Math.round((n / max) * 14)),
+            borderRadius: 1,
+            backgroundColor:
+              n === 0
+                ? 'var(--admin-border-subtle)'
+                : n >= max
+                  ? 'var(--admin-amber)'
+                  : 'var(--admin-text-muted)',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
  * pgbouncer saturation card: client-connection budget against
  * max_client_conn plus the per-database pool breakdown. At ≥95% the
  * pooler refuses new clients — every service sees it as a total DB outage
@@ -587,7 +647,7 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
               >
                 <thead>
                   <tr style={{ color: 'var(--admin-text-muted)', textAlign: 'left' }}>
-                    {['Foreign project', 'Flagged passes', 'Span', 'Last seen', ''].map((h) => (
+                    {['Foreign project', 'Flagged passes', 'History', 'Span', 'Last seen', ''].map((h) => (
                       <th
                         key={h}
                         style={{
@@ -609,6 +669,13 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
                       <td style={{ padding: '5px 8px 5px 0' }}>{f.workspace}</td>
                       <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
                         {f.passes}
+                      </td>
+                      <td style={{ padding: '5px 8px 5px 0', whiteSpace: 'nowrap' }}>
+                        <PassTrendBars
+                          history={f.history}
+                          bucketSeconds={f.bucketSeconds}
+                          windowHours={health.foreignPersistence?.windowHours ?? 0}
+                        />
                       </td>
                       <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
                         {f.spanHours >= 1
@@ -671,8 +738,9 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
                 Per-workspace persistence from the pool-audit ledger (same run/gap semantics as the
                 nightly foreign-dialer tracker — a span ≥{' '}
                 {health.foreignPersistence.sustainedMinSpanHours}h is what opens its tracking
-                issue). This is history, not a live scan: a workspace can appear here after it
-                stopped dialing.
+                issue). History shows each workspace's flagged passes per ~2h bucket across the
+                window (bar height scales to the row's own peak). This is history, not a live
+                scan: a workspace can appear here after it stopped dialing.
               </p>
             </>
           )}

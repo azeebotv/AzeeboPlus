@@ -218,6 +218,11 @@ export interface ForeignPersistenceRow {
    * never sustained/tracked regardless of span. Budget impact is still
    * real, so the row stays visible. */
   approved: boolean;
+  /** Flagged passes bucketed over the ledger window, oldest → newest —
+   * the card's sparkline. Fixed 24 buckets regardless of activity. */
+  history: number[];
+  /** Seconds per history bucket (windowMs / buckets). */
+  bucketSeconds: number;
 }
 
 /** Per-workspace persistence over the ledger window (card data). */
@@ -234,6 +239,49 @@ export interface ForeignPersistence {
    */
   trackingIssueUrl?: string | null;
   detail?: string;
+}
+
+/** Bucket count for a workspace's flagged-pass trend over the ledger window. */
+export const FOREIGN_PASS_TREND_BUCKETS = 24;
+
+/** Per-bucket flagged-pass counts over the window — the persistence card's
+ * sparkline data. Fixed-width so buckets are directly comparable across
+ * rows; stale workspaces show their trailing zeros.
+ */
+export interface ForeignPassTrend {
+  /** Seconds per bucket (windowMs / buckets, ≥1). */
+  bucketSeconds: number;
+  /** Flagged passes per bucket, oldest → newest. */
+  buckets: number[];
+}
+
+/**
+ * Bucket a workspace's flagged passes into fixed windows over the ledger
+ * window — pure. Buckets are [now-windowMs, now), newest last; a flagged
+ * pass exactly at `now` belongs to the newest bucket. Passes outside the
+ * window cannot occur (the ledger query bounds ranAt), but are counted
+ * into the nearest edge bucket rather than dropped.
+ */
+export function computeForeignPassTrend(
+  atMs: number[],
+  windowMs: number,
+  nowMs = Date.now(),
+  buckets = FOREIGN_PASS_TREND_BUCKETS
+): ForeignPassTrend {
+  const n = Math.max(1, Math.floor(buckets));
+  const w = Math.max(1, Math.floor(windowMs));
+  const bucketMs = Math.max(1, Math.floor(w / n));
+  const start = nowMs - w;
+  const counts = new Array<number>(n).fill(0);
+  for (const at of atMs) {
+    let idx = Math.floor((at - start) / bucketMs);
+    if (idx < 0) idx = 0;
+    if (idx >= n) idx = n - 1;
+    counts[idx] += 1;
+  }
+  // Ceil (not round): a degenerate 1ms bucket still reports a whole second,
+  // keeping the documented ≥1 invariant honest.
+  return { bucketSeconds: Math.ceil(bucketMs / 1000), buckets: counts };
 }
 
 /** Legacy name for the same payload (PgbouncerHealth.foreignPersistence). */
@@ -295,11 +343,26 @@ export function computeForeignPersistence(
     maxGapHours?: number;
     /** Approved foreign workspaces (POOL_FOREIGN_ALLOWLIST) — never sustained. */
     allowlist?: Set<string> | string[];
+    /** Sparkline window (ms). Defaults to the data's own span (oldest
+     * flagged row → now); the ledger caller passes its query window. */
+    windowMs?: number;
+    /** Reference "now" (ms) — pins bucket edges in tests. Defaults to now. */
+    nowMs?: number;
   } = {}
 ): ForeignPersistenceRow[] {
   const minSpanHours = opts.minSpanHours ?? 24;
   const maxGapHours = opts.maxGapHours ?? 3;
   const allowSet = opts.allowlist instanceof Set ? opts.allowlist : new Set(opts.allowlist ?? []);
+  const nowMs = opts.nowMs ?? Date.now();
+  // Sparkline window: the ledger caller passes its query window explicitly;
+  // absent that, fall back to the data's own span (oldest flagged row →
+  // now, floored at a minute) so buckets stay comparable across workspaces.
+  const oldestMs = rows.reduce<number>((acc, r) => {
+    const t = r.ranAt instanceof Date ? r.ranAt.getTime() : Date.parse(String(r.ranAt));
+    return Number.isFinite(t) && t < acc ? t : acc;
+  }, Number.POSITIVE_INFINITY);
+  const windowMs =
+    opts.windowMs ?? Math.max(60_000, nowMs - (Number.isFinite(oldestMs) ? oldestMs : nowMs));
   const byWorkspace = new Map<string, Array<{ atMs: number; conns: number | null }>>();
   for (const r of rows) {
     const atMs = r.ranAt instanceof Date ? r.ranAt.getTime() : Date.parse(r.ranAt);
@@ -351,6 +414,13 @@ export function computeForeignPersistence(
     }
     best = consider(best);
     if (!best) continue;
+    // Sparkline history covers EVERY flagged pass in the window — not just
+    // the best run — so a broken-off earlier burst stays visible.
+    const trend = computeForeignPassTrend(
+      passes.map((p) => p.atMs),
+      windowMs,
+      nowMs
+    );
     const approved = allowSet.has(workspace);
     out.push({
       workspace,
@@ -362,6 +432,8 @@ export function computeForeignPersistence(
       // nightly core's allowlist rule, so card and tracker never disagree.
       sustained: !approved && best.spanH >= minSpanHours - 1e-9,
       approved,
+      history: trend.buckets,
+      bucketSeconds: trend.bucketSeconds,
     });
   }
   return out.sort((a, b) => b.spanHours - a.spanHours || a.workspace.localeCompare(b.workspace));
@@ -1501,6 +1573,9 @@ export class OpsService {
         // show on the card (budget impact is real) but never read as
         // sustained, so card and tracker never disagree.
         allowlist: parseForeignAllowlist(process.env.POOL_FOREIGN_ALLOWLIST),
+        // Sparkline buckets span the exact query window so every row's
+        // history is directly comparable (and stays stable across polls).
+        windowMs: hours * 3_600_000,
       });
       // Tracking-issue link for the card's sustained rows: only resolved
       // when a sustained dialer actually exists — a quiet window never pays

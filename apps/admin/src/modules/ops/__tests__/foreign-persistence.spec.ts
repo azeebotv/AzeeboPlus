@@ -2,6 +2,8 @@ import {
   parseForeignSegment,
   computeForeignPersistence,
   parseForeignAllowlist,
+  computeForeignPassTrend,
+  FOREIGN_PASS_TREND_BUCKETS,
 } from '../ops.service';
 
 /**
@@ -197,5 +199,64 @@ describe('parseForeignAllowlist', () => {
     expect(parseForeignAllowlist(null)).toEqual(new Set());
     expect(parseForeignAllowlist('')).toEqual(new Set());
     expect(parseForeignAllowlist('  ')).toEqual(new Set());
+  });
+});
+
+describe('computeForeignPassTrend', () => {
+  // A pinned "now" keeps bucket edges deterministic.
+  const NOW = Date.parse('2026-09-27T12:00:00Z');
+  const W = 48 * 3_600_000; // the ledger window (48h)
+  const BUCKET = W / FOREIGN_PASS_TREND_BUCKETS; // 2h in ms
+
+  it('splits the window into 24 fixed buckets and counts per bucket', () => {
+    // Two passes in bucket 0, one in the middle, three in the last bucket.
+    const at = [
+      NOW - W + 1, // oldest edge of bucket 0
+      NOW - W + BUCKET - 1, // still bucket 0
+      NOW - BUCKET - 1, // second-newest bucket
+      NOW - 1,
+      NOW - 2,
+      NOW - 3, // newest bucket
+    ];
+    const trend = computeForeignPassTrend(at, W, NOW);
+    expect(trend.buckets).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
+    expect(trend.bucketSeconds).toBe(Math.round(BUCKET / 1000));
+    expect(trend.buckets[0]).toBe(2);
+    expect(trend.buckets[FOREIGN_PASS_TREND_BUCKETS - 2]).toBe(1);
+    expect(trend.buckets[FOREIGN_PASS_TREND_BUCKETS - 1]).toBe(3);
+    // Everything in between is silence.
+    expect(trend.buckets.slice(1, -2).every((n) => n === 0)).toBe(true);
+    expect(trend.buckets.reduce((a, b) => a + b, 0)).toBe(6);
+  });
+
+  it('out-of-window passes clamp to the nearest edge bucket, never dropped', () => {
+    const trend = computeForeignPassTrend([NOW - W - 10 * W, NOW + 10 * W], W, NOW);
+    expect(trend.buckets[0]).toBe(1);
+    expect(trend.buckets[FOREIGN_PASS_TREND_BUCKETS - 1]).toBe(1);
+    expect(trend.buckets.reduce((a, b) => a + b, 0)).toBe(2);
+  });
+
+  it('degenerate inputs stay finite (no buckets=0, no division by zero)', () => {
+    expect(computeForeignPassTrend([], 0, NOW).buckets).toHaveLength(
+      FOREIGN_PASS_TREND_BUCKETS
+    );
+    expect(computeForeignPassTrend([], 0, NOW).bucketSeconds).toBeGreaterThanOrEqual(1);
+    expect(computeForeignPassTrend([NOW], 0, NOW, 0).buckets).toHaveLength(1);
+    // Zero window: a single instant — but the pass is still counted
+    // (clamped into some bucket, never dropped).
+    const zero = computeForeignPassTrend([NOW], 0, NOW);
+    expect(zero.buckets).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
+    expect(zero.buckets.reduce((a, b) => a + b, 0)).toBe(1);
+  });
+
+  it('carries per-row history: all flagged passes bucketed, not just the best run', () => {
+    // /gappy from the span test: 3 passes 30-28h ago, gap, then 2 recent —
+    // the OLD burst wins on length (passes=3, as the span test asserts),
+    // but history keeps BOTH bursts visible: 5 flagged passes total.
+    const rows = rowsAt([30, 29, 28, 2, 1], () => fwDetail('/gappy'));
+    const out = computeForeignPersistence(rows, { minSpanHours: 24, maxGapHours: 3 });
+    expect(out[0].passes).toBe(3);
+    expect(out[0].history.reduce((a, b) => a + b, 0)).toBe(5);
+    expect(out[0].history).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
   });
 });

@@ -59,7 +59,12 @@ Two conventions hold across all of them:
   resolvePoolTrackingIssueUrl in ops.service.ts — best-effort, never
   throws into the health payload, only paid for when a sustained row
   exists). Unresolvable URL → plain "sustained — tracked nightly"
-  badges. The admin Ops Health card mirrors the
+  badges. Each persistence row also carries a 24-bucket pass-history
+  sparkline (foreignPersistence.rows[].history, oldest → newest, one bar
+  per ~2h bucket over the card's window — computeForeignPassTrend in
+  ops.service.ts; bars scale to the row's own peak, silent periods read
+  as flat gaps, and history counts EVERY flagged pass in the window, not
+  just the best persistence run). The admin Ops Health card mirrors the
   same list: approved rows show an "approved — not tracked" tag instead
   of "sustained — tracked nightly" (see apps/admin/src/modules/ops/
   ops.service.ts parseForeignAllowlist — a local copy; the admin build is
