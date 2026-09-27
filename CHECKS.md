@@ -556,7 +556,13 @@ changed all month". The Ops Health header carries a **store chip**
 baselines + hold-window flips are fleet-wide, `memory` (amber) when the
 store degraded and flip memory is per-process — a restart or a second
 replica loses the history, which is exactly why degraded is visible at
-a glance (mapping: `transportStoreStatus` in ops.service.ts). The store
+a glance (mapping: `transportStoreStatus` in ops.service.ts). Degradation
+also surfaces as a Recent-alerts feed entry (source `transport-store`):
+checkTransportStoreAlert mirrors the ledger-cadence pattern — pure
+transportStoreDegradedAlert decision + TRANSPORT_STORE_STATE_FILE hourly
+suppression (env-overridable, garbage state degrades to re-alerting), so
+aggressive polling yields one WARN per hour while the chip stays live.
+Recovery is silent by design: a healthy Redis needs no feed entry. The store
 reads a DEDICATED Redis DB index: `opsRedisUrl` (transport-store.ts)
 rewrites bare URLs to `…/1` so ops keys never share DB 0 with the
 feature-flag cache — an explicit index in OPS_REDIS_URL wins,

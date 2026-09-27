@@ -880,6 +880,18 @@ const LEDGER_CADENCE_STATE_FILE =
   `${process.env.TMPDIR || '/tmp'}/azeebo-admin-ledger-cadence.alert-state`;
 
 /**
+ * Transport-store degradation suppression state: JSON epoch ms of the last
+ * alert. Keeps the degradation alert to one entry per hour in the feed even
+ * under aggressive polling — the chip on the services card always shows the
+ * live state, so the feed would just drown otherwise. Env-overridable for
+ * tests. Shares LEDGER_CADENCE_SUPPRESS_MS's one-hour budget (same meaning:
+ * de-jitter a repeated condition).
+ */
+const TRANSPORT_STORE_STATE_FILE =
+  process.env.TRANSPORT_STORE_STATE_FILE ||
+  `${process.env.TMPDIR || '/tmp'}/azeebo-admin-transport-store.alert-state`;
+
+/**
  * pool-audit job log (scripts/database/pool-audit.sh): hourly headless
  * watchdog for pooler saturation + direct-5432 bypasses. Same LOG_LINE
  * format so recentAlerts() can parse WARN/ERROR lines as the 'pool-audit'
@@ -970,6 +982,26 @@ export function transportStoreStatus(degraded: boolean | undefined): {
         mode: 'redis',
         detail: 'Fleet-wide Redis baseline + hold-window flips (cross-restart, cross-replica)',
       };
+}
+
+/**
+ * Pure degradation-alert decision for the transport store (unit-tested):
+ * degraded AND not currently suppressed → a WARN whose message spells out
+ * the fleet-wide blast radius the chip's detail describes; healthy or
+ * already-alerted-within-the-hour → null. Mirrors ledgerSilenceAlert's role
+ * in the ledger-cadence pattern; the hourly suppression state lives in
+ * TRANSPORT_STORE_STATE_FILE (checked in checkTransportStoreAlert).
+ */
+export function transportStoreDegradedAlert(
+  degraded: boolean | undefined,
+  wasAlertingWithinHour: boolean
+): { level: 'WARN'; message: string } | null {
+  if (!degraded || wasAlertingWithinHour) return null;
+  return {
+    level: 'WARN',
+    message:
+      'transport store degraded — Redis unreachable; flip baselines + hold window are per-process (restart or a second replica loses flips)',
+  };
 }
 
 /**
@@ -2035,6 +2067,7 @@ export class OpsService {
       plistWatchdog,
       ledgerAlerts,
       logAlerts,
+      storeAlerts,
     ] = await Promise.all([
       this.checkDb(),
       this.checkFederation(),
@@ -2066,12 +2099,14 @@ export class OpsService {
         PLIST_WATCHDOG_STALE_MINUTES
       ),
       this.checkLedgerCadence(),
+      this.checkTransportStoreAlert(),
       this.recentAlerts(),
     ]);
-    // Ledger-silence alerts render in the same Recent alerts table as the
-    // log-derived entries (the table is source-agnostic); log-sourced alerts
-    // stay primary so a genuine incident line outranks a cadence warning.
-    const alerts = [...logAlerts, ...ledgerAlerts]
+    // Ledger-silence and transport-store degradation alerts render in the
+    // same Recent alerts table as the log-derived entries (the table is
+    // source-agnostic); log-sourced alerts stay primary so a genuine
+    // incident line outranks a cadence/degradation warning.
+    const alerts = [...logAlerts, ...ledgerAlerts, ...storeAlerts]
       .sort((a, b) => b.at.localeCompare(a.at))
       .slice(0, 10);
 
@@ -2398,6 +2433,50 @@ export class OpsService {
     } catch (e) {
       // A broken watchdog must never break the health page.
       this.logger.warn(`ledger-cadence check failed (status unaffected): ${(e as Error).message}`);
+    }
+    return produced;
+  }
+
+  /**
+   * Transport-store degradation alert, ledger-cadence pattern: read the last
+   * alert epoch from TRANSPORT_STORE_STATE_FILE, decide via the pure
+   * transportStoreDegradedAlert, persist the new timestamp. Suppression is
+   * per-process (like checkLedgerCadence's state file) — an aggressive poll
+   * cadence yields one feed entry per hour, and the services card's chip
+   * always shows the live state regardless. Best-effort: never breaks
+   * getStatus; a state-file failure degrades to re-alerting (safe direction).
+   */
+  private async checkTransportStoreAlert(): Promise<OpsAlert[]> {
+    const produced: OpsAlert[] = [];
+    try {
+      let lastAlertAt = 0;
+      try {
+        const raw = JSON.parse(await readFile(TRANSPORT_STORE_STATE_FILE, 'utf8')) as number;
+        if (typeof raw === 'number' && Number.isFinite(raw)) lastAlertAt = raw;
+        // Garbage/corrupt file → 0 → the alert (re)fires — the safe direction.
+      } catch {
+        /* first run or corrupt file — start clean */
+      }
+      const now = Date.now();
+      const alert = transportStoreDegradedAlert(
+        this.transportStore.degraded,
+        now - lastAlertAt < LEDGER_CADENCE_SUPPRESS_MS
+      );
+      if (!alert) return produced;
+      await writeFile(
+        TRANSPORT_STORE_STATE_FILE,
+        JSON.stringify(now),
+        'utf8'
+      );
+      produced.push({
+        at: new Date(now).toISOString(),
+        level: alert.level,
+        source: 'transport-store',
+        message: `${alert.level}: ${alert.message}`,
+      });
+    } catch (e) {
+      // A broken watchdog must never break the health page.
+      this.logger.warn(`transport-store alert check failed (status unaffected): ${(e as Error).message}`);
     }
     return produced;
   }
