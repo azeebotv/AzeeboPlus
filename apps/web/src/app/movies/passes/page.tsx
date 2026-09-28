@@ -73,7 +73,7 @@ function PassesPageContent(): React.JSX.Element {
 
   const purchaseMutation = useMutation({
     mutationFn: async (passId: string) => {
-      const res = await apiFetch('/api/v1/movies/passes/purchase', {
+      const res = await apiFetch('/api/v1/movies/passes/subscribe', {
         method: 'POST',
         body: JSON.stringify({ passId }),
       });

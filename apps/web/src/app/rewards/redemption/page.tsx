@@ -33,7 +33,7 @@ function RedemptionContent() {
   const walletQuery = useQuery({
     queryKey: ['rewards-wallet'],
     queryFn: async () => {
-      const res = await api.request<WalletData>('/api/v1/rewards/wallet');
+      const res = await api.request<WalletData>('/api/v1/rewards/balance');
       if (res.success && res.data) return res.data;
       return { points: 0, totalEarned: 0, totalRedeemed: 0 };
     },
@@ -42,7 +42,7 @@ function RedemptionContent() {
   const itemsQuery = useQuery({
     queryKey: ['redemption-items'],
     queryFn: async () => {
-      const res = await api.request<RedemptionItem[]>('/api/v1/rewards/redemption-items');
+      const res = await api.request<RedemptionItem[]>('/api/v1/rewards/redeem-options');
       if (res.success && res.data) return res.data;
       return [];
     },

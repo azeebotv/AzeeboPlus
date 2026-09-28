@@ -40,7 +40,7 @@ export default function VerticalUniverseHome() {
   const featuredQuery = useQuery({
     queryKey: ['vertical', 'featured'],
     queryFn: async () => {
-      const res = await apiClient.get<ListResponse<FeaturedSeries>>('/v1/vertical/featured');
+      const res = await apiClient.get<ListResponse<FeaturedSeries>>('/v1/vertical/titles/featured');
       return Array.isArray(res) ? res : (res?.data ?? []);
     },
     staleTime: 60_000,
@@ -49,7 +49,7 @@ export default function VerticalUniverseHome() {
   const seriesQuery = useQuery({
     queryKey: ['vertical', 'series'],
     queryFn: async () => {
-      const res = await apiClient.get<ListResponse<VerticalItem>>('/v1/vertical/series');
+      const res = await apiClient.get<ListResponse<VerticalItem>>('/v1/vertical/titles');
       return Array.isArray(res) ? res : (res?.data ?? []);
     },
     staleTime: 60_000,
@@ -58,7 +58,8 @@ export default function VerticalUniverseHome() {
   const genresQuery = useQuery({
     queryKey: ['vertical', 'genres'],
     queryFn: async () => {
-      const res = await apiClient.get<ListResponse<GenreItem>>('/v1/vertical/genres');
+      // No genre catalog upstream; lore categories are the closest taxonomy.
+      const res = await apiClient.get<ListResponse<GenreItem>>('/v1/vertical/lore/categories');
       return Array.isArray(res) ? res : (res?.data ?? []);
     },
     staleTime: 60_000,

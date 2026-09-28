@@ -228,6 +228,22 @@ export class UsersController {
     return this.usersService.getWatchHistory(this.getUserId(req), Number(page), safeLimit);
   }
 
+  @Post('me/history')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Record a watch-history entry (upsert)' })
+  @ApiResponse({ status: 200, description: 'Watch history updated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async addToWatchHistory(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { contentId: string; contentType?: string; universe?: string }
+  ): Promise<unknown> {
+    if (!body?.contentId) {
+      return { success: false, message: 'contentId is required' };
+    }
+    await this.usersService.addWatchHistoryEntry(this.getUserId(req), body);
+    return { success: true, message: 'Watch history updated' };
+  }
+
   @Get('me/saved')
   @ApiOperation({ summary: 'Get user saved items' })
   @ApiQuery({ name: 'page', required: false, type: Number })

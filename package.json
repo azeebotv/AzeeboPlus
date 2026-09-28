@@ -45,6 +45,8 @@
     "build": "pnpm -r run build",
     "docs-sync": "ts-node --project tsconfig.scripts.json scripts/docs-sync.ts",
     "docs-sync:watch": "nodemon --watch services --exec ts-node --project tsconfig.scripts.json scripts/docs-sync.ts",
+    "check:docs": "node scripts/check-docs-consistency.mjs",
+    "dev:tv": "pnpm --filter @azeebo/tv start",
     "coverage-analyze": "ts-node --project tsconfig.scripts.json scripts/coverage-analyzer.ts",
     "contracts": "pnpm --filter @azeebo/contract-tests test:contracts",
     "contracts:watch": "pnpm --filter @azeebo/contract-tests test:watch",

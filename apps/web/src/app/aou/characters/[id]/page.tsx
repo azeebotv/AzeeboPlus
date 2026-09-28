@@ -31,7 +31,7 @@ export default function AOUCharacterDetailPage(): React.JSX.Element {
   } = useQuery({
     queryKey: ['aou', 'character', characterId],
     queryFn: async () => {
-      const res = await apiFetch<AOUCharacterDetail>(`/v1/knowledge/characters/${characterId}`);
+      const res = await apiFetch<AOUCharacterDetail>(`/v1/vertical/characters/${characterId}`);
       return res.success && res.data ? res.data : null;
     },
   });

@@ -40,7 +40,9 @@ export default function LiveChatScreen() {
   const messagesQuery = useQuery({
     queryKey: ['live', eventId, 'chat'],
     queryFn: async () => {
-      const res = await apiClient.get<ChatMessage[]>(`/v1/live/${eventId}/chat`);
+      const res = await apiClient.get<ChatMessage[]>(
+        `/v1/messaging/watch-parties/${eventId}/chat`
+      );
       return Array.isArray(res) ? res : [];
     },
     refetchInterval: 5_000,
@@ -49,7 +51,7 @@ export default function LiveChatScreen() {
 
   const sendMutation = useMutation({
     mutationFn: async (content: string) => {
-      return apiClient.post(`/v1/live/${eventId}/chat`, { content });
+      return apiClient.post(`/v1/messaging/watch-parties/${eventId}/chat`, { content });
     },
     onSuccess: () => {
       setMessage('');

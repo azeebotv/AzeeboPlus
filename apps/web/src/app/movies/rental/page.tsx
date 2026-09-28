@@ -60,10 +60,11 @@ function RentalPageContent(): React.JSX.Element {
   });
 
   const purchaseMutation = useMutation({
-    mutationFn: async ({ movieId, type }: { movieId: string; type: string }) => {
-      const res = await apiFetch('/api/v1/movies/rental/purchase', {
+    mutationFn: async ({ movieId }: { movieId: string; type: string }) => {
+      // Backend rents by path param and charges the fixed fee server-side.
+      const res = await apiFetch(`/api/v1/movies/${movieId}/rent`, {
         method: 'POST',
-        body: JSON.stringify({ movieId, type }),
+        body: JSON.stringify({}),
       });
       if (res.success) return res.data;
       throw new Error(res.message || 'Failed to process rental');

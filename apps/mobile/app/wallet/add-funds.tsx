@@ -47,9 +47,8 @@ export default function AddFundsScreen() {
   const handleAddFunds = async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.post<{ success: boolean }>('/api/v1/wallet/add', {
+      const res = await apiClient.post<{ success: boolean }>('/api/v1/wallet/fund', {
         amount,
-        method: 'card',
       });
       if (res.success) {
         Alert.alert('Success', 'Funds added to your wallet!');

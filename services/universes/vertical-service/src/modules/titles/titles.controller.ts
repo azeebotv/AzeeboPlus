@@ -48,6 +48,30 @@ export class TitlesController {
     return this.titlesService.getTitleBySlug(slug);
   }
 
+  @Get(':slug/episodes')
+  @ApiOperation({ summary: 'Get title episodes (chapters in play order)' })
+  @ApiResponse({ status: 200, description: 'Episode list' })
+  @ApiResponse({ status: 404, description: 'Title not found' })
+  async getEpisodes(@Param('slug') slug: string): Promise<unknown> {
+    return this.titlesService.getTitleEpisodes(slug);
+  }
+
+  @Get(':slug/characters')
+  @ApiOperation({ summary: 'Get characters of the title universe' })
+  @ApiResponse({ status: 200, description: 'Character list' })
+  @ApiResponse({ status: 404, description: 'Title not found' })
+  async getCharacters(@Param('slug') slug: string): Promise<unknown> {
+    return this.titlesService.getTitleCharacters(slug);
+  }
+
+  @Get(':slug/related')
+  @ApiOperation({ summary: 'Get related titles from the same universe' })
+  @ApiResponse({ status: 200, description: 'Related titles' })
+  @ApiResponse({ status: 404, description: 'Title not found' })
+  async getRelated(@Param('slug') slug: string): Promise<unknown> {
+    return this.titlesService.getRelatedTitles(slug);
+  }
+
   @Post()
   @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Create title' })

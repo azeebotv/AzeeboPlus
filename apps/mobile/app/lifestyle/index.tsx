@@ -46,7 +46,7 @@ export default function LifestyleUniverseHome() {
   const featuredQuery = useQuery({
     queryKey: ['lifestyle', 'featured'],
     queryFn: async () => {
-      const res = await apiClient.get<ListResponse<FeaturedItem>>('/v1/lifestyle/featured');
+      const res = await apiClient.get<ListResponse<FeaturedItem>>('/v1/lifestyle/city-guide/featured');
       return Array.isArray(res) ? res : (res?.data ?? []);
     },
     staleTime: 60_000,
@@ -55,7 +55,9 @@ export default function LifestyleUniverseHome() {
   const trendingQuery = useQuery({
     queryKey: ['lifestyle', 'trending'],
     queryFn: async () => {
-      const res = await apiClient.get<ListResponse<TrendingItem>>('/v1/lifestyle/trending');
+      // No lifestyle-wide trending feed upstream; music trending is the
+      // closest live signal.
+      const res = await apiClient.get<ListResponse<TrendingItem>>('/v1/lifestyle/music/trending');
       return Array.isArray(res) ? res : (res?.data ?? []);
     },
     staleTime: 60_000,
@@ -64,7 +66,8 @@ export default function LifestyleUniverseHome() {
   const categoriesQuery = useQuery({
     queryKey: ['lifestyle', 'categories'],
     queryFn: async () => {
-      const res = await apiClient.get<ListResponse<CategoryItem>>('/v1/lifestyle/categories');
+      // No lifestyle-wide category catalog; music genres are the closest taxonomy.
+      const res = await apiClient.get<ListResponse<CategoryItem>>('/v1/lifestyle/music/genres');
       return Array.isArray(res) ? res : (res?.data ?? []);
     },
     staleTime: 60_000,
@@ -73,7 +76,7 @@ export default function LifestyleUniverseHome() {
   const creatorsQuery = useQuery({
     queryKey: ['lifestyle', 'creators'],
     queryFn: async () => {
-      const res = await apiClient.get<ListResponse<CreatorItem>>('/v1/lifestyle/creators');
+      const res = await apiClient.get<ListResponse<CreatorItem>>('/v1/lifestyle/influencers');
       return Array.isArray(res) ? res : (res?.data ?? []);
     },
     staleTime: 60_000,

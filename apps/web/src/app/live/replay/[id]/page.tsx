@@ -21,6 +21,32 @@ interface ReplayData {
   highlights?: string[];
 }
 
+interface LiveEventData {
+  id: string;
+  title: string;
+  description?: string;
+  thumbnail: string;
+  scheduledAt: string;
+  duration: number;
+  status: string;
+  replayUrl?: string;
+}
+
+/** Map a live event (with a replay) onto the replay page shape. */
+function toReplayData(e: LiveEventData): ReplayData {
+  const mins = e.duration;
+  return {
+    id: e.id,
+    title: e.title,
+    description: e.description ?? '',
+    universe: 'African Originals',
+    recordedAt: e.scheduledAt,
+    duration: mins ? `${Math.round(mins / 60)} min` : '—',
+    viewCount: 0,
+    streamUrl: e.replayUrl ?? '',
+  };
+}
+
 function ReplayContent() {
   const params = useParams();
   const id = params?.id as string;
@@ -30,8 +56,10 @@ function ReplayContent() {
   const query = useQuery({
     queryKey: ['live', 'replay', id],
     queryFn: async () => {
-      const res = await api.request<ReplayData>(`/api/v1/live/replay/${id}`);
-      if (res.success && res.data) return res.data;
+      // Replays are live events whose replayUrl is set; there is no separate
+      // replay endpoint upstream (the old /live/replay/:id never existed).
+      const res = await api.request<LiveEventData>(`/api/v1/live-events/${id}`);
+      if (res.success && res.data) return toReplayData(res.data);
       throw new Error('Not found');
     },
     enabled: !!id,

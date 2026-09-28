@@ -945,6 +945,33 @@ export class UsersService {
     }
   }
 
+  /** Record (or refresh) a watch-history entry. Upserts on (userId, contentId). */
+  async addWatchHistoryEntry(
+    userId: string,
+    input: {
+      contentId: string;
+      contentType?: string;
+      universe?: string;
+    }
+  ): Promise<void> {
+    try {
+      await this.prisma.watchHistory.upsert({
+        where: { userId_contentId: { userId, contentId: input.contentId } },
+        create: {
+          userId,
+          contentId: input.contentId,
+          contentType: input.contentType ?? 'unknown',
+          universe: input.universe ?? 'unknown',
+        },
+        update: { watchedAt: new Date() },
+      });
+      this.logger.log(`Recorded watch history for user ${userId}, content ${input.contentId}`);
+    } catch (error: unknown) {
+      this.logger.error(`Failed to record watch history for user ${userId}`, error);
+      mapAndThrow(error, 'Failed to record watch history');
+    }
+  }
+
   async removeFromWatchHistory(userId: string, contentId: string): Promise<void> {
     try {
       await this.prisma.watchHistory.deleteMany({

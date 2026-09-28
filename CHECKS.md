@@ -309,6 +309,44 @@ PATCH vs backend PUT) fails both directions. Rule core is unit-tested in
 ratcheted in the baseline (`gatewayGhostEndpoints`,
 `gatewayUndeclaredBackendRoutes` — dir-scoped keys, may only shrink).
 
+**2026-09 ghost triage (192 → 0):** the ratcheted ghosts decomposed into four
+root causes, all fixed in the extractor or the declarations rather than
+baseline-padded: (1) `ENV_TO_DIR` pointed `ANALYTICS_SERVICE_URL` at a
+nonexistent `services/operations/analytics-service` (real dir:
+`services/intelligence/analytics-service`), which had ghosted 36 decls and
+hidden 66 real backend routes from the undeclared check; (2) the `/interactions`
+block used `pathStrategy: 'no-prefix'` although user-service serves
+`/v1/interactions/*` (URI versioning) — a real runtime 404; (3) the block
+parser's regex did not tolerate comment lines, so the commented `/movies`
+block was swallowed into `/reality`'s config (regex is now comment-tolerant);
+(4) `@All('*')` catch-all proxy controllers had their wildcards stripped —
+they now emit base + `path/**` routes. Ghosts that survived the extractor
+fixes were cleared by dropping decls with no backend and no caller,
+re-pointing clients to the routes that actually exist (e.g. passes
+`purchase`→`subscribe`, rental `purchase`→`/:id/rent`, AOU characters/timeline
+→ `/vertical/*`, live chat → `/messaging/watch-parties/:id/chat` with a
+`pathRewrite`, mobile hub pages to per-family endpoints), or implementing the
+missing backend route where a live screen depended on it (sports highlights,
+vertical title episodes/characters/related, knowledge
+`locked`/`what-you-know`/`summary`, movie `dbo/overview`, comedy
+categories/top-rated). Verb drift fixed client-side: creator monetization
+settings PUT→PATCH. The undeclared ratchet absorbed 66 analytics routes that
+the dir fix surfaced for the first time.
+
+**2026-09 undeclared ratchet pass (578 → 160):** every undeclared backend
+route was triaged service by service. Reachable surface is now declared on
+its true controller prefix (new blocks: `/reviews`, `/sharing`, `/privacy`,
+`/push`, `/watch-parties`, `/creators`; big extensions: analytics, content,
+lifestyle, vertical, reality, support, queue). The 160 still ratcheted are
+structurally unreachable through the gateway, not untriaged: `@Controller('admin')`
+families inside services (the `/admin` client prefix proxies to apps/admin,
+which re-implements or re-proxies them — ~130 routes), wallet `/v1/internal/*`
+service-to-service endpoints, payment provider webhooks that must bypass the
+gateway, per-app BFF catch-alls in apps/admin + apps/creator, and a few
+lifecycle/job-internal endpoints. Declaring those would make the contract
+lie; each should move out of shadowed controllers or behind explicit service
+auth instead.
+
 **Invariant (passes 1–2, gating + advisory):** every API call extracted from client code —
 including template literals and raw query strings — matches a route declared
 in the gateway's `SERVICE_CONFIGS` on **path AND HTTP method**. Exit 1 on any
@@ -400,28 +438,6 @@ Fails when:
 
 **Fix:** set the script to the exact value the error names. There is no
 per-workspace variant to choose — that's the point.
-
-### `smoke:ops` — ops API contract smoke (real payload)
-
-**Invariant:** against a REAL admin backend, `GET /admin/ops/services` and
-`GET /admin/ops/transport-flips` return `{ success: true, data }` envelopes
-whose fields match the shapes the Ops Health cards render — transport enum
-(`localhost|ipv6|ipv4`) on EVERY answered (non-down) service row, flip rows
-carrying epoch-ms `detectedAt` + boolean `familyChanged`, trend rows with
-`sweeps ≥ flips ≥ familyFlips` and `YYYY-MM-DD` days, `transportStore.mode`
-in `redis|memory`, and coherent `totalFlips ≥ totalFamilyFlips` totals.
-
-Fails when: non-200/auth failure (drifted route or guard), a missing or
-wrong-typed field the cards read, an out-of-enum transport/store value, or
-counter invariants broken (ledger UPSERT drift). The Playwright render sweep
-mocks these endpoints, so backend payload drift passes it silently — this is
-the real-payload half that fails fast instead.
-
-**Where:** dockerized-e2e.yml all-in-one-smoke job (mints the same dev JWT as
-the gateway-wide smoke — the admin JwtStrategy is stateless, so the unseeded
-container works) and locally via `pnpm smoke:ops` (defaults to
-`http://localhost:4016` + demo login; `ADMIN_EMAIL`/`ADMIN_PASSWORD` or
-`JWT_ACCESS_SECRET` override).
 
 ### `check:build-chain` — Docker build topology
 
@@ -578,13 +594,7 @@ changed all month". The Ops Health header carries a **store chip**
 baselines + hold-window flips are fleet-wide, `memory` (amber) when the
 store degraded and flip memory is per-process — a restart or a second
 replica loses the history, which is exactly why degraded is visible at
-a glance (mapping: `transportStoreStatus` in ops.service.ts). Degradation
-also surfaces as a Recent-alerts feed entry (source `transport-store`):
-checkTransportStoreAlert mirrors the ledger-cadence pattern — pure
-transportStoreDegradedAlert decision + TRANSPORT_STORE_STATE_FILE hourly
-suppression (env-overridable, garbage state degrades to re-alerting), so
-aggressive polling yields one WARN per hour while the chip stays live.
-Recovery is silent by design: a healthy Redis needs no feed entry. The store
+a glance (mapping: `transportStoreStatus` in ops.service.ts). The store
 reads a DEDICATED Redis DB index: `opsRedisUrl` (transport-store.ts)
 rewrites bare URLs to `…/1` so ops keys never share DB 0 with the
 feature-flag cache — an explicit index in OPS_REDIS_URL wins,
@@ -609,15 +619,7 @@ job (no JOB_PROFILES entry). Row growth is bounded at ~(services × days
 in the window) by the UPSERT — no retention entry needed. The ledger
 write is fire-and-forget: a failed write warns and never fails (or slows)
 the health sweep. Tests: `cd apps/admin && npx jest transport-flip`
-(codec) and the ops.test.tsx trend-card render tests. The Ops page also
-renders the CURRENT family per service as a Fleet transport table
-(client-only: FleetTransportCard in ops.tsx — Service/Port/Status/
-Transport/Latency from the already-fetched services snapshot, colocated
-with the flip trend so "which family is it on right now?" needs no
-cross-reference; localhost renders as dual-stack, down rows show
-unreachable with the probe error in the tooltip, and the header counts
-answering services + flips this sweep). It is inside the e2e aria
-snapshot with all four row shapes mocked.
+(codec) and the ops.test.tsx trend-card render tests.
 
 **Flip EVENTS** (job `transport-flip-event`): the per-day row keeps
 counters and only the day's LAST from→to pair; a service that flapped
@@ -789,35 +791,3 @@ upstream (scripted boots, CI).
 - A check that stops matching reality is worse than no check: when an
   invariant legitimately changes (e.g. a new export style), update the check
   *and* its tests in the same PR.
-
----
-
-## Redis DB namespaces
-
-### Dedicated flag-cache DB index (`FEATURE_FLAG_REDIS_DB`, default 2)
-
-**Invariant:** the feature-flag cache connects to its own Redis DB index —
-DB 0 stays reserved/generic, DB 1 is the ops transport store
-(`OPS_REDIS_DB_DEFAULT = 1`), DB 2 is the flag cache
-(`FEATURE_FLAG_REDIS_DB_DEFAULT = 2`).
-
-`resolveFeatureFlagRedisUrl()` (exported from `@azeebo/feature-flags`)
-rewrites any bare `redis://host:port` URL by appending the resolved index
-(`/2`), preserves credentials and `rediss://` TLS, honors an explicit index
-already present in the URL, and returns unparseable input untouched (never
-throws). `FEATURE_FLAG_REDIS_URL` wins over `REDIS_URL`; `FEATURE_FLAG_REDIS_DB`
-overrides the index (non-numeric/negative → default).
-
-**Coupling:** the universe-flag publisher in admin's
-`universe-management.service` resolves its client through the same resolver —
-publisher and cache must land on the same DB or universe flag writes would be
-invisible to readers sharing the `feature_flags:*` keyspace.
-
-**Verified live:** a global-flag PUT on :4016 landed `feature_flags:<key>`
-on DB 2 and was removed via the same client; DB 0 held no `feature_flags:*`
-keys before or after.
-
-**Deploy note:** Redis is the store of record for flags — before/at rollout
-of this build, copy existing prod keys once:
-`node scripts/migrate-flag-keys-redis-db.mjs` (dry run) then `--apply`.
-GET/SET byte copy with TTL preserved; source keys are never deleted.

@@ -28,6 +28,14 @@ export class ComedyController {
     return this.comedyService.getComedians();
   }
 
+  @Get('comedians/:id')
+  @ApiOperation({ summary: 'Comedian profile details' })
+  @ApiResponse({ status: 200, description: 'Comedian profile' })
+  @ApiResponse({ status: 404, description: 'Comedian not found' })
+  async getComedian(@Param('id') id: string): Promise<ComedyResponse> {
+    return this.comedyService.getComedian(id);
+  }
+
   @Get('series')
   @ApiOperation({ summary: 'Comedy series' })
   @ApiResponse({ status: 200, description: 'Series' })

@@ -45,6 +45,24 @@ export class ComedyFeedController {
     return this.comedyFeedService.getTrending(period, Number(limit));
   }
 
+  @Get('categories')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get comedy category catalog (special genres)' })
+  @ApiResponse({ status: 200, description: 'Category list' })
+  async getCategories(): Promise<unknown> {
+    return this.comedyFeedService.getCategories();
+  }
+
+  @Get('top-rated')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get top-rated clips (most liked)' })
+  @ApiResponse({ status: 200, description: 'Top-rated clip list' })
+  async getTopRated(): Promise<unknown> {
+    return this.comedyFeedService.getTopRated();
+  }
+
   @Get('specials')
   @UseGuards(FeatureFlagGuard, RateLimitGuard)
   @FeatureFlag(comedyFlags.specialsGate)

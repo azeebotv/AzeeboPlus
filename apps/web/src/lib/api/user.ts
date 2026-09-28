@@ -60,7 +60,7 @@ export function createUserMethods(client: RequestClient) {
       preferences: Record<string, unknown>
     ): Promise<ApiResponse<Record<string, unknown>>> => {
       return client.request<Record<string, unknown>>('/api/v1/users/me/preferences', {
-        method: 'PATCH',
+        method: 'PUT',
         body: JSON.stringify(preferences),
       });
     },

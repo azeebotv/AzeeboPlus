@@ -56,7 +56,7 @@ export default function ComedyUniverseHome() {
   const creatorsQuery = useQuery({
     queryKey: ['comedy', 'creators'],
     queryFn: async () => {
-      const res = await apiClient.get<ListResponse<CreatorItem>>('/v1/comedy/creators');
+      const res = await apiClient.get<ListResponse<CreatorItem>>('/v1/comedy/comedians');
       return Array.isArray(res) ? res : (res?.data ?? []);
     },
     staleTime: 60_000,

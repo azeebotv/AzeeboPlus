@@ -81,6 +81,23 @@ export class ComedyService {
     };
   }
 
+  async getComedian(id: string): Promise<ComedyResponse> {
+    const comedian = await this.prisma.comedianProfile.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { clips: true },
+        },
+      },
+    });
+    if (!comedian) throw new NotFoundException(`Comedian ${id} not found`);
+
+    return {
+      success: true,
+      data: { comedian },
+    };
+  }
+
   async getSeries(): Promise<ComedyResponse> {
     const series = await this.prisma.comedySeries.findMany({
       include: {

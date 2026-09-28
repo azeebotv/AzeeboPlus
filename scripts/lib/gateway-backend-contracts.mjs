@@ -141,6 +141,10 @@ export function extractControllerRoutes(content) {
     methodRe.lastIndex = 0;
     while ((mm = methodRe.exec(chunk)) !== null) {
       const raw = mm[2] ?? '';
+      // @All('*')-style catch-alls (proxy controllers) serve the controller
+      // base path AND every subpath — represented as two routes so both the
+      // exact base declaration and deeper declared paths match.
+      const isCatchAll = raw.trim().startsWith('*');
       const normalized = normalizeNestPath(raw);
       // Find the decorator's parameter-list span: the route path may also be
       // declared via @HttpCode/@ApiOperation after it; none affect the path.
@@ -151,8 +155,9 @@ export function extractControllerRoutes(content) {
       for (const method of methods) {
         routes.push({
           method,
-          path: joinRoute(controller.prefix, normalized),
+          path: joinRoute(controller.prefix, isCatchAll ? '' : normalized),
           versionNeutral,
+          catchAll: isCatchAll,
         });
       }
     }
@@ -211,7 +216,11 @@ export function pathMatches(a, b) {
 /** Parse all SERVICE_CONFIGS blocks: service name → config + endpoints. */
 export function parseServiceConfigs(content) {
   const configs = [];
-  const blockRe = /\n  \{\n    path:\s*'([^']+)'/g;
+  // Block start: `  {` then optional full-line // comments, then `    path:`.
+  // Comment-tolerant because several blocks document their strategy inline
+  // (e.g. /movies) — a strict regex silently swallowed the whole block into
+  // the preceding service's config.
+  const blockRe = /\n  \{\n(?:\s*\/\/[^\n]*\n)*\s*path:\s*'([^']+)'/g;
   let bm;
   const positions = [];
   while ((bm = blockRe.exec(content)) !== null) {
@@ -298,7 +307,12 @@ function backendRoutesForDir(root, dir) {
       // @All() stays a single 'ALL' pseudo-method: it serves every verb, so
       // it satisfies any declared method (ghost check) and is reported once
       // (undeclared check) instead of exploding 5×.
-      list.push({ method: route.method, path: norm(route.path), file: relFile });
+      if (route.catchAll) {
+        list.push({ method: route.method, path: norm(route.path), file: relFile });
+        list.push({ method: route.method, path: `${norm(route.path)}/**`, file: relFile });
+      } else {
+        list.push({ method: route.method, path: norm(route.path), file: relFile });
+      }
     }
   }
   return list;
@@ -423,10 +437,28 @@ export function undeclaredKey(u, backendDir) {
 function segmentMatch(a, b) {
   const as = norm(a).split('/').filter(Boolean);
   const bs = norm(b).split('/').filter(Boolean);
-  if (as.length !== bs.length) return false;
-  for (let i = 0; i < as.length; i++) {
-    const x = as[i];
-    const y = bs[i];
+  const ai = as.indexOf('**');
+  const bi = bs.indexOf('**');
+  if (ai === -1 && bi === -1) {
+    for (let i = 0; i < Math.max(as.length, bs.length); i++) {
+      if (as.length !== bs.length) return false;
+      const x = as[i];
+      const y = bs[i];
+      if (x.startsWith(':') || y.startsWith(':')) continue;
+      if (x !== y) return false;
+    }
+    return true;
+  }
+  // A trailing '**' (catch-all proxy route) matches the fixed prefix plus at
+  // least one further segment of the other path.
+  const pat = ai !== -1 ? as : bs;
+  const other = ai !== -1 ? bs : as;
+  const star = pat.indexOf('**');
+  if (star !== pat.length - 1) return false;
+  if (other.length < pat.length) return false;
+  for (let i = 0; i < star; i++) {
+    const x = pat[i];
+    const y = other[i];
     if (x.startsWith(':') || y.startsWith(':')) continue;
     if (x !== y) return false;
   }

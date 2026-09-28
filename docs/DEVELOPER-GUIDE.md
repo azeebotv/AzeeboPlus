@@ -26,7 +26,7 @@ pnpm run seed
 pnpm run dev
 ```
 
-Access: Web (4000), API Gateway (3013), Creator Portal (4014), Admin (4016).
+Access: Web (4000), API Gateway (3013), Creator Portal (4014), Admin (4016), TV App (8082).
 
 ---
 
@@ -34,17 +34,17 @@ Access: Web (4000), API Gateway (3013), Creator Portal (4014), Admin (4016).
 
 ```
 azeebo-plus/
-├── apps/          # Client apps: mobile, web, admin, creator
-├── services/      # 27 microservices organized by category
-│   ├── core/      # auth, user, wallet, payment, content, search, media
-│   ├── universes/ # reality, creator, lifestyle, vertical, movie, games, comedy, sports
-│   ├── engagement/# notification, reward, referral, messaging, subscription
+├── apps/          # Client apps: mobile, web, tv, admin, creator (5 apps)
+├── services/      # 29 microservices organized by category
+│   ├── core/      # auth, user, wallet, payment, content, search, media, knowledge
+│   ├── universes/ # reality, creator, lifestyle, vertical, movie, games, comedy, sports, live-event
+│   ├── engagement/# notification, reward, referral, messaging, engagement, subscription
 │   ├── operations/# moderation, queue, support
 │   ├── intelligence/# analytics, recommendation
 │   └── gateway/   # api-gateway
-├── packages/      # Shared libraries (ui, tokens, types, utils)
+├── packages/      # Shared libraries (26 packages: ui, tokens, types, utils, etc.)
 ├── infra/         # Kubernetes configs
-└── doc/           # Documentation
+└── docs/          # Documentation
 ```
 
 **Where to put new code:** Shared UI → `/packages/ui`, shared types → `/packages/shared-types`, platform feature → `/services/core/<service>`, universe feature → `/services/universes/<universe>`, client feature → `/apps/<app>`.
@@ -128,7 +128,7 @@ Copy `.env.example` to `.env`.
 ## 9. Architecture Decisions
 
 - **Monorepo:** pnpm workspaces for atomic commits and shared types
-- **Microservices:** 27 services, each with own DB and Prisma schema
+- **Microservices:** 29 services, each with own DB and Prisma schema
 - **Per-service databases:** Enforces boundaries, enables independent scaling
 - **Communication:** HTTP (sync, circuit breaker) + Redis Streams (async events)
 - **Auth:** JWT via gateway, 15min access + 7d refresh tokens
@@ -152,5 +152,6 @@ Copy `.env.example` to `.env`.
 
 - [ARCHITECTURE.md](../ARCHITECTURE.md) - Detailed architecture
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - Contribution standards
-- [SERVICES.md](../SERVICES.md) - Service catalog
+- [SERVICES.md](./SERVICES.md) - Service catalog
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment procedures
+- [AGENTS.md](./AGENTS.md) - Agent architecture

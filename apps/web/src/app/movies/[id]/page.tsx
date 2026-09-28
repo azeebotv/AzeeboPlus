@@ -65,10 +65,11 @@ function MovieDetailPageContent(): React.JSX.Element {
   });
 
   const rentMutation = useMutation({
-    mutationFn: async (type: string) => {
-      const res = await apiFetch('/api/v1/movies/rental/purchase', {
+    mutationFn: async () => {
+      // Backend rents by path param and charges the fixed fee server-side.
+      const res = await apiFetch(`/api/v1/movies/${id}/rent`, {
         method: 'POST',
-        body: JSON.stringify({ movieId: id, type }),
+        body: JSON.stringify({}),
       });
       if (res.success) return res.data;
       throw new Error(res.message || 'Failed to process');
@@ -198,7 +199,7 @@ function MovieDetailPageContent(): React.JSX.Element {
                     {movie.isAvailableForRent && (
                       <motion.button
                         type="button"
-                        onClick={() => rentMutation.mutate('rent')}
+                        onClick={() => rentMutation.mutate()}
                         disabled={rentMutation.isPending}
                         className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
                         style={{
@@ -328,7 +329,7 @@ function MovieDetailPageContent(): React.JSX.Element {
                     {movie.isAvailableForRent && (
                       <motion.button
                         type="button"
-                        onClick={() => rentMutation.mutate('rent')}
+                        onClick={() => rentMutation.mutate()}
                         disabled={rentMutation.isPending}
                         className="w-full py-3 rounded-full font-semibold transition-all"
                         style={{
@@ -344,7 +345,7 @@ function MovieDetailPageContent(): React.JSX.Element {
                     )}
                     <motion.button
                       type="button"
-                      onClick={() => rentMutation.mutate('purchase')}
+                      onClick={() => rentMutation.mutate()}
                       disabled={rentMutation.isPending}
                       className="w-full py-3 rounded-full font-semibold transition-all"
                       style={{

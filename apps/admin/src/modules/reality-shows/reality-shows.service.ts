@@ -120,6 +120,31 @@ export class RealityShowsService {
     return { id: created.id, title: created.title, status: created.status };
   }
 
+  /** Get a single show by ID. */
+  async getShow(id: string) {
+    const show = await this.prisma.contentItem.findUnique({
+      where: { id },
+      include: {
+        creator: { select: { id: true, displayName: true, email: true } },
+        mediaAsset: { select: { id: true, originalUrl: true } },
+      },
+    });
+    if (!show) throw new NotFoundException(`Show ${id} not found`);
+    return {
+      id: show.id,
+      title: show.title,
+      description: show.description,
+      status: show.status,
+      viewCount: show.viewCount,
+      isExclusive: show.isExclusive,
+      isPremiere: show.isPremiere,
+      creator: show.creator,
+      mediaUrl: show.mediaAsset?.originalUrl,
+      publishedAt: show.publishedAt?.toISOString(),
+      createdAt: show.createdAt.toISOString(),
+    };
+  }
+
   /** Update a show's editable fields. */
   async updateShow(
     id: string,

@@ -40,7 +40,7 @@ export default function LiveEventDetailPage(): React.JSX.Element {
   } = useQuery({
     queryKey: ['live', 'event', eventId],
     queryFn: async () => {
-      const res = await apiFetch<LiveEvent>(`/v1/live/events/${eventId}`);
+      const res = await apiFetch<LiveEvent>(`/api/v1/live-events/${eventId}`);
       return res.success ? res.data : null;
     },
   });

@@ -218,4 +218,32 @@ export class KnowledgeController {
     );
     return { success: true, data: { filteredUnitIds: filtered } };
   }
+
+  // ========================
+  // Reader-facing aggregates (AOU screens)
+  // ========================
+
+  @Get('summary')
+  @ApiOperation({ summary: 'Knowledge progress summary for the AOU hub' })
+  @ApiResponse({ status: 200, description: 'Summary counts' })
+  async getSummary() {
+    const data = await this.knowledgeService.getKnowledgeSummary();
+    return { success: true, data };
+  }
+
+  @Get('what-you-know')
+  @ApiOperation({ summary: 'Per-unit knowledge view for the What-You-Know screen' })
+  @ApiResponse({ status: 200, description: 'Units with unlock state' })
+  async getWhatYouKnow() {
+    const data = await this.knowledgeService.getWhatYouKnow();
+    return { success: true, data };
+  }
+
+  @Get('locked')
+  @ApiOperation({ summary: 'Locked-knowledge view for the AOU Locked screen' })
+  @ApiResponse({ status: 200, description: 'Locked knowledge items' })
+  async getLocked() {
+    const data = await this.knowledgeService.getLockedKnowledge();
+    return { success: true, data };
+  }
 }

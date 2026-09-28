@@ -53,7 +53,7 @@ export default function CreatorMonetizationPage() {
     setSuccess(false);
     try {
       await apiFetch('/api/v1/creator/monetization/settings', {
-        method: 'PUT',
+        method: 'PATCH',
         body: JSON.stringify(settings),
       });
       setSuccess(true);

@@ -39,7 +39,7 @@ export default function AOUHubPage(): React.JSX.Element {
   } = useQuery({
     queryKey: ['aou', 'characters'],
     queryFn: async () => {
-      const res = await apiFetch<AOUCharacter[]>('/v1/knowledge/characters');
+      const res = await apiFetch<AOUCharacter[]>('/v1/vertical/characters');
       return res.success && res.data ? res.data : null;
     },
   });
@@ -51,7 +51,7 @@ export default function AOUHubPage(): React.JSX.Element {
   } = useQuery({
     queryKey: ['aou', 'timeline'],
     queryFn: async () => {
-      const res = await apiFetch<AOUTimeline[]>('/v1/knowledge/timeline');
+      const res = await apiFetch<AOUTimeline[]>('/v1/vertical/timeline');
       return res.success && res.data ? res.data : null;
     },
   });

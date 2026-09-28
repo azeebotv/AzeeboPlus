@@ -6,29 +6,30 @@ A modular digital entertainment platform that functions as a shared operating sy
 
 ```
 azeebo-plus/
-├── apps/                    # Client applications
+├── apps/                    # Client applications (5 apps)
 │   ├── mobile/              # Mobile app (Expo React Native, port 8081)
 │   ├── web/                 # Next.js web app (port 4000)
+│   ├── tv/                  # Living room app (Expo React Native, port 8082)
 │   ├── admin/              # Standalone admin dashboard (Vite+React + NestJS, port 4016)
 │   └── creator/           # Standalone creator dashboard (Vite+React + NestJS, port 4014)
 │
-├── services/               # Backend microservices
-│   ├── core/              # Essential platform services
-│   ├── universes/         # Universe-specific business logic
-│   ├── engagement/        # User interaction services
-│   ├── operations/        # Platform operations
-│   ├── intelligence/      # Data & analytics
-│   └── gateway/           # API gateway & routing
+├── services/               # Backend microservices (29 services)
+│   ├── core/              # Essential platform services (8 services)
+│   ├── universes/         # Universe-specific business logic (9 services)
+│   ├── engagement/        # User interaction services (6 services)
+│   ├── operations/        # Platform operations (3 services)
+│   ├── intelligence/      # Data & analytics (2 services)
+│   └── gateway/           # API gateway & routing (1 service)
 │
-├── packages/              # Shared code libraries
+├── packages/              # Shared code libraries (26 packages)
 ├── infra/                 # Infrastructure configurations
 ├── scripts/               # Development & deployment scripts
 └── ci/                    # CI/CD scripts
 ```
 
-## Service Inventory (28 services + 4 frontends)
+## Service Inventory (29 services + 5 frontends)
 
-### Core Services (ports 3000-3005, 3019)
+### Core Services (ports 3000-3005, 3019, 3020)
 | Service | Port | DB | Description |
 |---------|------|----|-------------|
 | auth-service | 3000 | azeebo_auth | Authentication & authorization |
@@ -38,8 +39,9 @@ azeebo-plus/
 | content-service | 3004 | azeebo_content | Content management |
 | search-service | 3005 | azeebo_search | Search functionality |
 | media-service | 3019 | azeebo_media | Media upload & processing |
+| knowledge-service | 3020 | azeebo_knowledge | Knowledge graph, canonical events & spoiler control |
 
-### Universe Services (ports 3010-3012, 3014, 3016-3018, 3021)
+### Universe Services (ports 3010-3012, 3014, 3016-3018, 3021, 3027)
 | Service | Port | DB | Description |
 |---------|------|----|-------------|
 | reality-service | 3010 | azeebo_reality | Reality TV shows & voting |
@@ -68,12 +70,12 @@ azeebo-plus/
 | analytics-service | 3008 | azeebo_analytics | Analytics & reporting |
 | recommendation-service | 3009 | azeebo_recommendation | Personalization & recommendations |
 
-### Operations Services (ports 3015, 3020, 3022)
+### Operations Services (ports 3015, 3022, 3028)
 | Service | Port | DB | Description |
 |---------|------|----|-------------|
 | queue-service | 3015 | azeebo_queue | Background job processing |
-| support-service | 3020 | azeebo_support | Customer support & tickets |
 | moderation-service | 3022 | azeebo_moderation | Content moderation |
+| support-service | 3028 | azeebo_support | Customer support & tickets |
 
 ### Gateway (port 3013)
 | Service | Port | Description |
@@ -85,6 +87,7 @@ azeebo-plus/
 |-----|------|-----------|-------------|
 | mobile | 8081 | Expo (React Native) | Mobile app (iOS/Android) |
 | web | 4000 | Next.js | Main web application |
+| tv | 8082 | Expo (React Native) | Android TV / Fire TV / tvOS application |
 | admin | 4016 | Vite+React + NestJS | Standalone admin dashboard |
 | creator | 4014 | Vite+React + NestJS | Standalone creator dashboard |
 
@@ -207,14 +210,13 @@ ordering against real package dependencies is separately guarded by
 Each service gets its own PostgreSQL database, avoiding cross-service coupling:
 
 ```
-azeebo_auth     azeebo_user     azeebo_wallet    azeebo_payment
-azeebo_content  azeebo_search   azeebo_media
-azeebo_reality  azeebo_movie    azeebo_comedy     azeebo_games
-azeebo_sports   azeebo_lifestyle azeebo_vertical  azeebo_creator
-azeebo_notification  azeebo_reward  azeebo_engagement
-azeebo_messaging     azeebo_referral azeebo_subscription
-azeebo_analytics     azeebo_recommendation
-azeebo_queue    azeebo_support  azeebo_moderation
+azeebo_auth          azeebo_user          azeebo_wallet        azeebo_payment
+azeebo_content       azeebo_search        azeebo_media         azeebo_knowledge
+azeebo_reality       azeebo_movie         azeebo_comedy        azeebo_games
+azeebo_sports        azeebo_lifestyle     azeebo_vertical      azeebo_creator
+azeebo_live_event    azeebo_notification  azeebo_reward        azeebo_engagement
+azeebo_messaging     azeebo_referral      azeebo_subscription  azeebo_queue
+azeebo_support       azeebo_moderation    azeebo_analytics     azeebo_recommendation
 ```
 
 Each service's `.env` contains its own `DATABASE_URL` pointing to its database.
@@ -233,30 +235,38 @@ JWT_REFRESH_SECRET=<random-64-char-hex>
 These override the placeholder values in service `.env` files at runtime.
 For production, set secrets via Coolify UI or Docker environment variables.
 
-## Shared Packages (20 total)
+## Shared Packages (26 total)
 
-| Package | Description |
-|---------|-------------|
-| `shared-types` | TypeScript type definitions |
-| `utils` | Utility functions |
-| `api-client` | API client libraries |
-| `analytics-sdk` | Analytics tracking SDK |
-| `auth` | Authentication utilities |
-| `security` | Security utilities |
-| `validation` | Validation utilities |
-| `error-handling` | Error handling utilities |
-| `logger` | Logging utilities |
-| `observability` | Observability utilities |
-| `feature-flags` | Feature flag utilities |
-| `test-utils` | Testing utilities |
-| `internal-clients` | Internal service clients |
-| `shared-services` | Shared NestJS modules (prisma, redis, cache, rate-limit, queue, audit, analytics, validation, pagination, api-versioning, sanitize, middleware) |
-| `ui` | Shared React UI components |
-| `design-tokens` | Design tokens (colors, spacing, typography) |
-| `http-client` | HTTP client for service-to-service calls |
-| `event-bus` | Event bus for inter-service communication |
-| `opentelemetry` | OpenTelemetry tracing and instrumentation |
-| `contract-tests` | API contract testing utilities |
+The monorepo contains 26 shared packages (24 compile-only TypeScript workspaces + 2 specialized packages):
+
+| Package | Workspace Name | Description |
+|---------|----------------|-------------|
+| `shared-types` | `@azeebo/shared-types` | Canonical TypeScript type definitions, DTOs, and enums |
+| `utils` | `@azeebo/utils` | Common utility functions and helpers |
+| `validation` | `@azeebo/validation` | Validation utilities, decorators, and schemas |
+| `error-handling` | `@azeebo/error-handling` | Standardized error handling, exception filters, and problem details |
+| `logger` | `@azeebo/logger` | Structured JSON logging utilities |
+| `api-client` | `@azeebo/api-client` | Client SDK for frontend applications |
+| `http-client` | `@azeebo/http-client` | Resilient HTTP client for inter-service communication |
+| `internal-clients` | `@azeebo/internal-clients` | Type-safe internal service RPC client wrappers |
+| `event-bus` | `@azeebo/event-bus` | Redis-backed event bus for asynchronous communication |
+| `auth` | `@azeebo/auth` | Authentication utilities, Passport strategies, and guards |
+| `security` | `@azeebo/security` | Security utilities, rate limiting, and encryption helpers |
+| `feature-flags` | `@azeebo/feature-flags` | Redis-backed feature flag evaluation client |
+| `flag-metrics` | `@azeebo/flag-metrics` | Telemetry and metrics for feature flags |
+| `design-tokens` | `@azeebo/design-tokens` | Design tokens (colors, spacing, typography scales) |
+| `ui` | `@azeebo/ui` | Cross-platform shared UI components |
+| `react-data` | `@azeebo/react-data` | React Query hooks and data-fetching helpers |
+| `analytics-sdk` | `@azeebo/analytics-sdk` | Multi-platform analytics tracking SDK |
+| `observability` | `@azeebo/observability` | Metrics collection and Prometheus scrapers |
+| `opentelemetry` | `@azeebo/opentelemetry` | OpenTelemetry tracing and distributed context propagation |
+| `model-cost-tracker` | `@azeebo/model-cost-tracker` | AI/LLM model token and cost tracking utilities |
+| `queue-policy` | `@azeebo/queue-policy` | BullMQ queue policy and backoff retry configurations |
+| `shared-services` | `@azeebo/shared-services` | Common NestJS modules (Prisma, Redis, Cache, Health) |
+| `test-utils` | `@azeebo/test-utils` | Shared test fixtures, mock factories, and testing utilities |
+| `contract-tests` | `@azeebo/contract-tests` | API contract testing suites and utilities |
+| `eslint-rules` | `packages/eslint-rules` | Custom repo-wide ESLint AST rules (hex colors, logger enforcement) |
+| `monitoring` | `packages/monitoring` | Performance tracking interceptors and metrics controllers |
 
 ## Running Tests
 
@@ -310,6 +320,9 @@ rewritten without the stale-client check.
 ## Engineering Guidelines
 
 - [CLAUDE.md](./CLAUDE.md) - AI-assisted development guidelines and engineering rules
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Complete system architecture, service catalog, and data models
+- [docs/SERVICES.md](./docs/SERVICES.md) - Detailed microservices API endpoint catalog
+- [docs/DEVELOPER-GUIDE.md](./docs/DEVELOPER-GUIDE.md) - Developer onboarding and environment guide
 
 ## Key Principles
 

@@ -26,6 +26,11 @@ export class RealityShowsController {
     return this.showsService.getShows();
   }
 
+  @Get(':id')
+  async getShow(@Param('id') id: string) {
+    return this.showsService.getShow(id);
+  }
+
   @Put(':id/status')
   async updateShowStatus(@Param('id') id: string, @Body('status') status: string) {
     return this.showsService.updateShowStatus(id, status);
