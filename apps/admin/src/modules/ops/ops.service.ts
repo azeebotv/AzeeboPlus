@@ -230,6 +230,11 @@ export interface ForeignPersistenceRow {
    * that bucket had no pass recording a count) — the card's intensity
    * sparkline: dial hardness alongside dial frequency. */
   connHistory: Array<number | null>;
+  /** Peak connection count across ALL flagged passes in the window (0 when
+   * none recorded) — drives the foreign-burst WARN: a short-lived dialer
+   * that grabs many connections is dangerous even under the 24h span
+   * threshold. */
+  peakConns: number;
   /** Seconds per history bucket (windowMs / buckets). */
   bucketSeconds: number;
 }
@@ -597,6 +602,7 @@ export function computeForeignPersistence(
       FOREIGN_PASS_TREND_BUCKETS,
       passes.map((p) => p.conns)
     );
+    const peakConns = passes.reduce((m, p) => (p.conns !== null && p.conns > m ? p.conns : m), 0);
     const approved = allowSet.has(workspace);
     out.push({
       workspace,
@@ -611,6 +617,7 @@ export function computeForeignPersistence(
       project: attributeForeignProject(workspace, projectRoots),
       history: trend.buckets,
       connHistory: trend.connBuckets,
+      peakConns,
       bucketSeconds: trend.bucketSeconds,
     });
   }
@@ -1082,6 +1089,26 @@ const TRANSPORT_STORE_STATE_FILE =
   `${process.env.TMPDIR || '/tmp'}/azeebo-admin-transport-store.alert-state`;
 
 /**
+ * Burst-alert state file: last-alert epoch per offending workspace (JSON
+ * map), for the foreign-dialer burst WARN's hourly de-jitter (shares the
+ * ledger-cadence one-hour budget — same meaning: a repeated condition
+ * re-alerts at most hourly). Per-workspace so offender A alerting does not
+ * suppress offender B. Env-overridable for tests.
+ */
+const FOREIGN_BURST_STATE_FILE =
+  process.env.FOREIGN_BURST_STATE_FILE ||
+  `${process.env.TMPDIR || '/tmp'}/azeebo-admin-foreign-burst.alert-state`;
+
+/**
+ * Danger threshold for a foreign dialer's peak concurrent-connection count.
+ * A short-lived dialer grabbing many connections stresses the pooler's
+ * budget like a sustained one — arguably worse, since it defeats the 24h
+ * persistence heuristic entirely. Overridable for environments with
+ * different headroom.
+ */
+export const FOREIGN_BURST_PEAK_CONNS_DEFAULT = 20;
+
+/**
  * pool-audit job log (scripts/database/pool-audit.sh): hourly headless
  * watchdog for pooler saturation + direct-5432 bypasses. Same LOG_LINE
  * format so recentAlerts() can parse WARN/ERROR lines as the 'pool-audit'
@@ -1202,6 +1229,36 @@ export function transportStoreDegradedAlert(
     level: 'WARN',
     message:
       'transport store degraded — Redis unreachable; flip baselines + hold window are per-process (restart or a second replica loses flips)',
+  };
+}
+
+/**
+ * Pure burst-alert decision for a foreign dialer row (unit-tested): peak
+ * conns at/over the threshold AND span under the sustained threshold AND
+ * not approved → a WARN; suppressed-within-the-hour → null (the checker
+ * keeps the suppression clock running instead). A long SUSTAINED dialer is
+ * already tracked nightly, so the burst lane only catches what the nightly
+ * tracker will not — short but heavy bursts. Mirrors
+ * transportStoreDegradedAlert's role; the per-workspace suppression state
+ * lives in FOREIGN_BURST_STATE_FILE (checked in checkForeignBurstAlert).
+ */
+export function foreignBurstAlert(
+  row: {
+    workspace: string;
+    approved: boolean;
+    sustained: boolean;
+    spanHours: number;
+    peakConns: number;
+  },
+  opts: { threshold: number; now: number; lastAlertAt: number; suppressMs: number }
+): { level: 'WARN'; message: string } | null {
+  if (row.approved || row.sustained) return null;
+  if (row.peakConns < opts.threshold) return null;
+  if (opts.now - opts.lastAlertAt < opts.suppressMs) return null;
+  const span = Math.round(row.spanHours * 10) / 10;
+  return {
+    level: 'WARN',
+    message: `foreign dialer burst — ${row.workspace} peaked at ${row.peakConns} conns (threshold ${opts.threshold}) while its ${span}h span is under the sustained threshold; tracked here because the nightly sustained-dialer tracker will not`,
   };
 }
 
@@ -2278,8 +2335,9 @@ export class OpsService {
       poolAudit,
       plistWatchdog,
       ledgerAlerts,
-      logAlerts,
       storeAlerts,
+      burstAlerts,
+      recentAlertEntries,
     ] = await Promise.all([
       this.checkDb(),
       this.checkFederation(),
@@ -2312,13 +2370,14 @@ export class OpsService {
       ),
       this.checkLedgerCadence(),
       this.checkTransportStoreAlert(),
+      this.checkForeignBurstAlert(),
       this.recentAlerts(),
     ]);
-    // Ledger-silence and transport-store degradation alerts render in the
-    // same Recent alerts table as the log-derived entries (the table is
-    // source-agnostic); log-sourced alerts stay primary so a genuine
-    // incident line outranks a cadence/degradation warning.
-    const alerts = [...logAlerts, ...ledgerAlerts, ...storeAlerts]
+    // Ledger-silence, transport-store degradation, and foreign-burst alerts
+    // render in the same Recent alerts table as the log-derived entries (the
+    // table is source-agnostic); log-sourced alerts lead the concat so a
+    // genuine incident line outranks a derived warning on timestamp ties.
+    const alerts = [...recentAlertEntries, ...ledgerAlerts, ...storeAlerts, ...burstAlerts]
       .sort((a, b) => b.at.localeCompare(a.at))
       .slice(0, 10);
 
@@ -2689,6 +2748,70 @@ export class OpsService {
     } catch (e) {
       // A broken watchdog must never break the health page.
       this.logger.warn(`transport-store alert check failed (status unaffected): ${(e as Error).message}`);
+    }
+    return produced;
+  }
+
+  /**
+   * Foreign-dialer burst alert, ledger-cadence pattern: when a dialer's
+   * peak connection count crosses the burst threshold while its span
+   * stays UNDER the sustained threshold (a long sustained dialer is already
+   * tracked nightly), raise a WARN so short-but-heavy bursts get tracked
+   * too. Per-workspace hourly suppression (state file) so the feed gets one
+   * entry per offender per hour; recovery clears the clock so the NEXT
+   * burst re-alerts immediately. Approved (allowlisted) workspaces never
+   * alert. Best-effort: never breaks getStatus.
+   */
+  private async checkForeignBurstAlert(): Promise<OpsAlert[]> {
+    const produced: OpsAlert[] = [];
+    try {
+      // Resolved per call (not module load) so specs can point the state
+      // file at a scratch path and set their own threshold via env.
+      const stateFile =
+        process.env.FOREIGN_BURST_STATE_FILE || FOREIGN_BURST_STATE_FILE;
+      const threshold = Number(
+        process.env.POOL_FOREIGN_PEAK_CONNS ?? FOREIGN_BURST_PEAK_CONNS_DEFAULT
+      );
+      const fp = await this.getForeignPersistence(48);
+      const rows = fp?.rows ?? [];
+      const offenders = rows.filter(
+        (r) => !r.approved && r.peakConns >= threshold && !r.sustained
+      );
+      let suppressed: Record<string, number> = {};
+      try {
+        suppressed = JSON.parse(await readFile(stateFile, 'utf8'));
+      } catch {
+        /* first run or corrupt file — start clean */
+      }
+      const now = Date.now();
+      const nextSuppressed: Record<string, number> = {};
+      for (const row of offenders) {
+        const lastAlertAt = suppressed[row.workspace] ?? 0;
+        const alert = foreignBurstAlert(row, {
+          threshold,
+          now,
+          lastAlertAt,
+          suppressMs: LEDGER_CADENCE_SUPPRESS_MS,
+        });
+        if (!alert) {
+          if (lastAlertAt) nextSuppressed[row.workspace] = lastAlertAt; // keep the clock running
+          continue;
+        }
+        nextSuppressed[row.workspace] = now;
+        produced.push({
+          at: new Date(now).toISOString(),
+          level: alert.level,
+          source: 'foreign-burst',
+          message: `${alert.level}: ${alert.message}`,
+        });
+      }
+      // Persist the clocks: recovered offenders (were suppressed, now
+      // quiet) drop from the state file so their NEXT burst re-alerts
+      // immediately.
+      await writeFile(stateFile, JSON.stringify(nextSuppressed), 'utf8');
+    } catch (e) {
+      // A broken watchdog must never break the health page.
+      this.logger.warn(`foreign-burst check failed (status unaffected): ${(e as Error).message}`);
     }
     return produced;
   }
