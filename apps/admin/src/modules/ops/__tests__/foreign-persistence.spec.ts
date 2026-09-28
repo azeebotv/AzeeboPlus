@@ -2,6 +2,8 @@ import {
   parseForeignSegment,
   computeForeignPersistence,
   parseForeignAllowlist,
+  parseForeignProjectRoots,
+  attributeForeignProject,
   computeForeignPassTrend,
   FOREIGN_PASS_TREND_BUCKETS,
 } from '../ops.service';
@@ -310,5 +312,42 @@ describe('computeForeignPassTrend', () => {
     const rows = rowsAt([1], () => fwDetail('/sparse', 4));
     const out = computeForeignPersistence(rows, { minSpanHours: 1 });
     expect(out[0].connHistory.filter((v) => v !== null)).toEqual([4]);
+  });
+
+  it('attributed rows carry their project; unmatched workspaces own their group', () => {
+    const detail = (ws: string) =>
+      `pgbouncer 62/200 clients; foreign direct clients (context, not violations): ${ws}(python 777, 2 conns)`;
+    const rows = rowsAt([2, 1], (i) => detail(i === 0 ? '/Users/x/YCN/services/gateway' : '/mystery/proj'));
+    const out = computeForeignPersistence(rows, {
+      minSpanHours: 1,
+      projectRootsRaw: '/Users/x/YCN=YCN, /Users/x/YCN/services/gateway=Gateway',
+    });
+    const byWs = Object.fromEntries(out.map((r) => [r.workspace, r.project]));
+    // Longest root wins: the gateway row matches the more specific root.
+    expect(byWs['/Users/x/YCN/services/gateway']).toBe('Gateway');
+    // No match → the workspace itself is the project (never null/unknown).
+    expect(byWs['/mystery/proj']).toBe('/mystery/proj');
+  });
+
+  it('overlapping roots attribute independently (longest-prefix wins)', () => {
+    const roots = parseForeignProjectRoots('/Users/x/YCN=YCN, /Users/x/YCN-fork=YCN-fork');
+    expect(attributeForeignProject('/Users/x/YCN-fork/services/api', roots)).toBe('YCN-fork');
+    expect(attributeForeignProject('/Users/x/YCN/services/api', roots)).toBe('YCN');
+    expect(attributeForeignProject('/Users/z/other', roots)).toBe('/Users/z/other');
+  });
+
+  it('attribution sorts group-mates together within equal spans', () => {
+    const detail = (ws: string) =>
+      `pgbouncer 62/200 clients; foreign direct clients (context, not violations): ${ws}(python 777, 2 conns)`;
+    const mk = (ws: string, h: number) => ({ detail: detail(ws), ranAt: new Date(Date.now() - h * H) });
+    const rows = [mk('/Users/x/YCN/services/search', 2), mk('/Users/x/YCN/services/auth', 2), mk('/loner', 2)].sort(
+      (a, b) => b.ranAt.getTime() - a.ranAt.getTime()
+    );
+    const out = computeForeignPersistence(rows, {
+      minSpanHours: 1,
+      projectRootsRaw: '/Users/x/YCN=YCN',
+    });
+    // Equal spans: YCN rows adjacent before the unmatched workspace.
+    expect(out.map((r) => r.project)).toEqual(['YCN', 'YCN', '/loner']);
   });
 });

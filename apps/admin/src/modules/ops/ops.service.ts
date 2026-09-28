@@ -218,6 +218,11 @@ export interface ForeignPersistenceRow {
    * never sustained/tracked regardless of span. Budget impact is still
    * real, so the row stays visible. */
   approved: boolean;
+  /** Owning project the workspace was attributed to via
+   * POOL_FOREIGN_PROJECT_ROOTS prefix match (longest root wins), or the
+   * workspace itself when nothing matched. Every row HAS a project — the
+   * card groups on it without null-checks. */
+  project: string;
   /** Flagged passes bucketed over the ledger window, oldest → newest —
    * the card's frequency sparkline. Fixed 24 buckets regardless of activity. */
   history: number[];
@@ -326,6 +331,51 @@ export function parseForeignAllowlist(raw: string | undefined | null): Set<strin
 }
 
 /**
+ * Parse POOL_FOREIGN_PROJECT_ROOTS — comma-separated `root=Project` pairs
+ * mapping absolute path prefixes to a display project name (root may contain
+ * '=' once, at the first position; `=`-less and nameless entries are
+ * skipped). Longest root wins on overlap, so sibling deployments like
+ * `/Users/x/YCN` vs `/Users/x/YCN-fork` attribute independently. Local
+ * mirror of scripts/pool-issue-tracker.mjs, like parseForeignAllowlist —
+ * apps/admin builds are hermetic (rootDir: src) and must not import
+ * scripts/. Exported for tests.
+ */
+export function parseForeignProjectRoots(
+  raw: string | undefined | null
+): Array<{ root: string; project: string }> {
+  if (!raw || typeof raw !== 'string') return [];
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const eq = entry.indexOf('=');
+      return eq > 0
+        ? { root: entry.slice(0, eq).trim(), project: entry.slice(eq + 1).trim() }
+        : null;
+    })
+    .filter((p): p is { root: string; project: string } => !!p && !!p.root && !!p.project)
+    .sort((a, b) => b.root.length - a.root.length);
+}
+
+/**
+ * Attribute a foreign workspace path to its owning project: the first
+ * (longest, per the parser's ordering) root that prefixes the workspace.
+ * Unmatched workspaces ARE their own project — the card can always group
+ * without null-checks, and a lone unknown dialer still reads as one group
+ * instead of vanishing into an "unknown" bucket.
+ */
+export function attributeForeignProject(
+  workspace: string,
+  roots: Array<{ root: string; project: string }>
+): string {
+  for (const { root, project } of roots) {
+    if (workspace.startsWith(root)) return project;
+  }
+  return workspace;
+}
+
+/**
  * Pull the flagged foreign workspaces out of one pass detail line:
  * [{ workspace, conns }] — empty when the pass recorded none.
  */
@@ -365,6 +415,9 @@ export function computeForeignPersistence(
     maxGapHours?: number;
     /** Approved foreign workspaces (POOL_FOREIGN_ALLOWLIST) — never sustained. */
     allowlist?: Set<string> | string[];
+    /** Raw POOL_FOREIGN_PROJECT_ROOTS value — comma-separated
+     * `root=Project` pairs for workspace → project attribution. */
+    projectRootsRaw?: string | null;
     /** Sparkline window (ms). Defaults to the data's own span (oldest
      * flagged row → now); the ledger caller passes its query window. */
     windowMs?: number;
@@ -396,6 +449,7 @@ export function computeForeignPersistence(
     }
   }
   const out: ForeignPersistenceRow[] = [];
+  const projectRoots = parseForeignProjectRoots(opts.projectRootsRaw);
   interface BestRun {
     length: number;
     spanH: number;
@@ -456,12 +510,25 @@ export function computeForeignPersistence(
       // nightly core's allowlist rule, so card and tracker never disagree.
       sustained: !approved && best.spanH >= minSpanHours - 1e-9,
       approved,
+      project: attributeForeignProject(workspace, projectRoots),
       history: trend.buckets,
       connHistory: trend.connBuckets,
       bucketSeconds: trend.bucketSeconds,
     });
   }
-  return out.sort((a, b) => b.spanHours - a.spanHours || a.workspace.localeCompare(b.workspace));
+  // Span first (the card's headline), then project so a workspace's
+  // group-mates sit adjacent even in the flat payload. Named projects rank
+  // before path-self groups (unmatched workspaces) — absolute paths sort
+  // lexicographically before letters, which would otherwise float a lone
+  // unknown dialer above every known project. Workspace name last.
+  const groupRank = (project: string) => (project.startsWith('/') ? 1 : 0);
+  return out.sort(
+    (a, b) =>
+      b.spanHours - a.spanHours ||
+      groupRank(a.project) - groupRank(b.project) ||
+      a.project.localeCompare(b.project) ||
+      a.workspace.localeCompare(b.workspace)
+  );
 }
 // The flip hold window (10 min) now lives server-side as the flips-hash TTL
 // in transport-store.ts (FLIP_TTL_S) — both admin pages poll the same
@@ -1641,6 +1708,9 @@ export class OpsService {
         // show on the card (budget impact is real) but never read as
         // sustained, so card and tracker never disagree.
         allowlist: parseForeignAllowlist(process.env.POOL_FOREIGN_ALLOWLIST),
+        // Workspace → project attribution for the card's grouping (no-op
+        // when unset: each workspace is then its own project).
+        projectRootsRaw: process.env.POOL_FOREIGN_PROJECT_ROOTS,
         // Sparkline buckets span the exact query window so every row's
         // history is directly comparable (and stays stable across polls).
         windowMs: hours * 3_600_000,

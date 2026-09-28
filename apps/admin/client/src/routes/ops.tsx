@@ -320,6 +320,52 @@ function ConnTrendBars({
  * pooler refuses new clients — every service sees it as a total DB outage
  * — so this card has its own dedicated alert band (80% warn, 95% critical).
  */
+/**
+ * Group foreign-persistence rows by attributed project for the card's grouped
+ * table, with per-group aggregates for the section headers. `fp.rows` is
+ * already sorted (span desc, named groups before path-self groups, workspace
+ * name), so groups emerge in display order and rows keep their in-group
+ * order. Missing `project` (pre-attribution backend) degrades to the
+ * workspace path itself — one row per group, flat table, no crash.
+ */
+type ForeignRow = ForeignPersistence['rows'][number];
+
+type ForeignGroupAggregates = {
+  passes: number;
+  peakConns: number;
+  sustainedCount: number;
+  anySustained: boolean;
+};
+
+function groupForeignRowsByProject(rows: ForeignRow[]): Array<[string, ForeignGroupAggregates, ForeignRow[]]> {
+  const groups = new Map<string, { aggregates: ForeignGroupAggregates; rows: ForeignRow[] }>();
+  for (const row of rows) {
+    const project = row.project ?? row.workspace;
+    const g = groups.get(project);
+    if (g) {
+      g.aggregates.passes += row.passes;
+      const peak = (row.connHistory ?? []).reduce<number>((m, v) => (v !== null && v > m ? v : m), g.aggregates.peakConns);
+      g.aggregates.peakConns = peak;
+      if (row.sustained) {
+        g.aggregates.sustainedCount += 1;
+        g.aggregates.anySustained = true;
+      }
+      g.rows.push(row);
+    } else {
+      groups.set(project, {
+        aggregates: {
+          passes: row.passes,
+          peakConns: (row.connHistory ?? []).reduce<number>((m, v) => (v !== null && v > m ? v : m), 0),
+          sustainedCount: row.sustained ? 1 : 0,
+          anySustained: row.sustained,
+        },
+        rows: [row],
+      });
+    }
+  }
+  return [...groups.entries()].map(([project, { aggregates, rows: gRows }]) => [project, aggregates, gRows] as const);
+}
+
 function PgbouncerCard({
   health,
   foreignPersistence,
@@ -799,9 +845,50 @@ function PgbouncerCard({
                   </tr>
                 </thead>
                 <tbody>
-                  {fp.rows.map((f) => (
-                    <tr key={f.workspace}>
-                      <td style={{ padding: '5px 8px 5px 0' }}>{f.workspace}</td>
+                  {groupForeignRowsByProject(fp.rows).map(([project, aggregates, rows]) => {
+                    const solo = rows.length === 1;
+                    return [
+                      ...(solo
+                        ? []
+                        : [
+                            <tr
+                              key={`grp:${project}`}
+                              style={{ color: 'var(--admin-text-muted)' }}
+                            >
+                              <td
+                                colSpan={7}
+                                style={{
+                                  padding: '10px 8px 2px 0',
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em',
+                                  borderTop: '1px solid var(--admin-border-subtle)',
+                                }}
+                              >
+                                {project} — {rows.length} workspace{rows.length === 1 ? '' : 's'} ·{' '}
+                                {aggregates.passes} pass{aggregates.passes === 1 ? '' : 'es'} · peak{' '}
+                                {aggregates.peakConns} conn{aggregates.peakConns === 1 ? '' : 's'}
+                                {aggregates.anySustained
+                                  ? ` · ${aggregates.sustainedCount} sustained`
+                                  : ''}
+                              </td>
+                            </tr>,
+                          ]),
+                      ...rows.map((f) => (
+                        <tr key={f.workspace}>
+                          <td style={{ padding: '5px 8px 5px 0' }}>
+                            <span
+                              style={{ fontWeight: solo ? 600 : 400 }}
+                              title={
+                                (f.project ?? f.workspace) === f.workspace
+                                  ? `No POOL_FOREIGN_PROJECT_ROOTS root matched — the workspace path is its own project group`
+                                  : `Project: ${f.project} — workspace: ${f.workspace}`
+                              }
+                            >
+                              {f.project ?? f.workspace}
+                            </span>
+                          </td>
                       <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
                         {f.passes}
                       </td>
@@ -872,17 +959,21 @@ function PgbouncerCard({
                           </span>
                         )}
                       </td>
-                    </tr>
-                  ))}
+                        </tr>
+                      )),
+                    ];
+                  })}
                 </tbody>
               </table>
               <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '4px 0 0' }}>
                 Per-workspace persistence from the pool-audit ledger (same run/gap semantics as the
                 nightly foreign-dialer tracker — a span ≥{' '}
                 {fp.sustainedMinSpanHours}h is what opens its tracking
-                issue). History shows each workspace's flagged passes per ~2h bucket across the
-                window (bar height scales to the row's own peak). This is history, not a live
-                scan: a workspace can appear here after it stopped dialing.
+                issue). Rows are grouped by owning project (POOL_FOREIGN_PROJECT_ROOTS prefix
+                match; unmatched workspaces stand alone). History shows each workspace's flagged
+                passes per ~2h bucket across the window (bar height scales to the row's own
+                peak). This is history, not a live scan: a workspace can appear here after it
+                stopped dialing.
               </p>
             </>
           )}

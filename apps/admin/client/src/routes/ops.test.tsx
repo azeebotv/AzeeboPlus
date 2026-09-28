@@ -629,6 +629,90 @@ describe('Ops page transport-flip trend card', () => {
     });
   });
 
+  describe('foreign persistence project grouping', () => {
+    const stubRows = (rows: unknown[]) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({
+            success: true,
+            data: {
+              available: true,
+              level: 'ok',
+              foreignPersistence: {
+                windowHours: 48,
+                sustainedMinSpanHours: 24,
+                rows,
+                trackingIssueUrl: null,
+              },
+            },
+          });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: baseSnapshot([]) });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    const mkRow = (ws: string, project: string | undefined, over: Record<string, unknown> = {}) => ({
+      workspace: ws,
+      passes: 2,
+      spanHours: 5,
+      lastSeen: new Date().toISOString(),
+      conns: 1,
+      sustained: false,
+      approved: false,
+      history: [1, 0, 1, 0],
+      connHistory: [1, null, 2, null],
+      bucketSeconds: 7200,
+      ...(project !== undefined ? { project } : {}),
+      ...over,
+    });
+
+    it('groups multi-workspace projects under an aggregate section header', async () => {
+      stubRows([
+        mkRow('/Users/other/YCN/services/gateway', 'YCN'),
+        mkRow('/Users/other/YCN/services/search', 'YCN'),
+      ]);
+      renderPage();
+      const header = await screen.findByText(/YCN — 2 workspaces · 4 passes/i);
+      expect(header).toBeTruthy();
+      // Both rows carry the project label (full workspace in the tooltip).
+      expect(screen.getAllByText('YCN')).toHaveLength(2);
+    });
+
+    it('unmatched workspaces are their own group and render the full path', async () => {
+      stubRows([mkRow('/mystery/proj', '/mystery/proj')]);
+      renderPage();
+      expect(await screen.findByText('/mystery/proj')).toBeTruthy();
+      // Solo project group → no section header row.
+      expect(screen.queryByText(/— 1 workspace ·/i)).toBeNull();
+    });
+
+    it('rows without project (pre-attribution backend) degrade to the flat table', async () => {
+      stubRows([mkRow('/Users/other/fleet', undefined), mkRow('/Users/other/node', undefined)]);
+      renderPage();
+      expect(await screen.findByText('/Users/other/fleet')).toBeTruthy();
+      expect(screen.getByText('/Users/other/node')).toBeTruthy();
+      // Each path-self row is its own group → no headers anywhere.
+      expect(screen.queryByText(/— 2 workspaces/i)).toBeNull();
+      expect(screen.queryByText(/— 1 workspace ·/i)).toBeNull();
+    });
+
+    it('group headers surface sustained counts', async () => {
+      stubRows([
+        mkRow('/Users/other/YCN/services/gateway', 'YCN', { sustained: true, spanHours: 30 }),
+        mkRow('/Users/other/YCN/services/search', 'YCN'),
+      ]);
+      renderPage();
+      expect(await screen.findByText(/1 sustained/i)).toBeTruthy();
+    });
+  });
+
   describe('foreign persistence window toggle', () => {
     /** Stub BOTH persistence sources: the pgbouncer snapshot's embedded 48h
      * payload and the dedicated per-window endpoint the toggle re-queries.

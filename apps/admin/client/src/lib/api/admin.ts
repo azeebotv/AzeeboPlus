@@ -1310,6 +1310,10 @@ export interface ForeignPersistence {
     conns: number | null;
     sustained: boolean;
     approved: boolean;
+    /** Owning project via POOL_FOREIGN_PROJECT_ROOTS prefix match (longest
+     * root wins), or the workspace itself when nothing matched — the card
+     * groups on this. Optional: absent on a pre-attribution backend. */
+    project?: string;
     /** Flagged passes per bucket over windowHours, oldest → newest —
      * the row's frequency sparkline. Fixed 24 buckets regardless of window. */
     history: number[];

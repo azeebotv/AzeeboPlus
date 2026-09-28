@@ -82,6 +82,7 @@ const PERSISTENCE = {
   rows: [
     {
       workspace: '/Users/other/YCN/services/gateway',
+      project: 'YCN-other',
       passes: 8,
       spanHours: 26.5,
       lastSeen: '2026-09-27T10:30:00.000Z',
@@ -94,6 +95,7 @@ const PERSISTENCE = {
     },
     {
       workspace: '/Users/other/YCN/services/rewards',
+      project: 'YCN-other',
       passes: 3,
       spanHours: 4,
       lastSeen: '2026-09-27T11:50:00.000Z',
@@ -107,6 +109,7 @@ const PERSISTENCE = {
     {
       // Approved (allowlisted) dialer — visible, but NEVER sustained.
       workspace: '/Users/me/YCN/services/api',
+      project: 'YCN-mine',
       passes: 30,
       spanHours: 30,
       lastSeen: '2026-09-27T11:55:00.000Z',
