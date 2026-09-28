@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TransportFlip as BackendTransportFlip } from '../../../src/modules/ops/service-probe';
 import OpsPage from './ops';
@@ -588,6 +588,86 @@ describe('Ops page transport-flip trend card', () => {
       });
       expect(bar.getAttribute('aria-label')).toMatch(/\(oldest → newest\)$/);
       expect(bar.getAttribute('aria-label')).not.toMatch(/peak bucket/i);
+    });
+  });
+
+  describe('foreign persistence window toggle', () => {
+    /** Stub BOTH persistence sources: the pgbouncer snapshot's embedded 48h
+     * payload and the dedicated per-window endpoint the toggle re-queries.
+     * The foreign-persistence branch must be tested BEFORE the pgbouncer
+     * branch — the longer path contains the shorter one. */
+    const stubToggle = (embedded: unknown, perWindow: Record<number, unknown>) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer/foreign-persistence')) {
+          const hours = Number(new URL(u, 'http://localhost').searchParams.get('hours') ?? 0);
+          const body = perWindow[hours] ?? {
+            windowHours: hours,
+            sustainedMinSpanHours: 24,
+            rows: [],
+            trackingIssueUrl: null,
+          };
+          return Promise.resolve({ success: true, data: body });
+        }
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({
+            success: true,
+            data: { available: true, level: 'ok', foreignPersistence: embedded },
+          });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: baseSnapshot([]) });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    const row48 = {
+      workspace: '/Users/other/fleet',
+      passes: 8,
+      spanHours: 8,
+      lastSeen: new Date().toISOString(),
+      conns: 1,
+      approved: false,
+      sustained: false,
+      history: [1, 0, 2, 0, 5, 0, 0, 0],
+      bucketSeconds: 7200,
+    };
+    const row168 = { ...row48, history: [3, 0, 0, 1], bucketSeconds: 25200 };
+
+    it('re-queries the ledger and rescales sparklines when a window chip is clicked', async () => {
+      stubToggle(
+        { windowHours: 48, sustainedMinSpanHours: 24, rows: [row48], trackingIssueUrl: null },
+        { 168: { windowHours: 168, sustainedMinSpanHours: 24, rows: [row168], trackingIssueUrl: null } }
+      );
+      renderPage();
+      expect(await screen.findByText(/ledger, last 48h/i)).toBeTruthy();
+      expect(screen.getByRole('img', { name: /last 48h/ })).toBeTruthy();
+
+      // Scope to the persistence card's group — the flip-trend card has its
+      // own 7d/14d chips elsewhere on the page.
+      fireEvent.click(
+        within(screen.getByRole('group', { name: /persistence window/i })).getByRole('button', {
+          name: '7d',
+        })
+      );
+
+      expect(await screen.findByText(/ledger, last 168h/i)).toBeTruthy();
+      const bar = screen.getByRole('img', { name: /last 168h/ });
+      // Rescaled: the 7d payload's buckets are 7h each, 4 of them.
+      expect(bar.getAttribute('aria-label')).toMatch(/per 7h bucket/);
+      expect(bar.children).toHaveLength(4);
+
+      // The toggle hit the dedicated endpoint and did NOT refetch the whole
+      // pgbouncer sweep.
+      const calls = vi.mocked(apiFetch).mock.calls.map((c) => String(c[0]));
+      expect(
+        calls.filter((u) => u.includes('/admin/ops/pgbouncer') && !u.includes('foreign-persistence'))
+      ).toHaveLength(1);
+      expect(calls.filter((u) => u.includes('foreign-persistence'))).toHaveLength(1);
     });
   });
 });

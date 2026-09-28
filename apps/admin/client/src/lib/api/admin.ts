@@ -828,6 +828,10 @@ export const adminApi = {
   getOpsRunHistory: (hours?: number) =>
     apiFetch<OpsRunHistory>(`/api/v1/admin/ops/runs${hours ? `?hours=${hours}` : ''}`),
   getOpsPgbouncer: () => apiFetch<PgbouncerHealth>('/api/v1/admin/ops/pgbouncer'),
+  getOpsForeignPersistence: (hours?: number) =>
+    apiFetch<ForeignPersistence>(
+      `/api/v1/admin/ops/pgbouncer/foreign-persistence${hours ? `?hours=${hours}` : ''}`
+    ),
   getOpsTransportFlipTrend: (days?: number) =>
     apiFetch<TransportFlipTrend>(`/api/v1/admin/ops/transport-flips${days ? `?days=${days}` : ''}`),
   getGatewayHttp: () => apiFetch<GatewayHttpSummary>('/api/v1/admin/ops/gateway-http'),
@@ -1291,6 +1295,34 @@ export interface PgbouncerBypass {
   connections: number;
 }
 
+/** GET /admin/ops/pgbouncer/foreign-persistence — per-workspace foreign-dialer
+ * persistence over a caller-chosen window (the card's 48h/7d/14d toggle).
+ * Same row shape the pgbouncer snapshot embeds; the window is explicit here. */
+export interface ForeignPersistence {
+  windowHours: number;
+  /** Sustained threshold applied (mirrors POOL_FOREIGN_MIN_SPAN_H default). */
+  sustainedMinSpanHours: number;
+  rows: Array<{
+    workspace: string;
+    passes: number;
+    spanHours: number;
+    lastSeen: string;
+    conns: number | null;
+    sustained: boolean;
+    approved: boolean;
+    /** Flagged passes per bucket over windowHours, oldest → newest —
+     * the row's sparkline. Fixed 24 buckets regardless of window. */
+    history: number[];
+    /** Seconds per history bucket (windowHours / 24). */
+    bucketSeconds: number;
+  }>;
+  /** Pool-health tracking issue URL when resolvable — sustained rows link
+   * to it; null/unset degrades the card to plain badges. */
+  trackingIssueUrl?: string | null;
+  /** Present when the ledger read failed: why the rows are empty. */
+  detail?: string;
+}
+
 export interface PgbouncerHealth {
   available: boolean;
   detail?: string;
@@ -1315,28 +1347,7 @@ export interface PgbouncerHealth {
    * `sustained` marks rows at/over the tracking-issue threshold (24h+);
    * `approved` marks rows on POOL_FOREIGN_ALLOWLIST — visible (the budget
    * impact is real) but never sustained, so never tracked. */
-  foreignPersistence?: {
-    windowHours: number;
-    sustainedMinSpanHours: number;
-    rows: Array<{
-      workspace: string;
-      passes: number;
-      spanHours: number;
-      lastSeen: string;
-      conns: number | null;
-      sustained: boolean;
-      approved: boolean;
-      /** Flagged passes per bucket over windowHours, oldest → newest —
-       * the row's sparkline. Fixed 24 buckets regardless of activity. */
-      history: number[];
-      /** Seconds per history bucket (windowHours / 24). */
-      bucketSeconds: number;
-    }>;
-    /** Pool-health tracking issue URL when resolvable — sustained rows link
-     * to it; null/unset degrades the card to plain badges. */
-    trackingIssueUrl?: string | null;
-    detail?: string;
-  };
+  foreignPersistence?: ForeignPersistence;
   /** Present when the bypass scan itself failed (e.g. lsof unavailable). */
   bypassesDetail?: string;
   checkedAt: string;

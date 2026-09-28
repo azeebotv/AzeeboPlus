@@ -25,6 +25,7 @@ import {
   GatewayRateLimitSnapshot,
   PgbouncerHealth,
   TransportFlipTrend,
+  ForeignPersistence,
 } from './ops.service';
 
 @Controller('admin/ops')
@@ -55,6 +56,17 @@ export class OpsController {
   @Get('pgbouncer')
   getPgbouncerHealth(): Promise<PgbouncerHealth> {
     return this.opsService.getPgbouncerHealth();
+  }
+
+  /** Foreign-dialer persistence over a caller-chosen window (clamped 6h–14d
+   * inside the service; invalid values fall back to the 48h default) — the
+   * persistence card's window toggle re-queries the ledger through this. */
+  @Get('pgbouncer/foreign-persistence')
+  getForeignPersistence(@Query('hours') hours?: string): Promise<ForeignPersistence | null> {
+    const parsed = Number(hours);
+    return this.opsService.getForeignPersistence(
+      Number.isFinite(parsed) && parsed > 0 ? parsed : 48
+    );
   }
 
   /** Transport-flip persistence trend (ledger-backed, default 14 days). */

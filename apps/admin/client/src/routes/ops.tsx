@@ -16,6 +16,7 @@ import type {
   OpsTransportFlip,
   TransportFlipTrend,
   TransportFlipTrendRow,
+  ForeignPersistence,
 } from '@/lib/api/admin';
 import { Icon } from '@/components/Icons';
 
@@ -173,6 +174,14 @@ const STORE_CHIP: Record<
   memory: { label: 'memory', color: 'var(--admin-amber)', bg: 'rgba(245,158,11,0.15)' },
 };
 
+/** Window choices for the foreign-persistence card's toggle (hours). The
+ * service clamps to 6h–14d, so these all pass through untouched. */
+const FOREIGN_WINDOW_OPTIONS: Array<{ label: string; hours: number }> = [
+  { label: '48h', hours: 48 },
+  { label: '7d', hours: 24 * 7 },
+  { label: '14d', hours: 24 * 14 },
+];
+
 /**
  * Inline per-workspace sparkline: one bar per bucket of flagged passes over
  * the ledger window (oldest → newest, fixed width — every row's buckets are
@@ -239,9 +248,25 @@ function PassTrendBars({
  * pooler refuses new clients — every service sees it as a total DB outage
  * — so this card has its own dedicated alert band (80% warn, 95% critical).
  */
-function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
+function PgbouncerCard({
+  health,
+  foreignPersistence,
+  onWindowChange,
+  onWindowHours,
+}: {
+  health?: PgbouncerHealth | null;
+  /** Dedicated ledger re-query for the card's window toggle — wins over the
+   * pgbouncer snapshot's embedded persistence when present, so switching
+   * windows doesn't wait on (or refetch) the whole sweep. */
+  foreignPersistence?: ForeignPersistence | null;
+  /** Fires when a window chip is clicked; the page re-queries the ledger. */
+  onWindowChange?: (hours: number) => void;
+  /** The page's active toggle window (null/undefined = snapshot's own). */
+  onWindowHours?: number | null;
+}) {
   if (!health) return null;
   const level = PG_LEVEL[health.level ?? 'ok'];
+  const fp = foreignPersistence ?? health.foreignPersistence;
   return (
     <div
       data-testid="pgbouncer-card"
@@ -630,19 +655,55 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
               </p>
             </>
           )}
-          {health.foreignPersistence && health.foreignPersistence.rows.length > 0 && (
+          {fp && fp.rows.length > 0 && (
             <>
               <div
                 style={{
                   marginTop: 14,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  color: 'var(--admin-text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  flexWrap: 'wrap',
                 }}
               >
-                Foreign dialer persistence — ledger, last {health.foreignPersistence.windowHours}h
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: 'var(--admin-text-muted)',
+                  }}
+                >
+                  Foreign dialer persistence — ledger, last {fp.windowHours}h
+                </div>
+                <div style={{ display: 'inline-flex', gap: 4 }} role="group" aria-label="Persistence window">
+                  {FOREIGN_WINDOW_OPTIONS.map(({ label, hours }) => {
+                    const active = hours === (onWindowHours ?? fp.windowHours);
+                    return (
+                      <button
+                        key={hours}
+                        type="button"
+                        disabled={active}
+                        onClick={() => onWindowChange?.(hours)}
+                        title={`Re-query the ledger for the last ${label} — sparklines rescale to the chosen window`}
+                        style={{
+                          padding: '2px 10px',
+                          fontSize: 11,
+                          fontWeight: active ? 700 : 500,
+                          borderRadius: 999,
+                          border: '1px solid rgba(148,163,184,0.35)',
+                          background: active ? 'rgba(16,185,129,0.15)' : 'transparent',
+                          color: active ? 'var(--admin-emerald)' : 'var(--admin-text-muted)',
+                          cursor: active ? 'default' : 'pointer',
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
               <table
                 style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 6 }}
@@ -666,7 +727,7 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {health.foreignPersistence.rows.map((f) => (
+                  {fp.rows.map((f) => (
                     <tr key={f.workspace}>
                       <td style={{ padding: '5px 8px 5px 0' }}>{f.workspace}</td>
                       <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
@@ -676,7 +737,7 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
                         <PassTrendBars
                           history={f.history}
                           bucketSeconds={f.bucketSeconds}
-                          windowHours={health.foreignPersistence?.windowHours ?? 0}
+                          windowHours={fp.windowHours ?? 0}
                         />
                       </td>
                       <td style={{ padding: '5px 8px 5px 0', fontVariantNumeric: 'tabular-nums' }}>
@@ -696,9 +757,9 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
                             approved — not tracked
                           </span>
                         ) : f.sustained ? (
-                          health.foreignPersistence?.trackingIssueUrl ? (
+                          fp?.trackingIssueUrl ? (
                             <a
-                              href={health.foreignPersistence.trackingIssueUrl}
+                              href={fp.trackingIssueUrl}
                               target="_blank"
                               rel="noreferrer"
                               style={{
@@ -707,7 +768,7 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
                                 fontSize: 11,
                                 textDecoration: 'underline',
                               }}
-                              title={`At/over the ${health.foreignPersistence?.sustainedMinSpanHours}h threshold — this dialer is listed in the nightly pool-health tracking issue`}
+                              title={`At/over the ${fp?.sustainedMinSpanHours}h threshold — this dialer is listed in the nightly pool-health tracking issue`}
                             >
                               sustained — tracking issue ↗
                             </a>
@@ -718,7 +779,7 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
                                 fontWeight: 600,
                                 fontSize: 11,
                               }}
-                              title={`At/over the ${health.foreignPersistence?.sustainedMinSpanHours}h threshold — the nightly pool-health tracker opens/updates its tracking issue for this dialer`}
+                              title={`At/over the ${fp?.sustainedMinSpanHours}h threshold — the nightly pool-health tracker opens/updates its tracking issue for this dialer`}
                             >
                               sustained — tracked nightly
                             </span>
@@ -726,7 +787,7 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
                         ) : (
                           <span
                             style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}
-                            title={`Below the ${health.foreignPersistence?.sustainedMinSpanHours}h sustained threshold — context only, no tracking issue`}
+                            title={`Below the ${fp?.sustainedMinSpanHours}h sustained threshold — context only, no tracking issue`}
                           >
                             below threshold
                           </span>
@@ -739,25 +800,25 @@ function PgbouncerCard({ health }: { health?: PgbouncerHealth | null }) {
               <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '4px 0 0' }}>
                 Per-workspace persistence from the pool-audit ledger (same run/gap semantics as the
                 nightly foreign-dialer tracker — a span ≥{' '}
-                {health.foreignPersistence.sustainedMinSpanHours}h is what opens its tracking
+                {fp.sustainedMinSpanHours}h is what opens its tracking
                 issue). History shows each workspace's flagged passes per ~2h bucket across the
                 window (bar height scales to the row's own peak). This is history, not a live
                 scan: a workspace can appear here after it stopped dialing.
               </p>
             </>
           )}
-          {health.foreignPersistence &&
-            health.foreignPersistence.rows.length === 0 &&
-            !health.foreignPersistence.detail &&
+          {fp &&
+            fp.rows.length === 0 &&
+            !fp.detail &&
             (health.foreignDirectClients ?? []).length > 0 && (
               <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '8px 0 0' }}>
-                No flagged foreign passes in the last {health.foreignPersistence.windowHours}h of
+                No flagged foreign passes in the last {fp.windowHours}h of
                 the ledger — the clients above are new since the last watchdog pass recorded them.
               </p>
             )}
-          {health.foreignPersistence?.detail && (
+          {fp?.detail && (
             <p style={{ color: 'var(--admin-text-muted)', fontSize: 11, margin: '8px 0 0' }}>
-              Persistence history unavailable — {health.foreignPersistence.detail}
+              Persistence history unavailable — {fp.detail}
             </p>
           )}
         </>
@@ -1422,6 +1483,23 @@ export default function OpsPage() {
   const [since, setSince] = useState<number | null>(null);
   /** Window for the job cards' pass-history strips. */
   const [historyHours, setHistoryHours] = useState<number>(24);
+  /** Window for the foreign-persistence card's ledger re-query (null = the
+   * pgbouncer snapshot's embedded persistence, 48h). */
+  const [foreignWindowHours, setForeignWindowHours] = useState<number | null>(null);
+  // Dedicated foreign-persistence query: keyed by the card's toggle window so
+  // switching 48h/7d/14d re-queries ONLY the ledger read (cheap SQL), never
+  // the whole pgbouncer sweep. Null key = follow the snapshot; once a window
+  // is chosen the dedicated data wins until the window goes back to null.
+  const { data: foreignPersistence } = useQuery({
+    queryKey: ['admin', 'ops-foreign-persistence', foreignWindowHours],
+    enabled: foreignWindowHours !== null,
+    placeholderData: (prev) => prev,
+    queryFn: async () => {
+      const res = await adminApi.getOpsForeignPersistence(foreignWindowHours ?? undefined);
+      return res.success ? (res.data as ForeignPersistence) : null;
+    },
+    refetchInterval: 30_000,
+  });
   const { data, isLoading, dataUpdatedAt } = useQuery({
     queryKey: ['admin', 'ops-status'],
     queryFn: async () => {
@@ -1613,7 +1691,12 @@ export default function OpsPage() {
         ))}
       </div>
 
-      <PgbouncerCard health={pgbouncer} />
+      <PgbouncerCard
+        health={pgbouncer}
+        foreignPersistence={foreignPersistence}
+        onWindowHours={foreignWindowHours}
+        onWindowChange={setForeignWindowHours}
+      />
       <div style={{ marginTop: 16 }}>
         <TransportFlipTrendCard trend={flipTrend} />
       </div>
