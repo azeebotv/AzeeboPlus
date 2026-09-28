@@ -89,6 +89,7 @@ const PERSISTENCE = {
       sustained: true,
       approved: false,
       history: HISTORY,
+      connHistory: [null, 2, 3, null, 6, 1, null, 0],
       bucketSeconds: 7200,
     },
     {
@@ -100,6 +101,7 @@ const PERSISTENCE = {
       sustained: false,
       approved: false,
       history: [0, 1, 0, 0, 0, 0, 1, 0],
+      connHistory: [null, 1, null, null, null, null, 2, null],
       bucketSeconds: 7200,
     },
     {
@@ -112,6 +114,7 @@ const PERSISTENCE = {
       sustained: false,
       approved: true,
       history: [3, 3, 3, 3, 3, 3, 3, 3],
+      connHistory: [2, 2, 2, 2, 2, 2, 2, 2],
       bucketSeconds: 7200,
     },
   ],

@@ -219,8 +219,12 @@ export interface ForeignPersistenceRow {
    * real, so the row stays visible. */
   approved: boolean;
   /** Flagged passes bucketed over the ledger window, oldest → newest —
-   * the card's sparkline. Fixed 24 buckets regardless of activity. */
+   * the card's frequency sparkline. Fixed 24 buckets regardless of activity. */
   history: number[];
+  /** Peak connection count per history bucket, oldest → newest (null when
+   * that bucket had no pass recording a count) — the card's intensity
+   * sparkline: dial hardness alongside dial frequency. */
+  connHistory: Array<number | null>;
   /** Seconds per history bucket (windowMs / buckets). */
   bucketSeconds: number;
 }
@@ -253,6 +257,11 @@ export interface ForeignPassTrend {
   bucketSeconds: number;
   /** Flagged passes per bucket, oldest → newest. */
   buckets: number[];
+  /** Peak concurrent-connection count among the passes in each bucket,
+   * oldest → newest — dial INTENSITY alongside pass frequency. Null where
+   * the bucket had no passes, or none of its passes recorded a count (the
+   * ledger only started recording conns recently). */
+  connBuckets: Array<number | null>;
 }
 
 /**
@@ -261,27 +270,40 @@ export interface ForeignPassTrend {
  * pass exactly at `now` belongs to the newest bucket. Passes outside the
  * window cannot occur (the ledger query bounds ranAt), but are counted
  * into the nearest edge bucket rather than dropped.
+ *
+ * `values` (optional, parallel to `atMs`) carries each pass's recorded
+ * connection count; per bucket the PEAK non-null value wins — a dialer's
+ * worst burst in the bucket, not its average. Absent/short values arrays
+ * degrade to all-null connBuckets (pre-conns ledgers, legacy callers).
  */
 export function computeForeignPassTrend(
   atMs: number[],
   windowMs: number,
   nowMs = Date.now(),
-  buckets = FOREIGN_PASS_TREND_BUCKETS
+  buckets = FOREIGN_PASS_TREND_BUCKETS,
+  values?: Array<number | null>
 ): ForeignPassTrend {
   const n = Math.max(1, Math.floor(buckets));
   const w = Math.max(1, Math.floor(windowMs));
   const bucketMs = Math.max(1, Math.floor(w / n));
   const start = nowMs - w;
   const counts = new Array<number>(n).fill(0);
-  for (const at of atMs) {
+  const connPeak = new Array<number | null>(n).fill(null);
+  for (let i = 0; i < atMs.length; i++) {
+    const at = atMs[i];
     let idx = Math.floor((at - start) / bucketMs);
     if (idx < 0) idx = 0;
     if (idx >= n) idx = n - 1;
     counts[idx] += 1;
+    const v = values?.[i];
+    const curPeak = connPeak[idx];
+    if (typeof v === 'number' && (curPeak === null || v > curPeak)) {
+      connPeak[idx] = v;
+    }
   }
   // Ceil (not round): a degenerate 1ms bucket still reports a whole second,
   // keeping the documented ≥1 invariant honest.
-  return { bucketSeconds: Math.ceil(bucketMs / 1000), buckets: counts };
+  return { bucketSeconds: Math.ceil(bucketMs / 1000), buckets: counts, connBuckets: connPeak };
 }
 
 /** Legacy name for the same payload (PgbouncerHealth.foreignPersistence). */
@@ -419,7 +441,9 @@ export function computeForeignPersistence(
     const trend = computeForeignPassTrend(
       passes.map((p) => p.atMs),
       windowMs,
-      nowMs
+      nowMs,
+      FOREIGN_PASS_TREND_BUCKETS,
+      passes.map((p) => p.conns)
     );
     const approved = allowSet.has(workspace);
     out.push({
@@ -433,6 +457,7 @@ export function computeForeignPersistence(
       sustained: !approved && best.spanH >= minSpanHours - 1e-9,
       approved,
       history: trend.buckets,
+      connHistory: trend.connBuckets,
       bucketSeconds: trend.bucketSeconds,
     });
   }

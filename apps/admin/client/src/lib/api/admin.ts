@@ -1311,8 +1311,14 @@ export interface ForeignPersistence {
     sustained: boolean;
     approved: boolean;
     /** Flagged passes per bucket over windowHours, oldest → newest —
-     * the row's sparkline. Fixed 24 buckets regardless of window. */
+     * the row's frequency sparkline. Fixed 24 buckets regardless of window. */
     history: number[];
+    /** Peak connection count per history bucket, oldest → newest (null when
+     * that bucket had no pass recording a count) — the row's intensity
+     * sparkline: dial hardness alongside dial frequency. Optional so the
+     * client degrades gracefully against a pre-intensity backend during
+     * rolling deploys. */
+    connHistory?: Array<number | null>;
     /** Seconds per history bucket (windowHours / 24). */
     bucketSeconds: number;
   }>;

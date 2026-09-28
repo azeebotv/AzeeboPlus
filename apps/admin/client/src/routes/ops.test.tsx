@@ -589,6 +589,44 @@ describe('Ops page transport-flip trend card', () => {
       expect(bar.getAttribute('aria-label')).toMatch(/\(oldest → newest\)$/);
       expect(bar.getAttribute('aria-label')).not.toMatch(/peak bucket/i);
     });
+
+    it('renders a per-row intensity sparkline from the conn buckets', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [
+          {
+            ...sparkRow,
+            connHistory: [null, 2, 1, 6, null, 60, 0, 0],
+          },
+        ],
+        trackingIssueUrl: null,
+      });
+      renderPage();
+      const bars = await screen.findAllByRole('img', {
+        name: /Peak conns per 2h bucket/i,
+      });
+      expect(bars).toHaveLength(1);
+      const bar = bars[0]!;
+      expect(bar.getAttribute('aria-label')).toMatch(/peak: 60 conns/);
+      expect(bar.children).toHaveLength(sparkRow.history.length);
+      // Null buckets stay as visible stubs, not gaps.
+      expect(bar.children[0]!.getAttribute('aria-hidden')).toBeNull();
+    });
+
+    it('an all-null connHistory degrades to a quiet dash (pre-conns ledger)', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [{ ...sparkRow, connHistory: [null, null, null, null] }],
+        trackingIssueUrl: null,
+      });
+      renderPage();
+      const dash = await screen.findByRole('img', { name: /Peak conns per 2h bucket/i });
+      expect(dash.textContent).toBe('—');
+      expect(dash.getAttribute('aria-label')).toMatch(/\(oldest → newest\)$/);
+      expect(dash.getAttribute('aria-label')).not.toMatch(/peak:/i);
+    });
   });
 
   describe('foreign persistence window toggle', () => {
@@ -634,9 +672,15 @@ describe('Ops page transport-flip trend card', () => {
       approved: false,
       sustained: false,
       history: [1, 0, 2, 0, 5, 0, 0, 0],
+      connHistory: [1, null, 2, null, 5, null, null, null],
       bucketSeconds: 7200,
     };
-    const row168 = { ...row48, history: [3, 0, 0, 1], bucketSeconds: 25200 };
+    const row168 = {
+      ...row48,
+      history: [3, 0, 0, 1],
+      connHistory: [12, null, null, 4],
+      bucketSeconds: 25200,
+    };
 
     it('re-queries the ledger and rescales sparklines when a window chip is clicked', async () => {
       stubToggle(
@@ -645,7 +689,7 @@ describe('Ops page transport-flip trend card', () => {
       );
       renderPage();
       expect(await screen.findByText(/ledger, last 48h/i)).toBeTruthy();
-      expect(screen.getByRole('img', { name: /last 48h/ })).toBeTruthy();
+      expect(screen.getByRole('img', { name: /Flagged passes per 2h bucket/ })).toBeTruthy();
 
       // Scope to the persistence card's group — the flip-trend card has its
       // own 7d/14d chips elsewhere on the page.
@@ -656,10 +700,13 @@ describe('Ops page transport-flip trend card', () => {
       );
 
       expect(await screen.findByText(/ledger, last 168h/i)).toBeTruthy();
-      const bar = screen.getByRole('img', { name: /last 168h/ });
+      const bar = screen.getByRole('img', { name: /Flagged passes per 7h bucket/ });
       // Rescaled: the 7d payload's buckets are 7h each, 4 of them.
       expect(bar.getAttribute('aria-label')).toMatch(/per 7h bucket/);
       expect(bar.children).toHaveLength(4);
+      // The intensity sparkline rescales with it (peak 12 from the 7d row).
+      const connBar = screen.getByRole('img', { name: /Peak conns per 7h bucket/ });
+      expect(connBar.getAttribute('aria-label')).toMatch(/peak: 12 conns/);
 
       // The toggle hit the dedicated endpoint and did NOT refetch the whole
       // pgbouncer sweep.

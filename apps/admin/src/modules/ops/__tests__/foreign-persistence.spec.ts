@@ -259,4 +259,56 @@ describe('computeForeignPassTrend', () => {
     expect(out[0].history.reduce((a, b) => a + b, 0)).toBe(5);
     expect(out[0].history).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
   });
+
+  it('connHistory: per-bucket peak conns, parallel to history', () => {
+    // 4 buckets over W → W/4 each; place one pass inside each of the first
+    // three buckets (out-of-window times would clamp to the edge bucket).
+    const trend = computeForeignPassTrend(
+      [NOW - 0.9 * W, NOW - 0.6 * W, NOW - 0.3 * W],
+      W,
+      NOW,
+      4,
+      [2, 9, 5]
+    );
+    expect(trend.connBuckets).toEqual([2, 9, 5, null]);
+  });
+
+  it('connHistory: peak wins within one bucket; nulls never mask a number', () => {
+    // Three passes in the same bucket: null conns, then 3, then 7 — the
+    // peak (7) must survive, and the unrecorded ones must not reset it.
+    const trend = computeForeignPassTrend(
+      [NOW - W, NOW - W + 1, NOW - W + 2],
+      W,
+      NOW,
+      4,
+      [null, 3, 7]
+    );
+    expect(trend.connBuckets).toEqual([7, null, null, null]);
+  });
+
+  it('connHistory: absent values array degrades to all-null (pre-conns ledger)', () => {
+    const trend = computeForeignPassTrend([NOW - W, NOW], W, NOW, 4);
+    expect(trend.connBuckets).toEqual([null, null, null, null]);
+  });
+
+  it('rows carry connHistory end-to-end from the ledger detail strings', () => {
+    const detail = (conns: number | null) =>
+      conns === null
+        ? 'pgbouncer 62/200 clients; foreign direct clients (context, not violations): /intensity/python 777'
+        : fwDetail('/intensity', conns);
+    const rows = rowsAt([3, 2, 1], (i) => detail([5, null, 9][i]));
+    const out = computeForeignPersistence(rows, { minSpanHours: 1 });
+    expect(out[0].history).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
+    expect(out[0].connHistory).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
+    // 24 buckets over 3h+ of data: the three passes land in the newest
+    // buckets — peak 9 latest, 5 behind it, null where only the uncounted
+    // (segmentless) pass sits.
+    expect(out[0].connHistory.filter((v) => v !== null)).toEqual([5, 9]);
+  });
+
+  it('connHistory values are null-safe: conns recorded but passes sparse', () => {
+    const rows = rowsAt([1], () => fwDetail('/sparse', 4));
+    const out = computeForeignPersistence(rows, { minSpanHours: 1 });
+    expect(out[0].connHistory.filter((v) => v !== null)).toEqual([4]);
+  });
 });
