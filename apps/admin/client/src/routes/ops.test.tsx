@@ -713,6 +713,108 @@ describe('Ops page transport-flip trend card', () => {
     });
   });
 
+  describe('foreign persistence window persistence (localStorage)', () => {
+    const KEY = 'azeebo_ops_foreign_window_hours';
+
+    /** Stub both persistence sources with per-window bodies (self-contained:
+     * stubToggle lives in the sibling toggle describe's scope). */
+    const stubWith = (
+      embedded: unknown,
+      perWindow: Record<number, unknown>
+    ) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer/foreign-persistence')) {
+          const hours = Number(new URL(u, 'http://localhost').searchParams.get('hours') ?? 0);
+          return Promise.resolve({
+            success: true,
+            data:
+              perWindow[hours] ?? {
+                windowHours: hours,
+                sustainedMinSpanHours: 24,
+                rows: [],
+                trackingIssueUrl: null,
+              },
+          });
+        }
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({
+            success: true,
+            data: { available: true, level: 'ok', foreignPersistence: embedded },
+          });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: baseSnapshot([]) });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    afterEach(() => {
+      window.localStorage.clear();
+    });
+
+    it('restores the stored window on load and re-queries at that window', async () => {
+      window.localStorage.setItem(KEY, '168');
+      stubWith({ windowHours: 48, sustainedMinSpanHours: 24, rows: [], trackingIssueUrl: null }, {});
+      renderPage();
+      // The dedicated endpoint must be queried WITH the stored window even
+      // before any chip click this session.
+      await waitFor(() => {
+        const persisted = vi
+          .mocked(apiFetch)
+          .mock.calls.some((c) => String(c[0]).includes('foreign-persistence?hours=168'));
+        expect(persisted).toBe(true);
+      });
+    });
+
+    it('an invalid stored value falls back to the snapshot (no dedicated query)', async () => {
+      window.localStorage.setItem(KEY, '999');
+      stubWith({ windowHours: 48, sustainedMinSpanHours: 24, rows: [], trackingIssueUrl: null }, {});
+      renderPage();
+      await waitFor(() => expect(screen.getByTestId('pgbouncer-card')).toBeTruthy());
+      const dedicated = vi
+        .mocked(apiFetch)
+        .mock.calls.filter((c) => String(c[0]).includes('foreign-persistence'));
+      expect(dedicated).toHaveLength(0);
+    });
+
+    it('clicking a chip persists the choice for the next load', async () => {
+      const row = {
+        workspace: '/Users/other/fleet',
+        project: '/Users/other/fleet',
+        passes: 2,
+        spanHours: 2,
+        lastSeen: new Date().toISOString(),
+        conns: 1,
+        sustained: false,
+        approved: false,
+        history: [1, 0, 1, 0],
+        connHistory: [1, null, 2, null],
+        bucketSeconds: 7200,
+      };
+      stubWith(
+        { windowHours: 48, sustainedMinSpanHours: 24, rows: [row], trackingIssueUrl: null },
+        { 168: { windowHours: 168, sustainedMinSpanHours: 24, rows: [row], trackingIssueUrl: null } }
+      );
+      renderPage();
+      await screen.findByText(/ledger, last 48h/i);
+      fireEvent.click(
+        within(screen.getByRole('group', { name: /persistence window/i })).getByRole('button', {
+          name: '7d',
+        })
+      );
+      await waitFor(() => expect(window.localStorage.getItem(KEY)).toBe('168'));
+    });
+  });
+
   describe('foreign persistence window toggle', () => {
     /** Stub BOTH persistence sources: the pgbouncer snapshot's embedded 48h
      * payload and the dedicated per-window endpoint the toggle re-queries.

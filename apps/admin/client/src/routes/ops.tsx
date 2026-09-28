@@ -182,6 +182,12 @@ const FOREIGN_WINDOW_OPTIONS: Array<{ label: string; hours: number }> = [
   { label: '14d', hours: 24 * 14 },
 ];
 
+/** localStorage key for the foreign-persistence window choice — ops get
+ * their last window back on reload (sessionStorage would forget it in every
+ * new tab, defeating the point). Valid values are the toggle's own options;
+ * anything else falls back to following the snapshot. */
+const FOREIGN_WINDOW_STORAGE_KEY = 'azeebo_ops_foreign_window_hours';
+
 /**
  * Inline per-workspace sparkline: one bar per bucket of flagged passes over
  * the ledger window (oldest → newest, fixed width — every row's buckets are
@@ -1654,8 +1660,31 @@ export default function OpsPage() {
   /** Window for the job cards' pass-history strips. */
   const [historyHours, setHistoryHours] = useState<number>(24);
   /** Window for the foreign-persistence card's ledger re-query (null = the
-   * pgbouncer snapshot's embedded persistence, 48h). */
-  const [foreignWindowHours, setForeignWindowHours] = useState<number | null>(null);
+   * pgbouncer snapshot's embedded persistence, 48h). Restored from
+   * localStorage so ops land on their last window after a reload; a stale
+   * or invalid stored value (toggle options changed, hand-edited) and
+   * unavailable storage both fall back to the snapshot behavior. Lazy
+   * initializer keeps this a read-once concern. */
+  const [foreignWindowHours, setForeignWindowHours] = useState<number | null>(() => {
+    try {
+      const hours = Number(window.localStorage.getItem(FOREIGN_WINDOW_STORAGE_KEY));
+      return FOREIGN_WINDOW_OPTIONS.some((o) => o.hours === hours) ? hours : null;
+    } catch {
+      return null;
+    }
+  });
+  /** Toggle handler: mirrors the choice into localStorage (removal on null)
+   * so the next page load restores it. Storage failures are non-fatal — the
+   * choice just doesn't persist. */
+  const selectForeignWindow = (hours: number | null) => {
+    setForeignWindowHours(hours);
+    try {
+      if (hours === null) window.localStorage.removeItem(FOREIGN_WINDOW_STORAGE_KEY);
+      else window.localStorage.setItem(FOREIGN_WINDOW_STORAGE_KEY, String(hours));
+    } catch {
+      /* storage unavailable — choice simply won't persist */
+    }
+  };
   // Dedicated foreign-persistence query: keyed by the card's toggle window so
   // switching 48h/7d/14d re-queries ONLY the ledger read (cheap SQL), never
   // the whole pgbouncer sweep. Null key = follow the snapshot; once a window
@@ -1865,7 +1894,7 @@ export default function OpsPage() {
         health={pgbouncer}
         foreignPersistence={foreignPersistence}
         onWindowHours={foreignWindowHours}
-        onWindowChange={setForeignWindowHours}
+        onWindowChange={selectForeignWindow}
       />
       <div style={{ marginTop: 16 }}>
         <TransportFlipTrendCard trend={flipTrend} />
