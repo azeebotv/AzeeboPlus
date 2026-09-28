@@ -197,11 +197,21 @@ export class RedisTransportStore implements TransportStore {
     this._dbIndex = redisDbFromUrl(url);
     try {
       this.redis = new Redis(url, {
-        lazyConnect: false,
+        // Lazy: connect on first COMMAND, not on construction — building the
+        // OpsService (or this store) must not open a socket. Matters for
+        // specs that instantiate the service with stubbed Prisma and never
+        // sweep transport (a socket would hang the jest worker, and on CI —
+        // where no Redis exists — it would retry-connect forever). First
+        // command on an unreachable Redis still fails fast into the fallback
+        // via the same maxRetries/timeout knobs below.
+        lazyConnect: true,
         maxRetriesPerRequest: 1,
-        enableOfflineQueue: false,
-        // Transport memory is best-effort: fail fast to the fallback rather
-        // than stalling a health sweep on a down Redis.
+        // Offline queue stays ENABLED (default): with lazy connect, the
+        // first command races the initial handshake — rejecting it (the old
+        // fail-fast setting) would degrade the store's very first sweep and
+        // lose that baseline write. The queue buffers only within the 1s
+        // connect/command bounds below, so an unreachable Redis still
+        // degrades to the fallback quickly.
         connectTimeout: 1_000,
         commandTimeout: 1_000,
       });

@@ -250,6 +250,104 @@ export interface ForeignPersistence {
   detail?: string;
 }
 
+/**
+ * Contract gate for the pgbouncer endpoint's foreignPersistence payload:
+ * returns a list of shape violations (empty = valid). Exported so the CI
+ * smoke spec can drive the REAL producer through a stubbed Prisma and fail
+ * the build when a regression drops the sparkline history, the per-row
+ * tracking flag, or the tracking-issue link the card renders. Producer-side
+ * strictness: trackingIssueUrl must be explicitly present (string or null —
+ * `undefined` breaks the client's degrade branch), and connHistory, when
+ * present, must stay parallel to history.
+ */
+export function assertForeignPersistenceShape(data: unknown): string[] {
+  const bad: string[] = [];
+  const p = (ok: unknown, msg: string) => {
+    if (!ok) bad.push(msg);
+  };
+  if (typeof data !== 'object' || data === null) return ['foreignPersistence: expected an object'];
+  const d = data as Record<string, unknown>;
+  p(
+    typeof d.windowHours === 'number' && Number.isFinite(d.windowHours) && d.windowHours > 0,
+    'windowHours: expected a positive finite number'
+  );
+  p(
+    typeof d.sustainedMinSpanHours === 'number' &&
+      Number.isFinite(d.sustainedMinSpanHours) &&
+      d.sustainedMinSpanHours > 0,
+    'sustainedMinSpanHours: expected a positive finite number'
+  );
+  p(Array.isArray(d.rows), 'rows: expected an array');
+  p(
+    d.trackingIssueUrl === null || typeof d.trackingIssueUrl === 'string',
+    'trackingIssueUrl: expected a string or null — the card\'s tracking-issue link contract (undefined breaks the degrade branch)'
+  );
+  if (typeof d.detail !== 'undefined') {
+    p(typeof d.detail === 'string', 'detail: expected a string when present');
+  }
+  if (Array.isArray(d.rows)) {
+    (d.rows as Array<Record<string, unknown>>).forEach((r, i) => {
+      const at = `rows[${i}]`;
+      p(
+        typeof r.workspace === 'string' && r.workspace.length > 0,
+        `${at}.workspace: expected a non-empty string`
+      );
+      p(
+        typeof r.passes === 'number' && Number.isInteger(r.passes) && r.passes >= 0,
+        `${at}.passes: expected a non-negative integer`
+      );
+      p(
+        typeof r.spanHours === 'number' && Number.isFinite(r.spanHours) && r.spanHours >= 0,
+        `${at}.spanHours: expected a finite non-negative number`
+      );
+      p(
+        typeof r.lastSeen === 'string' && !Number.isNaN(Date.parse(r.lastSeen as string)),
+        `${at}.lastSeen: expected a parseable ISO timestamp`
+      );
+      p(r.conns === null || typeof r.conns === 'number', `${at}.conns: expected a number or null`);
+      p(
+        typeof r.sustained === 'boolean',
+        `${at}.sustained: expected a boolean — the per-row tracking flag`
+      );
+      p(typeof r.approved === 'boolean', `${at}.approved: expected a boolean`);
+      if (r.project !== undefined) {
+        p(
+          typeof r.project === 'string' && r.project.length > 0,
+          `${at}.project: expected a non-empty string when present`
+        );
+      }
+      p(
+        Array.isArray(r.history) &&
+          (r.history as unknown[]).length > 0 &&
+          (r.history as unknown[]).every((v) => typeof v === 'number' && Number.isFinite(v)),
+        `${at}.history: expected a non-empty array of finite numbers (the frequency sparkline)`
+      );
+      if (r.connHistory !== undefined) {
+        const ch = r.connHistory as unknown[];
+        p(
+          Array.isArray(ch) &&
+            Array.isArray(r.history) &&
+            ch.length === (r.history as unknown[]).length,
+          `${at}.connHistory: expected an array parallel to history (the intensity sparkline)`
+        );
+        if (Array.isArray(ch)) {
+          p(
+            ch.every((v) => v === null || typeof v === 'number'),
+            `${at}.connHistory: expected numbers or nulls only`
+          );
+        }
+      }
+      p(
+        typeof r.bucketSeconds === 'number' &&
+          Number.isInteger(r.bucketSeconds) &&
+          r.bucketSeconds >= 1,
+        `${at}.bucketSeconds: expected an integer ≥ 1`
+      );
+    });
+  }
+  return bad;
+}
+
 /** Bucket count for a workspace's flagged-pass trend over the ledger window. */
 export const FOREIGN_PASS_TREND_BUCKETS = 24;
 
