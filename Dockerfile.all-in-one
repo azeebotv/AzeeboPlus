@@ -15,7 +15,7 @@
 # ============================================================
 # Stage 1: Build — compile everything
 # ============================================================
-FROM node:22.16.0-bookworm-slim AS builder
+FROM node:26.9.0-bookworm-slim AS builder
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
@@ -389,7 +389,7 @@ RUN echo "Cache bust: $CACHEBUST" && \
 # ============================================================
 # Stage 2: Runtime — lean image with production deps only
 # ============================================================
-FROM node:22.16.0-bookworm-slim
+FROM node:26.9.0-bookworm-slim
 
 # Stage 2 RUNs pipe find(1) output; keep pipefail semantics identical to the
 # builder stage so a failed find is never silently swallowed under /bin/sh.
