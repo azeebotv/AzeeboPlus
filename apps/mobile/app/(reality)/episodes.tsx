@@ -15,6 +15,7 @@ import { realityApi } from '@azeebo/react-data/api/engagement';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface EpisodeData {
   id: string;
@@ -142,7 +143,7 @@ export default function EpisodesScreen() {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
           <Text style={styles.loadingText}>Loading episodes...</Text>
         </View>
       </SafeAreaView>
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   seasonButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   seasonButtonText: {
     color: colors.light[100],
@@ -341,7 +342,7 @@ const styles = StyleSheet.create({
   },
   episodeNumber: {
     fontSize: 12,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '600',
   },
   episodeDuration: {
@@ -377,7 +378,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

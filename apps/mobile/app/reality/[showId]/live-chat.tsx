@@ -14,6 +14,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { realityApi, chatApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface ChatMessage {
   id: string;
@@ -125,7 +126,7 @@ export default function LiveChatScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E8420A" />
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading live chat...</Text>
       </View>
     );
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#E8420A',
+    color: brand.flame,
     marginRight: 8,
   },
   badge: {
@@ -305,7 +306,7 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,

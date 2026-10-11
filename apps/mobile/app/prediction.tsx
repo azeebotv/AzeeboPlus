@@ -19,6 +19,7 @@ import { apiClient } from '@azeebo/react-data/api/client';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { analytics } from '../src/utils/analytics';
+import { brand } from '@azeebo/design-tokens';
 
 const leaderboardData = [
   { rank: 1, avatar: '👑', name: 'PredatorKing', points: 15000 },
@@ -923,7 +924,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

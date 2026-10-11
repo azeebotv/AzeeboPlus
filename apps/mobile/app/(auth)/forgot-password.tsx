@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.2)',
   },
   resetButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(204,28,28,0.4)',
   },
   errorText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backToLogin: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 16,
   },
 });

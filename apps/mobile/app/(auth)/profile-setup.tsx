@@ -18,6 +18,7 @@ import { userApi } from '@azeebo/react-data/api/user';
 import { apiClient } from '@azeebo/react-data/api/client';
 import { ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
@@ -161,7 +162,7 @@ export default function ProfileSetupScreen() {
                 Choose at least 3 to get personalized recommendations
               </Text>
               {isLoadingInterests ? (
-                <ActivityIndicator color="#E8420A" />
+                <ActivityIndicator color={brand.flame} />
               ) : interestsError ? (
                 <ErrorState description={interestsError} onRetry={fetchInterests} />
               ) : (
@@ -295,8 +296,8 @@ const styles = StyleSheet.create({
     borderColor: colors.neutral[700],
   },
   interestChipSelected: {
-    backgroundColor: '#E8420A',
-    borderColor: '#E8420A',
+    backgroundColor: brand.flame,
+    borderColor: brand.flame,
   },
   interestText: {
     color: colors.light[100],
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   completeButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

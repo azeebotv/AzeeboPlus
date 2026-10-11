@@ -6,9 +6,10 @@ import { colors, radius } from '../../src/theme';
 import { lifestyleApi } from '@azeebo/react-data/api/lifestyle';
 import { extractGenres } from '../../src/lib/music';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { brand } from '@azeebo/design-tokens';
 
 const GENRE_COLORS: Record<string, string> = {
-  afrobeats: '#E8420A',
+  afrobeats: brand.flame,
   hiphop: '#8B5CF6',
   'hip-hop': '#8B5CF6',
   rnb: '#EC4899',

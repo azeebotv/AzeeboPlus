@@ -6,6 +6,7 @@ import { contentApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface EarningsData {
   totalEarnings: number;
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   balanceCard: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   withdrawButtonText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 16,
     fontWeight: '600',
   },

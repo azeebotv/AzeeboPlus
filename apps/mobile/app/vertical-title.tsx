@@ -7,6 +7,7 @@ import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { analytics } from '../src/utils/analytics';
 import { defaultImages, colors } from '../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
 
@@ -331,7 +332,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   genreBadge: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -383,7 +384,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.tertiary,
   },
   followButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   followButtonText: {
     color: '#fff',
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
   followButtonTextActive: {},
   watchButton: {
     flex: 1,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
@@ -431,7 +432,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabActive: {
-    borderBottomColor: '#E8420A',
+    borderBottomColor: brand.flame,
   },
   tabText: {
     color: colors.text.secondary,
@@ -439,7 +440,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   tabTextActive: {
-    color: '#E8420A',
+    color: brand.flame,
   },
   content: {
     padding: 16,
@@ -479,7 +480,7 @@ const styles = StyleSheet.create({
   castAvatarText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#E8420A',
+    color: brand.flame,
   },
   castName: {
     fontSize: 12,
@@ -517,7 +518,7 @@ const styles = StyleSheet.create({
   },
   characterRole: {
     fontSize: 12,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -545,7 +546,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -577,7 +578,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   timelineLine: {
     width: 2,
@@ -596,7 +597,7 @@ const styles = StyleSheet.create({
   },
   timelineEpisode: {
     fontSize: 12,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '600',
   },
   timelineYear: {

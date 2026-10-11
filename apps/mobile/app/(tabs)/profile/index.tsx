@@ -27,6 +27,7 @@ import {
   GlowCard,
 } from '../../../src/components/motion';
 import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const MENU_ITEMS = [
   { id: 'subscriptions', label: 'Subscriptions', icon: '📺', action: 'navigate' },
@@ -162,7 +163,7 @@ export default function ProfileScreen() {
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
         </View>
       </SafeAreaView>
     );
@@ -213,7 +214,7 @@ export default function ProfileScreen() {
           <ScrollReveal direction="up" delay={60}>
             <View style={styles.profileSection}>
               <GlowCard variant="strong" padding={0} style={styles.avatar}>
-                <View style={[styles.avatarInner, { backgroundColor: '#E8420A' }]}>
+                <View style={[styles.avatarInner, { backgroundColor: brand.flame }]}>
                   {user?.avatar ? (
                     <Text style={styles.avatarImage}>👤</Text>
                   ) : (
@@ -317,7 +318,7 @@ export default function ProfileScreen() {
                   <Switch
                     value={pushEnabled}
                     onValueChange={(value) => handleTogglePreference('push', value)}
-                    trackColor={{ false: '#333', true: '#E8420A' }}
+                    trackColor={{ false: '#333', true: brand.flame }}
                     thumbColor="#fff"
                   />
                 </View>
@@ -344,7 +345,7 @@ export default function ProfileScreen() {
                   <Switch
                     value={emailEnabled}
                     onValueChange={(value) => handleTogglePreference('email', value)}
-                    trackColor={{ false: '#333', true: '#E8420A' }}
+                    trackColor={{ false: '#333', true: brand.flame }}
                     thumbColor="#fff"
                   />
                 </View>
@@ -526,7 +527,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   loginButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 24,
@@ -597,7 +598,7 @@ const styles = StyleSheet.create({
   },
   editButton: {
     alignSelf: 'flex-start',
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -767,7 +768,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

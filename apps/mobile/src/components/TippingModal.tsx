@@ -12,6 +12,7 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { creatorApi } from '@azeebo/react-data/api/creator';
 import { colors } from '../theme';
+import { brand } from '@azeebo/design-tokens';
 
 const PRESET_AMOUNTS = [100, 500, 1000, 5000, 10000];
 
@@ -250,7 +251,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(232,66,10,0.15)',
   },
   amountText: { color: '#F5F0EB', fontSize: 13, fontWeight: '600' },
-  amountTextActive: { color: '#E8420A' },
+  amountTextActive: { color: brand.flame },
   input: {
     backgroundColor: '#1a1a1a',
     borderRadius: 8,
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sendButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',

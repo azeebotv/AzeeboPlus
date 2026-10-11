@@ -15,6 +15,7 @@ import { authApi, type Device } from '@azeebo/react-data';
 import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function DeviceManagementScreen() {
   const router = useRouter();
@@ -166,8 +167,8 @@ export default function DeviceManagementScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            colors={['#E8420A']}
-            tintColor="#E8420A"
+            colors={[brand.flame]}
+            tintColor={brand.flame}
           />
         }
         ListEmptyComponent={

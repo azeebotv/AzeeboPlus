@@ -21,6 +21,7 @@ import { LoadingState, ErrorState } from '../../../src/components/StateContainer
 import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { addFundsPresetAmounts, walletLimits } from '../../../src/config/prices';
 import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const PRESET_AMOUNTS = addFundsPresetAmounts;
 
@@ -480,8 +481,8 @@ const styles = StyleSheet.create({
     borderColor: colors.neutral[700],
   },
   presetButtonSelected: {
-    backgroundColor: '#E8420A',
-    borderColor: '#E8420A',
+    backgroundColor: brand.flame,
+    borderColor: brand.flame,
   },
   presetText: {
     color: colors.light[100],
@@ -502,7 +503,7 @@ const styles = StyleSheet.create({
     borderColor: colors.neutral[700],
   },
   methodCardSelected: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
     backgroundColor: colors.bg.deep,
   },
   methodIcon: {
@@ -540,16 +541,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   methodRadioSelected: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
   },
   methodRadioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   addButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

@@ -16,6 +16,7 @@ import { walletApi } from '@azeebo/react-data';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
 import { walletPresetAmounts, walletLimits } from '../../../src/config/prices';
 import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const PRESET_AMOUNTS = walletPresetAmounts;
 
@@ -404,8 +405,8 @@ const styles = StyleSheet.create({
     borderColor: colors.neutral[700],
   },
   presetButtonSelected: {
-    backgroundColor: '#E8420A',
-    borderColor: '#E8420A',
+    backgroundColor: brand.flame,
+    borderColor: brand.flame,
   },
   presetText: {
     color: colors.light[100],
@@ -423,7 +424,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   verifyButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     paddingHorizontal: 20,
     justifyContent: 'center',
@@ -437,7 +438,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   withdrawButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -453,7 +454,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   balanceCard: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 20,
     marginBottom: 24,

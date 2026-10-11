@@ -13,6 +13,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface LiveEventDetail {
   id: string;
@@ -142,7 +143,7 @@ export default function LiveEventDetailScreen() {
           <Text style={styles.statusText}>{getTimeStatus(event.scheduledAt, event.status)}</Text>
 
           <View style={[styles.priceCard, { backgroundColor: cardBg }]}>
-            <Text style={[styles.price, { color: '#E8420A' }]}>
+            <Text style={[styles.price, { color: brand.flame }]}>
               {formatPrice(event.ticketPrice, event.currency)}
             </Text>
             <Text style={styles.priceLabel}>
@@ -240,7 +241,7 @@ const styles = StyleSheet.create({
   imageEmoji: { fontSize: 60 },
   contentSection: { paddingHorizontal: 16 },
   title: { fontSize: 24, fontWeight: '700', marginBottom: 4 },
-  statusText: { fontSize: 14, color: '#E8420A', fontWeight: '600', marginBottom: 16 },
+  statusText: { fontSize: 14, color: brand.flame, fontWeight: '600', marginBottom: 16 },
   priceCard: {
     borderRadius: 12,
     padding: 16,
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
   },
   endedText: { color: '#6b7280', fontWeight: '600' },
   purchaseButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

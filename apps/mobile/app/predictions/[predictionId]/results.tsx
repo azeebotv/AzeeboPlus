@@ -12,6 +12,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { realityApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface PredictionResult {
   id: string;
@@ -66,7 +67,7 @@ export default function PredictionResultsScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E8420A" />
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading results...</Text>
       </SafeAreaView>
     );
@@ -86,7 +87,7 @@ export default function PredictionResultsScreen() {
         style={styles.container}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#E8420A']} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[brand.flame]} />
         }
       >
         <View style={styles.header}>
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
     marginBottom: 4,
   },
   statLabel: {

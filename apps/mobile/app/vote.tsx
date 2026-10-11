@@ -17,6 +17,7 @@ import { votePackages as defaultVotePackages } from '../src/config/prices';
 import { realityApi } from '@azeebo/react-data/api/engagement';
 import type { RealityShow, RealityContestant } from '@azeebo/react-data/api/engagement';
 import { colors } from '../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const VOTE_PACKAGES = defaultVotePackages.reality;
 
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -269,9 +270,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  packageSelected: { borderColor: '#E8420A' },
+  packageSelected: { borderColor: brand.flame },
   packageVotes: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  packagePrice: { color: '#E8420A', fontSize: 14, fontWeight: '600', marginTop: 4 },
+  packagePrice: { color: brand.flame, fontSize: 14, fontWeight: '600', marginTop: 4 },
   packageBonus: { color: colors.category.green, fontSize: 12, marginTop: 2 },
   quantityRow: {
     flexDirection: 'row',
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   voteButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

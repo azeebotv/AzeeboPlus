@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { apiClient } from '@azeebo/react-data/api/client';
 import { createLogger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const logger = createLogger('AddFunds');
 
@@ -179,10 +180,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
   },
-  quickButtonSelected: { backgroundColor: '#E8420A' },
+  quickButtonSelected: { backgroundColor: brand.flame },
   quickButtonText: { color: '#fff', fontSize: 14 },
   addButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

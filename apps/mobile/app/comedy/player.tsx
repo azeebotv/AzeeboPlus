@@ -19,6 +19,7 @@ import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const { width: _width } = Dimensions.get('window');
 
@@ -345,7 +346,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.2)',
-    borderTopColor: '#E8420A',
+    borderTopColor: brand.flame,
   },
   commentEmpty: {
     textAlign: 'center',
@@ -482,7 +483,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   followButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -565,7 +566,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   postButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function OnboardingWelcomeScreen() {
   const colorScheme = useColorScheme();
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
     bottom: '20%',
     borderRadius: 100,
     borderWidth: 2,
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
     opacity: 0.3,
   },
   ring2: {
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   primaryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   secondaryButtonText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 16,
     fontWeight: '500',
     textAlign: 'center',

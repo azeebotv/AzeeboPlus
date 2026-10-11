@@ -16,6 +16,7 @@ import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { referralApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface ReferralStats {
   referralCode: string;
@@ -104,7 +105,7 @@ export default function ReferralHistoryScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#E8420A" />
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading referral history...</Text>
       </SafeAreaView>
     );
@@ -123,7 +124,7 @@ export default function ReferralHistoryScreen() {
       <ScrollView
         style={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#E8420A" />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={brand.flame} />
         }
       >
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
   },
-  statValue: { fontSize: 22, fontWeight: 'bold', color: '#E8420A', marginBottom: 4 },
+  statValue: { fontSize: 22, fontWeight: 'bold', color: brand.flame, marginBottom: 4 },
   earningsValue: { color: '#10B981' },
   statLabel: { fontSize: 11, color: colors.light[400] },
   shareSection: {
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   shareButtons: { flexDirection: 'row', gap: 12, width: '100%' },
   shareButton: {
     flex: 1,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',

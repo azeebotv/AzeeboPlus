@@ -9,6 +9,7 @@ import { useWallet } from '@azeebo/react-data/contexts/WalletContext';
 import { createLogger } from '@azeebo/react-data/utils/logger';
 import type { SubscriptionPlan } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const logger = createLogger('SubscriptionPlans');
 
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2A1A1A',
   },
-  planCardSelected: { borderColor: '#E8420A', backgroundColor: 'rgba(232,66,10,0.15)' },
+  planCardSelected: { borderColor: brand.flame, backgroundColor: 'rgba(232,66,10,0.15)' },
   planHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
   },
   planName: { color: '#fff', fontSize: 16, fontWeight: '600' },
   tierBadge: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -229,9 +230,9 @@ const styles = StyleSheet.create({
   },
   checkoutTitle: { color: '#9A8A7A', fontSize: 12, marginBottom: 4 },
   checkoutName: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  checkoutPrice: { color: '#E8420A', fontSize: 18, fontWeight: '700', marginBottom: 16 },
+  checkoutPrice: { color: brand.flame, fontSize: 18, fontWeight: '700', marginBottom: 16 },
   buyButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 8,

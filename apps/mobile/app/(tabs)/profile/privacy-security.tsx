@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiClient } from '@azeebo/react-data/api/client';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface SecurityOption {
   id: string;
@@ -180,7 +181,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={twoFactorEnabled}
                     onValueChange={() => handleSecurityOption(option)}
-                    trackColor={{ false: '#333', true: '#E8420A' }}
+                    trackColor={{ false: '#333', true: brand.flame }}
                     thumbColor={twoFactorEnabled ? '#fff' : '#666'}
                   />
                 )}
@@ -188,7 +189,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={loginAlertsEnabled}
                     onValueChange={() => handleSecurityOption(option)}
-                    trackColor={{ false: '#333', true: '#E8420A' }}
+                    trackColor={{ false: '#333', true: brand.flame }}
                     thumbColor={loginAlertsEnabled ? '#fff' : '#666'}
                   />
                 )}
@@ -226,7 +227,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={activityStatusEnabled}
                     onValueChange={() => handlePrivacyOption(option)}
-                    trackColor={{ false: '#333', true: '#E8420A' }}
+                    trackColor={{ false: '#333', true: brand.flame }}
                     thumbColor={activityStatusEnabled ? '#fff' : '#666'}
                   />
                 )}
@@ -234,7 +235,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={dataSharingEnabled}
                     onValueChange={() => handlePrivacyOption(option)}
-                    trackColor={{ false: '#333', true: '#E8420A' }}
+                    trackColor={{ false: '#333', true: brand.flame }}
                     thumbColor={dataSharingEnabled ? '#fff' : '#666'}
                   />
                 )}

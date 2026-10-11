@@ -6,6 +6,7 @@ import { contentApi, type ContentItem } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function MovieDetailScreen() {
   const colorScheme = useColorScheme();
@@ -343,7 +344,7 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 2,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   timeText: {
     color: '#fff',
@@ -413,7 +414,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,

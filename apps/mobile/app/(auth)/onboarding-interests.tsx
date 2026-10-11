@@ -7,6 +7,7 @@ import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function OnboardingInterestsScreen() {
   const colorScheme = useColorScheme();
@@ -87,7 +88,7 @@ export default function OnboardingInterestsScreen() {
               onPress={() => toggleInterest(interest.id)}
               style={[
                 styles.interestButton,
-                selectedInterests.includes(interest.id) && { backgroundColor: '#E8420A' },
+                selectedInterests.includes(interest.id) && { backgroundColor: brand.flame },
               ]}
             >
               <Text style={styles.interestIcon}>{interest.icon}</Text>
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   continueButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

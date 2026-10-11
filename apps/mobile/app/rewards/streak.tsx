@@ -14,6 +14,7 @@ import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { apiClient } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface StreakData {
   currentStreak?: number;
@@ -106,7 +107,7 @@ export default function StreakScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#E8420A" />
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading streak data...</Text>
       </SafeAreaView>
     );
@@ -117,7 +118,7 @@ export default function StreakScreen() {
       <ScrollView
         style={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#E8420A" />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={brand.flame} />
         }
       >
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   flameIcon: { fontSize: 48, marginBottom: 8 },
-  streakCount: { fontSize: 48, fontWeight: 'bold', color: '#E8420A' },
+  streakCount: { fontSize: 48, fontWeight: 'bold', color: brand.flame },
   streakLabel: { fontSize: 16, color: colors.light[400], marginBottom: 12 },
   todayBadge: {
     backgroundColor: 'rgba(16,185,129,0.15)',
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statLabel: { fontSize: 12, color: colors.light[400], marginBottom: 8 },
-  statValue: { fontSize: 20, fontWeight: 'bold', color: '#E8420A' },
+  statValue: { fontSize: 20, fontWeight: 'bold', color: brand.flame },
   calendarSection: {
     backgroundColor: colors.bg.tertiary,
     borderRadius: 16,
@@ -288,10 +289,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.04)',
   },
   calendarDayActive: { backgroundColor: 'rgba(232,66,10,0.25)' },
-  calendarDayToday: { borderWidth: 1, borderColor: '#E8420A' },
+  calendarDayToday: { borderWidth: 1, borderColor: brand.flame },
   calendarDayText: { fontSize: 10, color: colors.category.cocoa },
-  calendarDayTextActive: { color: '#E8420A' },
-  calendarDayTextToday: { color: '#E8420A' },
+  calendarDayTextActive: { color: brand.flame },
+  calendarDayTextToday: { color: brand.flame },
   milestonesSection: { marginBottom: 24 },
   milestoneCard: {
     flexDirection: 'row',
@@ -322,6 +323,6 @@ const styles = StyleSheet.create({
   milestoneLabel: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
   milestoneSubtext: { fontSize: 11, color: colors.light[400] },
   milestoneRight: { alignItems: 'flex-end' },
-  milestoneReward: { fontSize: 14, fontWeight: '700', color: '#E8420A' },
+  milestoneReward: { fontSize: 14, fontWeight: '700', color: brand.flame },
   milestoneUnlocked: { fontSize: 10, color: '#10B981', marginTop: 2 },
 });

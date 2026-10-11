@@ -18,6 +18,7 @@ import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { getVotePackages } from '../../src/config/prices';
 import type { VotePackage } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface Contestant {
   id: string;
@@ -296,7 +297,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#E8420A',
+    color: brand.flame,
   },
   balanceContainer: {
     alignItems: 'flex-end',
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   contestantCardSelected: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
   },
   contestantAvatar: {
     width: 80,
@@ -356,17 +357,17 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   packageCardSelected: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
   },
   packageCardPopular: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
     backgroundColor: colors.bg.deepRaised,
   },
   popularBadge: {
     position: 'absolute',
     top: -10,
     right: 12,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -394,14 +395,14 @@ const styles = StyleSheet.create({
   packagePrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
   },
   footer: {
     padding: 24,
     paddingBottom: 32,
   },
   voteButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

@@ -11,6 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { changeLanguage, LANGUAGES, type SupportedLanguage } from '../../i18n';
 import { colors } from '../../theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface LanguageSwitcherProps {
   /** Position of the button — 'header' (top-right) or 'footer' (bottom-center) */
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
   },
   languageCheck: {
     fontSize: 20,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '700',
   },
   modalCloseButton: {
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   modalCloseText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 16,
     fontWeight: '600',
   },

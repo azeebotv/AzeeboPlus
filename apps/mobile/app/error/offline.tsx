@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function OfflineScreen() {
   const colorScheme = useColorScheme();
@@ -64,7 +65,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

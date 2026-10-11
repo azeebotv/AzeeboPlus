@@ -18,6 +18,7 @@ import { mediaFingerprint } from '@azeebo/react-data/utils/mediaCache';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const uploadOptions = [
   { id: 'video', name: 'Video', icon: '📹', color: colors.error[500] },
@@ -26,16 +27,13 @@ const uploadOptions = [
   { id: 'story', name: 'Story', icon: '📖', color: colors.category.mint },
 ];
 
-// Privacy options map onto the content service's create DTO: "public" is the
-// default published state, "premium" sets isPremium (premium window gating),
-// "private"/"unlisted" keep the item out of public feeds via metadata.
-// NOTE: the backend treats these as a soft signal for now (no ACL column
-// yet) — see content.repository.create, which persists isPremium only.
+// MOB-10-04: Only offer privacy options supported by content-service.
+// "Public" is the standard published item, "Premium" gates behind the premium window.
+// "Private" and "Unlisted" are deferred until server-side ACL/direct link authorization
+// is implemented in content.repository.ts.
 const privacyOptions = [
   { id: 'public', name: 'Public' },
   { id: 'premium', name: 'Premium' },
-  { id: 'private', name: 'Private' },
-  { id: 'unlisted', name: 'Unlisted' },
 ];
 
 interface SelectedFile {
@@ -44,8 +42,6 @@ interface SelectedFile {
   type: string;
   size?: number;
 }
-
-
 
 export default function CreateScreen() {
   const colorScheme = useColorScheme();
@@ -212,14 +208,24 @@ export default function CreateScreen() {
 
       // Visibility-restricted items keep the draft status (they are excluded
       // from the public home/watch feeds, which list published content).
+      let publishSuccess = true;
       if (publishedId && isPublicFeed) {
         const publishResult = await contentApi.publishContentItem(publishedId);
         if (!publishResult.success) {
+          publishSuccess = false;
           logger.warn('Content created but publish failed', undefined, { contentId: publishedId });
         }
       }
 
-      Alert.alert('Success', 'Content published successfully!', [{ text: 'OK' }]);
+      if (!publishSuccess) {
+        Alert.alert(
+          'Upload Succeeded (Draft Saved)',
+          'Your content was uploaded successfully, but could not be published to public feeds right now. It has been saved as a draft.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Success', 'Content published successfully!', [{ text: 'OK' }]);
+      }
       setTitle('');
       setDescription('');
       setSelectedUniverse(null);
@@ -390,7 +396,7 @@ export default function CreateScreen() {
                   }
                   style={[
                     styles.universeButton,
-                    selectedUniverse === universe.id && { backgroundColor: '#E8420A' },
+                    selectedUniverse === universe.id && { backgroundColor: brand.flame },
                   ]}
                 >
                   <Text style={styles.universeIcon}>{universe.icon}</Text>
@@ -417,14 +423,12 @@ export default function CreateScreen() {
                 onPress={() => setPrivacy(option.id)}
                 style={[
                   styles.privacyButton,
-                  privacy === option.id && { backgroundColor: '#E8420A' },
+                  privacy === option.id && { backgroundColor: brand.flame },
                 ]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: privacy === option.id }}
               >
-                <Text
-                  style={[styles.privacyText, privacy === option.id && { color: '#ffffff' }]}
-                >
+                <Text style={[styles.privacyText, privacy === option.id && { color: '#ffffff' }]}>
                   {option.name}
                 </Text>
               </TouchableOpacity>
@@ -433,8 +437,6 @@ export default function CreateScreen() {
           <Text style={[styles.privacyHint, { color: colors.text.secondary }]}>
             {privacy === 'public' && 'Visible to everyone in feeds and search.'}
             {privacy === 'premium' && 'Only subscribers with a premium window can watch.'}
-            {privacy === 'private' && 'Only you can see this content.'}
-            {privacy === 'unlisted' && 'Only people with the link can find this content.'}
           </Text>
         </View>
 
@@ -520,7 +522,7 @@ const styles = StyleSheet.create({
   uploadButton: {
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
     borderRadius: 16,
     padding: 32,
     alignItems: 'center',
@@ -636,7 +638,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   submitButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

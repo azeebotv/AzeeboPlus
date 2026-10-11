@@ -26,6 +26,7 @@ import {
   FadeIn,
 } from '../../src/components/motion';
 import { radius, colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface RewardItem {
   id: string;
@@ -88,12 +89,14 @@ export default function RewardsScreen() {
       // missions, points ledger history, and the redeem catalog. Wallet-side
       // point→cash redemption rides POST /v1/wallet/redeem-reward.
       const [accountRes, missionsRes, historyRes, catalogRes] = await Promise.all([
+        apiClient.get<{ success: boolean; data: { rewardAccount: { points: number } } }>(
+          '/v1/rewards'
+        ),
         apiClient
-          .get<{ success: boolean; data: { rewardAccount: { points: number } } }>('/v1/rewards'),
-        apiClient
-          .get<{ success: boolean; data: { missions: MissionWithCompletion[] } }>(
-            '/v1/rewards/missions'
-          )
+          .get<{
+            success: boolean;
+            data: { missions: MissionWithCompletion[] };
+          }>('/v1/rewards/missions')
           .catch(() => null),
         apiClient
           .get<{
@@ -102,9 +105,10 @@ export default function RewardsScreen() {
           }>('/v1/rewards/history?limit=10')
           .catch(() => null),
         apiClient
-          .get<{ success: boolean; data: { options: RedeemOption[] } }>(
-            '/v1/rewards/redeem-options'
-          )
+          .get<{
+            success: boolean;
+            data: { options: RedeemOption[] };
+          }>('/v1/rewards/redeem-options')
           .catch(() => null),
       ]);
 
@@ -215,7 +219,7 @@ export default function RewardsScreen() {
           { paddingTop: insets.top, backgroundColor: isDark ? '#1A0A0A' : '#ffffff' },
         ]}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#E8420A" />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={brand.flame} />
         }
         keyboardDismissMode="on-drag"
       >
@@ -361,7 +365,9 @@ export default function RewardsScreen() {
                       onPress={() => setRedeemTarget(option)}
                       style={[styles.redeemCard, currentPoints < option.cost && { opacity: 0.5 }]}
                     >
-                      <Text style={styles.redeemIcon}>{REWARD_TYPE_ICONS[option.type] || '🎁'}</Text>
+                      <Text style={styles.redeemIcon}>
+                        {REWARD_TYPE_ICONS[option.type] || '🎁'}
+                      </Text>
                       <Text style={[styles.redeemName, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
                         {option.name}
                       </Text>
@@ -486,27 +492,19 @@ export default function RewardsScreen() {
               history.map((item) => (
                 <View
                   key={item.id}
-                  style={[
-                    styles.historyItem,
-                    { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' },
-                  ]}
+                  style={[styles.historyItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}
                 >
                   <View style={styles.historyIconView}>
                     <Text style={styles.historyIconText}>{item.icon}</Text>
                   </View>
                   <View style={styles.historyInfo}>
-                    <Text
-                      style={[styles.historyTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}
-                    >
+                    <Text style={[styles.historyTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
                       {item.title}
                     </Text>
                     <Text style={styles.historyDate}>{item.date}</Text>
                   </View>
                   <Text
-                    style={[
-                      styles.historyPoints,
-                      item.points < 0 && { color: colors.error[500] },
-                    ]}
+                    style={[styles.historyPoints, item.points < 0 && { color: colors.error[500] }]}
                   >
                     {item.points > 0 ? '+' : ''}
                     {item.points}
@@ -526,12 +524,7 @@ export default function RewardsScreen() {
         onRequestClose={() => !isRedeeming && setRedeemTarget(null)}
       >
         <View style={styles.confirmOverlay}>
-          <View
-            style={[
-              styles.confirmCard,
-              { backgroundColor: isDark ? '#1a1a1a' : '#ffffff' },
-            ]}
-          >
+          <View style={[styles.confirmCard, { backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }]}>
             {redeemTarget && (
               <>
                 <Text style={[styles.confirmTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -645,14 +638,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   pointsCard: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: radius.xl,
     padding: 24,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
-    shadowColor: '#E8420A',
+    shadowColor: brand.flame,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -758,7 +751,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   redeemPoints: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: radius.xl,
@@ -915,7 +908,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   confirmGo: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   confirmGoDisabled: {
     opacity: 0.5,

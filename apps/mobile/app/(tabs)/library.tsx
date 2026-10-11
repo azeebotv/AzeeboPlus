@@ -6,6 +6,7 @@ import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { useSavedContent, useRecentContent } from '@azeebo/react-data/hooks/useContentQuery';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const TABS = [
   { id: 'watchlist', label: 'Watchlist', emoji: '📋' },
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tabActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   tabEmoji: {
     fontSize: 14,
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -287,7 +288,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.tertiary,
   },
   resumeText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 12,
     fontWeight: '600',
   },

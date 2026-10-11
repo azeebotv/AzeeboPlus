@@ -16,6 +16,7 @@ import { LoadingState, ErrorState } from '../../../src/components/StateContainer
 import { useWallet } from '@azeebo/react-data/contexts/WalletContext';
 import { votePackages as defaultVotePackages } from '../../../src/config/prices';
 import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const VOTE_PACKAGES = defaultVotePackages.reality;
 
@@ -340,7 +341,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
   },
-  playIcon: { fontSize: 48, color: '#E8420A' },
+  playIcon: { fontSize: 48, color: brand.flame },
   streamLabel: { color: colors.text.secondary, fontSize: 12, marginTop: 4 },
   viewerBadge: {
     position: 'absolute',
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -404,7 +405,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 12,
     borderRadius: 10,
     gap: 8,
@@ -468,9 +469,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  packageCardSelected: { borderColor: '#E8420A' },
+  packageCardSelected: { borderColor: brand.flame },
   packageVotes: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  packagePrice: { color: '#E8420A', fontSize: 14, fontWeight: '600' },
+  packagePrice: { color: brand.flame, fontSize: 14, fontWeight: '600' },
   packageBonus: { color: colors.category.green, fontSize: 11, marginTop: 2 },
   quantityRow: {
     flexDirection: 'row',
@@ -494,7 +495,7 @@ const styles = StyleSheet.create({
   summaryLabel: { color: colors.text.secondary, fontSize: 14 },
   summaryValue: { color: '#fff', fontSize: 14, fontWeight: '600' },
   voteNowButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',

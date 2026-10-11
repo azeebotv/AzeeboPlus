@@ -1,4 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
+import { brand } from '@azeebo/design-tokens';
 
 describe('Mobile Homepage — Dual System', () => {
   describe('Guest Homepage', () => {
@@ -218,7 +219,7 @@ describe('Mobile Homepage — Dual System', () => {
     it('should support progress bar display', () => {
       const progressConfig = {
         showsProgress: true,
-        progressColor: '#E8420A',
+        progressColor: brand.flame,
         backgroundColor: 'rgba(255,255,255,0.2)',
         height: 3,
       };
@@ -236,7 +237,7 @@ describe('Mobile Homepage — Dual System', () => {
     it('should show loading indicator while auth state resolves', () => {
       const loadingConfig = {
         indicator: 'ActivityIndicator',
-        color: '#E8420A',
+        color: brand.flame,
         size: 'large',
       };
       expect(loadingConfig.indicator).toBe('ActivityIndicator');
@@ -355,7 +356,7 @@ describe('Mobile Homepage — Dual System', () => {
       const loadingState = {
         isLoading: true,
         showsActivityIndicator: true,
-        color: '#E8420A',
+        color: brand.flame,
       };
       expect(loadingState.showsActivityIndicator).toBe(true);
     });
