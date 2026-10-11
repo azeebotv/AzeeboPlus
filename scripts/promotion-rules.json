@@ -52,6 +52,30 @@
     {
       "id": "azeebo-custom/no-hex-colors",
       "ratchet": "scripts/no-hex-colors-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-arbitrary-hex-class",
+      "ratchet": "scripts/no-arbitrary-hex-class-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-dead-class-override",
+      "ratchet": "scripts/no-dead-class-override-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-retired-brand-alias",
+      "ratchet": "scripts/no-retired-brand-alias-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-off-system-color-utility",
+      "ratchet": "scripts/no-off-system-color-utility-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/require-shared-route-boundary",
+      "ratchet": "scripts/require-shared-route-boundary-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-undefined-az-utility",
+      "ratchet": "scripts/no-undefined-az-utility-baseline.json"
     }
   ]
 }

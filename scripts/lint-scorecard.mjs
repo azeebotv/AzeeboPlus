@@ -37,7 +37,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { discoverWorkspaces, runEslintJson, countWarnings } from './check-lint-warning-ratchet.mjs';
+import { discoverWorkspaces, runEslintJson, countFindings } from './check-lint-warning-ratchet.mjs';
 import { inScope, resolveSeverities, severityOf, loadPromotionConfig, classifyServices } from './check-rule-promotion.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -269,7 +269,7 @@ async function main() {
   const serviceNames = new Set(workspaces.map((w) => w.name));
 
   for (const [index, { id: ruleId, ratchet }] of selected.entries()) {
-    const { counts } = countWarnings(results, workspaces, ruleId);
+    const { counts, warnCounts } = countFindings(results, workspaces, ruleId);
     const liveTotal = [...counts.values()].reduce((s, c) => s + c, 0);
 
     // The rule's ratchet baseline is the trend source. A rule without one
@@ -288,8 +288,9 @@ async function main() {
     const trend = trendFrom(history, liveTotal, serviceNames);
 
     // Same classification as the promotion gate — one source of truth for
-    // migrating/healthy/promote/exempt/misgated.
-    const entries = classifyServices(workspaces, severities, counts, ruleId).map((c) => ({
+    // migrating/healthy/promote/exempt/misgated — which means the warning-only
+    // counts, not the severity-agnostic total the trend compares.
+    const entries = classifyServices(workspaces, severities, warnCounts, ruleId).map((c) => ({
       name: c.name,
       warnCount: c.warnCount,
       severity: c.severity,
@@ -314,7 +315,7 @@ async function main() {
         if (baselineServiceTotal !== liveTotal) {
           console.log('');
           console.log(
-            `note: baseline for these services (${baselineServiceTotal}) ≠ live warnings (${liveTotal}) — run \`pnpm run check:lint-ratchet -- --update\` after landing conversions to keep the trend honest.`,
+            `note: baseline for these services (${baselineServiceTotal}) ≠ live findings (${liveTotal}) — run \`pnpm run check:lint-ratchet -- --update\` after landing conversions to keep the trend honest.`,
           );
         }
       } catch {

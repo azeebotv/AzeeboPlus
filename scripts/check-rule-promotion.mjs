@@ -54,7 +54,7 @@
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
-import { discoverWorkspaces, runEslintJson, countWarnings } from './check-lint-warning-ratchet.mjs';
+import { discoverWorkspaces, runEslintJson, countFindings } from './check-lint-warning-ratchet.mjs';
 import { loadPromotionConfig, selectRules, PROMOTION_CONFIG_PATH } from './lib/promotion-config.mjs';
 
 const require = createRequire(import.meta.url);
@@ -174,8 +174,11 @@ async function main() {
   const results = runEslintJson(workspaces.flatMap((w) => w.lintDirs), ROOT);
 
   const perRule = selected.map((rule) => {
-    const { counts } = countWarnings(results, workspaces, rule.id);
-    const classified = classifyServices(workspaces, severities, counts, rule.id, {
+    // Warnings only, deliberately: this gate asks "is this service still
+    // converting", and an `error`-severity finding is not a conversion in
+    // progress — it is a lint failure, which the ratchet gate owns.
+    const { warnCounts } = countFindings(results, workspaces, rule.id);
+    const classified = classifyServices(workspaces, severities, warnCounts, rule.id, {
       pinExemptions: rule.exemptWorkspaces ?? [],
     });
     // Config-rot warnings: an exemption that no longer matches reality.
@@ -186,7 +189,7 @@ async function main() {
         warnings.push(`exemptWorkspaces for "${rule.id}" lists "${c.name}" but it reports ${c.warnCount} warning(s) — exemption or conversion, not both`);
       }
     }
-    return { rule, counts, classified };
+    return { rule, warnCounts, classified };
   });
 
   for (const warning of warnings) console.warn(`⚠️  ${warning}`);
