@@ -77,6 +77,16 @@
   --color-az-universe-games: #DDA0DD;
   --color-az-universe-comedy: #F39C12;
   --color-az-universe-sports: #E74C3C;
+  --color-az-category-violet: #8b5cf6;
+  --color-az-category-violet-light: #a78bfa;
+  --color-az-category-pink: #ec4899;
+  --color-az-category-cyan: #06b6d4;
+  --color-az-category-teal: #14b8a6;
+  --color-az-category-indigo: #6366f1;
+  --color-az-category-sky: #1e90ff;
+  --color-az-category-crimson: #c41e3a;
+  --color-az-category-emerald: #10b981;
+  --color-az-category-forest: #0d3b2e;
   --color-az-ink: #FFFFFF;
   --color-az-ink-dim: #D9D9D9;
   --color-az-ink-muted: #A8A8A8;
@@ -85,6 +95,8 @@
   --color-az-surface-panel: #1F1F1F;
   --color-az-surface-edge: #262626;
   --color-az-surface-auth-void: #100012;
+  --color-az-surface-auth-violet: #1B001F;
+  --color-az-surface-auth-warm: #3A1A0A;
   --color-az-glass-border: rgba(255, 255, 255, 0.08);
   --color-az-glass-border-hover: rgba(255, 255, 255, 0.16);
   --color-az-glass-card: rgba(255, 255, 255, 0.10);
@@ -175,7 +187,22 @@
   /* --- elevation: Figma builds depth from blur + hairline, not shadow --- */
   --shadow-az-lifted: 0 3px 50px rgba(0, 0, 0, 0.35);
   --shadow-az-hairline: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-az-sticky: 0 1px 24px 0 rgba(0, 0, 0, 0.4);
+  --shadow-az-sticky-idle: 0 1px 12px 0 rgba(0, 0, 0, 0.2);
   --shadow-az-glow: 0 0 20px rgba(227, 30, 36, 0.4);
+
+  /* --- hue blooms: one geometry per role, derived from a registered hex --- */
+  --shadow-az-glow-gold: 0 4px 16px rgba(251, 191, 36, 0.4);
+  --shadow-az-glow-silver: 0 4px 16px rgba(192, 192, 192, 0.3);
+  --shadow-az-glow-bronze: 0 4px 16px rgba(205, 127, 50, 0.3);
+  --shadow-az-glow-badge: 0 0 25px rgba(251, 191, 36, 0.3);
+  --shadow-az-glow-badge-strong: 0 0 40px rgba(251, 191, 36, 0.3);
+  --shadow-az-glow-warning: 0 8px 32px rgba(245, 158, 11, 0.3);
+  --shadow-az-glow-warning-bloom: 0 0 40px rgba(245, 158, 11, 0.3);
+  --shadow-az-glow-warning-spark: 0 0 12px rgba(245, 158, 11, 0.6);
+  --shadow-az-glow-error: 0 8px 32px rgba(239, 68, 68, 0.35);
+  --shadow-az-glow-primary: 0 8px 32px rgba(227, 30, 36, 0.35);
+  --shadow-az-glow-primary-soft: 0 0 12px rgba(227, 30, 36, 0.3);
   --blur-az-glass: 12px;
 
   /* --- tracking + leading primitives --- */

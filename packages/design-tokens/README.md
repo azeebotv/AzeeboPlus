@@ -42,21 +42,44 @@ const styles = {
   status, so it lives in this package rather than in the state ramps.
 - `--color-az-accent-<metal>` — the reward-tier metals (`gold`, `bronze`,
   `silver`), the same values the mobile sheets read through `colors.accent`.
+  `--brand-gold` used to sit beside that gold at #FFD700; one concept now has one
+  value, and the medal chrome on `/leaderboard` and `/rewards` reads it.
+- `--color-az-category-<hue>` — the subject hues that are not a universe and not a
+  status: genre badges, vertical identity, chart series (`violet` and its light
+  step, `pink`, `cyan`, `teal`, `indigo`, `sky`, `crimson`, `emerald`, `forest`).
+  Registered rather than measured, exactly like `universeColors`, and with the same
+  purpose: before this layer existed these hexes lived only in twelve
+  `--brand-*` hue aliases in `globals.css` and in Tailwind's private `purple-500`,
+  which is to say nowhere a page could look them up.
+- `--color-az-ink*`, `--color-az-surface-*` (including `surface-auth-violet`, the
+  measured Onboarding/Login backdrop, and `surface-auth-warm`) and
+  `--color-az-glass-*` — the surface layer, mapped by the generator's
+  `SURFACE_UTILITIES` table because its utility names do not match its field names.
+- `--shadow-az-glow-<name>` and `--shadow-az-sticky(-idle)` — the glow family
+  (`gold|silver|bronze|badge(-strong)|warning(|bloom|spark)|error|primary(-soft)`).
+  Every one is `withAlpha` of a colour already in this package, so a glow cannot
+  introduce a hue the registry does not own. Five pages had hand-written five
+  geometries for the same warning bloom; they now share `shadow-az-glow-warning`.
 
 The generator flattens colour groups by hand, so it now checks its own list: every
 group in `colors` must be either a web ramp (`primary`, `secondary`, `success`,
 `warning`, `error`, `accent`) or a declared console-only one (`dark`, `light`,
-`text`, `bg`, `border`), and every web ramp step must reach the stylesheet. A group
-added here without being classified fails `pnpm tokens:css` — that is how
-`colors.accent` shipped for a whole migration while `bg-az-accent-gold` compiled to
-nothing. The other half of the guard is the
+`text`, `bg`, `border`), every web ramp step must reach the stylesheet, and so must
+every `universeColors` and `categoryColors` entry and every field of `surface`. A
+group or field added here without being classified fails `pnpm tokens:css` — that
+is how `colors.accent` shipped for a whole migration while `bg-az-accent-gold`
+compiled to nothing. The other half of the guard is the
 `azeebo-custom/no-undefined-az-utility` lint rule, which reads the emitted
 stylesheet and rejects a page that names a token not in it.
+`scripts/__tests__/design-token-emission.test.mjs` pins the same contract from the
+outside, and `pnpm tokens:css:check` fails if the committed stylesheet is stale.
 
 Colors the rule-enforcement layer expects you to use: `text-az-ink`,
 `text-az-ink-dim`, `text-az-ink-muted`, `bg-az-glass-fill|card`,
-`border-az-glass-border`, `text-az-flame|scarlet`, and the semantic ramps
-`az-primary|secondary|success|warning|error-<step>`.
+`border-az-glass-border`, `text-az-flame|scarlet`, the semantic ramps
+`az-primary|secondary|success|warning|error-<step>`, `bg-az-surface-*` for
+elevations and auth backdrops, `az-category-*` for subject hues, and
+`shadow-az-glow-*` for the glows.
 
 `globals.css` builds the shared component classes on top of those variables
 (`.az-glass`, `.az-chip`, `.az-btn-primary`, `.az-input`, `.az-divider`,
@@ -108,4 +131,4 @@ token.
 
 - **Team**: Design Engineering
 - **Maintainer**: design@azeeboplus.com
-- **Last Updated**: 2026-10-09
+- **Last Updated**: 2026-10-11

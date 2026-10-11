@@ -13,10 +13,12 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import {
   brand,
+  categoryColors,
   colors,
   elevation,
   families,
   glass,
+  glows,
   radius,
   shadows,
   spacing,
@@ -32,6 +34,23 @@ const OUT = resolve(__dirname, '../apps/web/src/styles/design-tokens.css');
 const checkOnly = process.argv.includes('--check');
 
 const kebab = (s: string) => s.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+
+/* The surface layer gets utility names that don't match its field names (ink is
+   the ink colour, not a surface-ink), so the mapping is explicit — and checked,
+   for the same reason the colour groups are: a field a later migration adds to
+   the registry must not be silently skipped. */
+const SURFACE_UTILITIES: Array<[keyof typeof surface, string]> = [
+  ['ink', 'ink'],
+  ['dim', 'ink-dim'],
+  ['faint', 'ink-muted'],
+  ['root', 'surface-root'],
+  ['raised', 'surface-raised'],
+  ['panel', 'surface-panel'],
+  ['edge', 'surface-edge'],
+  ['authVoid', 'surface-auth-void'],
+  ['authViolet', 'surface-auth-violet'],
+  ['authWarm', 'surface-auth-warm'],
+];
 
 const colorEntries: Array<[string, string]> = [
   ['scarlet', brand.scarlet],
@@ -53,14 +72,11 @@ const colorEntries: Array<[string, string]> = [
   // universe menu, per-show badges). The package owns the palette; web reads it
   // through the generator so per-universe hexes stop being retyped per page.
   ...Object.entries(universeColors).map(([k, v]) => [`universe-${k}`, v.primary]),
-  ['ink', '#FFFFFF'],
-  ['ink-dim', surface.dim],
-  ['ink-muted', surface.faint],
-  ['surface-root', surface.root],
-  ['surface-raised', surface.raised],
-  ['surface-panel', surface.panel],
-  ['surface-edge', surface.edge],
-  ['surface-auth-void', surface.authVoid],
+  // Categorical subject hues (genre badges, vertical identity, chart series).
+  // Registered rather than measured, but the only place a page can name them
+  // from; leaving them out is what kept ~60 sites on `var(--brand-purple)`.
+  ...Object.entries(categoryColors).map(([k, v]) => [`category-${kebab(k)}`, v]),
+  ...SURFACE_UTILITIES.map(([key, name]) => [name, surface[key]] as [string, string]),
   ['glass-border', glass.border],
   ['glass-border-hover', glass.borderHover],
   ['glass-card', glass.card],
@@ -96,12 +112,22 @@ const unaccountedGroups = Object.keys(colors).filter(
 const unemittedUniverses = Object.keys(universeColors).filter(
   (name) => !emittedColorNames.has(`universe-${name}`)
 );
+const unemittedCategories = Object.keys(categoryColors).filter(
+  (name) => !emittedColorNames.has(`category-${kebab(name)}`)
+);
+const unemittedSurfaces = (Object.keys(surface) as Array<keyof typeof surface>).filter(
+  (key) => !SURFACE_UTILITIES.some(([mapped]) => mapped === key)
+);
 const emissionGaps = [
   ...unemitted.map((cssName) => `${cssName} is declared in the registry but never pushed into the stylesheet`),
   ...unaccountedGroups.map(
     (group) => `colors.${group} belongs in neither WEB_RAMP_GROUPS nor CONSOLE_ONLY_GROUPS`
   ),
   ...unemittedUniverses.map((name) => `--color-az-universe-${name} is not in colorEntries`),
+  ...unemittedCategories.map((name) => `--color-az-category-${name} is not in colorEntries`),
+  ...unemittedSurfaces.map(
+    (key) => `surface.${key} has no entry in SURFACE_UTILITIES, so no az utility reads it`
+  ),
 ];
 if (emissionGaps.length) {
   throw new Error(
@@ -161,7 +187,11 @@ for (const [role, t] of typeEntries) {
 lines.push('', '  /* --- elevation: Figma builds depth from blur + hairline, not shadow --- */');
 lines.push(`  --shadow-az-lifted: ${elevation.lifted};`);
 lines.push(`  --shadow-az-hairline: ${elevation.hairline};`);
+lines.push(`  --shadow-az-sticky: ${elevation.sticky};`);
+lines.push(`  --shadow-az-sticky-idle: ${elevation.stickyIdle};`);
 lines.push(`  --shadow-az-glow: ${shadows.glow};`);
+lines.push('', '  /* --- hue blooms: one geometry per role, derived from a registered hex --- */');
+for (const [name, value] of Object.entries(glows)) lines.push(`  --shadow-az-glow-${kebab(name)}: ${value};`);
 lines.push(`  --blur-az-glass: ${glass.blur}px;`);
 
 lines.push('', '  /* --- tracking + leading primitives --- */');

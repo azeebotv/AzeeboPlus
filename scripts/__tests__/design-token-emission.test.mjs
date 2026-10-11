@@ -56,3 +56,55 @@ test('the accent metals are usable as utilities, not just registry keys', () => 
   // the generator pushed the registry entry into the stylesheet.
   assert.match(CSS, /--color-az-accent-silver: #c0c0c0;/);
 });
+
+test('the categorical hues have az utilities to land on', () => {
+  // Same gap class as the metals, one layer over: the premium/violet family and
+  // the genre identities had no registry home, so ~60 sites stayed on
+  // `var(--brand-purple)` and Tailwind's raw `purple-500`. `--check` above proves
+  // the generator emits whatever the registry declares; this proves the registry
+  // still *declares* them, so deleting the group cannot quietly reopen the hole.
+  for (const [name, hex] of [
+    ['violet', '#8b5cf6'],
+    ['violet-light', '#a78bfa'],
+    ['pink', '#ec4899'],
+    ['cyan', '#06b6d4'],
+    ['teal', '#14b8a6'],
+    ['indigo', '#6366f1'],
+    ['sky', '#1e90ff'],
+    ['crimson', '#c41e3a'],
+    ['emerald', '#10b981'],
+    ['forest', '#0d3b2e'],
+  ]) {
+    assert.match(
+      CSS,
+      new RegExp(`--color-az-category-${name}: ${hex};`),
+      `--color-az-category-${name} is missing, so bg-az-category-${name} is a dead utility`
+    );
+  }
+});
+
+test('the auth backdrops are surface tokens, not page-level literals', () => {
+  // `authViolet` is the measured Onboarding/Login backdrop and `authWarm` the
+  // in-product one; both feed the `via-…` gradient stops, which is where a
+  // hand-typed hex silently drifts from the rest of the surface layer.
+  assert.match(CSS, /--color-az-surface-auth-violet: #1B001F;/);
+  assert.match(CSS, /--color-az-surface-auth-warm: #3A1A0A;/);
+  assert.match(CSS, /--color-az-surface-auth-void: #100012;/);
+});
+
+test('the glow shadows exist and derive from registered colours', () => {
+  // Five pages had hand-written the same warning bloom in five geometries. The
+  // glows are now registry-owned, emitted by a loop, and built with `withAlpha`
+  // from tokens that already exist — the assertion below is on that derivation,
+  // because a glow with an invented hex would pass `--check` just as happily.
+  assert.match(CSS, /--shadow-az-glow-gold: 0 4px 16px rgba\(251, 191, 36, 0\.4\);/);
+  assert.match(CSS, /--shadow-az-glow-warning: 0 8px 32px rgba\(245, 158, 11, 0\.3\);/);
+  assert.match(CSS, /--shadow-az-glow-primary: 0 8px 32px rgba\(227, 30, 36, 0\.35\);/);
+  // 251/191/36 is accent-gold, 245/158/11 is warning-500, 227/30/36 is primary-500.
+  for (const rgb of ['251, 191, 36', '245, 158, 11', '227, 30, 36']) {
+    assert.ok(
+      CSS.includes(`rgba(${rgb},`),
+      `rgba(${rgb}) appears only in a glow, so it is not a registered colour`
+    );
+  }
+});

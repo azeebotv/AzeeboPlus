@@ -44,6 +44,18 @@ export const surface = {
   edge: '#262626',
   /** Deep violet-black used behind the auth/onboarding art. */
   authVoid: '#100012',
+  /**
+   * The second, deeper violet of the same art: measured 10 times across the
+   * Onboarding, Login and Register frames. `via-purple-950` on two landing
+   * pages was an improvisation for this role.
+   */
+  authViolet: '#1B001F',
+  /**
+   * Warm endpoint of the auth-page backdrop. Not a Figma fill — this is the
+   * value apps/web already paints, registered so the gradient is composed from
+   * tokens instead of a hand-typed hex.
+   */
+  authWarm: '#3A1A0A',
   faint: '#A8A8A8',
   dim: '#D9D9D9',
   ink: '#FFFFFF',
@@ -73,6 +85,31 @@ export const universeColors = {
   games: { primary: '#DDA0DD', secondary: '#E6BCE6' },
   comedy: { primary: '#F39C12', secondary: '#F5B041' },
   sports: { primary: '#E74C3C', secondary: '#EC7063' },
+};
+
+/**
+ * Categorical hues: colours that name a *subject* — a music genre, a vertical's
+ * identity, a chart series, a tournament outcome class — instead of a state.
+ *
+ * These are registered, not measured: the Figma captures contain no purple,
+ * pink, cyan or indigo fill at all (the only violets there are the `#100012` /
+ * `#1B001F` auth art), so this is the palette the product already ships in
+ * apps/web's `--brand-*` compat layer, promoted so a page can write
+ * `text-az-category-violet` instead of `text-[var(--brand-purple)]`. Same
+ * contract as `universeColors`: fixed, never theme-aware, and never a
+ * substitute for a state ramp.
+ */
+export const categoryColors = {
+  violet: '#8b5cf6',
+  violetLight: '#a78bfa',
+  pink: '#ec4899',
+  cyan: '#06b6d4',
+  teal: '#14b8a6',
+  indigo: '#6366f1',
+  sky: '#1e90ff',
+  crimson: '#c41e3a',
+  emerald: '#10b981',
+  forest: '#0d3b2e',
 };
 
 export type ColorScale = {
@@ -409,7 +446,35 @@ export const elevation = {
   hairline: `0 0 0 1px ${glass.border}`,
   /** The one real shadow in the file: ~50px blur, ~3px y-offset, black. */
   lifted: '0 3px 50px rgba(0, 0, 0, 0.35)',
+  /** Sticky header once the page has scrolled under it. */
+  sticky: '0 1px 24px 0 rgba(0, 0, 0, 0.4)',
+  /** Sticky header at rest. */
+  stickyIdle: '0 1px 12px 0 rgba(0, 0, 0, 0.2)',
   blurPx: glass.blur,
+};
+
+/**
+ * Hue-tinted blooms. Figma barely shadows anything, but the product's reward,
+ * restriction and rank surfaces all paint one, and each page hand-typed its own
+ * rgba() literal — which is how a single warning glow ended up with five
+ * different geometries. Every value here is derived from a registered hex, so
+ * moving a hue moves its glow with it.
+ */
+export const glows = {
+  /** Rank chips on the leaderboard: a short, tight bloom under the medal gradient. */
+  gold: `0 4px 16px ${withAlpha(colors.accent.gold, 0.4)}`,
+  silver: `0 4px 16px ${withAlpha(colors.accent.silver, 0.3)}`,
+  bronze: `0 4px 16px ${withAlpha(colors.accent.bronze, 0.3)}`,
+  /** Reward tiles: the same metal, but a wide halo rather than a drop. */
+  badge: `0 0 25px ${withAlpha(colors.accent.gold, 0.3)}`,
+  badgeStrong: `0 0 40px ${withAlpha(colors.accent.gold, 0.3)}`,
+  /** Status surfaces (maintenance, rate-limited, degraded). */
+  warning: `0 8px 32px ${withAlpha(colors.warning[500], 0.3)}`,
+  warningBloom: `0 0 40px ${withAlpha(colors.warning[500], 0.3)}`,
+  warningSpark: `0 0 12px ${withAlpha(colors.warning[500], 0.6)}`,
+  error: `0 8px 32px ${withAlpha(colors.error[500], 0.35)}`,
+  primary: `0 8px 32px ${withAlpha(BRAND_SCARLET, 0.35)}`,
+  primarySoft: `0 0 12px ${withAlpha(BRAND_SCARLET, 0.3)}`,
 };
 
 export const transitions = {
