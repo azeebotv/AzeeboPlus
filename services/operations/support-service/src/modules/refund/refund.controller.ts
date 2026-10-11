@@ -20,7 +20,7 @@ import {
 } from './dto/refund.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { Prisma } from '../../prisma/client/index.js';
-import { AuthGuard } from '../../common/guards/auth.guard';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { AdminGuard } from '@azeebo/security';
 import { FeatureFlag, FeatureFlagGuard, supportFlags } from '@azeebo/feature-flags';
 
@@ -33,7 +33,7 @@ interface AuthenticatedRequest {
 
 @ApiTags('Refunds')
 @Controller('support/refunds')
-@UseGuards(AuthGuard)
+@UseGuards(ServiceAuthGuard)
 @ApiBearerAuth()
 export class RefundController {
   constructor(@Inject(RefundService) private refundService: RefundService) {}

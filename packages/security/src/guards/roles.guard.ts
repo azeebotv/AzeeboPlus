@@ -1,16 +1,22 @@
-import {
-  Inject,
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from '../decorators/roles.decorator.js';
+import { ROLES_KEY } from '../decorators/roles.decorator';
 
+/**
+ * Role-based access guard. Routes (or controllers) annotated with @Roles()
+ * require the authenticated user to hold one of the listed roles; routes
+ * without @Roles() pass through.
+ *
+ * Register after the authentication guard (ServiceAuthGuard / GatewayAuthGuard)
+ * so request.user is populated:
+ *   providers: [
+ *     { provide: APP_GUARD, useClass: ServiceAuthGuard },
+ *     { provide: APP_GUARD, useClass: RolesGuard },
+ *   ]
+ */
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(@Inject(Reflector) private reflector: Reflector) {}
+  constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     const allowedRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [

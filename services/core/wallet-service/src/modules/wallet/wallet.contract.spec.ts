@@ -105,6 +105,10 @@ const mockWalletService = {
   }),
 };
 
+// Unique per jest run: a live Redis (REDIS_URL set) keeps idempotency keys
+// for 24h, so fixed keys would 409 on the second run.
+const runId = Date.now();
+
 describe('Wallet Controller Contract Tests', () => {
   let app: INestApplication;
   let baseUrl: string;
@@ -199,6 +203,7 @@ describe('Wallet Controller Contract Tests', () => {
       const response = await request(baseUrl)
         .post('/v1/wallet/fund')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `contract-fund-${runId}-1`)
         .send({ amount: 50000, reference: 'pay-ref-123' });
 
       expect(response.status).toBe(201);

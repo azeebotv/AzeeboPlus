@@ -3,7 +3,7 @@ import { INestApplication, ValidationPipe, CanActivate, ExecutionContext } from 
 import request from 'supertest';
 import { ModerationController } from './moderation.controller.js';
 import { ModerationService } from './moderation.service.js';
-import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { RolesGuard } from '@azeebo/security';
 import { Reflector } from '@nestjs/core';
 
 class MockRolesGuard implements CanActivate {

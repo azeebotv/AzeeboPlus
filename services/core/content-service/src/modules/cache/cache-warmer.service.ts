@@ -1,6 +1,7 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { CacheService } from './cache.service';
+import { CacheService } from './cache.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 export interface WarmupConfig {
   key: string;
@@ -9,14 +10,39 @@ export interface WarmupConfig {
   tags?: string[];
 }
 
+export interface WarmupOutcome {
+  success: boolean;
+  key: string;
+  error?: string;
+}
+
+export interface CacheWarmerStatus {
+  totalConfigs: number;
+  lastAttemptAt: Date | null;
+  lastSuccessAt: Date | null;
+  lastDurationMs: number | null;
+  failedKeys: string[];
+  succeededKeys: string[];
+  isHealthy: boolean;
+}
+
 @Injectable()
 export class CacheWarmerService implements OnModuleInit {
   private readonly logger = new Logger(CacheWarmerService.name);
   private warmupConfigs: WarmupConfig[] = [];
 
-  constructor(private cacheService: CacheService) {}
+  private lastAttemptAt: Date | null = null;
+  private lastSuccessAt: Date | null = null;
+  private lastDurationMs: number | null = null;
+  private lastFailedKeys: string[] = [];
+  private lastSucceededKeys: string[] = [];
 
-  async onModuleInit() {
+  constructor(
+    private readonly cacheService: CacheService,
+    @Optional() private readonly prisma?: PrismaService
+  ) {}
+
+  async onModuleInit(): Promise<void> {
     this.registerWarmupTasks();
     await this.warmAll();
   }
@@ -24,7 +50,7 @@ export class CacheWarmerService implements OnModuleInit {
   /**
    * Register all warmup tasks
    */
-  private registerWarmupTasks() {
+  private registerWarmupTasks(): void {
     this.warmupConfigs = [
       // Trending content - refresh every 5 minutes
       {
@@ -107,29 +133,45 @@ export class CacheWarmerService implements OnModuleInit {
   }
 
   /**
-   * Warm all caches on startup
+   * Warm all caches on startup or on schedule
    */
-  async warmAll(): Promise<void> {
+  async warmAll(): Promise<{ succeeded: number; failed: number; durationMs: number }> {
     this.logger.log('Starting cache warmup...');
     const startTime = Date.now();
+    this.lastAttemptAt = new Date(startTime);
 
-    const results = await Promise.allSettled(
+    const outcomes: WarmupOutcome[] = await Promise.all(
       this.warmupConfigs.map((config) => this.warmSingle(config))
     );
 
-    const succeeded = results.filter((r) => r.status === 'fulfilled').length;
-    const failed = results.filter((r) => r.status === 'rejected').length;
+    const succeededItems = outcomes.filter((o) => o.success);
+    const failedItems = outcomes.filter((o) => !o.success);
+
+    this.lastSucceededKeys = succeededItems.map((o) => o.key);
+    this.lastFailedKeys = failedItems.map((o) => o.key);
+
     const duration = Date.now() - startTime;
+    this.lastDurationMs = duration;
+
+    if (failedItems.length === 0) {
+      this.lastSuccessAt = new Date();
+    }
 
     this.logger.log(
-      `Cache warmup completed: ${succeeded} succeeded, ${failed} failed in ${duration}ms`
+      `Cache warmup completed: ${succeededItems.length} succeeded, ${failedItems.length} failed in ${duration}ms`
     );
+
+    return {
+      succeeded: succeededItems.length,
+      failed: failedItems.length,
+      durationMs: duration,
+    };
   }
 
   /**
-   * Warm a single cache entry
+   * Warm a single cache entry without swallowing errors silently
    */
-  async warmSingle(config: WarmupConfig): Promise<void> {
+  async warmSingle(config: WarmupConfig): Promise<WarmupOutcome> {
     try {
       const data = await config.fetchFn();
       await this.cacheService.set(config.key, data, {
@@ -137,64 +179,149 @@ export class CacheWarmerService implements OnModuleInit {
         tags: config.tags,
       });
       this.logger.debug(`Warmed cache: ${config.key}`);
+      return { success: true, key: config.key };
     } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
       this.logger.error(`Failed to warm cache: ${config.key}`, error);
+      return { success: false, key: config.key, error: errMsg };
     }
   }
 
   /**
    * Warm cache by tag
    */
-  async warmByTag(tag: string): Promise<void> {
+  async warmByTag(tag: string): Promise<WarmupOutcome[]> {
     const configs = this.warmupConfigs.filter((c) => c.tags?.includes(tag));
     this.logger.log(`Warming ${configs.length} caches with tag: ${tag}`);
 
-    await Promise.allSettled(configs.map((config) => this.warmSingle(config)));
+    return Promise.all(configs.map((config) => this.warmSingle(config)));
   }
 
   /**
    * Scheduled warmup - runs every 5 minutes
    */
   @Cron(CronExpression.EVERY_5_MINUTES)
-  async scheduledWarmup() {
+  async scheduledWarmup(): Promise<void> {
     this.logger.debug('Running scheduled cache warmup');
     await this.warmAll();
   }
 
   /**
-   * Get warmup status
+   * Get truthful warmup status (never returns current timestamp if no warmup occurred)
    */
-  getStatus(): { totalConfigs: number; lastWarmup: Date } {
+  getStatus(): CacheWarmerStatus {
     return {
       totalConfigs: this.warmupConfigs.length,
-      lastWarmup: new Date(),
+      lastAttemptAt: this.lastAttemptAt,
+      lastSuccessAt: this.lastSuccessAt,
+      lastDurationMs: this.lastDurationMs,
+      failedKeys: [...this.lastFailedKeys],
+      succeededKeys: [...this.lastSucceededKeys],
+      isHealthy: this.lastFailedKeys.length === 0 && this.lastAttemptAt !== null,
     };
   }
 
-  // --- Data fetching functions (stubs) ---
+  // --- Authoritative Data Fetching (backed by PrismaService when available) ---
 
   private async fetchTrending(universe: string): Promise<unknown> {
-    // In production, query database
+    if (this.prisma) {
+      const items = await this.prisma.contentItem.findMany({
+        where: {
+          status: 'published',
+          universe: { name: universe },
+        },
+        orderBy: [{ viewCount: 'desc' }, { createdAt: 'desc' }],
+        take: 20,
+        select: {
+          id: true,
+          title: true,
+          thumbnail: true,
+          universeId: true,
+          viewCount: true,
+          publishedAt: true,
+        },
+      });
+      return { universe, items, updatedAt: new Date() };
+    }
     return { universe, items: [], updatedAt: new Date() };
   }
 
   private async fetchPopularByRegion(region: string): Promise<unknown> {
+    if (this.prisma) {
+      const items = await this.prisma.contentItem.findMany({
+        where: { status: 'published' },
+        orderBy: [{ viewCount: 'desc' }, { createdAt: 'desc' }],
+        take: 20,
+        select: {
+          id: true,
+          title: true,
+          thumbnail: true,
+          universeId: true,
+          viewCount: true,
+        },
+      });
+      return { region, items, updatedAt: new Date() };
+    }
     return { region, items: [], updatedAt: new Date() };
   }
 
   private async fetchNewReleases(): Promise<unknown> {
+    if (this.prisma) {
+      const items = await this.prisma.contentItem.findMany({
+        where: { status: 'published' },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        select: {
+          id: true,
+          title: true,
+          thumbnail: true,
+          universeId: true,
+          createdAt: true,
+        },
+      });
+      return { items, updatedAt: new Date() };
+    }
     return { items: [], updatedAt: new Date() };
   }
 
   private async fetchAllCategories(): Promise<unknown> {
+    if (this.prisma) {
+      const categories = await this.prisma.category.findMany({
+        take: 50,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+        },
+      });
+      return { categories, updatedAt: new Date() };
+    }
     return { categories: [], updatedAt: new Date() };
   }
 
   private async fetchFeaturedCreators(): Promise<unknown> {
+    if (this.prisma) {
+      const creators = await this.prisma.contentItem.findMany({
+        where: { status: 'published' },
+        distinct: ['creatorId'],
+        take: 20,
+        select: {
+          creatorId: true,
+        },
+      });
+      return { creators, updatedAt: new Date() };
+    }
     return { creators: [], updatedAt: new Date() };
   }
 
   private async fetchFeatureFlags(): Promise<unknown> {
+    if (this.prisma) {
+      const flags = await this.prisma.universeFeatureFlag.findMany({
+        take: 100,
+      });
+      return { flags, updatedAt: new Date() };
+    }
     return { flags: {}, updatedAt: new Date() };
   }
 }

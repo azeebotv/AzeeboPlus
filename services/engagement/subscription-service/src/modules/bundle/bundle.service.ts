@@ -35,7 +35,7 @@ export class BundleService {
     );
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
     // Secret for internal wallet-service calls — same resolution order the
     // wallet-service InternalSecretGuard uses to validate it.

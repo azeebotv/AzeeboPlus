@@ -17,7 +17,7 @@ jest.mock('../../utils/logger', () => ({
 }));
 
 jest.mock('../../utils/certificatePinning', () => ({
-  certificatePinningService: { setup: jest.fn() },
+  certificatePinningService: { setup: jest.fn(), fetchWithPinning: jest.fn() },
 }));
 
 (globalThis as Record<string, unknown>).__DEV__ = true;
@@ -49,5 +49,52 @@ describe('gatewayPath', () => {
 
   it('should handle empty string', () => {
     expect(gatewayPath('')).toBe('/api/v1');
+  });
+});
+
+describe('apiClient Idempotency-Key header', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let freshClient: any;
+  let fetchWithPinning: jest.Mock;
+
+  beforeEach(() => {
+    jest.resetModules();
+    fetchWithPinning = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
+    jest.doMock('../../utils/certificatePinning', () => ({
+      certificatePinningService: {
+        setup: jest.fn(),
+        fetchWithPinning,
+      },
+    }));
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    freshClient = require('../client').apiClient;
+  });
+
+  it('adds an Idempotency-Key header to POST requests', async () => {
+    await freshClient.post('/v1/wallet/withdraw', { amount: 100 });
+
+    const [, init] = fetchWithPinning.mock.calls[0];
+    expect(init.headers['Idempotency-Key']).toMatch(/^idemp-/);
+  });
+
+  it('does not add an Idempotency-Key header to GET requests', async () => {
+    await freshClient.get('/v1/wallet');
+
+    const [, init] = fetchWithPinning.mock.calls[0];
+    expect(init.headers['Idempotency-Key']).toBeUndefined();
+  });
+
+  it('preserves a caller-supplied Idempotency-Key', async () => {
+    await freshClient.post(
+      '/v1/wallet/withdraw',
+      { amount: 100 },
+      { headers: { 'Idempotency-Key': 'caller-key-1' } }
+    );
+
+    const [, init] = fetchWithPinning.mock.calls[0];
+    expect(init.headers['Idempotency-Key']).toBe('caller-key-1');
   });
 });

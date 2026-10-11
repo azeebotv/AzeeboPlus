@@ -96,7 +96,7 @@ describe('PaymentsService Integration', () => {
           useValue: {
             getOrThrow: jest.fn().mockImplementation((key: string) => {
               const config: Record<string, string> = {
-                ANALYTICS_SERVICE_URL: 'http://analytics-service:3040',
+                ANALYTICS_SERVICE_URL: 'http://analytics-service:3008',
                 WALLET_SERVICE_URL: 'http://wallet-service:3010',
               };
               return config[key];

@@ -177,7 +177,7 @@ describe('AuthService', () => {
           useValue: {
             get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
               const config: Record<string, unknown> = {
-                SALT_ROUNDS: 10,
+                SALT_ROUNDS: 12,
                 JWT_EXPIRES_IN: '30m',
                 JWT_REFRESH_EXPIRES_IN: '7d',
                 JWT_ACCESS_SECRET: 'test-jwt-secret-for-access-tokens-min-32-chars',
@@ -293,6 +293,36 @@ describe('AuthService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('access_token');
+    });
+
+    it('upgrades legacy cost-10 password hashes on successful login', async () => {
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        password: '$2b$10$abcdefghijklmnopqrstuuabcdefghijklmnopqrstuvwxyz0123456789',
+      });
+      (authRepository.createSession as jest.Mock).mockResolvedValue(mockSession);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('$2b$12$upgradedhash');
+      (jwtService.sign as jest.Mock).mockReturnValue('access-token');
+
+      await service.login(loginDto);
+
+      expect(bcrypt.hash).toHaveBeenCalledWith('Password123!', 12);
+      expect(authRepository.updatePassword).toHaveBeenCalledWith('user-123', '$2b$12$upgradedhash');
+    });
+
+    it('does not rehash when the stored hash already uses the current cost', async () => {
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        password: '$2b$12$abcdefghijklmnopqrstuuabcdefghijklmnopqrstuvwxyz0123456789',
+      });
+      (authRepository.createSession as jest.Mock).mockResolvedValue(mockSession);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (jwtService.sign as jest.Mock).mockReturnValue('access-token');
+
+      await service.login(loginDto);
+
+      expect(authRepository.updatePassword).not.toHaveBeenCalled();
     });
 
     it('should fail with invalid password', async () => {

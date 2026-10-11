@@ -74,7 +74,7 @@ export class SocialAuthService {
     @Inject(ConfigService) private readonly configService: ConfigService,
     @Inject(RedisService) private readonly redisService: RedisService
   ) {
-    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
+    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 12);
   }
 
   // ─── OAuth token verification ──────────────────────────────────────
@@ -348,7 +348,7 @@ export class SocialAuthService {
           throw new UnauthorizedException('Social account already linked to another user');
         }
 
-        const password = await bcrypt.hash(randomUUID(), 10);
+        const password = await bcrypt.hash(randomUUID(), this.saltRounds);
         user = await this.authRepository.create({
           email: socialUser.email,
           password,

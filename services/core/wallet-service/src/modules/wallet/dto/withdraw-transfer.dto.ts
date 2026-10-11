@@ -1,35 +1,57 @@
 import { IsString, IsNumber, IsOptional, IsPositive, Min } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class WithdrawWalletDto {
-  @ApiProperty({ example: 100 })
+  /**
+   * Client-generated key that is stable across retries. Prevents duplicate
+   * withdrawals when a request times out and is replayed. May also be
+   * supplied via the Idempotency-Key header (sent automatically by the
+   * shared http-client); falls back to a server-generated unique key.
+   */
+  @ApiPropertyOptional({ example: 'withdraw-0b9e6c1e-2b7a-4f3d-9c1a-8f2e7d6c5b4a' })
+  @IsString()
+  @IsOptional()
+  idempotencyKey?: string;
+
+  @ApiPropertyOptional({ example: 100 })
   @IsNumber()
   @IsPositive()
   @Min(0.01)
   amount!: number;
 
-  @ApiProperty({ example: 'bank-account-123' })
+  @ApiPropertyOptional({ example: 'bank-account-123' })
   @IsString()
   bankAccountId!: string;
 
-  @ApiProperty({ example: 'Withdrawal to bank account', required: false })
+  @ApiPropertyOptional({ example: 'Withdrawal to bank account' })
   @IsString()
   @IsOptional()
   description?: string;
 }
 
 export class TransferWalletDto {
-  @ApiProperty({ example: 50 })
+  /**
+   * Client-generated key that is stable across retries. Prevents duplicate
+   * transfers when a request times out and is replayed. May also be
+   * supplied via the Idempotency-Key header (sent automatically by the
+   * shared http-client); falls back to a server-generated unique key.
+   */
+  @ApiPropertyOptional({ example: 'transfer-0b9e6c1e-2b7a-4f3d-9c1a-8f2e7d6c5b4a' })
+  @IsString()
+  @IsOptional()
+  idempotencyKey?: string;
+
+  @ApiPropertyOptional({ example: 50 })
   @IsNumber()
   @IsPositive()
   @Min(0.01)
   amount!: number;
 
-  @ApiProperty({ example: 'user-456' })
+  @ApiPropertyOptional({ example: 'user-456' })
   @IsString()
   recipientId!: string;
 
-  @ApiProperty({ example: 'Transfer for services', required: false })
+  @ApiPropertyOptional({ example: 'Transfer for services' })
   @IsString()
   @IsOptional()
   description?: string;

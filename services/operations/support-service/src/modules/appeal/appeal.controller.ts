@@ -14,7 +14,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AppealService } from './appeal.service';
 import { CreateAppealDto, DecideAppealDto, AppealQueryDto } from './dto/appeal.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
-import { AuthGuard } from '../../common/guards/auth.guard';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { AdminGuard } from '@azeebo/security';
 
 interface AuthenticatedRequest {
@@ -26,7 +26,7 @@ interface AuthenticatedRequest {
 
 @ApiTags('Appeals')
 @Controller('support/appeals')
-@UseGuards(AuthGuard)
+@UseGuards(ServiceAuthGuard)
 @ApiBearerAuth()
 export class AppealController {
   constructor(@Inject(AppealService) private appealService: AppealService) {}

@@ -8,10 +8,11 @@ import { FeatureFlagGuard, FeatureFlagService, supportFlags } from '@azeebo/feat
 
 jest.mock('@azeebo/security', () => ({
   AdminGuard: jest.fn(),
+  ServiceAuthGuard: jest.fn(),
 }));
 
 import { AdminGuard } from '@azeebo/security';
-import { AuthGuard } from '../../common/guards/auth.guard.js';
+import { ServiceAuthGuard } from '@azeebo/security';
 
 class MockAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -59,7 +60,7 @@ describe('Support takedown kill-switch (support_takedowns_auto)', () => {
         FeatureFlagGuard,
       ],
     })
-      .overrideGuard(AuthGuard)
+      .overrideGuard(ServiceAuthGuard)
       .useClass(MockAuthGuard)
       .overrideGuard(AdminGuard)
       .useClass(MockAdminGuard)

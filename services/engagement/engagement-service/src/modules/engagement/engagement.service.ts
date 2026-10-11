@@ -76,6 +76,19 @@ export class EngagementService {
 
   // --- User Profile Enrichment ---
 
+  /** Bounded-concurrency map so fan-outs never open N simultaneous sockets. */
+  private async mapChunked<T, R>(
+    items: T[],
+    size: number,
+    fn: (item: T) => Promise<R>
+  ): Promise<R[]> {
+    const results: R[] = [];
+    for (let i = 0; i < items.length; i += size) {
+      results.push(...(await Promise.all(items.slice(i, i + size).map(fn))));
+    }
+    return results;
+  }
+
   private async enrichUserProfile(
     userId: string
   ): Promise<{ displayName: string; avatar: string | null }> {
@@ -148,30 +161,42 @@ export class EngagementService {
         take: limit,
       });
 
-      // Enrich entries with user profiles
-      const enrichedEntries = await Promise.all(
-        entries.map(async (entry: LeaderboardEntryData, index: number) => {
-          let displayName = entry.displayName;
-          let avatar = entry.avatar;
+      // Enrich entries with user profiles — chunked so a board full of
+      // missing profiles doesn't fire `limit` concurrent user-service calls.
+      const enrichmentEntries = entries.filter(
+        (entry: LeaderboardEntryData) => !entry.displayName || entry.displayName === 'Unknown'
+      );
+      const profiles = new Map(
+        (
+          await this.mapChunked(enrichmentEntries, 5, (entry: LeaderboardEntryData) =>
+            this.enrichUserProfile(entry.userId)
+          )
+        ).map((profile, i) => [enrichmentEntries[i].userId, profile] as const)
+      );
 
-          if (!displayName || displayName === 'Unknown') {
-            const profile = await this.enrichUserProfile(entry.userId);
+      const enrichedEntries = entries.map((entry: LeaderboardEntryData, index: number) => {
+        let displayName = entry.displayName;
+        let avatar = entry.avatar;
+
+        if (!displayName || displayName === 'Unknown') {
+          const profile = profiles.get(entry.userId);
+          if (profile) {
             displayName = profile.displayName;
             avatar = profile.avatar;
           }
+        }
 
-          return {
-            id: entry.id,
-            userId: entry.userId,
-            displayName,
-            avatar,
-            score: entry.score,
-            rank: index + 1,
-            category: entry.category,
-            timePeriod: entry.timePeriod,
-          };
-        })
-      );
+        return {
+          id: entry.id,
+          userId: entry.userId,
+          displayName,
+          avatar,
+          score: entry.score,
+          rank: index + 1,
+          category: entry.category,
+          timePeriod: entry.timePeriod,
+        };
+      });
 
       const result = {
         success: true,

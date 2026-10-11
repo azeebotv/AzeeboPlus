@@ -3,6 +3,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule } from '@nestjs/throttler';
+import KeyvRedis from '@keyv/redis';
 import { JwtModule } from '@nestjs/jwt';
 import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
@@ -37,6 +38,22 @@ const universeSentinelDefaults = Object.fromEntries(
   UNIVERSE_SLUGS.map((slug) => [universeEnabledKey(slug), true])
 ) as Record<string, boolean>;
 
+/**
+ * Shared proxy-response cache store. With REDIS_URL the 5-minute gateway
+ * cache is Redis-backed so N gateway replicas agree (in-memory diverges per
+ * pod and silently caps at 100 entries); without it the default per-process
+ * memory store is used. KeyvRedis connects lazily and, with
+ * throwOnConnectError/throwOnErrors off, degrades to cache misses instead of
+ * failing requests when Redis is unreachable.
+ */
+const gatewayCacheStore = process.env.REDIS_URL
+  ? new KeyvRedis(process.env.REDIS_URL, {
+      namespace: 'gateway-cache',
+      throwOnConnectError: false,
+      throwOnErrors: false,
+    })
+  : undefined;
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -53,7 +70,9 @@ const universeSentinelDefaults = Object.fromEntries(
     CacheModule.register({
       isGlobal: true,
       ttl: 300_000, // 5 minutes — keep in sync with proxy controller CACHE_TTL_MS
-      max: 100, // maximum number of items in cache
+      ...(gatewayCacheStore
+        ? { stores: [gatewayCacheStore] }
+        : { max: 100 }), // in-memory fallback only (single replica / dev)
     }),
     ThrottlerModule.forRoot({
       throttlers: [

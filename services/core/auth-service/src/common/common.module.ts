@@ -1,5 +1,5 @@
 import { Module, Global } from '@nestjs/common';
-import { RolesGuard } from './guards/roles.guard.js';
+import { RolesGuard } from '@azeebo/security';
 
 @Global()
 @Module({

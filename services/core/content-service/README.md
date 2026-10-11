@@ -125,7 +125,7 @@ PORT=3004
 DATABASE_URL="postgresql://user:password@localhost:5432/azeebo_content"
 REDIS_URL="redis://localhost:6379"
 JWT_SECRET="your-jwt-secret"
-ANALYTICS_SERVICE_URL="http://analytics-service:3040"
+ANALYTICS_SERVICE_URL="http://analytics-service:3008"
 ```
 
 ## Prisma Models (15)

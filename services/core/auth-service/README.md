@@ -95,7 +95,7 @@ Required env vars (see `.env.example`):
 | `REDIS_URL` | Redis connection | — |
 | `JWT_ACCESS_SECRET` | JWT signing key (>=32 chars) | — |
 | `JWT_REFRESH_SECRET` | Refresh token signing key | — |
-| `ANALYTICS_SERVICE_URL` | Analytics service URL | http://analytics-service:3040 |
+| `ANALYTICS_SERVICE_URL` | Analytics service URL | http://analytics-service:3008 |
 
 ## Testing
 

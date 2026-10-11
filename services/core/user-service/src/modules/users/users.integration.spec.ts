@@ -73,11 +73,11 @@ describe('UsersService Integration', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
-              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3040';
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3008';
               return defaultValue;
             }),
             getOrThrow: jest.fn().mockImplementation((key: string) => {
-              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3040';
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3008';
               return '';
             }),
           },

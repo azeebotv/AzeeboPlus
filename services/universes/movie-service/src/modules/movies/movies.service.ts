@@ -23,7 +23,7 @@ export class MoviesService {
     this.rentalFee = this.configService.get<number>('MOVIE_RENTAL_FEE', 500);
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 

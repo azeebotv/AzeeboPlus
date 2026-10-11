@@ -10,6 +10,7 @@ import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { FeatureFlagModule, userFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { EventBusModule } from '@azeebo/event-bus';
 
 @Module({
   imports: [
@@ -19,6 +20,12 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     }),
     RateLimiterModule.forRoot(),
     TerminusModule,
+    EventBusModule.forRoot(
+      {
+        redisUrl: process.env.EVENT_BUS_REDIS_URL || 'redis://localhost:6379',
+      },
+      'user-service'
+    ),
     UsersModule,
     HealthModule,
     AdminModule,

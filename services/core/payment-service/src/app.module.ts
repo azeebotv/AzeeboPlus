@@ -19,6 +19,8 @@ import { ObservabilityModule } from '@azeebo/observability';
 import { FeatureFlagModule } from '@azeebo/feature-flags';
 import { paymentFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { EventBusModule } from '@azeebo/event-bus';
+import { ErasureConsumerService } from './modules/erasure/erasure-consumer.service.js';
 
 @Module({
   imports: [
@@ -28,6 +30,12 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     }),
     RedisModule,
     CacheModule,
+    EventBusModule.forRoot(
+      {
+        redisUrl: process.env.EVENT_BUS_REDIS_URL || 'redis://localhost:6379',
+      },
+      'payment-service'
+    ),
     RateLimiterModule.forRoot(),
     PaymentProviderModule,
     DatabaseModule,
@@ -60,6 +68,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
   providers: [
     PaymentsService,
     PaymentReconciliationService,
+    ErasureConsumerService,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,

@@ -10,6 +10,8 @@ import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { FeatureFlagModule, messagingFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { EventBusModule } from '@azeebo/event-bus';
+import { ErasureConsumerService } from './modules/erasure/erasure-consumer.service.js';
 
 @Module({
   imports: [
@@ -18,6 +20,12 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
+    EventBusModule.forRoot(
+      {
+        redisUrl: process.env.EVENT_BUS_REDIS_URL || 'redis://localhost:6379',
+      },
+      'messaging-service'
+    ),
     DatabaseModule,
     MessagingModule,
     WatchPartyModule,
@@ -38,6 +46,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     }),
   ],
   providers: [
+    ErasureConsumerService,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,

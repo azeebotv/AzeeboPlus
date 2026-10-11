@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
@@ -10,6 +11,10 @@ import { PaystackProvider } from './providers/paystack.provider.js';
 import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
 import { WebhookRetryService } from './webhook-retry.service.js';
 import { FeatureFlagService } from '@azeebo/feature-flags';
+
+// Unique per jest run: a live Redis (REDIS_URL set) keeps idempotency keys
+// for 24h, so fixed keys would 409 on the second run.
+const runId = Date.now();
 
 describe('Payments Service Authorization Tests', () => {
   let app: INestApplication;
@@ -71,12 +76,15 @@ describe('Payments Service Authorization Tests', () => {
     }),
   };
 
+  // Global guard mirroring production's ServiceAuthGuard ordering: auth runs
+  // BEFORE route guards (IdempotencyGuard), so unauthenticated requests are
+  // rejected with 403, not 409. Webhooks stay public.
   const mockAuthGuard = {
     canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
-      if (!authEnabled) {
-        return false;
-      }
       const req = context.switchToHttp().getRequest();
+      if (!authEnabled) {
+        return req.path?.includes('/webhook');
+      }
       req.user = { sub: 'user-123' };
       return true;
     }),
@@ -86,6 +94,7 @@ describe('Payments Service Authorization Tests', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [PaymentsController],
       providers: [
+        { provide: APP_GUARD, useValue: mockAuthGuard },
         { provide: PaymentsService, useValue: mockPaymentsService },
         { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
         { provide: PrismaService, useValue: {} },
@@ -138,6 +147,7 @@ describe('Payments Service Authorization Tests', () => {
       const response = await request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `auth-init-${runId}-1`)
         .send({
           amount: 1000,
           currency: 'NGN',
@@ -227,6 +237,7 @@ describe('Payments Service Authorization Tests', () => {
       const response = await request(baseUrl)
         .post('/v1/payments/refund-request')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `auth-refund-${runId}-1`)
         .send({
           transactionId: 'trx-abc123',
           reason: 'Product not received',

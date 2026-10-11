@@ -89,13 +89,13 @@ export class AuthService {
     @Inject(ConfigService) private readonly configService: ConfigService,
     @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
-    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
+    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 12);
     this.accessTokenExpiry = this.configService.get<string>('JWT_EXPIRES_IN', '30m');
     this.refreshTokenExpiryDays = this.configService.get<number>('REFRESH_TOKEN_EXPIRY_DAYS', 7);
     this.maxFailedAttempts = this.configService.get<number>('MAX_FAILED_ATTEMPTS', 5);
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 
@@ -113,7 +113,7 @@ export class AuthService {
           metadata,
           timestamp: new Date().toISOString(),
         },
-        { timeout: 10000 }
+        { timeout: 1000 } // AUD-22: prevent socket exhaustion under brownouts
       );
     } catch (error) {
       this.logger.warn(`Failed to track analytics event: ${eventName}`);
@@ -202,6 +202,19 @@ export class AuthService {
     });
   }
 
+  private async rehashPasswordIfStale(
+    user: { id: string; password: string },
+    plaintext: string
+  ): Promise<void> {
+    const rounds = Number(user.password.split('$')[2]);
+    if (!Number.isFinite(rounds) || rounds >= this.saltRounds) return;
+    const upgraded = await bcrypt.hash(plaintext, this.saltRounds);
+    await this.authRepository.updatePassword(user.id, upgraded);
+    this.logger.log(
+      `Upgraded password hash cost for user ${user.id}: ${rounds} -> ${this.saltRounds}`
+    );
+  }
+
   async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
     const user = await this.findUserByEmailCached(loginDto.email);
     if (!user) {
@@ -243,6 +256,11 @@ export class AuthService {
     }
 
     await this.resetFailedLoginAttempts(loginDto.email);
+
+    // Rehash-on-login: transparently upgrade hashes created with a lower
+    // cost factor (e.g. the pre-2026 default of 10) to the current
+    // SALT_ROUNDS — the plaintext is only ever available at login time.
+    await this.rehashPasswordIfStale(user, loginDto.password);
 
     // auth_email_verification_required: unverified users cannot sign in — they
     // must verify via the emailed link first (registration issues no tokens).
@@ -623,6 +641,20 @@ export class AuthService {
     } catch (error: unknown) {
       this.logger.error(
         `Failed to send password reset email: ${error instanceof Error ? error.message : String(error)}`
+      );
+      // AUD-08: Persist outbox item in Redis so notification failure doesn't silently strand users
+      const outboxKey = `notification_outbox:password_reset:${resetToken}`;
+      await this.redisService.set(
+        outboxKey,
+        JSON.stringify({
+          userId: user.id,
+          email: user.email,
+          displayName: user.displayName,
+          resetToken,
+          attempts: 1,
+          lastAttemptAt: new Date().toISOString(),
+        }),
+        86400
       );
     }
 

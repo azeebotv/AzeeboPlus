@@ -16,6 +16,9 @@
       "@azeebo/*": [
         "../../../packages/*/dist"
       ],
+      "@azeebo/security/log-redaction": [
+        "../../../packages/security/dist/log-redaction"
+      ],
       "@prisma/client": [
         "./src/prisma/client"
       ],

@@ -205,7 +205,7 @@ describe('Proxy Controller - Admin universe-flag undo routes', () => {
     const route = adminRoute();
     expect(route).toBeDefined();
     expect(route?.envKey).toBe('ADMIN_SERVICE_URL');
-    expect(route?.fallbackUrl).toBe('http://localhost:4016');
+    expect(route?.fallbackUrl).toBe('http://admin-app:4016');
     // apps/admin serves URI-versioned routes (/v1/admin/...), so the gateway
     // must use the default strategy that preserves the version prefix.
     expect(route?.pathStrategy).toBe('default');

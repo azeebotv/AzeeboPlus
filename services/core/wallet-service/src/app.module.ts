@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
 import { WalletModule } from './modules/wallet/wallet.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
+import { BorrowModule } from './modules/borrow/borrow.module.js';
 import { InternalWalletModule } from './modules/internal/internal-wallet.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
@@ -32,6 +33,7 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
     JwtConfigModule,
     WalletModule,
     AdminModule,
+    BorrowModule,
     InternalWalletModule,
     HealthModule,
     MetricsModule,

@@ -18,7 +18,7 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { AnalyticsService } from './analytics.service.js';
 import { WEPAnalyticsService } from './wep-analytics.service.js';
 import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
-import { IngestEventsDto } from './dto/analytics.dto.js';
+import { IngestEventsDto, WebVitalDto } from './dto/analytics.dto.js';
 
 @ApiTags('Analytics')
 @ApiBearerAuth()
@@ -45,7 +45,7 @@ export class AnalyticsController {
   @Post('events')
   @RateLimit(100, 60000)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Ingest product events' })
+  @ApiOperation({ summary: 'Ingest product events (consent-enforced)' })
   @ApiResponse({ status: 200, description: 'Events ingested' })
   async ingestEvents(@Body() body: IngestEventsDto): Promise<AnalyticsResponse> {
     return this.analyticsService.ingestEvents(
@@ -55,7 +55,9 @@ export class AnalyticsController {
         sessionId?: string;
         metadata?: Record<string, unknown>;
         timestamp?: string;
-      }[]
+      }[],
+      body.consent,
+      body.consentVersion
     );
   }
 
@@ -64,12 +66,24 @@ export class AnalyticsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Ingest client web-vitals RUM metric' })
   @ApiResponse({ status: 200, description: 'Web-vital recorded' })
-  async ingestWebVital(@Body() body: Record<string, unknown>): Promise<{ success: boolean }> {
-    const metricName = typeof body.name === 'string' ? body.name : 'VITAL';
+  async ingestWebVital(@Body() body: WebVitalDto): Promise<{ success: boolean }> {
+    // Whitelist only the known vital fields — arbitrary client-controlled
+    // payloads must not be persisted into the PII store.
+    const whitelist: Record<string, unknown> = {
+      session_id: body.id,
+      platform: 'web',
+      timestamp: new Date().toISOString(),
+      name: body.name,
+      value: body.value,
+      rating: body.rating,
+      delta: body.delta,
+      navigationType: body.navigationType,
+      page: body.page,
+    };
     await this.analyticsService.trackEvent(
-      `web_vital_${metricName.toLowerCase()}`,
+      `web_vital_${body.name.toLowerCase()}`,
       undefined,
-      body
+      whitelist
     );
     return { success: true };
   }

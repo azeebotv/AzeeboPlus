@@ -60,6 +60,8 @@ export const EventTypes = {
   USER_CREATED: 'user.created',
   USER_UPDATED: 'user.updated',
   USER_DELETED: 'user.deleted',
+  USER_ERASURE_REQUESTED: 'user.erasure.requested',
+  USER_ERASURE_COMPLETED: 'user.erasure.completed',
 
   // Wallet events
   WALLET_FUNDED: 'wallet.funded',

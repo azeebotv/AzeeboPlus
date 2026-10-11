@@ -1,6 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { createHash } from 'crypto';
+import { pseudonymizeIdentifier } from '../log-redaction';
 import type { AuditPrismaClient } from '../types';
 
 // ============================================================================
@@ -390,6 +391,26 @@ export class ImmutableAuditService {
       return this.prisma!.auditLog.count();
     }
     return ImmutableAuditService.inMemoryLog.length;
+  }
+
+  /**
+   * AUD-48: pseudonymize network metadata (IP + user agent) on entries older
+   * than the cutoff. In-memory counterpart of
+   * ImmutableAuditDbService.pseudonymizeNetworkMetadata — see that method
+   * for the legal-basis carve-out and the chain-integrity argument. The
+   * chain hash excludes ipAddress/userAgent, so verifyIntegrity() stays
+   * valid after this sweep.
+   */
+  async pseudonymizeNetworkMetadata(olderThan: Date): Promise<{ compacted: number }> {
+    let compacted = 0;
+    for (const entry of ImmutableAuditService.inMemoryLog) {
+      if (entry.timestamp >= olderThan) continue;
+      if (!entry.ipAddress && !entry.userAgent) continue;
+      if (entry.ipAddress) entry.ipAddress = pseudonymizeIdentifier(entry.ipAddress);
+      if (entry.userAgent) entry.userAgent = pseudonymizeIdentifier(entry.userAgent);
+      compacted++;
+    }
+    return { compacted };
   }
 
   /**

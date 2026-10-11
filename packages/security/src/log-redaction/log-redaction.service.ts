@@ -1,3 +1,4 @@
+import { createHash, createHmac } from 'crypto';
 import { Injectable, Logger } from '@nestjs/common';
 
 // ============================================================================
@@ -145,4 +146,19 @@ export class LogRedactionService {
       },
     };
   }
+}
+
+/**
+ * Pseudonymize an identifier (email, phone) for logging: a short keyed hash
+ * keeps logs correlate-able across entries without storing the identifier.
+ * Keyed with LOG_PSEUDONYM_SECRET when set (HMAC), otherwise plain SHA-256
+ * (still not reversible for high-entropy values, but predictable for common
+ * addresses — set the secret in production).
+ */
+export function pseudonymizeIdentifier(value: string): string {
+  const secret = process.env.LOG_PSEUDONYM_SECRET;
+  const digest = secret
+    ? createHmac('sha256', secret).update(value).digest('hex')
+    : createHash('sha256').update(value).digest('hex');
+  return `id_${digest.slice(0, 12)}`;
 }

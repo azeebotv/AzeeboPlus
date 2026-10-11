@@ -1,5 +1,13 @@
 // Security tables for audit log, break-glass sessions, and dual-control requests.
-// These are used by the integration tests and production implementations.
+//
+// TEST-OWNED SCHEMA: no service migration creates these tables yet — nothing
+// persists to them in production (no service injects the dual-control /
+// break-glass services with a live client). This schema exists so the live
+// integration e2e (src/security.integration.e2e.spec.ts) can `db push` a
+// scratch database. When a service starts persisting these tables, its
+// migrations become the canonical owner and this file must be deleted or
+// aligned with that service's schema — it is invisible to the
+// migrations↔schema drift gate, which only scans services/.
 
 generator client {
   provider = "prisma-client-js"
@@ -9,6 +17,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl   = env("DIRECT_DATABASE_URL")
 }
 
 /// Append-only audit log with hash chain integrity (TAA §56).
@@ -27,6 +36,14 @@ model AuditLog {
   newState       String?
   reason         String?
   correlationId  String?
+  /// AUD-48 legal-basis carve-out: network metadata is retained under
+  /// Art. 6(1)(f) GDPR (security monitoring, incident response, fraud
+  /// prevention) and is exempt from right-to-erasure row deletion, unlike
+  /// the user-service application audit log which erases wholesale.
+  /// Minimization is by pseudonymizing compaction
+  /// (ImmutableAuditDbService.pseudonymizeNetworkMetadata) after the
+  /// retention window. These two columns are deliberately EXCLUDED from the
+  /// chain hash so compaction can never break verifyIntegrity().
   ipAddress      String?
   userAgent      String?
   timestamp      DateTime @default(now())

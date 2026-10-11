@@ -27,6 +27,10 @@ jest.mock('@azeebo/feature-flags', () => ({
   },
 }));
 
+// Unique per jest run: a live Redis (REDIS_URL set) keeps idempotency keys
+// for 24h, so fixed keys would 409 on the second run.
+const runId = Date.now();
+
 describe('Wallet Service Authorization Tests', () => {
   let app: INestApplication;
   let baseUrl: string;
@@ -244,6 +248,7 @@ describe('Wallet Service Authorization Tests', () => {
       const response = await request(baseUrl)
         .post('/wallet/fund')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `auth-fund-${runId}-1`)
         .send({ amount: 1000, currency: 'NGN', paymentMethod: 'card' });
 
       expect(response.status).toBe(201);
@@ -268,6 +273,7 @@ describe('Wallet Service Authorization Tests', () => {
       const response = await request(baseUrl)
         .post('/wallet/withdraw')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `auth-withdraw-${runId}-1`)
         .send({ amount: 500, bankAccountId: 'bank-123' });
 
       expect(response.status).toBe(201);
@@ -292,6 +298,7 @@ describe('Wallet Service Authorization Tests', () => {
       const response = await request(baseUrl)
         .post('/wallet/transfer')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `auth-transfer-${runId}-1`)
         .send({ recipientId: 'user-456', amount: 200 });
 
       expect(response.status).toBe(201);

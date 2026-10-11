@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma } from '../../prisma/client/index.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
+import { PIIMinimizationService } from './pii-minimization.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { FeatureFlagService, analyticsFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
@@ -76,9 +77,39 @@ const ALLOWED_EVENT_NAMES = [
   'content_search_correction_shown',
   'content_search_correction_accepted',
   'flag_stale_enabled',
+  'consent_state',
 ];
 
 const REQUIRED_METADATA_FIELDS = ['session_id', 'platform', 'timestamp'];
+
+/**
+ * Events that serve core service functionality or security/finance records
+ * and are therefore ingestible without analytics consent. Everything else
+ * requires the sender's granted analytics consent (deny-by-default).
+ */
+const ESSENTIAL_EVENT_NAMES = new Set([
+  'login',
+  'login_success',
+  'login_failed',
+  'signup',
+  'signup_started',
+  'signup_completed',
+  'payment_initiated',
+  'payment_success',
+  'payment_failed',
+  'payment_provider_failover',
+  'refund_initiated',
+  'refund_completed',
+  'error_occurred',
+  'flag_stale_enabled',
+]);
+
+type BatchConsent = {
+  analytics: boolean;
+  marketing: boolean;
+  personalization?: boolean;
+  third_party?: boolean;
+};
 
 @Injectable()
 export class AnalyticsService {
@@ -90,7 +121,8 @@ export class AnalyticsService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(ConfigService) private readonly configService: ConfigService,
-    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
+    private readonly piiMinimization: PIIMinimizationService
   ) {
     this.userServiceUrl = this.configService.get<string>(
       'USER_SERVICE_URL',
@@ -247,7 +279,22 @@ export class AnalyticsService {
     return { valid: true };
   }
 
-  async ingestEvents(events: Event[]): Promise<AnalyticsResponse> {
+  /** Deny-by-default consent check: essential allowlist or granted analytics consent. */
+  private hasConsentFor(event: Event, consent?: BatchConsent): boolean {
+    if (ESSENTIAL_EVENT_NAMES.has(event.type) || event.type.startsWith('consent_')) return true;
+    return consent?.analytics === true;
+  }
+
+  async ingestEvents(
+    events: Event[],
+    consent?: {
+      analytics: boolean;
+      marketing: boolean;
+      personalization?: boolean;
+      third_party?: boolean;
+    },
+    consentVersion?: string
+  ): Promise<AnalyticsResponse> {
     if (!events || events.length === 0) {
       throw new BadRequestException('No events provided');
     }
@@ -272,21 +319,60 @@ export class AnalyticsService {
       throw new BadRequestException(`All events failed validation: ${validationErrors.join('; ')}`);
     }
 
+    // Server-side consent enforcement (deny-by-default): events are only
+    // persisted when the batch consent state grants their category. The
+    // client-declared category is not trusted for essential bypasses — only
+    // events on the ESSENTIAL_EVENT_NAMES allowlist skip the consent check.
+    const consentErrors: string[] = [];
+    const consentedEvents = validEvents.filter((event, i) => {
+      if (this.hasConsentFor(event, consent)) return true;
+      consentErrors.push(`Event[${i}]: ${event.type} requires consent`);
+      return false;
+    });
+
+    // Record the consent state itself as an essential event so lawful-basis
+    // evidence exists server-side regardless of the analytics choice. The
+    // ledger row is written alongside user events but not counted in
+    // `ingested`, which reports user events only.
+    const rows: Array<{
+      eventName: string;
+      userId?: string;
+      sessionId?: string;
+      metadata?: Prisma.InputJsonValue;
+      timestamp: Date;
+    }> = [];
+
+    if (consent) {
+      rows.push({
+        eventName: 'consent_state',
+        metadata: {
+          consent: { ...consent },
+          consentVersion: consentVersion ?? 'unknown',
+          timestamp: new Date().toISOString(),
+        } as Prisma.InputJsonValue,
+        timestamp: new Date(),
+      });
+    }
+
     try {
       const samplingRate = await this.getSamplingRate();
-      const sampled = validEvents.filter((event) =>
+      const sampled = consentedEvents.filter((event) =>
         this.isSampled(event.userId ?? event.sessionId, samplingRate)
       );
 
-      await this.writeEvents(
-        sampled.map((event) => ({
+      for (const event of sampled) {
+        rows.push({
           eventName: event.type,
           userId: event.userId,
           sessionId: event.sessionId,
-          metadata: (event.metadata || undefined) as Prisma.InputJsonValue,
+          metadata: event.metadata
+            ? (this.piiMinimization.minimizeEvent(event.metadata) as Prisma.InputJsonValue)
+            : undefined,
           timestamp: event.timestamp ? new Date(event.timestamp) : new Date(),
-        }))
-      );
+        });
+      }
+
+      await this.writeEvents(rows);
 
       await this.cache.invalidate('analytics:*');
 
@@ -294,9 +380,12 @@ export class AnalyticsService {
         success: true,
         data: {
           ingested: sampled.length,
-          sampled: validEvents.length - sampled.length,
-          rejected: validationErrors.length,
-          validationErrors: validationErrors.length > 0 ? validationErrors : undefined,
+          sampled: consentedEvents.length - sampled.length,
+          rejected: validationErrors.length + consentErrors.length,
+          validationErrors:
+            validationErrors.length + consentErrors.length > 0
+              ? [...validationErrors, ...consentErrors]
+              : undefined,
         },
       };
     } catch (error) {

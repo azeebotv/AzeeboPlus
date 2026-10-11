@@ -14,11 +14,13 @@ import { DatabaseModule } from '../database/database.module';
 import { MediaLifecycleService } from '../media/media-lifecycle.service.js';
 import { BlobReconcileService } from '../media/blob-reconcile.service.js';
 import { UploadTtlSweeperService } from '../media/upload-ttl-sweeper.service.js';
+import { ErasureConsumerService } from '../erasure/erasure-consumer.service.js';
 
 @Module({
   imports: [ConfigModule, CommonModule, DatabaseModule, JwtConfigModule, CacheModule],
   controllers: [UploadController],
   providers: [
+    ErasureConsumerService,
     UploadService,
     FileAccessPolicyService,
     S3Service,

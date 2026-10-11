@@ -71,6 +71,10 @@ export const gatewayFlags = {
   csrfEnforce: 'gateway_csrf_enforce',
   legacyRedirect: 'gateway_legacy_redirect',
   apiV2: 'gateway_api_v2',
+  // Enforce the per-route `endpoints` method/path tables as the declared
+  // public surface (404 anything not declared). Off by default until each
+  // route table is validated against its service's controllers.
+  endpointEnforcement: 'gateway_endpoint_enforcement',
 } as const;
 
 export const authFlags = {

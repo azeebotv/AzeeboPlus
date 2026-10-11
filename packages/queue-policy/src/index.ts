@@ -31,6 +31,26 @@ export interface JobRetentionPolicy {
   removeOnFail: KeepJobsPolicy;
 }
 
+/** Worker-level lock settings shared by every BullMQ worker in the repo. */
+export interface WorkerLockSettings {
+  /** How long (ms) a worker holds a job's lock before it can be declared stalled and handed to another worker. */
+  lockDuration: number;
+  /** How often (ms) the worker renews its locks (the stalled-job check cadence). */
+  stalledInterval: number;
+}
+
+/**
+ * Canonical worker lock settings for every `BullModule.registerQueue` in the
+ * repo. BullMQ's default lockDuration is 30s: payment jobs that call external
+ * providers (Paystack/Flutterwave) can exceed it, after which BullMQ declares
+ * the job stalled and re-runs it — duplicate-charge territory. stalledInterval
+ * must stay shorter than lockDuration so locks are renewed well before expiry.
+ */
+export const WORKER_LOCK_SETTINGS: WorkerLockSettings = {
+  lockDuration: 120000, // 2 minutes
+  stalledInterval: 30000,
+};
+
 /**
  * Canonical job-retention policy for every `BullModule.forRoot` in the repo.
  *

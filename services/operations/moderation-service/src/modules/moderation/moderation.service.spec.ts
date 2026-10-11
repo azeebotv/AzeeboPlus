@@ -85,7 +85,7 @@ describe('ModerationService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('http://analytics-service:3040'),
+            get: jest.fn().mockReturnValue('http://analytics-service:3008'),
           },
         },
         {

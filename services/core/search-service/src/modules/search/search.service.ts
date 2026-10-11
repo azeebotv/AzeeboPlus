@@ -158,7 +158,7 @@ export class SearchService implements OnModuleInit {
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
     this.suggestionsAiUrl = this.configService.get<string>('SEARCH_SUGGESTIONS_AI_URL');
   }

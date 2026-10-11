@@ -23,6 +23,25 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   }
 
   /**
+   * Scrub internal service URLs from string leaves inside `details` before
+   * they reach the client. Depth-capped so cyclic or pathological payloads
+   * can't blow the stack.
+   */
+  private sanitizeDetails(value: unknown, depth = 0): unknown {
+    if (depth > 5) return '[truncated]';
+    if (typeof value === 'string') return this.sanitizeMessage(value);
+    if (Array.isArray(value)) return value.map((item) => this.sanitizeDetails(item, depth + 1));
+    if (value !== null && typeof value === 'object') {
+      const out: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(value)) {
+        out[key] = this.sanitizeDetails(val, depth + 1);
+      }
+      return out;
+    }
+    return value;
+  }
+
+  /**
    * Derive an RFC 7807 problem type URI from the HTTP status code.
    * @see https://www.rfc-editor.org/rfc/rfc9457#name-https-api-rfc9110org-
    */
@@ -85,6 +104,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         error = exception.name;
         code = exception.name;
       }
+    } else if (exception instanceof Error && /https?:\/\//.test(exception.message)) {
+      // Axios/fetch errors often include the full URL in the message. This
+      // branch must run before the generic Error branch or it is unreachable.
+      status = HttpStatus.BAD_GATEWAY;
+      message = 'Bad gateway';
+      error = 'Bad Gateway';
+      code = 'BAD_GATEWAY';
+
+      this.logger.error(`Upstream error: ${exception.message}`, exception.stack);
     } else if (exception instanceof Error) {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       message = 'Internal server error';
@@ -92,14 +120,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       code = 'INTERNAL_SERVER_ERROR';
 
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
-    } else if (exception instanceof Error && /https?:\/\//.test(exception.message)) {
-      // Axios/fetch errors often include the full URL in the message.
-      status = HttpStatus.BAD_GATEWAY;
-      message = 'Bad gateway';
-      error = 'Bad Gateway';
-      code = 'BAD_GATEWAY';
-
-      this.logger.error(`Upstream error: ${exception.message}`, exception.stack);
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       message = 'An unknown error occurred';
@@ -111,6 +131,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     // Sanitize the message to remove internal URLs before sending to client.
     const sanitizedMessage = this.sanitizeMessage(message);
+
+    // Same treatment for details: internal URLs in string leaves (axios
+    // messages, stack fragments, upstream bodies) must not reach clients.
+    const clientDetails = details
+      ? (this.sanitizeDetails(details) as Record<string, unknown>)
+      : undefined;
 
     // RFC 7807 (Problem Details for HTTP APIs) response envelope
     const errorResponse: ErrorResponse = {
@@ -128,7 +154,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       message: sanitizedMessage,
       error,
       statusCode: status,
-      ...(details ? { details } : {}),
+      ...(clientDetails ? { details: clientDetails } : {}),
       timestamp: new Date().toISOString(),
       path: request?.url,
     };

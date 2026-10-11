@@ -16,6 +16,7 @@ import { ObservabilityModule } from '@azeebo/observability';
 import { FeatureFlagModule } from '@azeebo/feature-flags';
 import { authFlags, subscriptionFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { EventBusModule } from '@azeebo/event-bus';
 import { SocialAuthModule } from './modules/social-auth/social-auth.module.js';
 import { DeviceLinkModule } from './modules/device-link/device-link.module.js';
 
@@ -26,6 +27,12 @@ import { DeviceLinkModule } from './modules/device-link/device-link.module.js';
       envFilePath: ['.env', '../../.env'],
     }),
     RedisModule,
+    EventBusModule.forRoot(
+      {
+        redisUrl: process.env.EVENT_BUS_REDIS_URL || 'redis://localhost:6379',
+      },
+      'auth-service'
+    ),
     RateLimiterModule.forRoot(),
     SecurityModule,
     TerminusModule,

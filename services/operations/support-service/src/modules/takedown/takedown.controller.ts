@@ -14,7 +14,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { TakedownService } from './takedown.service';
 import { CreateTakedownDto, DecideTakedownDto, TakedownQueryDto } from './dto/takedown.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
-import { AuthGuard } from '../../common/guards/auth.guard';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { AdminGuard } from '@azeebo/security';
 import { FeatureFlag, FeatureFlagGuard, supportFlags } from '@azeebo/feature-flags';
 
@@ -27,7 +27,7 @@ interface AuthenticatedRequest {
 
 @ApiTags('Content Takedowns')
 @Controller('support/takedowns')
-@UseGuards(AuthGuard)
+@UseGuards(ServiceAuthGuard)
 @UseGuards(FeatureFlagGuard)
 @FeatureFlag(supportFlags.takedownsAuto)
 @ApiBearerAuth()

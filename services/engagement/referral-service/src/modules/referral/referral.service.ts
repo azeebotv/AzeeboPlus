@@ -37,7 +37,7 @@ export class ReferralService {
     this.defaultReferralReward = this.configService.get<number>('DEFAULT_REFERRAL_REWARD', 50);
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 

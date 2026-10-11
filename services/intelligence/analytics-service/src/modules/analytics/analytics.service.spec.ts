@@ -17,6 +17,7 @@ jest.mock('axios', () => ({
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service.js';
+import { PIIMinimizationService } from './pii-minimization.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
@@ -76,6 +77,7 @@ describe('AnalyticsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AnalyticsService,
+        PIIMinimizationService,
         { provide: PrismaService, useValue: mockPrismaService },
         {
           provide: ConfigService,
@@ -121,11 +123,49 @@ describe('AnalyticsService', () => {
 
       mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 1 });
 
-      const result = await service.ingestEvents(events);
+      const result = await service.ingestEvents(events, { analytics: true, marketing: false });
 
       expect(result.success).toBe(true);
       expect(result.data!.ingested).toBe(1);
       expect(result.data!.rejected).toBe(0);
+    });
+
+    it('should drop analytics-category events without granted consent', async () => {
+      const events = [
+        {
+          type: 'content_view',
+          userId: 'user-1',
+          sessionId: 'session-1',
+          metadata: { session_id: 's1', platform: 'mobile', timestamp: '2026-01-01T00:00:00Z' },
+        },
+      ];
+
+      const result = await service.ingestEvents(events);
+
+      expect(result.success).toBe(true);
+      expect(result.data!.ingested).toBe(0);
+      expect(result.data!.rejected).toBe(1);
+    });
+
+    it('should persist consent_state as an essential event when consent is supplied', async () => {
+      const events = [
+        {
+          type: 'login',
+          userId: 'user-1',
+          metadata: { session_id: 's1', platform: 'web', timestamp: '2026-01-01T00:00:00Z' },
+        },
+      ];
+
+      mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 2 });
+
+      const result = await service.ingestEvents(events, { analytics: false, marketing: false }, '1.0');
+
+      expect(result.success).toBe(true);
+      // login is essential; consent_state is appended as the ledger record
+      const createdNames = mockPrismaService.productEvent.create.mock.calls.map(
+        (call: [{ data: { eventName: string } }]) => call[0].data.eventName
+      );
+      expect(createdNames.sort()).toEqual(['consent_state', 'login']);
     });
 
     it('should reject empty events array', async () => {
@@ -154,7 +194,7 @@ describe('AnalyticsService', () => {
 
       mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 1 });
 
-      const result = await service.ingestEvents(events);
+      const result = await service.ingestEvents(events, { analytics: true, marketing: false });
 
       expect(result.success).toBe(true);
       expect(result.data!.ingested).toBe(1);
@@ -174,7 +214,7 @@ describe('AnalyticsService', () => {
 
       mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 2 });
 
-      const result = await service.ingestEvents(events);
+      const result = await service.ingestEvents(events, { analytics: true, marketing: false });
 
       expect(result.success).toBe(true);
       expect(result.data!.ingested).toBe(2);

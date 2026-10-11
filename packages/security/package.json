@@ -10,6 +10,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.js"
+    },
+    "./log-redaction": {
+      "types": "./dist/log-redaction/index.d.ts",
+      "import": "./dist/log-redaction/index.js",
+      "require": "./dist/log-redaction/index.js"
     }
   },
   "scripts": {

@@ -38,6 +38,9 @@ export { InternalSecretGuard } from './guards/internal-secret.guard';
 /** Guard that checks user permissions against required permission set. */
 export { PermissionsGuard } from './guards/permissions.guard';
 
+/** Role-based access guard evaluated against @Roles() metadata. */
+export { RolesGuard } from './guards/roles.guard';
+
 /** Guard that enforces idempotency keys on mutating requests. */
 export { IdempotencyGuard } from './guards/idempotency.guard';
 
@@ -46,6 +49,9 @@ export { Permissions } from './decorators/permissions.decorator';
 
 /** Decorator to mark a route as publicly accessible (no auth required). */
 export { Public, IS_PUBLIC_KEY } from './decorators/public.decorator';
+
+/** Decorator to restrict a route or controller to specific roles. */
+export { Roles, ROLES_KEY } from './decorators/roles.decorator';
 
 /** Metadata key for storing permissions on route handlers. */
 export { PERMISSIONS_KEY } from '@azeebo/shared-types';
@@ -92,7 +98,7 @@ export {
 export { DualControlDbService } from './dual-control/dual-control-db.service';
 
 /** Sensitive log field redaction (TAA §52). */
-export { LogRedactionService } from './log-redaction/log-redaction.service';
+export { LogRedactionService, pseudonymizeIdentifier } from './log-redaction/log-redaction.service';
 
 /** Account merge preserving purchase/history (TAA §49). */
 export {

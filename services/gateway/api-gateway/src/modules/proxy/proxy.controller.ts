@@ -17,7 +17,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from '@azeebo/security';
-import { AuthThrottlerGuard } from '../../guards/auth-throttler.guard';
 import { Request, Response } from 'express';
 import { RawBodyRequest } from '../../common/raw-body-capture.middleware';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -222,7 +221,9 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   {
     path: '/privacy',
     envKey: 'USER_SERVICE_URL',
-    fallbackUrl: 'http://user-service:3002',
+    // AUD-04 fix: 3002 is wallet-service; user-service listens on 3001
+    // (same envKey as /users and /interactions, which both resolve 3001).
+    fallbackUrl: 'http://user-service:3001',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'default',
@@ -299,6 +300,29 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         path: '/credit-reverse',
         description: 'Reverse a wallet credit',
       },
+    ],
+  },
+  {
+    path: '/borrow',
+    envKey: 'WALLET_SERVICE_URL',
+    fallbackUrl: 'http://wallet-service:3002',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'default',
+    // Deliberately NOT publicCacheable: this catalogue names lenders Azeebo+ has
+    // approved, so a partner that is pulled or deactivated must disappear from the
+    // public page on the next request. The gateway cache holds a body for
+    // CACHE_TTL_MS with no write-side invalidation, which would keep advertising a
+    // removed partner (and its dead apply link) for minutes after the admin edit.
+    // The listing is a single indexed read of a few dozen rows, so the cache bought
+    // almost nothing. /admin/* rows are uncacheable anyway (isAdminPath).
+    endpoints: [
+      { method: 'GET', path: '/banks', description: 'List active lending partners' },
+      { method: 'GET', path: '/banks/:slug', description: 'Get one lending partner' },
+      { method: 'GET', path: '/admin/banks', description: 'List all partners incl. inactive (admin)' },
+      { method: 'POST', path: '/admin/banks', description: 'Create a partner (admin)' },
+      { method: 'PATCH', path: '/admin/banks/:id', description: 'Update a partner (admin)' },
+      { method: 'DELETE', path: '/admin/banks/:id', description: 'Delete a partner (admin)' },
     ],
   },
   {
@@ -657,7 +681,9 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   {
     path: '/push',
     envKey: 'NOTIFICATION_SERVICE_URL',
-    fallbackUrl: 'http://notification-service:3023',
+    // AUD-04 fix: 3023 is engagement-service; notification-service listens on
+    // 3006 (same envKey as /notifications, which resolves 3006).
+    fallbackUrl: 'http://notification-service:3006',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'default',
@@ -792,6 +818,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       // AOS-MA-001 — Risk Engine
       { method: 'POST', path: '/risk/classifications', description: 'Create risk classification' },
       { method: 'GET', path: '/risk/classifications', description: 'List risk classifications' },
+      { method: 'GET', path: '/risk', description: 'Risk engine overview' },
       {
         method: 'PUT',
         path: '/risk/classifications/:actionType',
@@ -801,6 +828,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       // AOS-MA-001 — Task Router
       { method: 'POST', path: '/tasks/classifications', description: 'Create task classification' },
       { method: 'GET', path: '/tasks/classifications', description: 'List task classifications' },
+      { method: 'GET', path: '/tasks', description: 'Task router overview' },
       {
         method: 'GET',
         path: '/tasks/classifications/stats',
@@ -819,6 +847,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       // AOS-MA-001 — Capacity Ledger
       { method: 'POST', path: '/capacity/entries', description: 'Record capacity entry' },
       { method: 'GET', path: '/capacity/entries', description: 'List capacity entries' },
+      { method: 'GET', path: '/capacity', description: 'Capacity ledger overview' },
       {
         method: 'GET',
         path: '/capacity/summary/:period',
@@ -1088,7 +1117,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   {
     path: '/admin',
     envKey: 'ADMIN_SERVICE_URL',
-    fallbackUrl: 'http://localhost:4016',
+    fallbackUrl: 'http://admin-app:4016',
     supportedVersions: ['1'],
     defaultVersion: '1',
     // apps/admin is a standalone NestJS app with URI versioning
@@ -1405,6 +1434,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         description: 'Reject an agbala moderation item',
       },
       { method: 'GET', path: '/ops/pgbouncer', description: 'Pgbouncer pool stats' },
+      {
+        method: 'GET',
+        path: '/ops/pgbouncer/foreign-persistence',
+        description: 'Foreign-dialer persistence over window',
+      },
       { method: 'GET', path: '/ops/transport-flips', description: 'Recent gateway transport flips' },
       { method: 'GET', path: '/universes', description: 'List universes' },
       { method: 'GET', path: '/universes/:id', description: 'Get universe by ID' },
@@ -1637,7 +1671,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     // Kept separate from /admin so the SPA's /api/v1/creator-entries calls
     // resolve here; admin-backend adds auth + identity stamping upstream.
     envKey: 'ADMIN_SERVICE_URL',
-    fallbackUrl: 'http://localhost:4016',
+    fallbackUrl: 'http://admin-app:4016',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'default',
@@ -1660,7 +1694,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     // microservice (:3018) — a dedicated env key so /creator and /creators
     // can point at different upstreams.
     envKey: 'CREATOR_APP_URL',
-    fallbackUrl: 'http://localhost:4014',
+    fallbackUrl: 'http://creator-app:4014',
     supportedVersions: ['1'],
     defaultVersion: '1',
     // apps/creator is a standalone NestJS app with URI versioning
@@ -1788,16 +1822,6 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         path: '/channels/:channelId/uploads',
         description: 'Upload to a channel',
       },
-    ],
-  },
-  {
-    path: '/creators',
-    envKey: 'CREATOR_SERVICE_URL',
-    fallbackUrl: 'http://creator-service:3018',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    pathStrategy: 'default',
-    endpoints: [
       { method: 'POST', path: '/onboard', description: 'Creator onboarding' },
       { method: 'GET', path: '/me', description: 'Get my creator profile' },
       { method: 'PATCH', path: '/me', description: 'Update creator profile' },
@@ -1875,7 +1899,8 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   {
     path: '/support',
     envKey: 'SUPPORT_SERVICE_URL',
-    fallbackUrl: 'http://support-service:3020',
+    // AUD-04 fix: 3020 is knowledge-service; support-service listens on 3028.
+    fallbackUrl: 'http://support-service:3028',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'default',
@@ -3428,7 +3453,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   {
     path: '/knowledge',
     envKey: 'KNOWLEDGE_SERVICE_URL',
-    fallbackUrl: 'http://knowledge-service:3028',
+    // AUD-04 fix: knowledge-service listens on 3020 — 3028 is support-service.
+    // This fallback is live in docker-compose.prod.yml (no *_SERVICE_URL keys
+    // are set there), so the wrong port meant every /knowledge request 502'd
+    // the moment the route was enabled.
+    fallbackUrl: 'http://knowledge-service:3020',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'default',
@@ -3480,7 +3509,6 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
 ];
 @ApiTags('Gateway')
 @Controller('api')
-@UseGuards(AuthThrottlerGuard)
 export class ProxyController {
   private readonly logger = new Logger(ProxyController.name);
   private readonly REQUEST_ID_HEADER = 'X-Request-ID';
@@ -3494,7 +3522,10 @@ export class ProxyController {
     @Inject(FeatureFlagService)
     private readonly featureFlagService: FeatureFlagService
   ) {
-    this.UPSTREAM_TIMEOUT = this.configService.get<number>('UPSTREAM_TIMEOUT', 30000);
+    // AUD-21: was 30000 — a hung upstream pinned gateway workers for 30s per
+    // request. 5s fails fast; raise per-deployment via UPSTREAM_TIMEOUT for
+    // known-slow routes (the value flows straight into the breaker budget).
+    this.UPSTREAM_TIMEOUT = this.configService.get<number>('UPSTREAM_TIMEOUT', 5000);
   }
 
   // ─── Versioned routes with path: /api/:version/:service/*path ──────
@@ -3646,6 +3677,31 @@ export class ProxyController {
     return this.handleProxy('DELETE', version, service, '', req, res);
   }
 
+  @Get('routes')
+  @UseGuards(AdminGuard)
+  @Header('Content-Type', 'application/json')
+  getRoutes(): {
+    success: boolean;
+    data: {
+      path: string;
+      targetUrl: string;
+      supportedVersions: string[];
+      defaultVersion: string;
+    }[];
+  } {
+    return {
+      success: true,
+      data: SERVICE_CONFIGS.map((r) => ({
+        path: r.path,
+        targetUrl: this.configService.get<string>(r.envKey) || r.fallbackUrl,
+        supportedVersions: r.supportedVersions,
+        defaultVersion: r.defaultVersion,
+        pathStrategy: r.pathStrategy,
+      })),
+    };
+  }
+
+
   // ─── Legacy unversioned routes: /api/:service/*path ────────────────
 
   @Get(':service/*path')
@@ -3772,30 +3828,6 @@ export class ProxyController {
     return this.proxyRequest(method, version, service, path, req, res);
   }
 
-  @Get('routes')
-  @UseGuards(AdminGuard)
-  @Header('Content-Type', 'application/json')
-  getRoutes(): {
-    success: boolean;
-    data: {
-      path: string;
-      targetUrl: string;
-      supportedVersions: string[];
-      defaultVersion: string;
-    }[];
-  } {
-    return {
-      success: true,
-      data: SERVICE_CONFIGS.map((r) => ({
-        path: r.path,
-        targetUrl: this.configService.get<string>(r.envKey) || r.fallbackUrl,
-        supportedVersions: r.supportedVersions,
-        defaultVersion: r.defaultVersion,
-        pathStrategy: r.pathStrategy,
-      })),
-    };
-  }
-
   private async findRoute(service: string): Promise<ServiceRoute | undefined> {
     const config = SERVICE_CONFIGS.find(
       (r) => r.path === `/${service}` || r.path.startsWith(`/${service}/`)
@@ -3827,6 +3859,35 @@ export class ProxyController {
       return false;
     }
     return route.supportedVersions.includes(normalizedVersion);
+  }
+
+  /**
+   * Deny-by-default endpoint allowlist check. The sub-path is what follows
+   * the service prefix (e.g. 'balance' for /api/v1/wallet/balance), so a
+   * leading version segment is stripped for legacy unversioned URLs
+   * (/api/wallet/v1/balance). Declared ':param' segments match any
+   * non-empty segment. Routes without an endpoints manifest stay open.
+   */
+  private isDeclaredEndpoint(route: ServiceRoute, method: string, subPath: string): boolean {
+    if (!route.endpoints || route.endpoints.length === 0) {
+      return true;
+    }
+    const requestSegments = (subPath || '').split('/').filter(Boolean);
+    if (requestSegments.length > 0 && /^v\d+$/.test(requestSegments[0])) {
+      requestSegments.shift();
+    }
+    return route.endpoints.some((ep) => {
+      if (ep.method.toUpperCase() !== method.toUpperCase()) {
+        return false;
+      }
+      const declaredSegments = ep.path.split('/').filter(Boolean);
+      if (declaredSegments.length !== requestSegments.length) {
+        return false;
+      }
+      return declaredSegments.every((seg, i) =>
+        seg.startsWith(':') ? requestSegments[i].length > 0 : seg === requestSegments[i]
+      );
+    });
   }
 
   private buildCacheKey(req: Request, version: string): string {
@@ -3919,7 +3980,7 @@ export class ProxyController {
     method: string,
     version: string,
     service: string,
-    _path: string,
+    subPath: string,
     req: Request,
     res: Response
   ): Promise<void> {
@@ -3929,11 +3990,13 @@ export class ProxyController {
     }
 
     // Global kill-switch: gateway_maintenance_mode returns 503 for all traffic.
-    const [maintenanceMode, apiV2Enabled, responseCacheEnabled] = await Promise.all([
-      this.featureFlagService.isEnabled(gatewayFlags.maintenanceMode),
-      this.featureFlagService.isEnabled(gatewayFlags.apiV2),
-      this.featureFlagService.isEnabled(gatewayFlags.responseCache),
-    ]);
+    const [maintenanceMode, apiV2Enabled, responseCacheEnabled, endpointEnforcement] =
+      await Promise.all([
+        this.featureFlagService.isEnabled(gatewayFlags.maintenanceMode),
+        this.featureFlagService.isEnabled(gatewayFlags.apiV2),
+        this.featureFlagService.isEnabled(gatewayFlags.responseCache),
+        this.featureFlagService.isEnabled(gatewayFlags.endpointEnforcement),
+      ]);
     if (maintenanceMode) {
       res.setHeader(this.REQUEST_ID_HEADER, requestId);
       res.setHeader('Retry-After', '300');
@@ -3970,6 +4033,15 @@ export class ProxyController {
         supportedVersions: route.supportedVersions,
         defaultVersion: route.defaultVersion,
       });
+      return;
+    }
+
+    // Deny-by-default endpoint allowlist (gateway_endpoint_enforcement,
+    // default off): only method+path pairs declared in the route's endpoints
+    // manifest are forwarded upstream.
+    if (endpointEnforcement && !this.isDeclaredEndpoint(route, method, subPath)) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({ message: 'Endpoint not found' });
       return;
     }
 
@@ -4133,12 +4205,9 @@ export class ProxyController {
         'authorization',
         'x-request-id',
         'x-correlation-id',
-        // GatewayAuthGuard-verified identity (stamped onto req.headers above).
-        // Without these, downstream ServiceAuthGuards fall back to parsing the
-        // raw JWT themselves and cookie-only SPA requests 401.
-        'x-user-id',
-        'x-user-email',
-        'x-user-role',
+        // The shared http-client auto-generates this on POSTs; downstream
+        // wallet/payment idempotency depends on it surviving the proxy hop.
+        'idempotency-key',
       ];
 
       for (const key of ALLOWED_HEADERS) {
@@ -4148,7 +4217,21 @@ export class ProxyController {
         }
       }
 
-      // Inject gateway secret so downstream ServiceAuthGuard trusts x-user-* headers
+      // SECURITY (AUD-01): Only forward identity headers if verified by GatewayAuthGuard
+      // Never trust client-supplied x-user-* headers on unauthenticated or public paths.
+      const verifiedUser = (req as Request & { user?: { sub?: string; id?: string; email?: string; role?: string } }).user;
+      if (verifiedUser && typeof verifiedUser === 'object') {
+        const uid = verifiedUser.sub || verifiedUser.id;
+        if (uid) headers['x-user-id'] = uid;
+        if (verifiedUser.email) headers['x-user-email'] = verifiedUser.email;
+        if (verifiedUser.role) headers['x-user-role'] = verifiedUser.role;
+      } else {
+        delete headers['x-user-id'];
+        delete headers['x-user-email'];
+        delete headers['x-user-role'];
+      }
+
+      // Inject gateway secret so downstream ServiceAuthGuard trusts verified x-user-* headers
       const gatewaySecret = this.configService.get<string>('GATEWAY_SECRET');
       if (gatewaySecret) {
         headers['x-gateway-secret'] = gatewaySecret;
@@ -4200,12 +4283,9 @@ export class ProxyController {
       res.setHeader(API_VERSION_HEADER, version);
       res.setHeader(this.REQUEST_ID_HEADER, requestId);
 
-      const statusToForward = [200, 201, 204, 400, 401, 403, 404, 409, 422, 429, 500, 502, 503];
-      if (statusToForward.includes(proxyResponse.status)) {
-        res.status(proxyResponse.status);
-      } else {
-        res.status(HttpStatus.OK);
-      }
+      // Forward the upstream status verbatim: collapsing unknown statuses
+      // (3xx, 410, 413, 451, …) into 200 OK corrupts client retry/cache logic.
+      res.status(proxyResponse.status);
 
       const data = proxyResponse.data;
 
