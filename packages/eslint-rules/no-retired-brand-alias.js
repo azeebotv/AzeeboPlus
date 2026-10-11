@@ -12,14 +12,18 @@
  * The aliases here are the ones with a canonical equivalent. `--text-primary`,
  * `--text-secondary` and `--text-tertiary` are deliberately absent: they flip
  * per theme in `globals.css`, and the `--color-az-*` ramp is static, so mapping
- * them would silently break light mode. `--brand-gold` is absent too: it is
- * #FFD700 while the registry accent token is #FBBF24, and its call sites mix
- * medal chrome with a carrier-identity hue. The other categorical hues
- * (`--brand-purple|pink|grey|sky|…`) match no az token, so they are not banned —
- * that gap is reported, not hidden behind a wrong substitution. `--brand-green`
- * and `--brand-amber` are exact copies of `az-success-500`/`az-warning-500` yet
- * stay out for the same reason: their remaining app-code use is the genre
- * palette on /music/genres, where the value is an identity, not a status.
+ * them would silently break light mode.
+ *
+ * The categorical hues (`--brand-purple|pink|cyan|teal|indigo|grey|…`) were
+ * absent from this rule for a while because they matched no az token at all —
+ * banning them would have forced a wrong substitution. They now have one:
+ * `categoryColors` in the registry, emitted as `--color-az-category-*`, and
+ * `globals.css` redeclares each alias as a pointer at that token. Same for
+ * `--brand-green`/`--brand-amber`: they were kept out while their only app-code
+ * use was the genre palette, where the hex names an identity rather than a
+ * status. `/music/genres` now reads `--color-az-category-*` for its identities,
+ * so what is left of those two is a plain copy of `az-success-500`/
+ * `az-warning-500` and nothing more.
  *
  * Options:
  *   aliases: Record<string, string> - alias name -> canonical custom property
@@ -39,6 +43,26 @@ const DEFAULT_ALIASES = {
   // `--brand-copper` is what the medal code calls the bronze tier.
   '--brand-copper': '--color-az-accent-bronze',
   '--brand-silver': '--color-az-accent-silver',
+  // Rewards gold used to be #FFD700 here while the registry medal was #FBBF24 —
+  // two golds for one concept. The alias now reads the registry value.
+  '--brand-gold': '--color-az-accent-gold',
+  // Categorical subject hues, registered as `categoryColors`.
+  '--brand-purple': '--color-az-category-violet',
+  '--brand-purple-light': '--color-az-category-violet-light',
+  '--brand-pink': '--color-az-category-pink',
+  '--brand-cyan': '--color-az-category-cyan',
+  '--brand-teal': '--color-az-category-teal',
+  '--brand-indigo': '--color-az-category-indigo',
+  '--brand-sky': '--color-az-category-sky',
+  '--brand-crimson': '--color-az-category-crimson',
+  '--brand-emerald': '--color-az-category-emerald',
+  '--brand-forest': '--color-az-category-forest',
+  '--brand-grey': '--color-az-ink-muted',
+  // Exact copies of the status ramp. Out of the map while /music/genres used
+  // them as genre identities; that palette moved to `--color-az-category-*`, so
+  // the only readers left are the internal consoles.
+  '--brand-green': '--color-az-success-500',
+  '--brand-amber': '--color-az-warning-500',
 };
 
 // `var(--brand-orange, #EC691F)` carries a fallback that survives the swap; the
@@ -84,7 +108,10 @@ function create(context) {
         // backticks and `${`, and a JSX attribute its quotes.
         const raw = sourceCode.getText(node);
         let output = raw;
-        for (const name of unique) {
+        // Longest name first: `--brand-purple` is a prefix of
+        // `--brand-purple-light`, and a plain split would rewrite the tail of
+        // the longer alias into `--color-az-category-violet-light`.
+        for (const name of [...unique].sort((a, b) => b.length - a.length)) {
           output = output.split(`var(${name}`).join(`var(${aliases[name]}`);
           output = output.split(`var( ${name}`).join(`var(${aliases[name]}`);
         }

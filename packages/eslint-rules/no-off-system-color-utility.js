@@ -43,10 +43,10 @@ const HUE_TO_RAMP = {
   sky: ['secondary — or universe-lifestyle'],
   blue: ['secondary — or primary'],
   indigo: ['secondary'],
-  violet: ['a hue registered in packages/design-tokens'],
-  purple: ['a hue registered in packages/design-tokens'],
-  fuchsia: ['a hue registered in packages/design-tokens'],
-  pink: ['a hue registered in packages/design-tokens'],
+  violet: ['az-category-violet (500+) or az-category-violet-light (<=400)'],
+  purple: ['az-category-violet (500+) or az-category-violet-light (<=400)'],
+  fuchsia: ['az-category-pink'],
+  pink: ['az-category-pink'],
   gray: ['ink / surface / glass'],
   grey: ['ink / surface / glass'],
   slate: ['ink / surface / glass'],
@@ -151,11 +151,16 @@ function consoleRoleOf(token) {
 // Only these families are enforced, because only these have a canonical target:
 // `az-warning` IS amber, `az-error` IS red, `az-success` IS green and
 // `az-secondary` IS blue — step for step, same hexes, in
-// `packages/design-tokens/src/index.ts`. The violet/pink family is listed above
-// for guidance but NOT banned: neither Figma file defines a purple, and the
-// eight `--color-az-universe-*` hues are branding, not a premium ramp. Inventing
-// a token to silence a lint error would put an unmeasured colour on screen, so
-// those uses stay visible as a registry gap instead.
+// `packages/design-tokens/src/index.ts`.
+//
+// The violet/pink family used to be listed for guidance but NOT banned: neither
+// Figma file defines a purple, and inventing a token to silence a lint error
+// would have put an unmeasured colour on screen. They are banned now, against
+// the layer that closes that objection honestly: `categoryColors`, which
+// registers the hues the product already ships (`--brand-purple` et al.) as
+// subject hues rather than measured brand colours. `az-category-violet` is the
+// same hex a page painted before, lookable-up in the registry — so the ban
+// removes Tailwind's private palette from the markup without moving a pixel.
 const MIGRATABLE_HUES = [
   'red',
   'rose',
@@ -170,6 +175,10 @@ const MIGRATABLE_HUES = [
   'sky',
   'blue',
   'indigo',
+  'violet',
+  'purple',
+  'fuchsia',
+  'pink',
   'gray',
   'grey',
   'slate',

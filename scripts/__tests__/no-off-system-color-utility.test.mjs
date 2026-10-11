@@ -140,12 +140,39 @@ test('hue names arriving from a class constant are flagged', () => {
   );
 });
 
-test('the violet family is left alone until the palette owns a premium hue', () => {
-  // Neither Figma file defines a purple, and --color-az-universe-* are branding
-  // hues rather than a ramp. A wrong substitution would put an unmeasured
-  // colour on screen, so this is a reported registry gap, not a lint error.
+test('the violet family maps onto the registered category hues', () => {
+  // This used to assert the opposite: neither Figma file defines a purple, so a
+  // substitution would have put an unmeasured colour on screen. `categoryColors`
+  // now registers the hues the product already ships as subject hues, so the ban
+  // has a target that is the same hex the page painted before.
+  const messages = flagged(
+    `export const A = () => <div className="bg-purple-500 text-pink-400 border-fuchsia-300" />;`
+  );
+  assert.equal(messages.length, 3, JSON.stringify(messages));
+  assert.match(messages[0], /az-category-violet/);
+  assert.match(messages[1], /az-category-pink/);
+  assert.match(messages[2], /az-category-pink/);
+});
+
+test('a light violet step is pointed at the light category hue', () => {
+  // Both directions land in the same guidance string, which names the two
+  // registered violets and the split by step, so the substitution stays
+  // mechanical rather than a guess at which purple was meant.
+  const messages = flagged(
+    `export const A = () => <div className="text-violet-400 bg-purple-500" />;`
+  );
+  assert.equal(messages.length, 2, JSON.stringify(messages));
+  for (const message of messages) {
+    assert.match(message, /az-category-violet/);
+    assert.match(message, /az-category-violet-light/);
+  }
+});
+
+test('the registered category vocabulary itself is never flagged', () => {
   assert.deepEqual(
-    flagged(`export const A = () => <div className="bg-purple-500 text-pink-400 border-fuchsia-300" />;`),
+    flagged(
+      `export const A = () => <div className="bg-az-category-violet/15 text-az-category-violet-light border-az-category-pink from-az-surface-auth-violet" />;`
+    ),
     []
   );
 });

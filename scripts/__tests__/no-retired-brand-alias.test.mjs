@@ -7,11 +7,13 @@
  * globals.css keeps the pre-design-system `--brand-*`/`--hp-*` alias layer alive
  * for the internal consoles, so a page reading `var(--brand-orange)` looks fine
  * while silently stepping outside the generated token ramp. The rule maps each
- * retired alias to its canonical `--color-az-*` equivalent — and deliberately
- * says nothing about the ones that must not be swapped: the theme-flipping
- * `--text-*` variables, gold and purple, whose legacy hexes have no registry
- * counterpart, and green/amber, which match a status ramp byte for byte but are
- * used in app code as genre identities.
+ * retired alias to its canonical `--color-az-*` equivalent, and says nothing only
+ * about what the registry cannot name: the theme-flipping `--text-*` variables and
+ * the untokenised art literals (`--brand-surface`, `--music-purple`). The gold,
+ * purple and green/amber aliases were excluded while they had no counterpart — the
+ * registry's `accent` medals and `categoryColors` layer gave each of them a target
+ * that is the value already on screen, so keeping them silent would only hide the
+ * ramp from the pages that could join it.
  */
 
 import { test } from 'node:test';
@@ -167,18 +169,22 @@ test('the shipped map retires the tier metals', () => {
   }
 });
 
-test('hex-exact copies of a status ramp stay out when used as identity hues', () => {
+test('the status-ramp copies are banned now that the genre palette moved', () => {
   // `--brand-green` #22c55e and `--brand-amber` #f59e0b are byte-for-byte
-  // az-success-500 / az-warning-500, so a textual swap would be value-preserving
-  // — and wrong. Their only app-code uses are entries in /music/genres'
-  // GENRE_COLORS, where the hex names a genre rather than a state. Banning them
-  // would push pages to relabel identity hues as statuses.
-  for (const alias of ['--brand-green', '--brand-amber']) {
+  // az-success-500 / az-warning-500. They stayed out of the map while their only
+  // app-code uses were entries in /music/genres' GENRE_COLORS, where the hex names
+  // a genre rather than a state; that palette reads `--color-az-category-*` now,
+  // so the aliases have nothing left to protect.
+  for (const [alias, canonical] of [
+    ['--brand-green', '--color-az-success-500'],
+    ['--brand-amber', '--color-az-warning-500'],
+  ]) {
     const messages = flagged(
       `export const A = () => <div style={{ color: 'var(${alias})' }} />;`,
       {}
     );
-    assert.deepEqual(messages, [], `${alias} must not be flagged: ${messages}`);
+    assert.equal(messages.length, 1, `${alias} should be flagged: ${messages}`);
+    assert.match(messages[0], new RegExp(canonical));
   }
 });
 
@@ -195,14 +201,44 @@ test('eslint.config.js wires this map rather than copying it', () => {
   assert.equal(configured[0], rule.DEFAULT_ALIASES);
 });
 
-test('hues the registry does not own stay silent', () => {
-  // --brand-gold is #FFD700 while registry gold is #FBBF24, and --brand-purple is
-  // the premium violet the palette still has no ramp for. A wrong substitution
-  // would move pixels and hide the gap, so the map leaves both out.
+test('the categorical hues have canonical targets', () => {
+  // `categoryColors` registers the hues the product already ships, so gold and
+  // purple are no longer exceptions: gold because the alias reads the registry
+  // medal value now (one gold, not #FFD700 beside #FBBF24), purple because the
+  // category layer owns the hex.
+  const aliases = rule.DEFAULT_ALIASES;
+  for (const [alias, target] of [
+    ['--brand-gold', '--color-az-accent-gold'],
+    ['--brand-purple', '--color-az-category-violet'],
+    ['--brand-purple-light', '--color-az-category-violet-light'],
+    ['--brand-grey', '--color-az-ink-muted'],
+  ]) {
+    assert.equal(aliases[alias], target, `${alias} -> ${target}`);
+  }
+});
+
+test('the fixer rewrites the longer alias when the shorter is a prefix', () => {
+  // `--brand-purple` is a prefix of `--brand-purple-light`, so a naive split on
+  // the shorter name would leave `-light` glued onto the target token.
+  const output = lint(
+    `export const A = () => <div className="bg-[var(--brand-purple-light)] text-[var(--brand-purple)]" />;`,
+    { aliases: rule.DEFAULT_ALIASES },
+    true
+  );
+  assert.match(output, /bg-\[var\(--color-az-category-violet-light\)\]/);
+  assert.match(output, /text-\[var\(--color-az-category-violet\)\]/);
+  assert.doesNotMatch(output, /violet-light-light|category-violet-light-light/);
+});
+
+test('values with no registry twin stay silent', () => {
+  // The alias layer's remaining art values — `--brand-surface` (#18151e) and
+  // `--brand-mid-brown` (#9a8a7a) are untokenised compositions in globals.css, and
+  // `--music-purple` is fixed identity art for the music universe. Reporting them
+  // would demand a substitution the registry cannot name.
   assert.deepEqual(
     flagged(
-      `export const A = () => <div style={{ color: 'var(--brand-gold)' }} className="bg-[var(--brand-purple)]" />;`,
-      {}
+      `export const A = () => <div style={{ color: 'var(--brand-mid-brown)' }} className="bg-[var(--brand-surface)] border-[var(--music-purple)]" />;`,
+      { aliases: rule.DEFAULT_ALIASES }
     ),
     []
   );

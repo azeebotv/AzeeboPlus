@@ -527,24 +527,31 @@ change the rule's reach while its own tests kept passing.
 - `--text-primary`, `--text-secondary`, `--text-tertiary` — these flip per theme
   in `globals.css`, and the `--color-az-*` ramp is static, so substituting them
   would silently break light mode.
-- `--brand-gold` (#FFD700) — `accent.gold` is #FBBF24, so this is not a
-  substitution. And its call sites are not one thing: medal chrome that belongs on
-  the accent tokens, and a carrier-identity hue on /commerce/telco-reconciliation
-  that the az vocabulary has no business owning. A palette decision, not a sweep.
-- `--brand-purple|pink|grey|sky|crimson|emerald|cyan|teal|indigo|forest` — no
-  hex-exact az counterpart. A reported gap beats a wrong substitution.
-- `--brand-green` (#22c55e) and `--brand-amber` (#f59e0b) — these two _are_
-  `success.500` and `warning.500` by another name, and their three remaining
-  app-code uses are all entries in `GENRE_COLORS` on `/music/genres`. There the
-  hex is a genre's identity, not a status, and pointing an identity hue at a
-  status ramp would read as "reggae is a success state" to the next person.
-  Categorical subject hues have one home in the registry — `universeColors` —
-  and it has no genre entry yet. That gap is reported here rather than closed
-  by a lint-driven palette decision.
+- The untokenised art values that stay hand-authored in `globals.css`:
+  `--brand-surface` (#18151e), `--brand-surface-input`, `--brand-mid-brown`,
+  `--music-purple` and the `--hp-*` landing composition. They are one-off marketing
+  art with no registry entry, so the rule would have to name a token that does not
+  exist.
 
-What _is_ in the map beyond the accent layer: `--brand-copper` (#CD7F32) and
-`--brand-silver` (#C0C0C0), the registry's `accent.bronze`/`accent.silver`
-retyped.
+Everything else the layer holds now has a target, including the three cases that
+were exempt while the registry had nothing to offer:
+
+- `--brand-gold` — was #FFD700 sitting beside the registry's `accent.gold` #FBBF24,
+  two golds for one concept. The alias reads the registry value now, which is also
+  what medals, badges and the reward tiers render.
+- `--brand-purple|purple-light|pink|cyan|teal|indigo|sky|crimson|emerald|forest|grey`
+  — `categoryColors` registers these subject hues (genre badges, vertical identity,
+  chart series) and the generator emits `--color-az-category-*`, so each alias is a
+  pointer at that token rather than a second copy of the hex.
+- `--brand-green` (#22c55e) and `--brand-amber` (#f59e0b) — exact copies of
+  `az-success-500`/`az-warning-500`. They stayed out of the map while their only
+  app-code uses were `GENRE_COLORS` on `/music/genres`, where the hex named an
+  identity rather than a status; that palette moved to `--color-az-category-*`, so
+  nothing is left to protect.
+
+What else is in the map: `--brand-copper` (#CD7F32) and `--brand-silver` (#C0C0C0),
+the registry's `accent.bronze`/`accent.silver` retyped, and the `--hp-{bg,bg-alt,
+card-bg,card-border,divider}` surface layer behind the same sweep.
 
 ### A composed var() is invisible to this rule
 
@@ -624,13 +631,18 @@ renders:
 
 ### What it deliberately does NOT flag
 
-- `purple`, `violet`, `pink`, `fuchsia` — no Figma frame defines a premium
-  purple and the universe hues are branding rather than a ramp. There is no
-  correct token to point at, so banning them would produce an unmeasured colour
-  or a fake substitution. Tracked as a palette-registry gap.
 - `white`, `black` — `bg-black/60` scrims over photography are sanctioned, and
   `text-white` is a contrast question, not a hue question.
-- Anything in the generated `az-*` vocabulary.
+- Anything in the generated `az-*` vocabulary — including the `az-category-*`
+  and `az-surface-auth-*` tokens the campaign added while writing this rule.
+
+The violet family (`purple`, `violet`, `pink`, `fuchsia`) *is* banned now. It was
+left out while no Figma frame defined a premium purple and the eight
+`--color-az-universe-*` hues were branding rather than a ramp: the only way to
+satisfy the rule would have been to invent a token, which puts an unmeasured
+colour on screen. `categoryColors` in the registry registers the hexes the
+product already shipped (`#8b5cf6` and its light step, `#ec4899`), so the
+guidance now names real targets.
 
 ### No fixer
 
@@ -665,11 +677,15 @@ because it has to read against the panel). The package now ships a
 `"lint": "eslint src"` script, so it is discovered by the ratchet, the promotion
 gate and `pnpm -r lint` like every other workspace.
 
-What remains outside the rule is the unenforced residue the campaign recorded as
-registry gaps (premium purples, `--brand-purple`/`--brand-pink` tints, the genre
-identity hues on `/music/genres`, arbitrary-value shadows, and `--brand-gold` at
-`#FFD700` against the registry's `#FBBF24` accent silver/gold/bronze, which the
-generator does emit).
+What remains outside the two rules is the residue that has no generated counterpart
+rather than a gap in the registry: `black`/`white` contrast uses, the fixed
+marketing art under `--hp-*` in `globals.css`, and shadow geometries that name no
+colour. The items this file used to record as open registry gaps — the premium
+purples, the `--brand-purple`/`--brand-pink` tints, the `/music/genres` identity
+hues, `--brand-gold` at #FFD700 against the registry's #FBBF24, and the hand-typed
+glows — are closed: `categoryColors` and `glows` in the registry own those values,
+`no-off-system-color-utility` bans the raw-palette route onto them, and
+`no-retired-brand-alias` owns the alias half.
 
 ---
 
