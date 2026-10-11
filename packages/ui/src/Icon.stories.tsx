@@ -100,7 +100,7 @@ export const CommonIcons: Story = {
       {['Home', 'User', 'Settings', 'Search', 'Mail', 'Bell', 'Heart', 'Star'].map((icon) => (
         <div key={icon} className="flex flex-col items-center gap-2 p-2">
           <Icon name={icon as IconName} size="lg" />
-          <span className="text-xs text-text-tertiary">{icon}</span>
+          <span className="text-xs text-az-ink-muted">{icon}</span>
         </div>
       ))}
     </div>

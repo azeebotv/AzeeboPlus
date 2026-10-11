@@ -87,7 +87,7 @@ export const BottomNavigationComponent: StoryObj<typeof BottomNavigation> = {
     activeItem: 'home',
   },
   render: (args) => (
-    <div className="p-4 bg-bg-primary" style={{ height: '200px' }}>
+    <div className="p-4 bg-az-surface-root" style={{ height: '200px' }}>
       <BottomNavigation {...args} onItemPress={() => {}} />
     </div>
   ),

@@ -20,6 +20,7 @@
     "build": "bash ../../scripts/build-package.sh",
     "watch": "tsc -p tsconfig.json --watch",
     "clean": "rm -rf dist",
+    "lint": "eslint src",
     "test": "jest",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build --output-dir storybook-static"
@@ -43,8 +44,7 @@
     "@hookform/resolvers": "^5.4.0",
     "lucide-react": "^1.20.0",
     "react-hook-form": "^7.79.0",
-    "zod": "^4.4.3",
-    "zustand": "^5.0.14"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@storybook/addon-essentials": "^8.6.18",
@@ -67,11 +67,14 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^29.5.14",
-    "@testing-library/react-native": "^13.0.1"
+    "@testing-library/react-native": "^13.0.1",
+    "zustand": "^5.0.14"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0",
-    "react-native": "^0.76.5 || ~0.85.0"
-  }
+    "react-native": "^0.76.5 || ~0.85.0",
+    "zustand": "^5.0.14"
+  },
+  "peerDependenciesMeta": {}
 }

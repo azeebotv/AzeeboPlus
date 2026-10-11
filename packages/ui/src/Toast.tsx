@@ -167,17 +167,17 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   };
 
   const styles: Record<ToastType, string> = {
-    success: 'bg-bg-secondary border-success-500/30',
-    error: 'bg-bg-secondary border-error-500/30',
-    warning: 'bg-bg-secondary border-warning-500/30',
-    info: 'bg-bg-secondary border-primary-500/30',
+    success: 'bg-az-surface-raised border-az-success-500/30',
+    error: 'bg-az-surface-raised border-az-error-500/30',
+    warning: 'bg-az-surface-raised border-az-warning-500/30',
+    info: 'bg-az-surface-raised border-az-primary-500/30',
   };
 
   const iconColors: Record<ToastType, string> = {
-    success: 'text-success-400',
-    error: 'text-error-400',
-    warning: 'text-warning-400',
-    info: 'text-primary-400',
+    success: 'text-az-success-400',
+    error: 'text-az-error-400',
+    warning: 'text-az-warning-400',
+    info: 'text-az-primary-400',
   };
 
   return (
@@ -192,12 +192,12 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
       <div className="flex items-start gap-3">
         <div className={`flex-shrink-0 ${iconColors[toast.type]}`}>{icons[toast.type]}</div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-text-primary">{toast.title}</p>
-          {toast.message && <p className="mt-1 text-sm text-text-secondary">{toast.message}</p>}
+          <p className="text-sm font-medium text-az-ink">{toast.title}</p>
+          {toast.message && <p className="mt-1 text-sm text-az-ink-dim">{toast.message}</p>}
         </div>
         <button
           onClick={onClose}
-          className="flex-shrink-0 text-text-tertiary hover:text-text-primary transition-colors"
+          className="flex-shrink-0 text-az-ink-muted hover:text-az-ink transition-colors"
           aria-label="Dismiss notification"
         >
           <svg

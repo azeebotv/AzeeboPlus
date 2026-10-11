@@ -216,7 +216,7 @@ export const EmptyStateComponent: StoryObj<typeof EmptyState> = {
     description: 'There are no items to display. Try adding some content.',
   },
   render: (args) => (
-    <div className="p-4 bg-bg-secondary rounded-xl border border-border-default">
+    <div className="p-4 bg-az-surface-raised rounded-xl border border-az-glass-border">
       <EmptyState {...args} action={<Button>Add Item</Button>} />
     </div>
   ),

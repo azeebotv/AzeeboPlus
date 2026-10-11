@@ -25,7 +25,7 @@ export const Default: Story = {
     children: (
       <div>
         <h3 className="text-lg font-semibold text-white mb-2">Card Title</h3>
-        <p className="text-gray-400">This is a basic card with default padding.</p>
+        <p className="text-az-ink-dim">This is a basic card with default padding.</p>
       </div>
     ),
   },
@@ -37,7 +37,7 @@ export const NoPadding: Story = {
     children: (
       <div className="p-6">
         <h3 className="text-lg font-semibold text-white mb-2">No Padding Card</h3>
-        <p className="text-gray-400">Padding controlled externally.</p>
+        <p className="text-az-ink-dim">Padding controlled externally.</p>
       </div>
     ),
   },
@@ -49,7 +49,7 @@ export const SmallPadding: Story = {
     children: (
       <div>
         <h3 className="text-lg font-semibold text-white mb-2">Small Padding</h3>
-        <p className="text-gray-400">Compact card with small padding.</p>
+        <p className="text-az-ink-dim">Compact card with small padding.</p>
       </div>
     ),
   },
@@ -61,7 +61,7 @@ export const LargePadding: Story = {
     children: (
       <div>
         <h3 className="text-lg font-semibold text-white mb-2">Large Padding</h3>
-        <p className="text-gray-400">Spacious card with large padding.</p>
+        <p className="text-az-ink-dim">Spacious card with large padding.</p>
       </div>
     ),
   },
@@ -74,7 +74,7 @@ export const Clickable: Story = {
     children: (
       <div>
         <h3 className="text-lg font-semibold text-white mb-2">Clickable Card</h3>
-        <p className="text-gray-400">Click this card to trigger an action.</p>
+        <p className="text-az-ink-dim">Click this card to trigger an action.</p>
       </div>
     ),
   },

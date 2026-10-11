@@ -62,8 +62,8 @@ export function Tabs({
         <nav
           className={`
             flex ${fullWidth ? 'w-full' : ''}
-            ${variant === 'pills' ? 'gap-1 p-1 bg-bg-tertiary rounded-lg' : ''}
-            ${variant === 'underline' ? 'border-b border-border-default' : ''}
+            ${variant === 'pills' ? 'gap-1 p-1 bg-az-surface-panel rounded-lg' : ''}
+            ${variant === 'underline' ? 'border-b border-az-glass-border' : ''}
           `}
           role="tablist"
           aria-label="Tabs"
@@ -85,21 +85,21 @@ function TabButton({ tab, variant, fullWidth }: { tab: Tab; variant: string; ful
   const baseStyles = `
     relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium
     transition-all duration-200 rounded-md
-    focus:outline-none focus:ring-2 focus:ring-primary-500/50
+    focus:outline-none focus:ring-2 focus:ring-az-primary-500/50
     disabled:opacity-50 disabled:cursor-not-allowed
     ${fullWidth ? 'flex-1 justify-center' : ''}
   `;
 
   const variantStyles = {
     default: isActive
-      ? 'text-primary-400 bg-primary-500/10'
-      : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary',
+      ? 'text-az-primary-400 bg-az-primary-500/10'
+      : 'text-az-ink-dim hover:text-az-ink hover:bg-az-surface-panel',
     pills: isActive
-      ? 'text-white bg-primary-500 shadow-sm'
-      : 'text-text-secondary hover:text-text-primary',
+      ? 'text-white bg-az-primary-500 shadow-sm'
+      : 'text-az-ink-dim hover:text-az-ink',
     underline: isActive
-      ? 'text-primary-400 border-b-2 border-primary-400'
-      : 'text-text-secondary hover:text-text-primary border-b-2 border-transparent hover:border-border-default',
+      ? 'text-az-primary-400 border-b-2 border-az-primary-400'
+      : 'text-az-ink-dim hover:text-az-ink border-b-2 border-transparent hover:border-az-glass-border',
   };
 
   const getIcon = (icon: IconName | React.ReactNode) => {
@@ -125,7 +125,7 @@ function TabButton({ tab, variant, fullWidth }: { tab: Tab; variant: string; ful
         <span
           className={`
           ml-1 px-2 py-0.5 text-xs rounded-full
-          ${isActive ? 'bg-primary-400/20 text-primary-300' : 'bg-bg-hover text-text-tertiary'}
+          ${isActive ? 'bg-az-primary-400/20 text-az-primary-300' : 'bg-az-glass-fill text-az-ink-muted'}
         `}
         >
           {String(tab.badge)}
@@ -180,7 +180,7 @@ export function Breadcrumbs({ items, separator, className = '' }: BreadcrumbsPro
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
-      className="text-text-tertiary flex-shrink-0"
+      className="text-az-ink-muted flex-shrink-0"
       aria-hidden="true"
     >
       <path d="M9 18l6-6-6-6" />
@@ -197,7 +197,7 @@ export function Breadcrumbs({ items, separator, className = '' }: BreadcrumbsPro
             <li key={index} className="flex items-center gap-2">
               {index > 0 && (separator || defaultSeparator)}
               {isLast ? (
-                <span className="text-text-primary font-medium" aria-current="page">
+                <span className="text-az-ink font-medium" aria-current="page">
                   {item.icon && typeof item.icon === 'string' ? (
                     <>
                       <Icon name={item.icon as IconName} size="sm" className="inline mr-1" />
@@ -213,7 +213,7 @@ export function Breadcrumbs({ items, separator, className = '' }: BreadcrumbsPro
               ) : item.href ? (
                 <a
                   href={item.href}
-                  className="text-text-secondary hover:text-text-primary transition-colors flex items-center"
+                  className="text-az-ink-dim hover:text-az-ink transition-colors flex items-center"
                 >
                   {item.icon && typeof item.icon === 'string' ? (
                     <>
@@ -230,7 +230,7 @@ export function Breadcrumbs({ items, separator, className = '' }: BreadcrumbsPro
               ) : (
                 <button
                   onClick={item.onClick}
-                  className="text-text-secondary hover:text-text-primary transition-colors flex items-center"
+                  className="text-az-ink-dim hover:text-az-ink transition-colors flex items-center"
                 >
                   {item.icon && typeof item.icon === 'string' ? (
                     <>
@@ -280,7 +280,7 @@ export function Pagination({
       {showFirstLast && currentPage > 2 && (
         <button
           onClick={() => onPageChange(1)}
-          className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+          className="p-2 rounded-lg text-az-ink-dim hover:text-az-ink hover:bg-az-surface-panel transition-colors"
           aria-label="Go to first page"
         >
           <svg
@@ -300,7 +300,7 @@ export function Pagination({
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="p-2 rounded-lg text-az-ink-dim hover:text-az-ink hover:bg-az-surface-panel disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         aria-label="Go to previous page"
       >
         <svg
@@ -317,7 +317,7 @@ export function Pagination({
 
       {pages.map((page, index) =>
         page === '...' ? (
-          <span key={`ellipsis-${index}`} className="px-3 py-2 text-text-tertiary">
+          <span key={`ellipsis-${index}`} className="px-3 py-2 text-az-ink-muted">
             ...
           </span>
         ) : (
@@ -328,8 +328,8 @@ export function Pagination({
               min-w-[40px] h-10 px-3 rounded-lg text-sm font-medium transition-colors
               ${
                 page === currentPage
-                  ? 'bg-primary-500 text-white'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
+                  ? 'bg-az-primary-500 text-white'
+                  : 'text-az-ink-dim hover:text-az-ink hover:bg-az-surface-panel'
               }
             `}
             aria-current={page === currentPage ? 'page' : undefined}
@@ -342,7 +342,7 @@ export function Pagination({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="p-2 rounded-lg text-az-ink-dim hover:text-az-ink hover:bg-az-surface-panel disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         aria-label="Go to next page"
       >
         <svg
@@ -360,7 +360,7 @@ export function Pagination({
       {showFirstLast && currentPage < totalPages - 1 && (
         <button
           onClick={() => onPageChange(totalPages)}
-          className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+          className="p-2 rounded-lg text-az-ink-dim hover:text-az-ink hover:bg-az-surface-panel transition-colors"
           aria-label="Go to last page"
         >
           <svg
@@ -448,7 +448,7 @@ export function BottomNavigation({
 }: BottomNavigationProps) {
   return (
     <nav
-      className={`fixed bottom-0 left-0 right-0 z-sticky bg-bg-secondary border-t border-border-default px-2 py-2 ${className}`}
+      className={`fixed bottom-0 left-0 right-0 z-sticky bg-az-surface-raised border-t border-az-glass-border px-2 py-2 ${className}`}
       role="navigation"
       aria-label="Bottom navigation"
     >
@@ -469,7 +469,7 @@ export function BottomNavigation({
               className={`
                 relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl
                 transition-all duration-200
-                ${isActive ? 'text-primary-400' : 'text-text-tertiary hover:text-text-secondary'}
+                ${isActive ? 'text-az-primary-400' : 'text-az-ink-muted hover:text-az-ink-dim'}
               `}
               aria-current={isActive ? 'page' : undefined}
               aria-label={item.label}
@@ -478,7 +478,7 @@ export function BottomNavigation({
                 <span
                   className={`
                   absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1.5 rounded-full text-xs font-medium flex items-center justify-center
-                  ${isActive ? 'bg-primary-500 text-white' : 'bg-error-500 text-white'}
+                  ${isActive ? 'bg-az-primary-500 text-white' : 'bg-az-error-500 text-white'}
                 `}
                 >
                   {item.badge}
@@ -549,7 +549,7 @@ export function Dropdown({ trigger, items, className = '', align = 'left' }: Dro
     <div className={`relative inline-block ${className}`} data-dropdown>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+        className="focus:outline-none focus:ring-2 focus:ring-az-primary-500/50"
       >
         {trigger}
       </button>
@@ -558,14 +558,14 @@ export function Dropdown({ trigger, items, className = '', align = 'left' }: Dro
         <div
           className={`
             absolute ${align === 'right' ? 'right-0' : 'left-0'} mt-2 w-56
-            bg-bg-secondary border border-border-default rounded-xl shadow-xl
+            bg-az-surface-raised border border-az-glass-border rounded-xl shadow-xl
             py-1 z-dropdown
           `}
           role="menu"
         >
           {items.map((item) => {
             if (item.divider) {
-              return <div key={item.id} className="border-t border-border-default my-1" />;
+              return <div key={item.id} className="border-t border-az-glass-border my-1" />;
             }
 
             return (
@@ -581,8 +581,8 @@ export function Dropdown({ trigger, items, className = '', align = 'left' }: Dro
                   transition-colors duration-150
                   ${
                     item.disabled
-                      ? 'opacity-50 cursor-not-allowed text-text-tertiary'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
+                      ? 'opacity-50 cursor-not-allowed text-az-ink-muted'
+                      : 'text-az-ink-dim hover:text-az-ink hover:bg-az-surface-panel'
                   }
                 `}
                 role="menuitem"
@@ -590,7 +590,7 @@ export function Dropdown({ trigger, items, className = '', align = 'left' }: Dro
                 {item.icon && getIcon(item.icon)}
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.shortcut && (
-                  <span className="text-text-tertiary text-xs">{item.shortcut}</span>
+                  <span className="text-az-ink-muted text-xs">{item.shortcut}</span>
                 )}
               </button>
             );
