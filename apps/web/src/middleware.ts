@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import {
-  AUTH_COOKIE,
-  LEGACY_AUTH_COOKIE,
-  isAuthMarkerValid,
-} from './lib/cookie-names';
+import { AUTH_COOKIE, LEGACY_AUTH_COOKIE, isAuthMarkerValid } from './lib/cookie-names';
 
 /**
  * Middleware: Homepage Routing + Role-Based Access Control + Auth Guard.
@@ -33,6 +29,8 @@ const protectedRoutes = [
   '/messages',
   '/settings',
   '/wallet',
+  // Public /borrow stays anonymous; only the signed-in account view is gated.
+  '/borrow/account',
   '/content',
   '/payment',
   '/referral',
@@ -64,16 +62,33 @@ export function middleware(request: NextRequest) {
     securityHeaders['Strict-Transport-Security'] = 'max-age=63072000; includeSubDomains; preload';
   }
 
+  // AUD-06: fresh per-request CSP nonce. Production `script-src` no longer
+  // contains 'unsafe-inline' — inline scripts execute only with this nonce.
+  // Next.js parses the nonce from the *request-side* CSP during SSR and stamps
+  // it on its framework/inline <script> tags, so the policy is forwarded on
+  // the request as well (see passThrough below); the response copy is what the
+  // browser enforces. Nonces require per-request rendering: the root layout
+  // sets `export const dynamic = 'force-dynamic'`, otherwise prerendered HTML
+  // is baked without nonce attributes and every script would be blocked.
+  // (docs: nextjs.org/docs/app/guides/content-security-policy)
+  const nonce = btoa(crypto.randomUUID());
+
   // Content-Security-Policy
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.youtube.com https://www.youtube-nocookie.com https://www.googletagmanager.com https://www.google-analytics.com",
+    // AUD-06: nonce gates inline scripts ('unsafe-inline' removed). The host
+    // allow-list stays for legacy nonce-incapable browsers; dev keeps
+    // 'unsafe-eval' because React's debug tooling requires it (prod does not).
+    `script-src 'self' 'nonce-${nonce}'${isProd ? '' : " 'unsafe-eval'"} https://www.youtube.com https://www.youtube-nocookie.com https://www.googletagmanager.com https://www.google-analytics.com`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https: http://localhost:*",
+    "img-src 'self' data: blob: https://*.azeeboplus.com https://*.cloudfront.net https://*.ytimg.com https://images.unsplash.com http://localhost:*",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' http://localhost:* ws://localhost:* ws: wss: https: https://*.azeeboplus.com https://api.stripe.com",
+    "connect-src 'self' http://localhost:* ws://localhost:* ws: wss: https://*.azeeboplus.com https://api.stripe.com https://api.paystack.co https://api.flutterwave.com https://www.google-analytics.com https://*.amazonaws.com",
     "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
-    "media-src 'self' https: blob: data:",
+    // AUD-06: was an open `https:` wildcard (arbitrary remote media). Playback
+    // only comes from our CDN domains, S3 presigned URLs (same origins already
+    // trusted in connect-src) and localhost in development (img-src parity).
+    "media-src 'self' data: blob: https://*.azeeboplus.com https://*.cloudfront.net https://*.amazonaws.com http://localhost:*",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -82,19 +97,39 @@ export function middleware(request: NextRequest) {
 
   securityHeaders['Content-Security-Policy'] = cspDirectives;
 
+  // Request-side copy: Next.js extracts 'nonce-…' from the CSP on the
+  // incoming request to nonce the scripts it renders (x-nonce also exposes it
+  // to app code via headers(), e.g. for next/script or JSON-LD tags).
+  const forwardedHeaders = new Headers(request.headers);
+  forwardedHeaders.set('Content-Security-Policy', cspDirectives);
+  forwardedHeaders.set('x-nonce', nonce);
+
+  // Document pass-throughs must carry the request-side policy so the nonces
+  // SSR stamps on <script> tags match the CSP the browser enforces. Redirects
+  // render no HTML, so they only need the response headers.
+  const passThrough = (): NextResponse =>
+    NextResponse.next({ request: { headers: forwardedHeaders } });
+
   // Check if the user is authenticated using the namespaced auth marker
   // cookie (host-scoped cookie safety — see lib/cookie-names.ts). The bare
   // `auth` name is shared by every localhost app and foreign tooling has
   // planted email-valued `auth` cookies that clobbered real sessions.
   const authCookie = request.cookies.get(AUTH_COOKIE);
-  const isAuthenticated = isAuthMarkerValid(authCookie?.value);
+  // The marker lives 15 minutes and the access cookie with it, but the httpOnly
+  // refresh cookie outlives both — and middleware sees httpOnly cookies. A page
+  // load carrying any token cookie is a recoverable session: bounce it to login
+  // and the user is locked out of a session the client probe would happily
+  // restore. Marker-only evidence was what made every reload look logged out.
+  const isAuthenticated =
+    isAuthMarkerValid(authCookie?.value) ||
+    request.cookies.has('access_token') ||
+    request.cookies.has('refresh_token');
 
   // A legacy/foreign bare `auth` cookie must never count as a session. When
   // present alongside an unauthenticated request, sweep it out of the jar on
   // every response so it stops surviving page loads. Applied inside
   // addSecurityHeaders because every return path flows through it.
-  const sweepLegacyAuthCookie =
-    request.cookies.has(LEGACY_AUTH_COOKIE) && !isAuthenticated;
+  const sweepLegacyAuthCookie = request.cookies.has(LEGACY_AUTH_COOKIE) && !isAuthenticated;
 
   // Helper to add security headers to response
   const addSecurityHeaders = (response: NextResponse): NextResponse => {
@@ -122,7 +157,7 @@ export function middleware(request: NextRequest) {
     pathname === '/sitemap.xml' ||
     pathname === '/favicon.ico'
   ) {
-    return addSecurityHeaders(NextResponse.next());
+    return addSecurityHeaders(passThrough());
   }
 
   // --- Homepage routing guards ---
@@ -132,7 +167,7 @@ export function middleware(request: NextRequest) {
       return addSecurityHeaders(NextResponse.redirect(new URL('/home', request.url)));
     }
     // Guest users see the legacy homepage — no redirect
-    return addSecurityHeaders(NextResponse.next());
+    return addSecurityHeaders(passThrough());
   }
 
   if (pathname === '/home') {
@@ -141,7 +176,7 @@ export function middleware(request: NextRequest) {
       return addSecurityHeaders(NextResponse.redirect(new URL('/', request.url)));
     }
     // Authenticated users see the redesigned homepage — no redirect
-    return addSecurityHeaders(NextResponse.next());
+    return addSecurityHeaders(passThrough());
   }
 
   // --- Admin route redirect to standalone app ---
@@ -173,7 +208,7 @@ export function middleware(request: NextRequest) {
       return addSecurityHeaders(NextResponse.redirect(loginUrl));
     }
   }
-  return addSecurityHeaders(NextResponse.next());
+  return addSecurityHeaders(passThrough());
 }
 
 export const config = {

@@ -3,6 +3,29 @@
  * SEO-001: Add structured data
  */
 
+/**
+ * AUD-59: JSON.stringify output is not safe to inline into a <script> — a
+ * creator-authored title containing `</script>` would break out of the tag,
+ * and `<`/U+2028/U+2029 can be misparsed. Escape them before injection.
+ */
+function serializeJsonLd(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
+function JsonLdScript({ jsonLd }: { jsonLd: Record<string, unknown> }) {
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+    />
+  );
+}
+
 interface OrganizationProps {
   name: string;
   url: string;
@@ -12,20 +35,17 @@ interface OrganizationProps {
 }
 
 export function OrganizationJsonLd({ name, url, logo, description, sameAs }: OrganizationProps) {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name,
-    url,
-    logo,
-    description,
-    sameAs,
-  };
-
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    <JsonLdScript
+      jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name,
+        url,
+        logo,
+        description,
+        sameAs,
+      }}
     />
   );
 }
@@ -41,25 +61,22 @@ interface WebSiteProps {
 }
 
 export function WebSiteJsonLd({ name, url, description, potentialAction }: WebSiteProps) {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name,
-    url,
-    description,
-    potentialAction: potentialAction
-      ? {
-          '@type': 'SearchAction',
-          target: potentialAction.target,
-          'query-input': potentialAction['query-input'],
-        }
-      : undefined,
-  };
-
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    <JsonLdScript
+      jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name,
+        url,
+        description,
+        potentialAction: potentialAction
+          ? {
+              '@type': 'SearchAction',
+              target: potentialAction.target,
+              'query-input': potentialAction['query-input'],
+            }
+          : undefined,
+      }}
     />
   );
 }
@@ -85,29 +102,26 @@ export function VideoObjectJsonLd({
   embedUrl,
   interactionCount,
 }: VideoObjectProps) {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'VideoObject',
-    name,
-    description,
-    thumbnailUrl,
-    uploadDate,
-    duration,
-    contentUrl,
-    embedUrl,
-    interactionStatistic: interactionCount
-      ? {
-          '@type': 'InteractionCounter',
-          interactionType: { '@type': 'WatchAction' },
-          userInteractionCount: interactionCount,
-        }
-      : undefined,
-  };
-
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    <JsonLdScript
+      jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'VideoObject',
+        name,
+        description,
+        thumbnailUrl,
+        uploadDate,
+        duration,
+        contentUrl,
+        embedUrl,
+        interactionStatistic: interactionCount
+          ? {
+              '@type': 'InteractionCounter',
+              interactionType: { '@type': 'WatchAction' },
+              userInteractionCount: interactionCount,
+            }
+          : undefined,
+      }}
     />
   );
 }
@@ -117,21 +131,18 @@ interface BreadcrumbListProps {
 }
 
 export function BreadcrumbJsonLd({ items }: BreadcrumbListProps) {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.name,
-      item: item.url,
-    })),
-  };
-
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    <JsonLdScript
+      jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: items.map((item, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: item.name,
+          item: item.url,
+        })),
+      }}
     />
   );
 }

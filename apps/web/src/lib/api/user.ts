@@ -78,6 +78,23 @@ export function createUserMethods(client: RequestClient) {
       });
     },
 
+    exportUserData: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+      return client.request<Record<string, unknown>>('/api/v1/users/me/export');
+    },
+
+    getDeletionStatus: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+      return client.request<Record<string, unknown>>('/api/v1/users/me/deletion-status');
+    },
+
+    requestAccountDeletion: async (
+      reason?: string
+    ): Promise<ApiResponse<Record<string, unknown>>> => {
+      return client.request<Record<string, unknown>>('/api/v1/users/me', {
+        method: 'DELETE',
+        ...(reason ? { body: JSON.stringify({ reason }) } : {}),
+      });
+    },
+
     getSavedItems: async (
       page = 1,
       limit = 20

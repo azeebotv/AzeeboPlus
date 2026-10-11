@@ -28,14 +28,23 @@ const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-      },
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-      },
+      // AUD-66: placehold.co/picsum.photos exist only for seeded dev data.
+      // They must never be renderable through next/image in production
+      // builds, so they join remotePatterns only outside production. The
+      // seed-hosts CI check parses these literals statically, keeping the
+      // SEED_IMAGE_HOSTS ⊆ remotePatterns invariant intact.
+      ...(process.env.NODE_ENV === 'production'
+        ? []
+        : [
+            {
+              protocol: 'https',
+              hostname: 'placehold.co',
+            },
+            {
+              protocol: 'https',
+              hostname: 'picsum.photos',
+            },
+          ]),
       {
         // Seed data (scripts/seeders/lifestyle-seeder.ts) emits cover URLs on
         // this host; ContentCard/OptimizedImage render them via next/image.
@@ -77,42 +86,8 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   async headers() {
-    const isProd = process.env.NODE_ENV === 'production';
-    const securityHeaders = [
-      {
-        key: 'X-DNS-Prefetch-Control',
-        value: 'on',
-      },
-      {
-        key: 'X-Frame-Options',
-        value: 'DENY',
-      },
-      {
-        key: 'X-Content-Type-Options',
-        value: 'nosniff',
-      },
-      {
-        key: 'Referrer-Policy',
-        value: 'strict-origin-when-cross-origin',
-      },
-      {
-        key: 'Permissions-Policy',
-        value: 'camera=(), microphone=(), geolocation=()',
-      },
-      {
-        key: 'Content-Security-Policy',
-        value:
-          "default-src 'self'; script-src 'self' 'unsafe-eval' https://www.youtube.com https://www.youtube-nocookie.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' http://localhost:* https: ws://localhost:* ws: wss:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; media-src 'self' https: blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
-      },
-    ];
-
-    if (isProd) {
-      securityHeaders.push({
-        key: 'Strict-Transport-Security',
-        value: 'max-age=63072000; includeSubDomains; preload',
-      });
-    }
-
+    // Security headers are single-sourced in src/middleware.ts (AUD-04)
+    // Only /sw.js static service worker caching headers remain here.
     return [
       {
         source: '/sw.js',
@@ -130,10 +105,6 @@ const nextConfig = {
             value: '/',
           },
         ],
-      },
-      {
-        source: '/:path*',
-        headers: securityHeaders,
       },
     ];
   },
@@ -160,10 +131,6 @@ const nextConfig = {
       {
         source: '/feature-flags/:path*',
         destination: `${apiGatewayUrl}/feature-flags/:path*`,
-      },
-      {
-        source: '/metrics',
-        destination: `${apiGatewayUrl}/metrics`,
       },
     ];
   },

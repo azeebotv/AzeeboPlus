@@ -205,16 +205,13 @@ export function createCreatorMethods(client: RequestClient) {
     }): Promise<ApiResponse<ChallengeSubmission>> => {
       // Backend contract: POST /challenges/:id/submit with { content, mediaUrl? }
       // (lifestyle-service ChallengeController), not a bare /challenges/submit.
-      return client.request<ChallengeSubmission>(
-        `/api/v1/challenges/${data.challengeId}/submit`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            content: data.description,
-            mediaUrl: data.contentUrl,
-          }),
-        }
-      );
+      return client.request<ChallengeSubmission>(`/api/v1/challenges/${data.challengeId}/submit`, {
+        method: 'POST',
+        body: JSON.stringify({
+          content: data.description,
+          mediaUrl: data.contentUrl,
+        }),
+      });
     },
 
     getSubscribers: async (

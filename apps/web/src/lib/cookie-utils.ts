@@ -3,11 +3,7 @@
  * S-001: Client-side helpers for cookie-based auth
  */
 
-import {
-  AUTH_COOKIE,
-  clearLegacyAuthCookie,
-  isAuthMarkerValid,
-} from './cookie-names';
+import { AUTH_COOKIE, clearLegacyAuthCookie, isAuthMarkerValid } from './cookie-names';
 
 const API_BASE = '';
 
@@ -71,9 +67,7 @@ export async function clearAuthCookies(): Promise<boolean> {
  */
 export function isAuthenticated(): boolean {
   if (typeof document === 'undefined') return false;
-  const match = document.cookie.match(
-    new RegExp('(?:^|;\\s*)' + AUTH_COOKIE + '=([^;]*)')
-  );
+  const match = document.cookie.match(new RegExp('(?:^|;\\s*)' + AUTH_COOKIE + '=([^;]*)'));
   if (!isAuthMarkerValid(match?.[1] ? decodeURIComponent(match[1]) : null)) {
     // Nothing valid under the namespaced name — also expire any legacy
     // bare `auth` cookie so a stale/foreign marker can't confuse anything.
