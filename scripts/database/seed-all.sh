@@ -272,16 +272,27 @@ seed_content_db() {
 # ============================================================
 seed_wallet_db() {
   info "Seeding azeebo_wallet..."
+  # One run_sql per statement: psql -c runs the whole batch in a single
+  # implicit transaction, so one bad row used to abort the rest and the
+  # "may have already existed" warning hid the real error.
   run_sql "azeebo_wallet" "
-    INSERT INTO wallets (id, user_id, balance, currency, status, created_at, updated_at)
+    INSERT INTO wallets (id, \"userId\", balance, currency, \"createdAt\", \"updatedAt\")
     VALUES
-      ('w0000000-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 5000.00, 'NGN', 'active', NOW(), NOW()),
-      ('w0000000-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000003', 12500.00, 'NGN', 'active', NOW(), NOW()),
-      ('w0000000-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000004', 8750.00, 'NGN', 'active', NOW(), NOW()),
-      ('w0000000-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000005', 15000.00, 'NGN', 'active', NOW(), NOW())
+      ('w0000000-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 5000.00, 'NGN', NOW(), NOW()),
+      ('w0000000-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000003', 12500.00, 'NGN', NOW(), NOW()),
+      ('w0000000-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000004', 8750.00, 'NGN', NOW(), NOW()),
+      ('w0000000-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000005', 15000.00, 'NGN', NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
   "
-  ok "Wallet database seeded (4 wallets with NGN balances)"
+  run_sql "azeebo_wallet" "
+    INSERT INTO partner_banks (id, slug, name, \"productName\", \"licenceRef\", \"registrationNumber\", \"minAmount\", \"maxAmount\", \"minTenorMonths\", \"maxTenorMonths\", \"interestRateMin\", \"interestRateMax\", \"feeDisclosure\", \"totalCostExample\", eligibility, \"applyUrl\", \"termsUrl\", \"privacyUrl\", \"displayOrder\", \"isActive\", \"isSample\", \"createdAt\", \"updatedAt\")
+    VALUES
+      ('pb000000-0000-0000-0000-000000000001', 'sample-bank-a', 'Sample Partner Bank A', 'Short-tenor personal advance', 'CBN MICROFINANCE BANK LICENCE 00000-PLACEHOLDER', 'RC 0000000 (placeholder)', 10000.00, 500000.00, 1, 6, 12.000, 24.000, '2.5% facility fee deducted at disbursement; no early-repayment charge.', 'NGN 100,000 over 6 months at 18% p.a. = NGN 109,000 total repayment (illustrative).', 'Existing Azeebo+ account in good standing; partner runs its own credit check.', 'https://apply.example.org/sample-bank-a', 'https://example.org/terms', 'https://example.org/privacy', 1, true, true, NOW(), NOW()),
+      ('pb000000-0000-0000-0000-000000000002', 'sample-bank-b', 'Sample Partner Bank B', 'Income-linked loan', 'CBN LICENCE 00000-PLACEHOLDER', 'RC 0000001 (placeholder)', 50000.00, 2000000.00, 3, 24, 9.500, 19.000, 'NGN 1,500 account fee per loan; interest accrues daily on the outstanding balance.', 'NGN 500,000 over 12 months at 15% p.a. = NGN 543,750 total repayment (illustrative).', 'Salaried applicants with 6 months of payslips; partner verifies income directly.', 'https://apply.example.org/sample-bank-b', 'https://example.org/terms', 'https://example.org/privacy', 2, true, true, NOW(), NOW()),
+      ('pb000000-0000-0000-0000-000000000003', 'sample-bank-c', 'Sample Partner Bank C', 'Small-ticket starter loan', 'CBN LICENCE 00000-PLACEHOLDER', 'RC 0000002 (placeholder)', 2000.00, 60000.00, 1, 3, 15.000, 30.000, 'Flat 3% origination fee; late repayment attracts 5% of the overdue instalment.', 'NGN 20,000 over 3 months at 24% p.a. = NGN 21,200 total repayment (illustrative).', 'First-time borrowers; minimum account age 30 days.', 'https://apply.example.org/sample-bank-c', 'https://example.org/terms', 'https://example.org/privacy', 3, true, true, NOW(), NOW())
+    ON CONFLICT (id) DO NOTHING;
+  "
+  ok "Wallet database seeded (4 wallets with NGN balances, 3 sample partner banks)"
 }
 
 # ============================================================

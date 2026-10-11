@@ -82,6 +82,9 @@
       "@azeebo/security": [
         "./packages/security/dist"
       ],
+      "@azeebo/security/log-redaction": [
+        "./packages/security/dist/log-redaction"
+      ],
       "@azeebo/observability": [
         "./packages/observability/dist"
       ],

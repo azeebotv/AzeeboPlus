@@ -1,0 +1,365 @@
+{
+  "generatedAt": "2026-10-08T07:18:10.374Z",
+  "categories": [
+    "files",
+    "exports",
+    "types",
+    "duplicates"
+  ],
+  "workspaces": {
+    ".": {
+      "files": 42,
+      "exports": 53,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/core/auth-service": {
+      "files": 12,
+      "exports": 3,
+      "types": 5,
+      "duplicates": 0
+    },
+    "services/core/content-service": {
+      "files": 3,
+      "exports": 0,
+      "types": 1,
+      "duplicates": 0
+    },
+    "services/core/knowledge-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 1,
+      "duplicates": 0
+    },
+    "services/core/media-service": {
+      "files": 13,
+      "exports": 0,
+      "types": 1,
+      "duplicates": 0
+    },
+    "services/core/payment-service": {
+      "files": 6,
+      "exports": 0,
+      "types": 1,
+      "duplicates": 0
+    },
+    "services/core/search-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 5,
+      "duplicates": 0
+    },
+    "services/core/user-service": {
+      "files": 4,
+      "exports": 0,
+      "types": 2,
+      "duplicates": 0
+    },
+    "services/core/wallet-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 13,
+      "duplicates": 0
+    },
+    "services/engagement/engagement-service": {
+      "files": 0,
+      "exports": 1,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/engagement/messaging-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 2,
+      "duplicates": 0
+    },
+    "services/engagement/notification-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 1,
+      "duplicates": 0
+    },
+    "services/engagement/referral-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 2,
+      "duplicates": 0
+    },
+    "services/engagement/reward-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 5,
+      "duplicates": 0
+    },
+    "services/engagement/subscription-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/gateway/api-gateway": {
+      "files": 1,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/intelligence/analytics-service": {
+      "files": 6,
+      "exports": 19,
+      "types": 2,
+      "duplicates": 0
+    },
+    "services/intelligence/recommendation-service": {
+      "files": 1,
+      "exports": 0,
+      "types": 3,
+      "duplicates": 0
+    },
+    "services/operations/moderation-service": {
+      "files": 0,
+      "exports": 2,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/operations/queue-service": {
+      "files": 8,
+      "exports": 1,
+      "types": 2,
+      "duplicates": 0
+    },
+    "services/operations/support-service": {
+      "files": 2,
+      "exports": 1,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/universes/comedy-service": {
+      "files": 3,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/universes/creator-service": {
+      "files": 0,
+      "exports": 1,
+      "types": 4,
+      "duplicates": 0
+    },
+    "services/universes/games-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/universes/lifestyle-service": {
+      "files": 0,
+      "exports": 2,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/universes/live-event-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/universes/movie-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 4,
+      "duplicates": 0
+    },
+    "services/universes/reality-service": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/universes/sports-service": {
+      "files": 1,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "services/universes/vertical-service": {
+      "files": 0,
+      "exports": 3,
+      "types": 3,
+      "duplicates": 0
+    },
+    "apps/admin": {
+      "files": 0,
+      "exports": 13,
+      "types": 32,
+      "duplicates": 1
+    },
+    "apps/creator": {
+      "files": 1,
+      "exports": 6,
+      "types": 12,
+      "duplicates": 1
+    },
+    "apps/mobile": {
+      "files": 42,
+      "exports": 21,
+      "types": 4,
+      "duplicates": 1
+    },
+    "apps/tv": {
+      "files": 0,
+      "exports": 20,
+      "types": 0,
+      "duplicates": 1
+    },
+    "apps/web": {
+      "files": 59,
+      "exports": 34,
+      "types": 31,
+      "duplicates": 6
+    },
+    "packages/analytics-sdk": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/api-client": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/auth": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/contract-tests": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/design-tokens": {
+      "files": 2,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/error-handling": {
+      "files": 1,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/event-bus": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/feature-flags": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/flag-metrics": {
+      "files": 0,
+      "exports": 1,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/http-client": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/internal-clients": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/logger": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/model-cost-tracker": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/observability": {
+      "files": 1,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/opentelemetry": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/queue-policy": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/react-data": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/security": {
+      "files": 2,
+      "exports": 0,
+      "types": 4,
+      "duplicates": 0
+    },
+    "packages/shared-services": {
+      "files": 29,
+      "exports": 9,
+      "types": 6,
+      "duplicates": 0
+    },
+    "packages/shared-types": {
+      "files": 0,
+      "exports": 0,
+      "types": 2,
+      "duplicates": 0
+    },
+    "packages/test-utils": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/ui": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 1
+    },
+    "packages/utils": {
+      "files": 0,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    },
+    "packages/validation": {
+      "files": 1,
+      "exports": 0,
+      "types": 0,
+      "duplicates": 0
+    }
+  }
+}

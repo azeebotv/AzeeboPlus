@@ -52,6 +52,7 @@ ALL_DATABASES=(
   azeebo_lifestyle
   azeebo_vertical
   azeebo_creator
+  azeebo_live_event
   azeebo_moderation
   azeebo_queue
   azeebo_support
@@ -60,7 +61,6 @@ ALL_DATABASES=(
   azeebo_referral
   azeebo_subscription
   azeebo_admin
-  azeebo_creator
 )
 
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
