@@ -16,38 +16,45 @@
      Re-pointed at the canonical Figma accent (#E31E24 scarlet / #EC691F flame);
      the retired #e8420a → #cc1c1c pair is gone from the product. These two are
      the compatibility aliases for the ~1000 sites that still reference them —
-     new code must use the generated `az-*` utilities instead. */
-  --brand-orange: #ec691f; /* Flame — lighter end of the brand gradient */
-  --brand-red: #e31e24; /* Scarlet — primary CTA, logo accent, active states */
+     new code must use the generated `az-*` utilities instead.
+     Everything below that has a registry twin is now an alias *to* the generated
+     variable rather than a second copy of the hex: this layer used to hold its
+     own values, which is how `--brand-gold` (#FFD700) and `az-accent-gold`
+     (#fbbf24) ended up as two different golds for one concept. */
+  --brand-orange: var(--color-az-flame); /* Flame — lighter end of the brand gradient */
+  --brand-red: var(--color-az-scarlet); /* Scarlet — primary CTA, logo accent, active states */
   --brand-near-black: #0b090e; /* Near-Black — page root & auth surfaces (matching --hp-bg) */
-  --brand-forest: #0d3b2e; /* Forest Dark Green — legacy compatibility */
-  --brand-green: #22c55e; /* Green — success states */
-  --brand-white: #ffffff; /* White — primary text */
+  --brand-forest: var(--color-az-category-forest); /* Forest Dark Green — legacy compatibility */
+  --brand-green: var(--color-az-success-500); /* Green — success states */
+  --brand-white: var(--color-az-ink); /* White — primary text */
   --brand-surface: #18151e; /* Surface Dark — card backgrounds, inputs (--hp-card-bg) */
   --brand-surface-input: #14121a; /* Input field fill */
   --brand-mid-brown: #9a8a7a; /* Mid Brown — secondary text */
-  --brand-gold: #ffd700; /* Gold — rewards, badges */
-  --brand-purple: #8b5cf6; /* Purple — premium, highlights */
-  --brand-blue: #3b82f6; /* Blue — links, info */
-  --brand-sky: #1e90ff; /* Sky Blue — secondary links */
-  --brand-emerald: #10b981; /* Emerald — success, online */
-  --brand-amber: #f59e0b; /* Amber — warnings, ratings */
-  --brand-crimson: #c41e3a; /* Crimson — alerts, live */
-  --brand-silver: #c0c0c0; /* Silver — inactive, disabled */
-  --brand-grey: #9ca3af; /* Grey — muted text (WCAG 2.2 AA compliant >= 4.5:1) */
-  --brand-copper: #cd7f32; /* Copper — metallic accents */
-  --brand-light-green: #32cd32; /* Light Green — online, active */
+  /* Rewards/badges. Was #FFD700, a second gold beside the registry's medal
+     gold; Figma's Rewards frame reads #FAB801, i.e. the amber side, so the
+     registry value wins and the alias stops disagreeing with it. */
+  --brand-gold: var(--color-az-accent-gold);
+  --brand-purple: var(--color-az-category-violet); /* Purple — premium, highlights */
+  --brand-blue: var(--color-az-secondary-500); /* Blue — links, info */
+  --brand-sky: var(--color-az-category-sky); /* Sky Blue — secondary links */
+  --brand-emerald: var(--color-az-category-emerald); /* Emerald — success, online */
+  --brand-amber: var(--color-az-warning-500); /* Amber — warnings, ratings */
+  --brand-crimson: var(--color-az-category-crimson); /* Crimson — alerts, live */
+  --brand-silver: var(--color-az-accent-silver); /* Silver — inactive, disabled */
+  --brand-grey: var(--color-az-ink-muted); /* Grey — muted text (still >= 4.5:1 on the dark root) */
+  --brand-copper: var(--color-az-accent-bronze); /* Copper — metallic accents */
+  --brand-light-green: var(--color-az-success-400); /* Light Green — online, active */
 
-  /* Categorical data hues (music genre badges, chart series, category pills).
-     These sit outside the brand and state ramps — they encode a subject, not a
-     status — so they stay here as fixed, non-theme-aware literals rather than
-     generated `az-*` tokens. Several pages referenced them before they were
-     ever defined, which silently dropped the colour. */
-  --brand-pink: #ec4899;
-  --brand-purple-light: #a78bfa;
-  --brand-cyan: #06b6d4;
-  --brand-teal: #14b8a6;
-  --brand-indigo: #6366f1;
+  /* Categorical data hues (music genre badges, chart series, category pills):
+     registered in packages/design-tokens as `categoryColors` and emitted as
+     `--color-az-category-*`. They encode a subject, not a status, and stay
+     fixed rather than theme-aware. The aliases remain so markup already written
+     against them resolves; new markup should name the token. */
+  --brand-pink: var(--color-az-category-pink);
+  --brand-purple-light: var(--color-az-category-violet-light);
+  --brand-cyan: var(--color-az-category-cyan);
+  --brand-teal: var(--color-az-category-teal);
+  --brand-indigo: var(--color-az-category-indigo);
 
   /* Vertical identity accents (fixed, not theme-aware — like the --hp- art
      palette below): gradient endpoints for vertical landing headers. */
@@ -57,7 +64,11 @@
     var(--color-az-flame) 0%,
     var(--color-az-scarlet) 100%
   ); /* Live page header art */
-  --auth-warm-gradient: linear-gradient(160deg, #3a1a0a, #0b090e); /* Auth pages decorative bg */
+  --auth-warm-gradient: linear-gradient(
+    160deg,
+    var(--color-az-surface-auth-warm) 0%,
+    var(--color-az-surface-root) 100%
+  ); /* Auth pages decorative bg */
 
   /* Glass panel — Frosted luxury dark panels */
   --glass-bg: rgba(24, 21, 30, 0.75);
@@ -385,7 +396,7 @@
   --hp-cta-nav-border: rgba(255, 255, 255, 0.07);
   --hp-cta-store-bg: rgba(255, 255, 255, 0.05);
   --hp-cta-store-border: rgba(255, 255, 255, 0.11);
-  --hp-cta-badge-bg: var(--brand-purple);
+  --hp-cta-badge-bg: var(--color-az-category-violet);
   --hp-cta-badge-glow: 0 8px 24px rgba(139, 92, 246, 0.4);
   --hp-ambient-purple: rgba(109, 40, 217, 0.18);
   --hp-ambient-orange: rgba(227, 30, 36, 0.13);
@@ -414,7 +425,7 @@
   --hp-toast-later-col: rgba(255, 255, 255, 0.55);
 
   /* ── Offline Banner ── */
-  --hp-offline-bg: var(--brand-gold);
+  --hp-offline-bg: var(--color-az-accent-gold);
   --hp-offline-text: var(--brand-near-black);
 }
 
