@@ -48,10 +48,10 @@ function KnowledgeCard({ unit, isUnlocked, progress, onReveal, onConsume }: Know
   };
 
   const spoilerColors = {
-    none: 'border-green-500/30',
-    mild: 'border-yellow-500/30',
-    moderate: 'border-orange-500/30',
-    heavy: 'border-red-500/30',
+    none: 'border-az-success-500/30',
+    mild: 'border-az-warning-500/30',
+    moderate: 'border-az-flame/30',
+    heavy: 'border-az-error-500/30',
   };
 
   const spoilerLabels = {
@@ -63,11 +63,11 @@ function KnowledgeCard({ unit, isUnlocked, progress, onReveal, onConsume }: Know
 
   if (!isUnlocked) {
     return (
-      <div className="border border-gray-700 rounded-xl p-4 bg-gray-900/50">
+      <div className="border border-az-surface-edge rounded-xl p-4 bg-az-surface-raised/50">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <svg
-              className="w-5 h-5 text-gray-500"
+              className="w-5 h-5 text-az-ink-muted"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -79,43 +79,39 @@ function KnowledgeCard({ unit, isUnlocked, progress, onReveal, onConsume }: Know
                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
               />
             </svg>
-            <span className="text-sm font-medium text-gray-400">Locked</span>
+            <span className="az-body-strong text-az-ink-muted">Locked</span>
           </div>
           <span
-            className={`text-xs px-2 py-1 rounded-full border ${spoilerColors[unit.spoilerLevel]} bg-gray-800`}
+            className={`az-caption px-2 py-1 rounded-full border bg-az-surface-panel ${spoilerColors[unit.spoilerLevel]}`}
           >
             {spoilerLabels[unit.spoilerLevel]}
           </span>
         </div>
-        <h3 className="text-white font-semibold mb-1 blur-sm select-none">{unit.title}</h3>
-        <p className="text-gray-500 text-sm blur-sm select-none line-clamp-2">{unit.description}</p>
+        <h3 className="text-az-ink font-semibold mb-1 blur-sm select-none">{unit.title}</h3>
+        <p className="text-az-ink-muted az-body blur-sm select-none line-clamp-2">
+          {unit.description}
+        </p>
 
         {/* Progress toward unlock */}
         <div className="mt-3">
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
+          <div className="flex justify-between az-caption text-az-ink-muted mb-1">
             <span>Unlock progress</span>
             <span>{Math.round(progress)}%</span>
           </div>
-          <div className="w-full bg-gray-800 rounded-full h-1.5">
+          <div className="w-full bg-az-surface-edge rounded-full h-1.5">
             <div
-              className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+              className="bg-az-scarlet h-1.5 rounded-full transition-all duration-300"
               style={{ width: `${Math.min(progress, 100)}%` }}
             />
           </div>
         </div>
 
         {progress >= unit.requiredConsumption ? (
-          <button
-            onClick={handleReveal}
-            className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-4 rounded-lg transition-colors"
-          >
+          <button onClick={handleReveal} className="mt-3 az-btn-primary">
             Unlock & Reveal
           </button>
         ) : (
-          <button
-            onClick={onConsume}
-            className="mt-3 w-full bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm py-2 px-4 rounded-lg transition-colors"
-          >
+          <button onClick={onConsume} className="mt-3 az-btn-social">
             Continue Watching to Unlock
           </button>
         )}
@@ -125,11 +121,13 @@ function KnowledgeCard({ unit, isUnlocked, progress, onReveal, onConsume }: Know
 
   // Unlocked — show with optional reveal gate
   return (
-    <div className={`border rounded-xl p-4 ${spoilerColors[unit.spoilerLevel]} bg-gray-900/30`}>
+    <div
+      className={`border rounded-xl p-4 bg-az-surface-raised/30 ${spoilerColors[unit.spoilerLevel]}`}
+    >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <svg
-            className="w-5 h-5 text-green-500"
+            className="w-5 h-5 text-az-success-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -141,10 +139,10 @@ function KnowledgeCard({ unit, isUnlocked, progress, onReveal, onConsume }: Know
               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <span className="text-sm font-medium text-green-400">Unlocked</span>
+          <span className="az-body-strong text-az-success-400">Unlocked</span>
         </div>
         <span
-          className={`text-xs px-2 py-1 rounded-full border ${spoilerColors[unit.spoilerLevel]}`}
+          className={`az-caption px-2 py-1 rounded-full border ${spoilerColors[unit.spoilerLevel]}`}
         >
           {spoilerLabels[unit.spoilerLevel]}
         </span>
@@ -152,21 +150,18 @@ function KnowledgeCard({ unit, isUnlocked, progress, onReveal, onConsume }: Know
 
       {!isRevealed && unit.spoilerLevel !== 'none' ? (
         <>
-          <h3 className="text-white font-semibold mb-1">{unit.title}</h3>
-          <p className="text-gray-400 text-sm mb-3">
+          <h3 className="text-az-ink font-semibold mb-1">{unit.title}</h3>
+          <p className="az-body text-az-ink-muted mb-3">
             Content contains {unit.spoilerLevel} spoilers
           </p>
-          <button
-            onClick={handleReveal}
-            className="w-full border border-gray-600 hover:border-gray-500 text-gray-300 text-sm py-2 px-4 rounded-lg transition-colors"
-          >
+          <button onClick={handleReveal} className="az-btn-social">
             Reveal Content
           </button>
         </>
       ) : (
         <div>
-          <h3 className="text-white font-semibold mb-2">{unit.title}</h3>
-          <p className="text-gray-300 text-sm leading-relaxed">{unit.description}</p>
+          <h3 className="text-az-ink font-semibold mb-2">{unit.title}</h3>
+          <p className="az-body text-az-ink-dim">{unit.description}</p>
         </div>
       )}
     </div>
@@ -203,8 +198,8 @@ export function ProgressiveUnlock({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-bold text-white">What You Know</h2>
-        <span className="text-sm text-gray-400">
+        <h2 className="az-title text-az-ink">What You Know</h2>
+        <span className="az-body text-az-ink-muted">
           {unlockedIds.size} of {knowledgeUnits.length} unlocked
         </span>
       </div>

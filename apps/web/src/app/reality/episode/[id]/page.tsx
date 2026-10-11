@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { ArrowLeft, Loader2, Pause, Play } from 'lucide-react';
 import Link from 'next/link';
 
 interface EpisodeDetail {
@@ -85,113 +85,96 @@ export default function RealityDynamicEpisodePlayerPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader active="Reality" />
-        <div className="flex items-center justify-center min-h-[60vh]">
+      <PageShell activeNav="Reality" maxWidth="xl">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--brand-orange)] mx-auto" />
-            <p className="mt-4 text-white/60">Loading episode player...</p>
+            <Loader2 className="mx-auto size-12 animate-spin text-az-flame" aria-hidden="true" />
+            <p className="az-body mt-4 text-az-ink-muted">Loading episode player...</p>
           </div>
         </div>
-        <AppFooter />
-      </div>
+      </PageShell>
     );
   }
 
   if (!episode) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader active="Reality" />
-        <div className="flex items-center justify-center min-h-[60vh]">
+      <PageShell activeNav="Reality" maxWidth="xl">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <p className="text-white text-xl mb-4">Episode not found</p>
-            <Link
-              href="/reality"
-              className="az-btn-primary inline-block"
-              style={{ width: 'auto', paddingInline: '1.5rem' }}
-            >
+            <p className="az-title mb-4 text-az-ink">Episode not found</p>
+            <Link href="/reality" className="az-btn-primary az-btn-primary--inline inline-block">
               Back to Reality Shows
             </Link>
           </div>
         </div>
-        <AppFooter />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Reality" />
+    <PageShell activeNav="Reality" maxWidth="xl">
+      <Link
+        href="/reality"
+        className="az-body-strong mb-6 inline-flex items-center gap-1.5 text-az-ink-muted transition-colors hover:text-az-ink"
+      >
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        Back to Reality Shows
+      </Link>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
-        <Link
-          href="/reality"
-          className="text-sm text-white/50 hover:text-white mb-6 inline-flex items-center gap-1.5 transition-colors"
-        >
-          ← Back to Reality Shows
-        </Link>
+      {/* Video Player Box */}
+      <div className="relative mb-6 flex aspect-video items-center justify-center overflow-hidden rounded-az-feature border border-az-glass-border bg-az-surface-root shadow-az-lifted">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="flex size-20 items-center justify-center rounded-full bg-az-flame/90 text-az-ink shadow-az-glow transition-transform hover:scale-110 hover:bg-az-flame"
+            aria-label={isPlaying ? 'Pause' : 'Play'}
+          >
+            {isPlaying ? (
+              <Pause className="size-8" aria-hidden="true" />
+            ) : (
+              <Play className="size-8 fill-az-ink" aria-hidden="true" />
+            )}
+          </button>
+        </div>
 
-        {/* Video Player Box */}
-        <div className="relative aspect-video rounded-3xl overflow-hidden bg-black mb-6 shadow-2xl border border-white/10 flex items-center justify-center">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <button
-              onClick={togglePlay}
-              className="w-20 h-20 rounded-full bg-[var(--brand-orange)]/90 hover:bg-[var(--brand-orange)] text-white text-3xl font-bold flex items-center justify-center shadow-2xl transition-transform hover:scale-110"
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? 'Pause' : '▶'}
-            </button>
+        {/* Bottom Player Controls */}
+        <div className="az-scrim--hero absolute bottom-0 left-0 right-0 p-4">
+          <div className="mb-3 h-1.5 w-full overflow-hidden rounded-az-pill bg-az-ink/20">
+            <div
+              className="h-full rounded-az-pill bg-az-flame transition-all"
+              style={{ width: `${(currentTime / (episode.duration || 1)) * 100}%` }}
+            />
           </div>
+          <div className="flex items-center justify-between">
+            <span className="az-caption text-az-ink/70">
+              {formatTime(currentTime)} / {formatTime(episode.duration || 0)}
+            </span>
+            <span className="az-overline text-az-ink">
+              Season {episode.seasonNumber} Episode {episode.episodeNumber}
+            </span>
+          </div>
+        </div>
+      </div>
 
-          {/* Bottom Player Controls */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
-            <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden mb-3">
-              <div
-                className="bg-[var(--brand-orange)] h-full transition-all"
-                style={{ width: `${(currentTime / (episode.duration || 1)) * 100}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-xs text-white/70">
-              <span>
-                {formatTime(currentTime)} / {formatTime(episode.duration || 0)}
-              </span>
-              <span className="font-semibold text-white">
-                Season {episode.seasonNumber} Episode {episode.episodeNumber}
-              </span>
-            </div>
+      {/* Episode Info */}
+      <div className="az-glass space-y-4 p-8">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span className="az-overline mb-2 inline-block rounded-az-pill bg-az-flame px-3 py-1 text-az-ink">
+              Reality S{episode.seasonNumber} E{episode.episodeNumber}
+            </span>
+            <h1 className="az-headline text-2xl text-az-ink sm:text-3xl">{episode.title}</h1>
+          </div>
+          <div className="flex gap-3">
+            <Link href="/vote" className="az-btn-primary az-btn-primary--inline inline-block">
+              Vote in This Episode
+            </Link>
           </div>
         </div>
 
-        {/* Episode Info */}
-        <div className="az-glass p-8 rounded-3xl border border-white/10 space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-[var(--brand-orange)] text-white uppercase tracking-wider mb-2 inline-block">
-                Reality S{episode.seasonNumber} E{episode.episodeNumber}
-              </span>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">{episode.title}</h1>
-            </div>
-            <div className="flex gap-3">
-              <Link
-                href="/vote"
-                className="px-6 py-2.5 rounded-full font-bold text-white transition-all hover:scale-105"
-                style={{
-                  background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                }}
-              >
-                Vote in This Episode
-              </Link>
-            </div>
-          </div>
-
-          <p className="text-white/60 leading-relaxed">{episode.description}</p>
-        </div>
-      </main>
-
-      <AppFooter />
-    </div>
+        <p className="az-lead leading-relaxed text-az-ink-muted">{episode.description}</p>
+      </div>
+    </PageShell>
   );
 }

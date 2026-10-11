@@ -57,7 +57,7 @@ export function VerticalEndCta({
   };
 
   return (
-    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent flex flex-col justify-end p-6">
+    <div className="absolute inset-0 az-scrim--hero flex flex-col justify-end p-6">
       {/* Creator info */}
       <div className="flex items-center gap-3 mb-6">
         <button onClick={handleViewCreator} className="flex items-center gap-3">
@@ -65,19 +65,19 @@ export function VerticalEndCta({
             <img
               src={content.creator.avatar}
               alt={content.creator.name}
-              className="w-12 h-12 rounded-full border-2 border-white"
+              className="w-12 h-12 rounded-full border-2 border-az-ink"
             />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
-              <span className="text-lg font-bold text-white">
+            <div className="w-12 h-12 rounded-full bg-az-surface-edge flex items-center justify-center">
+              <span className="text-lg font-bold text-az-ink">
                 {content.creator.name.charAt(0).toUpperCase()}
               </span>
             </div>
           )}
           <div className="text-left">
-            <p className="text-white font-semibold">{content.creator.name}</p>
+            <p className="text-az-ink font-semibold">{content.creator.name}</p>
             {content.creator.followerCount && (
-              <p className="text-gray-400 text-sm">
+              <p className="az-body text-az-ink-muted">
                 {content.creator.followerCount.toLocaleString()} followers
               </p>
             )}
@@ -87,7 +87,9 @@ export function VerticalEndCta({
         <button
           onClick={() => onFollow?.(content.creator.id)}
           className={`ml-auto px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-            isFollowing ? 'bg-gray-700 text-white' : 'bg-white text-black hover:bg-gray-200'
+            isFollowing
+              ? 'bg-az-glass-fill-hover text-az-ink'
+              : 'bg-az-ink text-az-surface-root hover:bg-az-ink-dim'
           }`}
         >
           {isFollowing ? 'Following' : 'Follow'}
@@ -99,7 +101,7 @@ export function VerticalEndCta({
         {content.nextContentId && (
           <button
             onClick={handleWatchNext}
-            className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+            className="az-btn-primary flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -119,10 +121,7 @@ export function VerticalEndCta({
           </button>
         )}
 
-        <button
-          onClick={onRewatch}
-          className="bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
-        >
+        <button onClick={onRewatch} className="az-btn-social">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
@@ -134,10 +133,7 @@ export function VerticalEndCta({
           Rewatch
         </button>
 
-        <button
-          onClick={onShare}
-          className="bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
-        >
+        <button onClick={onShare} className="az-btn-social">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
@@ -149,10 +145,7 @@ export function VerticalEndCta({
           Share
         </button>
 
-        <button
-          onClick={handleExploreUniverse}
-          className="bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
-        >
+        <button onClick={handleExploreUniverse} className="az-btn-social">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
@@ -168,8 +161,8 @@ export function VerticalEndCta({
       {/* Up next teaser */}
       {content.nextContentTitle && (
         <div className="text-center">
-          <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Up Next</p>
-          <p className="text-white font-medium text-sm">{content.nextContentTitle}</p>
+          <p className="az-overline text-az-ink-muted mb-1">Up Next</p>
+          <p className="text-az-ink font-medium text-sm">{content.nextContentTitle}</p>
         </div>
       )}
     </div>

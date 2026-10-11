@@ -83,11 +83,11 @@ export default function StreakPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <PageShell activeNav="Rewards" glowColor="rgba(232, 66, 10, 0.25)">
+    <PageShell activeNav="Rewards" glowColor="rgba(227, 30, 36, 0.25)">
       <div className="mb-6">
         <Link
           href="/rewards"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-az-ink/60 hover:text-az-ink transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Rewards Center
         </Link>
@@ -96,16 +96,16 @@ export default function StreakPage(): React.JSX.Element {
       <div className="max-w-3xl mx-auto">
         <PageHero
           eyebrow="DAILY ENGAGEMENT"
-          eyebrowColor="var(--brand-orange)"
+          eyebrowColor="var(--color-az-flame)"
           badge={`${currentStreak} DAYS RUNNING`}
           title="Daily Activity Streak"
           subtitle="Check in daily, stream entertainment, and keep your flame alive to unlock exclusive multiplier bonuses."
-          glowColor="rgba(232, 66, 10, 0.3)"
+          glowColor="color-mix(in srgb, var(--color-az-scarlet) 30%, transparent)"
         />
 
         {isLoading ? (
           <div className="flex justify-center py-20">
-            <Spinner size="lg" color="var(--brand-orange)" />
+            <Spinner size="lg" color="var(--color-az-flame)" />
           </div>
         ) : error ? (
           <ErrorState
@@ -120,30 +120,34 @@ export default function StreakPage(): React.JSX.Element {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="az-glass p-8 sm:p-12 rounded-3xl text-center relative overflow-hidden border border-[var(--brand-orange)]/30"
+              className="az-glass p-8 sm:p-12 text-center relative overflow-hidden border"
               style={{
                 background:
-                  'linear-gradient(135deg, rgba(232, 66, 10, 0.15) 0%, rgba(204, 28, 28, 0.08) 50%, rgba(18, 15, 25, 0.9) 100%)',
+                  'linear-gradient(135deg, color-mix(in srgb, var(--color-az-scarlet) 15%, transparent) 0%, color-mix(in srgb, var(--color-az-scarlet) 8%, transparent) 50%, rgba(18, 15, 25, 0.9) 100%)',
               }}
             >
-              <div className="w-24 h-24 rounded-full bg-[var(--brand-orange)]/20 border border-[var(--brand-orange)]/40 flex items-center justify-center mx-auto mb-4 text-[var(--brand-orange)] shadow-[0_0_50px_rgba(232,66,10,0.4)]">
-                <Flame className="w-12 h-12 fill-[var(--brand-orange)] animate-pulse" />
+              <div className="w-24 h-24 rounded-full bg-[var(--color-az-flame)]/20 border border-[var(--color-az-flame)]/40 flex items-center justify-center mx-auto mb-4 text-[var(--color-az-flame)] shadow-az-glow">
+                <Flame className="w-12 h-12 fill-[var(--color-az-flame)] animate-pulse" />
               </div>
 
               <div className="flex items-baseline justify-center gap-2 mb-1">
-                <span className="text-6xl sm:text-7xl font-extrabold text-white tracking-tight">
+                <span className="text-6xl sm:text-7xl font-extrabold text-az-ink tracking-tight">
                   {currentStreak}
                 </span>
-                <span className="text-xl sm:text-2xl font-bold text-[var(--brand-orange)]">Days</span>
+                <span className="text-xl sm:text-2xl font-bold text-[var(--color-az-flame)]">
+                  Days
+                </span>
               </div>
-              <p className="text-white/60 text-sm sm:text-base mb-6">Consecutive Platform Check-ins</p>
+              <p className="text-az-ink/60 text-sm sm:text-base mb-6">
+                Consecutive Platform Check-ins
+              </p>
 
               {todayActive ? (
-                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-az-success-500/15 text-az-success-400 border border-az-success-500/25">
                   <CheckCircle2 className="w-4 h-4" /> Today&apos;s check-in recorded!
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-az-warning-500/15 text-az-warning-400 border border-az-warning-500/25">
                   <Flame className="w-4 h-4" /> Stream now to preserve your flame!
                 </span>
               )}
@@ -151,35 +155,35 @@ export default function StreakPage(): React.JSX.Element {
 
             {/* Current vs Longest Stats */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="az-glass p-5 rounded-2xl text-center border border-white/10">
-                <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mb-1">
+              <div className="az-glass p-5 text-center border border-az-glass-border">
+                <p className="text-xs text-az-ink/50 uppercase tracking-wider font-semibold mb-1">
                   Active Streak
                 </p>
-                <p className="text-2xl sm:text-3xl font-extrabold text-[var(--brand-orange)]">
+                <p className="az-headline text-2xl sm:text-3xl font-extrabold text-[var(--color-az-flame)]">
                   {currentStreak} Days
                 </p>
               </div>
 
-              <div className="az-glass p-5 rounded-2xl text-center border border-white/10">
-                <p className="text-xs text-white/50 uppercase tracking-wider font-semibold mb-1">
+              <div className="az-glass p-5 text-center border border-az-glass-border">
+                <p className="text-xs text-az-ink/50 uppercase tracking-wider font-semibold mb-1">
                   All-Time Best
                 </p>
-                <p className="text-2xl sm:text-3xl font-extrabold text-amber-400">
+                <p className="az-headline text-2xl sm:text-3xl font-extrabold text-az-warning-400">
                   {longestStreak} Days
                 </p>
               </div>
             </div>
 
             {/* 30-Day Activity Heatmap */}
-            <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+            <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-[var(--brand-orange)]" />
-                  <h2 className="az-headline text-lg sm:text-xl font-bold text-white">
+                  <Calendar className="w-5 h-5 text-[var(--color-az-flame)]" />
+                  <h2 className="az-headline text-lg sm:text-xl text-az-ink">
                     Past 30 Days Activity
                   </h2>
                 </div>
-                <span className="text-xs text-white/40 font-medium">Daily Heatmap</span>
+                <span className="text-xs text-az-ink/40 font-medium">Daily Heatmap</span>
               </div>
 
               <div className="grid grid-cols-7 gap-2.5 sm:gap-3">
@@ -188,17 +192,17 @@ export default function StreakPage(): React.JSX.Element {
                   return (
                     <div key={i} className="text-center">
                       {i < 7 && (
-                        <p className="text-[10px] text-white/40 uppercase font-bold mb-2">
+                        <p className="text-[10px] text-az-ink/40 uppercase font-bold mb-2">
                           {dayLabel}
                         </p>
                       )}
                       <div
                         className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-xs font-bold mx-auto transition-all ${
                           day.active
-                            ? 'bg-[var(--brand-orange)] text-white shadow-[0_0_15px_rgba(232,66,10,0.4)]'
+                            ? 'bg-[var(--color-az-flame)] text-az-ink shadow-az-glow'
                             : day.isToday
-                              ? 'border-2 border-[var(--brand-orange)] bg-[var(--brand-orange)]/15 text-white'
-                              : 'bg-white/5 text-white/40 border border-white/5'
+                              ? 'border-2 border-[var(--color-az-flame)] bg-[var(--color-az-flame)]/15 text-az-ink'
+                              : 'bg-az-glass-fill text-az-ink/40 border border-az-ink/5'
                         }`}
                       >
                         {day.date.getDate()}
@@ -210,10 +214,10 @@ export default function StreakPage(): React.JSX.Element {
             </div>
 
             {/* Milestones Roadmap */}
-            <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
+            <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
               <div className="flex items-center gap-2 mb-6">
-                <Trophy className="w-5 h-5 text-amber-400" />
-                <h2 className="az-headline text-lg sm:text-xl font-bold text-white">
+                <Trophy className="w-5 h-5 text-az-warning-400" />
+                <h2 className="az-headline text-lg sm:text-xl text-az-ink">
                   Streak Milestones & Bounties
                 </h2>
               </div>
@@ -224,16 +228,16 @@ export default function StreakPage(): React.JSX.Element {
                     key={m.days}
                     className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 ${
                       m.unlocked
-                        ? 'bg-emerald-500/10 border-emerald-500/25'
-                        : 'bg-white/5 border-white/10'
+                        ? 'bg-az-success-500/10 border-az-success-500/25'
+                        : 'bg-az-glass-fill border-az-glass-border'
                     }`}
                   >
                     <div className="flex items-center gap-3.5">
                       <div
                         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                           m.unlocked
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-white/10 text-white/40'
+                            ? 'bg-az-success-500/20 text-az-success-400'
+                            : 'bg-az-glass-card text-az-ink/40'
                         }`}
                       >
                         {m.unlocked ? (
@@ -243,17 +247,18 @@ export default function StreakPage(): React.JSX.Element {
                         )}
                       </div>
                       <div>
-                        <p className="font-bold text-white text-sm sm:text-base">{m.label}</p>
-                        <p className="text-xs text-white/50">{m.days} consecutive check-ins</p>
+                        <p className="font-bold text-az-ink text-sm sm:text-base">{m.label}</p>
+                        <p className="text-xs text-az-ink/50">{m.days} consecutive check-ins</p>
                       </div>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="inline-flex items-center gap-1 text-sm sm:text-base font-extrabold text-[var(--brand-orange)]">
-                        <Sparkles className="w-3.5 h-3.5" />+₦{m.reward.toLocaleString()}
+                      <span className="inline-flex items-center gap-1 text-sm sm:text-base font-extrabold text-[var(--color-az-flame)]">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        +₦{m.reward.toLocaleString()}
                       </span>
                       {m.unlocked && (
-                        <span className="block text-[10px] uppercase font-bold text-emerald-400 mt-0.5">
+                        <span className="block text-[10px] uppercase font-bold text-az-success-400 mt-0.5">
                           Claimed
                         </span>
                       )}

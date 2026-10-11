@@ -1,13 +1,13 @@
 'use client';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import MusicTrackList, { Track } from '@/components/music/MusicTrackList';
 import { extractGenres, extractTracks } from '@/lib/music';
+import { Flame, Music } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface Genre {
@@ -46,99 +46,41 @@ function MusicPageContent(): React.JSX.Element {
   const genres: Genre[] = genresQuery.data ?? [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Music" />
-
-      {/* Hero */}
-      <section
-        className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, var(--music-purple) 0%, #E8420A 100%)' }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Music
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Stream the latest hits, live performances, and exclusive drops
-          </motion.p>
-          <motion.div
-            className="flex justify-center gap-3 mt-6 flex-wrap"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+    <PageShell activeNav="Music">
+      <PageHero
+        eyebrow="Music"
+        title="Music"
+        subtitle="Stream the latest hits, live performances, and exclusive drops"
+        accentColor="var(--color-az-universe-lifestyle)"
+        actions={
+          <>
             <Link
               href="/music/trending"
-              className="px-5 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 hover:scale-105 active:scale-95 shadow-lg"
-              style={{ background: 'var(--brand-orange)', color: 'var(--brand-white)' }}
+              className="az-body-strong inline-flex items-center gap-2 rounded-az-pill bg-az-flame px-5 py-2.5 text-az-surface-root shadow-az-glow transition-all hover:scale-105 active:scale-95"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1.001A3.75 3.75 0 0012 18z"
-                />
-              </svg>
+              <Flame size={16} aria-hidden="true" />
               Trending
             </Link>
             <Link
               href="/music/genres"
-              className="px-5 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 hover:bg-white/10 active:scale-95"
-              style={{
-                border: '1px solid rgba(255,255,255,0.2)',
-                backgroundColor: 'rgba(255,255,255,0.05)',
-                color: 'var(--brand-white)',
-              }}
+              className="az-body-strong inline-flex items-center gap-2 rounded-az-pill border border-az-ink/20 bg-az-ink/5 px-5 py-2.5 text-az-ink transition-all hover:bg-az-glass-card active:scale-95"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a.75.75 0 00.532-.72v-1.443m0-6.553V3.627a.75.75 0 00-.943-.726L8.5 5.5m0 0v10.803a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a.75.75 0 00.532-.72V5.5"
-                />
-              </svg>
+              <Music size={16} aria-hidden="true" />
               Genres
             </Link>
-          </motion.div>
-        </div>
-      </section>
+          </>
+        }
+      />
 
       {/* Genre Quick Links */}
       {genres.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <section className="py-8">
+          <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
             {genres.slice(0, 8).map((genre) => (
               <Link
                 key={genre.id}
                 href={`/music/genres/${genre.slug || genre.id}`}
-                className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-2"
-                style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--brand-white)' }}
+                className="az-body-strong flex items-center gap-2 whitespace-nowrap rounded-az-pill bg-az-ink/5 px-4 py-2 text-az-ink transition-all hover:bg-az-ink/10"
               >
                 <span>{genre.icon || 'Music'}</span>
                 {genre.name}
@@ -146,8 +88,7 @@ function MusicPageContent(): React.JSX.Element {
             ))}
             <Link
               href="/music/genres"
-              className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all"
-              style={{ color: 'var(--brand-orange)' }}
+              className="az-body-strong whitespace-nowrap rounded-az-pill px-4 py-2 text-az-flame transition-colors hover:text-az-scarlet"
             >
               View All →
             </Link>
@@ -161,9 +102,7 @@ function MusicPageContent(): React.JSX.Element {
         error={musicQuery.error?.message}
         onRetry={() => musicQuery.refetch()}
       />
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 

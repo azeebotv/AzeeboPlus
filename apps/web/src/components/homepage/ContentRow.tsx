@@ -143,17 +143,17 @@ export default function ContentRow({
       {/* Section header */}
       <div className="flex items-baseline justify-between mb-3 px-4 sm:px-6 lg:px-8">
         <div>
-          <h2 id={`row-${sectionId}`} className="text-lg sm:text-xl font-bold text-white">
+          <h2 id={`row-${sectionId}`} className="az-title text-az-ink">
             {title}
           </h2>
-          {subtitle && <p className="text-sm text-white/50 mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="az-caption mt-0.5 text-az-ink-muted">{subtitle}</p>}
         </div>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={(): void => scroll('left')}
             disabled={!canScrollLeft}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]"
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-az-glass-card hover:bg-az-glass-fill-active disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-az-ink focus:outline-none focus:ring-2 focus:ring-az-flame"
             aria-label={t('content.scrollLeft', { title })}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -170,7 +170,7 @@ export default function ContentRow({
             type="button"
             onClick={(): void => scroll('right')}
             disabled={!canScrollRight}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]"
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-az-glass-card hover:bg-az-glass-fill-active disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-az-ink focus:outline-none focus:ring-2 focus:ring-az-flame"
             aria-label={t('content.scrollRight', { title })}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -189,12 +189,7 @@ export default function ContentRow({
       {/* Scrollable row */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto overflow-y-hidden scroll-smooth px-4 sm:px-6 lg:px-8 pb-2"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-        }}
+        className="content-row-scroll flex gap-4 overflow-x-auto overflow-y-hidden scroll-smooth px-4 sm:px-6 lg:px-8 pb-2"
         onScroll={trackScroll}
         role="region"
         aria-label={t('content.contentList', { title })}
@@ -205,7 +200,7 @@ export default function ContentRow({
                 key={i}
                 width={`${cardWidth}px`}
                 height={`${cardSize === 'sm' ? 224 : cardSize === 'lg' ? 400 : 310}px`}
-                borderRadius="12px"
+                borderRadius="var(--radius-az-card)"
                 className="flex-shrink-0"
               />
             ))
@@ -223,12 +218,7 @@ export default function ContentRow({
 
         {/* Infinite scroll sentinel */}
         {hasMore && onLoadMore && (
-          <div
-            ref={sentinelRef}
-            className="flex-shrink-0"
-            style={{ width: 1, height: 1 }}
-            aria-hidden="true"
-          />
+          <div ref={sentinelRef} className="flex-shrink-0 h-px w-px" aria-hidden="true" />
         )}
 
         {/* Loading more indicator */}
@@ -240,7 +230,7 @@ export default function ContentRow({
               height: cardSize === 'sm' ? 224 : cardSize === 'lg' ? 400 : 310,
             }}
           >
-            <div className="w-6 h-6 border-2 border-white/30 border-t-[var(--brand-orange)] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-az-ink/30 border-t-az-flame rounded-full animate-spin" />
           </div>
         )}
       </div>

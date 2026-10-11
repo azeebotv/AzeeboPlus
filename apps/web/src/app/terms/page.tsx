@@ -58,15 +58,15 @@ export default function TermsPage(): React.JSX.Element {
         badge="Legal & Regulatory Framework"
         title="Terms of Service"
         subtitle="The formal legal agreement between you and Virtual Media Network Limited regarding the use of Azeebo+."
-        accentColor="orange"
+        accentColor="var(--color-az-flame)"
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-20">
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
-          <span className="text-xs text-white/50 uppercase tracking-widest font-mono font-bold">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-az-glass-border">
+          <span className="az-micro-label text-az-ink-muted uppercase font-mono">
             Effective Date: January 2026 • Version 3.1
           </span>
-          <span className="text-xs text-orange-400 font-bold uppercase tracking-wider">
+          <span className="az-micro-label text-az-flame uppercase font-bold">
             Jurisdiction: Lagos, Nigeria
           </span>
         </div>
@@ -75,28 +75,27 @@ export default function TermsPage(): React.JSX.Element {
           {SECTIONS.map((sec) => (
             <div
               key={sec.num}
-              className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 hover:border-white/20 transition-all duration-300"
+              className="az-glass p-6 sm:p-8 transition-colors hover:border-az-glass-border-hover"
             >
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-xs font-black text-orange-400 tracking-widest font-mono">
-                  {sec.num}
-                </span>
-                <h2 className="text-base sm:text-lg font-bold text-white">{sec.title}</h2>
+                <span className="az-overline text-az-flame font-mono">{sec.num}</span>
+                <h2 className="az-title text-az-ink">{sec.title}</h2>
               </div>
-              <p className="text-sm text-white/60 leading-relaxed">{sec.body}</p>
+              <p className="az-lead text-az-ink-muted">{sec.body}</p>
             </div>
           ))}
         </div>
 
-        <div className="mt-12 az-glass p-8 rounded-3xl border border-white/10 text-center">
-          <Scale size={24} className="text-orange-400 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-white mb-1">Legal Queries & Formal Notices</h3>
-          <p className="text-xs text-white/50 max-w-lg mx-auto mb-4">
-            Formal legal notices should be directed to our Legal Department at Virtual Media Network Limited, Lagos, Nigeria.
+        <div className="mt-12 az-glass p-8 text-center">
+          <Scale size={24} className="text-az-flame mx-auto mb-3" />
+          <h3 className="az-subtitle text-az-ink mb-1">Legal Queries &amp; Formal Notices</h3>
+          <p className="az-body text-az-ink-muted max-w-lg mx-auto mb-4">
+            Formal legal notices should be directed to our Legal Department at Virtual Media Network
+            Limited, Lagos, Nigeria.
           </p>
           <a
             href="mailto:legal@azeeboplus.com"
-            className="az-btn-primary inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold"
+            className="az-btn-primary inline-flex items-center gap-2"
           >
             <span>legal@azeeboplus.com</span>
           </a>
@@ -105,4 +104,3 @@ export default function TermsPage(): React.JSX.Element {
     </PageShell>
   );
 }
-

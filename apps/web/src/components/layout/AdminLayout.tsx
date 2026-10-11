@@ -55,24 +55,11 @@ export default function AdminLayout({
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          backgroundColor: 'var(--brand-near-black)',
-          minHeight: '100vh',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
+      <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
         <div
-          style={{
-            width: 40,
-            height: 40,
-            border: '3px solid #2A1A1A',
-            borderTopColor: 'var(--brand-orange)',
-            borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite',
-          }}
+          role="status"
+          aria-label="Loading admin console"
+          className="size-10 animate-spin rounded-full border-[3px] border-az-surface-edge border-t-az-flame"
         />
       </div>
     );
@@ -89,34 +76,14 @@ export default function AdminLayout({
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
+    <div className="min-h-screen bg-az-surface-root text-az-ink">
       <AppHeader />
-      <div style={{ display: 'flex', paddingTop: 72, minHeight: '100vh' }}>
+      <div className="flex min-h-screen pt-[72px]">
         {/* Mobile sidebar toggle */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           aria-label="Toggle admin sidebar"
-          style={{
-            position: 'fixed',
-            bottom: 20,
-            right: 20,
-            zIndex: 50,
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-            color: 'var(--brand-white)',
-            border: 'none',
-            fontSize: 20,
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(232,66,10,0.4)',
-          }}
+          className="fixed bottom-5 right-5 z-50 flex size-12 items-center justify-center rounded-az-pill bg-[image:var(--gradient-az-cta)] text-az-ink shadow-az-glow lg:hidden"
         >
           {sidebarOpen ? 'X' : 'Menu'}
         </button>
@@ -124,27 +91,13 @@ export default function AdminLayout({
         {/* Sidebar */}
         <aside
           aria-label="Admin navigation"
-          style={{
-            width: 260,
-            flexShrink: 0,
-            backgroundColor: 'var(--bg-tertiary)',
-            borderRight: '1px solid #2A1A1A',
-            position: 'sticky',
-            top: 72,
-            height: 'calc(100vh - 72px)',
-            overflowY: 'auto',
-            padding: '16px 12px',
-            ...(isMobile
-              ? {
-                  position: 'fixed' as const,
-                  top: 72,
-                  left: sidebarOpen ? 0 : -280,
-                  zIndex: 40,
-                  transition: 'left 0.3s ease',
-                  width: 280,
-                }
-              : {}),
-          }}
+          className={`top-[72px] h-[calc(100vh-72px)] overflow-y-auto border-r border-az-glass-border bg-az-surface-panel px-3 py-4 ${
+            isMobile
+              ? `fixed left-0 z-40 w-[280px] transition-transform duration-300 ease-in-out ${
+                  sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                }`
+              : 'sticky w-[260px] shrink-0'
+          }`}
         >
           <nav>
             {ADMIN_NAV.map((item) => (
@@ -153,22 +106,13 @@ export default function AdminLayout({
                 href={item.href}
                 aria-current={isActive(item.href) ? 'page' : undefined}
                 onClick={() => setSidebarOpen(false)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                  marginBottom: 4,
-                  textDecoration: 'none',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: isActive(item.href) ? 'var(--brand-orange)' : 'var(--text-secondary)',
-                  backgroundColor: isActive(item.href) ? 'rgba(232,66,10,0.1)' : 'transparent',
-                  transition: 'all 0.2s ease',
-                }}
+                className={`mb-1 flex items-center gap-3 rounded-az-control px-3.5 py-2.5 transition-colors ${
+                  isActive(item.href)
+                    ? 'az-body-strong bg-az-scarlet/10 text-az-flame'
+                    : 'az-body text-az-ink-muted hover:bg-az-glass-fill hover:text-az-ink'
+                }`}
               >
-                <span style={{ fontSize: 18 }}>{item.icon}</span>
+                <span className="az-subtitle w-6 text-center leading-none">{item.icon}</span>
                 {item.label}
               </a>
             ))}
@@ -176,7 +120,7 @@ export default function AdminLayout({
         </aside>
 
         {/* Main content */}
-        <main style={{ flex: 1, padding: '32px 24px', minWidth: 0 }}>{children}</main>
+        <main className="min-w-0 flex-1 px-6 py-8">{children}</main>
       </div>
     </div>
   );

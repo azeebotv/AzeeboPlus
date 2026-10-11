@@ -5,10 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { Play } from 'lucide-react';
 import { api, ContentItem } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -31,6 +31,20 @@ interface Episode {
   duration?: number;
   createdAt: string;
 }
+
+/* Outcome colours live in the token ramp, so each status maps to classes
+   instead of a hand-written inline gradient. */
+const BAR_TONES: Record<Contestant['status'], string> = {
+  safe: 'bg-gradient-to-r from-az-success-500 to-az-success-400',
+  danger: 'bg-gradient-to-r from-az-error-500 to-az-error-400',
+  eliminated: 'bg-az-ink/30',
+};
+
+const STATUS_TONES: Record<Contestant['status'], string> = {
+  safe: 'bg-az-success-500/20 text-az-success-400',
+  danger: 'bg-az-error-500/20 text-az-error-400',
+  eliminated: 'bg-az-ink/10 text-az-ink-muted',
+};
 
 function ShowDetailContent(): React.JSX.Element {
   const params = useParams();
@@ -85,9 +99,7 @@ function ShowDetailContent(): React.JSX.Element {
     showQuery.error?.message || episodesQuery.error?.message || contestantsQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Reality" />
-
+    <PageShell maxWidth="full" activeNav="Reality">
       {/* Hero Banner */}
       <section className="relative">
         {isLoading ? (
@@ -109,7 +121,7 @@ function ShowDetailContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/60 to-transparent" />
+            <div className="absolute inset-0 az-scrim--hero" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -117,22 +129,18 @@ function ShowDetailContent(): React.JSX.Element {
                 transition={{ duration: 0.5 }}
               >
                 <div className="flex items-center gap-2 mb-4">
-                  <span
-                    className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
-                  >
+                  <span className="az-overline rounded-az-pill bg-az-scarlet/20 px-3 py-1 text-az-flame">
                     Reality Show
                   </span>
-                  <span className="text-white/40 text-sm">{episodes.length} episodes</span>
+                  <span className="az-caption text-az-ink/40">{episodes.length} episodes</span>
                 </div>
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{show.title}</h1>
-                <p className="text-white/60 text-lg mb-6 max-w-3xl">{show.description}</p>
+                <h1 className="az-heading mb-3 text-az-ink sm:az-display">{show.title}</h1>
+                <p className="az-lead mb-6 max-w-3xl text-az-ink/60">{show.description}</p>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                   <Link href={`/watch/${show.id}`}>
                     <motion.button
                       type="button"
-                      className="az-btn-primary"
-                      style={{ width: 'auto', paddingInline: '2rem' }}
+                      className="az-btn-primary az-btn-primary--inline"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -142,11 +150,7 @@ function ShowDetailContent(): React.JSX.Element {
                   <Link href={`/reality/results?showId=${show.id}`}>
                     <motion.button
                       type="button"
-                      className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                      style={{
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        backgroundColor: 'rgba(255,255,255,0.08)',
-                      }}
+                      className="az-chip az-body-strong px-6 py-3 text-az-ink transition-all"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -163,7 +167,7 @@ function ShowDetailContent(): React.JSX.Element {
       {/* Episodes List */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">Episodes</h2>
+          <h2 className="az-section-title mb-6 text-az-ink sm:mb-8">Episodes</h2>
         </ScrollReveal>
 
         {isLoading ? (
@@ -201,26 +205,21 @@ function ShowDetailContent(): React.JSX.Element {
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-[var(--brand-orange)] font-semibold">
-                        E{episode.episodeNumber}
-                      </span>
+                      <span className="az-overline text-az-flame">E{episode.episodeNumber}</span>
                       {episode.duration && (
-                        <span className="text-xs text-white/40">
+                        <span className="az-caption text-az-ink/40">
                           {Math.floor(episode.duration / 60)}m
                         </span>
                       )}
                     </div>
-                    <h3 className="font-semibold text-white text-sm truncate">{episode.title}</h3>
-                    <p className="text-xs text-white/50 mt-1 line-clamp-1">{episode.description}</p>
+                    <h3 className="az-body-strong truncate text-az-ink">{episode.title}</h3>
+                    <p className="az-caption mt-1 line-clamp-1 text-az-ink-muted">
+                      {episode.description}
+                    </p>
                   </div>
                   <div className="flex items-center">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: 'rgba(232,66,10,0.2)' }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#E8420A">
-                        <polygon points="5,3 19,12 5,21" />
-                      </svg>
+                    <div className="flex size-8 items-center justify-center rounded-full bg-az-scarlet/20">
+                      <Play size={12} className="text-az-flame" aria-hidden="true" />
                     </div>
                   </div>
                 </motion.div>
@@ -229,26 +228,26 @@ function ShowDetailContent(): React.JSX.Element {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-white/50 text-lg">No episodes available yet</p>
+            <p className="az-lead text-az-ink-muted">No episodes available yet</p>
           </div>
         )}
       </section>
 
       {/* Contestants Grid */}
       {contestants.length > 0 && (
-        <section className="py-10 sm:py-12" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <section className="border-y border-az-glass-border bg-az-surface-raised py-10 sm:py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ScrollReveal>
               <div className="flex items-center justify-between mb-6 sm:mb-8">
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white">Contestants</h2>
-                  <p className="text-sm sm:text-base mt-1 text-white/50">
+                  <h2 className="az-section-title text-az-ink">Contestants</h2>
+                  <p className="az-body mt-1 text-az-ink-muted sm:az-lead">
                     Vote for your favorite contestants
                   </p>
                 </div>
                 <Link
                   href={`/reality/results?showId=${showId}`}
-                  className="text-sm font-medium text-[var(--brand-orange)] hover:text-[var(--brand-red)] transition-colors"
+                  className="az-body-strong text-az-flame transition-colors hover:text-az-scarlet"
                 >
                   View Leaderboard
                 </Link>
@@ -266,54 +265,26 @@ function ShowDetailContent(): React.JSX.Element {
                 >
                   <GlowCard universe="reality" className="overflow-hidden text-center">
                     <div className="p-5">
-                      <div
-                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto mb-3 flex items-center justify-center font-bold text-xl sm:text-2xl text-white"
-                        style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                      >
+                      <div className="az-title mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-az-flame to-az-scarlet text-az-ink sm:size-20 sm:az-section-title">
                         {contestant.avatar?.charAt(0) || contestant.name.charAt(0)}
                       </div>
-                      <h3 className="font-bold text-white text-sm sm:text-base mb-1 truncate">
+                      <h3 className="az-body-strong mb-1 truncate text-az-ink sm:az-lead">
                         {contestant.name}
                       </h3>
-                      <p className="text-xs text-white/50 mb-3">
+                      <p className="az-caption mb-3 text-az-ink-muted">
                         {contestant.votes.toLocaleString()} votes
                       </p>
-                      <div
-                        className="h-1.5 rounded-full overflow-hidden"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                      >
+                      <div className="h-1.5 overflow-hidden rounded-az-pill bg-az-ink/10">
                         <motion.div
-                          className="h-full rounded-full"
+                          className={`h-full rounded-az-pill ${BAR_TONES[contestant.status]}`}
                           initial={{ width: 0 }}
                           whileInView={{ width: `${(contestant.votes / (maxVotes || 1)) * 100}%` }}
                           viewport={{ once: true }}
                           transition={{ duration: 0.8, delay: index * 0.1 }}
-                          style={{
-                            background:
-                              contestant.status === 'safe'
-                                ? 'linear-gradient(90deg, #22C55E, #4ADE80)'
-                                : contestant.status === 'danger'
-                                  ? 'linear-gradient(90deg, #EF4444, #F87171)'
-                                  : 'rgba(255,255,255,0.3)',
-                          }}
                         />
                       </div>
                       <span
-                        className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize"
-                        style={{
-                          backgroundColor:
-                            contestant.status === 'safe'
-                              ? 'rgba(34,197,94,0.2)'
-                              : contestant.status === 'danger'
-                                ? 'rgba(239,68,68,0.2)'
-                                : 'rgba(255,255,255,0.1)',
-                          color:
-                            contestant.status === 'safe'
-                              ? 'var(--color-success-500)'
-                              : contestant.status === 'danger'
-                                ? 'var(--color-error-500)'
-                                : 'rgba(255,255,255,0.5)',
-                        }}
+                        className={`az-micro-label mt-2 inline-block rounded-az-pill px-2.5 py-0.5 ${STATUS_TONES[contestant.status]}`}
                       >
                         {contestant.status}
                       </span>
@@ -330,21 +301,17 @@ function ShowDetailContent(): React.JSX.Element {
       <section className="py-10 sm:py-12">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
-            className="rounded-2xl p-8 sm:p-12"
-            style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+            className="rounded-az-feature bg-gradient-to-br from-az-flame to-az-scarlet p-8 text-az-ink sm:p-12"
             whileHover={{ scale: 1.01 }}
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-              Support Your Favorite
-            </h2>
-            <p className="text-white/80 mb-6 max-w-lg mx-auto">
+            <h2 className="az-section-title mb-3 text-az-ink">Support Your Favorite</h2>
+            <p className="az-body mb-6 max-w-lg mx-auto text-az-ink/80 sm:az-lead">
               Every vote counts! Cast your vote and help your favorite contestant stay in the
               competition.
             </p>
             <motion.button
               type="button"
-              className="px-8 py-3 rounded-full text-sm font-semibold transition-all"
-              style={{ backgroundColor: 'white', color: 'var(--brand-orange)' }}
+              className="az-body-strong rounded-az-pill bg-az-ink px-8 py-3 text-az-flame transition-all"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -353,9 +320,7 @@ function ShowDetailContent(): React.JSX.Element {
           </motion.div>
         </div>
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -365,8 +330,8 @@ export default function ShowDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

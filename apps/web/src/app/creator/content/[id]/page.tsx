@@ -51,7 +51,7 @@ function ContentDetailContent() {
 
   if (query.isLoading) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.15)">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
         <div className="max-w-4xl mx-auto py-20 px-4 space-y-6">
           <Skeleton className="aspect-video w-full rounded-3xl" />
           <Skeleton className="h-10 w-2/3 rounded-xl" />
@@ -62,7 +62,7 @@ function ContentDetailContent() {
 
   if (query.error || !content) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.12)">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 12%, transparent)">
         <div className="max-w-md mx-auto py-20 px-4">
           <ErrorState
             title="Content asset not found"
@@ -75,7 +75,7 @@ function ContentDetailContent() {
   }
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.14)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
       <PageHero
         badge="Asset Intelligence"
         title={content.title}
@@ -86,7 +86,7 @@ function ContentDetailContent() {
             onClick={() => router.push(`/creator/upload?edit=${content.id}`)}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="az-btn-primary px-6 py-3 rounded-full text-xs font-bold flex items-center gap-2"
+            className="az-btn-primary flex items-center gap-2"
           >
             <Edit3 className="w-4 h-4" />
             Edit Metadata
@@ -98,7 +98,7 @@ function ContentDetailContent() {
         <button
           type="button"
           onClick={() => router.push('/creator/content-manager')}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-az-ink/50 hover:text-az-ink transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Content Manager
@@ -107,7 +107,7 @@ function ContentDetailContent() {
         <ScrollReveal>
           <div className="space-y-6">
             {content.thumbnail && (
-              <div className="relative aspect-video rounded-3xl overflow-hidden az-glass border border-white/10">
+              <div className="relative aspect-video overflow-hidden az-glass border border-az-glass-border">
                 <OptimizedImage
                   src={content.thumbnail}
                   alt={content.title}
@@ -121,14 +121,14 @@ function ContentDetailContent() {
               <span
                 className={`px-3 py-1 rounded-full text-xs font-mono font-bold uppercase border ${
                   content.status === 'published'
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                    ? 'bg-az-success-500/10 text-az-success-400 border-az-success-500/20'
+                    : 'bg-az-warning-500/10 text-az-warning-400 border-az-warning-500/20'
                 }`}
               >
                 {content.status}
               </span>
               {content.universe && (
-                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-[var(--brand-orange)]/15 border border-[var(--brand-orange)]/30 text-[var(--brand-orange)]">
+                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-[var(--color-az-flame)]/15 border border-[var(--color-az-flame)]/30 text-[var(--color-az-flame)]">
                   {content.universe}
                 </span>
               )}
@@ -139,50 +139,50 @@ function ContentDetailContent() {
               )}
             </div>
 
-            <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-4">
-              <h2 className="text-xl font-bold text-white tracking-tight">Synopsis</h2>
-              <p className="text-sm text-white/70 leading-relaxed">{content.description}</p>
+            <div className="az-glass p-6 sm:p-8 border border-az-glass-border space-y-4">
+              <h2 className="text-xl font-bold text-az-ink tracking-tight">Synopsis</h2>
+              <p className="text-sm text-az-ink/70 leading-relaxed">{content.description}</p>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <div className="az-glass p-5 rounded-2xl border border-white/10 text-center">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-2 text-blue-400">
+              <div className="az-glass p-5 border border-az-glass-border text-center">
+                <div className="w-8 h-8 rounded-lg bg-az-secondary-500/10 border border-az-secondary-500/20 flex items-center justify-center mx-auto mb-2 text-az-secondary-400">
                   <Eye className="w-4 h-4" />
                 </div>
-                <p className="text-2xl font-extrabold text-white tracking-tight">
+                <p className="text-2xl font-extrabold text-az-ink tracking-tight">
                   {content.viewCount.toLocaleString()}
                 </p>
-                <p className="text-[10px] font-mono uppercase tracking-wider text-white/40 mt-0.5">
+                <p className="text-[10px] font-mono uppercase tracking-wider text-az-ink/40 mt-0.5">
                   Verified Views
                 </p>
               </div>
 
-              <div className="az-glass p-5 rounded-2xl border border-white/10 text-center">
+              <div className="az-glass p-5 border border-az-glass-border text-center">
                 <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center mx-auto mb-2 text-pink-400">
                   <Heart className="w-4 h-4 fill-current" />
                 </div>
-                <p className="text-2xl font-extrabold text-white tracking-tight">
+                <p className="text-2xl font-extrabold text-az-ink tracking-tight">
                   {content.likeCount.toLocaleString()}
                 </p>
-                <p className="text-[10px] font-mono uppercase tracking-wider text-white/40 mt-0.5">
+                <p className="text-[10px] font-mono uppercase tracking-wider text-az-ink/40 mt-0.5">
                   Likes
                 </p>
               </div>
 
-              <div className="az-glass p-5 rounded-2xl border border-white/10 text-center">
+              <div className="az-glass p-5 border border-az-glass-border text-center">
                 <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-2 text-purple-400">
                   <MessageSquare className="w-4 h-4" />
                 </div>
-                <p className="text-2xl font-extrabold text-white tracking-tight">
+                <p className="text-2xl font-extrabold text-az-ink tracking-tight">
                   {content.commentCount.toLocaleString()}
                 </p>
-                <p className="text-[10px] font-mono uppercase tracking-wider text-white/40 mt-0.5">
+                <p className="text-[10px] font-mono uppercase tracking-wider text-az-ink/40 mt-0.5">
                   Comments
                 </p>
               </div>
             </div>
 
-            <div className="az-glass p-5 rounded-2xl border border-white/10 text-xs text-white/40 flex flex-wrap items-center justify-between gap-2">
+            <div className="az-glass p-5 border border-az-glass-border text-xs text-az-ink/40 flex flex-wrap items-center justify-between gap-2">
               <span>Created: {new Date(content.createdAt).toLocaleString('en-NG')}</span>
               {content.publishedAt && (
                 <span>Published: {new Date(content.publishedAt).toLocaleString('en-NG')}</span>
@@ -201,8 +201,8 @@ export default function ContentDetailPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

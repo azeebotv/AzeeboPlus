@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
+import { ChevronLeft } from 'lucide-react';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useToast } from '@/components/ToastProvider';
 
@@ -154,149 +155,115 @@ export default function SuperVotePage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
+      <PageShell activeNav="Reality" maxWidth="lg">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <div
-              className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{
-                border: '3px solid rgba(255,255,255,0.1)',
-                borderTopColor: 'var(--brand-orange)',
-              }}
-            />
-            <p className="mt-4 text-white/60">Loading...</p>
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-[3px] border-az-ink/10 border-t-az-flame" />
+            <p className="mt-4 text-az-ink/60">Loading...</p>
           </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
-      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-white/50 hover:text-white mb-4 flex items-center gap-2 transition-colors"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back
-          </button>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white">Super Vote</h1>
-              <p className="mt-1" style={{ color: 'var(--brand-orange)' }}>
-                2x Voting Power
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-white/50">Balance</p>
-              <p className="text-2xl font-bold text-white">₦{walletBalance.toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4">Select Contestant</h2>
-          <div
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-            role="radiogroup"
-            aria-label="Select contestant"
-          >
-            {contestants.map((contestant) => (
-              <button
-                key={contestant.id}
-                onClick={() => setSelectedContestant(contestant.id)}
-                role="radio"
-                aria-checked={selectedContestant === contestant.id}
-                className={`az-glass p-4 text-center transition-all rounded-xl ${
-                  selectedContestant === contestant.id ? 'ring-2' : ''
-                }`}
-                style={
-                  selectedContestant === contestant.id
-                    ? {
-                        borderColor: 'var(--brand-orange)',
-                        boxShadow: '0 0 20px rgba(232,66,10,0.3)',
-                      }
-                    : undefined
-                }
-              >
-                <OptimizedImage
-                  src={contestant.avatar}
-                  alt={contestant.name}
-                  width={80}
-                  height={80}
-                  className="w-20 h-20 rounded-full mx-auto mb-3 object-cover"
-                />
-                <h3 className="text-sm font-semibold text-white mb-1">{contestant.name}</h3>
-                <p className="text-xs text-white/50">
-                  Rank #{contestant.rank} • {contestant.votes.toLocaleString()} votes
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4">Select Vote Package</h2>
-          <div className="space-y-3" role="radiogroup" aria-label="Select vote package">
-            {votePackages.map((pkg) => (
-              <button
-                key={pkg.id}
-                onClick={() => setSelectedPackage(pkg.id)}
-                role="radio"
-                aria-checked={selectedPackage === pkg.id}
-                className={`w-full az-glass p-4 text-left transition-all relative rounded-xl ${
-                  selectedPackage === pkg.id ? 'ring-2' : ''
-                }`}
-                style={
-                  selectedPackage === pkg.id
-                    ? { boxShadow: '0 0 20px rgba(232,66,10,0.3)' }
-                    : undefined
-                }
-              >
-                {pkg.isPopular && (
-                  <span
-                    className="absolute -top-3 right-4 px-3 py-1 rounded-full text-xs font-semibold text-white"
-                    style={{ backgroundColor: 'var(--brand-orange)' }}
-                  >
-                    Most Popular
-                  </span>
-                )}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">{pkg.name}</h3>
-                    <p className="text-sm text-white/50">{pkg.description}</p>
-                  </div>
-                  <p className="text-2xl font-bold" style={{ color: 'var(--brand-orange)' }}>
-                    ₦{pkg.price.toLocaleString()}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
+    <PageShell activeNav="Reality" maxWidth="lg">
+      <div className="mb-8">
         <button
-          onClick={handleVote}
-          disabled={!selectedContestant || !selectedPackage || isVoting}
-          className="w-full py-4 rounded-full font-semibold text-lg transition-all az-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          onClick={() => router.back()}
+          aria-label="Go back"
+          className="text-az-ink/50 hover:text-az-ink mb-4 flex items-center gap-2 transition-colors"
         >
-          {isVoting ? 'Processing...' : 'Vote Submit Super Vote'}
+          <ChevronLeft size={20} aria-hidden="true" />
+          Back
         </button>
+        <PageHero
+          title="Super Vote"
+          rightElement={
+            <div className="text-right">
+              <p className="az-caption text-az-ink/50">Balance</p>
+              <p className="az-section-title text-az-ink">₦{walletBalance.toLocaleString()}</p>
+            </div>
+          }
+        >
+          <p className="az-body-strong text-az-flame">2x Voting Power</p>
+        </PageHero>
       </div>
+
+      <div className="mb-8">
+        <h2 className="az-subtitle text-az-ink mb-4">Select Contestant</h2>
+        <div
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+          role="radiogroup"
+          aria-label="Select contestant"
+        >
+          {contestants.map((contestant) => (
+            <button
+              key={contestant.id}
+              type="button"
+              onClick={() => setSelectedContestant(contestant.id)}
+              role="radio"
+              aria-checked={selectedContestant === contestant.id}
+              className={`az-glass p-4 text-center transition-all ${
+                selectedContestant === contestant.id ? 'outline-2 outline-az-flame' : ''
+              }`}
+            >
+              <OptimizedImage
+                src={contestant.avatar}
+                alt={contestant.name}
+                width={80}
+                height={80}
+                className="w-20 h-20 rounded-full mx-auto mb-3 object-cover"
+              />
+              <h3 className="az-body-strong text-az-ink mb-1">{contestant.name}</h3>
+              <p className="az-caption text-az-ink/50">
+                Rank #{contestant.rank} • {contestant.votes.toLocaleString()} votes
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="az-subtitle text-az-ink mb-4">Select Vote Package</h2>
+        <div className="space-y-3" role="radiogroup" aria-label="Select vote package">
+          {votePackages.map((pkg) => (
+            <button
+              key={pkg.id}
+              type="button"
+              onClick={() => setSelectedPackage(pkg.id)}
+              role="radio"
+              aria-checked={selectedPackage === pkg.id}
+              className={`w-full az-glass p-4 text-left transition-all relative ${
+                selectedPackage === pkg.id ? 'outline-2 outline-az-flame' : ''
+              }`}
+            >
+              {pkg.isPopular && (
+                <span className="az-overline absolute -top-3 right-4 rounded-az-pill bg-az-flame px-3 py-1 text-az-ink">
+                  Most Popular
+                </span>
+              )}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="az-subtitle text-az-ink">{pkg.name}</h3>
+                  <p className="az-caption text-az-ink/50">{pkg.description}</p>
+                </div>
+                <p className="az-section-title text-az-flame">₦{pkg.price.toLocaleString()}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleVote}
+        disabled={!selectedContestant || !selectedPackage || isVoting}
+        className="transition-all az-btn-primary"
+      >
+        {isVoting ? 'Processing...' : 'Vote Submit Super Vote'}
+      </button>
       <ConfirmDialog
         open={confirmDialog.open}
         title={confirmDialog.title}
@@ -305,7 +272,6 @@ export default function SuperVotePage(): React.JSX.Element {
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
       />
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

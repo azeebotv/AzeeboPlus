@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 import { api, ContentItem } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
@@ -49,16 +48,11 @@ export default function MovieDetailPage(): React.JSX.Element {
   }, [movieId]);
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Movies" />
-
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+    <PageShell maxWidth="2xl" activeNav="Movies">
+      <div className="pb-10">
         <Link
           href="/movies"
-          className="text-sm text-white/50 hover:text-white mb-6 inline-flex items-center gap-1.5 transition-colors"
+          className="az-caption mb-6 inline-flex items-center gap-1.5 text-az-ink/50 transition-colors hover:text-az-ink"
         >
           ← Back to Movies
         </Link>
@@ -77,8 +71,8 @@ export default function MovieDetailPage(): React.JSX.Element {
           />
         ) : (
           <div className="space-y-12">
-            {/* Hero Banner */}
-            <div className="relative rounded-3xl overflow-hidden min-h-[420px] flex items-end p-8 sm:p-12 border border-white/10 shadow-2xl">
+            {/* Hero Banner — the movie's own artwork is this page's hero */}
+            <div className="relative rounded-az-panel overflow-hidden min-h-[420px] flex items-end p-8 sm:p-12 border border-az-glass-border shadow-az-lifted">
               {movie.thumbnail && (
                 <OptimizedImage
                   src={movie.thumbnail}
@@ -88,32 +82,27 @@ export default function MovieDetailPage(): React.JSX.Element {
                   priority
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/60 to-transparent" />
+              <div className="absolute inset-0 az-scrim--hero" />
 
               <div className="relative z-10 max-w-2xl">
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[var(--brand-orange)] text-white uppercase tracking-wider mb-4 inline-block">
+                <span className="az-caption inline-block rounded-az-pill bg-az-flame px-3 py-1 font-bold uppercase tracking-wider text-az-ink mb-4">
                   {movie.contentType || 'Movie'}
                 </span>
-                <h1 className="text-3xl sm:text-5xl font-extrabold text-white mb-4 leading-tight">
-                  {movie.title}
-                </h1>
-                <p className="text-white/70 text-base line-clamp-3 mb-6">
+                <h1 className="az-headline text-3xl sm:text-5xl text-az-ink mb-4">{movie.title}</h1>
+                <p className="az-body text-az-ink/70 line-clamp-3 mb-6">
                   {movie.description || 'Experience premium cinema streaming on Azeebo+ Cinemaxis.'}
                 </p>
 
                 <div className="flex flex-wrap items-center gap-4">
                   <Link
                     href={`/watch/${movie.id}`}
-                    className="px-8 py-3.5 rounded-full font-bold text-white transition-all hover:scale-105 shadow-xl inline-flex items-center gap-2"
-                    style={{
-                      background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                    }}
+                    className="az-btn-primary az-btn-primary--inline az-btn-primary--sm inline-flex items-center gap-2"
                   >
                     <span></span> Watch Movie
                   </Link>
                   <Link
                     href={`/movies/${movie.id}`}
-                    className="px-6 py-3.5 rounded-full font-semibold text-white/80 bg-white/10 hover:bg-white/20 transition-all"
+                    className="rounded-az-pill px-6 py-3.5 az-body-strong bg-az-glass-card text-az-ink/80 transition-all hover:bg-az-ink/20"
                   >
                     View Details
                   </Link>
@@ -124,15 +113,15 @@ export default function MovieDetailPage(): React.JSX.Element {
             {/* Related Movies */}
             {related.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold text-white mb-6">More Movies You May Like</h2>
+                <h2 className="az-section-title text-az-ink mb-6">More Movies You May Like</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                   {related.map((item) => (
                     <Link
                       key={item.id}
                       href={`/watch/movie-detail?id=${item.id}`}
-                      className="group block rounded-2xl overflow-hidden border border-white/5 bg-white/[0.02] hover:border-[var(--brand-orange)]/50 transition-all hover:scale-102"
+                      className="group block rounded-az-card overflow-hidden border border-az-ink/5 bg-az-ink/[0.02] transition-all hover:border-az-flame/50 hover:scale-[1.02]"
                     >
-                      <div className="relative aspect-[2/3] w-full bg-white/5">
+                      <div className="relative aspect-[2/3] w-full bg-az-glass-fill">
                         {item.thumbnail && (
                           <OptimizedImage
                             src={item.thumbnail}
@@ -143,7 +132,7 @@ export default function MovieDetailPage(): React.JSX.Element {
                         )}
                       </div>
                       <div className="p-3">
-                        <h4 className="text-xs font-semibold text-white truncate group-hover:text-[var(--brand-orange)] transition-colors">
+                        <h4 className="az-caption truncate font-semibold text-az-ink transition-colors group-hover:text-az-flame">
                           {item.title}
                         </h4>
                       </div>
@@ -154,9 +143,7 @@ export default function MovieDetailPage(): React.JSX.Element {
             )}
           </div>
         )}
-      </main>
-
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }

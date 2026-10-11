@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Loader } from 'lucide-react';
 import { apiFetch } from '../../../lib/api';
+import { PageShell } from '@/components/layout/PageShell';
 
 export default function ShareRedirectPage(): React.JSX.Element {
   const params = useParams();
@@ -37,30 +38,23 @@ export default function ShareRedirectPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: 'var(--bg-primary)' }}
-      >
+      <PageShell maxWidth="sm">
         <div className="az-glass p-8 text-center">
-          <h1 className="text-2xl font-bold text-white mb-2">Link not found</h1>
-          <p className="text-white/50">This share link may have expired or been removed.</p>
+          <h1 className="az-title mb-2 text-az-ink">Link not found</h1>
+          <p className="az-body text-az-ink-muted">
+            This share link may have expired or been removed.
+          </p>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ backgroundColor: 'var(--bg-primary)' }}
-    >
+    <PageShell maxWidth="sm">
       <div className="text-center">
-        <Loader
-          className="w-8 h-8 mx-auto mb-4 animate-spin"
-          style={{ color: 'var(--brand-orange)' }}
-        />
-        <p className="text-white/60">Redirecting...</p>
+        <Loader className="mx-auto mb-4 size-8 animate-spin text-az-flame" />
+        <p className="az-body text-az-ink-muted">Redirecting...</p>
       </div>
-    </div>
+    </PageShell>
   );
 }

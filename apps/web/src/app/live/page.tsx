@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -70,169 +70,148 @@ function LiveEventsPageContent(): React.JSX.Element {
     return `${symbols[currency] || currency} ${price.toLocaleString()}`;
   };
 
-  const statusColor = (status: string): string => {
+  /* Status badges keep the semantic colour of the event state; the pill fill
+     comes from the token ramp instead of a per-status CSS variable. */
+  const statusPillClass = (status: string): string => {
     switch (status) {
       case 'live':
-        return 'var(--color-success-500)';
+        return 'bg-az-success-500 text-az-ink';
       case 'scheduled':
-        return 'var(--brand-orange)';
+        return 'bg-az-flame text-az-ink';
       case 'ended':
-        return 'var(--brand-grey)';
+        return 'bg-az-ink/20 text-az-ink-muted';
       case 'cancelled':
-        return 'var(--color-error-500)';
+        return 'bg-az-error-500 text-az-ink';
       default:
-        return 'var(--text-secondary)';
+        return 'bg-az-ink/20 text-az-ink-muted';
     }
   };
 
+  const filters = (['upcoming', 'live', 'ended', 'all'] as const).map((f) => {
+    const selected = filter === f;
+    return (
+      <button
+        key={f}
+        type="button"
+        aria-pressed={selected}
+        aria-label={`Filter by ${f === 'upcoming' ? 'Upcoming' : f === 'live' ? 'Live Now' : f === 'ended' ? 'Ended' : 'All Events'}`}
+        onClick={() => setFilter(f)}
+        className={`az-body-strong shrink-0 whitespace-nowrap rounded-az-pill border px-4 py-2 transition-all ${
+          selected
+            ? 'border-az-flame bg-az-scarlet/20 text-az-ink'
+            : 'border-az-glass-border bg-az-glass-fill text-az-ink-muted hover:border-az-glass-border-hover'
+        }`}
+      >
+        {f === 'upcoming'
+          ? 'Upcoming'
+          : f === 'live'
+            ? 'Live Now'
+            : f === 'ended'
+              ? 'Ended'
+              : 'All Events'}
+      </button>
+    );
+  });
+
   return (
-    <div
-      className="min-h-screen relative overflow-x-hidden"
-      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Live" logoVariant="light" />
+    <PageShell activeNav="Live" maxWidth="7xl">
+      <PageHero
+        eyebrow="Live"
+        title="Live Events"
+        subtitle="Pay-per-view concerts, comedy shows, sports events and more"
+        actions={<div className="flex items-center gap-2 overflow-x-auto">{filters}</div>}
+      />
 
-      <section className="relative py-16 sm:py-20" style={{ background: 'var(--live-gradient)' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Live Events
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Pay-per-view concerts, comedy shows, sports events and more
-          </motion.p>
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <div className="flex items-center gap-4 mb-8">
-          {['upcoming', 'live', 'ended', 'all'].map((f) => (
-            <button
-              key={f}
-              type="button"
-              aria-label={`Filter by ${f === 'upcoming' ? 'Upcoming' : f === 'live' ? 'Live Now' : f === 'ended' ? 'Ended' : 'All Events'}`}
-              onClick={() => setFilter(f)}
-              className="px-4 py-2 rounded-full text-sm font-medium transition-all"
-              style={{
-                backgroundColor: filter === f ? 'var(--brand-orange)' : 'rgba(255,255,255,0.05)',
-                color: filter === f ? 'white' : 'var(--text-secondary)',
-              }}
-            >
-              {f === 'upcoming'
-                ? 'Upcoming'
-                : f === 'live'
-                  ? 'Live Now'
-                  : f === 'ended'
-                    ? 'Ended'
-                    : 'All Events'}
-            </button>
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="az-glass overflow-hidden">
+              <Skeleton height="200px" borderRadius="0" />
+              <div className="p-4 space-y-3">
+                <Skeleton height="20px" width="70%" />
+                <Skeleton height="16px" width="50%" />
+                <Skeleton height="36px" borderRadius="0" />
+              </div>
+            </div>
           ))}
         </div>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass overflow-hidden">
-                <Skeleton height="200px" borderRadius="0" />
-                <div className="p-4 space-y-3">
-                  <Skeleton height="20px" width="70%" />
-                  <Skeleton height="16px" width="50%" />
-                  <Skeleton height="36px" borderRadius="0" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : error ? (
-          <ErrorState
-            title="Failed to load events"
-            description={error}
-            onButtonPress={() => eventsQuery.refetch()}
-          />
-        ) : events.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event, index) => (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Link href={`/live/${event.id}`} className="block">
-                  <div className="az-glass overflow-hidden group cursor-pointer">
-                    <div className="relative">
-                      <OptimizedImage
-                        src={event.thumbnail}
-                        alt={event.title}
-                        width={400}
-                        height={200}
-                        className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
-                      <div className="absolute top-3 left-3 flex gap-2">
-                        <span
-                          className="px-3 py-1 rounded-full text-xs font-semibold"
-                          style={{
-                            backgroundColor: statusColor(event.status),
-                            color: 'var(--brand-white)',
-                          }}
-                        >
-                          {event.status === 'live'
-                            ? 'Circle LIVE'
-                            : event.status === 'scheduled'
-                              ? 'Upcoming'
-                              : event.status}
+      ) : error ? (
+        <ErrorState
+          title="Failed to load events"
+          description={error}
+          onButtonPress={() => eventsQuery.refetch()}
+        />
+      ) : events.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {events.map((event, index) => (
+            <motion.div
+              key={event.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <Link href={`/live/${event.id}`} className="block">
+                <div className="az-glass cursor-pointer overflow-hidden group">
+                  <div className="relative">
+                    <OptimizedImage
+                      src={event.thumbnail}
+                      alt={event.title}
+                      width={400}
+                      height={200}
+                      className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 az-scrim" aria-hidden="true" />
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <span
+                        className={`rounded-az-pill px-3 py-1 text-xs font-semibold ${statusPillClass(
+                          event.status
+                        )}`}
+                      >
+                        {event.status === 'live'
+                          ? 'Circle LIVE'
+                          : event.status === 'scheduled'
+                            ? 'Upcoming'
+                            : event.status}
+                      </span>
+                      {event.status === 'scheduled' && (
+                        <span className="rounded-az-pill bg-black/60 px-3 py-1 text-xs font-semibold text-az-ink">
+                          {getTimeRemaining(event.scheduledAt)}
                         </span>
-                        {event.status === 'scheduled' && (
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-black/60 text-white">
-                            {getTimeRemaining(event.scheduledAt)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="absolute bottom-3 left-3 right-3">
-                        <h3 className="text-lg font-bold text-white">{event.title}</h3>
-                      </div>
+                      )}
                     </div>
-                    <div className="p-4">
-                      <p className="text-sm text-white/50 mb-3 line-clamp-2">{event.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span
-                          className="text-lg font-bold"
-                          style={{ color: 'var(--brand-orange)' }}
-                        >
-                          {formatPrice(event.ticketPrice, event.currency)}
-                        </span>
-                        {event.maxViewers && (
-                          <span className="text-xs text-white/40">
-                            {event._count.tickets}/{event.maxViewers} sold
-                          </span>
-                        )}
-                      </div>
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <h3 className="az-title text-az-ink">{event.title}</h3>
                     </div>
                   </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            icon="Video"
-            title="No events found"
-            description="Check back later for upcoming live events"
-            dark
-          />
-        )}
-      </section>
-
-      <AppFooter logoVariant="light" />
-    </div>
+                  <div className="p-4">
+                    <p className="az-body mb-3 line-clamp-2 text-az-ink-muted">
+                      {event.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="az-title text-az-flame">
+                        {formatPrice(event.ticketPrice, event.currency)}
+                      </span>
+                      {event.maxViewers && (
+                        <span className="az-caption text-az-ink-muted">
+                          {event._count.tickets}/{event.maxViewers} sold
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon="Video"
+          title="No events found"
+          description="Check back later for upcoming live events"
+          dark
+        />
+      )}
+    </PageShell>
   );
 }
 

@@ -62,16 +62,14 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
       ref={dialogRef}
       tabIndex={-1}
     >
-      <div
-        className={`bg-white dark:bg-[#18151e] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl shadow-2xl ${sizes[size]} w-full mx-4 p-6 transition-colors`}
-      >
+      <div className={`az-glass text-az-ink ${sizes[size]} w-full mx-4 p-6 transition-colors`}>
         <div className="flex items-center justify-between mb-4">
-          <h2 id="modal-title" className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 id="modal-title" className="az-title text-az-ink">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-2.5 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-white rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2"
+            className="p-2.5 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-az-ink-dim hover:text-az-ink-muted rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame focus-visible:ring-offset-2"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

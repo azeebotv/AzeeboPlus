@@ -95,11 +95,7 @@ export default function HeroSlides({
   return (
     <section
       ref={containerRef}
-      className="relative w-full overflow-hidden"
-      style={{
-        minHeight: 'min(70vh, 600px)',
-        background: 'var(--hp-bg)',
-      }}
+      className="relative w-full overflow-hidden bg-az-surface-root min-h-[min(70vh,600px)]"
       onMouseEnter={(): void => setIsPaused(true)}
       onMouseLeave={(): void => setIsPaused(false)}
       onFocus={(): void => setIsPaused(true)}
@@ -111,7 +107,11 @@ export default function HeroSlides({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <AmbientGlow color="rgba(232,66,10,0.22)" size={600} className="-top-48 -left-48" />
+      <AmbientGlow
+        color="color-mix(in srgb, var(--color-az-scarlet) 22%, transparent)"
+        size={600}
+        className="-top-48 -left-48"
+      />
 
       {/* Slide content */}
       <AnimatePresence mode="wait">
@@ -136,7 +136,7 @@ export default function HeroSlides({
               src={
                 currentSlide.mediaAsset?.thumbnailUrl ||
                 currentSlide.thumbnail ||
-                '/images/poster_ember_queen.jpg'
+                '/images/poster_ember_queen.webp'
               }
               alt={currentSlide.title || t('home.heroSlide')}
               fill
@@ -144,21 +144,17 @@ export default function HeroSlides({
               priority={currentIndex === 0}
               sizes="100vw"
             />
-            {/* Gradient overlays — dark cinematic vignette */}
+            {/* Gradient overlays — dark cinematic vignette. The bottom fade is the
+                shared `.az-scrim--hero`; only the horizontal text-side vignette has no
+                shared equivalent, so it stays inline and reads from the surface token. */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  'linear-gradient(to right, rgba(11,9,14,0.95) 0%, rgba(11,9,14,0.7) 50%, rgba(11,9,14,0.3) 100%)',
+                  'linear-gradient(to right, color-mix(in srgb, var(--color-az-surface-root) 95%, transparent) 0%, color-mix(in srgb, var(--color-az-surface-root) 70%, transparent) 50%, color-mix(in srgb, var(--color-az-surface-root) 30%, transparent) 100%)',
               }}
             />
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  'linear-gradient(to top, rgba(11,9,14,1) 0%, rgba(11,9,14,0.4) 40%, transparent 80%)',
-              }}
-            />
+            <div className="az-scrim--hero absolute inset-0" />
           </div>
 
           {/* Text content */}
@@ -167,8 +163,7 @@ export default function HeroSlides({
               {/* Universe badge */}
               {currentSlide.universe?.name && (
                 <motion.span
-                  className="inline-block text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4"
-                  style={{ background: 'rgba(232,66,10,0.3)', color: 'var(--brand-orange)' }}
+                  className="az-micro-label mb-4 inline-block rounded-full bg-az-scarlet/30 px-3 py-1 text-az-flame"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
@@ -179,7 +174,7 @@ export default function HeroSlides({
               )}
 
               <motion.h2
-                className="az-headline text-white text-3xl sm:text-4xl lg:text-5xl mb-3 leading-tight"
+                className="az-headline text-az-ink text-3xl sm:text-4xl lg:text-5xl mb-3"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -189,7 +184,7 @@ export default function HeroSlides({
 
               {currentSlide.description && (
                 <motion.p
-                  className="text-white/70 text-sm sm:text-base mb-6 line-clamp-3"
+                  className="text-az-ink/70 text-sm sm:text-base mb-6 line-clamp-3"
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
@@ -207,8 +202,7 @@ export default function HeroSlides({
                 <Link href={`/watch/${currentSlide.id}`} onClick={handleSlideClick}>
                   <motion.button
                     type="button"
-                    className="az-btn-primary"
-                    style={{ width: 'auto', paddingInline: '2rem' }}
+                    className="az-btn-primary az-btn-primary--inline"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     aria-label={t('home.watchLabel', { title: currentSlide.title })}
@@ -217,7 +211,7 @@ export default function HeroSlides({
                   </motion.button>
                 </Link>
                 {currentSlide.duration && (
-                  <span className="text-white/50 text-sm">
+                  <span className="az-caption text-az-ink-muted">
                     {Math.floor(currentSlide.duration / 60)} min
                   </span>
                 )}
@@ -231,7 +225,7 @@ export default function HeroSlides({
       <button
         type="button"
         onClick={goPrev}
-        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border border-az-glass-border bg-az-surface-root/40 backdrop-blur-sm text-az-ink hover:bg-az-surface-root/70 hover:border-az-glass-border-hover transition-colors focus:outline-none focus:ring-2 focus:ring-az-flame"
         aria-label={t('home.previousSlide')}
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -248,7 +242,7 @@ export default function HeroSlides({
       <button
         type="button"
         onClick={goNext}
-        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border border-az-glass-border bg-az-surface-root/40 backdrop-blur-sm text-az-ink hover:bg-az-surface-root/70 hover:border-az-glass-border-hover transition-colors focus:outline-none focus:ring-2 focus:ring-az-flame"
         aria-label={t('home.nextSlide')}
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -276,11 +270,9 @@ export default function HeroSlides({
             aria-selected={index === currentIndex}
             aria-label={t('home.goToSlide', { index: index + 1, title: slide.title })}
             onClick={(): void => goTo(index)}
-            className="w-2.5 h-2.5 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white"
-            style={{
-              background: index === currentIndex ? 'var(--brand-orange)' : 'rgba(255,255,255,0.4)',
-              transform: index === currentIndex ? 'scale(1.3)' : 'scale(1)',
-            }}
+            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-az-flame ${
+              index === currentIndex ? 'scale-[1.3] bg-az-flame' : 'bg-az-ink/40'
+            }`}
           />
         ))}
       </div>

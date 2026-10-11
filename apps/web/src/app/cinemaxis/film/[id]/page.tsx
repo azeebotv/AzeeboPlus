@@ -4,9 +4,9 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { messageOf, requireData } from '@/lib/payload';
 
 interface CinemaxisFilm {
   id: string;
@@ -35,136 +35,132 @@ export default function CinemaxisFilmDetailPage(): React.JSX.Element {
   const {
     data: film,
     isLoading,
+    isError,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['cinemaxis', 'film', filmId],
     queryFn: async () => {
       const res = await apiFetch<CinemaxisFilm>(`/v1/movies/cinemaxis/${filmId}`);
-      return res.success ? res.data : null;
+      return requireData(res) ?? null;
     },
   });
 
-  if (error) {
+  if (isError) {
     return (
-      <>
-        <AppHeader />
-        <main className="min-h-screen bg-gray-950 text-white">
-          <ErrorState description="Failed to load film. Please try again." />
-        </main>
-        <AppFooter />
-      </>
+      <PageShell maxWidth="2xl" activeNav="Cinemaxis">
+        <div className="py-12">
+          <ErrorState
+            title="Film details unavailable"
+            description={messageOf(error)}
+            onButtonPress={() => refetch()}
+          />
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <>
-      <AppHeader />
-      <main className="min-h-screen bg-gray-950 text-white">
-        {isLoading ? (
-          <div className="max-w-6xl mx-auto px-4 py-12 space-y-6">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-[50vh] w-full rounded-xl" />
+    <PageShell maxWidth="2xl" activeNav="Cinemaxis">
+      {isLoading ? (
+        <div className="py-12 space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-[50vh] w-full rounded-az-card" />
+        </div>
+      ) : film ? (
+        <>
+          {/* Backdrop hero — the film's own artwork is this page's hero */}
+          <div className="relative h-[60vh] rounded-az-panel overflow-hidden bg-gradient-to-b from-[var(--brand-purple)]/40 to-az-surface-root">
+            {film.backdropUrl && (
+              <img
+                src={film.backdropUrl}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover opacity-40"
+              />
+            )}
+            <div className="absolute inset-0 az-scrim--hero" />
+            <div className="absolute bottom-0 left-0 right-0 px-4 pb-12">
+              <Link
+                href="/cinemaxis"
+                className="az-body-strong mb-4 inline-block text-az-flame hover:underline"
+              >
+                ← Cinemaxis
+              </Link>
+              <h1 className="az-headline mb-2 text-4xl text-az-ink">{film.title}</h1>
+              <div className="flex items-center gap-4 az-body text-az-ink-muted">
+                <span>{film.rating}</span>
+                <span>
+                  {Math.floor(film.duration / 60)}h {film.duration % 60}m
+                </span>
+                <span>{film.releaseDate}</span>
+                <span>{film.territory}</span>
+              </div>
+            </div>
           </div>
-        ) : film ? (
-          <>
-            <div className="relative h-[60vh] bg-gradient-to-b from-purple-900/40 to-gray-950">
-              {film.backdropUrl && (
-                <img
-                  src={film.backdropUrl}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover opacity-40"
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 max-w-6xl mx-auto px-4 pb-12">
-                <Link
-                  href="/cinemaxis"
-                  className="text-purple-400 hover:underline text-sm mb-4 inline-block"
-                >
-                  ← Cinemaxis
-                </Link>
-                <h1 className="text-4xl font-bold mb-2">{film.title}</h1>
-                <div className="flex items-center gap-4 text-sm text-gray-300">
-                  <span>{film.rating}</span>
-                  <span>
-                    {Math.floor(film.duration / 60)}h {film.duration % 60}m
-                  </span>
-                  <span>{film.releaseDate}</span>
-                  <span>{film.territory}</span>
-                </div>
-              </div>
-            </div>
-            <div className="max-w-6xl mx-auto px-4 py-12">
-              <div className="grid md:grid-cols-3 gap-8">
-                <div className="md:col-span-2 space-y-8">
-                  <section>
-                    <p className="text-gray-300 leading-relaxed text-lg">{film.description}</p>
-                  </section>
-                  <section>
-                    <h2 className="text-xl font-bold mb-3">Details</h2>
-                    <div className="space-y-2 text-gray-400">
-                      <p>
-                        <span className="text-gray-300">Director:</span> {film.director}
-                      </p>
-                      <p>
-                        <span className="text-gray-300">Cast:</span> {film.cast.join(', ')}
-                      </p>
-                      <p>
-                        <span className="text-gray-300">Genres:</span> {film.genres.join(', ')}
-                      </p>
-                    </div>
-                  </section>
-                </div>
-                <div className="space-y-4">
-                  <div className="bg-gray-900 rounded-xl p-6 sticky top-24">
-                    {film.hasTicket ? (
-                      <>
-                        <p className="text-green-400 font-semibold mb-2">
-                          CheckDigital Ticket Active
-                        </p>
-                        {film.accessExpiry && (
-                          <p className="text-sm text-gray-400 mb-4">
-                            Access expires: {new Date(film.accessExpiry).toLocaleDateString()}
-                          </p>
-                        )}
-                        <Link
-                          href={`/cinemaxis/watch/${film.id}`}
-                          className="block w-full bg-purple-600 hover:bg-purple-700 text-center px-6 py-3 rounded-lg font-semibold transition"
-                        >
-                          Watch Now
-                        </Link>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold mb-1">
-                          ₦{film.ticketPrice.toLocaleString()}
-                        </p>
-                        <p className="text-sm text-gray-400 mb-4">Digital Ticket</p>
-                        {user ? (
-                          <Link
-                            href={`/cinemaxis/ticket/${film.id}`}
-                            className="block w-full bg-purple-600 hover:bg-purple-700 text-center px-6 py-3 rounded-lg font-semibold transition"
-                          >
-                            Buy Digital Ticket
-                          </Link>
-                        ) : (
-                          <Link
-                            href="/auth/login"
-                            className="block w-full bg-purple-600 hover:bg-purple-700 text-center px-6 py-3 rounded-lg font-semibold transition"
-                          >
-                            Sign in to Purchase
-                          </Link>
-                        )}
-                      </>
-                    )}
+          <div className="py-12">
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="md:col-span-2 space-y-8">
+                <section>
+                  <p className="az-lead leading-relaxed text-az-ink-muted">{film.description}</p>
+                </section>
+                <section>
+                  <h2 className="az-title mb-3 text-az-ink">Details</h2>
+                  <div className="space-y-2 az-body text-az-ink-dim">
+                    <p>
+                      <span className="text-az-ink-muted">Director:</span> {film.director}
+                    </p>
+                    <p>
+                      <span className="text-az-ink-muted">Cast:</span> {film.cast.join(', ')}
+                    </p>
+                    <p>
+                      <span className="text-az-ink-muted">Genres:</span> {film.genres.join(', ')}
+                    </p>
                   </div>
+                </section>
+              </div>
+              <div className="space-y-4">
+                <div className="az-glass p-6 sticky top-24">
+                  {film.hasTicket ? (
+                    <>
+                      <p className="az-body-strong mb-2 text-az-success-400">
+                        Digital Ticket Active
+                      </p>
+                      {film.accessExpiry && (
+                        <p className="az-caption mb-4 text-az-ink-dim">
+                          Access expires: {new Date(film.accessExpiry).toLocaleDateString()}
+                        </p>
+                      )}
+                      <Link
+                        href={`/cinemaxis/watch/${film.id}`}
+                        className="az-btn-primary block text-center"
+                      >
+                        Watch Now
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <p className="az-section-title">{`₦${film.ticketPrice.toLocaleString()}`}</p>
+                      <p className="az-caption mb-4 text-az-ink-dim">Digital Ticket</p>
+                      {user ? (
+                        <Link
+                          href={`/cinemaxis/ticket/${film.id}`}
+                          className="az-btn-primary block text-center"
+                        >
+                          Buy Digital Ticket
+                        </Link>
+                      ) : (
+                        <Link href="/auth/login" className="az-btn-primary block text-center">
+                          Sign in to Purchase
+                        </Link>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
-          </>
-        ) : null}
-      </main>
-      <AppFooter />
-    </>
+          </div>
+        </>
+      ) : null}
+    </PageShell>
   );
 }

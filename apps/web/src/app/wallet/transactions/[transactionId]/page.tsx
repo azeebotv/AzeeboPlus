@@ -1,10 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 
 interface TransactionDetail {
   id: string;
@@ -48,147 +48,77 @@ export default function TransactionDetailPage(): React.JSX.Element {
 
   if (!isAuthenticated || !user) return <></>;
 
+  const isCredit = transaction?.type === 'deposit' || transaction?.type === 'earning';
+
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 600,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
+    <PageShell maxWidth="sm">
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="az-body mb-4 inline-flex items-center gap-2 text-az-ink-muted"
       >
-        <div style={{ marginBottom: 32 }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: 14,
-              marginBottom: 16,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span>←</span> Back to Transactions
-          </button>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Transaction Details</h1>
+        <ArrowLeft size={16} aria-hidden /> Back to Transactions
+      </button>
+      <h1 className="az-headline text-az-heading mb-8 text-az-ink">Transaction Details</h1>
+
+      {isLoading ? (
+        <div className="flex justify-center py-16">
+          <div
+            className="size-10 animate-spin rounded-full border-[3px] border-az-ink/20 border-t-az-flame"
+            role="status"
+            aria-label="Loading transaction"
+          />
         </div>
-
-        {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                border: '3px solid #18151e',
-                borderTopColor: 'var(--brand-orange)',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }}
-            />
-          </div>
-        ) : !transaction ? (
-          <div className="az-glass" style={{ padding: 40, borderRadius: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}></div>
-            <h3 style={{ fontSize: 18, marginBottom: 8 }}>Transaction not found</h3>
-            <a
-              href="/wallet/transactions"
-              style={{ color: 'var(--brand-orange)', textDecoration: 'none', fontWeight: 600 }}
+      ) : !transaction ? (
+        <div className="az-glass px-6 py-12 text-center">
+          <h3 className="az-subtitle mb-3 text-az-ink">Transaction not found</h3>
+          <a href="/wallet/transactions" className="az-body-strong text-az-flame no-underline">
+            View all transactions
+          </a>
+        </div>
+      ) : (
+        <div className="az-glass p-7">
+          <div className="mb-7 text-center">
+            <p className={`az-heading ${isCredit ? 'text-az-success-400' : 'text-az-scarlet'}`}>
+              {isCredit ? '+' : '-'}₦{(transaction.amount || 0).toLocaleString()}
+            </p>
+            <span
+              className={`mt-2 inline-block rounded-az-pill px-3.5 py-1 az-caption ${
+                transaction.status === 'completed'
+                  ? 'bg-az-success-400/15 text-az-success-400'
+                  : transaction.status === 'pending'
+                    ? 'bg-az-warning-400/15 text-az-warning-400'
+                    : 'bg-az-scarlet/15 text-az-flame'
+              }`}
             >
-              View all transactions
-            </a>
+              {transaction.status}
+            </span>
           </div>
-        ) : (
-          <div className="az-glass" style={{ padding: 28, borderRadius: 20 }}>
-            {/* Amount */}
-            <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <p
-                style={{
-                  fontSize: 36,
-                  fontWeight: 700,
-                  color:
-                    transaction.type === 'deposit' || transaction.type === 'earning'
-                      ? 'var(--brand-forest)'
-                      : 'var(--brand-red)',
-                }}
-              >
-                {transaction.type === 'deposit' || transaction.type === 'earning' ? '+' : '-'}₦
-                {(transaction.amount || 0).toLocaleString()}
-              </p>
-              <span
-                style={{
-                  display: 'inline-block',
-                  marginTop: 8,
-                  padding: '4px 14px',
-                  borderRadius: 999,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  backgroundColor:
-                    transaction.status === 'completed'
-                      ? 'rgba(13,59,46,0.2)'
-                      : transaction.status === 'pending'
-                        ? 'rgba(245,158,11,0.2)'
-                        : 'rgba(204,28,28,0.2)',
-                  color:
-                    transaction.status === 'completed'
-                      ? 'var(--brand-forest)'
-                      : transaction.status === 'pending'
-                        ? 'var(--color-warning-500)'
-                        : 'var(--brand-red)',
-                }}
-              >
-                {transaction.status}
-              </span>
-            </div>
 
-            {/* Details */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {[
-                { label: 'Transaction ID', value: transaction.id },
-                { label: 'Type', value: transaction.type },
-                { label: 'Date', value: new Date(transaction.createdAt).toLocaleString() },
-                { label: 'Description', value: transaction.description || 'N/A' },
-                { label: 'Payment Method', value: transaction.paymentMethod || 'N/A' },
-                transaction.fee
-                  ? { label: 'Fee', value: `₦${transaction.fee.toLocaleString()}` }
-                  : null,
-              ]
-                .filter(Boolean)
-                .map((item, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      padding: '10px 0',
-                      borderBottom: '1px solid #18151e',
-                    }}
-                  >
-                    <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-                      {item!.label}
-                    </span>
-                    <span style={{ fontWeight: 600, fontSize: 14, textTransform: 'capitalize' }}>
-                      {item!.value}
-                    </span>
-                  </div>
-                ))}
-            </div>
+          <div className="flex flex-col gap-4">
+            {[
+              { label: 'Transaction ID', value: transaction.id },
+              { label: 'Type', value: transaction.type },
+              { label: 'Date', value: new Date(transaction.createdAt).toLocaleString() },
+              { label: 'Description', value: transaction.description || 'N/A' },
+              { label: 'Payment Method', value: transaction.paymentMethod || 'N/A' },
+              transaction.fee
+                ? { label: 'Fee', value: `₦${transaction.fee.toLocaleString()}` }
+                : null,
+            ]
+              .filter(Boolean)
+              .map((item, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between border-b border-az-glass-border pb-2.5 last:border-b-0"
+                >
+                  <span className="az-body text-az-ink-muted">{item!.label}</span>
+                  <span className="az-body-strong text-az-ink capitalize">{item!.value}</span>
+                </div>
+              ))}
           </div>
-        )}
-      </main>
-      <AppFooter />
-    </div>
+        </div>
+      )}
+    </PageShell>
   );
 }

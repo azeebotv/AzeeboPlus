@@ -56,16 +56,18 @@ export default function ContentCard({
       <Link
         href={`/watch/${item.id}`}
         onClick={handleClick}
-        className="block rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)] transition-all duration-300"
+        className="block overflow-hidden rounded-az-card transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-az-flame"
         aria-label={t('content.watchLabel', { title: item.title })}
       >
         <div
-          className="relative overflow-hidden rounded-xl border transition-all duration-300 group-hover:border-[rgba(232,66,10,0.5)] group-hover:shadow-[0_8px_30px_rgba(232,66,10,0.18)]"
+          className="az-glass relative overflow-hidden"
           style={{
             width,
             height,
-            background: 'var(--hp-card-bg)',
-            borderColor: 'var(--hp-card-border)',
+            // Shared-layer gap: `.az-glass` paints `--radius-az-feature` (20px) and
+            // no `--card` modifier exists yet, so Figma's 12px poster radius is kept
+            // inline against the token rather than with a dead `rounded-az-card` utility.
+            borderRadius: 'var(--radius-az-card)',
           }}
         >
           <OptimizedImage
@@ -79,7 +81,7 @@ export default function ContentCard({
           {/* Duration badge */}
           {item.duration && (
             <span
-              className="absolute bottom-2 right-2 text-xs font-semibold px-1.5 py-0.5 rounded bg-black/70 text-white"
+              className="az-caption absolute bottom-2 right-2 rounded-az-control bg-az-surface-root/70 px-1.5 py-0.5 font-medium text-az-ink"
               aria-label={t('content.durationAria', {
                 minutes: Math.floor(item.duration / 60),
                 seconds: item.duration % 60,
@@ -92,7 +94,7 @@ export default function ContentCard({
           {/* Universe icon badge */}
           {item.universe?.icon && (
             <span
-              className="absolute top-2 left-2 text-sm px-1.5 py-0.5 rounded-md bg-black/50"
+              className="absolute top-2 left-2 rounded-az-control bg-az-surface-root/50 px-1.5 py-0.5 text-sm"
               aria-label={t('content.universeAria', { name: item.universe.name })}
             >
               {item.universe.icon}
@@ -102,7 +104,7 @@ export default function ContentCard({
           {/* Progress bar */}
           {showProgress && typeof progress === 'number' && progress > 0 && (
             <div
-              className="absolute bottom-0 left-0 right-0 h-1 bg-white/20"
+              className="absolute bottom-0 left-0 right-0 h-1 bg-az-ink/20"
               role="progressbar"
               aria-valuenow={Math.round(progress * 100)}
               aria-valuemin={0}
@@ -110,11 +112,8 @@ export default function ContentCard({
               aria-label={t('content.watchedAria', { percent: Math.round(progress * 100) })}
             >
               <div
-                className="h-full rounded-r-full"
-                style={{
-                  width: `${Math.round(progress * 100)}%`,
-                  background: 'var(--brand-orange)',
-                }}
+                className="h-full rounded-r-full bg-az-flame"
+                style={{ width: `${Math.round(progress * 100)}%` }}
               />
             </div>
           )}
@@ -123,9 +122,9 @@ export default function ContentCard({
 
       {/* Title */}
       <div className="mt-2 px-0.5">
-        <p className="text-sm font-medium text-white truncate leading-tight">{item.title}</p>
+        <p className="az-body-strong truncate text-az-ink">{item.title}</p>
         {item.creator?.name && (
-          <p className="text-xs text-white/50 truncate mt-0.5">{item.creator.name}</p>
+          <p className="az-caption mt-0.5 truncate text-az-ink-muted">{item.creator.name}</p>
         )}
       </div>
     </motion.div>

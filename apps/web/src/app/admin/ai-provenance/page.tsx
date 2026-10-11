@@ -77,12 +77,13 @@ export default function AiProvenancePage() {
   };
 
   const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-    needs_review: 'bg-orange-100 text-orange-800',
+    pending: 'bg-az-warning-500/20 text-az-warning-500',
+    approved: 'bg-az-success-500/20 text-az-success-500',
+    rejected: 'bg-az-error-500/15 text-az-error-500',
+    needs_review: 'bg-az-scarlet/15 text-az-flame',
   };
 
+  const restrictionChip = (tone: string) => `rounded-az-control px-2 py-1 az-micro-label ${tone}`;
 
   const typeIcons: Record<string, LucideIcon> = {
     image: ImageIcon,
@@ -93,21 +94,21 @@ export default function AiProvenancePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-az-surface-root p-6 text-az-ink">
+      <div className="mx-auto max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">AI Provenance Management</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="az-heading text-az-ink">AI Provenance Management</h1>
+          <p className="az-lead mt-2 text-az-ink-muted">
             Track and manage AI-generated content provenance, attribution, and clearances
           </p>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="mb-6 flex flex-wrap gap-4">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 bg-card border rounded-lg text-foreground"
+            className="az-input max-w-xs"
           >
             <option value="all">All Statuses</option>
             <option value="pending">Pending</option>
@@ -118,7 +119,7 @@ export default function AiProvenancePage() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-4 py-2 bg-card border rounded-lg text-foreground"
+            className="az-input max-w-xs"
           >
             <option value="all">All Types</option>
             <option value="image">Image</option>
@@ -130,9 +131,9 @@ export default function AiProvenancePage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading records...</div>
+          <div className="az-lead py-12 text-center text-az-ink-muted">Loading records...</div>
         ) : error ? (
-          <div className="text-center py-12 text-destructive">{error}</div>
+          <div className="az-lead py-12 text-center text-az-error-500">{error}</div>
         ) : records.length === 0 ? (
           <EmptyState
             icon="Bot"
@@ -142,55 +143,59 @@ export default function AiProvenancePage() {
         ) : (
           <div className="grid gap-4">
             {records.map((record) => (
-              <div key={record.id} className="bg-card rounded-xl border p-6">
-                <div className="flex items-start justify-between mb-4">
+              <div key={record.id} className="az-glass p-6">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
                     {(() => {
                       const IconComp = typeIcons[record.generationType] || FileText;
                       return (
-                        <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 flex-shrink-0">
+                        <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-az-card border border-az-glass-border bg-az-flame/10 text-az-flame">
                           <IconComp size={20} strokeWidth={1.75} />
                         </div>
                       );
                     })()}
                     <div>
-                      <h3 className="font-semibold text-foreground">{record.contentTitle}</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <h3 className="az-body-strong text-az-ink">{record.contentTitle}</h3>
+                      <p className="az-caption text-az-ink-muted">
                         {record.aiTool} / {record.aiModel}
                       </p>
                     </div>
                   </div>
                   <span
-                    className={`text-xs px-2 py-1 rounded-full ${statusColors[record.clearanceStatus]}`}
+                    className={`rounded-az-pill px-2.5 py-1 az-micro-label ${statusColors[record.clearanceStatus]}`}
                   >
                     {record.clearanceStatus.replace('_', ' ')}
                   </span>
                 </div>
 
                 {/* Restrictions */}
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="mb-4 flex flex-wrap gap-2">
                   {record.attributionRequired && (
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    <span
+                      className={restrictionChip('bg-az-secondary-500/20 text-az-secondary-500')}
+                    >
                       Attribution Required
                     </span>
                   )}
                   {record.talentRestriction && (
-                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                    <span
+                      className={restrictionChip('bg-az-universe-games/20 text-az-universe-games')}
+                    >
                       Talent Restricted
                     </span>
                   )}
                   {record.voiceRestriction && (
-                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                    <span className={restrictionChip('bg-az-flame/15 text-az-flame')}>
                       Voice Restricted
                     </span>
                   )}
                   {record.likenessRestriction && (
-                    <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                    <span className={restrictionChip('bg-az-error-500/15 text-az-error-500')}>
                       Likeness Restricted
                     </span>
                   )}
                   {record.vendorIndependenceVerified && (
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                    <span className={restrictionChip('bg-az-success-500/20 text-az-success-500')}>
                       Vendor Independent Check
                     </span>
                   )}
@@ -199,10 +204,10 @@ export default function AiProvenancePage() {
                 {/* Actions */}
                 {record.clearanceStatus === 'pending' ||
                 record.clearanceStatus === 'needs_review' ? (
-                  <div className="flex gap-3 mt-4 pt-4 border-t">
+                  <div className="mt-4 flex gap-3 border-t border-az-glass-border pt-4">
                     <button
                       onClick={() => handleClearance(record.id, 'approved', 'Approved by admin')}
-                      className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg"
+                      className="rounded-az-control bg-az-success-500/20 px-4 py-2 az-body-strong text-az-success-500 transition-colors hover:bg-az-success-500/30"
                     >
                       Approve
                     </button>
@@ -210,7 +215,7 @@ export default function AiProvenancePage() {
                       onClick={() =>
                         handleClearance(record.id, 'rejected', 'Rejected - needs revision')
                       }
-                      className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg"
+                      className="rounded-az-control bg-az-error-500/15 px-4 py-2 az-body-strong text-az-error-500 transition-colors hover:bg-az-error-500/25"
                     >
                       Reject
                     </button>

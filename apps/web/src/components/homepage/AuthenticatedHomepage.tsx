@@ -273,10 +273,7 @@ export default function AuthenticatedHomepage({
   }, []);
 
   return (
-    <div
-      className="min-h-screen relative overflow-x-hidden"
-      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
-    >
+    <div className="min-h-screen relative overflow-x-hidden bg-az-surface-root text-az-ink">
       <AppHeader active="Home" logoVariant="light" />
 
       {/* Top Ambient glow */}
@@ -284,7 +281,7 @@ export default function AuthenticatedHomepage({
         className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full blur-[140px] -z-0"
         style={{
           background:
-            'radial-gradient(circle, rgba(232,66,10,0.18) 0%, rgba(204,28,28,0.06) 50%, transparent 80%)',
+            'radial-gradient(circle, color-mix(in srgb, var(--color-az-scarlet) 18%, transparent) 0%, color-mix(in srgb, var(--color-az-scarlet) 6%, transparent) 50%, transparent 80%)',
         }}
         aria-hidden="true"
       />
@@ -296,7 +293,7 @@ export default function AuthenticatedHomepage({
         {/* Personalized greeting */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-2">
           <motion.h1
-            className="az-headline font-extrabold text-white text-2xl sm:text-3xl tracking-tight"
+            className="az-headline font-extrabold text-az-ink text-2xl sm:text-3xl"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
@@ -412,25 +409,18 @@ export default function AuthenticatedHomepage({
         {/* Bottom CTA for referrals */}
         <ScrollReveal>
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-            <div
-              className="relative py-10 sm:py-14 rounded-3xl overflow-hidden text-center"
-              style={{
-                background: 'linear-gradient(135deg, #CC1C1C 0%, #E8420A 100%)',
-                boxShadow: '0 20px 50px rgba(204,28,28,0.35)',
-              }}
-            >
+            <div className="relative py-10 sm:py-14 rounded-az-feature overflow-hidden text-center bg-gradient-to-br from-az-scarlet to-az-flame shadow-az-glow">
               <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6">
-                <h3 className="az-headline text-white text-2xl sm:text-3xl lg:text-4xl mb-3">
+                <h3 className="az-headline text-az-ink text-2xl sm:text-3xl lg:text-4xl mb-3">
                   Invite Friends, Earn Rewards
                 </h3>
-                <p className="text-sm sm:text-base text-white/90 mb-6 max-w-xl mx-auto">
+                <p className="text-sm sm:text-base text-az-ink/90 mb-6 max-w-xl mx-auto">
                   Share Azeebo+ with friends and earn rewards for every friend who signs up.
                 </p>
                 <a href="/referral">
                   <motion.button
                     type="button"
-                    className="px-6 sm:px-8 py-3 rounded-full text-sm sm:text-base font-bold transition-all"
-                    style={{ background: 'var(--brand-near-black)', color: 'var(--brand-white)' }}
+                    className="px-6 sm:px-8 py-3 rounded-az-pill bg-az-surface-root text-az-ink text-sm sm:text-base font-bold transition-all"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >

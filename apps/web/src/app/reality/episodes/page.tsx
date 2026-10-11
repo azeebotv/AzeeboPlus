@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
-import { Lock, Play } from 'lucide-react';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
+import { ChevronLeft, Loader2, Lock, Play } from 'lucide-react';
 
 interface Episode {
   id: string;
@@ -25,6 +25,14 @@ interface Season {
   seasonNumber: number;
   episodes: Episode[];
 }
+
+/* Season tabs: the active tab is the primary CTA, idle tabs are frosted chips.
+   Kept as module constants because `az-btn-primary` and the chip padding
+   utility cannot share one className expression (see no-dead-class-override). */
+const SEASON_TAB_ACTIVE =
+  'az-btn-primary az-btn-primary--sm az-btn-primary--inline whitespace-nowrap transition-all';
+const SEASON_TAB_IDLE =
+  'az-chip az-body-strong whitespace-nowrap px-4 py-2 text-az-ink transition-all';
 
 export default function EpisodesPage(): React.JSX.Element {
   const router = useRouter();
@@ -77,125 +85,105 @@ export default function EpisodesPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
+      <PageShell activeNav="Reality" maxWidth="xl">
+        <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
           <div className="text-center">
-            <div
-              className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{
-                border: '3px solid rgba(255,255,255,0.1)',
-                borderTopColor: 'var(--brand-orange)',
-              }}
-            />
-            <p className="mt-4 text-white/60">Loading episodes...</p>
+            <Loader2 className="mx-auto size-12 animate-spin text-az-flame" aria-hidden="true" />
+            <p className="az-body mt-4 text-az-ink-muted">Loading episodes...</p>
           </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
-      <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
+    <PageShell activeNav="Reality" maxWidth="xl">
+      <PageHero
+        eyebrow="Reality"
+        title={contentTitle}
+        subtitle="Episodes"
+        actions={
           <button
+            type="button"
             onClick={() => router.back()}
-            className="text-white/50 hover:text-white mb-4 flex items-center gap-2 transition-colors"
+            className="az-body-strong inline-flex items-center gap-2 text-az-ink-muted transition-colors hover:text-az-ink"
           >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            <ChevronLeft className="size-5" aria-hidden="true" />
             Back
           </button>
-          <h1 className="text-3xl font-bold text-white">{contentTitle}</h1>
-          <p className="text-white/50 mt-1">Episodes</p>
-        </div>
+        }
+      />
 
-        <div className="mb-6">
-          <div className="flex gap-2 overflow-x-auto pb-2" role="listbox" aria-label="Seasons">
-            {seasons.map((season) => (
-              <button
-                key={season.seasonNumber}
-                onClick={() => setSelectedSeason(season.seasonNumber)}
-                role="option"
-                aria-selected={selectedSeason === season.seasonNumber}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  selectedSeason === season.seasonNumber ? 'az-btn-primary' : ''
-                }`}
-                style={
-                  selectedSeason !== season.seasonNumber
-                    ? {
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: 'var(--brand-white)',
-                      }
-                    : undefined
-                }
-              >
-                Season {season.seasonNumber}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {currentSeason?.episodes.map((episode) => (
-            <div
-              key={episode.id}
-              onClick={() => handleEpisodeClick(episode)}
-              className={`az-glass flex gap-4 overflow-hidden transition-all group ${
-                episode.isLocked
-                  ? 'opacity-60 cursor-not-allowed'
-                  : 'cursor-pointer hover:scale-[1.01]'
-              }`}
+      <div className="mb-6">
+        <div
+          className="scrollbar-hide flex gap-2 overflow-x-auto pb-2"
+          role="listbox"
+          aria-label="Seasons"
+        >
+          {seasons.map((season) => (
+            <button
+              key={season.seasonNumber}
+              onClick={() => setSelectedSeason(season.seasonNumber)}
+              role="option"
+              aria-selected={selectedSeason === season.seasonNumber}
+              className={
+                selectedSeason === season.seasonNumber ? SEASON_TAB_ACTIVE : SEASON_TAB_IDLE
+              }
             >
-              <div className="relative w-48 h-28 flex-shrink-0">
-                <OptimizedImage
-                  src={episode.thumbnail}
-                  alt={episode.title}
-                  fill
-                  className="w-full h-full object-cover"
-                />
-                {episode.isLocked ? (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-black/70 border border-white/20 flex items-center justify-center text-white/70 shadow-lg">
-                      <Lock size={18} />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-orange-500/90 text-white flex items-center justify-center shadow-lg shadow-orange-500/30">
-                      <Play size={18} className="fill-white ml-0.5" />
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold" style={{ color: 'var(--brand-orange)' }}>
-                    E{episode.episodeNumber.toString().padStart(2, '0')}
-                  </span>
-                  <span className="text-xs text-white/50">{formatDuration(episode.duration)}</span>
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-1">{episode.title}</h3>
-                <p className="text-sm text-white/50 mb-2 line-clamp-2">{episode.description}</p>
-                <p className="text-xs text-white/40">{formatDate(episode.releaseDate)}</p>
-              </div>
-            </div>
+              Season {season.seasonNumber}
+            </button>
           ))}
         </div>
       </div>
-      <AppFooter />
-    </div>
+
+      <div className="space-y-4">
+        {currentSeason?.episodes.map((episode) => (
+          <div
+            key={episode.id}
+            onClick={() => handleEpisodeClick(episode)}
+            className={`az-glass flex gap-4 overflow-hidden transition-all group ${
+              episode.isLocked
+                ? 'opacity-60 cursor-not-allowed'
+                : 'cursor-pointer hover:scale-[1.01]'
+            }`}
+          >
+            <div className="relative w-48 h-28 flex-shrink-0">
+              <OptimizedImage
+                src={episode.thumbnail}
+                alt={episode.title}
+                fill
+                className="w-full h-full object-cover"
+              />
+              {episode.isLocked ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-az-surface-root/60">
+                  <div className="flex size-10 items-center justify-center rounded-full border border-az-ink/20 bg-az-surface-root/70 text-az-ink/70 shadow-az-lifted">
+                    <Lock size={18} aria-hidden="true" />
+                  </div>
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-az-surface-root/30 opacity-0 transition-opacity group-hover:opacity-100">
+                  <div className="flex size-10 items-center justify-center rounded-full bg-az-flame/90 text-az-ink shadow-az-glow">
+                    <Play size={18} className="ml-0.5 fill-az-ink" aria-hidden="true" />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="az-overline text-az-flame">
+                  E{episode.episodeNumber.toString().padStart(2, '0')}
+                </span>
+                <span className="az-caption text-az-ink-muted">
+                  {formatDuration(episode.duration)}
+                </span>
+              </div>
+              <h3 className="az-subtitle mb-1 truncate text-az-ink">{episode.title}</h3>
+              <p className="az-body mb-2 line-clamp-2 text-az-ink-muted">{episode.description}</p>
+              <p className="az-caption text-az-ink/40">{formatDate(episode.releaseDate)}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </PageShell>
   );
 }

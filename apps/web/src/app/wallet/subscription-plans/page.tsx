@@ -97,17 +97,18 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.15)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
       <PageHero
         badge="Streaming Access"
         title="Subscription Plans"
         description="Select the perfect pass to unlock uninterrupted 4K African cinema premieres, reality TV voting rights, and ad-free listening."
         rightElement={
           walletBalance !== null ? (
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-white/80">
-              <Wallet className="w-3.5 h-3.5 text-orange-400" />
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-az-glass-fill border border-az-glass-border text-xs text-az-ink/80">
+              <Wallet className="w-3.5 h-3.5 text-az-flame" />
               <span>
-                Wallet Balance: <strong className="text-white">₦{walletBalance.toLocaleString()}</strong>
+                Wallet Balance:{' '}
+                <strong className="text-az-ink">₦{walletBalance.toLocaleString()}</strong>
               </span>
             </div>
           ) : undefined
@@ -117,19 +118,19 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 -mt-4">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-10 h-10 border-4 border-white/10 border-t-[var(--brand-orange)] rounded-full animate-spin mb-4" />
-            <p className="text-xs text-white/40">Loading plan options...</p>
+            <div className="w-10 h-10 border-4 border-az-glass-border border-t-[var(--color-az-flame)] rounded-full animate-spin mb-4" />
+            <p className="text-xs text-az-ink/40">Loading plan options...</p>
           </div>
         ) : error ? (
-          <div className="az-glass p-8 rounded-3xl border border-white/10 text-center max-w-md mx-auto">
-            <p className="text-red-400 text-sm mb-4 leading-relaxed">{error}</p>
+          <div className="az-glass p-8 border border-az-glass-border text-center max-w-md mx-auto">
+            <p className="text-az-error-400 text-sm mb-4 leading-relaxed">{error}</p>
             <button
               onClick={() => {
                 setError(null);
                 setIsLoading(true);
                 loadPlans();
               }}
-              className="az-btn-primary px-6 py-2.5 rounded-full text-xs font-bold"
+              className="az-btn-primary"
             >
               Try Again
             </button>
@@ -142,34 +143,34 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
               return (
                 <div
                   key={plan.id}
-                  className={`az-glass p-7 sm:p-8 rounded-3xl border transition-all duration-300 flex flex-col justify-between relative ${
+                  className={`az-glass p-7 sm:p-8 border transition-all duration-300 flex flex-col justify-between relative ${
                     isPopular
-                      ? 'border-orange-500/40 bg-gradient-to-b from-orange-500/[0.08] to-transparent shadow-[0_12px_40px_rgba(232,66,10,0.15)] scale-105 z-10'
-                      : 'border-white/10 hover:border-white/20'
+                      ? 'from-az-flame/[0.08] to-transparent scale-105 z-10'
+                      : 'border-az-glass-border'
                   }`}
                 >
                   {isPopular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#e8420a] to-[#cc1c1c] text-white text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-az-scarlet to-az-flame text-az-ink text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1">
                       <Sparkles className="w-3 h-3" />
                       Most Popular
                     </div>
                   )}
 
                   <div>
-                    <h3 className="text-xl font-extrabold text-white mb-2 tracking-tight">
+                    <h3 className="text-xl font-extrabold text-az-ink mb-2 tracking-tight">
                       {plan.name}
                     </h3>
-                    <div className="flex items-baseline gap-1 mb-6 pb-6 border-b border-white/10">
-                      <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
+                    <div className="flex items-baseline gap-1 mb-6 pb-6 border-b border-az-glass-border">
+                      <span className="az-headline text-3xl sm:text-4xl text-az-ink">
                         ₦{plan.price.toLocaleString()}
                       </span>
-                      <span className="text-xs text-white/50 font-normal">/ month</span>
+                      <span className="text-xs text-az-ink/50 font-normal">/ month</span>
                     </div>
 
                     <div className="space-y-3 mb-8">
                       {(plan.features ?? []).map((feature, i) => (
-                        <div key={i} className="flex items-start gap-2.5 text-xs text-white/70">
-                          <CheckCircle2 className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
+                        <div key={i} className="flex items-start gap-2.5 text-xs text-az-ink/70">
+                          <CheckCircle2 className="w-4 h-4 text-az-flame flex-shrink-0 mt-0.5" />
                           <span className="leading-relaxed">{feature}</span>
                         </div>
                       ))}
@@ -178,17 +179,17 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
 
                   <div>
                     {isCurrent ? (
-                      <div className="w-full py-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold text-center tracking-wide">
+                      <div className="w-full py-3.5 rounded-2xl bg-az-success-500/10 border border-az-success-500/20 text-az-success-400 text-xs font-bold text-center tracking-wide">
                         Current Active Plan
                       </div>
                     ) : (
                       <button
                         onClick={() => setConfirmPlan(plan)}
                         disabled={subscribing === plan.id}
-                        className={`w-full py-3.5 rounded-2xl text-xs font-bold tracking-wide transition-all ${
+                        className={`w-full font-bold tracking-wide transition-all ${
                           isPopular
-                            ? 'az-btn-primary shadow-lg hover:shadow-orange-500/20'
-                            : 'bg-white/10 hover:bg-white/15 text-white border border-white/10'
+                            ? 'az-btn-primary shadow-lg hover:shadow-az-flame/20'
+                            : 'text-az-ink'
                         }`}
                       >
                         {subscribing === plan.id ? 'Processing...' : 'Choose ' + plan.name}
@@ -202,9 +203,12 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
         )}
 
         {/* Security and Guarantee Badge */}
-        <div className="mt-12 az-glass p-6 rounded-3xl border border-white/10 text-center max-w-xl mx-auto flex items-center justify-center gap-3 text-xs text-white/50">
-          <ShieldCheck className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-          <span>Encrypted Nigerian & African banking standards. Cancel or change your subscription anytime.</span>
+        <div className="mt-12 az-glass p-6 border border-az-glass-border text-center max-w-xl mx-auto flex items-center justify-center gap-3 text-xs text-az-ink/50">
+          <ShieldCheck className="w-5 h-5 text-az-success-400 flex-shrink-0" />
+          <span>
+            Encrypted Nigerian & African banking standards. Cancel or change your subscription
+            anytime.
+          </span>
         </div>
       </main>
 
@@ -218,27 +222,29 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
               onClick={() => setConfirmPlan(null)}
             >
               <div
-                className="az-glass p-8 rounded-3xl border border-white/15 max-w-sm w-full shadow-2xl relative"
+                className="az-glass p-8 border max-w-sm w-full relative"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
                   onClick={() => setConfirmPlan(null)}
-                  className="absolute top-5 right-5 text-white/40 hover:text-white transition-colors"
+                  className="absolute top-5 right-5 text-az-ink/40 hover:text-az-ink transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
 
-                <h3 className="text-xl font-extrabold text-white mb-1 tracking-tight">
+                <h3 className="text-xl font-extrabold text-az-ink mb-1 tracking-tight">
                   Confirm Subscription
                 </h3>
-                <p className="text-xs text-white/60 mb-6">
+                <p className="text-xs text-az-ink/60 mb-6">
                   {confirmPlan.name} • ₦{confirmPlan.price.toLocaleString()}/month
                 </p>
 
                 {walletBalance !== null && (
-                  <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 mb-6 flex items-center justify-between text-xs">
-                    <span className="text-white/60">Wallet Balance:</span>
-                    <strong className="text-white font-mono">₦{walletBalance.toLocaleString()}</strong>
+                  <div className="p-3.5 rounded-2xl bg-az-glass-fill border border-az-glass-border mb-6 flex items-center justify-between text-xs">
+                    <span className="text-az-ink/60">Wallet Balance:</span>
+                    <strong className="text-az-ink font-mono">
+                      ₦{walletBalance.toLocaleString()}
+                    </strong>
                   </div>
                 )}
 
@@ -249,8 +255,8 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                       disabled={subscribing === confirmPlan.id || !canAffordWallet}
                       className={`w-full py-3.5 px-4 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                         canAffordWallet
-                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg'
-                          : 'bg-white/5 text-white/30 border border-white/5 cursor-not-allowed'
+                          ? 'bg-az-success-600 hover:bg-az-success-500 text-az-ink shadow-lg'
+                          : 'bg-az-glass-fill text-az-ink/30 border border-az-ink/5 cursor-not-allowed'
                       }`}
                     >
                       <Wallet className="w-4 h-4" />
@@ -264,7 +270,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                   <button
                     onClick={() => handleSubscribe(confirmPlan.id, 'external')}
                     disabled={subscribing === confirmPlan.id}
-                    className="w-full py-3.5 px-4 rounded-2xl text-xs font-bold az-btn-primary flex items-center justify-center gap-2 shadow-lg"
+                    className="az-btn-primary flex items-center justify-center gap-2 shadow-lg"
                   >
                     <CreditCard className="w-4 h-4" />
                     {subscribing === confirmPlan.id ? 'Processing...' : 'Pay with Card / Transfer'}

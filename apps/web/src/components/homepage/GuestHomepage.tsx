@@ -54,14 +54,14 @@ const HERO_POSTERS_24: PosterItem[] = [
     title: 'The Ember Queen',
     genre: 'Historical Epic',
     rating: '4.9',
-    image: '/images/poster_ember_queen.jpg',
+    image: '/images/poster_ember_queen.webp',
   },
   {
     id: 'p2',
     title: 'Neo Lagos 2099',
     genre: 'Afro-Cyberpunk',
     rating: '4.8',
-    image: '/images/poster_neo_lagos.jpg',
+    image: '/images/poster_neo_lagos.webp',
   },
   {
     id: 'p3',
@@ -386,8 +386,8 @@ const UNIVERSE_CATEGORIES: UniverseCategory[] = [
     name: 'Movie Universe',
     slug: '/movies',
     miniPosters: [
-      { title: 'The Ember Queen', image: '/images/poster_ember_queen.jpg' },
-      { title: 'Neo Lagos 2099', image: '/images/poster_neo_lagos.jpg' },
+      { title: 'The Ember Queen', image: '/images/poster_ember_queen.webp' },
+      { title: 'Neo Lagos 2099', image: '/images/poster_neo_lagos.webp' },
       { title: 'King of Boys', image: '/images/posters/poster_01.jpg' },
       { title: 'Shanty Town', image: '/images/posters/poster_02.jpg' },
     ],
@@ -437,14 +437,14 @@ const GALLERY_MOSAIC_ITEMS: GalleryItem[] = [
     id: 'g2',
     title: 'Neo Lagos 2099',
     subtitle: 'Cyberpunk Nollywood',
-    image: '/images/poster_neo_lagos.jpg',
+    image: '/images/poster_neo_lagos.webp',
     badge: 'TRENDING',
   },
   {
     id: 'g3',
     title: 'The Monolith',
     subtitle: 'Art & Culture',
-    image: '/images/brand_hero.jpg',
+    image: '/images/brand_hero.webp',
     badge: 'EXCLUSIVE',
   },
   {
@@ -472,7 +472,7 @@ const GALLERY_MOSAIC_ITEMS: GalleryItem[] = [
     id: 'g7',
     title: 'The Ember Queen',
     subtitle: 'Historical Epic',
-    image: '/images/poster_ember_queen.jpg',
+    image: '/images/poster_ember_queen.webp',
     badge: 'ORIGINAL',
   },
   {
@@ -584,16 +584,12 @@ export default function GuestHomepage(): React.JSX.Element {
   };
 
   return (
-    <div
-      className="min-h-screen overflow-x-hidden"
-      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
-    >
+    <div className="min-h-screen overflow-x-hidden bg-az-surface-root text-az-ink">
       {/* ── Offline Banner ── */}
       {!isOnline && (
         <motion.div
           role="alert"
-          className="text-center py-2 px-4 text-sm font-medium sticky top-0 z-50"
-          style={{ background: 'var(--hp-offline-bg)', color: 'var(--hp-offline-text)' }}
+          className="text-center py-2 px-4 text-sm font-medium sticky top-0 z-50 bg-az-warning-400 text-az-surface-root"
           initial={{ y: -40 }}
           animate={{ y: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
@@ -606,7 +602,7 @@ export default function GuestHomepage(): React.JSX.Element {
       <AnimatePresence>
         {showInstallPrompt && !isInstalled && (
           <motion.div
-            className="az-glass fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 p-4 z-50 rounded-2xl"
+            className="az-glass fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 p-4 z-50"
             role="dialog"
             aria-modal="true"
             aria-label={`Install ${siteName}`}
@@ -617,8 +613,8 @@ export default function GuestHomepage(): React.JSX.Element {
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-semibold text-white">Install {siteName}</p>
-                <p className="text-sm truncate text-white/60">
+                <p className="az-body-strong text-az-ink">Install {siteName}</p>
+                <p className="az-caption truncate text-az-ink-muted">
                   Stream your universe with offline mode
                 </p>
               </div>
@@ -626,14 +622,14 @@ export default function GuestHomepage(): React.JSX.Element {
                 <button
                   type="button"
                   onClick={() => setShowInstallPrompt(false)}
-                  className="px-3 py-1.5 rounded-full text-xs text-white/60 hover:text-white transition-colors"
+                  className="px-3 py-1.5 rounded-az-pill az-caption text-az-ink-muted hover:text-az-ink transition-colors"
                 >
                   Later
                 </button>
                 <button
                   type="button"
                   onClick={handleInstall}
-                  className="az-btn-primary px-4 py-1.5 rounded-full text-xs font-semibold"
+                  className="az-btn-primary az-btn-primary--inline az-btn-primary--sm"
                 >
                   Install
                 </button>
@@ -653,12 +649,12 @@ export default function GuestHomepage(): React.JSX.Element {
         className="relative w-full overflow-hidden pt-12 sm:pt-20 pb-16"
         style={{
           background:
-            'radial-gradient(ellipse at 50% 20%, rgba(243, 80, 26, 0.15) 0%, rgba(11, 9, 14, 0.98) 75%)',
+            'radial-gradient(ellipse at 50% 20%, color-mix(in srgb, var(--color-az-flame) 15%, transparent) 0%, color-mix(in srgb, var(--color-az-surface-root) 98%, transparent) 75%)',
         }}
         aria-label="Hero: One Platform. Endless Universes."
       >
         <AmbientGlow
-          color="rgba(232, 66, 10, 0.22)"
+          color="color-mix(in srgb, var(--color-az-scarlet) 22%, transparent)"
           size={650}
           className="-top-32 left-1/2 -translate-x-1/2"
         />
@@ -668,38 +664,22 @@ export default function GuestHomepage(): React.JSX.Element {
           style={{ y: heroY }}
         >
           {/* Centered Main Headline */}
-          <h1
-            className="az-headline font-extrabold tracking-tight"
-            style={{
-              color: 'var(--brand-white)',
-              fontSize: 'clamp(2.25rem, 5.5vw, 4.25rem)',
-              lineHeight: 1.12,
-            }}
-          >
+          <h1 className="az-headline text-az-ink text-4xl sm:text-5xl lg:az-hero">
             One Platform. Endless Universes.
           </h1>
 
           {/* Subtitle */}
-          <p
-            className="max-w-2xl text-sm sm:text-base leading-relaxed"
-            style={{ color: 'rgba(255, 255, 255, 0.65)' }}
-          >
+          <p className="az-body sm:az-lead max-w-2xl text-az-ink-muted">
             Stream Nollywood, reality shows, live events and creator content all in one place.
             Discover stories that inspire, entertain, and connect.
           </p>
 
-          {/* Start Watching Pill Button */}
+          {/* Start Watching CTA */}
           <div className="pt-2">
             <Link href="/auth/register" tabIndex={-1}>
               <motion.button
                 type="button"
-                className="az-btn-primary az-ripple flex items-center gap-2"
-                style={{
-                  paddingInline: '2.5rem',
-                  paddingBlock: '0.85rem',
-                  fontSize: '0.95rem',
-                  borderRadius: '9999px',
-                }}
+                className="az-btn-primary az-btn-primary--inline az-ripple flex items-center gap-2"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
                 aria-label="Start Watching"
@@ -713,22 +693,14 @@ export default function GuestHomepage(): React.JSX.Element {
           {/* 8x3 Poster Wall Grid (24 Real Images) — scaled sleekly */}
           <div className="w-full max-w-5xl mx-auto mt-6 relative">
             <div
-              className="grid gap-1.5 sm:gap-2"
-              style={{
-                gridTemplateColumns: 'repeat(8, minmax(0, 1fr))',
-              }}
+              className="grid grid-cols-8 gap-1.5 sm:gap-2"
               role="img"
               aria-label="Grid of 24 trending movies, shows and universes"
             >
               {HERO_POSTERS_24.map((poster) => (
                 <div
                   key={poster.id}
-                  className="relative rounded-lg overflow-hidden group transition-transform duration-300 hover:scale-105 hover:z-20 cursor-pointer"
-                  style={{
-                    aspectRatio: '2 / 3',
-                    background: 'var(--hp-card-bg)',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.6)',
-                  }}
+                  className="relative aspect-[2/3] rounded-az-card overflow-hidden group transition-transform duration-300 hover:scale-105 hover:z-20 cursor-pointer bg-az-surface-panel shadow-az-lifted"
                   title={poster.title}
                 >
                   <Image
@@ -741,10 +713,7 @@ export default function GuestHomepage(): React.JSX.Element {
 
                   {/* Top rating badge */}
                   <div className="absolute top-1.5 right-1.5 z-10">
-                    <span
-                      className="text-[9px] font-bold px-1.5 py-0.5 rounded inline-flex items-center gap-1"
-                      style={{ background: 'rgba(0, 0, 0, 0.75)', color: '#fbbf24' }}
-                    >
+                    <span className="inline-flex items-center gap-1 rounded-az-chip bg-black/75 px-1.5 py-0.5 text-[9px] font-bold text-az-warning-400">
                       <svg
                         className="w-2.5 h-2.5 fill-current"
                         viewBox="0 0 24 24"
@@ -757,16 +726,11 @@ export default function GuestHomepage(): React.JSX.Element {
                   </div>
 
                   {/* Subtle bottom info bar */}
-                  <div
-                    className="absolute inset-x-0 bottom-0 p-1.5 z-10 flex flex-col justify-end"
-                    style={{
-                      background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 80%)',
-                    }}
-                  >
-                    <p className="text-[10px] font-bold text-white leading-tight truncate">
+                  <div className="az-scrim absolute inset-x-0 bottom-0 z-10 flex flex-col justify-end p-1.5">
+                    <p className="text-[10px] truncate font-bold leading-tight text-az-ink">
                       {poster.title}
                     </p>
-                    <p className="text-[8px] text-white/60 leading-none truncate mt-0.5">
+                    <p className="truncate text-[8px] leading-none mt-0.5 text-az-ink-muted">
                       {poster.genre}
                     </p>
                   </div>
@@ -776,11 +740,7 @@ export default function GuestHomepage(): React.JSX.Element {
 
             {/* Seamless gradient fade out into the next section */}
             <div
-              className="absolute inset-x-0 bottom-0 pointer-events-none"
-              style={{
-                height: '160px',
-                background: 'linear-gradient(to bottom, rgba(11, 9, 14, 0) 0%, var(--hp-bg) 100%)',
-              }}
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-az-surface-root"
               aria-hidden="true"
             />
           </div>
@@ -798,27 +758,13 @@ export default function GuestHomepage(): React.JSX.Element {
           {/* Top 2-column header */}
           <div className="flex flex-col lg:flex-row items-start justify-between gap-6 lg:gap-16 mb-12">
             <div className="lg:w-7/12">
-              <span
-                className="text-xs font-bold uppercase tracking-widest block mb-3"
-                style={{ color: 'var(--brand-orange)' }}
-              >
-                DEVICE STREAMING
-              </span>
-              <h2
-                className="az-headline font-extrabold uppercase leading-tight"
-                style={{
-                  color: 'var(--brand-white)',
-                  fontSize: 'clamp(1.75rem, 3.8vw, 2.75rem)',
-                }}
-              >
+              <span className="az-overline mb-3 block text-az-flame">DEVICE STREAMING</span>
+              <h2 className="az-headline uppercase text-az-ink text-3xl sm:text-4xl lg:az-display">
                 WE PROVIDE YOU STREAMING EXPERIENCE ACROSS VARIOUS DEVICES.
               </h2>
             </div>
             <div className="lg:w-5/12 pt-2">
-              <p
-                className="text-sm sm:text-base leading-relaxed"
-                style={{ color: 'var(--text-secondary)' }}
-              >
+              <p className="az-body sm:az-lead text-az-ink-muted">
                 With Azeebo+, you can enjoy your favorite shows, movies, and live events seamlessly
                 across all your devices. Whether on your phone, tablet, smart TV, or desktop,
                 we&apos;ve got you covered with synchronized progress.
@@ -831,33 +777,22 @@ export default function GuestHomepage(): React.JSX.Element {
             {DEVICE_FEATURES.map((feat, i) => (
               <motion.div
                 key={feat.title}
-                className="p-6 rounded-2xl flex flex-col justify-between transition-all duration-200"
-                style={{
-                  background: 'var(--hp-devices-card-bg)',
-                  border: '1px solid var(--hp-devices-card-border)',
-                }}
+                className="az-glass flex flex-col justify-between p-6"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08, duration: 0.4 }}
-                whileHover={{ translateY: -3, borderColor: 'rgba(243, 80, 26, 0.3)' }}
+                whileHover={{ translateY: -3 }}
               >
                 <div>
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-[var(--brand-orange)]"
-                    style={{
-                      background:
-                        'linear-gradient(135deg, rgba(229, 37, 28, 0.15) 0%, rgba(255, 107, 0, 0.15) 100%)',
-                      border: '1px solid rgba(243, 80, 26, 0.35)',
-                    }}
+                    className="mb-4 flex h-12 w-12 items-center justify-center rounded-az-control border border-az-scarlet/25 bg-az-scarlet/15 text-az-flame"
                     aria-hidden="true"
                   >
                     <DeviceFlatIcon type={feat.iconType} className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">{feat.title}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                    {feat.desc}
-                  </p>
+                  <h3 className="az-title mb-2 text-az-ink">{feat.title}</h3>
+                  <p className="az-body text-az-ink-muted">{feat.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -874,74 +809,41 @@ export default function GuestHomepage(): React.JSX.Element {
       >
         <ScrollReveal direction="up">
           <div className="text-center mb-14">
-            <span
-              className="text-xs font-bold uppercase tracking-widest block mb-2"
-              style={{ color: 'var(--brand-orange)' }}
-            >
-              EXPERIENCE THE PLATFORM
-            </span>
-            <h2
-              className="az-headline font-extrabold uppercase"
-              style={{
-                color: 'var(--brand-white)',
-                fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)',
-              }}
-            >
+            <span className="az-overline mb-2 block text-az-flame">EXPERIENCE THE PLATFORM</span>
+            <h2 className="az-headline uppercase text-az-ink text-3xl sm:text-4xl lg:az-display">
               WHY AZEEBO+
             </h2>
           </div>
 
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
-            {/* Left: The Orange Container with inset dark macOS app window */}
+            {/* Left: The brand-gradient container with inset dark macOS app window */}
             <div className="w-full lg:w-1/2 flex justify-center">
-              <div
-                className="relative rounded-3xl p-5 sm:p-7 w-full max-w-lg"
-                style={{
-                  background: 'var(--hp-logo-gradient)',
-                  boxShadow: '0 20px 60px rgba(229, 37, 28, 0.35)',
-                }}
-              >
+              <div className="relative w-full max-w-lg rounded-az-feature bg-gradient-to-br from-az-scarlet to-az-flame p-5 shadow-az-glow sm:p-7">
                 {/* Inset dark app window */}
-                <div
-                  className="rounded-2xl p-4 sm:p-6"
-                  style={{
-                    background: 'var(--hp-appwindow-bg)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
-                >
+                <div className="rounded-az-panel border border-az-ink/10 bg-az-surface-root p-4 sm:p-6">
                   {/* Window control dots */}
                   <div className="flex items-center gap-2 mb-6" aria-hidden="true">
-                    <span className="w-3 h-3 rounded-full" style={{ background: '#EF4444' }} />
-                    <span className="w-3 h-3 rounded-full" style={{ background: '#F59E0B' }} />
-                    <span className="w-3 h-3 rounded-full" style={{ background: '#10B981' }} />
+                    <span className="h-3 w-3 rounded-full bg-az-error-500" />
+                    <span className="h-3 w-3 rounded-full bg-az-warning-500" />
+                    <span className="h-3 w-3 rounded-full bg-az-success-500" />
                   </div>
 
                   {/* Simulated App Content Rows */}
                   <div className="space-y-4">
-                    <div
-                      className="h-4 w-3/4 rounded-md"
-                      style={{ background: 'rgba(255, 255, 255, 0.12)' }}
-                    />
-                    <div
-                      className="h-3 w-1/2 rounded-md"
-                      style={{ background: 'rgba(255, 255, 255, 0.08)' }}
-                    />
+                    <div className="h-4 w-3/4 rounded-az-card bg-az-ink/10" />
+                    <div className="h-3 w-1/2 rounded-az-card bg-az-ink/5" />
 
                     {/* Active highlighted action bar with hover cursor */}
                     <div className="relative pt-2">
-                      <div
-                        className="h-9 w-full rounded-lg flex items-center px-4"
-                        style={{ background: 'var(--hp-actionbar-bg)' }}
-                      >
-                        <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      <div className="flex h-9 w-full items-center rounded-az-card bg-az-flame px-4">
+                        <span className="az-overline text-az-ink">
                           CONTINUE WATCHING &bull; EPISODE 4
                         </span>
                       </div>
 
                       {/* Animated White Cursor Pointer */}
                       <motion.div
-                        className="absolute -right-3 top-5 text-white drop-shadow-lg"
-                        style={{ fontSize: 24 }}
+                        className="absolute -right-3 top-5 text-2xl text-az-ink drop-shadow-lg"
                         animate={{ x: [0, -6, 0], y: [0, 4, 0] }}
                         transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
                         aria-hidden="true"
@@ -950,14 +852,8 @@ export default function GuestHomepage(): React.JSX.Element {
                       </motion.div>
                     </div>
 
-                    <div
-                      className="h-3 w-5/6 rounded-md"
-                      style={{ background: 'rgba(255, 255, 255, 0.08)' }}
-                    />
-                    <div
-                      className="h-3 w-2/3 rounded-md"
-                      style={{ background: 'rgba(255, 255, 255, 0.06)' }}
-                    />
+                    <div className="h-3 w-5/6 rounded-az-card bg-az-ink/5" />
+                    <div className="h-3 w-2/3 rounded-az-card bg-az-ink/5" />
                   </div>
                 </div>
               </div>
@@ -980,13 +876,8 @@ export default function GuestHomepage(): React.JSX.Element {
                 },
               ].map((item) => (
                 <div key={item.title} className="flex flex-col gap-1.5">
-                  <h3 className="text-xl font-bold text-white">{item.title}</h3>
-                  <p
-                    className="text-sm sm:text-base leading-relaxed"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    {item.desc}
-                  </p>
+                  <h3 className="az-title text-az-ink">{item.title}</h3>
+                  <p className="az-body sm:az-lead text-az-ink-muted">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -1005,26 +896,15 @@ export default function GuestHomepage(): React.JSX.Element {
           {/* Header with BROWSE ALL button */}
           <div className="flex items-center justify-between flex-wrap gap-4 mb-10">
             <div>
-              <span
-                className="text-xs font-bold uppercase tracking-widest block mb-2"
-                style={{ color: 'var(--brand-orange)' }}
-              >
-                CATEGORIES
-              </span>
-              <h2
-                className="az-headline font-extrabold uppercase"
-                style={{
-                  color: 'var(--brand-white)',
-                  fontSize: 'clamp(1.5rem, 3.2vw, 2.5rem)',
-                }}
-              >
+              <span className="az-overline mb-2 block text-az-flame">CATEGORIES</span>
+              <h2 className="az-headline uppercase text-az-ink text-2xl sm:text-3xl lg:text-4xl">
                 EXPLORE OUR WIDE VARIETY OF CATEGORIES
               </h2>
             </div>
             <Link href="/browse">
               <motion.button
                 type="button"
-                className="az-btn-primary flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider"
+                className="az-btn-primary az-btn-primary--inline flex items-center gap-2 uppercase tracking-wider"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.96 }}
               >
@@ -1039,27 +919,19 @@ export default function GuestHomepage(): React.JSX.Element {
             {UNIVERSE_CATEGORIES.map((cat, i) => (
               <Link key={cat.name} href={cat.slug} className="group">
                 <motion.div
-                  className="rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-300"
-                  style={{
-                    background: 'var(--hp-card-bg)',
-                    border: '1px solid var(--hp-card-border)',
-                  }}
+                  className="az-glass flex flex-col justify-between p-3.5"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08, duration: 0.4 }}
-                  whileHover={{ translateY: -4, borderColor: 'rgba(255, 107, 0, 0.4)' }}
+                  whileHover={{ translateY: -4 }}
                 >
                   {/* 2x2 Mini Poster Quad with Real Images */}
-                  <div className="grid grid-cols-2 gap-2 mb-4 rounded-xl overflow-hidden">
+                  <div className="mb-4 grid grid-cols-2 gap-2 overflow-hidden rounded-az-panel">
                     {cat.miniPosters.map((mini, idx) => (
                       <div
                         key={idx}
-                        className="relative rounded-lg overflow-hidden flex items-center justify-center text-center p-1"
-                        style={{
-                          aspectRatio: '3 / 4',
-                          background: 'var(--hp-poster-bg)',
-                        }}
+                        className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-az-card bg-az-surface-panel p-1"
                       >
                         <Image
                           src={mini.image}
@@ -1068,14 +940,8 @@ export default function GuestHomepage(): React.JSX.Element {
                           className="object-cover"
                           sizes="120px"
                         />
-                        <div
-                          className="absolute inset-x-0 bottom-0 py-0.5 px-1 z-10"
-                          style={{
-                            background:
-                              'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%)',
-                          }}
-                        >
-                          <p className="text-[8px] font-bold text-white truncate drop-shadow">
+                        <div className="az-scrim absolute inset-x-0 bottom-0 z-10 px-1 py-0.5">
+                          <p className="truncate text-[8px] font-bold text-az-ink drop-shadow">
                             {mini.title}
                           </p>
                         </div>
@@ -1085,11 +951,11 @@ export default function GuestHomepage(): React.JSX.Element {
 
                   {/* Bottom bar: Title + Arrow */}
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-sm font-bold text-white group-hover:text-[var(--brand-orange)] transition-colors">
+                    <span className="az-body-strong text-az-ink transition-colors group-hover:text-az-flame">
                       {cat.name}
                     </span>
                     <span
-                      className="text-sm text-white/50 group-hover:text-white transition-colors"
+                      className="az-body text-az-ink-muted transition-colors group-hover:text-az-ink"
                       aria-hidden="true"
                     >
                       &rarr;
@@ -1110,24 +976,24 @@ export default function GuestHomepage(): React.JSX.Element {
         aria-label="Trending gallery showcase"
       >
         <AmbientGlow
-          color="rgba(243, 80, 26, 0.18)"
+          color="color-mix(in srgb, var(--color-az-flame) 18%, transparent)"
           size={700}
           className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
         />
 
         {/* Continuous Marquee Ticker */}
-        <div className="w-full overflow-hidden py-3 border-y border-white/5 bg-black/40 mb-12">
-          <div className="az-marquee text-xs sm:text-sm font-bold uppercase tracking-widest text-white/70">
+        <div className="w-full overflow-hidden py-3 border-y border-az-ink/5 bg-black/40 mb-12">
+          <div className="az-marquee az-overline text-az-ink-muted">
             {[...Array(4)].map((_, i) => (
               <span key={i} className="inline-flex items-center gap-6 mr-6">
                 <span>POPULAR MOVIES</span>
-                <span className="text-[var(--brand-orange)]">&bull;</span>
+                <span className="text-az-flame">&bull;</span>
                 <span>TOP SHOWS THIS WEEK</span>
-                <span className="text-[var(--brand-orange)]">&bull;</span>
+                <span className="text-az-flame">&bull;</span>
                 <span>TRENDING NOW</span>
-                <span className="text-[var(--brand-orange)]">&bull;</span>
+                <span className="text-az-flame">&bull;</span>
                 <span>EXCLUSIVE ORIGINALS</span>
-                <span className="text-[var(--brand-orange)]">&bull;</span>
+                <span className="text-az-flame">&bull;</span>
               </span>
             ))}
           </div>
@@ -1139,12 +1005,9 @@ export default function GuestHomepage(): React.JSX.Element {
             {GALLERY_MOSAIC_ITEMS.map((item, idx) => (
               <motion.div
                 key={item.id}
-                className="relative rounded-2xl overflow-hidden group cursor-pointer"
-                style={{
-                  aspectRatio: idx % 2 === 0 ? '4 / 5' : '5 / 6',
-                  background: 'var(--hp-card-bg)',
-                  marginTop: idx % 2 === 1 ? '1.25rem' : '0',
-                }}
+                className={`group relative cursor-pointer overflow-hidden rounded-az-panel bg-az-surface-panel ${
+                  idx % 2 === 0 ? 'aspect-[4/5]' : 'mt-5 aspect-[5/6]'
+                }`}
                 whileHover={{ scale: 1.03, zIndex: 10 }}
                 transition={{ duration: 0.25 }}
               >
@@ -1158,15 +1021,15 @@ export default function GuestHomepage(): React.JSX.Element {
 
                 {/* Badge */}
                 <div className="absolute top-3 left-3 z-10">
-                  <span className="text-[10px] font-bold px-2 py-1 rounded bg-black/60 text-white backdrop-blur-sm">
+                  <span className="rounded-az-chip bg-black/60 px-2 py-1 text-[10px] font-bold text-az-ink backdrop-blur-sm">
                     {item.badge}
                   </span>
                 </div>
 
                 {/* Bottom Overlay */}
-                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-10">
-                  <p className="text-sm font-bold text-white">{item.title}</p>
-                  <p className="text-xs text-white/60">{item.subtitle}</p>
+                <div className="az-scrim--hero absolute inset-x-0 bottom-0 z-10 p-4">
+                  <p className="az-body-strong text-az-ink">{item.title}</p>
+                  <p className="az-caption text-az-ink-muted">{item.subtitle}</p>
                 </div>
               </motion.div>
             ))}
@@ -1183,19 +1046,8 @@ export default function GuestHomepage(): React.JSX.Element {
       >
         <ScrollReveal direction="up">
           <div className="text-center mb-14">
-            <span
-              className="text-xs font-bold uppercase tracking-widest block mb-2"
-              style={{ color: 'var(--brand-orange)' }}
-            >
-              GET ANSWERS
-            </span>
-            <h2
-              className="az-headline font-extrabold uppercase"
-              style={{
-                color: 'var(--brand-white)',
-                fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)',
-              }}
-            >
+            <span className="az-overline mb-2 block text-az-flame">GET ANSWERS</span>
+            <h2 className="az-headline uppercase text-az-ink text-3xl sm:text-4xl lg:az-display">
               FREQUENTLY ASKED QUESTIONS
             </h2>
           </div>
@@ -1207,25 +1059,23 @@ export default function GuestHomepage(): React.JSX.Element {
               return (
                 <div
                   key={item.id}
-                  className="rounded-2xl overflow-hidden transition-all duration-200"
-                  style={{
-                    background: 'var(--hp-faq-item-bg)',
-                    border: '1px solid var(--hp-faq-item-border)',
-                  }}
+                  className="overflow-hidden rounded-az-panel border border-az-glass-border bg-az-glass-fill"
                 >
                   <button
                     type="button"
                     onClick={() => setOpenFaq(isOpen ? '' : item.id)}
-                    className="w-full flex items-center justify-between p-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]"
+                    className="w-full flex items-center justify-between p-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-az-scarlet"
                     aria-expanded={isOpen}
                   >
                     <div className="flex items-center gap-4">
-                      <span className="text-xs font-bold font-mono text-white/50">{item.num}</span>
-                      <span className="font-semibold text-sm sm:text-base text-white">
+                      <span className="font-mono text-xs font-bold text-az-ink-muted">
+                        {item.num}
+                      </span>
+                      <span className="az-body-strong text-az-ink sm:text-base">
                         {item.question}
                       </span>
                     </div>
-                    <span className="text-xl text-white/60 font-light" aria-hidden="true">
+                    <span className="text-xl font-light text-az-ink-muted" aria-hidden="true">
                       {isOpen ? '−' : '+'}
                     </span>
                   </button>
@@ -1239,7 +1089,7 @@ export default function GuestHomepage(): React.JSX.Element {
                         transition={{ duration: 0.22, ease: 'easeOut' }}
                         className="overflow-hidden"
                       >
-                        <p className="px-5 pb-5 pt-1 text-sm leading-relaxed text-white/70 pl-11">
+                        <p className="az-body px-5 pb-5 pt-1 pl-11 text-az-ink-muted">
                           {item.answer}
                         </p>
                       </motion.div>
@@ -1263,66 +1113,48 @@ export default function GuestHomepage(): React.JSX.Element {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
             {/* Left Column: Heading & Download Buttons */}
             <div className="w-full lg:w-1/2 text-left">
-              <span
-                className="text-xs font-bold uppercase tracking-widest block mb-3"
-                style={{ color: 'var(--brand-orange)' }}
-              >
+              <span className="az-overline mb-3 block text-az-flame">
                 AVAILABLE ON ALL PLATFORMS
               </span>
-              <h2
-                className="az-headline font-extrabold leading-tight mb-5"
-                style={{
-                  color: 'var(--brand-white)',
-                  fontSize: 'clamp(2rem, 4.5vw, 3.5rem)',
-                }}
-              >
+              <h2 className="az-headline mb-5 text-az-ink text-4xl sm:text-5xl lg:text-6xl">
                 Ready to Enter Your Universe?
               </h2>
-              <p className="text-sm sm:text-base leading-relaxed mb-8 text-white/70 max-w-lg">
+              <p className="az-body sm:az-lead mb-8 max-w-lg text-az-ink-muted">
                 Download the Azeebo+ app now and start your 7-day free trial today. Stream
                 seamlessly, vote in reality shows, and earn rewards anywhere.
               </p>
 
               <div className="flex flex-wrap items-center gap-4">
-                <a
-                  href="#download"
-                  className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 transition-colors group"
-                >
+                <a href="#download" className="az-btn-social group text-left">
                   <svg
-                    className="w-6 h-6 fill-current text-white group-hover:text-[var(--brand-orange)] transition-colors"
+                    className="h-6 w-6 fill-current text-az-ink transition-colors group-hover:text-az-flame"
                     viewBox="0 0 24 24"
                     aria-hidden="true"
                   >
                     <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.09 1.73-.95 2.76.99.08 2.02-.51 2.68-1.26z" />
                   </svg>
                   <div className="text-left leading-tight">
-                    <p className="text-[10px] text-white/60">Download on the</p>
-                    <p className="text-sm font-bold text-white">App Store</p>
+                    <p className="text-[10px] text-az-ink-muted">Download on the</p>
+                    <p className="az-body-strong text-az-ink">App Store</p>
                   </div>
                 </a>
 
-                <a
-                  href="#download"
-                  className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 transition-colors group"
-                >
+                <a href="#download" className="az-btn-social group text-left">
                   <svg
-                    className="w-6 h-6 fill-current text-white group-hover:text-[var(--brand-orange)] transition-colors"
+                    className="h-6 w-6 fill-current text-az-ink transition-colors group-hover:text-az-flame"
                     viewBox="0 0 24 24"
                     aria-hidden="true"
                   >
                     <path d="M3.609 1.814L13.792 12 3.61 22.186a2.38 2.38 0 0 1-.61-.714V2.528c.17-.282.38-.528.61-.714zm11.24 11.24l2.128 2.129-12.016 6.94 9.888-9.069zm0-2.108L4.96 1.878l12.016 6.94-2.127 2.128zm1.094 1.054l3.197 1.848a1.59 1.59 0 0 1 0 2.296l-3.197 1.848-1.414-1.414 1.414-4.578z" />
                   </svg>
                   <div className="text-left leading-tight">
-                    <p className="text-[10px] text-white/60">GET IT ON</p>
-                    <p className="text-sm font-bold text-white">Google Play</p>
+                    <p className="text-[10px] uppercase text-az-ink-muted">GET IT ON</p>
+                    <p className="az-body-strong text-az-ink">Google Play</p>
                   </div>
                 </a>
 
                 <Link href="/auth/register">
-                  <button
-                    type="button"
-                    className="az-btn-primary px-6 py-3.5 rounded-xl text-sm font-semibold"
-                  >
+                  <button type="button" className="az-btn-primary az-btn-primary--inline">
                     Start on Web
                   </button>
                 </Link>
@@ -1331,7 +1163,7 @@ export default function GuestHomepage(): React.JSX.Element {
 
             {/* Right Column: High-Res Smartphone held in hand */}
             <div className="w-full lg:w-1/2 flex justify-center">
-              <div className="relative w-full max-w-sm aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
+              <div className="relative aspect-[4/5] w-full max-w-sm overflow-hidden rounded-az-feature shadow-az-lifted">
                 <Image
                   src="/images/hand_phone_mockup.jpg"
                   alt="Azeebo+ mobile application running on a modern smartphone held in hand"
@@ -1342,9 +1174,10 @@ export default function GuestHomepage(): React.JSX.Element {
                 />
                 {/* Natural dark vignette fade on edges */}
                 <div
-                  className="absolute inset-0 pointer-events-none"
+                  className="pointer-events-none absolute inset-0"
                   style={{
-                    boxShadow: 'inset 0 0 60px rgba(8, 6, 10, 0.85)',
+                    boxShadow:
+                      'inset 0 0 60px color-mix(in srgb, var(--color-az-surface-root) 85%, transparent)',
                   }}
                   aria-hidden="true"
                 />
@@ -1362,34 +1195,22 @@ export default function GuestHomepage(): React.JSX.Element {
         aria-label="Loved & trusted testimonials"
       >
         <ScrollReveal direction="up">
-          <h2
-            className="az-headline font-extrabold mb-12"
-            style={{
-              color: 'var(--brand-white)',
-              fontSize: 'clamp(2.5rem, 5.5vw, 4.5rem)',
-            }}
-          >
+          <h2 className="az-headline mb-12 text-az-ink text-5xl sm:text-6xl lg:text-7xl">
             Loved &amp; trusted
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             {/* Review 1 */}
-            <div
-              className="p-8 rounded-3xl flex flex-col justify-between"
-              style={{
-                background: 'var(--hp-testi-card-bg)',
-                border: '1px solid var(--hp-testi-card-border)',
-              }}
-            >
-              <p className="text-base sm:text-lg leading-relaxed text-white/85 mb-8">
+            <div className="az-glass flex flex-col justify-between p-8">
+              <p className="az-lead mb-8 text-az-ink-dim sm:text-lg">
                 &ldquo;The variety of African stories combined with international blockbusters makes
                 Azeebo+ unmatched. The streaming quality is butter-smooth even on mobile
                 data.&rdquo;
               </p>
 
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="relative w-11 h-11 rounded-full overflow-hidden flex-shrink-0">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-full">
                     <Image
                       src="/images/placeholders/avatars/100x100_01.png"
                       alt="David O."
@@ -1398,33 +1219,25 @@ export default function GuestHomepage(): React.JSX.Element {
                     />
                   </div>
                   <div>
-                    <p className="font-bold text-white text-sm">David O.</p>
-                    <p className="text-xs text-white/50">Product Lead &bull; Lagos</p>
+                    <p className="az-body-strong text-az-ink">David O.</p>
+                    <p className="az-caption text-az-ink-muted">Product Lead &bull; Lagos</p>
                   </div>
                 </div>
-                <div className="text-xs text-white/40 font-semibold tracking-wider uppercase">
-                  Salesforce Verified
-                </div>
+                <div className="az-overline text-az-ink-muted">Salesforce Verified</div>
               </div>
             </div>
 
             {/* Review 2 */}
-            <div
-              className="p-8 rounded-3xl flex flex-col justify-between"
-              style={{
-                background: 'var(--hp-testi-card-bg)',
-                border: '1px solid var(--hp-testi-card-border)',
-              }}
-            >
-              <p className="text-base sm:text-lg leading-relaxed text-white/85 mb-8">
+            <div className="az-glass flex flex-col justify-between p-8">
+              <p className="az-lead mb-8 text-az-ink-dim sm:text-lg">
                 &ldquo;Azeebo+ has completely replaced other streaming services for our family. The
                 reality voting and live events are unlike anything else we&apos;ve
                 experienced.&rdquo;
               </p>
 
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="relative w-11 h-11 rounded-full overflow-hidden flex-shrink-0">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-full">
                     <Image
                       src="/images/placeholders/avatars/100x100_02.png"
                       alt="Sarah K."
@@ -1433,13 +1246,11 @@ export default function GuestHomepage(): React.JSX.Element {
                     />
                   </div>
                   <div>
-                    <p className="font-bold text-white text-sm">Sarah K.</p>
-                    <p className="text-xs text-white/50">Creative Director &bull; London</p>
+                    <p className="az-body-strong text-az-ink">Sarah K.</p>
+                    <p className="az-caption text-az-ink-muted">Creative Director &bull; London</p>
                   </div>
                 </div>
-                <div className="text-xs text-white/40 font-semibold tracking-wider uppercase">
-                  Early Adopter
-                </div>
+                <div className="az-overline text-az-ink-muted">Early Adopter</div>
               </div>
             </div>
           </div>
@@ -1454,21 +1265,15 @@ export default function GuestHomepage(): React.JSX.Element {
         aria-label="Newsletter Subscription"
       >
         <ScrollReveal direction="up">
-          <div
-            className="relative rounded-3xl p-8 sm:p-14 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8"
-            style={{
-              background: 'var(--hp-cta-bg)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
+          <div className="relative flex flex-col items-center justify-between gap-8 overflow-hidden rounded-az-feature border border-az-glass-border bg-az-surface-raised p-8 md:flex-row sm:p-14">
             {/* Radiant Red/Pink Liquid Glow Aura on the Left */}
             <div
-              className="absolute -left-20 top-1/2 -translate-y-1/2 rounded-full pointer-events-none"
+              className="pointer-events-none absolute -left-20 top-1/2 -translate-y-1/2 rounded-full"
               style={{
                 width: '450px',
                 height: '450px',
                 background:
-                  'radial-gradient(circle, #CC1C1C 0%, #E8420A 40%, rgba(204, 28, 28, 0) 70%)',
+                  'radial-gradient(circle, var(--color-az-scarlet) 0%, var(--color-az-flame) 40%, transparent 70%)',
                 filter: 'blur(70px)',
                 opacity: 0.85,
               }}
@@ -1477,21 +1282,18 @@ export default function GuestHomepage(): React.JSX.Element {
 
             {/* Left Content */}
             <div className="relative z-10 max-w-md">
-              <h2
-                className="az-headline font-extrabold text-white leading-tight mb-3"
-                style={{ fontSize: 'clamp(1.75rem, 3.2vw, 2.5rem)' }}
-              >
+              <h2 className="az-headline mb-3 text-az-ink text-3xl sm:text-4xl">
                 Signup for the newsletter
               </h2>
-              <p className="text-sm text-white/70">
+              <p className="az-body text-az-ink-muted">
                 Stay up to date with new releases, universe updates, and exclusive perks.
               </p>
             </div>
 
             {/* Right Form */}
-            <div className="relative z-10 w-full md:w-auto min-w-[320px]">
+            <div className="relative z-10 w-full min-w-[320px] md:w-auto">
               {emailSubmitted ? (
-                <div className="p-4 rounded-xl bg-green-500/20 border border-green-500/30 text-green-300 text-sm font-medium flex items-center gap-2.5">
+                <div className="az-body-strong flex items-center gap-2.5 rounded-az-panel border border-az-success-500/30 bg-az-success-500/20 p-4 text-az-success-400">
                   <svg
                     className="w-4 h-4 fill-none stroke-current stroke-[2.5]"
                     viewBox="0 0 24 24"
@@ -1503,7 +1305,7 @@ export default function GuestHomepage(): React.JSX.Element {
                 </div>
               ) : (
                 <form onSubmit={handleNewsletter} noValidate className="flex flex-col gap-2">
-                  <div className="relative flex items-center border-b border-white/30 focus-within:border-[var(--brand-orange)] pb-2 transition-colors">
+                  <div className="relative flex items-center">
                     <input
                       type="email"
                       value={emailValue}
@@ -1512,19 +1314,21 @@ export default function GuestHomepage(): React.JSX.Element {
                         setEmailError('');
                       }}
                       placeholder="Enter your email"
-                      className="bg-transparent text-white placeholder-white/40 text-sm w-full outline-none pr-8"
+                      className="az-input az-input--trailing"
                       aria-label="Email address for newsletter"
                       required
                     />
                     <button
                       type="submit"
-                      className="text-white hover:text-[var(--brand-orange)] transition-colors text-lg"
+                      className="absolute right-4 text-lg text-az-ink transition-colors hover:text-az-scarlet"
                       aria-label="Submit newsletter subscription"
                     >
                       &rarr;
                     </button>
                   </div>
-                  {emailError && <span className="text-xs text-red-400 mt-1">{emailError}</span>}
+                  {emailError && (
+                    <span className="az-caption mt-1 text-az-error-400">{emailError}</span>
+                  )}
                 </form>
               )}
             </div>

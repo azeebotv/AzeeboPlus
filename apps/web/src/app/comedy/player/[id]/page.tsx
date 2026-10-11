@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api, ContentItem } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -51,10 +51,8 @@ function ClipPlayerContent(): React.JSX.Element {
   const error = clipQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Comedy" />
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <PageShell activeNav="Comedy" maxWidth="2xl">
+      <div className="py-2">
         {isLoading ? (
           <div className="space-y-4">
             <Skeleton height="500px" borderRadius="0" />
@@ -73,8 +71,7 @@ function ClipPlayerContent(): React.JSX.Element {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative rounded-xl overflow-hidden mb-6"
-              style={{ backgroundColor: 'black', aspectRatio: '16/9' }}
+              className="relative mb-6 aspect-video overflow-hidden rounded-az-card bg-black"
             >
               {clip.mediaUrl || clip.mediaAsset?.originalUrl ? (
                 <video
@@ -92,11 +89,15 @@ function ClipPlayerContent(): React.JSX.Element {
                     className="object-cover opacity-50"
                   />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div
-                      className="w-20 h-20 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: 'rgba(232,66,10,0.9)' }}
-                    >
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="#fff">
+                    <div className="flex size-20 items-center justify-center rounded-full bg-az-scarlet/90">
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="text-az-ink"
+                        aria-hidden="true"
+                      >
                         <polygon points="5,3 19,12 5,21" />
                       </svg>
                     </div>
@@ -111,8 +112,13 @@ function ClipPlayerContent(): React.JSX.Element {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{clip.title}</h1>
-              <div className="flex items-center gap-4 text-sm text-white/50 mb-4">
+              <PageHero
+                eyebrow="Comedy"
+                title={clip.title}
+                accentColor="var(--color-az-universe-comedy)"
+                className="mb-2"
+              />
+              <div className="az-caption flex items-center gap-4 text-az-ink-muted">
                 {clip.views != null && <span>{clip.views.toLocaleString()} views</span>}
                 {clip.duration && (
                   <span>
@@ -121,14 +127,14 @@ function ClipPlayerContent(): React.JSX.Element {
                   </span>
                 )}
               </div>
-              <p className="text-white/60 leading-relaxed">{clip.description}</p>
+              <p className="az-body mt-4 leading-relaxed text-az-ink-muted">{clip.description}</p>
             </motion.div>
 
             {/* Related Clips */}
             {related.length > 0 && (
               <div className="mt-10">
                 <ScrollReveal>
-                  <h2 className="text-xl font-bold text-white mb-5">More Comedy Clips</h2>
+                  <h2 className="az-title mb-5 text-az-ink">More Comedy Clips</h2>
                 </ScrollReveal>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {related.map((item) => (
@@ -142,23 +148,25 @@ function ClipPlayerContent(): React.JSX.Element {
                             height={120}
                             className="w-full h-32 object-cover group-hover:scale-105 transition-transform"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
+                          <div className="absolute inset-0 az-scrim" />
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div
-                              className="w-10 h-10 rounded-full flex items-center justify-center"
-                              style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="#E8420A">
+                            <div className="flex size-10 items-center justify-center rounded-full bg-az-ink/90">
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                className="text-az-flame"
+                                aria-hidden="true"
+                              >
                                 <polygon points="5,3 19,12 5,21" />
                               </svg>
                             </div>
                           </div>
                         </div>
                         <div className="p-3">
-                          <h3 className="font-semibold text-white text-sm truncate">
-                            {item.title}
-                          </h3>
-                          <p className="text-xs text-white/40 mt-1">
+                          <h3 className="az-body-strong truncate text-az-ink">{item.title}</h3>
+                          <p className="az-caption mt-1 text-az-ink-dim">
                             {item.views != null && `${item.views.toLocaleString()} views`}
                           </p>
                         </div>
@@ -171,9 +179,7 @@ function ClipPlayerContent(): React.JSX.Element {
           </>
         ) : null}
       </div>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -183,8 +189,8 @@ export default function ClipPlayerPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

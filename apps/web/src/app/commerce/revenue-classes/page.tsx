@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
-import { Skeleton } from '@azeebo/ui/web';
+import { messageOf, requireArray } from '@/lib/payload';
+import { PageShell } from '@/components/layout/PageShell';
+import { ErrorState, Skeleton } from '@azeebo/ui/web';
 import { DollarSign, TrendingUp, BarChart3, PieChart, ArrowRight } from 'lucide-react';
 
 interface RevenueClass {
@@ -20,29 +20,78 @@ interface RevenueClass {
   collection: 'collected' | 'pending' | 'overdue';
 }
 
-const RECOGNITION_COLORS: Record<string, string> = {
-  immediate: 'var(--brand-emerald)',
-  deferred: 'var(--brand-amber)',
-  recognised: 'var(--brand-blue)',
+/* Dashboard hues ride the semantic ramp. A tone is a pair of token CLASSES —
+   the tint is `bg-az-<token>/<NN>` (Tailwind emits the color-mix for us), never
+   a hex string with an alpha suffix concatenated onto it. */
+type Tone = 'info' | 'success' | 'warning' | 'error' | 'premium';
+
+const TONES: Record<Tone, { tint: string; text: string }> = {
+  info: { tint: 'bg-az-secondary-500/15', text: 'text-az-secondary-500' },
+  success: { tint: 'bg-az-success-500/15', text: 'text-az-success-500' },
+  warning: { tint: 'bg-az-warning-500/15', text: 'text-az-warning-500' },
+  error: { tint: 'bg-az-error-500/15', text: 'text-az-error-500' },
+  premium: { tint: 'bg-[var(--brand-purple)]/15', text: 'text-[var(--brand-purple)]' },
 };
 
-const COLLECTION_COLORS: Record<string, string> = {
-  collected: 'var(--brand-emerald)',
-  pending: 'var(--brand-amber)',
-  overdue: 'var(--brand-red)',
+const RECOGNITION_TONES: Record<RevenueClass['recognition'], Tone> = {
+  immediate: 'success',
+  deferred: 'warning',
+  recognised: 'info',
 };
+
+const COLLECTION_TONES: Record<RevenueClass['collection'], Tone> = {
+  collected: 'success',
+  pending: 'warning',
+  overdue: 'error',
+};
+
+const REVENUE_FLOW: Array<{ label: string; desc: string; tone: Tone }> = [
+  { label: 'GMV', desc: 'Gross Merchandise Value', tone: 'info' },
+  { label: 'Revenue', desc: 'Recognised Revenue', tone: 'success' },
+  { label: 'Collection', desc: 'Cash Received', tone: 'warning' },
+  { label: 'Settlement', desc: 'Net to Creator', tone: 'premium' },
+];
+
+const PRINCIPLES: Array<{ title: string; desc: string }> = [
+  {
+    title: 'GMV ≠ Revenue',
+    desc: 'Gross merchandise value includes all transactions before deductions',
+  },
+  {
+    title: 'Collection ≠ Recognition',
+    desc: 'Cash received may differ from revenue recognised under accrual accounting',
+  },
+  {
+    title: 'Property/Universe Attribution',
+    desc: 'Revenue is attributed to the property/universe that generated it',
+  },
+  {
+    title: 'Separate Ledgers',
+    desc: 'Money, entitlements, points, and rewards are tracked separately',
+  },
+];
 
 export default function RevenueClassesPage(): React.JSX.Element {
   const [selectedUniverse, setSelectedUniverse] = useState('all');
 
-  const { data: revenueClasses, isLoading } = useQuery({
+  const {
+    data: revenueClasses,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['revenue-classes', selectedUniverse],
     queryFn: async () => {
       const params = selectedUniverse !== 'all' ? `?universe=${selectedUniverse}` : '';
       const res = await apiFetch<RevenueClass[]>(`/commerce/revenue-classes${params}`);
-      return res.success ? res.data || [] : [];
+      return requireArray(res);
     },
   });
+
+  // '—' while the read failed: a GMV of ₦0 here reads as "nothing collected",
+  // not as "the revenue service never answered".
+  const money = (value: number) => (isError ? '—' : `₦${value.toLocaleString()}`);
 
   const stats = {
     totalRevenue: revenueClasses?.reduce((sum, r) => sum + r.amount, 0) || 0,
@@ -61,51 +110,24 @@ export default function RevenueClassesPage(): React.JSX.Element {
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-primary)',
-        minHeight: '100vh',
-        color: 'var(--text-primary, #F5F0EB)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 1200,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 32,
-          }}
-        >
-          <div>
-            <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>
-              Revenue Class Separation
-            </h1>
-            <p style={{ color: 'var(--text-muted, #9A8A7A)' }}>
-              Track GMV vs Revenue vs Collection vs Recognition
-            </p>
-          </div>
+    <PageShell>
+      {/* Header */}
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="az-heading text-az-ink">Revenue Class Separation</h1>
+          <p className="az-body mt-1 text-az-ink-muted">
+            Track GMV vs Revenue vs Collection vs Recognition
+          </p>
+        </div>
+        <div>
+          <label htmlFor="revenue-universe" className="sr-only">
+            Filter by universe
+          </label>
           <select
+            id="revenue-universe"
             value={selectedUniverse}
             onChange={(e) => setSelectedUniverse(e.target.value)}
-            style={{
-              padding: '10px 16px',
-              borderRadius: 8,
-              border: '1px solid var(--glass-border)',
-              backgroundColor: 'var(--glass-bg)',
-              color: 'var(--text-primary)',
-              fontSize: 14,
-            }}
+            className="az-body rounded-az-control border border-az-glass-border bg-az-surface-panel px-4 py-2.5 text-az-ink hover:border-az-glass-border-hover"
           >
             <option value="all">All Universes</option>
             <option value="movies">Movies</option>
@@ -117,283 +139,151 @@ export default function RevenueClassesPage(): React.JSX.Element {
             <option value="live">Live</option>
           </select>
         </div>
+      </div>
 
-        {/* Stats Cards */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 16,
-            marginBottom: 32,
-          }}
-        >
-          <StatCard
-            icon={<DollarSign size={20} />}
-            label="Total GMV"
-            value={`₦${stats.totalRevenue.toLocaleString()}`}
-            color="#3B82F6"
-          />
-          <StatCard
-            icon={<TrendingUp size={20} />}
-            label="Collected"
-            value={`₦${stats.collected.toLocaleString()}`}
-            color="#10B981"
-          />
-          <StatCard
-            icon={<BarChart3 size={20} />}
-            label="Pending"
-            value={`₦${stats.pending.toLocaleString()}`}
-            color="#F59E0B"
-          />
-          <StatCard
-            icon={<PieChart size={20} />}
-            label="Overdue"
-            value={`₦${stats.overdue.toLocaleString()}`}
-            color="#EF4444"
-          />
-        </div>
+      {isError && (
+        <ErrorState
+          title="Revenue figures unavailable"
+          description={`${messageOf(error)} Figures are withheld rather than shown as ₦0.`}
+          onButtonPress={() => refetch()}
+        />
+      )}
 
-        {/* Revenue Flow Diagram */}
-        <div
-          style={{
-            padding: 24,
-            borderRadius: 16,
-            border: '1px solid var(--glass-border)',
-            backgroundColor: 'var(--glass-bg)',
-            marginBottom: 24,
-          }}
-        >
-          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>
-            Revenue Recognition Flow
-          </h2>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 16,
-            }}
-          >
-            {[
-              { label: 'GMV', desc: 'Gross Merchandise Value', color: 'var(--brand-blue)' },
-              { label: 'Revenue', desc: 'Recognised Revenue', color: 'var(--brand-emerald)' },
-              { label: 'Collection', desc: 'Cash Received', color: 'var(--brand-amber)' },
-              { label: 'Settlement', desc: 'Net to Creator', color: 'var(--brand-purple)' },
-            ].map((item, i) => (
-              <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 12,
-                    backgroundColor: `${item.color}20`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <DollarSign size={24} color={item.color} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{item.label}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{item.desc}</div>
-                </div>
-                {i < 3 && (
-                  <ArrowRight size={20} color="var(--text-muted)" style={{ marginLeft: 8 }} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Stats Cards */}
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard
+          icon={<DollarSign size={20} aria-hidden="true" />}
+          label="Total GMV"
+          value={money(stats.totalRevenue)}
+          tone="info"
+        />
+        <StatCard
+          icon={<TrendingUp size={20} aria-hidden="true" />}
+          label="Collected"
+          value={money(stats.collected)}
+          tone="success"
+        />
+        <StatCard
+          icon={<BarChart3 size={20} aria-hidden="true" />}
+          label="Pending"
+          value={money(stats.pending)}
+          tone="warning"
+        />
+        <StatCard
+          icon={<PieChart size={20} aria-hidden="true" />}
+          label="Overdue"
+          value={money(stats.overdue)}
+          tone="error"
+        />
+      </div>
 
-        {/* Revenue Classes Table */}
-        <div
-          style={{
-            padding: 24,
-            borderRadius: 16,
-            border: '1px solid var(--glass-border)',
-            backgroundColor: 'var(--glass-bg)',
-          }}
-        >
-          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Revenue Classes</h2>
-          {isLoading ? (
-            <Skeleton height="300px" borderRadius="8px" />
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
-                      Class
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
-                      Universe
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'right',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
-                      Amount
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'right',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
-                      Percentage
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
-                      Recognition
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
-                      Collection
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {revenueClasses?.map((rc) => (
-                    <tr key={rc.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                      <td style={{ padding: '12px 16px' }}>
-                        <div>
-                          <div style={{ fontWeight: 500 }}>{rc.name}</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                            {rc.description}
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: '12px 16px', textTransform: 'capitalize' }}>
-                        {rc.universe}
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600 }}>
-                        ₦{rc.amount.toLocaleString()}
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>{rc.percentage}%</td>
-                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                        <span
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: 4,
-                            fontSize: 11,
-                            fontWeight: 600,
-                            backgroundColor: `${RECOGNITION_COLORS[rc.recognition]}20`,
-                            color: RECOGNITION_COLORS[rc.recognition],
-                            textTransform: 'capitalize',
-                          }}
-                        >
-                          {rc.recognition}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                        <span
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: 4,
-                            fontSize: 11,
-                            fontWeight: 600,
-                            backgroundColor: `${COLLECTION_COLORS[rc.collection]}20`,
-                            color: COLLECTION_COLORS[rc.collection],
-                            textTransform: 'capitalize',
-                          }}
-                        >
-                          {rc.collection}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* Key Principles */}
-        <div
-          style={{
-            marginTop: 24,
-            padding: 24,
-            borderRadius: 16,
-            border: '1px solid var(--glass-border)',
-            backgroundColor: 'var(--glass-bg)',
-          }}
-        >
-          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Key Principles</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-            {[
-              {
-                title: 'GMV ≠ Revenue',
-                desc: 'Gross merchandise value includes all transactions before deductions',
-              },
-              {
-                title: 'Collection ≠ Recognition',
-                desc: 'Cash received may differ from revenue recognised under accrual accounting',
-              },
-              {
-                title: 'Property/Universe Attribution',
-                desc: 'Revenue is attributed to the property/universe that generated it',
-              },
-              {
-                title: 'Separate Ledgers',
-                desc: 'Money, entitlements, points, and rewards are tracked separately',
-              },
-            ].map((principle) => (
+      {/* Revenue Flow Diagram */}
+      <section className="az-glass mb-6 p-6">
+        <h2 className="az-subtitle mb-4 text-az-ink">Revenue Recognition Flow</h2>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {REVENUE_FLOW.map((item, i) => (
+            <div key={item.label} className="flex items-center gap-3">
               <div
-                key={principle.title}
-                style={{
-                  padding: 16,
-                  borderRadius: 12,
-                  border: '1px solid var(--glass-border)',
-                  backgroundColor: 'rgba(26,10,10,0.3)',
-                }}
+                className={`flex size-12 shrink-0 items-center justify-center rounded-az-card ${TONES[item.tone].tint} ${TONES[item.tone].text}`}
               >
-                <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
-                  {principle.title}
-                </h4>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                  {principle.desc}
-                </p>
+                <DollarSign size={24} aria-hidden="true" />
               </div>
-            ))}
-          </div>
+              <div>
+                <div className="az-body-strong text-az-ink">{item.label}</div>
+                <div className="az-caption text-az-ink-muted">{item.desc}</div>
+              </div>
+              {i < REVENUE_FLOW.length - 1 && (
+                <ArrowRight
+                  size={20}
+                  className="ml-2 shrink-0 text-az-ink-muted"
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+          ))}
         </div>
-      </main>
-      <AppFooter />
-    </div>
+      </section>
+
+      {/* Revenue Classes Table */}
+      <section className="az-glass p-6">
+        <h2 className="az-subtitle mb-4 text-az-ink">Revenue Classes</h2>
+        {isLoading ? (
+          <Skeleton height="300px" borderRadius="8px" />
+        ) : isError ? null : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <caption className="sr-only">
+                Revenue by class and universe, with amount, share of total, recognition timing and
+                collection status
+              </caption>
+              <thead>
+                <tr className="border-b border-az-glass-border">
+                  <th scope="col" className="az-caption px-4 py-3 text-left text-az-ink-muted">
+                    Class
+                  </th>
+                  <th scope="col" className="az-caption px-4 py-3 text-left text-az-ink-muted">
+                    Universe
+                  </th>
+                  <th scope="col" className="az-caption px-4 py-3 text-right text-az-ink-muted">
+                    Amount
+                  </th>
+                  <th scope="col" className="az-caption px-4 py-3 text-right text-az-ink-muted">
+                    Percentage
+                  </th>
+                  <th scope="col" className="az-caption px-4 py-3 text-center text-az-ink-muted">
+                    Recognition
+                  </th>
+                  <th scope="col" className="az-caption px-4 py-3 text-center text-az-ink-muted">
+                    Collection
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {revenueClasses?.map((rc) => (
+                  <tr key={rc.id} className="border-b border-az-glass-border">
+                    <td className="px-4 py-3">
+                      <div className="az-body-strong text-az-ink">{rc.name}</div>
+                      <div className="az-caption text-az-ink-muted">{rc.description}</div>
+                    </td>
+                    <td className="az-body px-4 py-3 capitalize text-az-ink-dim">{rc.universe}</td>
+                    <td className="az-body-strong px-4 py-3 text-right text-az-ink">
+                      ₦{rc.amount.toLocaleString()}
+                    </td>
+                    <td className="az-body px-4 py-3 text-right text-az-ink-dim">
+                      {rc.percentage}%
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <ToneBadge tone={RECOGNITION_TONES[rc.recognition]}>
+                        {rc.recognition}
+                      </ToneBadge>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <ToneBadge tone={COLLECTION_TONES[rc.collection]}>{rc.collection}</ToneBadge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Key Principles */}
+      <section className="az-glass mt-6 p-6">
+        <h2 className="az-subtitle mb-4 text-az-ink">Key Principles</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {PRINCIPLES.map((principle) => (
+            <div
+              key={principle.title}
+              className="rounded-az-card border border-az-glass-border bg-az-scarlet/10 p-4"
+            >
+              <h4 className="az-body-strong mb-1 text-az-ink">{principle.title}</h4>
+              <p className="az-caption text-az-ink-muted">{principle.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </PageShell>
   );
 }
 
@@ -401,40 +291,40 @@ function StatCard({
   icon,
   label,
   value,
-  color,
+  tone,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string | number;
-  color: string;
+  tone: Tone;
 }) {
   return (
-    <div
-      style={{
-        padding: 20,
-        borderRadius: 16,
-        border: '1px solid var(--glass-border)',
-        backgroundColor: 'var(--glass-bg)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+    <div className="az-glass p-5">
+      <div className="mb-3 flex items-center gap-3">
         <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 12,
-            backgroundColor: `${color}20`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color,
-          }}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-az-card ${TONES[tone].tint} ${TONES[tone].text}`}
         >
           {icon}
         </div>
-        <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>{label}</span>
+        <span className="az-caption text-az-ink-muted">{label}</span>
       </div>
-      <div style={{ fontSize: 24, fontWeight: 700 }}>{value}</div>
+      <div className="az-section-title text-az-ink">{value}</div>
     </div>
+  );
+}
+
+function ToneBadge({
+  tone,
+  children,
+}: {
+  tone: Tone;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <span
+      className={`inline-block rounded px-2 py-1 text-[11px] font-semibold capitalize ${TONES[tone].tint} ${TONES[tone].text}`}
+    >
+      {children}
+    </span>
   );
 }

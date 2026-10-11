@@ -157,7 +157,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
   if (editQuery.isLoading) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.15)">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
         <div className="max-w-2xl mx-auto py-16 px-4 space-y-6">
           <Skeleton className="h-12 w-full rounded-2xl" />
           <Skeleton className="h-40 w-full rounded-2xl" />
@@ -168,7 +168,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
   }
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.14)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
       <PageHero
         badge="Studio Ingestion"
         title={editContent ? 'Edit Master Asset' : 'Direct Studio Upload'}
@@ -181,13 +181,13 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
       <div className="max-w-2xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
-          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-6">
+          <div className="az-glass p-6 sm:p-8 border border-az-glass-border space-y-6">
             <div>
               <label
                 htmlFor="content-title"
-                className="text-white text-xs font-semibold mb-2 flex items-center gap-2"
+                className="text-az-ink text-xs font-semibold mb-2 flex items-center gap-2"
               >
-                <FileText className="w-4 h-4 text-[var(--brand-orange)]" />
+                <FileText className="w-4 h-4 text-[var(--color-az-flame)]" />
                 Asset Title
               </label>
               <input
@@ -197,14 +197,14 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Lagos Nights: Episode 1"
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[var(--brand-orange)] transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-az-glass-fill border border-az-glass-border text-az-ink placeholder-az-ink/30 text-sm focus:outline-none focus:border-[var(--color-az-flame)] transition-colors"
               />
             </div>
 
             <div>
               <label
                 htmlFor="content-description"
-                className="text-white text-xs font-semibold mb-2 block"
+                className="text-az-ink text-xs font-semibold mb-2 block"
               >
                 Synopsis & Description
               </label>
@@ -214,16 +214,16 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Detail the narrative, creator credits, and episode summary..."
                 rows={4}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[var(--brand-orange)] transition-colors resize-y"
+                className="w-full px-4 py-3 rounded-xl bg-az-glass-fill border border-az-glass-border text-az-ink placeholder-az-ink/30 text-sm focus:outline-none focus:border-[var(--color-az-flame)] transition-colors resize-y"
               />
             </div>
 
             <div>
               <label
                 htmlFor="content-universe"
-                className="text-white text-xs font-semibold mb-2 flex items-center gap-2"
+                className="text-az-ink text-xs font-semibold mb-2 flex items-center gap-2"
               >
-                <Globe className="w-4 h-4 text-blue-400" />
+                <Globe className="w-4 h-4 text-az-secondary-400" />
                 Target Universe
               </label>
               {universesLoading ? (
@@ -233,7 +233,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                   id="content-universe"
                   value={universeId}
                   onChange={(e) => setUniverseId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--hp-surface)] border border-white/10 text-white text-sm focus:outline-none focus:border-[var(--brand-orange)] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--hp-surface)] border border-az-glass-border text-az-ink text-sm focus:outline-none focus:border-[var(--color-az-flame)] transition-colors"
                 >
                   <option value="">Select Target Universe</option>
                   {universes.map((u) => (
@@ -248,9 +248,9 @@ export default function CreatorUploadPage(): React.JSX.Element {
             <div>
               <label
                 htmlFor="content-tags"
-                className="text-white text-xs font-semibold mb-2 flex items-center gap-2"
+                className="text-az-ink text-xs font-semibold mb-2 flex items-center gap-2"
               >
-                <Tag className="w-4 h-4 text-emerald-400" />
+                <Tag className="w-4 h-4 text-az-success-400" />
                 Tags (comma separated)
               </label>
               <input
@@ -260,7 +260,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 placeholder="e.g., nollywood, thriller, lagos, original"
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[var(--brand-orange)] transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-az-glass-fill border border-az-glass-border text-az-ink placeholder-az-ink/30 text-sm focus:outline-none focus:border-[var(--color-az-flame)] transition-colors"
               />
             </div>
 
@@ -268,21 +268,21 @@ export default function CreatorUploadPage(): React.JSX.Element {
               <div>
                 <label
                   htmlFor="content-file"
-                  className="text-white text-xs font-semibold mb-2 flex items-center gap-2"
+                  className="text-az-ink text-xs font-semibold mb-2 flex items-center gap-2"
                 >
-                  <UploadCloud className="w-4 h-4 text-[var(--brand-orange)]" />
+                  <UploadCloud className="w-4 h-4 text-[var(--color-az-flame)]" />
                   Media Master File
                 </label>
-                <div className="border-2 border-dashed border-white/15 hover:border-[var(--brand-orange)]/40 rounded-2xl p-8 text-center bg-white/[0.02] transition-colors">
+                <div className="border-2 border-dashed border-az-ink/15 hover:border-[var(--color-az-flame)]/40 rounded-2xl p-8 text-center bg-az-ink/[0.02] transition-colors">
                   <input
                     id="content-file"
                     type="file"
                     accept="video/*,image/*,audio/*"
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    className="w-full text-white/50 text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--brand-orange)] file:text-white hover:file:opacity-90 cursor-pointer"
+                    className="w-full text-az-ink/50 text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--color-az-flame)] file:text-az-ink hover:file:opacity-90 cursor-pointer"
                   />
                   {file && (
-                    <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
+                    <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-az-success-500/10 border border-az-success-500/20 text-az-success-400 text-xs font-medium">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
                     </div>
@@ -293,21 +293,26 @@ export default function CreatorUploadPage(): React.JSX.Element {
 
             {editContent?.thumbnail && (
               <div>
-                <span className="text-white text-xs font-semibold mb-2 block">
+                <span className="text-az-ink text-xs font-semibold mb-2 block">
                   Current Master Poster
                 </span>
-                <div className="relative aspect-video bg-white/5 rounded-2xl overflow-hidden border border-white/10">
-                  <OptimizedImage src={editContent.thumbnail} alt="" fill className="object-cover" />
+                <div className="relative aspect-video bg-az-glass-fill rounded-2xl overflow-hidden border border-az-glass-border">
+                  <OptimizedImage
+                    src={editContent.thumbnail}
+                    alt=""
+                    fill
+                    className="object-cover"
+                  />
                 </div>
               </div>
             )}
 
-            <div className="flex items-center gap-3 pt-4 border-t border-white/10">
+            <div className="flex items-center gap-3 pt-4 border-t border-az-glass-border">
               <button
                 type="button"
                 aria-label="Cancel upload"
                 onClick={() => router.push('/creator')}
-                className="px-6 py-3 rounded-full border border-white/10 text-white/60 hover:text-white hover:bg-white/5 text-xs font-bold transition-all"
+                className="px-6 py-3 rounded-full border border-az-glass-border text-az-ink/60 hover:text-az-ink hover:bg-az-glass-fill text-xs font-bold transition-all"
               >
                 Cancel
               </button>
@@ -318,7 +323,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                 disabled={isSubmitting || (!file && !editContent)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="az-btn-primary px-8 py-3 rounded-full text-xs font-bold flex items-center gap-2 disabled:opacity-50"
+                className="az-btn-primary flex items-center gap-2"
               >
                 <UploadCloud className="w-4 h-4" />
                 {isSubmitting

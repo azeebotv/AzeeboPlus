@@ -23,18 +23,18 @@ export default function PremiumUpsell(): React.JSX.Element | null {
   return (
     <div
       data-testid="premium-upsell"
-      className="relative overflow-hidden rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-500/10 to-transparent"
+      className="relative overflow-hidden rounded-az-panel border border-az-warning-400/30 bg-gradient-to-br from-az-warning-500/10 to-transparent"
     >
       <div className="flex flex-col items-start justify-between gap-4 p-6 sm:flex-row sm:items-center">
         <div className="min-w-0">
-          <p className="az-headline text-lg font-bold text-amber-200">{headline}</p>
-          <p className="mt-1 text-sm text-amber-100/60">
+          <p className="az-headline text-lg text-az-warning-400">{headline}</p>
+          <p className="az-caption mt-1 text-az-warning-400/60">
             Ad-free viewing, early access, and exclusive perks for members.
           </p>
         </div>
         <Link
           href="/premium"
-          className="shrink-0 rounded-full bg-amber-400 px-5 py-2.5 text-sm font-bold text-amber-950 transition hover:bg-amber-300"
+          className="az-body-strong shrink-0 rounded-az-pill bg-az-warning-400 px-5 py-2.5 text-az-surface-root transition hover:bg-az-warning-300"
         >
           View Plans
         </Link>

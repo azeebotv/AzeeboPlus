@@ -160,8 +160,8 @@ export default function DeviceLinkPage(): React.JSX.Element {
 
   if (phase === 'checking-auth' || phase === 'redirecting') {
     return (
-      <AuthShell headlineLines={['Connect', 'Your TV']} backgroundFallback="#0b090e">
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}>
+      <AuthShell headlineLines={['Connect', 'Your TV']} tagline="Sign in once on the big screen.">
+        <div className="flex items-center justify-center p-8">
           <Spinner className="h-6 w-6" />
         </div>
       </AuthShell>
@@ -170,19 +170,15 @@ export default function DeviceLinkPage(): React.JSX.Element {
 
   if (phase === 'confirmed' || phase === 'denied') {
     return (
-      <AuthShell headlineLines={['Connect', 'Your TV']} backgroundFallback="#0b090e">
-        <div style={{ display: 'grid', gap: 16, textAlign: 'center', padding: 8 }}>
+      <AuthShell headlineLines={['Connect', 'Your TV']} tagline="Sign in once on the big screen.">
+        <div className="grid gap-4 p-2 text-center">
           <div
             role="status"
-            style={{
-              fontSize: 40,
-              fontWeight: 700,
-              color: phase === 'confirmed' ? 'var(--brand-green)' : 'var(--brand-red)',
-            }}
+            className={`az-heading ${phase === 'confirmed' ? 'text-az-success-400' : 'text-az-error-400'}`}
           >
             {phase === 'confirmed' ? '✓ TV connected' : 'Sign-in declined'}
           </div>
-          <p style={{ color: 'rgba(255,255,255,0.72)', lineHeight: 1.6 }}>
+          <p className="az-lead text-az-ink-muted">
             {phase === 'confirmed'
               ? 'Your TV is now signed in. Switch back to the TV — it will finish on its own.'
               : 'The TV was not signed in. If this wasn\u2019t you, no action is needed — the code is now dead.'}
@@ -195,17 +191,7 @@ export default function DeviceLinkPage(): React.JSX.Element {
               setInfoCode('');
               setPhase('input');
             }}
-            style={{
-              justifySelf: 'center',
-              padding: '12px 28px',
-              borderRadius: 999,
-              border: '1px solid rgba(255,255,255,0.25)',
-              background: 'transparent',
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
+            className="az-body-strong justify-self-center rounded-az-pill border border-az-glass-border-hover bg-transparent px-7 py-3 text-az-ink transition-colors hover:bg-az-glass-fill"
           >
             Connect another TV
           </button>
@@ -215,11 +201,11 @@ export default function DeviceLinkPage(): React.JSX.Element {
   }
 
   return (
-    <AuthShell headlineLines={['Connect', 'Your TV']} backgroundFallback="#0b090e">
-      <div style={{ display: 'grid', gap: 16 }}>
-        <p style={{ color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: 0 }}>
-          On your TV, open <strong style={{ color: '#fff' }}>Sign in</strong> and enter the code
-          shown here. We\u2019ll show you which device is asking before you approve it.
+    <AuthShell headlineLines={['Connect', 'Your TV']} tagline="Sign in once on the big screen.">
+      <div className="grid gap-4">
+        <p className="az-lead m-0 text-az-ink-muted">
+          On your TV, open <strong className="text-az-ink">Sign in</strong> and enter the code shown
+          here. We’ll show you which device is asking before you approve it.
         </p>
 
         {errorMessage ? <Alert variant="error">{errorMessage}</Alert> : null}
@@ -229,7 +215,7 @@ export default function DeviceLinkPage(): React.JSX.Element {
             e.preventDefault();
             void submit('confirm');
           }}
-          style={{ display: 'grid', gap: 12 }}
+          className="grid gap-3"
         >
           <input
             value={formatCode(normalizeCode(code))}
@@ -242,62 +228,30 @@ export default function DeviceLinkPage(): React.JSX.Element {
             placeholder="XXXX-XXXX"
             aria-label="TV sign-in code"
             disabled={phase === 'submitting'}
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 12,
-              padding: '16px 18px',
-              color: '#fff',
-              fontSize: 28,
-              letterSpacing: 10,
-              textAlign: 'center',
-              fontFamily: 'monospace',
-              outline: 'none',
-              width: '100%',
-            }}
+            className="w-full rounded-az-card border border-az-glass-border bg-az-glass-fill px-[18px] py-4 text-center font-mono text-[28px] tracking-[10px] text-az-ink outline-none"
           />
 
           {infoLoading ? (
-            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13 }} role="status">
+            <div className="az-caption text-az-ink-dim" role="status">
               Checking which device this is…
             </div>
           ) : null}
 
           {deviceInfo && infoCode === normalizedCode ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                border: '1px solid rgba(255,255,255,0.25)',
-                borderRadius: 12,
-                padding: '14px 18px',
-                background: 'rgba(255,255,255,0.04)',
-              }}
-            >
+            <div className="flex items-center gap-3.5 rounded-az-card border border-az-glass-border-hover bg-az-glass-fill px-[18px] py-3.5">
               <div
-                aria-hidden
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  background: 'var(--brand-orange, #E8420A)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 22,
-                  flexShrink: 0,
-                }}
+                aria-hidden="true"
+                className="flex size-11 shrink-0 items-center justify-center rounded-az-control bg-[image:var(--gradient-az-cta)] text-[22px]"
               >
                 📺
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: '#fff', fontWeight: 600, fontSize: 16 }}>
+              <div className="min-w-0 flex-1">
+                <div className="az-lead font-semibold text-az-ink">
                   {deviceInfo.deviceName && deviceInfo.deviceName.trim()
                     ? deviceInfo.deviceName
                     : 'Unnamed TV'}
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 2 }}>
+                <div className="az-caption mt-0.5 text-az-ink-muted">
                   Code expires at{' '}
                   {new Date(deviceInfo.expiresAt).toLocaleTimeString([], {
                     hour: 'numeric',
@@ -312,20 +266,7 @@ export default function DeviceLinkPage(): React.JSX.Element {
           <button
             type="submit"
             disabled={phase === 'submitting' || !codeIsValid}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              padding: '14px 24px',
-              borderRadius: 12,
-              border: 'none',
-              background: codeIsValid ? 'var(--brand-orange, #E8420A)' : 'rgba(232,66,10,0.35)',
-              color: '#fff',
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: codeIsValid && phase !== 'submitting' ? 'pointer' : 'not-allowed',
-            }}
+            className="az-btn-primary flex items-center justify-center gap-2"
           >
             {phase === 'submitting' ? <Spinner /> : null}
             {phase === 'submitting' ? 'Connecting…' : 'Connect this TV'}
@@ -335,22 +276,13 @@ export default function DeviceLinkPage(): React.JSX.Element {
             type="button"
             disabled={phase === 'submitting' || !codeIsValid}
             onClick={() => void submit('deny')}
-            style={{
-              padding: '12px 24px',
-              borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'transparent',
-              color: 'rgba(255,255,255,0.85)',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: codeIsValid && phase !== 'submitting' ? 'pointer' : 'not-allowed',
-            }}
+            className="az-body-strong cursor-pointer rounded-az-card border border-az-glass-border bg-transparent px-6 py-3 text-az-ink transition-colors hover:bg-az-glass-fill disabled:cursor-not-allowed"
           >
             This wasn&apos;t me — decline
           </button>
         </form>
 
-        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, lineHeight: 1.5, margin: 0 }}>
+        <p className="az-caption m-0 text-az-ink-dim">
           Codes expire after 15 minutes and work once. Only confirm a code that matches the one on
           your TV screen.
         </p>

@@ -11,7 +11,16 @@ import { PageShell } from '@/components/layout/PageShell';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
-import { Phone, MapPin, Star, Building2, ArrowLeft, ArrowRight, Percent, Calendar } from 'lucide-react';
+import {
+  Phone,
+  MapPin,
+  Star,
+  Building2,
+  ArrowLeft,
+  ArrowRight,
+  Percent,
+  Calendar,
+} from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface PartnerDetail {
@@ -47,7 +56,7 @@ function PartnerDetailContent() {
   const p = query.data;
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.15)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-16 space-y-6">
         <div className="flex items-center justify-between">
           <Breadcrumbs
@@ -60,7 +69,7 @@ function PartnerDetailContent() {
           />
           <Link
             href="/lifestyle/partners"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/50 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-az-ink/50 hover:text-az-ink transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             All Partners
@@ -81,47 +90,49 @@ function PartnerDetailContent() {
           <div className="max-w-md mx-auto py-16">
             <ErrorState
               title="Partner Not Found"
-              description={query.error?.message || 'The requested venue partner profile could not be loaded.'}
+              description={
+                query.error?.message || 'The requested venue partner profile could not be loaded.'
+              }
               onButtonPress={() => query.refetch()}
             />
           </div>
         ) : (
           <div className="space-y-8">
             <ScrollReveal>
-              <div className="az-glass p-8 rounded-3xl border border-white/10 shadow-2xl space-y-6">
+              <div className="az-glass p-8 border border-az-glass-border space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-xs font-mono text-[var(--brand-orange)] flex items-center gap-1">
+                  <span className="text-xs font-mono text-[var(--color-az-flame)] flex items-center gap-1">
                     <Building2 className="w-3.5 h-3.5" />
                     {p.city} · {p.category}
                   </span>
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20 text-xs font-bold">
-                    <Star className="w-3.5 h-3.5 fill-amber-400" />
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-az-warning-400/10 text-az-warning-400 border border-az-warning-400/20 text-xs font-bold">
+                    <Star className="w-3.5 h-3.5 fill-az-warning-400" />
                     <span>{p.rating.toFixed(1)} Rating</span>
                   </div>
                 </div>
 
                 <div>
-                  <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                  <h1 className="az-headline text-2xl sm:text-4xl font-extrabold text-az-ink">
                     {p.name}
                   </h1>
-                  <p className="text-sm sm:text-base text-white/70 leading-relaxed mt-2 max-w-2xl">
+                  <p className="text-sm sm:text-base text-az-ink/70 leading-relaxed mt-2 max-w-2xl">
                     {p.description}
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-6 text-xs text-white/60 pt-4 border-t border-white/5">
+                <div className="flex flex-wrap items-center gap-6 text-xs text-az-ink/60 pt-4 border-t border-az-ink/5">
                   {p.address && (
                     <span className="flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 text-white/40" />
+                      <MapPin className="w-4 h-4 text-az-ink/40" />
                       {p.address}
                     </span>
                   )}
                   {p.phone && (
                     <a
                       href={`tel:${p.phone}`}
-                      className="flex items-center gap-1.5 text-white/60 hover:text-[var(--brand-orange)] transition-colors"
+                      className="flex items-center gap-1.5 text-az-ink/60 hover:text-[var(--color-az-flame)] transition-colors"
                     >
-                      <Phone className="w-4 h-4 text-white/40" />
+                      <Phone className="w-4 h-4 text-az-ink/40" />
                       {p.phone}
                     </a>
                   )}
@@ -131,8 +142,8 @@ function PartnerDetailContent() {
 
             {p.offers?.length > 0 && (
               <div className="space-y-4">
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <Percent className="w-4 h-4 text-emerald-400" />
+                <h2 className="text-base font-bold text-az-ink flex items-center gap-2">
+                  <Percent className="w-4 h-4 text-az-success-400" />
                   Active Privileges & Offers ({p.offers.length})
                 </h2>
 
@@ -141,22 +152,22 @@ function PartnerDetailContent() {
                     <ScrollReveal key={o.id}>
                       <Link href={`/lifestyle/offers/${o.id}`}>
                         <motion.div whileHover={{ y: -2 }}>
-                          <GlowCard className="p-5 rounded-2xl border border-white/10 flex items-center justify-between group cursor-pointer">
+                          <GlowCard className="p-5 rounded-2xl border border-az-glass-border flex items-center justify-between group cursor-pointer">
                             <div className="space-y-1">
-                              <h3 className="text-sm font-bold text-white group-hover:text-[var(--brand-orange)] transition-colors">
+                              <h3 className="text-sm font-bold text-az-ink group-hover:text-[var(--color-az-flame)] transition-colors">
                                 {o.title}
                               </h3>
-                              <p className="text-xs text-white/40 flex items-center gap-1">
+                              <p className="text-xs text-az-ink/40 flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
                                 Valid until {new Date(o.validUntil).toLocaleDateString()}
                               </p>
                             </div>
 
                             <div className="flex items-center gap-3">
-                              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-az-success-500/20 text-az-success-400 border border-az-success-500/30">
                                 {o.discount}
                               </span>
-                              <ArrowRight className="w-4 h-4 text-white/30 group-hover:text-[var(--brand-orange)] group-hover:translate-x-1 transition-all" />
+                              <ArrowRight className="w-4 h-4 text-az-ink/30 group-hover:text-[var(--color-az-flame)] group-hover:translate-x-1 transition-all" />
                             </div>
                           </GlowCard>
                         </motion.div>
@@ -179,8 +190,8 @@ export default function PartnerDetailPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

@@ -5,8 +5,7 @@ import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton } from '@azeebo/ui/web';
@@ -15,6 +14,7 @@ import analytics from '@/lib/analytics';
 import { ShareButton } from '@/components/ui/ShareButton';
 import { ReviewsSection } from '@/components/ui/ReviewsSection';
 import { WatchPartyOverlay } from '@/components/watch-party/WatchPartyOverlay';
+import { Heart, Music2, Pause, Play } from 'lucide-react';
 
 export default function TrackDetailPage(): React.JSX.Element {
   const params = useParams();
@@ -47,29 +47,26 @@ export default function TrackDetailPage(): React.JSX.Element {
 
   if (trackQuery.isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader active="Music" />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <PageShell activeNav="Music" maxWidth="lg">
+        <div className="py-12">
           <Skeleton height="400px" borderRadius="16px" />
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Music" />
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <PageShell activeNav="Music" maxWidth="lg">
+      <div className="py-12">
         <Link
           href="/music"
-          className="text-sm text-white/40 hover:text-white/60 transition-colors mb-6 inline-block"
+          className="az-caption mb-6 inline-block text-az-ink-muted transition-colors hover:text-az-ink"
         >
           ← Back to Music
         </Link>
 
         <motion.div
-          className="flex flex-col sm:flex-row gap-8"
+          className="flex flex-col gap-8 sm:flex-row"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -81,49 +78,48 @@ export default function TrackDetailPage(): React.JSX.Element {
                 alt={track?.title || 'Track'}
                 width={300}
                 height={300}
-                className="w-64 h-64 sm:w-72 sm:h-72 rounded-2xl object-cover shadow-2xl"
+                className="size-64 rounded-az-card object-cover shadow-2xl sm:size-72"
               />
             ) : (
-              <div
-                className="w-64 h-64 sm:w-72 sm:h-72 rounded-2xl flex items-center justify-center text-7xl"
-                style={{ background: 'linear-gradient(135deg, var(--music-purple), #E8420A)' }}
-              >
-                Music2
+              <div className="flex size-64 items-center justify-center rounded-az-card bg-az-flame/15 text-az-flame sm:size-72">
+                <Music2 size={72} strokeWidth={1.5} aria-hidden="true" />
               </div>
             )}
           </div>
 
           {/* Track Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex items-center gap-2">
               {track?.isExplicit && (
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white/10 text-white/60">
+                <span className="az-micro-label rounded-az-control bg-az-glass-card px-1.5 py-0.5 text-az-ink-muted">
                   E
                 </span>
               )}
               {track?.genre && (
-                <span className="px-2 py-0.5 rounded-full text-xs bg-white/10 text-white/60">
+                <span className="az-caption rounded-az-pill bg-az-glass-card px-2 py-0.5 text-az-ink-muted">
                   {track.genre}
                 </span>
               )}
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+            <h1 className="az-headline mb-2 text-3xl text-az-ink sm:text-4xl">
               {track?.title || 'Track'}
             </h1>
 
             {track?.artist && (
               <Link
                 href={track.artistId ? `/music/artists/${track.artistId}` : '#'}
-                className="text-lg text-white/60 hover:text-white/80 transition-colors mb-4 inline-block"
+                className="az-subtitle mb-4 inline-block text-az-ink-muted transition-colors hover:text-az-ink"
               >
                 {track.artist}
               </Link>
             )}
 
-            {track?.album && <p className="text-sm text-white/40 mb-2">Album: {track.album}</p>}
+            {track?.album && (
+              <p className="az-caption mb-2 text-az-ink-muted">Album: {track.album}</p>
+            )}
 
-            <div className="flex items-center gap-4 text-sm text-white/40 mb-6">
+            <div className="az-caption mb-6 flex items-center gap-4 text-az-ink-muted">
               {track?.duration && <span>{formatDuration(track.duration)}</span>}
               {track?.releaseDate && (
                 <span>{new Date(track.releaseDate).toLocaleDateString()}</span>
@@ -136,29 +132,32 @@ export default function TrackDetailPage(): React.JSX.Element {
             <motion.button
               type="button"
               onClick={() => setIsPlaying(!isPlaying)}
-              className="w-16 h-16 rounded-full flex items-center justify-center mb-6"
-              style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+              className="mb-6 flex size-16 items-center justify-center rounded-full bg-az-flame text-az-surface-root"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <span className="text-white text-2xl ml-1">{isPlaying ? 'Pause' : 'Play'}</span>
+              {isPlaying ? (
+                <Pause size={24} className="ml-1" aria-hidden="true" />
+              ) : (
+                <Play size={24} className="ml-1" aria-hidden="true" />
+              )}
             </motion.button>
 
             {/* Actions */}
             <div className="flex gap-3">
               <button
                 type="button"
-                className="px-4 py-2 rounded-full text-sm font-medium transition-all"
-                style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'var(--brand-white)' }}
+                className="az-body-strong inline-flex items-center gap-2 rounded-az-pill border border-az-ink/20 px-4 py-2 text-az-ink transition-all hover:bg-az-ink/5"
               >
-                HeartLike
+                <Heart size={16} aria-hidden="true" />
+                Like
               </button>
               <ShareButton
                 contentId={track?.id || ''}
                 title={track?.title || ''}
                 description={track?.artist ? `${track.title} by ${track.artist}` : track?.title}
                 thumbnail={track?.thumbnail || ''}
-                className="px-4 py-2 rounded-full"
+                className="px-4 py-2 rounded-az-pill"
               />
               <WatchPartyOverlay
                 contentId={track?.id || ''}
@@ -170,8 +169,7 @@ export default function TrackDetailPage(): React.JSX.Element {
               />
               <button
                 type="button"
-                className="px-4 py-2 rounded-full text-sm font-medium transition-all"
-                style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'var(--brand-white)' }}
+                className="az-body-strong inline-flex items-center gap-2 rounded-az-pill border border-az-ink/20 px-4 py-2 text-az-ink transition-all hover:bg-az-ink/5"
               >
                 + Add to Playlist
               </button>
@@ -183,9 +181,9 @@ export default function TrackDetailPage(): React.JSX.Element {
         {track?.lyrics && (
           <ScrollReveal>
             <section className="mt-12">
-              <h2 className="text-xl font-bold text-white mb-4">Lyrics</h2>
-              <div className="az-glass p-6 rounded-2xl">
-                <pre className="text-sm text-white/60 whitespace-pre-wrap font-sans leading-relaxed">
+              <h2 className="az-title mb-4 text-az-ink">Lyrics</h2>
+              <div className="az-glass p-6">
+                <pre className="az-body whitespace-pre-wrap font-sans leading-relaxed text-az-ink-muted">
                   {track.lyrics}
                 </pre>
               </div>
@@ -195,11 +193,9 @@ export default function TrackDetailPage(): React.JSX.Element {
       </div>
 
       {/* Reviews Section */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <section className="py-8">
         <ReviewsSection contentId={track?.id || ''} />
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

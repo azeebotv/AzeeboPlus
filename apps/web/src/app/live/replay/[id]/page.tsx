@@ -5,8 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
 import analytics from '@/lib/analytics';
 
 interface ReplayData {
@@ -67,73 +66,56 @@ function ReplayContent() {
   const replay = query.data;
   if (query.isLoading)
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div className="max-w-5xl mx-auto px-4 py-12">
-          <Skeleton height="400px" borderRadius="16" />
-        </div>
-      </div>
+      <PageShell activeNav="Live" maxWidth="xl" showFooter={false}>
+        <Skeleton height="400px" borderRadius="16" />
+      </PageShell>
     );
   if (query.error || !replay)
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div className="max-w-5xl mx-auto px-4 py-12">
-          <ErrorState title="Replay not found" />
-        </div>
-      </div>
+      <PageShell activeNav="Live" maxWidth="xl" showFooter={false}>
+        <ErrorState title="Replay not found" />
+      </PageShell>
     );
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Live" />
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div
-            className="aspect-video rounded-2xl overflow-hidden mb-6"
-            style={{ backgroundColor: 'black' }}
-          >
-            <video controls className="w-full h-full" poster={replay.streamUrl}>
-              <source src={replay.streamUrl} type="video/mp4" />
-            </video>
+    <PageShell activeNav="Live" maxWidth="xl">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <div className="mb-6 aspect-video overflow-hidden rounded-az-panel bg-black">
+          <video controls className="h-full w-full" poster={replay.streamUrl}>
+            <source src={replay.streamUrl} type="video/mp4" />
+          </video>
+        </div>
+        <div className="mb-4 flex items-center gap-2">
+          <span className="az-overline rounded-az-pill bg-[var(--brand-purple)]/15 px-3 py-1 text-[var(--brand-purple)]">
+            REPLAY
+          </span>
+          <span className="rounded-az-pill bg-az-scarlet/20 px-3 py-1 text-xs font-semibold text-az-flame">
+            {replay.universe}
+          </span>
+        </div>
+        <h1 className="az-heading mb-3 text-az-ink">{replay.title}</h1>
+        <p className="az-body mb-4 text-az-ink/60">{replay.description}</p>
+        <div className="az-caption mb-6 flex gap-6 text-az-ink-muted">
+          <span>{new Date(replay.recordedAt).toLocaleDateString()}</span>
+          <span>{replay.duration}</span>
+          <span>{replay.viewCount.toLocaleString()} views</span>
+        </div>
+        {replay.highlights && replay.highlights.length > 0 && (
+          <div className="az-glass p-6">
+            <h2 className="mb-3 text-lg font-bold text-az-ink">Highlights</h2>
+            <ul className="space-y-2">
+              {replay.highlights.map((h, i) => (
+                <li key={i} className="az-body flex items-start gap-2 text-az-ink-muted">
+                  <span aria-hidden="true" className="text-az-ink/30">
+                    •
+                  </span>
+                  {h}
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="flex items-center gap-2 mb-4">
-            <span
-              className="px-3 py-1 rounded-full text-xs font-semibold"
-              style={{ backgroundColor: 'rgba(139,92,246,0.15)', color: 'var(--brand-purple)' }}
-            >
-              REPLAY
-            </span>
-            <span
-              className="px-3 py-1 rounded-full text-xs font-semibold"
-              style={{ backgroundColor: 'rgba(232,66,10,0.15)', color: 'var(--brand-orange)' }}
-            >
-              {replay.universe}
-            </span>
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-3">{replay.title}</h1>
-          <p className="text-white/60 mb-4">{replay.description}</p>
-          <div className="flex gap-6 text-sm text-white/40 mb-6">
-            <span>{new Date(replay.recordedAt).toLocaleDateString()}</span>
-            <span>{replay.duration}</span>
-            <span>{replay.viewCount.toLocaleString()} views</span>
-          </div>
-          {replay.highlights && replay.highlights.length > 0 && (
-            <div className="az-glass p-6">
-              <h2 className="text-lg font-bold text-white mb-3">Highlights</h2>
-              <ul className="space-y-2">
-                {replay.highlights.map((h, i) => (
-                  <li key={i} className="text-sm text-white/50 flex items-start gap-2">
-                    <span className="text-white/30">•</span>
-                    {h}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </motion.div>
-      </section>
-      <AppFooter />
-    </div>
+        )}
+      </motion.div>
+    </PageShell>
   );
 }
 const Lazy = lazy(() => Promise.resolve({ default: ReplayContent }));
@@ -141,8 +123,8 @@ export default function ReplayPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

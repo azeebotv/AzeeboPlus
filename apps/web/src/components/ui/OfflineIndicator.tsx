@@ -111,7 +111,7 @@ export function OfflineBanner() {
     return (
       <div
         role="alert"
-        className="fixed top-0 left-0 right-0 z-50 bg-yellow-600 text-white px-4 py-2 text-center text-sm font-medium"
+        className="fixed top-0 left-0 right-0 z-50 bg-az-warning-500/12 border border-az-warning-500/30 text-az-warning-500 px-4 py-2 text-center text-sm font-medium"
       >
         <span className="mr-2"></span>
         You are offline. Some features may be unavailable.
@@ -152,7 +152,7 @@ export function RetryButton({
 
   if (retries >= maxRetries) {
     return (
-      <span className="text-sm text-muted-foreground">
+      <span className="text-sm text-az-ink-muted">
         Maximum retries reached. Please try again later.
       </span>
     );
@@ -162,7 +162,7 @@ export function RetryButton({
     <button
       onClick={handleRetry}
       disabled={isRetrying}
-      className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
+      className="az-btn-primary az-btn-primary--inline az-btn-primary--sm inline-flex items-center gap-2 disabled:opacity-50 transition-colors"
     >
       {isRetrying ? (
         <>

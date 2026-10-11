@@ -117,7 +117,7 @@ export default function QuizDetailPage(): React.JSX.Element {
       <div className="mb-6">
         <Link
           href="/participation"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-az-ink/60 hover:text-az-ink transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Community Participation
         </Link>
@@ -159,24 +159,25 @@ export default function QuizDetailPage(): React.JSX.Element {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="az-glass p-8 sm:p-12 text-center rounded-3xl border border-amber-500/30 relative overflow-hidden"
+            className="az-glass p-8 sm:p-12 text-center border relative overflow-hidden"
           >
-            <div className="w-20 h-20 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto mb-6 text-amber-400 shadow-[0_0_40px_rgba(245,158,11,0.3)]">
+            <div className="w-20 h-20 rounded-full bg-az-warning-500/15 border border-az-warning-500/30 flex items-center justify-center mx-auto mb-6 text-az-warning-400 shadow-[0_0_40px_rgba(245,158,11,0.3)]">
               <Trophy className="w-10 h-10" />
             </div>
 
-            <h2 className="az-headline text-2xl sm:text-4xl font-extrabold text-white mb-2">
+            <h2 className="az-headline text-2xl sm:text-4xl font-extrabold text-az-ink mb-2">
               Quiz Completed!
             </h2>
-            <p className="text-white/60 text-base max-w-md mx-auto mb-6">
+            <p className="text-az-ink/60 text-base max-w-md mx-auto mb-6">
               Outstanding performance. Your answers have been recorded in the community leaderboard.
             </p>
 
-            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-300 font-extrabold text-xl mb-8">
-              <Sparkles className="w-5 h-5 text-amber-400" />
+            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-az-warning-500/10 border border-az-warning-500/25 text-az-warning-400 font-extrabold text-xl mb-8">
+              <Sparkles className="w-5 h-5 text-az-warning-400" />
               {submitMutation.data?.data ? (
                 <>
-                  {submitMutation.data.data.correctAnswers}/{submitMutation.data.data.totalQuestions} correct ·{' '}
+                  {submitMutation.data.data.correctAnswers}/
+                  {submitMutation.data.data.totalQuestions} correct ·{' '}
                   {submitMutation.data.data.score} points
                 </>
               ) : (
@@ -194,7 +195,7 @@ export default function QuizDetailPage(): React.JSX.Element {
               </Link>
               <Link
                 href="/participation"
-                className="px-6 py-3 rounded-full text-sm font-semibold text-white/90 hover:text-white border border-white/15 bg-white/5 hover:bg-white/10 transition-all"
+                className="px-6 py-3 rounded-full text-sm font-semibold text-az-ink/90 hover:text-az-ink border border-az-ink/15 bg-az-glass-fill hover:bg-az-glass-card transition-all"
               >
                 More Community Activities
               </Link>
@@ -207,14 +208,17 @@ export default function QuizDetailPage(): React.JSX.Element {
               eyebrowColor="var(--brand-purple)"
               badge={`${questions.length} QUESTIONS`}
               title={quiz.title}
-              subtitle={quiz.description || 'Test your knowledge across Nollywood, music, sports, and pop culture.'}
+              subtitle={
+                quiz.description ||
+                'Test your knowledge across Nollywood, music, sports, and pop culture.'
+              }
               glowColor="rgba(109, 40, 217, 0.25)"
             />
 
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              className="az-glass p-6 sm:p-10 rounded-3xl border border-white/10 relative overflow-hidden mt-6"
+              className="az-glass p-6 sm:p-10 border border-az-glass-border relative overflow-hidden mt-6"
               style={{
                 background:
                   'linear-gradient(135deg, rgba(24, 21, 30, 0.9) 0%, rgba(30, 18, 40, 0.5) 100%)',
@@ -223,17 +227,17 @@ export default function QuizDetailPage(): React.JSX.Element {
               {/* Step indicator & progress meter */}
               <div className="mb-8">
                 <div className="flex items-center justify-between text-xs sm:text-sm font-semibold mb-2">
-                  <span className="text-white/60">
-                    Question <span className="text-white font-bold">{currentQuestion + 1}</span> of{' '}
+                  <span className="text-az-ink/60">
+                    Question <span className="text-az-ink font-bold">{currentQuestion + 1}</span> of{' '}
                     {questions.length}
                   </span>
-                  <span className="text-[var(--brand-orange)] font-bold">
+                  <span className="text-[var(--color-az-flame)] font-bold">
                     {Math.round(((currentQuestion + 1) / questions.length) * 100)}% Complete
                   </span>
                 </div>
-                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-az-glass-card rounded-full h-2 overflow-hidden">
                   <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-[var(--brand-orange)] to-[#cc1c1c]"
+                    className="h-full rounded-full bg-gradient-to-r from-az-scarlet to-az-flame"
                     animate={{
                       width: `${((currentQuestion + 1) / questions.length) * 100}%`,
                     }}
@@ -249,7 +253,7 @@ export default function QuizDetailPage(): React.JSX.Element {
                     <div className="w-8 h-8 rounded-xl bg-[var(--brand-purple)]/20 border border-[var(--brand-purple)]/40 flex items-center justify-center text-purple-300 font-bold shrink-0 mt-0.5">
                       {currentQuestion + 1}
                     </div>
-                    <h2 className="az-headline text-lg sm:text-2xl font-bold text-white leading-snug">
+                    <h2 className="az-headline text-lg sm:text-2xl text-az-ink">
                       {questions[currentQuestion].question}
                     </h2>
                   </div>
@@ -271,15 +275,15 @@ export default function QuizDetailPage(): React.JSX.Element {
                           }
                           className={`w-full text-left rounded-2xl p-4 sm:p-5 border transition-all flex items-center gap-4 group ${
                             isSelected
-                              ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)]/15 shadow-lg shadow-[var(--brand-orange)]/10 text-white'
-                              : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/[0.08] text-white/80'
+                              ? 'border-[var(--color-az-flame)] bg-[var(--color-az-flame)]/15 shadow-lg shadow-[var(--color-az-flame)]/10 text-az-ink'
+                              : 'border-az-glass-border bg-az-glass-fill hover:border-az-ink/20 hover:bg-az-ink/[0.08] text-az-ink/80'
                           }`}
                         >
                           <span
                             className={`w-8 h-8 rounded-xl border flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
                               isSelected
-                                ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)] text-white'
-                                : 'border-white/20 bg-white/5 text-white/60 group-hover:border-white/40'
+                                ? 'border-[var(--color-az-flame)] bg-[var(--color-az-flame)] text-az-ink'
+                                : 'border-az-ink/20 bg-az-glass-fill text-az-ink/60 group-hover:border-az-ink/40'
                             }`}
                           >
                             {optionLetter}
@@ -291,12 +295,12 @@ export default function QuizDetailPage(): React.JSX.Element {
                   </div>
 
                   {/* Step Navigation Controls */}
-                  <div className="flex items-center gap-3 pt-6 border-t border-white/10">
+                  <div className="flex items-center gap-3 pt-6 border-t border-az-glass-border">
                     {currentQuestion > 0 && (
                       <button
                         type="button"
                         onClick={() => setCurrentQuestion(currentQuestion - 1)}
-                        className="px-6 py-3 rounded-full text-sm font-semibold text-white/80 hover:text-white border border-white/15 bg-white/5 hover:bg-white/10 transition-all"
+                        className="px-6 py-3 rounded-full text-sm font-semibold text-az-ink/80 hover:text-az-ink border border-az-ink/15 bg-az-glass-fill hover:bg-az-glass-card transition-all"
                       >
                         Previous
                       </button>
@@ -320,7 +324,7 @@ export default function QuizDetailPage(): React.JSX.Element {
                       >
                         {submitMutation.isPending ? (
                           <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <div className="w-4 h-4 border-2 border-az-ink border-t-transparent rounded-full animate-spin" />
                             Grading Answers...
                           </>
                         ) : (

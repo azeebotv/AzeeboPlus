@@ -22,8 +22,8 @@ export default function ThemeToggle() {
           onClick={() => setTheme(option.value)}
           className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
             theme === option.value
-              ? 'bg-[var(--brand-orange)] text-white'
-              : 'bg-white/10 text-white/70 hover:bg-white/20'
+              ? 'bg-az-flame text-az-ink'
+              : 'bg-az-glass-card text-az-ink/70 hover:bg-az-ink/20'
           }`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

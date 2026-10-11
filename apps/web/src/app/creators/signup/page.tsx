@@ -3,11 +3,26 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import type { LucideIcon } from 'lucide-react';
+import { Check, Drama, Film, Gamepad2, Music, Sparkles, Trophy } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/components/ToastProvider';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
+
+/**
+ * Category glyphs are referenced by lucide name in `DEFAULT_CATEGORIES`; resolve
+ * them to components so the card renders the icon rather than its name.
+ */
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  Drama,
+  Sparkles,
+  Film,
+  Trophy,
+  Music,
+  Gamepad2,
+};
 
 interface CategoryOption {
   id: string;
@@ -167,258 +182,226 @@ export default function CreatorSignupPage(): React.JSX.Element {
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Creators" />
-
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-12">
-        <div className="text-center max-w-xl mx-auto mb-10">
-          <Link
-            href="/creators"
-            className="text-xs font-semibold uppercase tracking-widest text-[var(--brand-orange)] hover:underline inline-block mb-3"
-          >
+    <PageShell maxWidth="lg" activeNav="Creators" className="pb-16">
+      <PageHero
+        title="Join the Azeebo+ Creator Network"
+        description="Monetize your premium stories, connect directly with global audiences, and receive direct tipping and subscriptions."
+        actions={
+          <Link href="/creators" className="az-overline text-az-flame inline-block hover:underline">
             ← Back to Creator Hub
           </Link>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-            Join the Azeebo+ Creator Network
-          </h1>
-          <p className="text-white/60 text-sm sm:text-base leading-relaxed">
-            Monetize your premium stories, connect directly with global audiences, and receive
-            direct tipping and subscriptions.
-          </p>
-        </div>
+        }
+      />
 
-        {/* Step Indicator */}
-        <div className="flex items-center justify-center gap-3 sm:gap-6 mb-12">
-          {[
-            { num: 1, label: 'Category' },
-            { num: 2, label: 'Format' },
-            { num: 3, label: 'Profile' },
-          ].map((s) => (
-            <div key={s.num} className="flex items-center gap-2">
-              <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                  step === s.num
-                    ? 'bg-[var(--brand-orange)] text-white ring-4 ring-[var(--brand-orange)]/20 shadow-lg scale-105'
-                    : step > s.num
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-white/10 text-white/40'
-                }`}
-              >
-                {step > s.num ? 'Check' : s.num}
-              </div>
-              <span
-                className={`text-xs font-medium hidden sm:inline ${step >= s.num ? 'text-white' : 'text-white/40'}`}
-              >
-                {s.label}
-              </span>
-              {s.num < 3 && <div className="w-8 sm:w-12 h-0.5 bg-white/10 mx-1" />}
+      {/* Step Indicator */}
+      <div className="mb-12 flex items-center justify-center gap-3 sm:gap-6">
+        {[
+          { num: 1, label: 'Category' },
+          { num: 2, label: 'Format' },
+          { num: 3, label: 'Profile' },
+        ].map((s) => (
+          <div key={s.num} className="flex items-center gap-2">
+            <div
+              className={`flex size-9 items-center justify-center rounded-full transition-all ${
+                step === s.num
+                  ? 'scale-105 bg-az-scarlet text-az-ink shadow-az-glow ring-4 ring-az-scarlet/20'
+                  : step > s.num
+                    ? 'bg-az-success-500 text-az-ink'
+                    : 'bg-az-glass-card text-az-ink/40'
+              }`}
+            >
+              {step > s.num ? <Check className="size-4" aria-hidden="true" /> : s.num}
             </div>
-          ))}
-        </div>
+            <span
+              className={`az-caption hidden sm:inline ${step >= s.num ? 'text-az-ink' : 'text-az-ink/40'}`}
+            >
+              {s.label}
+            </span>
+            {s.num < 3 && <div className="mx-1 h-0.5 w-8 bg-az-glass-card sm:w-12" />}
+          </div>
+        ))}
+      </div>
 
-        {/* Wizard Container */}
-        <div className="az-glass p-6 sm:p-10 rounded-3xl border border-white/10 shadow-2xl">
-          {step === 1 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
-                  Select Your Primary Category
-                </h2>
-                <p className="text-white/60 text-sm">
-                  Choose the category that best describes your core creative work.
-                </p>
-              </div>
+      {/* Wizard Container */}
+      <div className="az-glass p-6 sm:p-10">
+        {step === 1 && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="az-section-title mb-2 text-az-ink">Select Your Primary Category</h2>
+              <p className="az-body text-az-ink-muted">
+                Choose the category that best describes your core creative work.
+              </p>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                {DEFAULT_CATEGORIES.map((cat) => {
-                  const isSelected = selectedCategory === cat.id;
-                  return (
-                    <div
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`p-5 rounded-2xl cursor-pointer border transition-all flex items-start gap-4 ${
-                        isSelected
-                          ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)]/10 shadow-lg scale-[1.02]'
-                          : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.05]'
-                      }`}
-                    >
-                      <span className="text-3xl">{cat.emoji}</span>
-                      <div>
-                        <h3 className="text-base font-bold text-white mb-1">{cat.label}</h3>
-                        <p className="text-xs text-white/50 leading-relaxed">{cat.description}</p>
-                      </div>
+            <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
+              {DEFAULT_CATEGORIES.map((cat) => {
+                const isSelected = selectedCategory === cat.id;
+                const CategoryIcon = CATEGORY_ICONS[cat.emoji] ?? Sparkles;
+                return (
+                  <div
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`flex cursor-pointer items-start gap-4 rounded-az-card border p-5 transition-all ${
+                      isSelected
+                        ? 'scale-[1.02] border-az-scarlet/40 bg-az-scarlet/10 shadow-az-glow'
+                        : 'border-az-glass-border bg-az-glass-fill hover:bg-az-glass-fill-hover'
+                    }`}
+                  >
+                    <CategoryIcon
+                      className="size-7 flex-shrink-0 text-az-flame"
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <h3 className="az-body-strong mb-1 text-az-ink">{cat.label}</h3>
+                      <p className="az-caption text-az-ink-muted">{cat.description}</p>
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-end pt-6">
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!selectedCategory}
+                className="az-btn-primary az-btn-primary--inline az-btn-primary--sm disabled:cursor-not-allowed"
+              >
+                Continue to Format →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="az-section-title mb-2 text-az-ink">
+                What is your primary content format?
+              </h2>
+              <p className="az-body text-az-ink-muted">
+                You can publish across multiple formats, but tell us your main focus.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
+              {DEFAULT_CONTENT_TYPES.map((type) => {
+                const isSelected = selectedContentType === type.id;
+                return (
+                  <div
+                    key={type.id}
+                    onClick={() => setSelectedContentType(type.id)}
+                    className={`cursor-pointer rounded-az-card border p-5 transition-all ${
+                      isSelected
+                        ? 'scale-[1.02] border-az-scarlet/40 bg-az-scarlet/10 shadow-az-glow'
+                        : 'border-az-glass-border bg-az-glass-fill hover:bg-az-glass-fill-hover'
+                    }`}
+                  >
+                    <h3 className="az-body-strong mb-1 text-az-ink">{type.label}</h3>
+                    <p className="az-caption text-az-ink-muted">{type.description}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-between pt-6">
+              <button
+                type="button"
+                onClick={handleBack}
+                className="az-body-strong rounded-az-pill bg-az-glass-fill px-6 py-3 text-az-ink-dim transition-colors hover:bg-az-glass-card hover:text-az-ink"
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!selectedContentType}
+                className="az-btn-primary az-btn-primary--inline az-btn-primary--sm disabled:cursor-not-allowed"
+              >
+                Continue to Profile →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <h2 className="az-section-title mb-2 text-az-ink">Creator Profile Details</h2>
+              <p className="az-body text-az-ink-muted">
+                Tell your audience and our curation team about yourself.
+              </p>
+            </div>
+
+            <div className="space-y-4 pt-2">
+              <div>
+                <label className="az-label">Creator / Channel Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.displayName}
+                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                  placeholder="e.g. Kola Studios or Maya Films"
+                  className="az-input"
+                />
               </div>
 
-              <div className="pt-6 flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={!selectedCategory}
-                  className="px-8 py-3.5 rounded-full font-bold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{
-                    background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                  }}
-                >
-                  Continue to Format →
-                </button>
+              <div>
+                <label className="az-label">Bio & Creative Vision</label>
+                <textarea
+                  rows={3}
+                  value={formData.bio}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  placeholder="Share a brief overview of your background, style, and what viewers can expect."
+                  className="az-input resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="az-label">Portfolio / Social Links (Optional)</label>
+                <input
+                  type="text"
+                  value={formData.socialLink}
+                  onChange={(e) => setFormData({ ...formData, socialLink: e.target.value })}
+                  placeholder="https://instagram.com/yourhandle or https://youtube.com/@channel"
+                  className="az-input"
+                />
+              </div>
+
+              <div>
+                <label className="az-label">Monetization Goals & Expectations</label>
+                <input
+                  type="text"
+                  value={formData.goals}
+                  onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
+                  placeholder="e.g. PPV specials, subscriber tiers, community tipping"
+                  className="az-input"
+                />
               </div>
             </div>
-          )}
 
-          {step === 2 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
-                  What is your primary content format?
-                </h2>
-                <p className="text-white/60 text-sm">
-                  You can publish across multiple formats, but tell us your main focus.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                {DEFAULT_CONTENT_TYPES.map((type) => {
-                  const isSelected = selectedContentType === type.id;
-                  return (
-                    <div
-                      key={type.id}
-                      onClick={() => setSelectedContentType(type.id)}
-                      className={`p-5 rounded-2xl cursor-pointer border transition-all ${
-                        isSelected
-                          ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)]/10 shadow-lg scale-[1.02]'
-                          : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.05]'
-                      }`}
-                    >
-                      <h3 className="text-base font-bold text-white mb-1">{type.label}</h3>
-                      <p className="text-xs text-white/50 leading-relaxed">{type.description}</p>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="pt-6 flex justify-between items-center">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="px-6 py-3 rounded-full font-semibold text-white/70 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
-                >
-                  ← Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={!selectedContentType}
-                  className="px-8 py-3.5 rounded-full font-bold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{
-                    background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                  }}
-                >
-                  Continue to Profile →
-                </button>
-              </div>
+            <div className="flex items-center justify-between pt-6">
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={isSubmitting}
+                className="az-body-strong rounded-az-pill bg-az-glass-fill px-6 py-3 text-az-ink-dim transition-colors hover:bg-az-glass-card hover:text-az-ink disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ← Back
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || !formData.displayName.trim()}
+                className="az-btn-primary az-btn-primary--inline az-btn-primary--sm disabled:cursor-not-allowed"
+              >
+                {isSubmitting
+                  ? 'Submitting Application...'
+                  : 'Complete & Launch Creator Studio Rocket'}
+              </button>
             </div>
-          )}
-
-          {step === 3 && (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
-                  Creator Profile Details
-                </h2>
-                <p className="text-white/60 text-sm">
-                  Tell your audience and our curation team about yourself.
-                </p>
-              </div>
-
-              <div className="space-y-4 pt-2">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-white/70 mb-2">
-                    Creator / Channel Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.displayName}
-                    onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                    placeholder="e.g. Kola Studios or Maya Films"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-[var(--brand-orange)] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-white/70 mb-2">
-                    Bio & Creative Vision
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={formData.bio}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    placeholder="Share a brief overview of your background, style, and what viewers can expect."
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-[var(--brand-orange)] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-white/70 mb-2">
-                    Portfolio / Social Links (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.socialLink}
-                    onChange={(e) => setFormData({ ...formData, socialLink: e.target.value })}
-                    placeholder="https://instagram.com/yourhandle or https://youtube.com/@channel"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-[var(--brand-orange)] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-white/70 mb-2">
-                    Monetization Goals & Expectations
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.goals}
-                    onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
-                    placeholder="e.g. PPV specials, subscriber tiers, community tipping"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-[var(--brand-orange)] transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-6 flex justify-between items-center">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  disabled={isSubmitting}
-                  className="px-6 py-3 rounded-full font-semibold text-white/70 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
-                >
-                  ← Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !formData.displayName.trim()}
-                  className="px-8 py-3.5 rounded-full font-bold text-white transition-all disabled:opacity-40 shadow-lg hover:scale-105"
-                  style={{
-                    background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                  }}
-                >
-                  {isSubmitting
-                    ? 'Submitting Application...'
-                    : 'Complete & Launch Creator Studio Rocket'}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      </main>
-
-      <AppFooter />
-    </div>
+          </form>
+        )}
+      </div>
+    </PageShell>
   );
 }

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from 'react';
 import { useServiceWorker } from '../hooks/useServiceWorker';
+import { useNetwork } from '../components/ui/OfflineIndicator';
 
 interface OfflineContextValue {
   isOnline: boolean;
@@ -27,22 +28,27 @@ const OfflineContext = createContext<OfflineContextValue>({
 
 export function OfflineProvider({ children }: { children: ReactNode }) {
   const sw = useServiceWorker();
+  // AUD-62: NetworkProvider (mounted as this provider's parent in the root
+  // layout) owns the single navigator.onLine listener for the whole app.
+  const { isOnline } = useNetwork();
 
   return (
-    <OfflineContext.Provider value={sw}>
+    <OfflineContext.Provider value={{ ...sw, isOnline }}>
       {children}
       {/* Update available banner */}
       {sw.updateAvailable && (
         <div
-          className="fixed bottom-4 right-4 z-50 az-glass p-4 rounded-xl shadow-lg max-w-sm"
-          style={{ border: '1px solid rgba(232,66,10,0.3)' }}
+          className="fixed bottom-4 right-4 z-50 az-glass p-4 max-w-sm"
+          style={{
+            border: '1px solid color-mix(in srgb, var(--color-az-scarlet) 30%, transparent)',
+          }}
         >
           <p className="text-sm text-white mb-3">A new version of Azeebo+ is available.</p>
           <div className="flex gap-2">
             <button
               onClick={sw.skipWaiting}
               className="flex-1 text-xs font-medium py-2 px-3 rounded-lg text-white"
-              style={{ background: 'var(--brand-orange, #E8420A)' }}
+              style={{ background: 'var(--color-az-flame)' }}
             >
               Update Now
             </button>
@@ -55,19 +61,10 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
           </div>
         </div>
       )}
-      {/* Offline indicator */}
-      {!sw.isOnline && (
-        <div
-          className="fixed top-0 left-0 right-0 z-50 py-2 px-4 text-center text-xs font-medium"
-          style={{ background: 'rgba(239,68,68,0.9)', color: 'white' }}
-        >
-          You&apos;re offline — some features may be limited
-        </div>
-      )}
       {/* Queue indicator */}
-      {sw.offlineQueueCount > 0 && sw.isOnline && (
-        <div className="fixed bottom-4 left-4 z-50 az-glass p-3 rounded-xl shadow-lg text-xs text-white/80">
-          <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2 animate-pulse" />
+      {sw.offlineQueueCount > 0 && isOnline && (
+        <div className="fixed bottom-4 left-4 z-50 az-glass p-3 text-xs text-white/80">
+          <span className="inline-block w-2 h-2 rounded-full bg-az-warning-500 mr-2 animate-pulse" />
           Syncing {sw.offlineQueueCount} queued action{sw.offlineQueueCount > 1 ? 's' : ''}...
         </div>
       )}

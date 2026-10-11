@@ -124,9 +124,9 @@ export function EmptyState({
   dark = false,
   className = '',
 }: EmptyStateProps) {
-  const titleColor = dark ? 'text-white' : 'text-gray-900';
-  const descColor = dark ? 'text-white/50' : 'text-gray-600';
-  const iconColor = dark ? 'text-white/30' : 'text-gray-400';
+  const titleColor = dark ? 'text-az-ink' : 'text-az-ink';
+  const descColor = dark ? 'text-az-ink/50' : 'text-az-ink-muted';
+  const iconColor = dark ? 'text-az-ink/30' : 'text-az-ink-dim';
 
   // Resolve icon: emoji -> icon name -> Lucide component
   const iconName = EMOJI_TO_ICON[icon] || ICON_MAP[icon] ? icon : EMOJI_TO_ICON[icon] || 'inbox';
@@ -141,12 +141,12 @@ export function EmptyState({
         strokeWidth={1.5}
         aria-hidden="true"
       />
-      <h3 className={`text-lg font-semibold ${titleColor} mb-2`}>{title}</h3>
-      <p className={`${descColor} max-w-md mb-6`}>{description}</p>
+      <h3 className={`az-title ${titleColor} mb-2`}>{title}</h3>
+      <p className={`az-lead ${descColor} max-w-md mb-6`}>{description}</p>
       {action && (
         <button
           onClick={action.onClick}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="az-btn-primary az-btn-primary--inline focus:outline-none focus:ring-2 focus:ring-az-flame"
         >
           {action.label}
         </button>

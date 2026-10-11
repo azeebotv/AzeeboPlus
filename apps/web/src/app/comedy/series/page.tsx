@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
 import { useUniversesQuery } from '@/hooks/useUniverses';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -41,37 +41,17 @@ function SeriesPageContent(): React.JSX.Element {
   const error = seriesQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Comedy" />
+    <PageShell activeNav="Comedy">
+      <PageHero
+        eyebrow="Comedy"
+        title="Comedy Series"
+        description="Binge-worthy comedy series from Africa's funniest creators"
+        accentColor="var(--color-az-universe-comedy)"
+      />
 
-      <section
-        className="relative py-16 sm:py-20"
-        style={{
-          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Comedy Series
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Binge-worthy comedy series from Africa&apos;s funniest creators
-          </motion.p>
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section className="py-4">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">All Series</h2>
+          <h2 className="az-section-title mb-6 text-az-ink sm:mb-8">All Series</h2>
         </ScrollReveal>
 
         {isLoading ? (
@@ -112,32 +92,30 @@ function SeriesPageContent(): React.JSX.Element {
                         height={200}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 via-transparent to-transparent" />
+                      <div className="absolute inset-0 az-scrim" />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div
-                          className="w-14 h-14 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
-                        >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="#E8420A">
+                        <div className="flex size-14 items-center justify-center rounded-full bg-az-ink/90">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="text-az-flame"
+                            aria-hidden="true"
+                          >
                             <polygon points="5,3 19,12 5,21" />
                           </svg>
                         </div>
                       </div>
                       {item.duration && (
-                        <span
-                          className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs font-medium"
-                          style={{
-                            backgroundColor: 'rgba(0,0,0,0.7)',
-                            color: 'var(--brand-white)',
-                          }}
-                        >
+                        <span className="az-caption absolute bottom-2 right-2 rounded-az-control bg-black/70 px-2 py-0.5 text-az-ink">
                           {Math.floor(item.duration / 60)}m
                         </span>
                       )}
                     </div>
                     <div className="p-4">
-                      <h3 className="font-bold text-white text-sm mb-2 truncate">{item.title}</h3>
-                      <p className="text-sm text-white/50 line-clamp-2">{item.description}</p>
+                      <h3 className="az-body-strong mb-2 truncate text-az-ink">{item.title}</h3>
+                      <p className="az-body line-clamp-2 text-az-ink-muted">{item.description}</p>
                     </div>
                   </GlowCard>
                 </Link>
@@ -146,13 +124,11 @@ function SeriesPageContent(): React.JSX.Element {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-lg text-white/50">No comedy series available</p>
+            <p className="az-lead text-az-ink-muted">No comedy series available</p>
           </div>
         )}
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -162,8 +138,8 @@ export default function SeriesPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

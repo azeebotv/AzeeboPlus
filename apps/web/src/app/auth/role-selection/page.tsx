@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Film, Laptop, Users } from 'lucide-react';
 import { webLogger } from '@/lib/logger';
 import { apiFetch } from '@/lib/api';
-import BrandLogo from '@/components/auth/BrandLogo';
+import AuthShell from '@/components/auth/AuthShell';
 import { Alert, Spinner } from '@/components/auth/FormBits';
 
 type Role = 'user' | 'creator' | 'both';
@@ -11,28 +12,28 @@ type Role = 'user' | 'creator' | 'both';
 const ROLES: {
   id: Role;
   title: string;
-  emoji: string;
+  icon: typeof Users;
   description: string;
   sub: string;
 }[] = [
   {
     id: 'user',
     title: 'Regular User',
-    emoji: 'Users',
-    description: 'Enjoy premium Nigerian contents',
-    sub: 'Discover music, movie, creator and entertainment',
+    icon: Users,
+    description: 'Enjoy premium Nigerian content',
+    sub: 'Discover music, movies, creators and entertainment',
   },
   {
     id: 'creator',
     title: 'Creator',
-    emoji: 'Film',
+    icon: Film,
     description: 'Build your audience and brand',
     sub: 'Showcase your talent, reach millions and connect',
   },
   {
     id: 'both',
     title: 'Creator & User',
-    emoji: 'Laptop',
+    icon: Laptop,
     description: 'Experience the best of both worlds',
     sub: 'Consume content and create your journey',
   },
@@ -67,99 +68,61 @@ export default function RoleSelectionPage(): React.JSX.Element {
   };
 
   return (
-    <div
-      className="relative min-h-screen w-full overflow-hidden p-6 sm:p-10"
-      style={{ backgroundColor: 'var(--brand-near-black)' }}
+    <AuthShell
+      headlineLines={['One account,', 'two ways in']}
+      tagline="Your curated home for Nigerian content, community and creation."
     >
-      {/* Lagos-at-night blurred ambient background */}
-      <div
-        className="absolute inset-0 opacity-25 pointer-events-none"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 20% 30%, rgba(232,66,10,0.25), transparent 40%), radial-gradient(circle at 80% 70%, rgba(168,85,247,0.18), transparent 50%), linear-gradient(180deg, var(--bg-secondary), var(--bg-primary))',
-        }}
-      />
-
-      <div className="relative z-10 max-w-6xl mx-auto">
-        <div className="mb-10">
-          <BrandLogo variant="light" />
-        </div>
-
-        <header className="text-center mb-10">
-          <h1 className="az-headline text-white text-4xl mb-3">Select Your Azeebo+ Role</h1>
-          <p className="text-white/55 text-base max-w-xl mx-auto">
-            Your curated home for Nigerian contents, community and creation.
-          </p>
-        </header>
-
-        {error && (
-          <div className="max-w-xl mx-auto mb-6">
-            <Alert>{error}</Alert>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {ROLES.map((role) => {
-            const isActive = active === role.id;
-            return (
-              <div
-                key={role.id}
-                className="az-glass az-glass--glow relative flex flex-col items-center text-center p-7 transition-all"
-                style={{
-                  boxShadow: isActive
-                    ? '0 0 30px rgba(204,28,28,0.45), 0 0 60px rgba(204,28,28,0.2)'
-                    : undefined,
-                }}
-              >
-                {/* Illustration tile */}
-                <div
-                  className="w-full rounded-xl mb-5 flex items-center justify-center"
-                  style={{
-                    height: 160,
-                    background:
-                      'linear-gradient(160deg, rgba(204,28,28,0.18), rgba(13,59,46,0.25))',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                  }}
-                >
-                  <span style={{ fontSize: 64 }}>{role.emoji}</span>
-                </div>
-
-                <h2 className="az-headline text-white text-xl mb-2">{role.title}</h2>
-                <p className="text-white font-semibold text-sm mb-1">{role.description}</p>
-                <p className="text-white/50 text-xs leading-relaxed mb-6">{role.sub}</p>
-
-                {isActive && (
-                  <div
-                    className="az-ambient-red"
-                    style={{
-                      width: 240,
-                      height: 120,
-                      bottom: -40,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                    }}
-                  />
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => handleRoleSelection(role.id)}
-                  className="az-btn-primary relative z-10 mt-auto"
-                  disabled={isLoading && isActive}
-                >
-                  {isLoading && isActive ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Spinner /> Selecting...
-                    </span>
-                  ) : (
-                    'Select'
-                  )}
-                </button>
-              </div>
-            );
-          })}
-        </div>
+      <div>
+        <h2 className="az-title text-az-ink">Select your Azeebo+ role</h2>
+        <p className="az-body mt-2 text-az-ink/60">
+          You can change this later — it only decides what you see first.
+        </p>
       </div>
-    </div>
+
+      {error && (
+        <div className="mt-5">
+          <Alert>{error}</Alert>
+        </div>
+      )}
+
+      <div className="mt-6 flex flex-col gap-3">
+        {ROLES.map((role) => {
+          const isActive = active === role.id;
+          const pending = isActive && isLoading;
+          return (
+            <button
+              key={role.id}
+              type="button"
+              onClick={() => handleRoleSelection(role.id)}
+              disabled={isLoading}
+              className={`flex w-full cursor-pointer items-center gap-4 rounded-az-panel border p-4 text-left transition-colors disabled:cursor-wait ${
+                isActive
+                  ? 'border-az-flame bg-az-flame/10'
+                  : 'border-az-glass-border bg-az-glass-fill hover:border-az-glass-border-hover'
+              }`}
+            >
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-az-control bg-az-flame/15 text-az-flame">
+                <role.icon size={20} aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="az-body-strong block text-az-ink">{role.title}</span>
+                <span className="az-caption block text-az-ink/60">
+                  {role.description} · {role.sub}
+                </span>
+              </span>
+              <span className="az-caption shrink-0 text-az-ink-muted">
+                {pending ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Spinner /> Selecting
+                  </span>
+                ) : (
+                  'Select'
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </AuthShell>
   );
 }

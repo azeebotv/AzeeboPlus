@@ -7,7 +7,22 @@ import { useUniverses } from '@/hooks/useUniverses';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import BrandLogo from '@/components/auth/BrandLogo';
-import { Mic, Film, Trophy, Compass, Laugh, Radio, Tv, Sparkles, type LucideIcon } from 'lucide-react';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
+import {
+  Disc3,
+  Drama,
+  Film,
+  Laugh,
+  Mic,
+  Music2,
+  Radio,
+  Sparkles,
+  Compass,
+  Trophy,
+  Tv,
+  type LucideIcon,
+} from 'lucide-react';
 
 type CategoryCard = {
   category: string;
@@ -56,6 +71,10 @@ const CATEGORY_CARDS: CategoryCard[] = [
   },
 ];
 
+/* The phone mockup's collage is decorative content, not a data set — the tiles
+   stand in for posters, so they get icons rather than emoji glyphs. */
+const COLLAGE_ICONS: LucideIcon[] = [Film, Mic, Disc3, Drama, Trophy, Music2];
+
 const universeIcons: Record<string, LucideIcon> = {
   movies: Film,
   music: Mic,
@@ -86,12 +105,10 @@ export default function OnboardingPage(): React.JSX.Element {
       });
       if (result.success) {
         localStorage.setItem('onboardingCompleted', 'true');
-        router.push('/home');
-      } else {
-        router.push('/home');
       }
     } catch (error) {
       webLogger.error('Failed to save preferences', error);
+    } finally {
       router.push('/home');
     }
   };
@@ -104,60 +121,43 @@ export default function OnboardingPage(): React.JSX.Element {
     const renderCard = (c: CategoryCard, index: number): React.JSX.Element => (
       <div
         key={c.category}
-        className="az-glass flex items-center gap-3 px-3 py-3"
-        style={{
-          width: 220,
-          opacity: 0,
-          animation: `fadeIn 0.6s ease ${0.2 + index * 0.12}s forwards`,
-        }}
+        className="az-glass flex w-[220px] items-center gap-3 px-3 py-3 opacity-0"
+        style={{ animation: 'fadeIn 0.6s ease forwards', animationDelay: `${0.2 + index * 0.12}s` }}
       >
-        <div
-          className="flex-shrink-0 flex items-center justify-center rounded-xl text-white shadow-md shadow-orange-500/20"
-          style={{
-            width: 44,
-            height: 44,
-            background: 'linear-gradient(135deg, #E8420A, #CC1C1C)',
-          }}
-        >
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-az-control bg-gradient-to-br from-az-flame to-az-scarlet text-az-ink shadow-lg shadow-az-flame/25">
           <c.icon size={22} strokeWidth={2} />
         </div>
         <div className="min-w-0">
-          <p className="font-bold text-white text-sm leading-tight">
-            {c.category} <span className="text-white/60">/ {c.sub}</span>
+          <p className="az-body-strong text-az-ink">
+            {c.category} <span className="text-az-ink/60">/ {c.sub}</span>
           </p>
-          <p className="text-white/50 italic text-xs leading-tight mt-0.5">{c.descriptor}</p>
+          <p className="az-caption mt-0.5 text-az-ink/50 italic">{c.descriptor}</p>
         </div>
       </div>
     );
 
     return (
-      <div
-        className="relative min-h-screen w-full overflow-hidden flex items-center justify-center"
-        style={{ backgroundColor: 'var(--brand-forest)' }}
-      >
+      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[var(--brand-forest)]">
         {/* Ambient green glow */}
         <div
-          className="az-ambient-red"
+          className="az-ambient-red pointer-events-none absolute -top-52 -left-52 size-[600px]"
           style={{
-            width: 600,
-            height: 600,
-            top: -200,
-            left: -200,
-            background: 'radial-gradient(circle, rgba(13,90,60,0.6) 0%, transparent 70%)',
+            background:
+              'radial-gradient(circle, color-mix(in srgb, var(--color-az-success-600) 60%, transparent) 0%, transparent 70%)',
           }}
         />
 
         {/* Logo top-left */}
-        <div className="absolute top-0 left-0 p-8 z-20">
+        <div className="absolute top-0 left-0 z-20 p-8">
           <BrandLogo variant="orange" />
         </div>
 
         {/* Orbiting category cards */}
-        <div className="hidden xl:flex absolute inset-0 items-center pointer-events-none">
-          <div className="flex flex-col gap-6 mr-auto pl-8 2xl:pl-24">
+        <div className="pointer-events-none absolute inset-0 hidden items-center xl:flex">
+          <div className="mr-auto flex flex-col gap-6 pl-8 2xl:pl-24">
             {leftCards.map(renderCard)}
           </div>
-          <div className="flex flex-col gap-6 ml-auto pr-8 2xl:pr-24">
+          <div className="ml-auto flex flex-col gap-6 pr-8 2xl:pr-24">
             {rightCards.map(renderCard)}
           </div>
         </div>
@@ -165,56 +165,46 @@ export default function OnboardingPage(): React.JSX.Element {
         {/* Center: phone mockup */}
         <div className="relative z-10 flex flex-col items-center px-6 text-center">
           <div
-            className="relative rounded-[2.5rem] p-2 mb-8"
+            className="relative mb-8 h-[520px] w-[260px] rounded-az-hero border-2 border-az-glass-border-hover p-2"
             style={{
-              width: 260,
-              height: 520,
-              background: 'linear-gradient(160deg, var(--bg-primary), #000)',
-              border: '2px solid rgba(255,255,255,0.15)',
-              boxShadow: '0 0 50px rgba(232,66,10,0.25), 0 30px 60px rgba(0,0,0,0.6)',
+              background:
+                'linear-gradient(160deg, var(--color-az-surface-panel), var(--color-az-surface-root))',
+              boxShadow:
+                '0 0 50px color-mix(in srgb, var(--color-az-scarlet) 25%, transparent), 0 30px 60px color-mix(in srgb, var(--color-az-surface-root) 60%, transparent)',
             }}
           >
             {/* Phone notch */}
-            <div
-              className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full"
-              style={{ width: 90, height: 18, background: 'black' }}
-            />
+            <div className="absolute top-2 left-1/2 h-[18px] w-[90px] -translate-x-1/2 rounded-az-pill bg-[var(--color-az-surface-root)]" />
             {/* Phone screen */}
             <div
-              className="relative w-full h-full rounded-[2.1rem] overflow-hidden flex flex-col items-center justify-center px-5"
+              className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[calc(var(--radius-az-hero)_-_8px)] px-5"
               style={{
                 background:
-                  'linear-gradient(160deg, rgba(204,28,28,0.35) 0%, rgba(13,59,46,0.6) 60%, rgba(26,10,10,0.9) 100%)',
+                  'linear-gradient(160deg, color-mix(in srgb, var(--color-az-scarlet) 35%, transparent) 0%, color-mix(in srgb, var(--brand-forest) 60%, transparent) 60%, color-mix(in srgb, var(--color-az-surface-root) 90%, transparent) 100%)',
               }}
             >
-              {/* Content collage emoji grid */}
-              <div className="grid grid-cols-3 gap-1.5 mb-6 opacity-90">
-                {['Film', 'Mic', 'Circle', 'Drama', 'Trophy', 'Music'].map((e, i) => (
+              {/* Content collage */}
+              <div className="mb-6 grid grid-cols-3 gap-1.5 opacity-90">
+                {COLLAGE_ICONS.map((Icon, i) => (
                   <div
                     key={i}
-                    className="rounded-md flex items-center justify-center text-lg"
-                    style={{
-                      width: 46,
-                      height: 46,
-                      background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                    }}
+                    className="flex size-[46px] items-center justify-center rounded-az-control border border-az-glass-border bg-az-glass-fill text-az-ink/80"
                   >
-                    {e}
+                    <Icon size={20} strokeWidth={1.75} />
                   </div>
                 ))}
               </div>
 
               {/* Multilingual welcome */}
-              <p className="az-headline text-white text-2xl leading-tight mb-1">Ekaabo</p>
-              <p className="text-white/80 text-sm font-semibold mb-1">Sannu Da Zuwa</p>
-              <p className="az-headline text-white text-xl leading-tight mb-6">Welcome Home</p>
+              <h1 className="az-title text-az-ink">Ekaabo</h1>
+              <p className="az-body-strong mt-1 text-az-ink/80">Sannu Da Zuwa</p>
+              <p className="az-subtitle mt-1 mb-6 text-az-ink">Welcome Home</p>
 
               <button
+                type="button"
                 aria-label="Get started"
                 onClick={() => setStep(2)}
-                className="az-btn-primary"
-                style={{ width: 'auto', paddingInline: '1.75rem', fontSize: '0.8rem' }}
+                className="az-btn-primary az-btn-primary--inline az-btn-primary--sm"
               >
                 GET STARTED
               </button>
@@ -224,10 +214,10 @@ export default function OnboardingPage(): React.JSX.Element {
           {/* Mobile fallback CTA */}
           <div className="xl:hidden">
             <button
+              type="button"
               aria-label="Get started"
               onClick={() => setStep(2)}
-              className="az-btn-primary"
-              style={{ width: 'auto', paddingInline: '2.5rem' }}
+              className="az-btn-primary az-btn-primary--inline"
             >
               GET STARTED
             </button>
@@ -236,7 +226,7 @@ export default function OnboardingPage(): React.JSX.Element {
           <div className="mt-5">
             <Link
               href="/auth/login"
-              className="text-white/70 hover:text-white text-sm font-medium transition-colors"
+              className="az-body text-az-ink/70 transition-colors hover:text-az-ink"
             >
               Sign In
             </Link>
@@ -248,76 +238,70 @@ export default function OnboardingPage(): React.JSX.Element {
 
   /* ---------- STEP 2: Interests (Dark) ---------- */
   return (
-    <div
-      className="min-h-screen w-full p-6 sm:p-10"
-      style={{ backgroundColor: 'var(--brand-near-black)' }}
-    >
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <BrandLogo variant="light" />
-        </div>
-
-        <div className="text-center mb-10">
-          <h1 className="az-headline text-white text-4xl mb-3">What interests you?</h1>
-          <p className="text-white/60 text-lg">
-            Select at least 3 topics to personalize your experience
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
-          {universesLoading ? (
-            <div className="col-span-full text-center text-white/60 py-12">
-              Loading interests...
-            </div>
-          ) : (
-            universes.map((universe) => {
-              const active = selectedInterests.includes(universe.name);
-              const UniverseIcon = universeIcons[universe.name?.toLowerCase() || ''] || Film;
-              return (
-                <button
-                  key={universe.id}
-                  onClick={() => toggleInterest(universe.name)}
-                  className="flex items-center gap-3.5 p-4 rounded-2xl border transition-all text-left"
-                  style={{
-                    background: active ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.04)',
-                    borderColor: active ? 'var(--brand-orange)' : 'rgba(255,255,255,0.1)',
-                    boxShadow: active ? '0 0 20px rgba(232,66,10,0.3)' : 'none',
-                  }}
-                >
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-                      active
-                        ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30'
-                        : 'bg-white/10 text-white/70'
-                    }`}
-                  >
-                    <UniverseIcon size={20} strokeWidth={1.75} />
-                  </div>
-                  <span className="font-bold text-white text-sm">{universe.displayName}</span>
-                </button>
-              );
-            })
-          )}
-        </div>
-
-        <div className="text-center">
-          <p className="text-white/50 mb-4">
-            {selectedInterests.length} selected
-            {selectedInterests.length >= 3 && (
-              <span className="text-green-400 font-semibold ml-2">— Ready!</span>
-            )}
-          </p>
-          <button
-            onClick={handleComplete}
-            disabled={selectedInterests.length < 3}
-            aria-label="Continue to Azeebo+"
-            className="az-btn-primary"
-            style={{ width: 'auto', paddingInline: '3rem' }}
-          >
-            Continue to Azeebo+
-          </button>
-        </div>
+    <PageShell maxWidth="lg" showHeader={false} showFooter={false} className="pb-16">
+      <div className="mb-8">
+        <BrandLogo variant="light" />
       </div>
-    </div>
+
+      <PageHero
+        title="What interests you?"
+        description="Select at least 3 topics to personalize your experience"
+      />
+
+      <div className="mb-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+        {universesLoading ? (
+          <div className="az-body col-span-full py-12 text-center text-az-ink/60">
+            Loading interests...
+          </div>
+        ) : (
+          universes.map((universe) => {
+            const active = selectedInterests.includes(universe.name);
+            const UniverseIcon = universeIcons[universe.name?.toLowerCase() || ''] || Film;
+            return (
+              <button
+                key={universe.id}
+                type="button"
+                onClick={() => toggleInterest(universe.name)}
+                aria-pressed={active}
+                className={`flex cursor-pointer items-center gap-3.5 rounded-az-card border p-4 text-left transition-colors ${
+                  active
+                    ? 'border-az-flame bg-az-scarlet/20'
+                    : 'border-az-glass-border bg-az-glass-fill hover:border-az-glass-border-hover'
+                }`}
+              >
+                <div
+                  className={`flex size-10 shrink-0 items-center justify-center rounded-az-control transition-colors ${
+                    active
+                      ? 'bg-az-flame text-az-ink shadow-md shadow-az-flame/30'
+                      : 'bg-az-glass-card text-az-ink/70'
+                  }`}
+                >
+                  <UniverseIcon size={20} strokeWidth={1.75} />
+                </div>
+                <span className="az-body-strong text-az-ink">{universe.displayName}</span>
+              </button>
+            );
+          })
+        )}
+      </div>
+
+      <div className="flex flex-col items-center gap-4">
+        <p className="az-body text-az-ink-muted">
+          {selectedInterests.length} selected
+          {selectedInterests.length >= 3 && (
+            <span className="az-body-strong ml-2 text-az-success-400">— Ready!</span>
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={handleComplete}
+          disabled={selectedInterests.length < 3}
+          aria-label="Continue to Azeebo+"
+          className="az-btn-primary az-btn-primary--inline"
+        >
+          Continue to Azeebo+
+        </button>
+      </div>
+    </PageShell>
   );
 }

@@ -64,7 +64,7 @@ export default function AOUWhatYouKnowPage(): React.JSX.Element {
       <div className="mb-6">
         <Link
           href="/aou"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-amber-400 transition-colors"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-az-ink/60 hover:text-az-warning-400 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Agbalá Olódùmarè Hub
         </Link>
@@ -75,13 +75,13 @@ export default function AOUWhatYouKnowPage(): React.JSX.Element {
         eyebrowColor="var(--brand-gold)"
         title="What You Know"
         subtitle="Your personalized compendium of unlocked revelations, mystical origins, and cosmic lore."
-        glowColor="rgba(245, 158, 11, 0.25)"
+        glowColor="color-mix(in srgb, var(--color-az-warning-500) 25%, transparent)"
         actions={
           <Link
             href="/aou/knowledge-locked"
-            className="px-5 py-2 rounded-full text-xs sm:text-sm font-semibold text-white/80 hover:text-white border border-white/15 bg-white/5 hover:bg-white/10 transition-all flex items-center gap-2"
+            className="px-5 py-2 rounded-full text-xs sm:text-sm font-semibold text-az-ink/80 hover:text-az-ink border border-az-ink/15 bg-az-glass-fill hover:bg-az-glass-card transition-all flex items-center gap-2"
           >
-            <Lock className="w-3.5 h-3.5 text-amber-400" />
+            <Lock className="w-3.5 h-3.5 text-az-warning-400" />
             View Locked Knowledge
           </Link>
         }
@@ -89,24 +89,24 @@ export default function AOUWhatYouKnowPage(): React.JSX.Element {
 
       {/* Progress Summary Header */}
       {knowledge && (
-        <div className="az-glass p-6 sm:p-8 rounded-2xl mb-10 border border-amber-500/20">
+        <div className="az-glass p-6 sm:p-8 mb-10 border">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <div className="w-10 h-10 rounded-xl bg-az-warning-500/10 border border-az-warning-500/30 flex items-center justify-center text-az-warning-400">
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Unlocked Knowledge Codex</h2>
-                <p className="text-xs sm:text-sm text-white/60">
+                <h2 className="text-lg font-bold text-az-ink">Unlocked Knowledge Codex</h2>
+                <p className="text-xs sm:text-sm text-az-ink/60">
                   {knowledge.totalUnlocked} of {knowledge.totalUnits} items unlocked
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-2xl sm:text-3xl font-extrabold text-amber-400">
+              <span className="az-headline text-2xl sm:text-3xl font-extrabold text-az-warning-400">
                 {Math.round((knowledge.totalUnlocked / (knowledge.totalUnits || 1)) * 100)}%
               </span>
-              <p className="text-xs text-white/40 uppercase tracking-wider font-semibold">
+              <p className="text-xs text-az-ink/40 uppercase tracking-wider font-semibold">
                 COMPLETION
               </p>
             </div>
@@ -131,8 +131,8 @@ export default function AOUWhatYouKnowPage(): React.JSX.Element {
           {Object.entries(categories).map(([category, units], catIndex) => (
             <section key={category}>
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <h2 className="az-headline text-xl sm:text-2xl font-bold text-white uppercase tracking-wide">
+                <Sparkles className="w-4 h-4 text-az-warning-400" />
+                <h2 className="az-headline text-xl sm:text-2xl text-az-ink uppercase">
                   {category}
                 </h2>
               </div>
@@ -143,30 +143,30 @@ export default function AOUWhatYouKnowPage(): React.JSX.Element {
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35, delay: (catIndex * 2 + unitIndex) * 0.05 }}
-                    className="az-glass p-5 sm:p-6 rounded-2xl border border-white/10 hover:border-amber-500/30 transition-all flex flex-col justify-between"
+                    className="az-glass p-5 sm:p-6 border border-az-glass-border transition-all flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-3">
-                        <h3 className="font-bold text-white text-base sm:text-lg">{unit.title}</h3>
+                        <h3 className="font-bold text-az-ink text-base sm:text-lg">{unit.title}</h3>
                         {unit.unlocked ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-az-success-500/10 text-az-success-400 border border-az-success-500/20">
                             <CheckCircle2 className="w-3 h-3" /> Unlocked
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/5 text-white/40 border border-white/10">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-az-glass-fill text-az-ink/40 border border-az-glass-border">
                             <Lock className="w-3 h-3" /> Locked
                           </span>
                         )}
                       </div>
                       {unit.description && (
-                        <p className="text-sm text-white/65 leading-relaxed mb-4">
+                        <p className="text-sm text-az-ink/65 leading-relaxed mb-4">
                           {unit.description}
                         </p>
                       )}
                     </div>
 
                     {unit.unlockedAt && (
-                      <p className="text-[11px] text-white/40 pt-2 border-t border-white/5">
+                      <p className="text-[11px] text-az-ink/40 pt-2 border-t border-az-ink/5">
                         Unlocked on {new Date(unit.unlockedAt).toLocaleDateString()}
                       </p>
                     )}
@@ -177,10 +177,10 @@ export default function AOUWhatYouKnowPage(): React.JSX.Element {
           ))}
         </div>
       ) : (
-        <div className="az-glass p-12 text-center rounded-2xl">
-          <BookOpen className="w-10 h-10 text-amber-400 mx-auto mb-4 opacity-80" />
-          <h3 className="text-lg font-bold text-white mb-2">No Lore Recorded Yet</h3>
-          <p className="text-sm text-white/50 max-w-md mx-auto mb-6">
+        <div className="az-glass p-12 text-center">
+          <BookOpen className="w-10 h-10 text-az-warning-400 mx-auto mb-4 opacity-80" />
+          <h3 className="text-lg font-bold text-az-ink mb-2">No Lore Recorded Yet</h3>
+          <p className="text-sm text-az-ink/50 max-w-md mx-auto mb-6">
             Watch episodes, take part in quizzes, and complete challenges to unlock units in your
             codex.
           </p>

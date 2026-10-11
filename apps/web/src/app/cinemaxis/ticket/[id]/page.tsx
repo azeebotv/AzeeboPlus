@@ -4,9 +4,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { messageOf, requireData } from '@/lib/payload';
 
 interface DigitalTicketProduct {
   id: string;
@@ -30,12 +31,14 @@ export default function DigitalTicketPage(): React.JSX.Element {
   const {
     data: product,
     isLoading,
+    isError,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['cinemaxis', 'ticket', filmId],
     queryFn: async () => {
       const res = await apiFetch<DigitalTicketProduct>(`/v1/movies/cinemaxis/${filmId}/ticket`);
-      return res.success ? res.data : null;
+      return requireData(res) ?? null;
     },
   });
 
@@ -50,92 +53,89 @@ export default function DigitalTicketPage(): React.JSX.Element {
     },
   });
 
-  if (error) {
+  if (isError) {
     return (
-      <>
-        <AppHeader />
-        <main className="min-h-screen bg-gray-950 text-white">
-          <ErrorState description="Failed to load ticket information. Please try again." />
-        </main>
-        <AppFooter />
-      </>
+      <PageShell maxWidth="md" activeNav="Cinemaxis">
+        <div className="py-12">
+          <ErrorState
+            title="Ticket information unavailable"
+            description={messageOf(error)}
+            onButtonPress={() => refetch()}
+          />
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <>
-      <AppHeader />
-      <main className="min-h-screen bg-gray-950 text-white">
-        <div className="max-w-lg mx-auto px-4 py-12">
-          {isLoading ? (
-            <div className="space-y-6">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-60 w-full" />
+    <PageShell maxWidth="md" activeNav="Cinemaxis">
+      <PageHero eyebrow="Cinemaxis" title="Digital Ticket" />
+
+      <div className="-mt-4 pb-12">
+        {isLoading ? (
+          <div className="space-y-6">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-60 w-full" />
+          </div>
+        ) : product ? (
+          <div className="az-glass p-6 space-y-4">
+            <div>
+              <h2 className="az-title text-az-ink">{product.title}</h2>
+              <p className="az-section-title mt-2 text-az-flame">
+                ₦{product.price.toLocaleString()}
+              </p>
             </div>
-          ) : product ? (
-            <>
-              <h1 className="text-2xl font-bold mb-6">Digital Ticket</h1>
-              <div className="bg-gray-900 rounded-xl p-6 space-y-4">
-                <div>
-                  <h2 className="text-xl font-bold">{product.title}</h2>
-                  <p className="text-3xl font-bold text-purple-400 mt-2">
-                    ₦{product.price.toLocaleString()}
-                  </p>
-                </div>
-                <div className="border-t border-gray-800 pt-4 space-y-2 text-sm text-gray-400">
-                  <p>
-                    <span className="text-gray-300">Access Duration:</span> {product.accessDuration}
-                  </p>
-                  <p>
-                    <span className="text-gray-300">Access Window:</span> {product.accessWindow}
-                  </p>
-                  <p>
-                    <span className="text-gray-300">Refund Policy:</span> {product.refundPolicy}
-                  </p>
-                  {product.rightsRestrictions && product.rightsRestrictions.length > 0 && (
-                    <p>
-                      <span className="text-gray-300">Rights Restrictions:</span>{' '}
-                      {product.rightsRestrictions.join(', ')}
-                    </p>
-                  )}
-                </div>
-                <div className="border-t border-gray-800 pt-4">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={agreedToTerms}
-                      onChange={(e) => setAgreedToTerms(e.target.checked)}
-                      className="mt-1"
-                    />
-                    <span className="text-sm text-gray-400">
-                      I understand the access duration, refund policy, and terms above.
-                    </span>
-                  </label>
-                </div>
-                {user ? (
-                  <button
-                    onClick={() => purchaseMutation.mutate()}
-                    disabled={!agreedToTerms || purchaseMutation.isPending}
-                    className="w-full bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-semibold transition disabled:opacity-50"
-                  >
-                    {purchaseMutation.isPending
-                      ? 'Processing...'
-                      : `Pay ₦${product.price.toLocaleString()}`}
-                  </button>
-                ) : (
-                  <p className="text-center text-gray-400">
-                    <a href="/auth/login" className="text-purple-400 hover:underline">
-                      Sign in
-                    </a>{' '}
-                    to purchase.
-                  </p>
-                )}
-              </div>
-            </>
-          ) : null}
-        </div>
-      </main>
-      <AppFooter />
-    </>
+            <div className="border-t border-az-ink/10 pt-4 space-y-2 az-body text-az-ink-dim">
+              <p>
+                <span className="text-az-ink-muted">Access Duration:</span> {product.accessDuration}
+              </p>
+              <p>
+                <span className="text-az-ink-muted">Access Window:</span> {product.accessWindow}
+              </p>
+              <p>
+                <span className="text-az-ink-muted">Refund Policy:</span> {product.refundPolicy}
+              </p>
+              {product.rightsRestrictions && product.rightsRestrictions.length > 0 && (
+                <p>
+                  <span className="text-az-ink-muted">Rights Restrictions:</span>{' '}
+                  {product.rightsRestrictions.join(', ')}
+                </p>
+              )}
+            </div>
+            <div className="border-t border-az-ink/10 pt-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-1 accent-az-flame"
+                />
+                <span className="az-body text-az-ink-muted">
+                  I understand the access duration, refund policy, and terms above.
+                </span>
+              </label>
+            </div>
+            {user ? (
+              <button
+                onClick={() => purchaseMutation.mutate()}
+                disabled={!agreedToTerms || purchaseMutation.isPending}
+                className="az-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {purchaseMutation.isPending
+                  ? 'Processing...'
+                  : `Pay ₦${product.price.toLocaleString()}`}
+              </button>
+            ) : (
+              <p className="az-body text-center text-az-ink-dim">
+                <a href="/auth/login" className="text-az-flame hover:underline">
+                  Sign in
+                </a>{' '}
+                to purchase.
+              </p>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </PageShell>
   );
 }

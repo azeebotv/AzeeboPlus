@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import { EmptyState } from '@/components/ui/EmptyState';
 import analytics from '@/lib/analytics';
 import { Gift } from 'lucide-react';
@@ -53,36 +53,27 @@ function RedemptionContent() {
   const isLoading = walletQuery.isLoading || itemsQuery.isLoading;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <AppHeader active="Rewards" logoVariant="light" />
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-[var(--brand-orange)] flex items-center justify-center border border-orange-500/20">
-              <Gift size={22} />
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-white">Redeem Points</h1>
-          </div>
-          <p className="text-white/50 text-lg mb-8">Convert your earned points into real rewards</p>
-        </motion.div>
+    <PageShell activeNav="Rewards">
+      <PageHero title="Redeem Points" description="Convert your earned points into real rewards" />
 
-        <div className="grid grid-cols-3 gap-4 mb-10">
-          <div className="az-glass p-6 text-center border border-white/10">
-            <p className="text-3xl font-bold text-white">{wallet.points.toLocaleString()}</p>
-            <p className="text-sm text-white/40 mt-1">Available Points</p>
+      <div className="pb-16">
+        <div className="mb-10 grid grid-cols-3 gap-4">
+          <div className="az-glass p-6 text-center">
+            <p className="az-heading text-az-ink">{wallet.points.toLocaleString()}</p>
+            <p className="az-caption mt-1 text-az-ink-muted">Available Points</p>
           </div>
-          <div className="az-glass p-6 text-center border border-white/10">
-            <p className="text-3xl font-bold text-white">{wallet.totalEarned.toLocaleString()}</p>
-            <p className="text-sm text-white/40 mt-1">Total Earned</p>
+          <div className="az-glass p-6 text-center">
+            <p className="az-heading text-az-ink">{wallet.totalEarned.toLocaleString()}</p>
+            <p className="az-caption mt-1 text-az-ink-muted">Total Earned</p>
           </div>
-          <div className="az-glass p-6 text-center border border-white/10">
-            <p className="text-3xl font-bold text-white">{wallet.totalRedeemed.toLocaleString()}</p>
-            <p className="text-sm text-white/40 mt-1">Total Redeemed</p>
+          <div className="az-glass p-6 text-center">
+            <p className="az-heading text-az-ink">{wallet.totalRedeemed.toLocaleString()}</p>
+            <p className="az-caption mt-1 text-az-ink-muted">Total Redeemed</p>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass p-6">
                 <Skeleton height="120px" borderRadius="12" />
@@ -103,7 +94,7 @@ function RedemptionContent() {
             dark
           />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item, index) => {
               const canAfford = wallet.points >= item.pointsCost;
               return (
@@ -113,19 +104,19 @@ function RedemptionContent() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.08 }}
-                  className="az-glass p-6 flex flex-col border border-white/10"
+                  className="az-glass flex flex-col p-6"
                 >
-                  <div className="text-center mb-4">
-                    <div className="w-14 h-14 rounded-2xl bg-orange-500/10 text-[var(--brand-orange)] flex items-center justify-center mx-auto mb-3 border border-orange-500/20">
+                  <div className="mb-4 text-center">
+                    <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-az-card border border-az-flame/20 bg-az-flame/10 text-az-flame">
                       <Gift size={24} />
                     </div>
-                    <h3 className="text-lg font-bold text-white">{item.title}</h3>
-                    <p className="text-sm text-white/50 mt-1">{item.description}</p>
+                    <h3 className="text-lg font-bold text-az-ink">{item.title}</h3>
+                    <p className="az-body mt-1 text-az-ink-muted">{item.description}</p>
                   </div>
                   <div className="mt-auto">
-                    <div className="flex justify-between items-center mb-3 text-sm">
-                      <span className="text-white/40">Cost</span>
-                      <span className="font-bold text-white">
+                    <div className="mb-3 flex items-center justify-between az-caption">
+                      <span className="text-az-ink-muted">Cost</span>
+                      <span className="az-body-strong text-az-ink">
                         {item.pointsCost.toLocaleString()} pts
                       </span>
                     </div>
@@ -134,23 +125,12 @@ function RedemptionContent() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         disabled={!canAfford}
-                        className={`w-full py-3 rounded-xl font-semibold text-sm ${canAfford ? 'az-btn-primary' : 'opacity-50 cursor-not-allowed'}`}
-                        style={
-                          !canAfford
-                            ? {
-                                backgroundColor: 'rgba(255,255,255,0.05)',
-                                color: 'rgba(255,255,255,0.3)',
-                              }
-                            : {}
-                        }
+                        className="az-btn-primary"
                       >
                         {canAfford ? 'Redeem' : `Need ${item.pointsCost - wallet.points} more`}
                       </motion.button>
                     ) : (
-                      <div
-                        className="w-full py-3 rounded-xl text-center text-sm text-white/30"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
-                      >
+                      <div className="az-body w-full rounded-az-card bg-az-ink/5 py-3 text-center text-az-ink-dim">
                         Out of stock
                       </div>
                     )}
@@ -160,9 +140,8 @@ function RedemptionContent() {
             })}
           </div>
         )}
-      </section>
-      <AppFooter logoVariant="light" />
-    </div>
+      </div>
+    </PageShell>
   );
 }
 
@@ -171,8 +150,8 @@ export default function RedemptionPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

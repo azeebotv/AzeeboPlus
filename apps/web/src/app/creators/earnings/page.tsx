@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 
 /**
  * Creator Earnings Dashboard (TAA §68)
@@ -81,187 +83,176 @@ export default function CreatorEarningsPage() {
   };
 
   const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    processing: 'bg-blue-100 text-blue-800',
-    completed: 'bg-green-100 text-green-800',
-    failed: 'bg-red-100 text-red-800',
+    pending: 'bg-az-warning-500/15 text-az-warning-400',
+    processing: 'bg-az-secondary-500/15 text-az-secondary-400',
+    completed: 'bg-az-success-500/15 text-az-success-400',
+    failed: 'bg-az-error-500/15 text-az-error-400',
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Earnings Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Track your earnings, payouts, and performance
-          </p>
-        </div>
+    <PageShell maxWidth="xl" className="pb-16">
+      <PageHero
+        title="Earnings Dashboard"
+        eyebrow="Creators"
+        description="Track your earnings, payouts, and performance"
+      />
 
-        {/* Summary cards */}
-        {summary && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Total Earnings</p>
-              <p className="text-2xl font-bold text-foreground">
-                {summary.totalEarnings.toLocaleString()} {summary.currency}
-              </p>
-            </div>
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Pending Payout</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {summary.pendingPayout.toLocaleString()} {summary.currency}
-              </p>
-            </div>
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">This Month</p>
-              <p className="text-2xl font-bold text-foreground">
-                {summary.currentMonth.toLocaleString()} {summary.currency}
-              </p>
-              <p
-                className={`text-xs ${summary.growthPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}
-              >
-                {summary.growthPercent >= 0 ? '↑' : '↓'} {Math.abs(summary.growthPercent)}% vs last
-                month
-              </p>
-            </div>
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Paid Out</p>
-              <p className="text-2xl font-bold text-green-600">
-                {summary.paidOut.toLocaleString()} {summary.currency}
-              </p>
-            </div>
+      {/* Summary cards */}
+      {summary && (
+        <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="az-glass p-4">
+            <p className="az-caption text-az-ink-muted">Total Earnings</p>
+            <p className="az-title mt-1 text-az-ink">
+              {summary.totalEarnings.toLocaleString()} {summary.currency}
+            </p>
           </div>
-        )}
-
-        {/* Tabs */}
-        <div className="flex gap-1 bg-muted rounded-lg p-1 mb-6">
-          {(['overview', 'history', 'payouts'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                activeTab === tab
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+          <div className="az-glass p-4">
+            <p className="az-caption text-az-ink-muted">Pending Payout</p>
+            <p className="az-title mt-1 text-az-secondary-400">
+              {summary.pendingPayout.toLocaleString()} {summary.currency}
+            </p>
+          </div>
+          <div className="az-glass p-4">
+            <p className="az-caption text-az-ink-muted">This Month</p>
+            <p className="az-title mt-1 text-az-ink">
+              {summary.currentMonth.toLocaleString()} {summary.currency}
+            </p>
+            <p
+              className={`az-micro-label mt-1 ${summary.growthPercent >= 0 ? 'text-az-success-400' : 'text-az-error-500'}`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+              {summary.growthPercent >= 0 ? '↑' : '↓'} {Math.abs(summary.growthPercent)}% vs last
+              month
+            </p>
+          </div>
+          <div className="az-glass p-4">
+            <p className="az-caption text-az-ink-muted">Paid Out</p>
+            <p className="az-title mt-1 text-az-success-400">
+              {summary.paidOut.toLocaleString()} {summary.currency}
+            </p>
+          </div>
         </div>
+      )}
 
-        {loading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading earnings...</div>
-        ) : error ? (
-          <div className="text-center py-12 text-destructive">{error}</div>
-        ) : (
-          <>
-            {/* History tab */}
-            {activeTab === 'history' && (
-              <div className="bg-card rounded-xl border overflow-hidden">
+      {/* Tabs */}
+      <div className="mb-6 flex gap-1 rounded-az-control bg-az-glass-fill p-1">
+        {(['overview', 'history', 'payouts'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`az-body-strong flex-1 rounded-az-control px-4 py-2 transition-colors ${
+              activeTab === tab
+                ? 'bg-az-glass-fill-active text-az-ink'
+                : 'text-az-ink-muted hover:text-az-ink'
+            }`}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="az-body py-12 text-center text-az-ink-muted">Loading earnings...</div>
+      ) : error ? (
+        <div className="az-body py-12 text-center text-az-error-400">{error}</div>
+      ) : (
+        <>
+          {/* History tab */}
+          {activeTab === 'history' && (
+            <div className="az-glass overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-az-glass-fill">
+                  <tr>
+                    <th className="az-body-strong px-4 py-3 text-left text-az-ink-muted">Type</th>
+                    <th className="az-body-strong px-4 py-3 text-left text-az-ink-muted">
+                      Description
+                    </th>
+                    <th className="az-body-strong px-4 py-3 text-left text-az-ink-muted">Amount</th>
+                    <th className="az-body-strong px-4 py-3 text-left text-az-ink-muted">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-az-glass-border">
+                  {entries.map((entry) => (
+                    <tr key={entry.id} className="hover:bg-az-glass-fill">
+                      <td className="az-body px-4 py-3">
+                        <span>{typeIcons[entry.type]}</span>
+                      </td>
+                      <td className="az-body px-4 py-3 text-az-ink">
+                        {entry.description}
+                        {entry.contentTitle && (
+                          <span className="ml-1 text-az-ink-muted">• {entry.contentTitle}</span>
+                        )}
+                      </td>
+                      <td className="az-body-strong px-4 py-3 text-az-success-400">
+                        +{entry.amount.toLocaleString()} {entry.currency}
+                      </td>
+                      <td className="az-body px-4 py-3 text-az-ink-muted">
+                        {new Date(entry.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Payouts tab */}
+          {activeTab === 'payouts' && (
+            <div className="space-y-4">
+              {/* Request payout button */}
+              <div className="flex justify-end">
+                <button className="az-btn-primary az-btn-primary--inline az-btn-primary--sm">
+                  Request Payout
+                </button>
+              </div>
+
+              <div className="az-glass overflow-hidden">
                 <table className="w-full">
-                  <thead className="bg-muted/50">
+                  <thead className="bg-az-glass-fill">
                     <tr>
-                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                        Type
-                      </th>
-                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                        Description
-                      </th>
-                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                      <th className="az-body-strong px-4 py-3 text-left text-az-ink-muted">
                         Amount
                       </th>
-                      <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                        Date
+                      <th className="az-body-strong px-4 py-3 text-left text-az-ink-muted">
+                        Status
+                      </th>
+                      <th className="az-body-strong px-4 py-3 text-left text-az-ink-muted">
+                        Requested
+                      </th>
+                      <th className="az-body-strong px-4 py-3 text-left text-az-ink-muted">
+                        Completed
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y">
-                    {entries.map((entry) => (
-                      <tr key={entry.id} className="hover:bg-muted/30">
+                  <tbody className="divide-y divide-az-glass-border">
+                    {payouts.map((payout) => (
+                      <tr key={payout.id} className="hover:bg-az-glass-fill">
+                        <td className="az-body-strong px-4 py-3 text-az-ink">
+                          {payout.amount.toLocaleString()} {payout.currency}
+                        </td>
                         <td className="px-4 py-3">
-                          <span>{typeIcons[entry.type]}</span>
+                          <span
+                            className={`az-micro-label rounded-az-pill px-2 py-1 ${statusColors[payout.status]}`}
+                          >
+                            {payout.status}
+                          </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-foreground">
-                          {entry.description}
-                          {entry.contentTitle && (
-                            <span className="text-muted-foreground ml-1">
-                              • {entry.contentTitle}
-                            </span>
-                          )}
+                        <td className="az-body px-4 py-3 text-az-ink-muted">
+                          {new Date(payout.requestedAt).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium text-green-600">
-                          +{entry.amount.toLocaleString()} {entry.currency}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground">
-                          {new Date(entry.createdAt).toLocaleDateString()}
+                        <td className="az-body px-4 py-3 text-az-ink-muted">
+                          {payout.completedAt
+                            ? new Date(payout.completedAt).toLocaleDateString()
+                            : '—'}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            )}
-
-            {/* Payouts tab */}
-            {activeTab === 'payouts' && (
-              <div className="space-y-4">
-                {/* Request payout button */}
-                <div className="flex justify-end">
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">
-                    Request Payout
-                  </button>
-                </div>
-
-                <div className="bg-card rounded-xl border overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-muted/50">
-                      <tr>
-                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                          Amount
-                        </th>
-                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                          Status
-                        </th>
-                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                          Requested
-                        </th>
-                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                          Completed
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {payouts.map((payout) => (
-                        <tr key={payout.id} className="hover:bg-muted/30">
-                          <td className="px-4 py-3 text-sm font-medium text-foreground">
-                            {payout.amount.toLocaleString()} {payout.currency}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full ${statusColors[payout.status]}`}
-                            >
-                              {payout.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {new Date(payout.requestedAt).toLocaleDateString()}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {payout.completedAt
-                              ? new Date(payout.completedAt).toLocaleDateString()
-                              : '—'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
+            </div>
+          )}
+        </>
+      )}
+    </PageShell>
   );
 }

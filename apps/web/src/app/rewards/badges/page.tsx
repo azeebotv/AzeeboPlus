@@ -66,7 +66,7 @@ export default function BadgesPage(): React.JSX.Element {
       <div className="mb-6">
         <Link
           href="/rewards"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-az-ink/60 hover:text-az-ink transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Rewards Center
         </Link>
@@ -78,13 +78,13 @@ export default function BadgesPage(): React.JSX.Element {
         badge={`${earnedBadges.length} / ${badges.length} UNLOCKED`}
         title="Badges of Distinction"
         subtitle="Earn recognition for your streaming dedication, community participation, and universal milestones."
-        glowColor="rgba(251, 191, 36, 0.25)"
+        glowColor="color-mix(in srgb, var(--color-az-warning-400) 25%, transparent)"
       />
 
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <div key={i} className="az-glass h-52 rounded-2xl p-4">
+            <div key={i} className="az-glass h-52 p-4">
               <Skeleton className="h-full w-full rounded-xl" />
             </div>
           ))}
@@ -102,8 +102,8 @@ export default function BadgesPage(): React.JSX.Element {
           {earnedBadges.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-6">
-                <Trophy className="w-5 h-5 text-amber-400" />
-                <h2 className="az-headline text-xl sm:text-2xl font-bold text-white">
+                <Trophy className="w-5 h-5 text-az-warning-400" />
+                <h2 className="az-headline text-xl sm:text-2xl text-az-ink">
                   Earned Achievements ({earnedBadges.length})
                 </h2>
               </div>
@@ -116,22 +116,22 @@ export default function BadgesPage(): React.JSX.Element {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.04 }}
                     onClick={() => setSelectedBadge(badge)}
-                    className="az-glass p-6 rounded-3xl text-center cursor-pointer border border-amber-500/25 hover:border-amber-500/50 hover:scale-[1.03] transition-all relative overflow-hidden group shadow-lg"
+                    className="az-glass p-6 text-center cursor-pointer border hover:scale-[1.03] transition-all relative overflow-hidden group"
                     style={{
                       background:
-                        'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(24, 21, 30, 0.95) 100%)',
+                        'linear-gradient(135deg, color-mix(in srgb, var(--color-az-warning-400) 10%, transparent) 0%, rgba(24, 21, 30, 0.95) 100%)',
                     }}
                   >
-                    <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto mb-3.5 text-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.3)] group-hover:scale-110 transition-transform">
+                    <div className="w-16 h-16 rounded-2xl bg-az-warning-500/15 border border-az-warning-500/30 flex items-center justify-center mx-auto mb-3.5 text-az-warning-400 shadow-[0_0_25px_rgba(251,191,36,0.3)] group-hover:scale-110 transition-transform">
                       <Award className="w-8 h-8" />
                     </div>
 
-                    <h3 className="font-bold text-white text-base mb-1 group-hover:text-amber-300 transition-colors">
+                    <h3 className="font-bold text-az-ink text-base mb-1 group-hover:text-az-warning-400 transition-colors">
                       {badge.name}
                     </h3>
-                    <p className="text-xs text-white/50 mb-3 line-clamp-2">{badge.description}</p>
+                    <p className="text-xs text-az-ink/50 mb-3 line-clamp-2">{badge.description}</p>
 
-                    <div className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                    <div className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-az-success-500/15 text-az-success-400 border border-az-success-500/25">
                       <Check className="w-3.5 h-3.5 stroke-[3]" /> Unlocked
                     </div>
                   </motion.div>
@@ -144,8 +144,8 @@ export default function BadgesPage(): React.JSX.Element {
           {lockedBadges.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-6">
-                <Lock className="w-5 h-5 text-white/40" />
-                <h2 className="az-headline text-xl sm:text-2xl font-bold text-white/70">
+                <Lock className="w-5 h-5 text-az-ink/40" />
+                <h2 className="az-headline text-xl sm:text-2xl text-az-ink/70">
                   Locked Achievements ({lockedBadges.length})
                 </h2>
               </div>
@@ -163,23 +163,25 @@ export default function BadgesPage(): React.JSX.Element {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.04 }}
                       onClick={() => setSelectedBadge(badge)}
-                      className="az-glass p-6 rounded-3xl text-center cursor-pointer border border-white/5 opacity-60 hover:opacity-100 hover:border-white/20 transition-all group"
+                      className="az-glass p-6 text-center cursor-pointer border opacity-60 hover:opacity-100 transition-all group"
                     >
-                      <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3.5 text-white/40 group-hover:text-white/70">
+                      <div className="w-16 h-16 rounded-2xl bg-az-glass-fill border border-az-glass-border flex items-center justify-center mx-auto mb-3.5 text-az-ink/40 group-hover:text-az-ink/70">
                         <Award className="w-8 h-8" />
                       </div>
 
-                      <h3 className="font-bold text-white text-base mb-1">{badge.name}</h3>
-                      <p className="text-xs text-white/40 mb-4 line-clamp-2">{badge.description}</p>
+                      <h3 className="font-bold text-az-ink text-base mb-1">{badge.name}</h3>
+                      <p className="text-xs text-az-ink/40 mb-4 line-clamp-2">
+                        {badge.description}
+                      </p>
 
                       <div className="space-y-1.5">
-                        <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-az-glass-card rounded-full h-1.5 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-[var(--brand-orange)] to-amber-500"
+                            className="h-full rounded-full bg-gradient-to-r from-[var(--color-az-flame)] to-az-warning-500"
                             style={{ width: `${progressPct}%` }}
                           />
                         </div>
-                        <span className="text-[10px] font-bold text-white/40">
+                        <span className="text-[10px] font-bold text-az-ink/40">
                           {badge.progress ?? 0} / {badge.target ?? 1}
                         </span>
                       </div>
@@ -191,10 +193,10 @@ export default function BadgesPage(): React.JSX.Element {
           )}
 
           {badges.length === 0 && (
-            <div className="az-glass p-12 text-center rounded-3xl border border-white/10">
-              <Award className="w-12 h-12 text-amber-400 mx-auto mb-4 opacity-80" />
-              <h3 className="text-lg font-bold text-white mb-2">No Badges Available Yet</h3>
-              <p className="text-sm text-white/50">Check back soon for new season achievements.</p>
+            <div className="az-glass p-12 text-center border border-az-glass-border">
+              <Award className="w-12 h-12 text-az-warning-400 mx-auto mb-4 opacity-80" />
+              <h3 className="text-lg font-bold text-az-ink mb-2">No Badges Available Yet</h3>
+              <p className="text-sm text-az-ink/50">Check back soon for new season achievements.</p>
             </div>
           )}
         </div>
@@ -212,7 +214,7 @@ export default function BadgesPage(): React.JSX.Element {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="az-glass max-w-md w-full p-8 rounded-3xl text-center relative border border-white/15 shadow-2xl"
+              className="az-glass max-w-md w-full p-8 text-center relative border"
               style={{
                 background:
                   'linear-gradient(135deg, rgba(24, 21, 30, 0.98) 0%, rgba(35, 25, 18, 0.95) 100%)',
@@ -220,7 +222,7 @@ export default function BadgesPage(): React.JSX.Element {
             >
               <button
                 onClick={() => setSelectedBadge(null)}
-                className="absolute top-4 right-4 p-2 rounded-full text-white/40 hover:text-white bg-white/5"
+                className="absolute top-4 right-4 p-2 rounded-full text-az-ink/40 hover:text-az-ink bg-az-glass-fill"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -228,31 +230,33 @@ export default function BadgesPage(): React.JSX.Element {
               <div
                 className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5 ${
                   selectedBadge.unlocked
-                    ? 'bg-amber-500/20 border border-amber-500/40 text-amber-400 shadow-[0_0_40px_rgba(251,191,36,0.3)]'
-                    : 'bg-white/5 border border-white/10 text-white/40'
+                    ? 'bg-az-warning-500/20 border border-az-warning-500/40 text-az-warning-400 shadow-[0_0_40px_rgba(251,191,36,0.3)]'
+                    : 'bg-az-glass-fill border border-az-glass-border text-az-ink/40'
                 }`}
               >
                 <Award className="w-10 h-10" />
               </div>
 
-              <h2 className="az-headline text-2xl font-bold text-white mb-2">{selectedBadge.name}</h2>
-              <p className="text-sm text-white/60 mb-6 leading-relaxed">
+              <h2 className="az-headline text-2xl text-az-ink mb-2">{selectedBadge.name}</h2>
+              <p className="text-sm text-az-ink/60 mb-6 leading-relaxed">
                 {selectedBadge.description}
               </p>
 
-              <div className="flex items-center justify-center gap-6 py-4 border-y border-white/10 mb-6">
+              <div className="flex items-center justify-center gap-6 py-4 border-y border-az-glass-border mb-6">
                 <div>
-                  <p className="text-xs text-white/40 uppercase font-semibold mb-1">Points Reward</p>
-                  <span className="text-xl font-extrabold text-[var(--brand-orange)] flex items-center justify-center gap-1">
+                  <p className="text-xs text-az-ink/40 uppercase font-semibold mb-1">
+                    Points Reward
+                  </p>
+                  <span className="text-xl font-extrabold text-[var(--color-az-flame)] flex items-center justify-center gap-1">
                     <Sparkles className="w-4 h-4" />+{selectedBadge.points}
                   </span>
                 </div>
 
                 <div>
-                  <p className="text-xs text-white/40 uppercase font-semibold mb-1">Status</p>
+                  <p className="text-xs text-az-ink/40 uppercase font-semibold mb-1">Status</p>
                   <span
                     className={`text-sm font-bold ${
-                      selectedBadge.unlocked ? 'text-emerald-400' : 'text-white/40'
+                      selectedBadge.unlocked ? 'text-az-success-400' : 'text-az-ink/40'
                     }`}
                   >
                     {selectedBadge.unlocked ? 'Unlocked' : 'In Progress'}
@@ -260,10 +264,7 @@ export default function BadgesPage(): React.JSX.Element {
                 </div>
               </div>
 
-              <button
-                onClick={() => setSelectedBadge(null)}
-                className="az-btn-primary py-3 px-8 text-sm"
-              >
+              <button onClick={() => setSelectedBadge(null)} className="az-btn-primary">
                 Close Dossier
               </button>
             </motion.div>

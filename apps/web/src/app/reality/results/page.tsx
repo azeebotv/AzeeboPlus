@@ -4,9 +4,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
-import { Trophy, DoorOpen, Crown, UserX } from 'lucide-react';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
+import { Trophy, DoorOpen, Crown, UserX, ChevronLeft } from 'lucide-react';
 
 interface ContestantResult {
   id: string;
@@ -63,209 +63,173 @@ export default function ResultsPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
+      <PageShell activeNav="Reality" maxWidth="lg">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <div
-              className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{
-                border: '3px solid rgba(255,255,255,0.1)',
-                borderTopColor: 'var(--brand-orange)',
-              }}
-            />
-            <p className="mt-4 text-white/60">Loading results...</p>
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-[3px] border-az-ink/10 border-t-az-flame" />
+            <p className="mt-4 text-az-ink/60">Loading results...</p>
           </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
-      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-white/50 hover:text-white mb-4 flex items-center gap-2 transition-colors"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back
-          </button>
-          <h1 className="text-3xl font-bold text-white">Results</h1>
-          <p className="text-white/50 mt-1">Episode Rankings</p>
-        </div>
+    <PageShell activeNav="Reality" maxWidth="lg">
+      <div className="mb-8">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          aria-label="Go back"
+          className="text-az-ink/50 hover:text-az-ink mb-4 flex items-center gap-2 transition-colors"
+        >
+          <ChevronLeft size={20} aria-hidden="true" />
+          Back
+        </button>
+        <PageHero title="Results" subtitle="Episode Rankings" />
+      </div>
 
-        <div className="mb-8">
-          <div
-            className="flex gap-2 overflow-x-auto pb-2"
-            role="listbox"
-            aria-label="Episode selector"
-          >
-            {results.map((result) => (
+      <div className="mb-8">
+        <div
+          className="flex gap-2 overflow-x-auto pb-2"
+          role="listbox"
+          aria-label="Episode selector"
+        >
+          {results.map((result) => {
+            const selected = selectedEpisode === result.id;
+            return (
               <button
                 key={result.id}
+                type="button"
                 onClick={() => setSelectedEpisode(result.id)}
                 role="option"
-                aria-selected={selectedEpisode === result.id}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  selectedEpisode === result.id ? 'az-btn-primary' : ''
+                aria-selected={selected}
+                className={`az-body-strong shrink-0 whitespace-nowrap rounded-az-pill border px-4 py-2 transition-all ${
+                  selected
+                    ? 'border-az-flame bg-az-scarlet/20 text-az-ink'
+                    : 'border-az-glass-border bg-az-glass-fill text-az-ink-muted hover:border-az-glass-border-hover'
                 }`}
-                style={
-                  selectedEpisode !== result.id
-                    ? {
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: 'var(--brand-white)',
-                      }
-                    : undefined
-                }
               >
                 E{result.episodeNumber}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
-
-        {selectedResult && (
-          <>
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-white">{selectedResult.title}</h2>
-              <p className="text-white/50 mt-1">
-                {new Date(selectedResult.date).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </p>
-            </div>
-
-            {selectedResult.winner && (
-              <div
-                className="az-glass p-6 mb-6"
-                style={{ border: '2px solid rgba(234,179,8,0.5)' }}
-              >
-                <div className="flex items-center gap-2 mb-4 text-amber-400 font-bold text-lg">
-                  <Trophy size={20} />
-                  <span>Episode Winner</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <OptimizedImage
-                    src={selectedResult.winner.avatar}
-                    alt={selectedResult.winner.name}
-                    width={80}
-                    height={80}
-                    className="w-20 h-20 rounded-full object-cover"
-                  />
-                  <div>
-                    <h4 className="text-xl font-semibold text-white">
-                      {selectedResult.winner.name}
-                    </h4>
-                    <p className="text-white/50">
-                      {selectedResult.winner.votes.toLocaleString()} votes (
-                      {selectedResult.winner.percentage}%)
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {selectedResult.evicted && (
-              <div
-                className="az-glass p-6 mb-6"
-                style={{ border: '2px solid rgba(239,68,68,0.5)' }}
-              >
-                <div className="flex items-center gap-2 mb-4 text-rose-400 font-bold text-lg">
-                  <DoorOpen size={20} />
-                  <span>Evicted Contestant</span>
-                </div>
-                <div className="flex items-center gap-4 opacity-70">
-                  <OptimizedImage
-                    src={selectedResult.evicted.avatar}
-                    alt={selectedResult.evicted.name}
-                    width={80}
-                    height={80}
-                    className="w-20 h-20 rounded-full object-cover"
-                  />
-                  <div>
-                    <h4 className="text-xl font-semibold text-white">
-                      {selectedResult.evicted.name}
-                    </h4>
-                    <p className="text-white/50">
-                      {selectedResult.evicted.votes.toLocaleString()} votes (
-                      {selectedResult.evicted.percentage}%)
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div>
-              <h3 className="text-xl font-semibold text-white mb-4">Full Rankings</h3>
-              <div className="space-y-3">
-                {[...selectedResult.contestants]
-                  .sort((a, b) => a.rank - b.rank)
-                  .map((contestant) => (
-                    <div
-                      key={contestant.id}
-                      className={`az-glass flex items-center gap-4 p-4 ${
-                        contestant.isWinner
-                          ? 'ring-2 ring-yellow-500'
-                          : contestant.isEvicted
-                            ? 'opacity-70'
-                            : ''
-                      }`}
-                    >
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                      >
-                        <span className="text-white font-bold">#{contestant.rank}</span>
-                      </div>
-                      <OptimizedImage
-                        src={contestant.avatar}
-                        alt={contestant.name}
-                        width={56}
-                        height={56}
-                        className="w-14 h-14 rounded-full object-cover"
-                      />
-                      <div className="flex-1">
-                        <h4 className="text-lg font-semibold text-white">{contestant.name}</h4>
-                        <p className="text-sm text-white/50">
-                          {contestant.votes.toLocaleString()} votes ({contestant.percentage}%)
-                        </p>
-                      </div>
-                      {contestant.isWinner && (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold shadow-lg shadow-amber-500/10">
-                          <Crown size={15} className="text-amber-400" />
-                          <span>Winner</span>
-                        </div>
-                      )}
-                      {contestant.isEvicted && (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold">
-                          <UserX size={15} className="text-rose-400" />
-                          <span>Evicted</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </>
-        )}
       </div>
-      <AppFooter />
-    </div>
+
+      {selectedResult && (
+        <>
+          <div className="mb-6">
+            <h2 className="az-subtitle text-az-ink">{selectedResult.title}</h2>
+            <p className="az-caption mt-1 text-az-ink/50">
+              {new Date(selectedResult.date).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </p>
+          </div>
+
+          {selectedResult.winner && (
+            <div className="az-glass outline-2 outline-az-warning-400/50 p-6 mb-6">
+              <div className="flex items-center gap-2 mb-4 text-az-warning-400 text-lg font-bold">
+                <Trophy size={20} aria-hidden="true" />
+                <span>Episode Winner</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <OptimizedImage
+                  src={selectedResult.winner.avatar}
+                  alt={selectedResult.winner.name}
+                  width={80}
+                  height={80}
+                  className="w-20 h-20 rounded-full object-cover"
+                />
+                <div>
+                  <h4 className="az-subtitle text-az-ink">{selectedResult.winner.name}</h4>
+                  <p className="az-body text-az-ink/50">
+                    {selectedResult.winner.votes.toLocaleString()} votes (
+                    {selectedResult.winner.percentage}%)
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {selectedResult.evicted && (
+            <div className="az-glass outline-2 outline-az-error-500/50 p-6 mb-6">
+              <div className="flex items-center gap-2 mb-4 text-az-error-400 text-lg font-bold">
+                <DoorOpen size={20} aria-hidden="true" />
+                <span>Evicted Contestant</span>
+              </div>
+              <div className="flex items-center gap-4 opacity-70">
+                <OptimizedImage
+                  src={selectedResult.evicted.avatar}
+                  alt={selectedResult.evicted.name}
+                  width={80}
+                  height={80}
+                  className="w-20 h-20 rounded-full object-cover"
+                />
+                <div>
+                  <h4 className="az-subtitle text-az-ink">{selectedResult.evicted.name}</h4>
+                  <p className="az-body text-az-ink/50">
+                    {selectedResult.evicted.votes.toLocaleString()} votes (
+                    {selectedResult.evicted.percentage}%)
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <h3 className="az-subtitle text-az-ink mb-4">Full Rankings</h3>
+            <div className="space-y-3">
+              {[...selectedResult.contestants]
+                .sort((a, b) => a.rank - b.rank)
+                .map((contestant) => (
+                  <div
+                    key={contestant.id}
+                    className={`az-glass flex items-center gap-4 p-4 ${
+                      contestant.isWinner
+                        ? 'outline-2 outline-[var(--brand-gold)]'
+                        : contestant.isEvicted
+                          ? 'opacity-70'
+                          : ''
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-az-ink/10">
+                      <span className="text-az-ink font-bold">#{contestant.rank}</span>
+                    </div>
+                    <OptimizedImage
+                      src={contestant.avatar}
+                      alt={contestant.name}
+                      width={56}
+                      height={56}
+                      className="w-14 h-14 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <h4 className="az-subtitle text-az-ink">{contestant.name}</h4>
+                      <p className="az-caption text-az-ink/50">
+                        {contestant.votes.toLocaleString()} votes ({contestant.percentage}%)
+                      </p>
+                    </div>
+                    {contestant.isWinner && (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-az-pill bg-az-warning-500/15 border border-az-warning-500/30 text-az-warning-400 text-xs font-bold shadow-lg shadow-az-warning-500/10">
+                        <Crown size={15} aria-hidden="true" className="text-az-warning-400" />
+                        <span>Winner</span>
+                      </div>
+                    )}
+                    {contestant.isEvicted && (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-az-pill bg-az-error-500/15 border border-az-error-500/30 text-az-error-400 text-xs font-bold">
+                        <UserX size={15} aria-hidden="true" className="text-az-error-400" />
+                        <span>Evicted</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </div>
+        </>
+      )}
+    </PageShell>
   );
 }

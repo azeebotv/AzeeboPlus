@@ -6,10 +6,9 @@ import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
 import { useUniversesQuery } from '@/hooks/useUniverses';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -45,95 +44,54 @@ function CinemaxisPageContent(): React.JSX.Element {
   const error = contentQuery.error?.message || null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <AppHeader active="Cinemaxis" />
+    <PageShell
+      maxWidth="7xl"
+      activeNav="Cinemaxis"
+      glowColor="color-mix(in srgb, var(--brand-purple) 12%, transparent)"
+    >
+      <PageHero
+        eyebrow="Cinemaxis Universe"
+        title="Cinemaxis"
+        description="Premium African cinema. Blockbuster movies, award-winning films, and exclusive releases."
+        glowColor="color-mix(in srgb, var(--brand-purple) 14%, transparent)"
+        actions={
+          <>
+            <Link href="/movies">
+              <motion.button
+                type="button"
+                aria-label="Browse movies"
+                className="az-body-strong rounded-az-pill border border-[color-mix(in_srgb,var(--brand-purple)_40%,transparent)] bg-[color-mix(in_srgb,var(--brand-purple)_20%,transparent)] px-6 py-3 text-az-ink transition-all"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Browse Movies
+              </motion.button>
+            </Link>
+            <Link href="/movies/premieres">
+              <motion.button
+                type="button"
+                aria-label="View premieres"
+                className="az-body-strong rounded-az-pill bg-[var(--brand-purple-light)] px-6 py-3 text-[var(--color-az-surface-root)] transition-all"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Premieres
+              </motion.button>
+            </Link>
+          </>
+        }
+      />
 
-      {/* Hero */}
-      <section
-        className="relative py-20 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%)',
-        }}
-      >
-        <AmbientGlow
-          color="rgba(232, 66, 10, 0.15)"
-          size={600}
-          className="top-[-100px] right-[-100px]"
-        />
-        <AmbientGlow
-          color="rgba(168, 85, 247, 0.12)"
-          size={500}
-          className="bottom-[-100px] left-[-100px]"
-        />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center">
-            <motion.h1
-              className="text-4xl sm:text-5xl font-bold text-white mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              Cinemaxis
-            </motion.h1>
-            <motion.p
-              className="text-xl text-white/70 mb-8 max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-            >
-              Premium African cinema. Blockbuster movies, award-winning films, and exclusive
-              releases.
-            </motion.p>
-            <motion.div
-              className="flex flex-wrap justify-center gap-4"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              <Link href="/movies">
-                <motion.button
-                  type="button"
-                  aria-label="Browse movies"
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{
-                    backgroundColor: 'rgba(168,85,247,0.2)',
-                    border: '1px solid rgba(168,85,247,0.4)',
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Browse Movies
-                </motion.button>
-              </Link>
-              <Link href="/movies/premieres">
-                <motion.button
-                  type="button"
-                  aria-label="View premieres"
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-[#100e14] transition-all"
-                  style={{ backgroundColor: 'var(--brand-purple-light)' }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Premieres
-                </motion.button>
-              </Link>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Content */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <section className="py-4">
         <ScrollReveal>
-          <div className="flex items-center justify-between mb-8">
+          <div className="mb-8 flex items-center justify-between">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">Featured Films</h2>
-              <p className="text-base mt-1 text-white/50">Curated from African cinema</p>
+              <h2 className="az-section-title text-az-ink">Featured Films</h2>
+              <p className="az-body mt-1 text-az-ink-muted">Curated from African cinema</p>
             </div>
             <Link
               href="/browse"
-              className="text-sm font-medium transition-colors"
-              style={{ color: 'var(--brand-purple-light)' }}
+              className="az-body-strong text-[var(--brand-purple-light)] transition-colors hover:text-[var(--brand-purple)]"
             >
               View All
             </Link>
@@ -170,13 +128,13 @@ function CinemaxisPageContent(): React.JSX.Element {
                       alt={item.title}
                       className="w-full h-40 object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b090e]/80 to-transparent" />
+                    <div className="absolute inset-0 az-scrim" />
                     <div className="absolute bottom-3 left-3 right-3">
-                      <h3 className="text-base font-bold text-white">{item.title}</h3>
+                      <h3 className="az-body-strong text-az-ink">{item.title}</h3>
                     </div>
                   </div>
                   <div className="p-3">
-                    <p className="text-xs text-white/50 line-clamp-2">{item.description}</p>
+                    <p className="az-caption line-clamp-2 text-az-ink-muted">{item.description}</p>
                   </div>
                 </GlowCard>
               </Link>
@@ -184,13 +142,11 @@ function CinemaxisPageContent(): React.JSX.Element {
           </StaggerGrid>
         ) : (
           <div className="text-center py-12">
-            <p className="text-lg text-white/50">No content available yet</p>
+            <p className="az-lead text-az-ink-muted">No content available yet</p>
           </div>
         )}
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 

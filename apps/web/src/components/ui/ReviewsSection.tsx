@@ -97,11 +97,11 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
           <div className="flex flex-col sm:flex-row gap-6">
             {/* Average Rating */}
             <div className="text-center sm:text-left">
-              <div className="text-4xl font-bold text-white mb-1">
+              <div className="text-4xl font-bold text-az-ink mb-1">
                 {summary.averageRating.toFixed(1)}
               </div>
               <StarRating rating={summary.averageRating} size={18} />
-              <p className="text-sm text-white/50 mt-1">
+              <p className="text-sm text-az-ink/50 mt-1">
                 {summary.totalRatings} rating{summary.totalRatings !== 1 ? 's' : ''}
               </p>
             </div>
@@ -110,20 +110,14 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
             <div className="flex-1 space-y-1.5">
               {summary.distribution.map((d) => (
                 <div key={d.stars} className="flex items-center gap-2">
-                  <span className="text-xs text-white/60 w-8">{d.stars} ★</span>
-                  <div
-                    className="flex-1 h-2 rounded-full overflow-hidden"
-                    style={{ background: 'rgba(255,255,255,0.1)' }}
-                  >
+                  <span className="text-xs text-az-ink/60 w-8">{d.stars} ★</span>
+                  <div className="flex-1 h-2 rounded-full overflow-hidden bg-az-ink/10">
                     <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${d.percentage}%`,
-                        background: 'var(--brand-orange)',
-                      }}
+                      className="h-full rounded-full bg-gradient-to-r from-az-scarlet to-az-flame transition-all"
+                      style={{ width: `${d.percentage}%` }}
                     />
                   </div>
-                  <span className="text-xs text-white/40 w-8 text-right">{d.count}</span>
+                  <span className="text-xs text-az-ink/40 w-8 text-right">{d.count}</span>
                 </div>
               ))}
             </div>
@@ -137,8 +131,7 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
           {!showForm && !userReview && (
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-white/5"
-              style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'var(--brand-orange)' }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-az-ink/20 text-az-flame transition-colors hover:bg-az-glass-fill"
             >
               <MessageSquare className="w-4 h-4" />
               Write a Review
@@ -169,7 +162,7 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
 
       {/* Sort Options */}
       <div className="flex items-center gap-4">
-        <span className="text-sm text-white/50">Sort by:</span>
+        <span className="text-sm text-az-ink/50">Sort by:</span>
         {(['recent', 'helpful', 'rating'] as const).map((sort) => (
           <button
             key={sort}
@@ -178,7 +171,7 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
               setPage(1);
             }}
             className={`text-sm font-medium transition-colors ${
-              sortBy === sort ? 'text-white' : 'text-white/40 hover:text-white/60'
+              sortBy === sort ? 'text-az-ink' : 'text-az-ink/40 hover:text-az-ink/60'
             }`}
           >
             {sort.charAt(0).toUpperCase() + sort.slice(1)}
@@ -193,68 +186,49 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
             {[1, 2, 3].map((i) => (
               <div key={i} className="az-glass p-4 animate-pulse">
                 <div className="flex items-center gap-3 mb-3">
-                  <div
-                    className="w-10 h-10 rounded-full"
-                    style={{ background: 'rgba(255,255,255,0.05)' }}
-                  />
+                  <div className="w-10 h-10 rounded-full bg-az-ink/5" />
                   <div className="space-y-2">
-                    <div
-                      className="h-3 rounded w-24"
-                      style={{ background: 'rgba(255,255,255,0.05)' }}
-                    />
-                    <div
-                      className="h-2 rounded w-16"
-                      style={{ background: 'rgba(255,255,255,0.05)' }}
-                    />
+                    <div className="h-3 rounded w-24 bg-az-ink/5" />
+                    <div className="h-2 rounded w-16 bg-az-ink/5" />
                   </div>
                 </div>
-                <div
-                  className="h-3 rounded w-3/4"
-                  style={{ background: 'rgba(255,255,255,0.05)' }}
-                />
+                <div className="h-3 rounded w-3/4 bg-az-ink/5" />
               </div>
             ))}
           </div>
         ) : reviews.length === 0 ? (
           <div className="az-glass p-8 text-center">
-            <MessageSquare className="w-8 h-8 mx-auto mb-3 text-white/20" />
-            <p className="text-white/50">No reviews yet. Be the first to review!</p>
+            <MessageSquare className="w-8 h-8 mx-auto mb-3 text-az-ink/20" />
+            <p className="text-az-ink/50">No reviews yet. Be the first to review!</p>
           </div>
         ) : (
           reviews.map((review) => (
             <div key={review.id} className="az-glass p-4">
               <div className="flex items-start gap-3">
                 {/* Avatar */}
-                <div
-                  className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold"
-                  style={{
-                    background:
-                      'linear-gradient(135deg, var(--brand-orange), var(--brand-red, #CC1C1C))',
-                    color: 'white',
-                  }}
-                >
+                <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold bg-gradient-to-br from-az-flame to-az-scarlet text-az-ink">
                   {review.userName?.charAt(0) || '?'}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   {/* Header */}
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-white">{review.userName}</span>
+                    <span className="text-sm font-medium text-az-ink">{review.userName}</span>
                     <StarRating rating={review.rating} size={12} />
-                    <span className="text-xs text-white/30">
+                    <span className="text-xs text-az-ink/30">
                       {new Date(review.createdAt).toLocaleDateString()}
                     </span>
                   </div>
 
                   {/* Title */}
                   {review.title && (
-                    <h4 className="text-sm font-medium text-white mb-1">{review.title}</h4>
+                    <h4 className="text-sm font-medium text-az-ink mb-1">{review.title}</h4>
                   )}
 
                   {/* Body */}
                   {review.body && (
                     <p
-                      className={`text-sm text-white/60 ${review.containsSpoilers ? 'blur-sm hover:blur-none transition-all cursor-pointer' : ''}`}
+                      className={`text-sm text-az-ink/60 ${review.containsSpoilers ? 'blur-sm hover:blur-none transition-all cursor-pointer' : ''}`}
                     >
                       {review.body}
                     </p>
@@ -262,7 +236,7 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
 
                   {/* Spoiler warning */}
                   {review.containsSpoilers && (
-                    <span className="inline-block mt-1 text-[10px] text-yellow-400/60">
+                    <span className="inline-block mt-1 text-[10px] text-az-warning-500/60">
                       Contains spoilers — hover to reveal
                     </span>
                   )}
@@ -271,7 +245,7 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
                   <div className="flex items-center gap-4 mt-3">
                     <button
                       onClick={() => helpfulMutation.mutate(review.id)}
-                      className="flex items-center gap-1 text-xs text-white/40 hover:text-white/60 transition-colors"
+                      className="flex items-center gap-1 text-xs text-az-ink/40 hover:text-az-ink/60 transition-colors"
                     >
                       <ThumbsUp className="w-3 h-3" />
                       Helpful ({review.helpfulCount})
@@ -281,7 +255,7 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
                         const reason = prompt('Why are you reporting this review?');
                         if (reason) reportMutation.mutate({ reviewId: review.id, reason });
                       }}
-                      className="flex items-center gap-1 text-xs text-white/40 hover:text-white/60 transition-colors"
+                      className="flex items-center gap-1 text-xs text-az-ink/40 hover:text-az-ink/60 transition-colors"
                     >
                       <Flag className="w-3 h-3" />
                       Report
@@ -300,19 +274,17 @@ export function ReviewsSection({ contentId }: ReviewsSectionProps): React.JSX.El
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3 py-1.5 rounded-lg text-xs text-white/60 hover:text-white disabled:opacity-30 transition-colors"
-            style={{ background: 'rgba(255,255,255,0.05)' }}
+            className="px-3 py-1.5 rounded-lg text-xs text-az-ink/60 bg-az-ink/5 hover:text-az-ink disabled:opacity-30 transition-colors"
           >
             Previous
           </button>
-          <span className="px-3 py-1.5 text-xs text-white/40">
+          <span className="px-3 py-1.5 text-xs text-az-ink/40">
             Page {page} of {Math.ceil(total / 10)}
           </span>
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={page >= Math.ceil(total / 10)}
-            className="px-3 py-1.5 rounded-lg text-xs text-white/60 hover:text-white disabled:opacity-30 transition-colors"
-            style={{ background: 'rgba(255,255,255,0.05)' }}
+            className="px-3 py-1.5 rounded-lg text-xs text-az-ink/60 bg-az-ink/5 hover:text-az-ink disabled:opacity-30 transition-colors"
           >
             Next
           </button>

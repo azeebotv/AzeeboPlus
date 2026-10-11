@@ -5,26 +5,26 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { extractGenres } from '@/lib/music';
 import analytics from '@/lib/analytics';
 
 const GENRE_COLORS: Record<string, string> = {
-  afrobeats: 'var(--brand-orange)',
+  afrobeats: 'var(--color-az-flame)',
   hiphop: 'var(--brand-purple)',
   pop: 'var(--brand-pink)',
-  rnb: 'var(--brand-cyan, #06b6d4)',
+  rnb: 'var(--brand-cyan)',
   gospel: 'var(--brand-amber)',
   highlife: 'var(--brand-green)',
-  Fuji: 'var(--brand-red)',
-  amapiano: 'var(--brand-indigo, #6366f1)',
+  Fuji: 'var(--color-az-scarlet)',
+  amapiano: 'var(--brand-indigo)',
   reggae: 'var(--brand-green)',
   jazz: 'var(--brand-purple-light)',
-  electronic: 'var(--brand-teal, #14b8a6)',
-  rock: 'var(--brand-orange)',
+  electronic: 'var(--brand-teal)',
+  rock: 'var(--color-az-flame)',
 };
 
 export default function MusicGenresPage(): React.JSX.Element {
@@ -47,38 +47,17 @@ export default function MusicGenresPage(): React.JSX.Element {
   const error = genresQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Music" />
+    <PageShell activeNav="Music">
+      <PageHero
+        eyebrow="Music"
+        title="Browse Genres"
+        subtitle="Discover music by your favorite genre"
+        accentColor="var(--color-az-universe-lifestyle)"
+      />
 
-      {/* Hero */}
-      <section
-        className="relative py-16 sm:py-20"
-        style={{
-          background: 'linear-gradient(135deg, var(--music-purple) 0%, var(--bg-secondary) 100%)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Music2Browse Genres
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Discover music by your favorite genre
-          </motion.p>
-        </div>
-      </section>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <div className="py-10 sm:py-12">
         {isLoading && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <Skeleton key={i} height="160px" borderRadius="16px" />
             ))}
@@ -95,10 +74,10 @@ export default function MusicGenresPage(): React.JSX.Element {
 
         {!isLoading && !error && (
           <ScrollReveal>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
               {genres.map((genre, index) => {
                 const color =
-                  GENRE_COLORS[genre.name?.toLowerCase()] || genre.color || 'var(--brand-orange)';
+                  GENRE_COLORS[genre.name?.toLowerCase()] || genre.color || 'var(--color-az-flame)';
                 return (
                   <motion.div
                     key={genre.id}
@@ -108,21 +87,19 @@ export default function MusicGenresPage(): React.JSX.Element {
                   >
                     <Link href={`/music/genres/${genre.slug || genre.id}`}>
                       <div
-                        className="relative overflow-hidden rounded-2xl p-6 sm:p-8 cursor-pointer hover:scale-[1.03] transition-transform h-40 sm:h-48 flex flex-col justify-end"
+                        className="relative flex h-40 cursor-pointer flex-col justify-end overflow-hidden rounded-az-card p-6 transition-transform hover:scale-[1.03] sm:h-48 sm:p-8"
                         style={{
                           background: `linear-gradient(135deg, ${color}40 0%, ${color}10 100%)`,
                           border: `1px solid ${color}30`,
                         }}
                       >
-                        <div className="absolute top-4 left-4 text-4xl sm:text-5xl opacity-80">
+                        <div className="absolute left-4 top-4 text-4xl opacity-80 sm:text-5xl">
                           {genre.icon || 'Music'}
                         </div>
                         <div>
-                          <h3 className="text-lg sm:text-xl font-bold text-white mb-1">
-                            {genre.name}
-                          </h3>
+                          <h3 className="az-title mb-1 text-az-ink">{genre.name}</h3>
                           {genre.trackCount != null && (
-                            <p className="text-sm text-white/50">
+                            <p className="az-caption text-az-ink-muted">
                               {genre.trackCount.toLocaleString()} tracks
                             </p>
                           )}
@@ -145,8 +122,6 @@ export default function MusicGenresPage(): React.JSX.Element {
           </ScrollReveal>
         )}
       </div>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

@@ -9,7 +9,7 @@ interface LazyLoadProps {
 export function LazyLoad({ fallback, children }: LazyLoadProps) {
   const defaultFallback = (
     <div className="flex items-center justify-center min-h-[200px]">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-az-scarlet"></div>
     </div>
   );
   return <Suspense fallback={fallback || defaultFallback}>{children}</Suspense>;

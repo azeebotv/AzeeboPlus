@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import BrandLogo from '@/components/auth/BrandLogo';
+import AuthShell from '@/components/auth/AuthShell';
 import { Alert, Spinner } from '@/components/auth/FormBits';
 import { apiFetch } from '@/lib/api';
 
@@ -96,87 +96,62 @@ export default function OTPVerificationPage(): React.JSX.Element {
   };
 
   return (
-    <div
-      className="relative min-h-screen w-full flex items-center justify-center p-6 overflow-hidden"
-      style={{ backgroundColor: 'var(--brand-near-black)' }}
+    <AuthShell
+      headlineLines={['Security', 'is a habit']}
+      tagline="A one-time code keeps your Azeebo+ account yours alone."
     >
-      {/* Subtle abstract tech pattern overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1'%3E%3Cpath d='M30 5l5 5-5 5-5-5z'/%3E%3Ccircle cx='10' cy='40' r='3'/%3E%3Cpath d='M45 35h10M45 40h10M45 45h10'/%3E%3Cpath d='M5 55h15'/%3E%3C/g%3E%3C/svg%3E\")",
-        }}
-      />
-
-      {/* Logo top-left */}
-      <div className="absolute top-0 left-0 p-8 z-20">
-        <BrandLogo variant="light" />
-      </div>
-
-      {/* Right-edge red ambient glow */}
-      <div
-        className="az-ambient-red"
-        style={{ width: 500, height: 500, top: '50%', right: -200, transform: 'translateY(-50%)' }}
-      />
-
-      <div className="az-glass az-glass--glow relative z-10 w-full max-w-xl p-8 sm:p-10 text-center">
-        <h1 className="az-headline text-white text-3xl mb-3">Verify Your Identity</h1>
-        <p className="text-white/55 text-sm leading-relaxed mb-8">
+      <div className="text-center">
+        <h2 className="az-headline text-2xl text-az-ink">Verify Your Identity</h2>
+        <p className="az-body mx-auto mt-2 max-w-sm leading-relaxed text-az-ink-muted">
           Enter your 6 digits verification code sent to your phone number
         </p>
+      </div>
 
-        {error && (
-          <div className="mb-6 text-left">
-            <Alert>{error}</Alert>
-          </div>
-        )}
+      {error && (
+        <div className="mt-5 text-left">
+          <Alert>{error}</Alert>
+        </div>
+      )}
 
-        <form onSubmit={handleVerify} className="space-y-7">
-          <div className="flex justify-center gap-2 sm:gap-3">
-            {digits.map((d, i) => (
-              <input
-                key={i}
-                ref={(el) => {
-                  inputsRef.current[i] = el;
-                }}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={d}
-                onChange={(e) => handleChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                aria-label={`Digit ${i + 1}`}
-                className="az-input text-center font-bold text-xl"
-                style={{ width: 48, height: 56, padding: 0 }}
-              />
-            ))}
-          </div>
+      <form onSubmit={handleVerify} className="mt-7 space-y-7">
+        <div className="flex justify-center gap-2 sm:gap-3">
+          {digits.map((d, i) => (
+            <input
+              key={i}
+              ref={(el) => {
+                inputsRef.current[i] = el;
+              }}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={d}
+              onChange={(e) => handleChange(i, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(i, e)}
+              aria-label={`Digit ${i + 1}`}
+              className="az-input az-input--otp"
+            />
+          ))}
+        </div>
 
-          <p className="text-white/50 text-sm">
-            Don&apos;t receive the code.{' '}
-            {resendIn > 0 ? (
-              <span className="font-bold text-white">Resend in {resendIn}s</span>
-            ) : (
-              <button
-                type="button"
-                onClick={handleResend}
-                className="font-bold text-white hover:text-[var(--brand-orange)] underline"
-              >
-                Resend
-              </button>
-            )}
-          </p>
+        <p className="az-body text-az-ink-muted">
+          Don&apos;t receive the code.{' '}
+          {resendIn > 0 ? (
+            <span className="font-bold text-az-ink">Resend in {resendIn}s</span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              className="font-bold text-az-ink hover:text-az-flame underline"
+            >
+              Resend
+            </button>
+          )}
+        </p>
 
+        <div className="flex justify-center">
           <button
             type="submit"
-            className="az-btn-primary"
-            style={{
-              width: 'auto',
-              marginInline: 'auto',
-              paddingInline: '3rem',
-              display: 'inline-block',
-            }}
+            className="az-btn-primary az-btn-primary--inline"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -187,10 +162,10 @@ export default function OTPVerificationPage(): React.JSX.Element {
               'Verify and continue'
             )}
           </button>
+        </div>
 
-          <p className="text-white/40 text-xs">Encrypted &amp; Secure Verification</p>
-        </form>
-      </div>
-    </div>
+        <p className="az-caption text-az-ink-muted">Encrypted &amp; Secure Verification</p>
+      </form>
+    </AuthShell>
   );
 }

@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -41,45 +41,24 @@ function LorePageContent(): React.JSX.Element {
   const error = loreQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Vertical" />
+    <PageShell activeNav="Vertical">
+      <PageHero
+        eyebrow="Vertical Universe"
+        title="Lore Explorer"
+        subtitle="Discover the rich backstories, lore, and mythology behind your favorite shows"
+      />
 
-      <section
-        className="relative py-16 sm:py-20"
-        style={{
-          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Lore Explorer
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Discover the rich backstories, lore, and mythology behind your favorite shows
-          </motion.p>
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section className="py-2 sm:py-4">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">Lore Entries</h2>
+          <h2 className="az-section-title mb-6 text-az-ink sm:mb-8">Lore Entries</h2>
         </ScrollReveal>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
                 <Skeleton height="200px" borderRadius="0" />
-                <div className="p-4 space-y-3">
+                <div className="space-y-3 p-4">
                   <Skeleton height="20px" width="70%" />
                   <Skeleton height="16px" width="90%" />
                 </div>
@@ -93,7 +72,7 @@ function LorePageContent(): React.JSX.Element {
             onButtonPress={() => loreQuery.refetch()}
           />
         ) : lore.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {lore.map((entry, index) => (
               <motion.div
                 key={entry.id}
@@ -110,27 +89,21 @@ function LorePageContent(): React.JSX.Element {
                         alt={entry.title}
                         width={400}
                         height={160}
-                        className="w-full h-40 object-cover"
+                        className="h-40 w-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
+                      <div className="absolute inset-0 az-scrim" />
                       {entry.category && (
-                        <span
-                          className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                          style={{
-                            backgroundColor: 'rgba(232,66,10,0.9)',
-                            color: 'var(--brand-white)',
-                          }}
-                        >
+                        <span className="az-caption absolute top-2 right-2 rounded-az-pill bg-az-scarlet/90 px-2.5 py-0.5 text-az-ink">
                           {entry.category}
                         </span>
                       )}
                       <div className="absolute bottom-3 left-3 right-3">
-                        <h3 className="text-lg font-bold text-white">{entry.title}</h3>
+                        <h3 className="az-subtitle text-az-ink">{entry.title}</h3>
                       </div>
                     </div>
                     <div className="p-4">
-                      <p className="text-sm text-white/50 line-clamp-3">{entry.description}</p>
-                      <span className="inline-block mt-3 text-sm text-[var(--brand-orange)] font-medium">
+                      <p className="az-caption line-clamp-3 text-az-ink/50">{entry.description}</p>
+                      <span className="az-body-strong mt-3 inline-block text-az-flame">
                         Explore →
                       </span>
                     </div>
@@ -140,14 +113,12 @@ function LorePageContent(): React.JSX.Element {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">No lore entries available</p>
+          <div className="py-12 text-center">
+            <p className="az-lead text-az-ink/50">No lore entries available</p>
           </div>
         )}
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -157,8 +128,8 @@ export default function LorePage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

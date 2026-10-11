@@ -10,7 +10,16 @@ import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { PageShell } from '@/components/layout/PageShell';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
-import { Tag, Calendar, ArrowLeft, Ticket, Building2, Check, ExternalLink, ShieldCheck } from 'lucide-react';
+import {
+  Tag,
+  Calendar,
+  ArrowLeft,
+  Ticket,
+  Building2,
+  Check,
+  ExternalLink,
+  ShieldCheck,
+} from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface OfferDetail {
@@ -46,7 +55,7 @@ function OfferDetailContent() {
   const o = query.data;
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.15)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-16 space-y-6">
         <div className="flex items-center justify-between">
           <Breadcrumbs
@@ -59,7 +68,7 @@ function OfferDetailContent() {
           />
           <Link
             href="/lifestyle/offers"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/50 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-az-ink/50 hover:text-az-ink transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             All Offers
@@ -76,35 +85,37 @@ function OfferDetailContent() {
           <div className="max-w-md mx-auto py-16">
             <ErrorState
               title="Offer Not Found"
-              description={query.error?.message || 'The requested voucher or privilege could not be located.'}
+              description={
+                query.error?.message || 'The requested voucher or privilege could not be located.'
+              }
               onButtonPress={() => query.refetch()}
             />
           </div>
         ) : (
           <ScrollReveal>
-            <div className="az-glass p-8 sm:p-10 rounded-3xl border border-white/10 shadow-2xl space-y-8 text-center">
-              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-lg font-mono font-extrabold mx-auto">
+            <div className="az-glass p-8 sm:p-10 border border-az-glass-border space-y-8 text-center">
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-az-success-500/20 text-az-success-400 border border-az-success-500/30 text-lg font-mono font-extrabold mx-auto">
                 <Tag className="w-5 h-5" />
                 <span>{o.discount}</span>
               </div>
 
               <div className="space-y-3">
-                <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                <h1 className="az-headline text-2xl sm:text-4xl font-extrabold text-az-ink">
                   {o.title}
                 </h1>
-                <p className="text-sm sm:text-base text-white/70 leading-relaxed max-w-xl mx-auto">
+                <p className="text-sm sm:text-base text-az-ink/70 leading-relaxed max-w-xl mx-auto">
                   {o.description}
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-white/50 border-y border-white/5 py-4">
-                <span className="flex items-center gap-1.5 font-semibold text-white">
-                  <Building2 className="w-4 h-4 text-[var(--brand-orange)]" />
+              <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-az-ink/50 border-y border-az-ink/5 py-4">
+                <span className="flex items-center gap-1.5 font-semibold text-az-ink">
+                  <Building2 className="w-4 h-4 text-[var(--color-az-flame)]" />
                   {o.partnerName}
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-white/40" />
+                  <Calendar className="w-4 h-4 text-az-ink/40" />
                   Valid until{' '}
                   {new Date(o.validUntil).toLocaleDateString('en-NG', {
                     month: 'long',
@@ -115,15 +126,15 @@ function OfferDetailContent() {
               </div>
 
               {o.terms?.length > 0 && (
-                <div className="text-left bg-white/5 p-5 rounded-2xl border border-white/5 space-y-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-white/60 flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[var(--brand-orange)]" />
+                <div className="text-left bg-az-glass-fill p-5 rounded-2xl border border-az-ink/5 space-y-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-az-ink/60 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-az-flame)]" />
                     Terms & Redemption Guidelines
                   </h3>
-                  <ul className="space-y-1.5 text-xs text-white/50">
+                  <ul className="space-y-1.5 text-xs text-az-ink/50">
                     {o.terms.map((t, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <span className="text-[var(--brand-orange)] mt-0.5">•</span>
+                        <span className="text-[var(--color-az-flame)] mt-0.5">•</span>
                         <span>{t}</span>
                       </li>
                     ))}
@@ -140,8 +151,8 @@ function OfferDetailContent() {
                   whileTap={{ scale: 0.98 }}
                   className={`w-full py-4 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg ${
                     claimed
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-[var(--brand-orange)] text-white hover:bg-[var(--brand-orange)]/90 shadow-[var(--brand-orange)]/25'
+                      ? 'bg-az-success-500/20 text-az-success-400 border border-az-success-500/30'
+                      : 'bg-[var(--color-az-flame)] text-az-ink hover:bg-[var(--color-az-flame)]/90 shadow-[var(--color-az-flame)]/25'
                   }`}
                 >
                   {claimed ? (
@@ -160,7 +171,7 @@ function OfferDetailContent() {
                 {o.partnerId && (
                   <Link
                     href={`/lifestyle/partners/${o.partnerId}`}
-                    className="inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-white transition-colors pt-2"
+                    className="inline-flex items-center gap-1.5 text-xs text-az-ink/40 hover:text-az-ink transition-colors pt-2"
                   >
                     View Partner Profile <ExternalLink className="w-3 h-3" />
                   </Link>
@@ -180,8 +191,8 @@ export default function OfferDetailPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

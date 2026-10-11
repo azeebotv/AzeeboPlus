@@ -2,15 +2,15 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import MusicTrackList from '@/components/music/MusicTrackList';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { extractTracks } from '@/lib/music';
+import { Mic } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface Artist {
@@ -58,66 +58,48 @@ export default function ArtistDetailPage(): React.JSX.Element {
   const tracks = tracksQuery.data ?? [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Music" />
-
-      {/* Artist Hero */}
-      <section
-        className="relative py-16 sm:py-20"
-        style={{
-          background: 'linear-gradient(135deg, var(--music-purple) 0%, var(--bg-primary) 100%)',
-        }}
+    <PageShell activeNav="Music">
+      <PageHero
+        eyebrow="Music"
+        title={artist?.name || 'Artist'}
+        subtitle={artist?.bio}
+        accentColor="var(--color-az-universe-lifestyle)"
+        rightElement={
+          artist?.avatar ? (
+            <OptimizedImage
+              src={artist.avatar}
+              alt={artist?.name || 'Artist'}
+              width={160}
+              height={160}
+              className="size-32 rounded-full object-cover sm:size-40"
+            />
+          ) : (
+            <div className="flex size-32 items-center justify-center rounded-full bg-az-flame/15 text-az-flame sm:size-40">
+              <Mic size={48} strokeWidth={1.5} aria-hidden="true" />
+            </div>
+          )
+        }
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-2">
+          {artist?.genre && <p className="az-subtitle text-az-ink-muted">{artist.genre}</p>}
+          <div className="az-caption flex gap-6 text-az-ink-muted">
+            {artist?.trackCount != null && <span>{artist.trackCount} tracks</span>}
+            {artist?.followerCount != null && (
+              <span>{artist.followerCount.toLocaleString()} followers</span>
+            )}
+          </div>
           <Link
             href="/music"
-            className="text-sm text-white/40 hover:text-white/60 transition-colors mb-6 inline-block"
+            className="az-caption inline-block text-az-ink-muted transition-colors hover:text-az-ink"
           >
             ← Back to Music
           </Link>
-
-          <motion.div
-            className="flex flex-col sm:flex-row items-start sm:items-center gap-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            {artist?.avatar ? (
-              <OptimizedImage
-                src={artist.avatar}
-                alt={artist?.name || 'Artist'}
-                width={160}
-                height={160}
-                className="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover"
-              />
-            ) : (
-              <div
-                className="w-32 h-32 sm:w-40 sm:h-40 rounded-full flex items-center justify-center text-5xl"
-                style={{ background: 'linear-gradient(135deg, var(--music-purple), #E8420A)' }}
-              >
-                Mic
-              </div>
-            )}
-
-            <div>
-              <h1 className="text-3xl sm:text-5xl font-bold text-white mb-2">
-                {artist?.name || 'Artist'}
-              </h1>
-              {artist?.genre && <p className="text-lg text-white/60 mb-2">{artist.genre}</p>}
-              {artist?.bio && <p className="text-sm text-white/50 max-w-xl mb-4">{artist.bio}</p>}
-              <div className="flex gap-6 text-sm text-white/50">
-                {artist?.trackCount != null && <span>{artist.trackCount} tracks</span>}
-                {artist?.followerCount != null && (
-                  <span>{artist.followerCount.toLocaleString()} followers</span>
-                )}
-              </div>
-            </div>
-          </motion.div>
         </div>
-      </section>
+      </PageHero>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section className="py-10 sm:py-12">
         <ScrollReveal>
-          <h2 className="text-2xl font-bold text-white mb-6">Tracks</h2>
+          <h2 className="az-section-title mb-6 text-az-ink">Tracks</h2>
           <MusicTrackList
             tracks={tracks}
             isLoading={tracksQuery.isLoading}
@@ -125,9 +107,7 @@ export default function ArtistDetailPage(): React.JSX.Element {
             onRetry={() => tracksQuery.refetch()}
           />
         </ScrollReveal>
-      </div>
-
-      <AppFooter />
-    </div>
+      </section>
+    </PageShell>
   );
 }

@@ -3,8 +3,8 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { BookOpen, Code, Key, Webhook, Shield, Zap, ExternalLink } from 'lucide-react';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 
 const sections = [
   {
@@ -12,251 +12,119 @@ const sections = [
     description: 'Quick start guide to integrate with the Azeebo+ API',
     icon: Zap,
     href: '/developers/quickstart',
-    color: 'var(--brand-emerald)',
+    tint: 'text-az-success-400',
+    tile: 'bg-az-success-400/10',
   },
   {
     title: 'API Reference',
     description: 'Complete API documentation with examples',
     icon: Code,
     href: '/developers/api-reference',
-    color: 'var(--brand-blue)',
+    tint: 'text-az-secondary-400',
+    tile: 'bg-az-secondary-400/10',
   },
   {
     title: 'Authentication',
     description: 'OAuth 2.0, API keys, and JWT token management',
     icon: Key,
     href: '/developers/authentication',
-    color: 'var(--brand-purple)',
+    tint: 'text-az-primary-300',
+    tile: 'bg-az-primary-300/10',
   },
   {
     title: 'Webhooks',
     description: 'Real-time event notifications for your application',
     icon: Webhook,
     href: '/developers/webhooks',
-    color: 'var(--brand-pink)',
+    tint: 'text-az-flame',
+    tile: 'bg-az-flame/10',
   },
   {
     title: 'Security',
     description: 'Security best practices and compliance guidelines',
     icon: Shield,
     href: '/developers/security',
-    color: 'var(--brand-red)',
+    tint: 'text-az-error-400',
+    tile: 'bg-az-error-400/10',
   },
   {
     title: 'Changelog',
     description: 'Track all API changes and updates',
     icon: BookOpen,
     href: '/developers/changelog',
-    color: 'var(--brand-amber)',
+    tint: 'text-az-warning-400',
+    tile: 'bg-az-warning-400/10',
   },
+];
+
+const STATS = [
+  { label: 'API Endpoints', value: '200+' },
+  { label: 'Uptime', value: '99.99%' },
+  { label: 'Response Time', value: '<100ms' },
+  { label: 'Daily Requests', value: '1M+' },
 ];
 
 export default function DevelopersPage(): React.JSX.Element {
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-primary)',
-        minHeight: '100vh',
-        color: 'var(--text-primary, #F5F0EB)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 1000,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        {/* Hero Section */}
-        <div style={{ textAlign: 'center', marginBottom: 64 }}>
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{ fontSize: 48, fontWeight: 800, marginBottom: 16 }}
-          >
-            Azeebo+ Developer Platform
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            style={{
-              fontSize: 18,
-              color: 'var(--text-muted, #9A8A7A)',
-              maxWidth: 600,
-              margin: '0 auto',
-              lineHeight: 1.6,
-            }}
-          >
-            Build amazing experiences on top of Africa's leading entertainment platform. Access
-            content, payments, and user management through our RESTful APIs.
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 32 }}
-          >
-            <Link
-              href="/developers/quickstart"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '14px 28px',
-                borderRadius: 12,
-                backgroundColor: 'var(--brand-orange)',
-                color: 'white',
-                fontSize: 16,
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
-            >
+    <PageShell activeNav="Developers" maxWidth="xl">
+      <PageHero
+        eyebrow="Developer Platform"
+        title="Build on Azeebo+"
+        subtitle="Access content, payments, and user management through our RESTful APIs — and ship amazing experiences on top of Africa's leading entertainment platform."
+        actions={
+          <>
+            <Link href="/developers/quickstart" className="az-btn-social w-auto">
               Get Started
               <ExternalLink size={18} />
             </Link>
-            <Link
-              href="/developers/api-reference"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '14px 28px',
-                borderRadius: 12,
-                border: '1px solid var(--glass-border)',
-                backgroundColor: 'transparent',
-                color: 'var(--text-primary)',
-                fontSize: 16,
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
-            >
+            <Link href="/developers/api-reference" className="az-btn-social w-auto">
               API Reference
             </Link>
-          </motion.div>
-        </div>
+          </>
+        }
+      />
 
-        {/* Quick Stats */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 16,
-            marginBottom: 64,
-          }}
-        >
-          {[
-            { label: 'API Endpoints', value: '200+' },
-            { label: 'Uptime', value: '99.99%' },
-            { label: 'Response Time', value: '<100ms' },
-            { label: 'Daily Requests', value: '1M+' },
-          ].map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 + i * 0.1 }}
-              style={{
-                padding: 24,
-                borderRadius: 16,
-                border: '1px solid var(--glass-border)',
-                backgroundColor: 'var(--glass-bg)',
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 32,
-                  fontWeight: 700,
-                  color: 'var(--brand-orange)',
-                  marginBottom: 4,
-                }}
-              >
-                {stat.value}
-              </div>
-              <div style={{ fontSize: 14, color: 'var(--text-muted, #9A8A7A)' }}>{stat.label}</div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Documentation Sections */}
-        <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 32 }}>Documentation</h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: 20,
-          }}
-        >
-          {sections.map((section, i) => (
-            <motion.div
-              key={section.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + i * 0.1 }}
-            >
-              <Link
-                href={section.href}
-                style={{
-                  display: 'block',
-                  padding: 24,
-                  borderRadius: 16,
-                  border: '1px solid var(--glass-border)',
-                  backgroundColor: 'var(--glass-bg)',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 12,
-                    backgroundColor: `${section.color}20`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 16,
-                  }}
-                >
-                  <section.icon size={24} color={section.color} />
-                </div>
-                <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>{section.title}</h3>
-                <p style={{ fontSize: 14, color: 'var(--text-muted, #9A8A7A)', lineHeight: 1.5 }}>
-                  {section.description}
-                </p>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Code Example */}
-        <div
-          style={{
-            marginTop: 64,
-            padding: 32,
-            borderRadius: 20,
-            border: '1px solid var(--glass-border)',
-            backgroundColor: 'var(--glass-bg)',
-          }}
-        >
-          <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>Quick Example</h2>
-          <pre
-            style={{
-              padding: 20,
-              borderRadius: 12,
-              backgroundColor: 'rgba(0,0,0,0.3)',
-              overflow: 'auto',
-              fontSize: 14,
-              fontFamily: 'monospace',
-              lineHeight: 1.6,
-            }}
+      <div className="mb-14 grid grid-cols-2 gap-4 md:grid-cols-4">
+        {STATS.map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + i * 0.08 }}
+            className="az-glass p-6 text-center"
           >
-            <code>{`// Fetch trending content
+            <div className="az-heading az-text-gradient">{stat.value}</div>
+            <div className="az-body text-az-ink-muted mt-1">{stat.label}</div>
+          </motion.div>
+        ))}
+      </div>
+
+      <h2 className="az-section-title text-az-ink mb-6">Documentation</h2>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
+        {sections.map((section, i) => (
+          <motion.div
+            key={section.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 + i * 0.06 }}
+          >
+            <Link href={section.href} className="az-glass block p-6">
+              <span
+                className={`mb-4 flex size-12 items-center justify-center rounded-az-control ${section.tile}`}
+              >
+                <section.icon size={24} className={section.tint} />
+              </span>
+              <h3 className="az-subtitle text-az-ink mb-2">{section.title}</h3>
+              <p className="az-body text-az-ink-muted">{section.description}</p>
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="az-glass mt-14 p-6 sm:p-8">
+        <h2 className="az-title text-az-ink mb-4">Quick Example</h2>
+        <pre className="overflow-auto rounded-az-control bg-az-surface-root/60 p-5 az-caption font-mono leading-relaxed">
+          <code>{`// Fetch trending content
 const response = await fetch('https://api.azeeboplus.com/v1/content/trending', {
   headers: {
     'Authorization': 'Bearer YOUR_API_KEY',
@@ -266,10 +134,8 @@ const response = await fetch('https://api.azeeboplus.com/v1/content/trending', {
 
 const data = await response.json();
 console.log(data.content); // Array of trending content`}</code>
-          </pre>
-        </div>
-      </main>
-      <AppFooter />
-    </div>
+        </pre>
+      </div>
+    </PageShell>
   );
 }

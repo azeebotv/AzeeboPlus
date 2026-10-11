@@ -13,25 +13,25 @@ interface GlowCardProps {
 }
 
 const universeGlows: Record<string, string> = {
-  reality: 'rgba(204,28,28,0.25)',
-  creators: 'rgba(232,66,10,0.25)',
-  lifestyle: 'rgba(13,59,46,0.25)',
-  vertical: 'rgba(139,92,246,0.25)',
-  movies: 'rgba(245,158,11,0.25)',
-  games: 'rgba(59,130,246,0.25)',
-  comedy: 'rgba(34,197,94,0.25)',
-  sports: 'rgba(239,68,68,0.25)',
+  reality: 'color-mix(in srgb, var(--color-az-scarlet) 25%, transparent)',
+  creators: 'color-mix(in srgb, var(--color-az-scarlet) 25%, transparent)',
+  lifestyle: 'color-mix(in srgb, rgb(13, 59, 46) 25%, transparent)',
+  vertical: 'color-mix(in srgb, rgb(139, 92, 246) 25%, transparent)',
+  movies: 'color-mix(in srgb, var(--color-az-warning-500) 25%, transparent)',
+  games: 'color-mix(in srgb, var(--color-az-secondary-500) 25%, transparent)',
+  comedy: 'color-mix(in srgb, var(--color-az-success-500) 25%, transparent)',
+  sports: 'color-mix(in srgb, var(--color-az-error-500) 25%, transparent)',
 };
 
 const universeBorders: Record<string, string> = {
-  reality: 'rgba(204,28,28,0.3)',
-  creators: 'rgba(232,66,10,0.3)',
-  lifestyle: 'rgba(13,59,46,0.3)',
-  vertical: 'rgba(139,92,246,0.3)',
-  movies: 'rgba(245,158,11,0.3)',
-  games: 'rgba(59,130,246,0.3)',
-  comedy: 'rgba(34,197,94,0.3)',
-  sports: 'rgba(239,68,68,0.3)',
+  reality: 'color-mix(in srgb, var(--color-az-scarlet) 30%, transparent)',
+  creators: 'color-mix(in srgb, var(--color-az-scarlet) 30%, transparent)',
+  lifestyle: 'color-mix(in srgb, rgb(13, 59, 46) 30%, transparent)',
+  vertical: 'color-mix(in srgb, rgb(139, 92, 246) 30%, transparent)',
+  movies: 'color-mix(in srgb, var(--color-az-warning-500) 30%, transparent)',
+  games: 'color-mix(in srgb, var(--color-az-secondary-500) 30%, transparent)',
+  comedy: 'color-mix(in srgb, var(--color-az-success-500) 30%, transparent)',
+  sports: 'color-mix(in srgb, var(--color-az-error-500) 30%, transparent)',
 };
 
 export function GlowCard({
@@ -43,8 +43,12 @@ export function GlowCard({
   role,
   ariaLabel,
 }: GlowCardProps): React.JSX.Element {
-  const glowColor = universe ? universeGlows[universe] : 'rgba(255,255,255,0.08)';
-  const borderColor = universe ? universeBorders[universe] : 'rgba(255,255,255,0.15)';
+  const glowColor = universe
+    ? universeGlows[universe]
+    : 'color-mix(in srgb, var(--color-az-ink) 8%, transparent)';
+  const borderColor = universe
+    ? universeBorders[universe]
+    : 'color-mix(in srgb, var(--color-az-ink) 15%, transparent)';
 
   return (
     <motion.div

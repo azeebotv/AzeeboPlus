@@ -29,7 +29,7 @@ function MusicPageContent(): React.JSX.Element {
   const tracks: Track[] = musicQuery.data ?? [];
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.15)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
       <PageHero
         badge="Afrobeats & Soundscapes"
         title="Lifestyle Music"
@@ -40,26 +40,28 @@ function MusicPageContent(): React.JSX.Element {
         <div className="flex items-center justify-between">
           <Link
             href="/lifestyle"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-az-ink/50 hover:text-az-ink transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Lifestyle Hub
           </Link>
 
-          <div className="flex items-center gap-2 text-xs font-mono text-white/40">
-            <Headphones className="w-3.5 h-3.5 text-[var(--brand-orange)]" />
+          <div className="flex items-center gap-2 text-xs font-mono text-az-ink/40">
+            <Headphones className="w-3.5 h-3.5 text-[var(--color-az-flame)]" />
             <span>Curated Soundtracks</span>
           </div>
         </div>
 
-        <div className="az-glass rounded-3xl p-6 border border-white/10 shadow-2xl">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
-            <div className="w-10 h-10 rounded-xl bg-[var(--brand-orange)]/15 flex items-center justify-center text-[var(--brand-orange)]">
+        <div className="az-glass p-6 border border-az-glass-border">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-az-ink/5">
+            <div className="w-10 h-10 rounded-xl bg-[var(--color-az-flame)]/15 flex items-center justify-center text-[var(--color-az-flame)]">
               <Music className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Afro-Sonic Playlist</h2>
-              <p className="text-xs text-white/40">Stream official soundtrack releases & top-charting records</p>
+              <h2 className="text-base font-bold text-az-ink">Afro-Sonic Playlist</h2>
+              <p className="text-xs text-az-ink/40">
+                Stream official soundtrack releases & top-charting records
+              </p>
             </div>
           </div>
 
@@ -81,8 +83,8 @@ export default function MusicPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

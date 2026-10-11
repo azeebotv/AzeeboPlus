@@ -22,7 +22,7 @@ export interface PageHeroProps {
 
 export function PageHero({
   eyebrow,
-  eyebrowColor = 'var(--brand-orange)',
+  eyebrowColor = 'var(--color-az-flame)',
   title,
   subtitle,
   description,
@@ -31,13 +31,19 @@ export function PageHero({
   rightElement,
   accentColor,
   children,
-  glowColor = 'rgba(232, 66, 10, 0.18)',
+  glowColor = 'color-mix(in srgb, var(--color-az-scarlet) 18%, transparent)',
   glowSize = 600,
   className = '',
 }: PageHeroProps): React.JSX.Element {
   const displaySubtitle = subtitle || description;
   const displayActions = actions || rightElement;
-  const effectiveEyebrowColor = accentColor ? `var(--brand-${accentColor}, ${accentColor})` : eyebrowColor;
+  /* `accentColor` predates the generated vocabulary: pages passed a bare hue word
+     and this composed `var(--brand-<word>, <word>)`, which reached the retired
+     alias layer through a template string — invisible to the alias rule, and with
+     a keyword fallback that made an unmapped word render rather than fail. The
+     prop is a CSS colour now, so each hero states which token it means and the
+     alias layer stays reachable only from globals.css. */
+  const effectiveEyebrowColor = accentColor ?? eyebrowColor;
   return (
     <div className={`relative mb-8 sm:mb-10 ${className}`}>
       {/* Background ambient lighting */}
@@ -54,17 +60,15 @@ export function PageHero({
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-3 border border-white/10 bg-white/5 backdrop-blur-md"
+              className="az-chip inline-flex items-center gap-2 px-3 py-1 mb-3"
             >
               <span
                 className="w-1.5 h-1.5 rounded-full animate-pulse"
                 style={{ backgroundColor: effectiveEyebrowColor }}
               />
-              <span className="tracking-widest uppercase text-white/80 font-medium">
-                {eyebrow || badge}
-              </span>
+              <span className="az-overline text-az-ink-dim">{eyebrow || badge}</span>
               {badge && eyebrow && (
-                <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-white/10 text-white/90">
+                <span className="ml-1 px-1.5 py-0.5 rounded-az-pill az-micro-label bg-az-glass-card text-az-ink-dim">
                   {badge}
                 </span>
               )}
@@ -75,7 +79,7 @@ export function PageHero({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.05 }}
-            className="az-headline font-extrabold text-white text-3xl sm:text-4xl lg:text-5xl tracking-tight"
+            className="az-headline az-hero-title text-az-ink"
           >
             {title}
           </motion.h1>
@@ -85,7 +89,7 @@ export function PageHero({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.1 }}
-              className="text-white/60 mt-2 text-sm sm:text-base max-w-2xl leading-relaxed"
+              className="az-lead text-az-ink-muted mt-2 max-w-2xl"
             >
               {displaySubtitle}
             </motion.p>

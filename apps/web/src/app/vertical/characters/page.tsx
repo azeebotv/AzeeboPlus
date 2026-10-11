@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import analytics from '@/lib/analytics';
 
 interface Character {
@@ -39,104 +39,53 @@ export default function VerticalCharactersPage(): React.JSX.Element {
   const characters = query.data as Character[] | undefined;
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Vertical" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Characters</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
-          Explore characters from the Azeebo+ vertical universe
-        </p>
+    <PageShell activeNav="Vertical">
+      <PageHero
+        eyebrow="Vertical Universe"
+        title="Characters"
+        subtitle="Explore characters from the Azeebo+ vertical universe"
+      />
 
-        {query.isLoading ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} height="240px" borderRadius="16px" />
-            ))}
-          </div>
-        ) : query.error ? (
-          <ErrorState title="Failed to load characters" />
-        ) : !characters || characters.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 60 }}>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 8 }}>
-              No characters yet
-            </p>
-            <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>
-              Characters will appear here once created in the storyworlds.
-            </p>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {characters.map((char) => (
-              <Link
-                key={char.id}
-                href={`/vertical/characters/${char.id}`}
-                style={{
-                  textDecoration: 'none',
-                  borderRadius: 16,
-                  overflow: 'hidden',
-                  border: '1px solid var(--border-default)',
-                }}
-              >
-                <div
-                  style={{
-                    position: 'relative',
-                    aspectRatio: '1',
-                    backgroundColor: 'var(--bg-tertiary)',
-                  }}
-                >
-                  {char.imageUrl && (
-                    <OptimizedImage src={char.imageUrl} alt="" fill className="object-cover" />
-                  )}
-                </div>
-                <div style={{ padding: 12 }}>
-                  <h3
-                    style={{
-                      fontWeight: 600,
-                      fontSize: 14,
-                      color: 'var(--text-primary)',
-                      margin: 0,
-                    }}
-                  >
-                    {char.name}
-                  </h3>
-                  {char.pathName && (
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        padding: '2px 8px',
-                        borderRadius: 999,
-                        backgroundColor: 'rgba(232,66,10,0.15)',
-                        color: 'var(--brand-orange)',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        marginTop: 4,
-                      }}
-                    >
-                      {char.pathName}
-                    </span>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </main>
-      <AppFooter />
-    </div>
+      {query.isLoading ? (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <Skeleton key={i} height="240px" borderRadius="16px" />
+          ))}
+        </div>
+      ) : query.error ? (
+        <ErrorState title="Failed to load characters" />
+      ) : !characters || characters.length === 0 ? (
+        <div className="az-glass px-6 py-16 text-center">
+          <p className="az-lead text-az-ink mb-1">No characters yet</p>
+          <p className="az-body text-az-ink-dim">
+            Characters will appear here once created in the storyworlds.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
+          {characters.map((char) => (
+            <Link
+              key={char.id}
+              href={`/vertical/characters/${char.id}`}
+              className="az-glass block overflow-hidden"
+            >
+              <div className="relative aspect-square bg-az-surface-raised">
+                {char.imageUrl && (
+                  <OptimizedImage src={char.imageUrl} alt="" fill className="object-cover" />
+                )}
+              </div>
+              <div className="p-3">
+                <h3 className="az-body-strong text-az-ink">{char.name}</h3>
+                {char.pathName && (
+                  <span className="az-chip mt-1 inline-block px-2 py-0.5 az-micro-label text-az-flame">
+                    {char.pathName}
+                  </span>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </PageShell>
   );
 }

@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, Copy, X, Send, Link } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 interface PartyParticipant {
   id: string;
@@ -82,7 +83,7 @@ export function WatchPartyOverlay({
       return result.success ? result.data : null;
     },
     enabled: !!activeParty?.id,
-    refetchInterval: 2000, // Poll for updates
+    refetchInterval: pollingIntervals.live, // Poll for updates
   });
 
   // Fetch chat messages
@@ -94,7 +95,7 @@ export function WatchPartyOverlay({
       return result.success ? result.data || [] : [];
     },
     enabled: !!activeParty?.id && showChat,
-    refetchInterval: 1000,
+    refetchInterval: pollingIntervals.realtime,
   });
 
   // Create party mutation
@@ -208,16 +209,14 @@ export function WatchPartyOverlay({
         <div className="flex gap-2">
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-            style={{ background: 'var(--brand-orange)', color: 'white' }}
+            className="az-btn-primary az-btn-primary--inline az-btn-primary--sm flex cursor-pointer items-center gap-2"
           >
             <Users className="w-4 h-4" />
             Start Party
           </button>
           <button
             onClick={() => setShowJoin(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-            style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'white' }}
+            className="flex cursor-pointer items-center gap-2 rounded-az-card border border-az-ink/20 px-4 py-2 az-body-strong text-az-ink transition-colors"
           >
             <Link className="w-4 h-4" />
             Join Party
@@ -227,22 +226,19 @@ export function WatchPartyOverlay({
 
       {/* Active Party Bar */}
       {activeParty && (
-        <div
-          className="fixed bottom-0 left-0 right-0 z-40 p-4"
-          style={{ background: 'rgba(0,0,0,0.9)', borderTop: '1px solid rgba(255,255,255,0.1)' }}
-        >
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-az-ink/10 bg-black/90 p-4">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-sm font-medium text-white">Watch Party</span>
+                <div className="w-2 h-2 rounded-full bg-az-success-500 animate-pulse" />
+                <span className="text-sm font-medium text-az-ink">Watch Party</span>
               </div>
               <div className="flex items-center gap-1">
-                <Users className="w-4 h-4 text-white/60" />
-                <span className="text-sm text-white/60">{activeParty.participantCount}</span>
+                <Users className="w-4 h-4 text-az-ink/60" />
+                <span className="text-sm text-az-ink/60">{activeParty.participantCount}</span>
               </div>
               {isHost && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400">
+                <span className="text-[10px] px-2 py-0.5 rounded-az-pill bg-az-warning-500/20 text-az-warning-400">
                   HOST
                 </span>
               )}
@@ -252,8 +248,7 @@ export function WatchPartyOverlay({
               {/* Invite Code */}
               <button
                 onClick={copyInviteCode}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-white/60 hover:text-white transition-colors"
-                style={{ background: 'rgba(255,255,255,0.1)' }}
+                className="flex cursor-pointer items-center gap-1 rounded-az-control bg-az-ink/10 px-3 py-1.5 text-xs text-az-ink/60 transition-colors hover:text-az-ink"
               >
                 <Copy className="w-3 h-3" />
                 {activeParty.inviteCode}
@@ -262,8 +257,11 @@ export function WatchPartyOverlay({
               {/* Chat Toggle */}
               <button
                 onClick={() => setShowChat(!showChat)}
-                className={`p-2 rounded-lg transition-colors ${showChat ? 'text-white' : 'text-white/60 hover:text-white'}`}
-                style={{ background: showChat ? 'var(--brand-orange)' : 'rgba(255,255,255,0.1)' }}
+                className={`cursor-pointer rounded-az-control p-2 transition-colors ${
+                  showChat
+                    ? 'bg-az-flame text-az-ink'
+                    : 'bg-az-ink/10 text-az-ink/60 hover:text-az-ink'
+                }`}
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -271,8 +269,7 @@ export function WatchPartyOverlay({
               {/* Leave */}
               <button
                 onClick={() => leaveMutation.mutate()}
-                className="p-2 rounded-lg text-white/60 hover:text-red-400 transition-colors"
-                style={{ background: 'rgba(255,255,255,0.1)' }}
+                className="cursor-pointer rounded-az-control bg-az-ink/10 p-2 text-az-ink/60 transition-colors hover:text-az-error-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -282,28 +279,22 @@ export function WatchPartyOverlay({
           {/* Chat Panel */}
           {showChat && (
             <div className="max-w-6xl mx-auto mt-4">
-              <div
-                className="rounded-xl overflow-hidden"
-                style={{ background: 'rgba(255,255,255,0.05)', maxHeight: 200 }}
-              >
-                <div className="p-3 space-y-2 overflow-y-auto" style={{ maxHeight: 150 }}>
+              <div className="max-h-[200px] overflow-hidden rounded-az-card bg-az-ink/5">
+                <div className="max-h-[150px] p-3 space-y-2 overflow-y-auto">
                   {(chatQuery.data || []).map((msg) => (
                     <div key={msg.id} className="text-sm">
                       {msg.type === 'system' ? (
-                        <span className="text-white/30 italic">{msg.content}</span>
+                        <span className="text-az-ink/30 italic">{msg.content}</span>
                       ) : (
                         <>
-                          <span className="font-medium text-white/80">{msg.userName}: </span>
-                          <span className="text-white/60">{msg.content}</span>
+                          <span className="font-medium text-az-ink/80">{msg.userName}: </span>
+                          <span className="text-az-ink/60">{msg.content}</span>
                         </>
                       )}
                     </div>
                   ))}
                 </div>
-                <div
-                  className="flex gap-2 p-2"
-                  style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
-                >
+                <div className="flex gap-2 border-t border-az-ink/5 p-2">
                   <input
                     type="text"
                     value={chatInput}
@@ -314,17 +305,15 @@ export function WatchPartyOverlay({
                       }
                     }}
                     placeholder="Type a message..."
-                    className="flex-1 px-3 py-1.5 rounded-lg text-sm text-white placeholder-white/30 border-none outline-none"
-                    style={{ background: 'rgba(255,255,255,0.1)' }}
+                    className="flex-1 rounded-az-control border-none bg-az-ink/10 px-3 py-1.5 text-sm text-az-ink outline-none placeholder-white/30"
                   />
                   <button
                     onClick={() => {
                       if (chatInput.trim()) chatMutation.mutate(chatInput.trim());
                     }}
-                    className="p-1.5 rounded-lg"
-                    style={{ background: 'var(--brand-orange)' }}
+                    className="cursor-pointer rounded-az-control bg-az-flame p-1.5"
                   >
-                    <Send className="w-4 h-4 text-white" />
+                    <Send className="w-4 h-4 text-az-ink" />
                   </button>
                 </div>
               </div>
@@ -337,23 +326,21 @@ export function WatchPartyOverlay({
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="az-glass p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-bold text-white mb-4">Start Watch Party</h3>
-            <p className="text-sm text-white/60 mb-4">
+            <h3 className="text-lg font-bold text-az-ink mb-4">Start Watch Party</h3>
+            <p className="text-sm text-az-ink/60 mb-4">
               Invite friends to watch together! Everyone&apos;s playback will be synchronized.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => createMutation.mutate()}
                 disabled={createMutation.isPending}
-                className="flex-1 py-2 px-4 rounded-xl text-sm font-medium text-white disabled:opacity-50"
-                style={{ background: 'var(--brand-orange)' }}
+                className="az-btn-primary flex-1 cursor-pointer"
               >
                 {createMutation.isPending ? 'Creating...' : 'Create Party'}
               </button>
               <button
                 onClick={() => setShowCreate(false)}
-                className="py-2 px-4 rounded-xl text-sm font-medium text-white/60 border hover:text-white transition-colors"
-                style={{ borderColor: 'rgba(255,255,255,0.2)' }}
+                className="cursor-pointer rounded-az-card border border-az-ink/20 px-4 py-2 text-sm font-medium text-az-ink/60 transition-colors hover:text-az-ink"
               >
                 Cancel
               </button>
@@ -366,22 +353,20 @@ export function WatchPartyOverlay({
       {showJoin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="az-glass p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-bold text-white mb-4">Join Watch Party</h3>
+            <h3 className="text-lg font-bold text-az-ink mb-4">Join Watch Party</h3>
             <input
               type="text"
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
               placeholder="Enter invite code"
               maxLength={8}
-              className="w-full px-4 py-3 rounded-xl text-center text-lg font-mono font-bold tracking-widest text-white placeholder-white/30 border outline-none focus:border-[var(--brand-orange)] mb-4"
-              style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }}
+              className="w-full rounded-az-card border bg-az-ink/5 px-4 py-3 text-center text-lg font-mono font-bold tracking-widest text-az-ink outline-none placeholder-white/30 mb-4 border-az-ink/10 focus:border-az-flame"
             />
             <div className="flex gap-3">
               <button
                 onClick={() => joinMutation.mutate(inviteCode)}
                 disabled={inviteCode.length < 8 || joinMutation.isPending}
-                className="flex-1 py-2 px-4 rounded-xl text-sm font-medium text-white disabled:opacity-50"
-                style={{ background: 'var(--brand-orange)' }}
+                className="az-btn-primary flex-1 cursor-pointer"
               >
                 {joinMutation.isPending ? 'Joining...' : 'Join'}
               </button>
@@ -390,8 +375,7 @@ export function WatchPartyOverlay({
                   setShowJoin(false);
                   setInviteCode('');
                 }}
-                className="py-2 px-4 rounded-xl text-sm font-medium text-white/60 border hover:text-white transition-colors"
-                style={{ borderColor: 'rgba(255,255,255,0.2)' }}
+                className="cursor-pointer rounded-az-card border border-az-ink/20 px-4 py-2 text-sm font-medium text-az-ink/60 transition-colors hover:text-az-ink"
               >
                 Cancel
               </button>

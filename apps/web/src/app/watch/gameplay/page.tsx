@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 import { apiFetch } from '@/lib/api';
 import { Skeleton } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -106,15 +106,12 @@ export default function GameplayPage(): React.JSX.Element {
   const q = questions[currentQuestion];
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Games" />
+    <PageShell maxWidth="lg" activeNav="Games">
+      <PageHero eyebrow="Games" title="Gameplay" />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-10 flex flex-col items-center justify-center">
+      <div className="-mt-4 pb-10 flex flex-col items-center justify-center">
         {isLoading ? (
-          <div className="az-glass p-8 rounded-3xl w-full max-w-xl text-center space-y-4">
+          <div className="az-glass p-8 w-full max-w-xl text-center space-y-4">
             <Skeleton height="32px" width="60%" className="mx-auto" />
             <Skeleton height="180px" borderRadius="16px" />
             <div className="space-y-2">
@@ -124,61 +121,56 @@ export default function GameplayPage(): React.JSX.Element {
             </div>
           </div>
         ) : gameOver ? (
-          <div className="az-glass p-10 rounded-3xl w-full max-w-lg text-center animate-fadeIn">
+          <div className="az-glass p-10 w-full max-w-lg text-center animate-fade-in">
             <div className="text-6xl mb-4"></div>
-            <h2 className="text-3xl font-extrabold text-white mb-2">Game Over!</h2>
-            <p className="text-white/60 mb-6">You earned</p>
-            <div className="text-5xl font-black text-[var(--brand-orange)] mb-6">
-              {score} <span className="text-xl font-normal text-white/70">pts</span>
+            <h2 className="az-headline text-3xl text-az-ink mb-2">Game Over!</h2>
+            <p className="text-az-ink/60 mb-6">You earned</p>
+            <div className="az-headline text-5xl text-az-flame mb-6">
+              {score} <span className="text-xl font-normal text-az-ink/70">pts</span>
             </div>
             <div className="flex gap-4 justify-center">
               <button
                 onClick={restartGame}
-                className="px-6 py-3 rounded-full font-bold text-white transition-transform hover:scale-105"
-                style={{
-                  background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                }}
+                className="az-btn-primary az-btn-primary--inline az-btn-primary--sm"
               >
                 Play Again
               </button>
               <Link
                 href="/games"
-                className="px-6 py-3 rounded-full font-semibold text-white/80 bg-white/10 hover:bg-white/20 transition-all"
+                className="inline-flex items-center rounded-az-pill px-6 py-3 az-body-strong bg-az-glass-card text-az-ink/80 transition-all hover:bg-az-ink/20"
               >
                 More Games
               </Link>
             </div>
           </div>
         ) : q ? (
-          <div className="az-glass p-8 sm:p-10 rounded-3xl w-full max-w-2xl border border-white/10 shadow-2xl">
+          <div className="az-glass p-8 sm:p-10 w-full max-w-2xl">
             {/* Header stats */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-az-glass-border">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-white/50">
-                  Question
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[var(--brand-orange)] text-white">
+                <span className="az-overline text-az-ink/50">Question</span>
+                <span className="az-caption rounded-az-pill bg-az-flame px-2.5 py-0.5 font-bold text-az-ink">
                   {currentQuestion + 1}/{questions.length}
                 </span>
               </div>
               <div className="flex items-center gap-6">
                 <div className="text-right">
-                  <span className="text-xs text-white/40 block">Time</span>
+                  <span className="az-caption block text-az-ink/40">Time</span>
                   <span
-                    className={`font-mono font-bold text-lg ${timeLeft < 15 ? 'text-red-400 animate-pulse' : 'text-white'}`}
+                    className={`font-mono text-lg font-bold ${timeLeft < 15 ? 'text-az-error-400 animate-pulse' : 'text-az-ink'}`}
                   >
                     0:{timeLeft.toString().padStart(2, '0')}
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-white/40 block">Score</span>
-                  <span className="font-bold text-lg text-[var(--brand-orange)]">{score}</span>
+                  <span className="az-caption block text-az-ink/40">Score</span>
+                  <span className="az-title text-az-flame">{score}</span>
                 </div>
               </div>
             </div>
 
             {/* Question */}
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-8 text-center leading-relaxed">
+            <h2 className="text-xl sm:text-2xl font-bold text-az-ink mb-8 text-center leading-relaxed">
               {q.question}
             </h2>
 
@@ -186,14 +178,15 @@ export default function GameplayPage(): React.JSX.Element {
             <div className="space-y-3">
               {q.options.map((opt, i) => {
                 const isChosen = selectedAnswer === opt;
-                let btnStyle = 'border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]';
+                let btnStyle =
+                  'border-az-glass-border bg-az-ink/[0.03] text-az-ink hover:bg-az-ink/[0.08]';
                 if (selectedAnswer !== null) {
                   if (opt === q.correct) {
-                    btnStyle = 'border-emerald-500 bg-emerald-500/20 text-emerald-300';
+                    btnStyle = 'border-az-success-500 bg-az-success-500/20 text-az-success-400';
                   } else if (isChosen && !isCorrect) {
-                    btnStyle = 'border-red-500 bg-red-500/20 text-red-300';
+                    btnStyle = 'border-az-error-500 bg-az-error-500/20 text-az-error-300';
                   } else {
-                    btnStyle = 'border-white/5 bg-white/[0.01] text-white/30';
+                    btnStyle = 'border-az-ink/5 bg-az-ink/[0.01] text-az-ink/30';
                   }
                 }
                 return (
@@ -201,22 +194,22 @@ export default function GameplayPage(): React.JSX.Element {
                     key={i}
                     disabled={selectedAnswer !== null}
                     onClick={() => handleAnswer(opt)}
-                    className={`w-full p-4 rounded-2xl font-semibold text-left transition-all border flex items-center justify-between ${btnStyle}`}
+                    className={`w-full p-4 rounded-az-panel font-semibold text-left transition-all border flex items-center justify-between ${btnStyle}`}
                   >
                     <span>{opt}</span>
                     {selectedAnswer !== null && opt === q.correct && (
-                      <span className="text-emerald-400 font-bold"></span>
+                      <span className="text-az-success-400 font-bold"></span>
                     )}
-                    {isChosen && !isCorrect && <span className="text-red-400 font-bold"></span>}
+                    {isChosen && !isCorrect && (
+                      <span className="text-az-error-400 font-bold"></span>
+                    )}
                   </button>
                 );
               })}
             </div>
           </div>
         ) : null}
-      </main>
-
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }

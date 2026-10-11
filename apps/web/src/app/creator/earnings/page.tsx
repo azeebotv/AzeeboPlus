@@ -49,7 +49,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.12)">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 12%, transparent)">
         <div className="max-w-xl mx-auto py-20 px-4">
           <ErrorState
             title="Failed to load earnings"
@@ -62,7 +62,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
   }
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.14)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
       <PageHero
         badge="Treasury & Settlement"
         title="Royalties & Earnings"
@@ -72,10 +72,10 @@ export default function CreatorEarningsPage(): React.JSX.Element {
       <div className="max-w-5xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Period Selector */}
         <div className="flex items-center justify-between">
-          <span className="text-xs font-mono uppercase tracking-wider text-white/50">
+          <span className="text-xs font-mono uppercase tracking-wider text-az-ink/50">
             Accounting Horizon
           </span>
-          <div className="flex items-center gap-1.5 p-1 rounded-full az-glass border border-white/10">
+          <div className="flex items-center gap-1.5 p-1 az-glass border border-az-glass-border">
             {(['7d', '30d', '90d'] as const).map((p) => {
               const isActive = period === p;
               return (
@@ -85,8 +85,8 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                   onClick={() => setPeriod(p)}
                   className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
                     isActive
-                      ? 'bg-[var(--brand-orange)] text-white shadow-lg'
-                      : 'text-white/60 hover:text-white'
+                      ? 'bg-[var(--color-az-flame)] text-az-ink shadow-lg'
+                      : 'text-az-ink/60 hover:text-az-ink'
                   }`}
                 >
                   {p.toUpperCase()}
@@ -104,22 +104,22 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                 label: 'Total Earnings',
                 value: `₦${earnings?.totalEarnings.toLocaleString() || '0'}`,
                 icon: DollarSign,
-                color: 'text-[var(--brand-orange)]',
-                border: 'hover:border-[var(--brand-orange)]/40',
+                color: 'text-[var(--color-az-flame)]',
+                border: 'hover:border-[var(--color-az-flame)]/40',
               },
               {
                 label: 'Available Balance',
                 value: `₦${earnings?.availableBalance.toLocaleString() || '0'}`,
                 icon: Wallet,
-                color: 'text-emerald-400',
-                border: 'hover:border-emerald-500/40',
+                color: 'text-az-success-400',
+                border: 'hover:border-az-success-500/40',
               },
               {
                 label: 'Pending In Transit',
                 value: `₦${earnings?.pendingEarnings.toLocaleString() || '0'}`,
                 icon: Clock,
-                color: 'text-amber-400',
-                border: 'hover:border-amber-500/40',
+                color: 'text-az-warning-400',
+                border: 'hover:border-az-warning-500/40',
               },
               {
                 label: 'Lifetime Accrual',
@@ -133,20 +133,20 @@ export default function CreatorEarningsPage(): React.JSX.Element {
               return (
                 <div
                   key={stat.label}
-                  className={`az-glass p-5 sm:p-6 rounded-2xl border border-white/10 ${stat.border} transition-all`}
+                  className={`az-glass p-5 sm:p-6 border border-az-glass-border ${stat.border} transition-all`}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-mono uppercase tracking-wider text-white/40">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-az-ink/40">
                       {stat.label}
                     </span>
-                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-az-glass-fill border border-az-glass-border flex items-center justify-center">
                       <Icon className={`w-4 h-4 ${stat.color}`} />
                     </div>
                   </div>
                   {isLoading ? (
                     <Skeleton className="h-8 w-24" />
                   ) : (
-                    <p className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                    <p className="az-headline text-2xl sm:text-3xl font-extrabold text-az-ink">
                       {stat.value}
                     </p>
                   )}
@@ -159,21 +159,18 @@ export default function CreatorEarningsPage(): React.JSX.Element {
         {/* Revenue Breakdown */}
         {earnings && (
           <ScrollReveal delay={0.1}>
-            <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
-              <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[var(--brand-orange)]" />
+            <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+              <h2 className="text-lg font-bold text-az-ink mb-6 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[var(--color-az-flame)]" />
                 Revenue Stream Decomposition
               </h2>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {Object.entries(earnings.revenueBreakdown).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="p-4 rounded-xl bg-white/[0.03] border border-white/5"
-                  >
-                    <span className="text-[11px] font-mono uppercase tracking-wider text-white/40 block mb-1">
+                  <div key={key} className="p-4 rounded-xl bg-az-ink/[0.03] border border-az-ink/5">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-az-ink/40 block mb-1">
                       {key.replace(/([A-Z])/g, ' $1')}
                     </span>
-                    <p className="text-xl font-bold text-white tracking-tight">
+                    <p className="text-xl font-bold text-az-ink tracking-tight">
                       ₦{value.toLocaleString()}
                     </p>
                   </div>
@@ -185,37 +182,37 @@ export default function CreatorEarningsPage(): React.JSX.Element {
 
         {/* Recent Payout History */}
         <ScrollReveal delay={0.2}>
-          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
-            <h2 className="text-lg font-bold text-white mb-6">Recent Settlement Ledger</h2>
+          <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+            <h2 className="text-lg font-bold text-az-ink mb-6">Recent Settlement Ledger</h2>
             {!earnings || earnings.earningsHistory.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-sm text-white/40">No earnings recorded for this timeframe.</p>
+                <p className="text-sm text-az-ink/40">No earnings recorded for this timeframe.</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {earnings.earningsHistory.map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 flex items-center justify-between transition-all"
+                    className="p-4 rounded-xl bg-az-ink/[0.03] border border-az-ink/5 hover:border-az-glass-border flex items-center justify-between transition-all"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                        <ArrowUpRight className="w-4 h-4 text-emerald-400" />
+                      <div className="w-9 h-9 rounded-lg bg-az-glass-fill border border-az-glass-border flex items-center justify-center">
+                        <ArrowUpRight className="w-4 h-4 text-az-success-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-white">{item.source}</p>
-                        <p className="text-xs text-white/40">{item.date}</p>
+                        <p className="text-sm font-semibold text-az-ink">{item.source}</p>
+                        <p className="text-xs text-az-ink/40">{item.date}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-emerald-400">
+                      <p className="text-sm font-bold text-az-success-400">
                         +₦{item.amount.toLocaleString()}
                       </p>
                       <span
                         className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full ${
                           item.status === 'completed'
-                            ? 'bg-emerald-500/10 text-emerald-400'
-                            : 'bg-amber-500/10 text-amber-400'
+                            ? 'bg-az-success-500/10 text-az-success-400'
+                            : 'bg-az-warning-500/10 text-az-warning-400'
                         }`}
                       >
                         {item.status}

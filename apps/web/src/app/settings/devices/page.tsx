@@ -67,7 +67,8 @@ export default function DevicesPage(): React.JSX.Element {
     setConfirmDialog({
       open: true,
       title: 'Remove Device Session',
-      message: 'Are you sure you want to sign out and disconnect this device? It will require re-authentication to stream again.',
+      message:
+        'Are you sure you want to sign out and disconnect this device? It will require re-authentication to stream again.',
       destructive: true,
       onConfirm: async () => {
         setConfirmDialog((prev) => ({ ...prev, open: false }));
@@ -102,7 +103,7 @@ export default function DevicesPage(): React.JSX.Element {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
         <Link
           href="/settings"
-          className="inline-flex items-center gap-2 text-xs font-bold text-white/50 hover:text-white transition-colors mb-6 group"
+          className="inline-flex items-center gap-2 text-xs font-bold text-az-ink/50 hover:text-az-ink transition-colors mb-6 group"
         >
           <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
           <span>Back to Settings</span>
@@ -113,27 +114,27 @@ export default function DevicesPage(): React.JSX.Element {
         badge="Session Security"
         title="Registered Devices"
         subtitle="Manage authorized streaming devices and revoke active sessions on lost or shared hardware."
-        accentColor="orange"
+        accentColor="var(--color-az-flame)"
       />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-20">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-xs font-bold text-white/60 uppercase tracking-wider">
+          <span className="text-xs font-bold text-az-ink/60 uppercase tracking-wider">
             Connected Screens ({devices.length})
           </span>
-          <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-az-success-400 font-medium">
             <ShieldCheck size={14} />
             <span>End-to-End Encrypted Session Tokens</span>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="az-glass rounded-3xl p-12 text-center border border-white/10">
-            <div className="w-10 h-10 rounded-full border-2 border-orange-500/20 border-t-orange-500 animate-spin mx-auto mb-3" />
-            <p className="text-white/60 text-sm">Querying active sessions...</p>
+          <div className="az-glass p-12 text-center border border-az-glass-border">
+            <div className="w-10 h-10 rounded-full border-2 border-az-flame/20 border-t-az-flame animate-spin mx-auto mb-3" />
+            <p className="text-az-ink/60 text-sm">Querying active sessions...</p>
           </div>
         ) : devices.length === 0 ? (
-          <div className="az-glass rounded-3xl p-10 border border-white/10 text-center">
+          <div className="az-glass p-10 border border-az-glass-border text-center">
             <EmptyState
               icon="Smartphone"
               title="No devices found"
@@ -146,32 +147,30 @@ export default function DevicesPage(): React.JSX.Element {
             {devices.map((device) => (
               <div
                 key={device.id}
-                className={`az-glass p-5 rounded-2xl flex items-center justify-between gap-4 transition-all border ${
-                  device.isCurrent
-                    ? 'border-orange-500/40 bg-orange-500/[0.04] shadow-lg shadow-orange-500/5'
-                    : 'border-white/10 hover:border-white/20'
+                className={`az-glass p-5 flex items-center justify-between gap-4 transition-all border ${
+                  device.isCurrent ? '' : 'border-az-glass-border'
                 }`}
               >
                 <div className="flex items-center gap-4 min-w-0">
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 border ${
                       device.isCurrent
-                        ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                        : 'bg-white/5 text-white/60 border-white/10'
+                        ? 'bg-az-flame/20 text-az-flame border-az-flame/30'
+                        : 'bg-az-glass-fill text-az-ink/60 border-az-glass-border'
                     }`}
                   >
                     {getDeviceIcon(device.type)}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-bold text-white text-sm truncate">{device.name}</p>
+                      <p className="font-bold text-az-ink text-sm truncate">{device.name}</p>
                       {device.isCurrent && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-az-flame/15 text-az-flame border border-az-flame/30">
                           Current Device
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-white/40 mt-0.5 truncate">
+                    <p className="text-xs text-az-ink/40 mt-0.5 truncate">
                       {device.location ? `${device.location} • ` : ''}Last active{' '}
                       {new Date(device.lastActive).toLocaleDateString('en-NG', {
                         month: 'short',
@@ -186,7 +185,7 @@ export default function DevicesPage(): React.JSX.Element {
                   <button
                     type="button"
                     onClick={() => handleRemove(device.id)}
-                    className="p-2.5 rounded-xl text-white/40 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all flex items-center gap-1.5 text-xs font-semibold"
+                    className="p-2.5 rounded-xl text-az-ink/40 hover:text-az-error-400 hover:bg-az-error-500/10 border border-transparent hover:border-az-error-500/20 transition-all flex items-center gap-1.5 text-xs font-semibold"
                     title="Sign out device"
                   >
                     <Trash2 size={15} />
@@ -210,4 +209,3 @@ export default function DevicesPage(): React.JSX.Element {
     </PageShell>
   );
 }
-

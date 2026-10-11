@@ -8,10 +8,46 @@ import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import { useFlags } from '../../context/FlagsContext';
 import { UNIVERSE_SLUGS } from '../../lib/flags';
+import analytics from '../../lib/analytics';
 import BrandLogo from '../auth/BrandLogo';
 import { useNotificationsSocket } from '@/hooks/useNotificationsSocket';
 
 /* ─── Constants ─── */
+
+// Header chrome expressed as token class pairs. The pre-token version drove
+// these off inline styles plus the retired legacy brand aliases; they now sit
+// on the generated `az-*` vocabulary (scarlet / flame / ink / surface-root).
+const HEADER_BAR_HEIGHT_CLS = 'h-[68px]';
+const HEADER_BAR_HEIGHT_SCROLLED_CLS = 'h-14';
+
+const HEADER_LINK_CLS =
+  'relative px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200';
+const HEADER_LINK_ACTIVE_CLS = 'text-az-ink bg-az-scarlet/14';
+const HEADER_LINK_IDLE_CLS = 'text-az-ink/55 bg-transparent hover:text-az-ink/85';
+
+// Floating menus: near-black frost at 97% with a 24px blur — the same surface
+// treatment the migrated pages use for popovers.
+const MENU_SURFACE_CLS = 'bg-az-surface-root/97 backdrop-blur-[24px]';
+
+const MENU_ROW_CLS = 'flex items-center gap-2.5 px-4 py-2 text-sm transition-colors';
+const MENU_ROW_ACTIVE_CLS = 'text-az-flame bg-az-scarlet/10';
+const MENU_ROW_IDLE_CLS = 'text-az-ink/60 bg-transparent hover:text-az-ink hover:bg-az-ink/4';
+
+const MOBILE_NAV_ROW_CLS =
+  'flex items-center gap-3 px-3 py-2.5 rounded-az-card text-sm font-medium transition-all';
+const MOBILE_UNIVERSE_ROW_CLS =
+  'flex items-center gap-3 px-3 py-2 rounded-az-card text-sm font-medium transition-all';
+const MOBILE_ROW_ACTIVE_CLS = 'text-az-ink bg-az-scarlet/14';
+const MOBILE_ROW_IDLE_CLS = 'text-az-ink/60 bg-transparent';
+
+const ACTIVE_DOT_CLS = 'bg-az-flame';
+const IDLE_DOT_CLS = 'bg-transparent';
+
+// Canonical brand CTA (scarlet → flame) with the design system's glow shadow.
+const CTA_CLS = 'bg-[image:var(--gradient-az-cta)] shadow-az-glow';
+
+const ICON_ACTION_CLS =
+  'p-2.5 rounded-az-card text-az-ink/50 hover:text-az-ink hover:bg-az-ink/6 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame';
 
 /* ─── Helpers ─── */
 
@@ -348,13 +384,15 @@ export default function AppHeader({
     }, []),
   });
 
+  // Figma redesign (docs/design/figma-azeebo-screen-spec.md §4):
+  // Universes ▾ · Watch · Live · Games · Rewards. Home lives on the logo,
+  // Library/Predictions/Bundles remain reachable from the avatar menu.
   const NAV_LINKS = [
-    { label: t('nav.home'), href: '/home' },
     { label: t('nav.browse'), href: '/browse' },
-    { label: t('nav.library'), href: '/library' },
     { label: 'Live', href: '/live' },
-    { label: 'Predictions', href: '/predictions' },
-    { label: 'Bundles', href: '/bundles' },
+    { label: t('universes.games'), href: '/games' },
+    { label: t('nav.rewards'), href: '/rewards' },
+    { label: 'Borrow', href: '/borrow' },
   ];
 
   // Per-slug presentation (label + route) for universes that have a web page.
@@ -413,6 +451,7 @@ export default function AppHeader({
     { label: 'Premium', href: '/premium', icon: 'crown' },
     { label: t('nav.rewards'), href: '/rewards', icon: 'star' },
     { label: t('nav.wallet'), href: '/wallet', icon: 'wallet' },
+    { label: 'Borrow', href: '/borrow/account', icon: 'wallet' },
     { label: t('nav.subscription'), href: '/wallet/subscription-history', icon: 'subscription' },
     { label: 'Bundles & Passes', href: '/bundles', icon: 'layers' },
     { label: 'Moderation', href: '/moderation', icon: 'shield' },
@@ -547,24 +586,24 @@ export default function AppHeader({
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 z-[100] transition-all duration-500"
-        style={{
-          backdropFilter: 'blur(18px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(18px) saturate(180%)',
-          background: scrolled ? 'rgba(9,9,15,0.92)' : 'rgba(9,9,15,0.75)',
-          borderTop: '1px solid rgba(255,255,255,0.04)',
-          borderBottom: `1px solid rgba(255,255,255,${scrolled ? '0.1' : '0.06'})`,
-          boxShadow: `0 1px ${scrolled ? '24px' : '12px'} rgba(0,0,0,${scrolled ? '0.4' : '0.2'})`,
-        }}
+        className={`fixed top-0 left-0 right-0 z-[100] border-t border-t-az-ink/4 backdrop-blur-[18px] backdrop-saturate-[180%] transition-all duration-500 ${
+          scrolled
+            ? 'bg-az-surface-root/92 border-b border-b-az-ink/10 shadow-[0_1px_24px_0_rgba(0,0,0,0.4)]'
+            : 'bg-az-surface-root/75 border-b border-b-az-ink/6 shadow-[0_1px_12px_0_rgba(0,0,0,0.2)]'
+        }`}
         role="banner"
       >
         {/* ═══ Main Header Bar ═══ */}
-        <div className="relative max-w-[1280px] mx-auto" style={{ height: scrolled ? 56 : 68 }}>
+        <div
+          className={`relative mx-auto max-w-[1280px] ${
+            scrolled ? HEADER_BAR_HEIGHT_SCROLLED_CLS : HEADER_BAR_HEIGHT_CLS
+          }`}
+        >
           {/* ─── 1. Brand Logo — pinned left ─── */}
           <div className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-10">
             <Link
               href="/"
-              className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--brand-near-black)] rounded-lg transition-transform hover:scale-105"
+              className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame focus-visible:ring-offset-2 focus-visible:ring-offset-az-surface-root rounded-lg transition-transform hover:scale-105"
               aria-label="Azeebo+ home"
             >
               <BrandLogo variant={logoVariant} height={logoHeight} />
@@ -583,24 +622,18 @@ export default function AppHeader({
                       <Link
                         key={link.href}
                         href={link.href}
-                        className="relative px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
-                        style={{
-                          color: active ? 'var(--brand-white)' : 'rgba(255,255,255,0.55)',
-                          background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.55)';
-                        }}
+                        onClick={() =>
+                          analytics.navClicked({
+                            label: link.label,
+                            href: link.href,
+                            position: 'header',
+                          })
+                        }
+                        className={`${HEADER_LINK_CLS} ${active ? HEADER_LINK_ACTIVE_CLS : HEADER_LINK_IDLE_CLS}`}
                       >
                         {link.label}
                         {active && (
-                          <span
-                            className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
-                            style={{ background: 'var(--brand-orange)' }}
-                          />
+                          <span className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-az-flame" />
                         )}
                       </Link>
                     );
@@ -608,23 +641,15 @@ export default function AppHeader({
                 </nav>
 
                 {/* Divider */}
-                <span className="w-px h-4 bg-white/10 mx-1" aria-hidden="true" />
+                <span className="w-px h-4 bg-az-glass-card mx-1" aria-hidden="true" />
 
                 {/* Universes Dropdown */}
                 <div className="relative" ref={universeDropdownRef}>
                   <button
                     onClick={() => setUniversesOpen((v) => !v)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
-                    style={{
-                      color: universesOpen ? 'var(--brand-white)' : 'rgba(255,255,255,0.55)',
-                      background: universesOpen ? 'rgba(232,66,10,0.14)' : 'transparent',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!universesOpen) e.currentTarget.style.color = 'rgba(255,255,255,0.55)';
-                    }}
+                    className={`${HEADER_LINK_CLS} flex items-center gap-2 ${
+                      universesOpen ? HEADER_LINK_ACTIVE_CLS : HEADER_LINK_IDLE_CLS
+                    }`}
                     aria-label="Browse universes"
                     aria-expanded={universesOpen}
                     aria-haspopup="true"
@@ -644,8 +669,7 @@ export default function AppHeader({
 
                   {universesOpen && (
                     <div
-                      className="absolute left-1/2 -translate-x-1/2 mt-2 w-48 rounded-2xl border border-white/[0.08] shadow-2xl py-1.5 z-50"
-                      style={{ background: 'rgba(9,9,15,0.97)', backdropFilter: 'blur(24px)' }}
+                      className={`absolute left-1/2 -translate-x-1/2 mt-2 w-48 rounded-az-panel border border-az-ink/[0.08] shadow-2xl py-1.5 z-50 ${MENU_SURFACE_CLS}`}
                       role="menu"
                       aria-label={t('appHeader.universes')}
                     >
@@ -657,28 +681,13 @@ export default function AppHeader({
                             href={u.href}
                             prefetch={true}
                             onClick={() => setUniversesOpen(false)}
-                            className="flex items-center gap-2.5 px-4 py-2 text-sm transition-colors"
-                            style={{
-                              color: active ? 'var(--brand-orange)' : 'rgba(255,255,255,0.6)',
-                              background: active ? 'rgba(232,66,10,0.1)' : 'transparent',
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!active) {
-                                e.currentTarget.style.color = 'var(--brand-white)';
-                                e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!active) {
-                                e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
-                                e.currentTarget.style.background = 'transparent';
-                              }
-                            }}
+                            className={`${MENU_ROW_CLS} ${active ? MENU_ROW_ACTIVE_CLS : MENU_ROW_IDLE_CLS}`}
                             role="menuitem"
                           >
                             <span
-                              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                              style={{ background: active ? 'var(--brand-orange)' : 'transparent' }}
+                              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                active ? ACTIVE_DOT_CLS : IDLE_DOT_CLS
+                              }`}
                             />
                             {u.label}
                           </Link>
@@ -698,7 +707,7 @@ export default function AppHeader({
                 {/* Search icon */}
                 <button
                   onClick={() => setSearchOpen((v) => !v)}
-                  className="p-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]"
+                  className={ICON_ACTION_CLS}
                   aria-label={t('common.search')}
                   aria-expanded={searchOpen}
                 >
@@ -718,11 +727,7 @@ export default function AppHeader({
                 </button>
 
                 {/* Messages icon */}
-                <Link
-                  href="/messages"
-                  className="p-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]"
-                  aria-label="Messages"
-                >
+                <Link href="/messages" className={ICON_ACTION_CLS} aria-label="Messages">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -741,7 +746,7 @@ export default function AppHeader({
                 {/* Notifications icon with real-time badge */}
                 <Link
                   href="/notifications"
-                  className="relative p-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]"
+                  className={`relative ${ICON_ACTION_CLS}`}
                   aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
                 >
                   <svg
@@ -758,21 +763,44 @@ export default function AppHeader({
                     />
                   </svg>
                   {unreadCount > 0 && (
-                    <span
-                      className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white"
-                      style={{ background: 'var(--brand-orange, #E8420A)' }}
-                    >
+                    <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-az-ink bg-az-flame">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
                 </Link>
 
-                {/* Wallet balance — desktop only */}
-                <div
-                  className="hidden sm:flex items-center gap-0 px-3 py-1.5 rounded-full text-xs font-medium border border-white/[0.06]"
-                  style={{ background: 'rgba(255,255,255,0.04)' }}
+                {/* Cart / passes & bundles — Figma redesign */}
+                <Link
+                  href="/bundles"
+                  onClick={() =>
+                    analytics.navClicked({
+                      label: 'cart',
+                      href: '/bundles',
+                      position: 'header',
+                    })
+                  }
+                  className={ICON_ACTION_CLS}
+                  aria-label="Passes, tickets and bundles"
                 >
-                  <span className="text-[var(--brand-orange)] font-semibold whitespace-nowrap">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"
+                    />
+                  </svg>
+                </Link>
+
+                {/* Wallet balance — desktop only */}
+                <div className="hidden sm:flex items-center gap-0 px-3 py-1.5 rounded-full text-xs font-medium border border-az-ink/[0.06] bg-az-ink/4">
+                  <span className="text-az-flame font-semibold whitespace-nowrap">
                     {formatBalance(balance?.balance ?? 0)}
                   </span>
                 </div>
@@ -781,7 +809,7 @@ export default function AppHeader({
                 <div className="relative" ref={profileMenuRef}>
                   <button
                     onClick={() => setProfileOpen((v) => !v)}
-                    className="flex items-center justify-center w-9 h-9 rounded-full text-white text-xs font-bold transition-all hover:ring-2 hover:ring-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]"
+                    className="flex items-center justify-center w-9 h-9 rounded-full text-az-ink text-xs font-bold transition-all hover:ring-2 hover:ring-az-ink/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame"
                     style={{ background: seededGradient(user?.id || 'default') }}
                     aria-label="Profile menu"
                     aria-expanded={profileOpen}
@@ -792,17 +820,16 @@ export default function AppHeader({
 
                   {profileOpen && (
                     <div
-                      className="absolute right-0 mt-2 w-56 rounded-2xl border border-white/[0.08] shadow-2xl py-1.5 z-50 overflow-hidden"
-                      style={{ background: 'rgba(9,9,15,0.97)', backdropFilter: 'blur(24px)' }}
+                      className={`absolute right-0 mt-2 w-56 rounded-az-panel border border-az-ink/[0.08] shadow-2xl py-1.5 z-50 overflow-hidden ${MENU_SURFACE_CLS}`}
                       role="menu"
                       aria-label="User menu"
                     >
                       {/* User info header */}
-                      <div className="px-4 py-3 border-b border-white/[0.06]">
-                        <p className="text-sm font-semibold text-white truncate">
+                      <div className="px-4 py-3 border-b border-az-ink/[0.06]">
+                        <p className="text-sm font-semibold text-az-ink truncate">
                           {user?.displayName || user?.name}
                         </p>
-                        <p className="text-xs text-white/40 truncate">{user?.email}</p>
+                        <p className="text-xs text-az-ink/40 truncate">{user?.email}</p>
                       </div>
 
                       {/* Menu items */}
@@ -814,7 +841,7 @@ export default function AppHeader({
                               key={item.href}
                               href={item.href}
                               onClick={() => setProfileOpen(false)}
-                              className="flex items-center gap-2.5 px-4 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
+                              className={`${MENU_ROW_CLS} ${MENU_ROW_IDLE_CLS}`}
                               role="menuitem"
                             >
                               <MenuIcon type={item.icon} />
@@ -825,11 +852,11 @@ export default function AppHeader({
                       </div>
 
                       {/* Log out */}
-                      <div className="border-t border-white/[0.06] pt-1">
+                      <div className="border-t border-az-ink/[0.06] pt-1">
                         {!confirmLogout ? (
                           <button
                             onClick={handleLogout}
-                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors flex items-center gap-2.5"
+                            className="w-full text-left px-4 py-2 text-sm text-az-error-400 hover:text-az-error-300 hover:bg-az-error-500/10 transition-colors flex items-center gap-2.5"
                             role="menuitem"
                           >
                             <svg
@@ -849,19 +876,19 @@ export default function AppHeader({
                           </button>
                         ) : (
                           <div className="px-4 py-2">
-                            <p className="text-xs text-white/50 mb-2">
+                            <p className="text-xs text-az-ink/50 mb-2">
                               {t('appHeader.confirmLogout')}
                             </p>
                             <div className="flex gap-2">
                               <button
                                 onClick={handleLogout}
-                                className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+                                className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-az-ink bg-az-error-500 hover:bg-az-error-600 transition-colors"
                               >
                                 {t('appHeader.yesSignOut')}
                               </button>
                               <button
                                 onClick={() => setConfirmLogout(false)}
-                                className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 border border-white/[0.1] hover:text-white transition-colors"
+                                className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-az-ink/60 border border-az-ink/[0.1] hover:text-az-ink transition-colors"
                               >
                                 {t('common.cancel')}
                               </button>
@@ -878,17 +905,13 @@ export default function AppHeader({
               <div className="flex items-center gap-2">
                 <Link
                   href="/auth/login"
-                  className="hidden sm:inline-flex px-4 py-1.5 rounded-full text-sm font-medium text-white/60 hover:text-white transition-colors border border-white/[0.1]"
+                  className="hidden sm:inline-flex px-4 py-1.5 rounded-full text-sm font-medium text-az-ink/60 hover:text-az-ink transition-colors border border-az-ink/[0.1]"
                 >
                   {t('auth.login')}
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="px-4 py-1.5 rounded-full text-sm font-semibold text-white transition-all hover:shadow-lg hover:scale-105"
-                  style={{
-                    background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                    boxShadow: '0 4px 14px rgba(232,66,10,0.25)',
-                  }}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold text-az-ink transition-all hover:scale-105 ${CTA_CLS}`}
                 >
                   {t('auth.register')}
                 </Link>
@@ -899,7 +922,7 @@ export default function AppHeader({
             <button
               ref={hamburgerRef}
               onClick={() => setMobileMenuOpen((v) => !v)}
-              className="lg:hidden p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]"
+              className="lg:hidden p-2 rounded-az-card text-az-ink/50 hover:text-az-ink hover:bg-az-ink/[0.06] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame"
               aria-label={mobileMenuOpen ? t('appHeader.closeMenu') : t('appHeader.openMenu')}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-drawer"
@@ -922,11 +945,9 @@ export default function AppHeader({
         {/* ═══ Search Overlay ═══ */}
         <div
           ref={searchOverlayRef}
-          className={`overflow-hidden transition-all duration-300 ${searchOpen ? 'max-h-[120px]' : 'max-h-0'}`}
-          style={{
-            background: 'rgba(9,9,15,0.98)',
-            borderTop: searchOpen ? '1px solid rgba(255,255,255,0.06)' : 'none',
-          }}
+          className={`bg-az-surface-root/98 overflow-hidden transition-all duration-300 ${
+            searchOpen ? 'max-h-[120px] border-t border-t-az-ink/6' : 'max-h-0 border-t-0'
+          }`}
           role="search"
           aria-label="Site search"
         >
@@ -934,7 +955,7 @@ export default function AppHeader({
             <form onSubmit={handleSearchSubmit}>
               <div className="relative">
                 <svg
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-az-ink/30"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -953,14 +974,14 @@ export default function AppHeader({
                   placeholder={t('appHeader.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3 rounded-full text-sm text-white placeholder-white/30 bg-white/[0.04] border border-white/[0.08] focus:border-[var(--brand-orange)]/50 focus:bg-white/[0.07] outline-none transition-all"
+                  className="w-full pl-12 pr-12 py-3 rounded-full text-sm text-az-ink placeholder:text-az-glass-placeholder bg-az-ink/[0.04] border border-az-ink/[0.08] focus:border-az-flame/50 focus:bg-az-ink/[0.07] outline-none transition-all"
                   aria-label={t('appHeader.searchAria')}
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full text-az-ink/30 hover:text-az-ink hover:bg-az-glass-card transition-colors"
                     aria-label={t('appHeader.clearSearch')}
                   >
                     <svg
@@ -998,12 +1019,9 @@ export default function AppHeader({
         <div
           ref={drawerRef}
           id="mobile-drawer"
-          className={`absolute top-0 left-0 right-0 transition-transform duration-300 ease-out ${mobileMenuOpen ? 'translate-y-0' : '-translate-y-full'}`}
-          style={{
-            background: 'rgba(9,9,15,0.97)',
-            backdropFilter: 'blur(24px)',
-            borderBottom: '1px solid rgba(255,255,255,0.07)',
-          }}
+          className={`absolute top-0 left-0 right-0 transition-transform duration-300 ease-out border-b border-b-az-ink/7 ${MENU_SURFACE_CLS} ${
+            mobileMenuOpen ? 'translate-y-0' : '-translate-y-full'
+          }`}
           role="dialog"
           aria-modal="true"
           aria-label="Navigation menu"
@@ -1013,7 +1031,7 @@ export default function AppHeader({
             <form onSubmit={handleSearchSubmit} className="mb-4">
               <div className="relative">
                 <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-az-ink/30"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -1029,7 +1047,7 @@ export default function AppHeader({
                 <input
                   type="search"
                   placeholder={t('appHeader.searchPlaceholderMobile')}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm text-white placeholder-white/30 bg-white/[0.04] border border-white/[0.08] outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm text-az-ink placeholder:text-az-glass-placeholder bg-az-ink/[0.04] border border-az-ink/[0.08] outline-none"
                   aria-label={t('appHeader.searchAria')}
                 />
               </div>
@@ -1045,15 +1063,14 @@ export default function AppHeader({
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                      style={{
-                        color: active ? 'var(--brand-white)' : 'rgba(255,255,255,0.6)',
-                        background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
-                      }}
+                      className={`${MOBILE_NAV_ROW_CLS} ${
+                        active ? MOBILE_ROW_ACTIVE_CLS : MOBILE_ROW_IDLE_CLS
+                      }`}
                     >
                       <span
-                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                        style={{ background: active ? 'var(--brand-orange)' : 'transparent' }}
+                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                          active ? ACTIVE_DOT_CLS : IDLE_DOT_CLS
+                        }`}
                       />
                       {link.label}
                     </Link>
@@ -1065,9 +1082,7 @@ export default function AppHeader({
             {/* Universes section (authenticated only) */}
             {isAuthenticated && (
               <>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-white/30 mb-2 px-3">
-                  Universes
-                </p>
+                <p className="az-overline text-az-ink/30 mb-2 px-3">Universes</p>
                 <div className="space-y-0.5 mb-2">
                   {UNIVERSE_OPTIONS.map((u) => {
                     const active = isActive(u.href);
@@ -1077,15 +1092,14 @@ export default function AppHeader({
                         href={u.href}
                         prefetch={true}
                         onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all"
-                        style={{
-                          color: active ? 'var(--brand-white)' : 'rgba(255,255,255,0.6)',
-                          background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
-                        }}
+                        className={`${MOBILE_UNIVERSE_ROW_CLS} ${
+                          active ? MOBILE_ROW_ACTIVE_CLS : MOBILE_ROW_IDLE_CLS
+                        }`}
                       >
                         <span
-                          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                          style={{ background: active ? 'var(--brand-orange)' : 'transparent' }}
+                          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                            active ? ACTIVE_DOT_CLS : IDLE_DOT_CLS
+                          }`}
                         />
                         {u.label}
                       </Link>
@@ -1095,12 +1109,12 @@ export default function AppHeader({
               </>
             )}
 
-            <div className="my-4 h-px bg-white/[0.06]" />
+            <div className="my-4 h-px bg-az-ink/[0.06]" />
 
             {/* Wallet (mobile, authenticated only) */}
             {isAuthenticated && (
               <div className="flex items-center gap-3 px-3 py-2.5 mb-2">
-                <span className="text-sm text-[var(--brand-orange)] font-semibold">
+                <span className="text-sm text-az-flame font-semibold">
                   {formatBalance(balance?.balance ?? 0)}
                 </span>
               </div>
@@ -1112,17 +1126,14 @@ export default function AppHeader({
                 <Link
                   href="/auth/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full text-center px-4 py-2.5 rounded-full text-sm font-medium text-white/60 border border-white/[0.1] transition-colors hover:text-white"
+                  className="block w-full text-center px-4 py-2.5 rounded-full text-sm font-medium text-az-ink/60 border border-az-ink/[0.1] transition-colors hover:text-az-ink"
                 >
                   Log in
                 </Link>
                 <Link
                   href="/auth/register"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full text-center px-4 py-2.5 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{
-                    background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                  }}
+                  className={`block w-full text-center px-4 py-2.5 rounded-full text-sm font-semibold text-az-ink transition-all ${CTA_CLS}`}
                 >
                   Sign up
                 </Link>
@@ -1134,7 +1145,7 @@ export default function AppHeader({
                   setMobileMenuOpen(false);
                   logout();
                 }}
-                className="w-full px-4 py-2.5 rounded-full text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors text-center"
+                className="w-full px-4 py-2.5 rounded-full text-sm font-medium text-az-error-400 border border-az-error-500/20 hover:bg-az-error-500/10 transition-colors text-center"
               >
                 {t('auth.logout')}
               </button>
@@ -1144,7 +1155,7 @@ export default function AppHeader({
       </div>
 
       {/* Spacer so page content doesn't hide behind fixed header */}
-      <div style={{ height: scrolled ? 56 : 68 }} />
+      <div className={scrolled ? HEADER_BAR_HEIGHT_SCROLLED_CLS : HEADER_BAR_HEIGHT_CLS} />
     </>
   );
 }

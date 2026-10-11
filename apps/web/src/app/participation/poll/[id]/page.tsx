@@ -84,15 +84,17 @@ export default function PollDetailPage(): React.JSX.Element {
     );
   }
 
-  const isExpired = poll ? Boolean(poll.expiresAt && new Date(poll.expiresAt) < new Date()) || poll.status === 'closed' : false;
+  const isExpired = poll
+    ? Boolean(poll.expiresAt && new Date(poll.expiresAt) < new Date()) || poll.status === 'closed'
+    : false;
   const hasVoted = voteMutation.isSuccess;
 
   return (
-    <PageShell activeNav="Reality" glowColor="rgba(232, 66, 10, 0.2)">
+    <PageShell activeNav="Reality" glowColor="rgba(227, 30, 36, 0.2)">
       <div className="mb-6">
         <Link
           href="/participation"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-az-ink/60 hover:text-az-ink transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Community Participation
         </Link>
@@ -115,31 +117,33 @@ export default function PollDetailPage(): React.JSX.Element {
           <>
             <PageHero
               eyebrow="COMMUNITY INTERACTION"
-              eyebrowColor="var(--brand-orange)"
+              eyebrowColor="var(--color-az-flame)"
               badge={hasVoted ? 'VOTE RECORDED' : isExpired ? 'ENDED' : 'LIVE POLL'}
               title={poll.title}
               subtitle={poll.description || 'Cast your vote and see real-time audience opinions.'}
-              glowColor="rgba(232, 66, 10, 0.25)"
+              glowColor="color-mix(in srgb, var(--color-az-scarlet) 25%, transparent)"
             />
 
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 relative overflow-hidden"
+              className="az-glass p-6 sm:p-8 border border-az-glass-border relative overflow-hidden"
               style={{
                 background:
                   'linear-gradient(135deg, rgba(24, 21, 30, 0.9) 0%, rgba(35, 18, 14, 0.4) 100%)',
               }}
             >
               {/* Poll stats metadata */}
-              <div className="flex items-center justify-between gap-4 pb-5 border-b border-white/10 mb-6 text-xs sm:text-sm text-white/60">
+              <div className="flex items-center justify-between gap-4 pb-5 border-b border-az-glass-border mb-6 text-xs sm:text-sm text-az-ink/60">
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[var(--brand-orange)]" />
-                  <span className="font-semibold text-white">{poll.totalVotes.toLocaleString()}</span>{' '}
+                  <Users className="w-4 h-4 text-[var(--color-az-flame)]" />
+                  <span className="font-semibold text-az-ink">
+                    {poll.totalVotes.toLocaleString()}
+                  </span>{' '}
                   verified votes
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-white/40" />
+                  <Clock className="w-4 h-4 text-az-ink/40" />
                   <span>
                     {isExpired
                       ? 'Voting concluded'
@@ -155,7 +159,9 @@ export default function PollDetailPage(): React.JSX.Element {
                 {poll.options.map((option) => {
                   const isSelected = selectedOption === option.id;
                   const pct =
-                    poll.totalVotes > 0 ? Math.round((option.voteCount / poll.totalVotes) * 100) : 0;
+                    poll.totalVotes > 0
+                      ? Math.round((option.voteCount / poll.totalVotes) * 100)
+                      : 0;
                   return (
                     <button
                       key={option.id}
@@ -163,14 +169,14 @@ export default function PollDetailPage(): React.JSX.Element {
                       onClick={() => setSelectedOption(option.id)}
                       className={`w-full text-left rounded-2xl p-4 sm:p-5 border transition-all relative overflow-hidden group ${
                         isSelected
-                          ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)]/10 shadow-lg'
-                          : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/[0.07]'
+                          ? 'border-[var(--color-az-flame)] bg-[var(--color-az-flame)]/10 shadow-lg'
+                          : 'border-az-glass-border bg-az-glass-fill hover:border-az-ink/20 hover:bg-az-ink/[0.07]'
                       }`}
                     >
                       {/* Live Fill bar behind option */}
                       {hasVoted && (
                         <div
-                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-[var(--brand-orange)]/20 to-transparent transition-all duration-700 pointer-events-none"
+                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-[var(--color-az-flame)]/20 to-transparent transition-all duration-700 pointer-events-none"
                           style={{ width: `${pct}%` }}
                         />
                       )}
@@ -180,26 +186,26 @@ export default function PollDetailPage(): React.JSX.Element {
                           <div
                             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                               isSelected
-                                ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)]'
-                                : 'border-white/30 group-hover:border-white/60'
+                                ? 'border-[var(--color-az-flame)] bg-[var(--color-az-flame)]'
+                                : 'border-az-ink/30 group-hover:border-az-ink/60'
                             }`}
                           >
-                            {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                            {isSelected && <div className="w-2 h-2 rounded-full bg-az-ink" />}
                           </div>
-                          <span className="font-semibold text-white text-sm sm:text-base">
+                          <span className="font-semibold text-az-ink text-sm sm:text-base">
                             {option.text}
                           </span>
                         </div>
 
                         {hasVoted && (
-                          <span className="text-sm font-bold text-white/90 shrink-0">{pct}%</span>
+                          <span className="text-sm font-bold text-az-ink/90 shrink-0">{pct}%</span>
                         )}
                       </div>
 
                       {hasVoted && (
-                        <div className="mt-3 w-full bg-white/10 rounded-full h-1.5 overflow-hidden relative z-10">
+                        <div className="mt-3 w-full bg-az-glass-card rounded-full h-1.5 overflow-hidden relative z-10">
                           <div
-                            className="bg-gradient-to-r from-[var(--brand-orange)] to-[#cc1c1c] h-full rounded-full transition-all duration-700"
+                            className="bg-gradient-to-r from-az-scarlet to-az-flame h-full rounded-full transition-all duration-700"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
@@ -214,11 +220,11 @@ export default function PollDetailPage(): React.JSX.Element {
                 <button
                   onClick={() => selectedOption && voteMutation.mutate(selectedOption)}
                   disabled={voteMutation.isPending || !selectedOption}
-                  className="w-full mt-6 az-btn-primary flex items-center justify-center gap-2 shadow-xl"
+                  className="mt-6 az-btn-primary flex items-center justify-center gap-2 shadow-xl"
                 >
                   {voteMutation.isPending ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-az-ink border-t-transparent rounded-full animate-spin" />
                       Submitting Vote...
                     </>
                   ) : (
@@ -231,24 +237,24 @@ export default function PollDetailPage(): React.JSX.Element {
               )}
 
               {voteMutation.isError && (
-                <div className="mt-4 p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs sm:text-sm font-semibold text-center">
+                <div className="mt-4 p-3.5 rounded-xl bg-az-error-500/10 border border-az-error-500/25 text-az-error-400 text-xs sm:text-sm font-semibold text-center">
                   Your vote could not be recorded — please try again.
                 </div>
               )}
 
               {hasVoted && (
-                <div className="mt-6 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center gap-2 text-emerald-400 text-xs sm:text-sm font-semibold">
+                <div className="mt-6 p-3.5 rounded-xl bg-az-success-500/10 border border-az-success-500/25 flex items-center justify-center gap-2 text-az-success-400 text-xs sm:text-sm font-semibold">
                   <CheckCircle2 className="w-4 h-4" />
                   Your vote has been recorded.
                 </div>
               )}
 
               {!isAuthenticated && (
-                <div className="az-glass p-4 rounded-xl text-center mt-6 border border-white/10">
-                  <p className="text-white/60 text-sm">
+                <div className="az-glass p-4 text-center mt-6 border border-az-glass-border">
+                  <p className="text-az-ink/60 text-sm">
                     <Link
                       href={`/auth/login?redirect=${encodeURIComponent(`/participation/poll/${pollId}`)}`}
-                      className="text-[var(--brand-orange)] font-bold hover:underline"
+                      className="text-[var(--color-az-flame)] font-bold hover:underline"
                     >
                       Sign in to your account
                     </Link>{' '}

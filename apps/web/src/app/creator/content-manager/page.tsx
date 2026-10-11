@@ -92,13 +92,13 @@ export default function ContentManagerPage(): React.JSX.Element {
   const renderTypeIcon = (type: string) => {
     switch (type) {
       case 'video':
-        return <Video className="w-4 h-4 text-[var(--brand-orange)]" />;
+        return <Video className="w-4 h-4 text-[var(--color-az-flame)]" />;
       case 'image':
-        return <Camera className="w-4 h-4 text-emerald-400" />;
+        return <Camera className="w-4 h-4 text-az-success-400" />;
       case 'audio':
         return <Music2 className="w-4 h-4 text-purple-400" />;
       default:
-        return <FileText className="w-4 h-4 text-blue-400" />;
+        return <FileText className="w-4 h-4 text-az-secondary-400" />;
     }
   };
 
@@ -114,7 +114,7 @@ export default function ContentManagerPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.15)">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
         <div className="max-w-6xl mx-auto py-20 px-4 space-y-6">
           <Skeleton className="h-12 w-64 rounded-2xl" />
           <div className="space-y-4">
@@ -129,7 +129,7 @@ export default function ContentManagerPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.12)">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 12%, transparent)">
         <div className="max-w-md mx-auto py-20 px-4">
           <ErrorState
             title="Failed to load content"
@@ -142,7 +142,7 @@ export default function ContentManagerPage(): React.JSX.Element {
   }
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.14)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
       <PageHero
         badge="Asset Catalog"
         title="Content Manager"
@@ -153,7 +153,7 @@ export default function ContentManagerPage(): React.JSX.Element {
             onClick={() => router.push('/creator/upload')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="az-btn-primary px-6 py-3 rounded-full text-xs font-bold flex items-center gap-2"
+            className="az-btn-primary flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Upload New Content
@@ -164,7 +164,11 @@ export default function ContentManagerPage(): React.JSX.Element {
       <div className="max-w-6xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
         {/* Filter and View Mode Toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0" role="group" aria-label="Content filters">
+          <div
+            className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0"
+            role="group"
+            aria-label="Content filters"
+          >
             {(['all', 'draft', 'published', 'archived'] as const).map((f) => {
               const isSelected = filter === f;
               return (
@@ -173,10 +177,10 @@ export default function ContentManagerPage(): React.JSX.Element {
                   type="button"
                   onClick={() => setFilter(f)}
                   aria-pressed={isSelected}
-                  className={`px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all ${
+                  className={`px-4 py-1.5 text-xs font-mono uppercase tracking-wider transition-all ${
                     isSelected
-                      ? 'bg-[var(--brand-orange)] text-white shadow-md'
-                      : 'text-white/50 hover:text-white/80 az-glass border border-white/10'
+                      ? 'text-az-ink'
+                      : 'text-az-ink/50 hover:text-az-ink/80 az-glass border border-az-glass-border'
                   }`}
                 >
                   {f}
@@ -185,15 +189,15 @@ export default function ContentManagerPage(): React.JSX.Element {
             })}
           </div>
 
-          <div className="flex items-center gap-1 p-1 rounded-xl az-glass border border-white/10 self-start sm:self-center">
+          <div className="flex items-center gap-1 p-1 az-glass border border-az-glass-border self-start sm:self-center">
             <button
               type="button"
               aria-label="List view"
               onClick={() => setViewMode('list')}
               className={`p-2 rounded-lg transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/40 hover:text-white'
+                  ? 'bg-az-glass-card text-az-ink'
+                  : 'text-az-ink/40 hover:text-az-ink'
               }`}
             >
               <List className="w-4 h-4" />
@@ -204,8 +208,8 @@ export default function ContentManagerPage(): React.JSX.Element {
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/40 hover:text-white'
+                  ? 'bg-az-glass-card text-az-ink'
+                  : 'text-az-ink/40 hover:text-az-ink'
               }`}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -215,16 +219,16 @@ export default function ContentManagerPage(): React.JSX.Element {
 
         {/* Content Listing */}
         {filteredContent.length === 0 ? (
-          <div className="az-glass p-16 text-center rounded-3xl border border-white/10">
-            <Film className="w-12 h-12 text-white/30 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">No Titles Found</h3>
-            <p className="text-xs text-white/50 max-w-sm mx-auto mb-6">
+          <div className="az-glass p-16 text-center border border-az-glass-border">
+            <Film className="w-12 h-12 text-az-ink/30 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-az-ink mb-2">No Titles Found</h3>
+            <p className="text-xs text-az-ink/50 max-w-sm mx-auto mb-6">
               You do not have any media files matching this filter state.
             </p>
             <button
               type="button"
               onClick={() => router.push('/creator/upload')}
-              className="az-btn-primary px-6 py-2.5 rounded-full text-xs font-bold"
+              className="az-btn-primary"
             >
               Upload First Asset
             </button>
@@ -233,8 +237,8 @@ export default function ContentManagerPage(): React.JSX.Element {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredContent.map((item: ContentItem) => (
               <ScrollReveal key={item.id}>
-                <div className="az-glass rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all flex flex-col group">
-                  <div className="relative aspect-video bg-white/5">
+                <div className="az-glass overflow-hidden border border-az-glass-border transition-all flex flex-col group">
+                  <div className="relative aspect-video bg-az-glass-fill">
                     {item.thumbnail ? (
                       <OptimizedImage
                         src={item.thumbnail}
@@ -243,34 +247,34 @@ export default function ContentManagerPage(): React.JSX.Element {
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white/30">
+                      <div className="w-full h-full flex items-center justify-center text-az-ink/30">
                         <Film className="w-8 h-8" />
                       </div>
                     )}
-                    <div className="absolute top-2.5 right-2.5 w-7 h-7 rounded-lg bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center">
+                    <div className="absolute top-2.5 right-2.5 w-7 h-7 rounded-lg bg-black/60 backdrop-blur-sm border border-az-glass-border flex items-center justify-center">
                       {renderTypeIcon(item.type)}
                     </div>
                   </div>
 
                   <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                     <div>
-                      <h3 className="text-sm font-bold text-white truncate">{item.title}</h3>
-                      <p className="text-xs text-white/50 line-clamp-2 mt-1">{item.description}</p>
+                      <h3 className="text-sm font-bold text-az-ink truncate">{item.title}</h3>
+                      <p className="text-xs text-az-ink/50 line-clamp-2 mt-1">{item.description}</p>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-white/5 text-xs">
+                    <div className="flex items-center justify-between pt-3 border-t border-az-ink/5 text-xs">
                       <span
                         className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border ${
                           item.status === 'published'
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            ? 'bg-az-success-500/10 text-az-success-400 border-az-success-500/20'
                             : item.status === 'processing'
-                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                              : 'bg-white/5 text-white/40 border-white/10'
+                              ? 'bg-az-warning-500/10 text-az-warning-400 border-az-warning-500/20'
+                              : 'bg-az-glass-fill text-az-ink/40 border-az-glass-border'
                         }`}
                       >
                         {item.status}
                       </span>
-                      <span className="flex items-center gap-1 text-white/40">
+                      <span className="flex items-center gap-1 text-az-ink/40">
                         <Eye className="w-3 h-3" />
                         {item.views.toLocaleString()}
                       </span>
@@ -284,9 +288,9 @@ export default function ContentManagerPage(): React.JSX.Element {
           <div className="space-y-3">
             {filteredContent.map((item: ContentItem) => (
               <ScrollReveal key={item.id}>
-                <div className="az-glass p-4 sm:p-5 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="az-glass p-4 sm:p-5 border border-az-glass-border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <div className="w-20 sm:w-24 aspect-video rounded-xl bg-white/5 relative overflow-hidden flex-shrink-0 border border-white/10">
+                    <div className="w-20 sm:w-24 aspect-video rounded-xl bg-az-glass-fill relative overflow-hidden flex-shrink-0 border border-az-glass-border">
                       {item.thumbnail ? (
                         <OptimizedImage
                           src={item.thumbnail}
@@ -295,7 +299,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                           className="object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white/30">
+                        <div className="w-full h-full flex items-center justify-center text-az-ink/30">
                           <Film className="w-5 h-5" />
                         </div>
                       )}
@@ -304,23 +308,23 @@ export default function ContentManagerPage(): React.JSX.Element {
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-2">
                         {renderTypeIcon(item.type)}
-                        <h3 className="text-sm font-bold text-white truncate">{item.title}</h3>
+                        <h3 className="text-sm font-bold text-az-ink truncate">{item.title}</h3>
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/40">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-az-ink/40">
                         <span>Created: {formatDate(item.createdAt)}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
-                          <Eye className="w-3 h-3 text-white/30" />
+                          <Eye className="w-3 h-3 text-az-ink/30" />
                           {item.views.toLocaleString()} views
                         </span>
                         <span>•</span>
                         <span
                           className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border ${
                             item.status === 'published'
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              ? 'bg-az-success-500/10 text-az-success-400 border-az-success-500/20'
                               : item.status === 'processing'
-                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                : 'bg-white/5 text-white/40 border-white/10'
+                                ? 'bg-az-warning-500/10 text-az-warning-400 border-az-warning-500/20'
+                                : 'bg-az-glass-fill text-az-ink/40 border-az-glass-border'
                           }`}
                         >
                           {item.status}
@@ -334,7 +338,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                       <button
                         type="button"
                         onClick={() => publishMutation.mutate(item.id)}
-                        className="px-4 py-2 rounded-full text-xs font-bold bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+                        className="px-4 py-2 rounded-full text-xs font-bold bg-az-success-500/20 border border-az-success-500/30 text-az-success-400 hover:bg-az-success-500/30 transition-colors"
                       >
                         Publish
                       </button>
@@ -343,7 +347,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                       type="button"
                       aria-label="Edit title"
                       onClick={() => router.push(`/creator/upload?edit=${item.id}`)}
-                      className="p-2 rounded-full az-glass border border-white/10 text-white/70 hover:text-white transition-colors"
+                      className="p-2 az-glass border border-az-glass-border text-az-ink/70 hover:text-az-ink transition-colors"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
@@ -362,7 +366,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                           },
                         });
                       }}
-                      className="p-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors"
+                      className="p-2 rounded-full bg-az-error-500/10 border border-az-error-500/20 text-az-error-400 hover:bg-az-error-500/20 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

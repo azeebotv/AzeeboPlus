@@ -63,12 +63,12 @@ export function ForcedUpgrade({ clientVersion, capabilities, storeUrls }: Forced
   const storeUrl = storeUrls?.[platform] || storeUrls?.web;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-card rounded-2xl shadow-xl p-8 text-center">
+    <div className="fixed inset-0 z-50 bg-az-surface-root flex items-center justify-center px-4">
+      <div className="az-glass max-w-md w-full p-8 text-center">
         {/* Icon */}
-        <div className="w-20 h-20 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="w-20 h-20 bg-az-scarlet/10 rounded-full flex items-center justify-center mx-auto mb-6">
           <svg
-            className="w-10 h-10 text-blue-600"
+            className="w-10 h-10 text-az-scarlet"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -82,24 +82,26 @@ export function ForcedUpgrade({ clientVersion, capabilities, storeUrls }: Forced
           </svg>
         </div>
 
-        <h2 className="text-2xl font-bold text-foreground mb-3">Update Required</h2>
-        <p className="text-muted-foreground mb-2">
+        <h2 className="az-section-title text-az-ink mb-3">Update Required</h2>
+        <p className="az-lead text-az-ink-dim mb-2">
           Your current version ({clientVersion}) is no longer supported.
         </p>
-        <p className="text-muted-foreground text-sm mb-6">
+        <p className="az-body text-az-ink-muted mb-6">
           Please update to version {capabilities.minSupportedVersion} or later to continue using
           Azeebo+.
         </p>
 
         {/* Version info */}
-        <div className="bg-muted rounded-lg p-3 mb-6 text-sm">
-          <div className="flex justify-between text-muted-foreground">
+        <div className="bg-az-glass-fill rounded-az-control p-3 mb-6 az-body">
+          <div className="flex justify-between text-az-ink-muted">
             <span>Your version</span>
-            <span className="text-destructive font-mono">{clientVersion}</span>
+            <span className="text-az-error-400 font-mono">{clientVersion}</span>
           </div>
-          <div className="flex justify-between text-muted-foreground mt-1">
+          <div className="flex justify-between text-az-ink-muted mt-1">
             <span>Required version</span>
-            <span className="text-green-500 font-mono">{capabilities.minSupportedVersion}</span>
+            <span className="text-az-success-400 font-mono">
+              {capabilities.minSupportedVersion}
+            </span>
           </div>
         </div>
 
@@ -110,17 +112,14 @@ export function ForcedUpgrade({ clientVersion, capabilities, storeUrls }: Forced
               href={storeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-colors"
+              className="block az-btn-primary"
             >
               Update Now
             </a>
           )}
 
           {!storeUrl && platform === 'web' && (
-            <button
-              onClick={() => window.location.reload()}
-              className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-colors"
-            >
+            <button onClick={() => window.location.reload()} className="az-btn-primary">
               Refresh to Update
             </button>
           )}

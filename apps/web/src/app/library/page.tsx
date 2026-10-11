@@ -2,6 +2,8 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import { Film, Heart } from 'lucide-react';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
@@ -154,22 +156,20 @@ export default function LibraryPage(): React.JSX.Element {
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.15)">
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
+        <div className="mx-auto max-w-md py-12">
           <motion.div
-            className="az-glass p-10 text-center rounded-3xl border border-white/10 max-w-md mx-auto shadow-2xl"
+            className="az-glass p-10 text-center"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-2xl font-extrabold text-white mb-3 tracking-tight">
-              Sign in to access your library
-            </h2>
-            <p className="text-white/50 text-sm">
+            <h2 className="az-section-title mb-3 text-az-ink">Sign in to access your library</h2>
+            <p className="az-body text-az-ink-muted">
               Save Nollywood blockbusters, resume streaming history, and manage your favorites.
             </p>
           </motion.div>
-        </main>
+        </div>
       </PageShell>
     );
   }
@@ -177,15 +177,14 @@ export default function LibraryPage(): React.JSX.Element {
   const currentSection = sections.find((s) => s.id === activeSection);
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.12)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 12%, transparent)">
       <PageHero
         badge="Media Hub"
         title="My Library"
         description="Your personal cinema vault: curated watchlists, streaming playback history, and favorited Nollywood titles."
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 -mt-4">
-
+      <div className="-mt-4 py-4">
         {/* Section Tabs */}
         <motion.div
           className="flex gap-3 sm:gap-4 mb-6 sm:mb-8 overflow-x-auto pb-2 scrollbar-hide"
@@ -198,17 +197,15 @@ export default function LibraryPage(): React.JSX.Element {
           {sections.map((section) => (
             <motion.button
               key={section.id}
+              type="button"
               role="tab"
               aria-selected={activeSection === section.id}
               onClick={() => setActiveSection(section.id as typeof activeSection)}
-              className={`px-5 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
-                activeSection === section.id ? 'text-white' : 'text-white/60 hover:text-white'
-              }`}
-              style={
+              className={`az-body-strong whitespace-nowrap rounded-az-pill px-5 py-2 transition-colors sm:px-6 sm:py-2.5 ${
                 activeSection === section.id
-                  ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
-                  : { border: '1px solid rgba(255,255,255,0.15)' }
-              }
+                  ? 'bg-gradient-to-br from-az-flame to-az-scarlet text-az-ink shadow-az-glow'
+                  : 'border border-az-ink/15 text-az-ink/60 hover:text-az-ink'
+              }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -306,120 +303,76 @@ export default function LibraryPage(): React.JSX.Element {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04, duration: 0.4 }}
                 >
-                  <a href={`/watch/${item.id}`} className="block relative h-44">
+                  <Link href={`/watch/${item.id}`} className="relative block h-44">
                     {item.thumbnail ? (
                       <OptimizedImage
                         src={item.thumbnail}
                         alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center text-white/40"
-                        style={{
-                          background:
-                            'linear-gradient(135deg, rgba(232,66,10,0.15), rgba(24,21,30,0.8))',
-                        }}
-                      >
-                        <svg
-                          className="w-12 h-12"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={1.5}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75 0V5.625m0 12.75a1.125 1.125 0 001.125 1.125m0 0h1.5m-2.625-1.125V5.625m0 0A1.125 1.125 0 013.375 4.5h17.25c.621 0 1.125.504 1.125 1.125v12.75c0 .621-.504 1.125-1.125 1.125m-17.25-13.875h17.25"
-                          />
-                        </svg>
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-az-scarlet/15 to-az-ink/80 text-az-ink/40">
+                        <Film className="size-12" aria-hidden="true" />
                       </div>
                     )}
                     {item.progress != null && item.progress > 0 && (
-                      <div
-                        className="absolute bottom-0 left-0 right-0 h-1"
-                        style={{ background: 'rgba(255,255,255,0.2)' }}
-                      >
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-az-ink/20">
                         <div
-                          className="h-full"
-                          style={{
-                            width: `${Math.min(item.progress, 100)}%`,
-                            background: 'var(--brand-orange)',
-                          }}
+                          className="h-full bg-az-flame"
+                          style={{ width: `${Math.min(item.progress, 100)}%` }}
                         />
                       </div>
                     )}
                     {item.duration && (
-                      <span
-                        className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold"
-                        style={{ background: 'rgba(0,0,0,0.7)', color: 'var(--brand-white)' }}
-                      >
+                      <span className="az-micro-label absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-white">
                         {Math.floor(item.duration / 60)}m
                       </span>
                     )}
-                  </a>
+                  </Link>
                   <div className="p-4">
-                    <a href={`/watch/${item.id}`}>
-                      <h3 className="font-bold text-white text-sm mb-1 group-hover:text-[var(--brand-orange)] transition-colors line-clamp-1">
+                    <Link href={`/watch/${item.id}`}>
+                      <h3 className="az-body-strong mb-1 line-clamp-1 text-az-ink transition-colors group-hover:text-az-flame">
                         {item.title}
                       </h3>
-                    </a>
-                    <p className="text-xs text-white/40 mb-3 line-clamp-1">
+                    </Link>
+                    <p className="az-caption mb-3 line-clamp-1 text-az-ink/40">
                       {item.universe?.name || item.creator?.name}
                     </p>
                     <div className="flex items-center gap-2">
                       {activeSection === 'watchlist' && (
                         <button
+                          type="button"
                           aria-label={`Remove ${item.title} from watchlist`}
                           onClick={() => removeFromWatchlist(item.id)}
-                          className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white transition-colors"
-                          style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                          className="flex-1 rounded-az-control border border-az-ink/15 px-3 py-1.5 text-xs font-medium text-az-ink/60 transition-colors hover:text-az-ink"
                         >
                           Remove
                         </button>
                       )}
                       {activeSection === 'history' && (
                         <button
+                          type="button"
                           aria-label={`Clear ${item.title} from history`}
                           onClick={() => removeFromHistory(item.id)}
-                          className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white transition-colors"
-                          style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                          className="flex-1 rounded-az-control border border-az-ink/15 px-3 py-1.5 text-xs font-medium text-az-ink/60 transition-colors hover:text-az-ink"
                         >
                           Clear
                         </button>
                       )}
                       <button
+                        type="button"
                         aria-label={
                           favorites.some((f) => f.id === item.id)
                             ? `Remove ${item.title} from favorites`
                             : `Add ${item.title} to favorites`
                         }
                         onClick={() => toggleFavorite(item.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-center ${favorites.some((f) => f.id === item.id) ? 'text-[var(--brand-orange)]' : 'text-white/60 hover:text-white'}`}
-                        style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                        className={`flex items-center justify-center rounded-az-control border border-az-ink/15 px-3 py-1.5 text-xs font-medium transition-colors ${favorites.some((f) => f.id === item.id) ? 'text-az-flame' : 'text-az-ink/60 hover:text-az-ink'}`}
                       >
-                        {favorites.some((f) => f.id === item.id) ? (
-                          <svg
-                            className="w-4 h-4 fill-current"
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                          </svg>
-                        ) : (
-                          <svg
-                            className="w-4 h-4 fill-none stroke-current stroke-2"
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                            />
-                          </svg>
-                        )}
+                        <Heart
+                          className={`size-4 ${favorites.some((f) => f.id === item.id) ? 'fill-current' : ''}`}
+                          aria-hidden="true"
+                        />
                       </button>
                     </div>
                   </div>
@@ -428,7 +381,7 @@ export default function LibraryPage(): React.JSX.Element {
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
+      </div>
     </PageShell>
   );
 }

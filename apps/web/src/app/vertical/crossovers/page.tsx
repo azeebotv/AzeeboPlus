@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -41,49 +41,26 @@ function CrossoversPageContent(): React.JSX.Element {
   const error = crossoversQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Vertical" />
-
+    <PageShell activeNav="Vertical">
       {/* Hero */}
-      <section
-        className="relative py-16 sm:py-20"
-        style={{
-          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Crossovers
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            When storyworlds collide — characters and narratives from different universes meet
-          </motion.p>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Vertical Universe"
+        title="Crossovers"
+        subtitle="When storyworlds collide — characters and narratives from different universes meet"
+      />
 
       {/* Crossovers Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section className="py-2 sm:py-4">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-            Crossover Episodes
-          </h2>
+          <h2 className="az-section-title mb-6 text-az-ink sm:mb-8">Crossover Episodes</h2>
         </ScrollReveal>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
                 <Skeleton height="200px" borderRadius="0" />
-                <div className="p-4 space-y-3">
+                <div className="space-y-3 p-4">
                   <Skeleton height="20px" width="70%" />
                   <Skeleton height="16px" width="90%" />
                   <Skeleton height="36px" borderRadius="0" />
@@ -98,7 +75,7 @@ function CrossoversPageContent(): React.JSX.Element {
             onButtonPress={() => crossoversQuery.refetch()}
           />
         ) : crossovers.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {crossovers.map((crossover, index) => (
               <motion.div
                 key={crossover.id}
@@ -115,49 +92,39 @@ function CrossoversPageContent(): React.JSX.Element {
                         alt={crossover.title}
                         width={400}
                         height={160}
-                        className="w-full h-40 object-cover"
+                        className="h-40 w-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
+                      <div className="absolute inset-0 az-scrim" />
                       <div className="absolute top-2 left-2">
-                        <span
-                          className="px-2.5 py-1 rounded-full text-[10px] font-bold"
-                          style={{
-                            backgroundColor: 'var(--brand-orange)',
-                            color: 'var(--brand-white)',
-                          }}
-                        >
+                        <span className="az-overline rounded-az-pill bg-az-flame px-2.5 py-1 text-az-ink">
                           CROSSOVER
                         </span>
                       </div>
                       <div className="absolute bottom-3 left-3 right-3">
-                        <h3 className="text-lg font-bold text-white">{crossover.title}</h3>
+                        <h3 className="az-subtitle text-az-ink">{crossover.title}</h3>
                       </div>
                     </div>
                     <div className="p-4">
-                      <p className="text-sm text-white/50 mb-3 line-clamp-2">
+                      <p className="az-caption mb-3 line-clamp-2 text-az-ink/50">
                         {crossover.description}
                       </p>
                       {crossover.storyworlds.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mb-3">
+                        <div className="mb-3 flex flex-wrap gap-1.5">
                           {crossover.storyworlds.map((sw) => (
                             <span
                               key={sw}
-                              className="px-2 py-0.5 rounded-full text-[10px] font-medium"
-                              style={{
-                                backgroundColor: 'rgba(255,255,255,0.1)',
-                                color: 'rgba(255,255,255,0.6)',
-                              }}
+                              className="az-micro-label rounded-az-pill bg-az-ink/10 px-2 py-0.5 text-az-ink/60"
                             >
                               {sw}
                             </span>
                           ))}
                         </div>
                       )}
-                      <div className="flex items-center justify-between text-xs text-white/40">
+                      <div className="az-caption flex items-center justify-between text-az-ink/40">
                         {crossover.episodeCount != null && (
                           <span>{crossover.episodeCount} episodes</span>
                         )}
-                        <span className="text-[var(--brand-orange)] font-medium">Watch Now →</span>
+                        <span className="az-body-strong text-az-flame">Watch Now →</span>
                       </div>
                     </div>
                   </GlowCard>
@@ -166,14 +133,12 @@ function CrossoversPageContent(): React.JSX.Element {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">No crossover episodes available</p>
+          <div className="py-12 text-center">
+            <p className="az-lead text-az-ink/50">No crossover episodes available</p>
           </div>
         )}
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -183,8 +148,8 @@ export default function CrossoversPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

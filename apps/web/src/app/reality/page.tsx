@@ -2,12 +2,12 @@
 import { useEffect, useState, useTransition } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { Gift, Trophy, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { api, ContentItem } from '../../lib/api';
 import { useUniversesQuery } from '@/hooks/useUniverses';
 import { Skeleton } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
@@ -38,6 +38,27 @@ const staggerItem = {
     transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const },
   },
 };
+
+const VOTE_TIPS = [
+  {
+    title: 'Supervote Power',
+    desc: 'Use supervotes to multiply your impact',
+    icon: Zap,
+    tone: 'text-az-flame',
+  },
+  {
+    title: 'Daily Rewards',
+    desc: 'Vote daily to earn bonus points',
+    icon: Gift,
+    tone: 'text-az-warning-400',
+  },
+  {
+    title: 'Leaderboard Bonus',
+    desc: 'Top voters get exclusive perks',
+    icon: Trophy,
+    tone: 'text-az-warning-400',
+  },
+];
 
 function RealityPageContent(): React.JSX.Element {
   useEffect(() => {
@@ -124,12 +145,7 @@ function RealityPageContent(): React.JSX.Element {
   };
 
   return (
-    <div
-      className="min-h-screen relative overflow-x-hidden"
-      style={{ background: 'var(--hp-bg)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Reality" logoVariant="light" />
-
+    <PageShell maxWidth="full" activeNav="Reality">
       {/* Hero Section */}
       <section className="relative">
         {isLoading ? (
@@ -141,18 +157,16 @@ function RealityPageContent(): React.JSX.Element {
               alt={selectedShow.title}
               className="w-full h-full object-cover"
             />
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  'linear-gradient(to top, rgba(11,9,14,1) 0%, rgba(11,9,14,0.6) 40%, rgba(11,9,14,0.2) 100%)',
-              }}
+            <div className="absolute inset-0 az-scrim--hero" />
+            <AmbientGlow
+              color="color-mix(in srgb, var(--color-az-scarlet) 25%, transparent)"
+              size={550}
+              className="bottom-0 right-0"
             />
-            <AmbientGlow color="rgba(232,66,10,0.25)" size={550} className="bottom-0 right-0" />
 
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
               <motion.h2
-                className="text-3xl sm:text-4xl font-bold text-white mb-2"
+                className="az-heading sm:az-display mb-2 text-az-ink"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
@@ -160,7 +174,7 @@ function RealityPageContent(): React.JSX.Element {
                 {selectedShow.title}
               </motion.h2>
               <motion.p
-                className="text-white/60 text-base sm:text-lg mb-5 sm:mb-6 max-w-2xl"
+                className="az-lead mb-5 max-w-2xl text-az-ink/60 sm:mb-6"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
@@ -176,8 +190,7 @@ function RealityPageContent(): React.JSX.Element {
                 <Link href={`/watch/${selectedShow.id}`}>
                   <motion.button
                     type="button"
-                    className="az-btn-primary"
-                    style={{ width: 'auto', paddingInline: '2rem' }}
+                    className="az-btn-primary az-btn-primary--inline"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -187,11 +200,7 @@ function RealityPageContent(): React.JSX.Element {
                 <motion.button
                   type="button"
                   onClick={scrollToVoting}
-                  className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    backgroundColor: 'rgba(255,255,255,0.08)',
-                  }}
+                  className="az-chip az-body-strong px-6 py-3 text-az-ink transition-all"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -208,8 +217,8 @@ function RealityPageContent(): React.JSX.Element {
         <ScrollReveal>
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">Reality Shows</h2>
-              <p className="text-sm sm:text-base mt-1 text-white/50">
+              <h2 className="az-section-title text-az-ink">Reality Shows</h2>
+              <p className="az-body mt-1 text-az-ink-muted">
                 Watch and vote for your favorite contestants
               </p>
             </div>
@@ -226,29 +235,23 @@ function RealityPageContent(): React.JSX.Element {
                     alt={show.title}
                     className="w-full h-44 sm:h-48 object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
+                  <div className="absolute inset-0 az-scrim" />
                   <div className="absolute bottom-4 left-4 right-4">
-                    <span
-                      className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                      style={{
-                        backgroundColor: 'rgba(232,66,10,0.2)',
-                        color: 'var(--brand-orange)',
-                      }}
-                    >
+                    <span className="az-overline mb-2 inline-block rounded-az-pill bg-az-scarlet/20 px-2.5 py-0.5 text-az-flame">
                       {show.contentType || 'Reality'}
                     </span>
-                    <h3 className="text-lg sm:text-xl font-bold text-white">{show.title}</h3>
+                    <h3 className="az-title text-az-ink">{show.title}</h3>
                   </div>
                 </div>
                 <div className="p-4">
-                  <p className="text-sm text-white/50 mb-3 line-clamp-2">{show.description}</p>
-                  <div className="flex items-center justify-between text-sm text-white/40">
+                  <p className="az-body mb-3 line-clamp-2 text-az-ink-muted">{show.description}</p>
+                  <div className="az-caption flex items-center justify-between text-az-ink/40">
                     <span>{show.duration || 0} min</span>
                     <span>{new Date(show.createdAt).toLocaleDateString()}</span>
                   </div>
                   <motion.button
                     type="button"
-                    className="az-btn-primary w-full mt-4"
+                    className="az-btn-primary mt-4"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -263,19 +266,19 @@ function RealityPageContent(): React.JSX.Element {
 
       {/* Leaderboard */}
       {safeContestants.length > 0 && (
-        <section className="py-10 sm:py-12" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <section className="border-y border-az-glass-border bg-az-surface-raised py-10 sm:py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ScrollReveal>
               <div className="flex items-center justify-between mb-6 sm:mb-8">
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white">Vote Leaderboard</h2>
-                  <p className="text-sm sm:text-base mt-1 text-white/50">
+                  <h2 className="az-section-title text-az-ink">Vote Leaderboard</h2>
+                  <p className="az-body mt-1 text-az-ink-muted">
                     See who&apos;s leading the competition
                   </p>
                 </div>
                 <Link
                   href="/reality/results"
-                  className="text-sm font-medium text-[var(--brand-orange)] hover:text-[var(--brand-red)] transition-colors"
+                  className="az-body-strong text-az-flame transition-colors hover:text-az-scarlet"
                 >
                   View All
                 </Link>
@@ -285,7 +288,7 @@ function RealityPageContent(): React.JSX.Element {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
               <ScrollReveal direction="left">
                 <div className="az-glass p-5 sm:p-6">
-                  <h3 className="text-base sm:text-lg font-bold mb-4 text-white">
+                  <h3 className="az-title mb-4 text-az-ink">
                     {selectedShow?.title || 'Show'} - Current Vote Count
                   </h3>
                   <motion.div
@@ -295,101 +298,79 @@ function RealityPageContent(): React.JSX.Element {
                     whileInView="visible"
                     viewport={{ once: true }}
                   >
-                    {safeContestants.map((contestant, index) => (
-                      <motion.div
-                        key={contestant.id}
-                        className="flex items-center gap-3 sm:gap-4"
-                        variants={staggerItem}
-                      >
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <span
-                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-white"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                          >
-                            {index + 1}
-                          </span>
-                          <div
-                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-xs sm:text-sm"
-                            style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                          >
-                            {contestant.avatar?.charAt(0) || contestant.name?.charAt(0) || '?'}
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-white text-sm truncate">
-                              {contestant.name}
+                    {safeContestants.map((contestant, index) => {
+                      const votes = contestant.votes ?? contestant._count?.votes ?? 0;
+                      const barTone =
+                        contestant.status === 'safe'
+                          ? 'bg-gradient-to-r from-az-success-500 to-az-success-400'
+                          : contestant.status === 'danger'
+                            ? 'bg-gradient-to-r from-az-error-500 to-az-error-400'
+                            : 'bg-az-ink/30';
+                      return (
+                        <motion.div
+                          key={contestant.id}
+                          className="flex items-center gap-3 sm:gap-4"
+                          variants={staggerItem}
+                        >
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <span className="az-caption flex size-7 shrink-0 items-center justify-center rounded-full bg-az-ink/10 font-bold text-az-ink sm:size-8">
+                              {index + 1}
                             </span>
-                            <span className="text-xs sm:text-sm text-white/50 flex-shrink-0 ml-2">
-                              {(contestant.votes ?? contestant._count?.votes ?? 0).toLocaleString()}{' '}
-                              votes
+                            <div className="az-caption flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-az-flame to-az-scarlet font-bold text-az-ink sm:size-10">
+                              {contestant.avatar?.charAt(0) || contestant.name?.charAt(0) || '?'}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="az-body-strong truncate text-az-ink">
+                                {contestant.name}
+                              </span>
+                              <span className="az-caption ml-2 shrink-0 text-az-ink-muted">
+                                {votes.toLocaleString()} votes
+                              </span>
+                            </div>
+                            <div className="h-1.5 overflow-hidden rounded-az-pill bg-az-ink/10 sm:h-2">
+                              <motion.div
+                                className={`h-full rounded-az-pill ${barTone}`}
+                                initial={{ width: 0 }}
+                                whileInView={{
+                                  width: `${(votes / (maxVotes || 1)) * 100}%`,
+                                }}
+                                viewport={{ once: true }}
+                                transition={{
+                                  duration: 0.8,
+                                  delay: index * 0.1,
+                                  ease: 'easeOut',
+                                }}
+                              />
+                            </div>
+                          </div>
+                          {contestant.status === 'danger' && (
+                            <span className="az-micro-label shrink-0 rounded-az-pill bg-az-error-500/20 px-2 py-0.5 font-semibold text-az-error-500 sm:px-2.5">
+                              Danger
                             </span>
-                          </div>
-                          <div
-                            className="h-1.5 sm:h-2 rounded-full overflow-hidden"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                          >
-                            <motion.div
-                              className="h-full rounded-full"
-                              initial={{ width: 0 }}
-                              whileInView={{
-                                width: `${((contestant.votes ?? contestant._count?.votes ?? 0) / (maxVotes || 1)) * 100}%`,
-                              }}
-                              viewport={{ once: true }}
-                              transition={{ duration: 0.8, delay: index * 0.1, ease: 'easeOut' }}
-                              style={{
-                                background:
-                                  contestant.status === 'safe'
-                                    ? 'linear-gradient(90deg, #22C55E, #4ADE80)'
-                                    : contestant.status === 'danger'
-                                      ? 'linear-gradient(90deg, #EF4444, #F87171)'
-                                      : 'rgba(255,255,255,0.3)',
-                              }}
-                            />
-                          </div>
-                        </div>
-                        {contestant.status === 'danger' && (
-                          <span
-                            className="px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[10px] sm:text-xs font-semibold flex-shrink-0"
-                            style={{
-                              backgroundColor: 'rgba(239,68,68,0.2)',
-                              color: 'var(--color-error-500)',
-                            }}
-                          >
-                            Danger
-                          </span>
-                        )}
-                        {contestant.status !== 'eliminated' && selectedShow?.id && (
-                          <button
-                            type="button"
-                            onClick={() => handleVote(contestant.id)}
-                            disabled={isVoting && votingId === contestant.id}
-                            className="px-3 py-1.5 rounded-full text-xs font-semibold text-white flex-shrink-0 transition-all az-btn-primary"
-                            style={{ width: 'auto' }}
-                          >
-                            {isVoting && votingId === contestant.id ? 'Voting…' : 'Vote'}
-                          </button>
-                        )}
-                        {contestant.status === 'eliminated' && (
-                          <span
-                            className="px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[10px] sm:text-xs font-semibold flex-shrink-0"
-                            style={{
-                              backgroundColor: 'rgba(255,255,255,0.1)',
-                              color: 'rgba(255,255,255,0.5)',
-                            }}
-                          >
-                            Eliminated
-                          </span>
-                        )}
-                      </motion.div>
-                    ))}
+                          )}
+                          {contestant.status !== 'eliminated' && selectedShow?.id && (
+                            <button
+                              type="button"
+                              onClick={() => handleVote(contestant.id)}
+                              disabled={isVoting && votingId === contestant.id}
+                              className="az-btn-primary az-btn-primary--sm az-btn-primary--inline shrink-0"
+                            >
+                              {isVoting && votingId === contestant.id ? 'Voting…' : 'Vote'}
+                            </button>
+                          )}
+                          {contestant.status === 'eliminated' && (
+                            <span className="az-micro-label shrink-0 rounded-az-pill bg-az-ink/10 px-2 py-0.5 font-semibold text-az-ink/50 sm:px-2.5">
+                              Eliminated
+                            </span>
+                          )}
+                        </motion.div>
+                      );
+                    })}
                   </motion.div>
                   {voteNotice && (
-                    <p
-                      role="status"
-                      className="text-sm mt-3 text-center"
-                      style={{ color: 'var(--brand-orange)' }}
-                    >
+                    <p role="status" className="az-body mt-3 text-center text-az-flame">
                       {voteNotice}
                     </p>
                   )}
@@ -399,112 +380,50 @@ function RealityPageContent(): React.JSX.Element {
               <ScrollReveal direction="right">
                 <div className="space-y-5 sm:space-y-6">
                   <motion.div
-                    className="rounded-xl p-5 sm:p-6 text-white"
-                    style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+                    className="rounded-az-panel bg-gradient-to-br from-az-flame to-az-scarlet p-5 text-az-ink sm:p-6"
                     whileHover={{ scale: 1.01 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <h3 className="text-lg sm:text-xl font-bold mb-2">Vote & Win Rewards!</h3>
-                    <p className="text-white/80 text-sm sm:text-base mb-4">
+                    <h3 className="az-title mb-2">Vote &amp; Win Rewards!</h3>
+                    <p className="az-body mb-4 text-az-ink/80 sm:az-lead">
                       Every vote you cast earns you reward points that can be redeemed for exclusive
                       content and prizes.
                     </p>
                     <div className="flex items-center gap-4">
                       <div className="text-center">
-                        <p className="text-2xl sm:text-3xl font-bold">
+                        <p className="az-section-title">
                           {(selectedShow as unknown as { pointsEarned?: number })?.pointsEarned ??
                             0}
                         </p>
-                        <p className="text-xs sm:text-sm text-white/70">Points Earned</p>
+                        <p className="az-caption text-az-ink/70">Points Earned</p>
                       </div>
-                      <div
-                        className="w-px h-10 sm:h-12"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
-                      />
+                      <div className="h-10 w-px shrink-0 bg-az-ink/30 sm:h-12" />
                       <div className="text-center">
-                        <p className="text-2xl sm:text-3xl font-bold">
+                        <p className="az-section-title">
                           {(selectedShow as unknown as { votesToday?: number })?.votesToday ?? 0}
                         </p>
-                        <p className="text-xs sm:text-sm text-white/70">Votes Today</p>
+                        <p className="az-caption text-az-ink/70">Votes Today</p>
                       </div>
                     </div>
                   </motion.div>
 
                   <GlowCard className="overflow-hidden">
-                    <div
-                      className="p-4"
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
-                    >
-                      <h3 className="font-bold text-white text-sm sm:text-base">Vote Tips</h3>
+                    <div className="border-b border-az-glass-border p-4">
+                      <h3 className="az-body-strong text-az-ink">Vote Tips</h3>
                     </div>
                     <div className="p-4 space-y-3">
-                      {[
-                        {
-                          title: 'Supervote Power',
-                          desc: 'Use supervotes to multiply your impact',
-                          icon: (
-                            <svg
-                              className="w-5 h-5 text-[var(--brand-orange)]"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
-                              />
-                            </svg>
-                          ),
-                        },
-                        {
-                          title: 'Daily Rewards',
-                          desc: 'Vote daily to earn bonus points',
-                          icon: (
-                            <svg
-                              className="w-5 h-5 text-amber-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H4.5a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"
-                              />
-                            </svg>
-                          ),
-                        },
-                        {
-                          title: 'Leaderboard Bonus',
-                          desc: 'Top voters get exclusive perks',
-                          icon: (
-                            <svg
-                              className="w-5 h-5 text-yellow-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871a3.375 3.375 0 00-3.375-3.375H12m4.5 7.875H12M9 18.75V15.375c0-.621.504-1.125 1.125-1.125h.871M12 7.5A3.75 3.75 0 008.25 3.75h7.5A3.75 3.75 0 0012 7.5z"
-                              />
-                            </svg>
-                          ),
-                        },
-                      ].map((tip) => (
-                        <div key={tip.title} className="flex items-start gap-3">
-                          <span className="flex-shrink-0 mt-0.5">{tip.icon}</span>
-                          <div>
-                            <p className="font-medium text-xs sm:text-sm text-white">{tip.title}</p>
-                            <p className="text-[10px] sm:text-xs text-white/50">{tip.desc}</p>
+                      {VOTE_TIPS.map((tip) => {
+                        const Icon = tip.icon;
+                        return (
+                          <div key={tip.title} className="flex items-start gap-3">
+                            <Icon size={20} className={`mt-0.5 shrink-0 ${tip.tone}`} />
+                            <div>
+                              <p className="az-body-strong text-az-ink">{tip.title}</p>
+                              <p className="az-caption text-az-ink-muted">{tip.desc}</p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </GlowCard>
                 </div>
@@ -513,9 +432,7 @@ function RealityPageContent(): React.JSX.Element {
           </div>
         </section>
       )}
-
-      <AppFooter logoVariant="light" />
-    </div>
+    </PageShell>
   );
 }
 

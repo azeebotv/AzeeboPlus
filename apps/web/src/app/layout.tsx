@@ -25,11 +25,18 @@ const montserrat = Montserrat({
   variable: '--font-display-base',
 });
 
+// AUD-06: the middleware CSP is nonce-based, and nonces only work when HTML
+// is rendered per request — prerendered (SSG/ISR) HTML is baked at build time
+// without nonce attributes, so `script-src` would block every script on it.
+// Cascades to all routes under this root layout (override per segment only if
+// a route is later proven to need no scripts).
+export const dynamic = 'force-dynamic';
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: 'var(--brand-near-black)',
+  themeColor: 'var(--color-az-surface-root)',
 };
 
 export const metadata: Metadata = {
@@ -94,7 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         className={`${inter.variable} ${montserrat.variable} min-h-screen`}
-        style={{ backgroundColor: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+        style={{ backgroundColor: 'var(--color-az-surface-root)', color: 'var(--text-primary)' }}
       >
         <a href="#main-content" className="skip-link">
           Skip to main content

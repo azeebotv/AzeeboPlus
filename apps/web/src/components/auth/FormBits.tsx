@@ -1,3 +1,5 @@
+import type { LucideIcon } from 'lucide-react';
+
 type AlertProps = {
   variant?: 'error' | 'success';
   children: React.ReactNode;
@@ -5,18 +7,13 @@ type AlertProps = {
 
 /** Dark-glass-themed inline alert for auth forms. */
 export function Alert({ variant = 'error', children }: AlertProps): React.JSX.Element {
-  const color = variant === 'success' ? 'var(--brand-green)' : 'var(--brand-red)';
+  const tone =
+    variant === 'success'
+      ? 'border-az-success-500 bg-az-success-500/12 text-az-success-500'
+      : 'border-az-scarlet bg-az-scarlet/14 text-az-scarlet';
   return (
-    <div
-      role="alert"
-      style={{
-        background: variant === 'success' ? 'rgba(34,197,94,0.12)' : 'rgba(204,28,28,0.14)',
-        border: `1px solid ${color}`,
-        borderRadius: 10,
-        padding: '0.7rem 0.9rem',
-      }}
-    >
-      <p style={{ color, fontSize: '0.85rem', fontWeight: 600 }}>{children}</p>
+    <div role="alert" className={`rounded-az-control border px-3.5 py-2.5 ${tone}`}>
+      <p className="az-body-strong">{children}</p>
     </div>
   );
 }
@@ -24,11 +21,10 @@ export function Alert({ variant = 'error', children }: AlertProps): React.JSX.El
 type SpinnerProps = { className?: string };
 
 /** Small white spinner for inline button loading states. */
-export function Spinner({ className = '' }: SpinnerProps): React.JSX.Element {
+export function Spinner({ className = 'size-4' }: SpinnerProps): React.JSX.Element {
   return (
     <svg
       className={`animate-spin ${className}`}
-      style={{ width: 16, height: 16 }}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -49,7 +45,6 @@ type SubmitButtonProps = {
   children: React.ReactNode;
   loadingLabel: string;
 };
-
 /** Primary brand pill button with spinner loading state. */
 export function SubmitButton({
   isLoading,
@@ -59,12 +54,53 @@ export function SubmitButton({
   return (
     <button type="submit" className="az-btn-primary" disabled={isLoading}>
       {isLoading ? (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+        <span className="inline-flex items-center gap-2">
           <Spinner /> {loadingLabel}
         </span>
       ) : (
         children
       )}
     </button>
+  );
+}
+
+type AuthFieldProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'id' | 'placeholder'> & {
+  id: string;
+  /** Doubles as the accessible name and the in-field prompt, as Figma draws it. */
+  label: string;
+  icon: LucideIcon;
+  trailing?: React.ReactNode;
+};
+
+/** Frosted input with a leading glyph and a screen-reader-only label. */
+export function AuthField({
+  id,
+  label,
+  icon: Icon,
+  trailing,
+  className = '',
+  ...inputProps
+}: AuthFieldProps): React.JSX.Element {
+  return (
+    <div className="relative">
+      <label htmlFor={id} className="sr-only">
+        {label}
+      </label>
+      <Icon
+        className="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-az-ink-dim"
+        aria-hidden="true"
+      />
+      <input
+        id={id}
+        {...inputProps}
+        placeholder={label}
+        className={`az-input az-input--icon ${trailing ? 'az-input--trailing' : ''} ${className}`}
+      />
+      {trailing && (
+        <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center">
+          {trailing}
+        </div>
+      )}
+    </div>
   );
 }

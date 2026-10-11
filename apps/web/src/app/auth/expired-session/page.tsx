@@ -6,52 +6,37 @@ export const metadata: Metadata = {
 };
 
 import Link from 'next/link';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { Hourglass } from 'lucide-react';
+import PageShell from '@/components/layout/PageShell';
 
 export default function ExpiredSessionPage(): React.JSX.Element {
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader />
-
-      <main className="flex-1 flex items-center justify-center p-6">
-        <div className="az-glass max-w-md w-full p-8 rounded-3xl text-center border border-white/10 shadow-2xl">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[var(--brand-orange)]/10 border border-[var(--brand-orange)]/30 flex items-center justify-center text-3xl animate-pulse">
-            Hourglass
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Session Expired</h1>
-
-          <p className="text-white/60 text-sm leading-relaxed mb-8">
-            Your login session has timed out due to inactivity or security policy. Please sign in
-            again to continue.
-          </p>
-
-          <div className="space-y-3">
-            <Link
-              href="/auth/login"
-              className="block w-full py-3.5 rounded-full font-bold text-white transition-transform hover:scale-105 shadow-lg"
-              style={{
-                background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-              }}
-            >
-              Sign In Again
-            </Link>
-
-            <Link
-              href="/"
-              className="block w-full py-3.5 rounded-full font-semibold text-white/70 bg-white/5 hover:bg-white/10 transition-colors"
-            >
-              Return to Homepage
-            </Link>
-          </div>
+    <PageShell maxWidth="sm">
+      <div className="az-glass mx-auto my-16 w-full max-w-md p-8 text-center">
+        <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-full border border-az-scarlet/30 bg-az-scarlet/10 animate-pulse">
+          <Hourglass className="size-9 text-az-flame" aria-hidden="true" />
         </div>
-      </main>
 
-      <AppFooter />
-    </div>
+        <h1 className="az-headline mb-3 text-2xl text-az-ink sm:text-3xl">Session Expired</h1>
+
+        <p className="az-body mb-8 leading-relaxed text-az-ink-muted">
+          Your login session has timed out due to inactivity or security policy. Please sign in
+          again to continue.
+        </p>
+
+        <div className="space-y-3">
+          <Link href="/auth/login" className="az-btn-primary block">
+            Sign In Again
+          </Link>
+
+          <Link
+            href="/"
+            className="az-body block w-full rounded-az-pill bg-az-glass-fill py-3.5 font-semibold text-az-ink-muted transition-colors hover:bg-az-glass-card hover:text-az-ink"
+          >
+            Return to Homepage
+          </Link>
+        </div>
+      </div>
+    </PageShell>
   );
 }
