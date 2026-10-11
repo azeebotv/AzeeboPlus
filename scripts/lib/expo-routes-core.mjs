@@ -150,7 +150,7 @@ function matchesRoute(targetSegs, routeSegs) {
 }
 
 /** Scan one app workspace; returns { routes, filesScanned, targets, violations }. */
-function scanApp(appDir, appName) {
+export function scanApp(appDir, appName) {
   const routesDir = path.join(appDir, 'app');
   if (!statSyncSafe(routesDir)) {
     return { routes: new Map(), filesScanned: 0, targets: 0, violations: [] };
