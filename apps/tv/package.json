@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@azeebo/analytics-sdk": "workspace:*",
-    "@azeebo/api-client": "workspace:*",
     "@azeebo/design-tokens": "workspace:*",
     "@azeebo/feature-flags": "workspace:*",
     "@azeebo/react-data": "workspace:*",

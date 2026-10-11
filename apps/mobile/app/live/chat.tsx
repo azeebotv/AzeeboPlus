@@ -17,6 +17,7 @@ import { colors } from '../../src/theme';
 import { apiClient } from '@azeebo/react-data/api/client';
 import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 interface ChatMessage {
   id: string;
@@ -40,12 +41,10 @@ export default function LiveChatScreen() {
   const messagesQuery = useQuery({
     queryKey: ['live', eventId, 'chat'],
     queryFn: async () => {
-      const res = await apiClient.get<ChatMessage[]>(
-        `/v1/messaging/watch-parties/${eventId}/chat`
-      );
+      const res = await apiClient.get<ChatMessage[]>(`/v1/messaging/watch-parties/${eventId}/chat`);
       return Array.isArray(res) ? res : [];
     },
-    refetchInterval: 5_000,
+    refetchInterval: pollingIntervals.mobileChat,
     enabled: !!eventId,
   });
 

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Image,
   RefreshControl,
   useColorScheme,
 } from 'react-native';
@@ -53,36 +54,50 @@ export default function WatchScreen() {
     loadContent().finally(() => setIsLoading(false));
   }, [loadContent]);
 
-  const renderItem = ({ item, index }: { item: ContentItem; index: number }) => (
-    <ScrollReveal direction="up" delay={index * 60}>
-      <TouchableOpacity
-        style={styles.contentCard}
-        onPress={() => router.push(`/watch/${item.id}`)}
-        activeOpacity={0.8}
-        accessibilityLabel={`${item.title} by ${item.creator.name}`}
-        accessibilityRole="button"
-      >
-        <View style={styles.thumbnailContainer}>
-          <View style={[styles.thumbnail, { backgroundColor: colors.bg.tertiary }]}>
-            <Text style={styles.playIcon}>▶</Text>
+  const renderItem = ({ item, index }: { item: ContentItem; index: number }) => {
+    const artworkUrl = item.thumbnail || item.mediaAsset?.thumbnailUrl;
+
+    return (
+      <ScrollReveal direction="up" delay={index * 60}>
+        <TouchableOpacity
+          style={styles.contentCard}
+          onPress={() => router.push(`/watch/${item.id}`)}
+          activeOpacity={0.8}
+          accessibilityLabel={`${item.title} by ${item.creator.name}`}
+          accessibilityRole="button"
+        >
+          <View style={styles.thumbnailContainer}>
+            {artworkUrl ? (
+              <Image
+                source={{ uri: artworkUrl }}
+                style={styles.thumbnailImage}
+                resizeMode="cover"
+                accessibilityLabel={`${item.title} thumbnail`}
+              />
+            ) : (
+              <View style={[styles.thumbnail, { backgroundColor: colors.bg.tertiary }]}>
+                <Text style={styles.playIcon}>▶</Text>
+              </View>
+            )}
+            {item.duration != null && (
+              <View style={styles.durationBadge}>
+                <Text style={styles.durationText}>
+                  {Math.floor(item.duration / 60)}:
+                  {(item.duration % 60).toString().padStart(2, '0')}
+                </Text>
+              </View>
+            )}
           </View>
-          {item.duration != null && (
-            <View style={styles.durationBadge}>
-              <Text style={styles.durationText}>
-                {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.contentInfo}>
-          <Text style={styles.contentTitle} numberOfLines={2}>
-            {item.title}
-          </Text>
-          <Text style={styles.contentCreator}>{item.creator.name}</Text>
-        </View>
-      </TouchableOpacity>
-    </ScrollReveal>
-  );
+          <View style={styles.contentInfo}>
+            <Text style={styles.contentTitle} numberOfLines={2}>
+              {item.title}
+            </Text>
+            <Text style={styles.contentCreator}>{item.creator.name}</Text>
+          </View>
+        </TouchableOpacity>
+      </ScrollReveal>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -172,6 +187,10 @@ const styles = StyleSheet.create({
     width: 120,
     height: 80,
     position: 'relative',
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
   },
   thumbnail: {
     width: '100%',

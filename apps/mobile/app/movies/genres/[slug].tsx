@@ -167,7 +167,11 @@ const styles = StyleSheet.create({
   },
   thumbWrap: { width: 84, height: 56, borderRadius: 8, overflow: 'hidden' },
   thumb: { width: '100%', height: '100%' },
-  thumbFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#222' },
+  thumbFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.bg.tertiary,
+  },
   thumbEmoji: { fontSize: 22 },
   movieInfo: { flex: 1 },
   movieTitle: { fontSize: 15, fontWeight: '700', marginBottom: 2 },
