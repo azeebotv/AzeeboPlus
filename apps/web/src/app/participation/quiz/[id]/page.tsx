@@ -161,7 +161,7 @@ export default function QuizDetailPage(): React.JSX.Element {
             animate={{ opacity: 1, scale: 1 }}
             className="az-glass p-8 sm:p-12 text-center border relative overflow-hidden"
           >
-            <div className="w-20 h-20 rounded-full bg-az-warning-500/15 border border-az-warning-500/30 flex items-center justify-center mx-auto mb-6 text-az-warning-400 shadow-[0_0_40px_rgba(245,158,11,0.3)]">
+            <div className="w-20 h-20 rounded-full bg-az-warning-500/15 border border-az-warning-500/30 flex items-center justify-center mx-auto mb-6 text-az-warning-400 shadow-az-glow-warning-bloom">
               <Trophy className="w-10 h-10" />
             </div>
 
@@ -205,7 +205,7 @@ export default function QuizDetailPage(): React.JSX.Element {
           <>
             <PageHero
               eyebrow="COMMUNITY TRIVIA & QUIZ"
-              eyebrowColor="var(--brand-purple)"
+              eyebrowColor="var(--color-az-category-violet)"
               badge={`${questions.length} QUESTIONS`}
               title={quiz.title}
               subtitle={
@@ -250,7 +250,7 @@ export default function QuizDetailPage(): React.JSX.Element {
               {questions[currentQuestion] && (
                 <div>
                   <div className="flex items-start gap-3 mb-6">
-                    <div className="w-8 h-8 rounded-xl bg-[var(--brand-purple)]/20 border border-[var(--brand-purple)]/40 flex items-center justify-center text-purple-300 font-bold shrink-0 mt-0.5">
+                    <div className="w-8 h-8 rounded-xl bg-az-category-violet/20 border border-az-category-violet/40 flex items-center justify-center text-az-category-violet-light font-bold shrink-0 mt-0.5">
                       {currentQuestion + 1}
                     </div>
                     <h2 className="az-headline text-lg sm:text-2xl text-az-ink">

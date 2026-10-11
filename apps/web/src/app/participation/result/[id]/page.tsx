@@ -83,7 +83,9 @@ function ParticipationResultContent(): React.JSX.Element {
       <div className="max-w-3xl mx-auto">
         <PageHero
           eyebrow={`FINAL ${result.type.toUpperCase()} RESULTS`}
-          eyebrowColor={result.type === 'quiz' ? 'var(--brand-purple)' : 'var(--color-az-flame)'}
+          eyebrowColor={
+            result.type === 'quiz' ? 'var(--color-az-category-violet)' : 'var(--color-az-flame)'
+          }
           badge={`${result.totalParticipants.toLocaleString()} PARTICIPANTS`}
           title={result.title}
           subtitle="Official verified consensus and score metrics from the Azeebo+ audience."
@@ -181,7 +183,7 @@ function ParticipationResultContent(): React.JSX.Element {
                     className="h-full rounded-full"
                     style={{
                       background: isCorrectAnswer
-                        ? 'linear-gradient(90deg, var(--brand-emerald) 0%, #059669 100%)'
+                        ? 'linear-gradient(90deg, var(--color-az-category-emerald) 0%, #059669 100%)'
                         : isUserAnswer
                           ? 'linear-gradient(90deg, var(--color-az-error-500) 0%, #b91c1c 100%)'
                           : 'linear-gradient(90deg, var(--color-az-flame) 0%, var(--color-az-scarlet) 100%)',

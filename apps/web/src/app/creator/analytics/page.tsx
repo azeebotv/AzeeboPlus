@@ -123,13 +123,13 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                 label: 'Reactions / Likes',
                 value: analytics?.totalLikes.toLocaleString() || '0',
                 icon: Heart,
-                color: 'text-pink-400',
+                color: 'text-az-category-pink',
               },
               {
                 label: 'Audience Reach',
                 value: analytics?.totalFollowers.toLocaleString() || '0',
                 icon: Users,
-                color: 'text-purple-400',
+                color: 'text-az-category-violet-light',
               },
               {
                 label: 'Revenue Accrued',
@@ -253,7 +253,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                         <span className="text-[11px] font-mono uppercase text-az-ink/40">
                           Comments
                         </span>
-                        <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+                        <MessageSquare className="w-3.5 h-3.5 text-az-category-violet-light" />
                       </div>
                       <p className="text-xl font-bold text-az-ink">
                         {analytics.engagementMetrics.commentRate.toFixed(1)}%

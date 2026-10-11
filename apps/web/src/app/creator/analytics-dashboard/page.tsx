@@ -132,7 +132,7 @@ export default function CreatorAnalyticsDashboard(): React.JSX.Element {
                   growth={isError ? undefined : overview?.earningsGrowth}
                 />
                 <MetricCard
-                  icon={<Clock className="w-5 h-5 text-purple-400" />}
+                  icon={<Clock className="w-5 h-5 text-az-category-violet-light" />}
                   label="Avg Watch Time"
                   value={isError ? dash : `${overview?.avgWatchTime || 0}m`}
                 />

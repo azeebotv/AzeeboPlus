@@ -96,7 +96,7 @@ export default function ContentManagerPage(): React.JSX.Element {
       case 'image':
         return <Camera className="w-4 h-4 text-az-success-400" />;
       case 'audio':
-        return <Music2 className="w-4 h-4 text-purple-400" />;
+        return <Music2 className="w-4 h-4 text-az-category-violet-light" />;
       default:
         return <FileText className="w-4 h-4 text-az-secondary-400" />;
     }

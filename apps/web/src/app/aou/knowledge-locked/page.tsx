@@ -52,7 +52,7 @@ function KnowledgeLockedContent(): React.JSX.Element {
 
       <PageHero
         eyebrow="CLASSIFIED ARCHIVES"
-        eyebrowColor="var(--brand-gold)"
+        eyebrowColor="var(--color-az-accent-gold)"
         title="Locked Knowledge"
         subtitle="Unveil deeper universal lore, forgotten gods, and ancient rituals by leveling up and conquering missions."
         glowColor="color-mix(in srgb, var(--color-az-warning-500) 25%, transparent)"

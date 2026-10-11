@@ -164,7 +164,7 @@ function ChallengeDetailContent(): React.JSX.Element {
             </div>
 
             <div className="az-glass p-5 text-center border border-az-glass-border">
-              <Calendar className="w-5 h-5 text-purple-400 mx-auto mb-1.5" />
+              <Calendar className="w-5 h-5 text-az-category-violet-light mx-auto mb-1.5" />
               <p className="text-xl sm:text-2xl font-extrabold text-az-ink">{daysLeft} Days</p>
               <p className="text-xs text-az-ink/50 uppercase tracking-wider font-semibold mt-1">
                 Time Remaining

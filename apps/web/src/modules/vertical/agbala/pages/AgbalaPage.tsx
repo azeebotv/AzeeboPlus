@@ -7,25 +7,25 @@ const PATHS = [
     id: 'warrior',
     name: 'Warrior',
     description: 'Strength, honor, and combat mastery',
-    color: 'var(--brand-crimson)',
+    color: 'var(--color-az-category-crimson)',
   },
   {
     id: 'sage',
     name: 'Sage',
     description: 'Wisdom, knowledge, and ancient truths',
-    color: 'var(--brand-sky)',
+    color: 'var(--color-az-category-sky)',
   },
   {
     id: 'trickster',
     name: 'Trickster',
     description: 'Cunning, deception, and survival',
-    color: 'var(--brand-gold)',
+    color: 'var(--color-az-accent-gold)',
   },
   {
     id: 'healer',
     name: 'Healer',
     description: 'Compassion, restoration, and balance',
-    color: 'var(--brand-light-green)',
+    color: 'var(--color-az-success-400)',
   },
 ];
 

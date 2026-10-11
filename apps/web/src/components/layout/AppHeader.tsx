@@ -588,8 +588,8 @@ export default function AppHeader({
       <header
         className={`fixed top-0 left-0 right-0 z-[100] border-t border-t-az-ink/4 backdrop-blur-[18px] backdrop-saturate-[180%] transition-all duration-500 ${
           scrolled
-            ? 'bg-az-surface-root/92 border-b border-b-az-ink/10 shadow-[0_1px_24px_0_rgba(0,0,0,0.4)]'
-            : 'bg-az-surface-root/75 border-b border-b-az-ink/6 shadow-[0_1px_12px_0_rgba(0,0,0,0.2)]'
+            ? 'bg-az-surface-root/92 border-b border-b-az-ink/10 shadow-az-sticky'
+            : 'bg-az-surface-root/75 border-b border-b-az-ink/6 shadow-az-sticky-idle'
         }`}
         role="banner"
       >

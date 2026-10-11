@@ -54,7 +54,7 @@ function SportsPageContent(): React.JSX.Element {
           featured?.description ?? 'Live matches, classic replays and everything in between'
         }
         accentColor="var(--color-az-success-500)"
-        glowColor="color-mix(in srgb, var(--brand-emerald) 14%, transparent)"
+        glowColor="color-mix(in srgb, var(--color-az-category-emerald) 14%, transparent)"
         actions={
           featured && (
             <>

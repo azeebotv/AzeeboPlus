@@ -190,7 +190,7 @@ export default function ResultsPage(): React.JSX.Element {
                     key={contestant.id}
                     className={`az-glass flex items-center gap-4 p-4 ${
                       contestant.isWinner
-                        ? 'outline-2 outline-[var(--brand-gold)]'
+                        ? 'outline-2 outline-az-accent-gold'
                         : contestant.isEvicted
                           ? 'opacity-70'
                           : ''

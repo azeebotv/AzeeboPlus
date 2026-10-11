@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 
 /* Tip tiers are reward ranks, not statuses, so they keep the categorical
    metallic ramp (see `src/app/rankings`) instead of the semantic colour set.
-   A tone is a pair of token CLASSES — the tint is `bg-[var(--brand-*)]/15`,
+   A tone is a pair of token CLASSES — the tint is `bg-az-accent-gold/15`,
    Tailwind emits the color-mix for us. */
 const TIER_CONFIG: Record<string, { label: string; color: string; bg: string; min: number }> = {
   bronze: {
@@ -22,8 +22,8 @@ const TIER_CONFIG: Record<string, { label: string; color: string; bg: string; mi
   },
   gold: {
     label: 'Gold',
-    color: 'text-[var(--brand-gold)]',
-    bg: 'bg-[var(--brand-gold)]/15',
+    color: 'text-az-accent-gold',
+    bg: 'bg-az-accent-gold/15',
     min: 50000,
   },
   platinum: {

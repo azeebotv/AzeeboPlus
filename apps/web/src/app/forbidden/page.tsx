@@ -17,7 +17,7 @@ export default function ForbiddenPage(): React.JSX.Element {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-az-error-600/15 blur-3xl pointer-events-none" />
 
           {/* Icon Badge */}
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-az-error-600 to-az-flame flex items-center justify-center text-az-ink mx-auto mb-6 shadow-[0_8px_32px_rgba(227, 30, 36,0.35)]">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-az-error-600 to-az-flame flex items-center justify-center text-az-ink mx-auto mb-6 shadow-az-glow-primary">
             <ShieldAlert className="w-10 h-10" />
           </div>
 

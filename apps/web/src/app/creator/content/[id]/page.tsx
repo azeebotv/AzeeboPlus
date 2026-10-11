@@ -133,7 +133,7 @@ function ContentDetailContent() {
                 </span>
               )}
               {content.type && (
-                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-purple-500/15 border border-purple-500/30 text-purple-400">
+                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-az-category-violet/15 border border-az-category-violet/30 text-az-category-violet-light">
                   {content.type}
                 </span>
               )}
@@ -158,7 +158,7 @@ function ContentDetailContent() {
               </div>
 
               <div className="az-glass p-5 border border-az-glass-border text-center">
-                <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center mx-auto mb-2 text-pink-400">
+                <div className="w-8 h-8 rounded-lg bg-az-category-pink/10 border border-az-category-pink/20 flex items-center justify-center mx-auto mb-2 text-az-category-pink">
                   <Heart className="w-4 h-4 fill-current" />
                 </div>
                 <p className="text-2xl font-extrabold text-az-ink tracking-tight">
@@ -170,7 +170,7 @@ function ContentDetailContent() {
               </div>
 
               <div className="az-glass p-5 border border-az-glass-border text-center">
-                <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-2 text-purple-400">
+                <div className="w-8 h-8 rounded-lg bg-az-category-violet/10 border border-az-category-violet/20 flex items-center justify-center mx-auto mb-2 text-az-category-violet-light">
                   <MessageSquare className="w-4 h-4" />
                 </div>
                 <p className="text-2xl font-extrabold text-az-ink tracking-tight">

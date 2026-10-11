@@ -121,7 +121,7 @@ function NeighborhoodsContent() {
                       universe="lifestyle"
                       className="overflow-hidden rounded-2xl border border-az-glass-border flex flex-col h-full group cursor-pointer"
                     >
-                      <div className="relative h-44 bg-gradient-to-br from-[var(--color-az-flame)]/25 via-purple-950/30 to-[var(--color-az-surface-root)] flex items-center justify-center overflow-hidden">
+                      <div className="relative h-44 bg-gradient-to-br from-[var(--color-az-flame)]/25 via-az-surface-auth-violet/30 to-[var(--color-az-surface-root)] flex items-center justify-center overflow-hidden">
                         <Building2 className="w-14 h-14 text-az-ink/20 group-hover:scale-110 group-hover:text-[var(--color-az-flame)]/40 transition-all duration-300" />
                         <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[var(--color-az-flame)] border border-[var(--color-az-flame)]/30 text-[10px] font-mono font-bold">
                           {n.placeCount} Venues

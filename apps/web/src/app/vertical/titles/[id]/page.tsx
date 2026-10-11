@@ -185,7 +185,7 @@ function TitleDetailPageContent(): React.JSX.Element {
                     <span className="flex items-center gap-1">
                       <Star
                         size={14}
-                        className="fill-current text-[var(--brand-gold)]"
+                        className="fill-current text-az-accent-gold"
                         aria-hidden="true"
                       />
                       {title.rating}

@@ -72,7 +72,7 @@ export default function AOUWhatYouKnowPage(): React.JSX.Element {
 
       <PageHero
         eyebrow="CODEX & WISDOM"
-        eyebrowColor="var(--brand-gold)"
+        eyebrowColor="var(--color-az-accent-gold)"
         title="What You Know"
         subtitle="Your personalized compendium of unlocked revelations, mystical origins, and cosmic lore."
         glowColor="color-mix(in srgb, var(--color-az-warning-500) 25%, transparent)"

@@ -14,16 +14,16 @@ import analytics from '@/lib/analytics';
 
 const GENRE_COLORS: Record<string, string> = {
   afrobeats: 'var(--color-az-flame)',
-  hiphop: 'var(--brand-purple)',
-  pop: 'var(--brand-pink)',
-  rnb: 'var(--brand-cyan)',
-  gospel: 'var(--brand-amber)',
-  highlife: 'var(--brand-green)',
+  hiphop: 'var(--color-az-category-violet)',
+  pop: 'var(--color-az-category-pink)',
+  rnb: 'var(--color-az-category-cyan)',
+  gospel: 'var(--color-az-warning-500)',
+  highlife: 'var(--color-az-success-500)',
   Fuji: 'var(--color-az-scarlet)',
-  amapiano: 'var(--brand-indigo)',
-  reggae: 'var(--brand-green)',
-  jazz: 'var(--brand-purple-light)',
-  electronic: 'var(--brand-teal)',
+  amapiano: 'var(--color-az-category-indigo)',
+  reggae: 'var(--color-az-success-500)',
+  jazz: 'var(--color-az-category-violet-light)',
+  electronic: 'var(--color-az-category-teal)',
   rock: 'var(--color-az-flame)',
 };
 

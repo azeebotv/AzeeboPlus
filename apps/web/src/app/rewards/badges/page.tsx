@@ -74,7 +74,7 @@ export default function BadgesPage(): React.JSX.Element {
 
       <PageHero
         eyebrow="ACHIEVEMENTS & HONORS"
-        eyebrowColor="var(--brand-gold)"
+        eyebrowColor="var(--color-az-accent-gold)"
         badge={`${earnedBadges.length} / ${badges.length} UNLOCKED`}
         title="Badges of Distinction"
         subtitle="Earn recognition for your streaming dedication, community participation, and universal milestones."
@@ -122,7 +122,7 @@ export default function BadgesPage(): React.JSX.Element {
                         'linear-gradient(135deg, color-mix(in srgb, var(--color-az-warning-400) 10%, transparent) 0%, rgba(24, 21, 30, 0.95) 100%)',
                     }}
                   >
-                    <div className="w-16 h-16 rounded-2xl bg-az-warning-500/15 border border-az-warning-500/30 flex items-center justify-center mx-auto mb-3.5 text-az-warning-400 shadow-[0_0_25px_rgba(251,191,36,0.3)] group-hover:scale-110 transition-transform">
+                    <div className="w-16 h-16 rounded-2xl bg-az-warning-500/15 border border-az-warning-500/30 flex items-center justify-center mx-auto mb-3.5 text-az-warning-400 shadow-az-glow-badge group-hover:scale-110 transition-transform">
                       <Award className="w-8 h-8" />
                     </div>
 
@@ -230,7 +230,7 @@ export default function BadgesPage(): React.JSX.Element {
               <div
                 className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5 ${
                   selectedBadge.unlocked
-                    ? 'bg-az-warning-500/20 border border-az-warning-500/40 text-az-warning-400 shadow-[0_0_40px_rgba(251,191,36,0.3)]'
+                    ? 'bg-az-warning-500/20 border border-az-warning-500/40 text-az-warning-400 shadow-az-glow-badge-strong'
                     : 'bg-az-glass-fill border border-az-glass-border text-az-ink/40'
                 }`}
               >

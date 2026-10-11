@@ -215,11 +215,11 @@ export default function ParticipationHubPage(): React.JSX.Element {
             {/* Quizzes */}
             <section>
               <div className="flex items-center gap-3 mb-5">
-                <ListChecks className="w-5 h-5 text-purple-400" />
+                <ListChecks className="w-5 h-5 text-az-category-violet-light" />
                 <h2 className="az-headline text-xl sm:text-2xl font-extrabold text-az-ink">
                   Trivia &amp; Quizzes
                 </h2>
-                <span className="text-xs font-bold text-purple-300 bg-purple-500/10 border border-purple-500/25 rounded-full px-3 py-1">
+                <span className="text-xs font-bold text-az-category-violet-light bg-az-category-violet/10 border border-az-category-violet/25 rounded-full px-3 py-1">
                   Earn Points
                 </span>
               </div>
@@ -229,12 +229,12 @@ export default function ParticipationHubPage(): React.JSX.Element {
                     <SectionCard
                       key={q.id}
                       href={`/participation/quiz/${q.id}`}
-                      icon={<ListChecks className="w-5 h-5 text-purple-400" />}
-                      accent="bg-purple-500/10 border border-purple-500/25"
+                      icon={<ListChecks className="w-5 h-5 text-az-category-violet-light" />}
+                      accent="bg-az-category-violet/10 border border-az-category-violet/25"
                       title={q.title}
                       subtitle={q.description}
                       meta={
-                        <span className="text-[11px] font-bold text-purple-300 bg-purple-500/10 rounded-full px-2.5 py-1 whitespace-nowrap capitalize">
+                        <span className="text-[11px] font-bold text-az-category-violet-light bg-az-category-violet/10 rounded-full px-2.5 py-1 whitespace-nowrap capitalize">
                           {q.difficulty} · {q.playCount} plays
                         </span>
                       }

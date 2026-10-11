@@ -2,7 +2,7 @@
  * The one pending-state treatment every `app/**\/loading.tsx` boundary renders.
  *
  * Each boundary used to draw its own spinner, which is how the retired
- * `border-[var(--brand-orange)]` alias reached ~200 files and why the same route
+ * `border-az-flame` alias reached ~200 files and why the same route
  * spun three different ways depending on who generated the folder.
  */
 export default function RouteLoading({

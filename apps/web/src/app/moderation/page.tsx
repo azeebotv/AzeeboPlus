@@ -40,8 +40,8 @@ const modLinks = [
     desc: 'Rapid swipe-and-report interface optimized for mobile viewport devices and live streams.',
     badge: 'Mobile Optimized',
     icon: Smartphone,
-    color: 'text-purple-400',
-    bg: 'bg-purple-500/10 border-purple-500/20',
+    color: 'text-az-category-violet-light',
+    bg: 'bg-az-category-violet/10 border-az-category-violet/20',
   },
   {
     href: '/moderation/mobile-status',

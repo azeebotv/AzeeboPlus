@@ -173,7 +173,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
                 label: 'Followers',
                 value: (stats?.totalFollowers || 0).toLocaleString(),
                 icon: Users,
-                color: 'text-purple-400',
+                color: 'text-az-category-violet-light',
               },
             ].map((stat) => {
               const Icon = stat.icon;

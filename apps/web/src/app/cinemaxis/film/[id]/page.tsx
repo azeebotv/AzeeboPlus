@@ -70,7 +70,7 @@ export default function CinemaxisFilmDetailPage(): React.JSX.Element {
       ) : film ? (
         <>
           {/* Backdrop hero — the film's own artwork is this page's hero */}
-          <div className="relative h-[60vh] rounded-az-panel overflow-hidden bg-gradient-to-b from-[var(--brand-purple)]/40 to-az-surface-root">
+          <div className="relative h-[60vh] rounded-az-panel overflow-hidden bg-gradient-to-b from-az-category-violet/40 to-az-surface-root">
             {film.backdropUrl && (
               <img
                 src={film.backdropUrl}

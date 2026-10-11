@@ -164,7 +164,7 @@ export default function NotificationsPage(): React.JSX.Element {
       case 'follow':
         return <UserPlus className="w-4 h-4 text-az-success-400" />;
       case 'mention':
-        return <AtSign className="w-4 h-4 text-purple-400" />;
+        return <AtSign className="w-4 h-4 text-az-category-violet-light" />;
       case 'system':
         return <Shield className="w-4 h-4 text-az-warning-400" />;
       default:

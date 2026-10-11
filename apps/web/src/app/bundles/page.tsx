@@ -13,7 +13,7 @@ import analytics from '@/lib/analytics';
    (secondary/purple/warning) rather than the semantic status colours. */
 const TIER_COLORS: Record<string, string> = {
   standard: 'bg-az-secondary-500',
-  premium: 'bg-[var(--brand-purple)]',
+  premium: 'bg-az-category-violet',
   ultimate: 'bg-az-warning-500',
 };
 

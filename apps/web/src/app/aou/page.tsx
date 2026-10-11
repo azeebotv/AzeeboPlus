@@ -90,7 +90,7 @@ export default function AOUHubPage(): React.JSX.Element {
       {/* Hero Header */}
       <PageHero
         eyebrow="AFRICAN ORIGINAL UNIVERSE"
-        eyebrowColor="var(--brand-gold)"
+        eyebrowColor="var(--color-az-accent-gold)"
         badge="LORE VAULT"
         title="Agbalá Olódùmarè"
         subtitle="Something to care about. Step into our epic mythological storyworld, discover legendary characters, and unravel the sacred chronicles of the cosmos."
@@ -226,7 +226,7 @@ export default function AOUHubPage(): React.JSX.Element {
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="az-headline w-full h-full bg-gradient-to-br from-az-warning-900/40 via-purple-950/50 to-black flex items-center justify-center text-4xl font-extrabold text-az-warning-400/80">
+                      <div className="az-headline w-full h-full bg-gradient-to-br from-az-warning-900/40 via-az-surface-auth-violet/50 to-black flex items-center justify-center text-4xl font-extrabold text-az-warning-400/80">
                         {char.name[0]}
                       </div>
                     )}
@@ -288,7 +288,7 @@ export default function AOUHubPage(): React.JSX.Element {
                 transition={{ duration: 0.35, delay: index * 0.08 }}
                 className="az-glass p-5 sm:p-6 flex items-start gap-4 sm:gap-6 relative transition-colors"
               >
-                <div className="w-4 h-4 rounded-full bg-az-warning-500 mt-1 shrink-0 ring-4 ring-az-warning-500/20 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
+                <div className="w-4 h-4 rounded-full bg-az-warning-500 mt-1 shrink-0 ring-4 ring-az-warning-500/20 shadow-az-glow-warning-spark" />
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
                     <h3 className="font-bold text-az-ink text-base sm:text-lg">{event.title}</h3>

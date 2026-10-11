@@ -97,7 +97,7 @@ function GameDetailPageContent(): React.JSX.Element {
               />
               <div className="absolute inset-0 az-scrim--hero" />
               <AmbientGlow
-                color="color-mix(in srgb, var(--brand-purple) 25%, transparent)"
+                color="color-mix(in srgb, var(--color-az-category-violet) 25%, transparent)"
                 size={500}
                 className="bottom-0 right-0"
               />
@@ -109,7 +109,7 @@ function GameDetailPageContent(): React.JSX.Element {
                   transition={{ duration: 0.5 }}
                 >
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="az-overline rounded-az-pill bg-[var(--brand-purple)]/20 px-3 py-1 text-[var(--brand-purple)]">
+                    <span className="az-overline rounded-az-pill bg-az-category-violet/20 px-3 py-1 text-az-category-violet">
                       {game.category}
                     </span>
                     <span className="az-caption rounded-az-pill bg-az-ink/10 px-3 py-1 text-az-ink/60">

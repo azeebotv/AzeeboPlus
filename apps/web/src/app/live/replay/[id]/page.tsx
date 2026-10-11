@@ -85,7 +85,7 @@ function ReplayContent() {
           </video>
         </div>
         <div className="mb-4 flex items-center gap-2">
-          <span className="az-overline rounded-az-pill bg-[var(--brand-purple)]/15 px-3 py-1 text-[var(--brand-purple)]">
+          <span className="az-overline rounded-az-pill bg-az-category-violet/15 px-3 py-1 text-az-category-violet">
             REPLAY
           </span>
           <span className="rounded-az-pill bg-az-scarlet/20 px-3 py-1 text-xs font-semibold text-az-flame">

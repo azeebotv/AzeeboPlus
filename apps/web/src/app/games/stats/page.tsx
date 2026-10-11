@@ -23,7 +23,7 @@ function getStatIcon(name: string): React.JSX.Element {
     case 'Flame':
       return <Flame className="w-6 h-6 text-az-flame mx-auto" />;
     case 'Gem':
-      return <Gem className="w-6 h-6 text-[var(--brand-purple-light)] mx-auto" />;
+      return <Gem className="w-6 h-6 text-az-category-violet-light mx-auto" />;
     case 'BarChart3':
       return <BarChart3 className="w-6 h-6 text-az-secondary-400 mx-auto" />;
     default:
@@ -63,13 +63,14 @@ interface RecentGame {
 }
 
 /* Rarity is a categorical reward ramp (like the leaderboard podium metals),
-   not a semantic status, so the grey/purple rungs ride `var(--brand-*)`
-   arbitrary utilities and the blue/gold rungs use generated tokens. */
+   not a semantic status: grey is the ink layer, violet a registered category
+   hue, and only the blue/gold rungs borrow a state token because they are
+   hex-identical to it. */
 const RARITY_STYLES: Record<string, { bg: string; text: string; border: string }> = {
   common: {
-    bg: 'bg-[var(--brand-grey)]/15',
-    text: 'text-[var(--brand-grey)]',
-    border: 'border-[var(--brand-grey)]/30',
+    bg: 'bg-az-ink-muted/15',
+    text: 'text-az-ink-muted',
+    border: 'border-az-ink-muted/30',
   },
   rare: {
     bg: 'bg-az-secondary-500/15',
@@ -77,9 +78,9 @@ const RARITY_STYLES: Record<string, { bg: string; text: string; border: string }
     border: 'border-az-secondary-500/30',
   },
   epic: {
-    bg: 'bg-[var(--brand-purple)]/15',
-    text: 'text-[var(--brand-purple-light)]',
-    border: 'border-[var(--brand-purple)]/30',
+    bg: 'bg-az-category-violet/15',
+    text: 'text-az-category-violet-light',
+    border: 'border-az-category-violet/30',
   },
   legendary: {
     bg: 'bg-az-warning-500/15',
@@ -97,7 +98,7 @@ const RESULT_STYLES: Record<string, { bg: string; text: string }> = {
     bg: 'bg-az-error-500/15',
     text: 'text-az-error-500',
   },
-  draw: { bg: 'bg-[var(--brand-grey)]/15', text: 'text-[var(--brand-grey)]' },
+  draw: { bg: 'bg-az-ink-muted/15', text: 'text-az-ink-muted' },
 };
 
 function StatsPageContent(): React.JSX.Element {

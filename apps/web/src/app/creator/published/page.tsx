@@ -161,7 +161,7 @@ export default function PublishedPage(): React.JSX.Element {
                         <Eye className="w-3.5 h-3.5 text-az-ink/40" />
                         {(item.views || 0).toLocaleString()} streams
                       </span>
-                      <span className="flex items-center gap-1.5 text-pink-400">
+                      <span className="flex items-center gap-1.5 text-az-category-pink">
                         <Heart className="w-3.5 h-3.5 fill-current" />
                         {(item.likes || 0).toLocaleString()}
                       </span>

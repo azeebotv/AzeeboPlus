@@ -193,7 +193,7 @@ function TriviaPageContent(): React.JSX.Element {
     <PageShell
       activeNav="Games"
       maxWidth="7xl"
-      glowColor="color-mix(in srgb, var(--brand-purple) 14%, transparent)"
+      glowColor="color-mix(in srgb, var(--color-az-category-violet) 14%, transparent)"
     >
       {session && currentQuestion ? (
         /* Active Trivia Session */
@@ -327,8 +327,8 @@ function TriviaPageContent(): React.JSX.Element {
             eyebrow="Games Universe"
             title="BrainTrivia"
             subtitle="Test your knowledge and earn rewards"
-            accentColor="var(--brand-purple)"
-            glowColor="color-mix(in srgb, var(--brand-purple) 16%, transparent)"
+            accentColor="var(--color-az-category-violet)"
+            glowColor="color-mix(in srgb, var(--color-az-category-violet) 16%, transparent)"
           />
 
           {/* Categories Grid */}
@@ -369,8 +369,8 @@ function TriviaPageContent(): React.JSX.Element {
                       {(() => {
                         const CategoryIcon = categoryIcons[category.name?.toLowerCase()] || Brain;
                         return (
-                          <div className="group relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-[var(--brand-purple)]/25 to-az-surface-root/85">
-                            <div className="flex size-20 items-center justify-center rounded-az-panel border border-[var(--brand-purple)]/30 bg-[var(--brand-purple)]/15 text-[var(--brand-purple-light)] shadow-xl shadow-[var(--brand-purple)]/10 transition-all duration-300 group-hover:scale-110 group-hover:border-[var(--brand-purple-light)]/50">
+                          <div className="group relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-az-category-violet/25 to-az-surface-root/85">
+                            <div className="flex size-20 items-center justify-center rounded-az-panel border border-az-category-violet/30 bg-az-category-violet/15 text-az-category-violet-light shadow-xl shadow-az-category-violet/10 transition-all duration-300 group-hover:scale-110 group-hover:border-az-category-violet-light/50">
                               <CategoryIcon size={38} strokeWidth={1.75} />
                             </div>
                           </div>

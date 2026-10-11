@@ -137,7 +137,7 @@ export default function OnboardingPage(): React.JSX.Element {
     );
 
     return (
-      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[var(--brand-forest)]">
+      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-az-category-forest">
         {/* Ambient green glow */}
         <div
           className="az-ambient-red pointer-events-none absolute -top-52 -left-52 size-[600px]"
@@ -180,7 +180,7 @@ export default function OnboardingPage(): React.JSX.Element {
               className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[calc(var(--radius-az-hero)_-_8px)] px-5"
               style={{
                 background:
-                  'linear-gradient(160deg, color-mix(in srgb, var(--color-az-scarlet) 35%, transparent) 0%, color-mix(in srgb, var(--brand-forest) 60%, transparent) 60%, color-mix(in srgb, var(--color-az-surface-root) 90%, transparent) 100%)',
+                  'linear-gradient(160deg, color-mix(in srgb, var(--color-az-scarlet) 35%, transparent) 0%, color-mix(in srgb, var(--color-az-category-forest) 60%, transparent) 60%, color-mix(in srgb, var(--color-az-surface-root) 90%, transparent) 100%)',
               }}
             >
               {/* Content collage */}

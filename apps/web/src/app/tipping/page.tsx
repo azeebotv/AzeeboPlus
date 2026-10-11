@@ -37,8 +37,8 @@ const TIER_COLORS: Record<string, { color: string; bg: string }> = {
     bg: 'color-mix(in srgb, var(--color-az-accent-silver) 15%, transparent)',
   },
   gold: {
-    color: 'var(--brand-gold)',
-    bg: 'color-mix(in srgb, var(--brand-gold) 15%, transparent)',
+    color: 'var(--color-az-accent-gold)',
+    bg: 'color-mix(in srgb, var(--color-az-accent-gold) 15%, transparent)',
   },
   platinum: {
     color: 'var(--color-az-accent-silver)',

@@ -44,21 +44,21 @@ export default function LeaderboardPage(): React.JSX.Element {
   const getRankBadge = (rank: number) => {
     if (rank === 1) {
       return (
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-az-warning-500 to-az-warning-300 text-black flex items-center justify-center font-black shadow-[0_4px_16px_rgba(234,179,8,0.4)]">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-az-warning-500 to-az-warning-300 text-black flex items-center justify-center font-black shadow-az-glow-gold">
           <Crown className="w-5 h-5 fill-black" />
         </div>
       );
     }
     if (rank === 2) {
       return (
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-az-ink-dim to-az-ink text-black flex items-center justify-center font-black shadow-[0_4px_16px_rgba(203,213,225,0.3)]">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-az-ink-dim to-az-ink text-black flex items-center justify-center font-black shadow-az-glow-silver">
           <Medal className="w-5 h-5" />
         </div>
       );
     }
     if (rank === 3) {
       return (
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-az-warning-700 to-az-warning-500 text-az-ink flex items-center justify-center font-black shadow-[0_4px_16px_rgba(180,83,9,0.3)]">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-az-warning-700 to-az-warning-500 text-az-ink flex items-center justify-center font-black shadow-az-glow-bronze">
           <Award className="w-5 h-5" />
         </div>
       );

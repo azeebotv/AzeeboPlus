@@ -109,7 +109,7 @@ export default function ProcessMiningPage(): React.JSX.Element {
             icon={<Clock size={20} />}
             label="Total Hours/Month"
             value={isError ? dash : stats.totalHours.toLocaleString()}
-            tone="bg-[var(--brand-purple)]/20 text-[var(--brand-purple)]"
+            tone="bg-az-category-violet/20 text-az-category-violet"
           />
           <StatCard
             icon={<DollarSign size={20} />}

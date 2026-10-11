@@ -15,7 +15,7 @@ export default function AccountRestrictedPage(): React.JSX.Element {
         <div className="az-glass p-8 sm:p-12 max-w-lg w-full text-center border border-az-glass-border relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-az-error-600/15 blur-3xl pointer-events-none" />
 
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-az-error-600 to-az-warning-600 flex items-center justify-center text-az-ink mx-auto mb-6 shadow-[0_8px_32px_rgba(239,68,68,0.35)]">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-az-error-600 to-az-warning-600 flex items-center justify-center text-az-ink mx-auto mb-6 shadow-az-glow-error">
             <ShieldAlert className="w-10 h-10" />
           </div>
 

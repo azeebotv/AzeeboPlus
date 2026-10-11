@@ -39,8 +39,8 @@ interface LeaderboardEntry {
   losses: number;
 }
 
-/* Lifecycle statuses ride the semantic ramp; `completed` grey has no az token
-   ramp entry, so it uses a `var(--brand-grey)` arbitrary utility. */
+/* Lifecycle statuses ride the semantic ramp; `completed` is the absence of a
+   status rather than one, so it reads from the ink layer. */
 const STATUS_STYLES: Record<
   string,
   { chipBg: string; chipText: string; bannerFrom: string; label: string }
@@ -58,9 +58,9 @@ const STATUS_STYLES: Record<
     label: 'In Progress',
   },
   completed: {
-    chipBg: 'bg-[var(--brand-grey)]/20',
-    chipText: 'text-[var(--brand-grey)]',
-    bannerFrom: 'from-[var(--brand-grey)]/20',
+    chipBg: 'bg-az-ink-muted/20',
+    chipText: 'text-az-ink-muted',
+    bannerFrom: 'from-az-ink-muted/20',
     label: 'Completed',
   },
   upcoming: {
@@ -144,7 +144,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
   const getRankStyle = (rank: number) => {
     switch (rank) {
       case 1:
-        return { bg: 'bg-[var(--brand-gold)]/20', text: 'text-[var(--brand-gold)]' };
+        return { bg: 'bg-az-accent-gold/20', text: 'text-az-accent-gold' };
       case 2:
         return {
           bg: 'bg-[var(--color-az-accent-silver)]/20',

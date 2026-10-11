@@ -47,20 +47,20 @@ function CinemaxisPageContent(): React.JSX.Element {
     <PageShell
       maxWidth="7xl"
       activeNav="Cinemaxis"
-      glowColor="color-mix(in srgb, var(--brand-purple) 12%, transparent)"
+      glowColor="color-mix(in srgb, var(--color-az-category-violet) 12%, transparent)"
     >
       <PageHero
         eyebrow="Cinemaxis Universe"
         title="Cinemaxis"
         description="Premium African cinema. Blockbuster movies, award-winning films, and exclusive releases."
-        glowColor="color-mix(in srgb, var(--brand-purple) 14%, transparent)"
+        glowColor="color-mix(in srgb, var(--color-az-category-violet) 14%, transparent)"
         actions={
           <>
             <Link href="/movies">
               <motion.button
                 type="button"
                 aria-label="Browse movies"
-                className="az-body-strong rounded-az-pill border border-[color-mix(in_srgb,var(--brand-purple)_40%,transparent)] bg-[color-mix(in_srgb,var(--brand-purple)_20%,transparent)] px-6 py-3 text-az-ink transition-all"
+                className="az-body-strong rounded-az-pill border border-[color-mix(in_srgb,var(--color-az-category-violet)_40%,transparent)] bg-[color-mix(in_srgb,var(--color-az-category-violet)_20%,transparent)] px-6 py-3 text-az-ink transition-all"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -71,7 +71,7 @@ function CinemaxisPageContent(): React.JSX.Element {
               <motion.button
                 type="button"
                 aria-label="View premieres"
-                className="az-body-strong rounded-az-pill bg-[var(--brand-purple-light)] px-6 py-3 text-[var(--color-az-surface-root)] transition-all"
+                className="az-body-strong rounded-az-pill bg-az-category-violet-light px-6 py-3 text-[var(--color-az-surface-root)] transition-all"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -91,7 +91,7 @@ function CinemaxisPageContent(): React.JSX.Element {
             </div>
             <Link
               href="/browse"
-              className="az-body-strong text-[var(--brand-purple-light)] transition-colors hover:text-[var(--brand-purple)]"
+              className="az-body-strong text-az-category-violet-light transition-colors hover:text-az-category-violet"
             >
               View All
             </Link>

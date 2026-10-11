@@ -43,13 +43,13 @@ const TONES: Record<Tone, { tint: string; text: string }> = {
   success: { tint: 'bg-az-success-500/15', text: 'text-az-success-500' },
   warning: { tint: 'bg-az-warning-500/15', text: 'text-az-warning-500' },
   error: { tint: 'bg-az-error-500/15', text: 'text-az-error-500' },
-  premium: { tint: 'bg-[var(--brand-purple)]/15', text: 'text-[var(--brand-purple)]' },
+  premium: { tint: 'bg-az-category-violet/15', text: 'text-az-category-violet' },
 };
 
 /* Carrier identity hues are categorical, not status colours, so they keep the
    brand hues — but as token classes rather than a var() string. */
 const CARRIER_TONES: Record<string, string> = {
-  MTN: 'bg-[var(--brand-gold)]',
+  MTN: 'bg-az-accent-gold',
   Airtel: 'bg-az-scarlet',
   Glo: 'bg-az-success-500',
   '9Mobile': 'bg-az-secondary-500',

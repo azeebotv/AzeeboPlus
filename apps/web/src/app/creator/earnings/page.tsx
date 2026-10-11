@@ -125,8 +125,8 @@ export default function CreatorEarningsPage(): React.JSX.Element {
                 label: 'Lifetime Accrual',
                 value: `₦${earnings?.lifetimeEarnings.toLocaleString() || '0'}`,
                 icon: TrendingUp,
-                color: 'text-purple-400',
-                border: 'hover:border-purple-500/40',
+                color: 'text-az-category-violet-light',
+                border: 'hover:border-az-category-violet/40',
               },
             ].map((stat) => {
               const Icon = stat.icon;

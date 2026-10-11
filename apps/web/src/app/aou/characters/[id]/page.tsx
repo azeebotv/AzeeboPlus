@@ -90,7 +90,7 @@ export default function AOUCharacterDetailPage(): React.JSX.Element {
                   />
                 </div>
               ) : (
-                <div className="w-36 h-48 sm:w-48 sm:h-64 rounded-2xl bg-gradient-to-br from-az-warning-600/30 to-purple-900/40 border border-az-warning-500/25 flex items-center justify-center text-6xl font-extrabold text-az-warning-400/90 shadow-2xl shrink-0">
+                <div className="w-36 h-48 sm:w-48 sm:h-64 rounded-2xl bg-gradient-to-br from-az-warning-600/30 to-az-surface-auth-violet/40 border border-az-warning-500/25 flex items-center justify-center text-6xl font-extrabold text-az-warning-400/90 shadow-2xl shrink-0">
                   {character.name[0]}
                 </div>
               )}

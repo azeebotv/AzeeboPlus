@@ -141,7 +141,7 @@ export default function WalletPage(): React.JSX.Element {
               <span className="text-xs text-az-ink/40 uppercase tracking-wider font-bold">
                 Universe Passes
               </span>
-              <History size={16} className="text-purple-400" />
+              <History size={16} className="text-az-category-violet-light" />
             </div>
             <p className="text-sm font-semibold text-az-ink">1-Click Fast Pass</p>
             <p className="text-[11px] text-az-ink/40 mt-0.5">Auto-rebill control enabled</p>

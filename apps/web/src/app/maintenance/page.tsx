@@ -17,7 +17,7 @@ export default function MaintenancePage(): React.JSX.Element {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-az-warning-500/15 blur-3xl pointer-events-none" />
 
           {/* Icon Badge */}
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-az-warning-500 to-az-flame flex items-center justify-center text-az-ink mx-auto mb-6 shadow-[0_8px_32px_rgba(245,158,11,0.3)]">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-az-warning-500 to-az-flame flex items-center justify-center text-az-ink mx-auto mb-6 shadow-az-glow-warning">
             <Wrench className="w-10 h-10" />
           </div>
 

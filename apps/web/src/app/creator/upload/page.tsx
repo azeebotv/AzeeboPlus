@@ -233,7 +233,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                   id="content-universe"
                   value={universeId}
                   onChange={(e) => setUniverseId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--hp-surface)] border border-az-glass-border text-az-ink text-sm focus:outline-none focus:border-[var(--color-az-flame)] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-az-surface-raised border border-az-glass-border text-az-ink text-sm focus:outline-none focus:border-[var(--color-az-flame)] transition-colors"
                 >
                   <option value="">Select Target Universe</option>
                   {universes.map((u) => (

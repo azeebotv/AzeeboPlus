@@ -23,7 +23,7 @@ function PaymentPendingContent(): React.JSX.Element {
                 background:
                   status === 'pending'
                     ? 'color-mix(in srgb, var(--color-az-warning-500) 15%, transparent)'
-                    : 'color-mix(in srgb, var(--brand-purple) 15%, transparent)',
+                    : 'color-mix(in srgb, var(--color-az-category-violet) 15%, transparent)',
               }}
             />
 

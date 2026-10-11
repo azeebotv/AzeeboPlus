@@ -36,7 +36,7 @@ const TIME_FRAME_LABELS: Record<TimeFrame, string> = {
 /* Podium places are reward ranks, not statuses, so they keep the categorical
    metallic ramp the tipping tiers use instead of the semantic colour set. */
 const MEDALS: Record<number, { ring: string; tone: string; icon: LucideIcon }> = {
-  1: { ring: 'border-[var(--brand-gold)]', tone: 'text-[var(--brand-gold)]', icon: Trophy },
+  1: { ring: 'border-az-accent-gold', tone: 'text-az-accent-gold', icon: Trophy },
   2: {
     ring: 'border-[var(--color-az-accent-silver)]',
     tone: 'text-[var(--color-az-accent-silver)]',
