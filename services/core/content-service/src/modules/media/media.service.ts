@@ -7,6 +7,24 @@ import { randomUUID } from 'node:crypto';
 import sharp from 'sharp';
 import { Readable } from 'stream';
 
+/**
+ * AWS SDK v3 reports a missing key as `NotFound`/`NoSuchKey`, with the status on
+ * `$metadata.httpStatusCode` — a shape `mapAndThrow` does not read, so without
+ * this test an absent object and an unreachable bucket look identical.
+ */
+function isMissingObject(error: unknown): boolean {
+  const shaped = error as {
+    name?: string;
+    Code?: string;
+    $metadata?: { httpStatusCode?: number };
+  };
+  return (
+    shaped?.name === 'NotFound' ||
+    shaped?.Code === 'NoSuchKey' ||
+    shaped?.$metadata?.httpStatusCode === 404
+  );
+}
+
 @Injectable()
 export class MediaService {
   private readonly logger = new Logger(MediaService.name);
@@ -135,6 +153,14 @@ export class MediaService {
       const head = await this.s3Client.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
       return { size: head.ContentLength ?? 0, contentType: head.ContentType };
     } catch (error) {
+      // allowed-fabricated-4xx: a key that is not there and a bucket that cannot
+      // be reached arrive through the same catch, and the mapper below reads
+      // neither — it can only call the missing object a 500. `isMissingObject`
+      // inspects the caught error's own code before this 404 is chosen, and every
+      // other cause still falls through to `mapAndThrow`.
+      if (isMissingObject(error)) {
+        throw new NotFoundException(`Object ${key} is not in storage`);
+      }
       this.logger.error(`Error stating object ${key}: ${(error as Error).message}`);
       mapAndThrow(error, 'stating uploaded object');
     }

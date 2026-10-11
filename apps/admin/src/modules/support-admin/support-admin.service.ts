@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { upstreamAuthContext } from '../../common/upstream-auth.middleware';
 
 export interface SupportTicketItem {
@@ -47,9 +48,20 @@ export class SupportAdminService {
     let res: Response;
     try {
       res = await fetch(url, { ...init, headers, signal: AbortSignal.timeout(6_000) });
-    } catch (e) {
-      this.logger.warn(`support-service unreachable at ${url}: ${e instanceof Error ? e.message : e}`);
-      throw new Error('support-service is currently unavailable');
+    } catch (error) {
+      this.logger.warn(
+        `support-service unreachable at ${url}: ${error instanceof Error ? error.message : error}`
+      );
+      // The try wraps the transport only, so whatever reaches here is an
+      // unreachable or timed-out upstream. Carrying a network `code` is what makes
+      // mapAndThrow answer 503 rather than flattening an outage into a generic 500.
+      mapAndThrow(
+        Object.assign(new Error('support-service is currently unavailable'), {
+          cause: error,
+          code: (error as { code?: string }).code ?? 'ECONNREFUSED',
+        }),
+        `reaching support-service at ${url}`
+      );
     }
 
     const body = (await res.json().catch(() => null)) as

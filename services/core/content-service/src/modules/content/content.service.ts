@@ -881,10 +881,20 @@ export class ContentService {
       let stat: { size: number; contentType?: string };
       try {
         stat = await this.mediaService.statObject(key);
-      } catch {
-        throw new BadRequestException(
-          'Upload not found in storage — the file may not have finished uploading'
-        );
+      } catch (error) {
+        if (error instanceof NotFoundException) {
+          // allowed-fabricated-4xx: statObject separates "the key is not in the
+          // bucket" from "the bucket is not answering", so this branch only runs
+          // when the object genuinely is missing — the creator's own problem, and
+          // the message the upload screen already handles.
+          throw new BadRequestException(
+            'Upload not found in storage — the file may not have finished uploading'
+          );
+        }
+        // Anything else (credentials refused, storage unreachable) is a server
+        // failure; reporting it as a bad request tells the creator to retry
+        // something that was never their fault.
+        mapAndThrow(error, `confirming upload ${contentId}`);
       }
       if (!stat.size) {
         throw new BadRequestException('Uploaded object is empty');
