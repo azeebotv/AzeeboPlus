@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import { isRecord, num } from '@/lib/payload';
+import { asRecord, isRecord, num, requireData } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 /** Zero-safe governance counters: a partial payload renders zeros, never throws. */
@@ -22,6 +22,16 @@ function toGovernanceSummary(data: unknown): GovernanceSummary {
   };
 }
 
+/**
+ * Governance counters render 'Unavailable' when the read failed. A flat 0 here
+ * is the most damaging kind of wrong: an admin reads "nothing awaiting
+ * approval" while the governance service is down.
+ */
+function govCount(failed: boolean, value: number | undefined): string {
+  if (failed) return 'Unavailable';
+  return (value ?? 0).toLocaleString();
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const {
@@ -32,8 +42,10 @@ export default function DashboardPage() {
     queryKey: ['admin', 'dashboard'],
     queryFn: async () => {
       const res = await adminApi.getDashboard();
-      // Field guards: a degraded/partial payload renders zeros, never throws.
-      const d: Record<string, unknown> = isRecord(res.data) ? res.data : {};
+      // requireData first: the field guards below are for PARTIAL payloads, and
+      // without them an outage coerced to zeros and this page's own error branch
+      // was unreachable — 0 users looked identical to a real 0.
+      const d = asRecord(requireData(res, null));
       return {
         totalUsers: num(d.totalUsers),
         totalContent: num(d.totalContent),
@@ -45,21 +57,21 @@ export default function DashboardPage() {
   });
 
   // Real wallet aggregate — replaces a fabricated activity number.
-  const { data: walletStats = { totalWallets: 0 } } = useQuery({
+  const { data: walletStats, isError: walletStatsFailed } = useQuery({
     queryKey: ['admin', 'wallet-stats'],
     queryFn: async () => {
       const res = await adminApi.getWalletStats();
-      const d: Record<string, unknown> = isRecord(res.data) ? res.data : {};
+      const d = asRecord(requireData(res, null));
       return { totalWallets: num(d.totalWallets) };
     },
   });
 
   // Governance card — dual-control approvals + rights-clearance health (TAA §55).
-  const { data: governance } = useQuery({
+  const { data: governance, isError: governanceFailed } = useQuery({
     queryKey: ['admin', 'governance-summary'],
     queryFn: async () => {
       const res = await adminApi.getGovernanceSummary();
-      return toGovernanceSummary(res.data);
+      return toGovernanceSummary(requireData(res, null));
     },
     // A governance-count outage must not blank the whole dashboard.
     retry: 1,
@@ -87,7 +99,7 @@ export default function DashboardPage() {
           label: 'Content Titles',
           value: stats.totalContent?.toLocaleString() || '0',
           icon: 'film',
-          color: '#8b5cf6',
+          color: 'var(--admin-purple)',
           bgGlow: 'rgba(139,92,246,0.1)',
         },
         {
@@ -106,7 +118,8 @@ export default function DashboardPage() {
         },
         {
           label: 'Wallets',
-          value: walletStats.totalWallets.toLocaleString(),
+          // '—' rather than 0: an unreachable wallet service is not an empty one.
+          value: walletStatsFailed ? '—' : (walletStats?.totalWallets ?? 0).toLocaleString(),
           icon: 'sparkles',
           color: 'var(--admin-orange)',
           bgGlow: 'rgba(232,66,10,0.1)',
@@ -175,7 +188,9 @@ export default function DashboardPage() {
         >
           <Icon name="alertTriangle" size={24} color="var(--admin-red)" />
           <div>
-            <p style={{ color: '#ff6b6b', fontWeight: 600, fontSize: 15 }}>Failed to load dashboard metrics</p>
+            <p style={{ color: 'var(--admin-red)', fontWeight: 600, fontSize: 15 }}>
+              Failed to load dashboard metrics
+            </p>
             <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginTop: 4 }}>
               Unable to reach the platform metrics API. Please verify administrative service connectivity.
             </p>
@@ -283,28 +298,28 @@ export default function DashboardPage() {
               {[
                 {
                   label: 'Awaiting Approval',
-                  value: governance?.pendingDualControl ?? 0,
+                  value: govCount(governanceFailed, governance?.pendingDualControl),
                   color: 'var(--admin-amber)',
                   icon: 'clock',
                   href: '/dual-control?status=awaiting',
                 },
                 {
                   label: 'Approved, Not Executed',
-                  value: governance?.approvedNotExecuted ?? 0,
+                  value: govCount(governanceFailed, governance?.approvedNotExecuted),
                   color: 'var(--admin-orange)',
                   icon: 'checkCircle',
                   href: '/dual-control?status=approved',
                 },
                 {
                   label: 'Expiring ≤ 30 Days',
-                  value: governance?.expiringClearances ?? 0,
+                  value: govCount(governanceFailed, governance?.expiringClearances),
                   color: 'var(--admin-amber)',
                   icon: 'book',
                   href: '/talent-clearance?expiry=expiring',
                 },
                 {
                   label: 'Expired Unresolved',
-                  value: governance?.expiredClearances ?? 0,
+                  value: govCount(governanceFailed, governance?.expiredClearances),
                   color: governance?.expiredClearances ? 'var(--admin-red)' : 'var(--admin-emerald)',
                   icon: 'alertTriangle',
                   href: '/talent-clearance?expiry=expired',
@@ -328,7 +343,7 @@ export default function DashboardPage() {
                     <Icon name={item.icon} size={16} color={item.color} />
                   </div>
                   <p style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.5, color: item.color, margin: 0 }}>
-                    {item.value.toLocaleString()}
+                    {item.value}
                   </p>
                 </button>
               ))}

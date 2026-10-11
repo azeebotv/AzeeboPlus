@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { AdminUniverse } from '@/lib/admin-types';
+import { requireData } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 export default function UniversesPage() {
@@ -99,14 +100,12 @@ export default function UniversesPage() {
     queryKey: ['admin', 'universe-stats'],
     queryFn: async () => {
       const res = await adminApi.getUniverseStats();
-      if (!res.success) return null;
-      const d = res.data as {
+      return requireData(res, null) as {
         totalUniverses?: number;
         enabledUniverses?: number;
         disabledUniverses?: number;
         totalContentItems?: number;
-      };
-      return d ?? null;
+      } | null;
     },
   });
 

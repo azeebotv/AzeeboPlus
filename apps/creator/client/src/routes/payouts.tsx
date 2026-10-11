@@ -38,17 +38,21 @@ export default function PayoutsPage() {
     queryKey: ['creator', 'payouts'],
     queryFn: async () => {
       const res = await creatorApi.getPayouts();
-      return res.success ? (res.data as PayoutsData) : null;
+      return creatorApi.assertSuccess<PayoutsData>(res);
     },
   });
 
   // The backend rejects payouts below the creator's configured minimum —
   // surface the real threshold instead of guessing one.
-  const { data: settings } = useQuery({
+  const {
+    data: settings,
+    isError: settingsFailed,
+    error: settingsError,
+  } = useQuery({
     queryKey: ['creator', 'settings'],
     queryFn: async () => {
       const res = await creatorApi.getSettings();
-      return res.success ? (res.data as CreatorSettings) : null;
+      return creatorApi.assertSuccess<CreatorSettings>(res);
     },
   });
   const minimumPayout = settings?.minimumPayout ?? 0;
@@ -206,6 +210,14 @@ export default function PayoutsPage() {
             {belowMinimum && (
               <p style={{ color: 'var(--creator-amber, #f59e0b)', fontSize: 13, marginTop: 8 }}>
                 Minimum payout is {formatNgn(minimumPayout)} (set in Settings).
+              </p>
+            )}
+            {settingsFailed && !belowMinimum && (
+              // Without the threshold the client cannot pre-validate, so say so
+              // rather than implying there is no minimum.
+              <p style={errorTextStyle()}>
+                Minimum payout threshold unavailable ({creatorApi.errorMessage(settingsError)}). The
+                server still enforces it.
               </p>
             )}
             {requestMutation.isSuccess && (

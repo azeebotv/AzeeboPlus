@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
-import { isRecord, num } from '@/lib/payload';
+import { isRecord, requireData, num } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /**
  * Cost summary — matched to the model-cost-tracker service contract:
@@ -83,15 +84,15 @@ export default function CostDashboardPage() {
       const res = await apiFetch<CostSummary>('/api/v1/analytics/cost/summary');
       return res.success ? asSummary(res.data) : null;
     },
-    refetchInterval: 30000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const eventsQuery = useQuery({
     queryKey: ['admin', 'cost-events'],
     queryFn: async () => {
       const res = await apiFetch<CostEvent[]>('/api/v1/analytics/cost/events?limit=50');
-      if (!res.success) return [];
-      return (Array.isArray(res.data) ? res.data : []).map((e) => {
+      const rows = requireData(res, []);
+      return (Array.isArray(rows) ? rows : []).map((e) => {
         const rec: Record<string, unknown> = isRecord(e) ? e : {};
         return {
           id: String(rec.id ?? ''),

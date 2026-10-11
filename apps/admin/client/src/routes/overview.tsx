@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '@/lib/api/admin';
+import { requireData } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 export default function OverviewPage() {
@@ -12,8 +13,8 @@ export default function OverviewPage() {
   } = useQuery({
     queryKey: ['admin', 'platform-overview'],
     queryFn: async () => {
-      const res = await adminApi.getPlatformOverview();
-      return res.success ? (res.data as unknown as Record<string, number | string>) : {};
+      const data = requireData(await adminApi.getPlatformOverview(), {});
+      return data as unknown as Record<string, number | string>;
     },
   });
 
@@ -145,9 +146,14 @@ export default function OverviewPage() {
                     letterSpacing: 0.6,
                   }}
                 >
-                  {`${key} · ${subKey}`.replace(/([A-Z])/g, ' $1').replace(/\s+/g, ' ').trim()}
+                  {`${key} · ${subKey}`
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/\s+/g, ' ')
+                    .trim()}
                 </p>
-                <p style={{ fontSize: 26, fontWeight: 700, color: 'var(--admin-orange)', margin: 0 }}>
+                <p
+                  style={{ fontSize: 26, fontWeight: 700, color: 'var(--admin-orange)', margin: 0 }}
+                >
                   {typeof subValue === 'number'
                     ? subValue.toLocaleString()
                     : String(subValue ?? '—')}

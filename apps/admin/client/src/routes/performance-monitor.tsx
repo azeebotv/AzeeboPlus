@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { GatewayHttpSummary } from '@/lib/api/admin';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 const latColor = (ms: number) =>
   ms < 100 ? 'var(--admin-emerald)' : ms < 500 ? 'var(--admin-amber)' : 'var(--admin-red)';
@@ -55,7 +56,7 @@ function MetricCard({
 
 export default function PerformanceMonitorPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState(30000);
+  const [refreshInterval, setRefreshInterval] = useState<number>(pollingIntervals.dashboard);
 
   const { data, isLoading, isError, error, refetch, dataUpdatedAt } = useQuery({
     queryKey: ['admin', 'gateway-http'],

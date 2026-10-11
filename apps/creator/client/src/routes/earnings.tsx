@@ -9,7 +9,7 @@ export default function EarningsPage() {
     queryKey: ['creator', 'earnings'],
     queryFn: async () => {
       const res = await creatorApi.getEarnings();
-      return res.success ? (res.data as EarningsData) : null;
+      return creatorApi.assertSuccess<EarningsData>(res);
     },
   });
 
@@ -17,7 +17,7 @@ export default function EarningsPage() {
     queryKey: ['creator', 'earnings-history'],
     queryFn: async () => {
       const res = await creatorApi.getEarningsHistory(50);
-      return res.success ? (res.data as EarningsHistoryData) : null;
+      return creatorApi.assertSuccess<EarningsHistoryData>(res);
     },
   });
 
@@ -144,6 +144,8 @@ export default function EarningsPage() {
             </h3>
             {history.isLoading ? (
               <p style={{ color: 'var(--creator-text-muted)', fontSize: 13 }}>Loading history...</p>
+            ) : history.isError ? (
+              <p style={errorTextStyle()}>{creatorApi.errorMessage(history.error)}</p>
             ) : history.data && history.data.items.length > 0 ? (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>

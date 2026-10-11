@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { Itinerary, Neighborhood, Partner, PartnerOffer } from '@/lib/admin-types';
+import { requireData } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 /**
@@ -1560,8 +1561,7 @@ export default function LifestyleGuidesPage() {
     queryKey: ['admin', 'lifestyle-partners', 'all'],
     queryFn: async () => {
       const res = await adminApi.getPartners();
-      if (!res.success) return [];
-      return res.data ?? [];
+      return requireData(res, []);
     },
   });
 

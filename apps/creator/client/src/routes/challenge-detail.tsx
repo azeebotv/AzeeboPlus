@@ -5,7 +5,7 @@ import { creatorApi } from '@/lib/api/creator';
 import { ChallengeLeaderboard, statusColor, statusText } from '@/components/ChallengeLeaderboard';
 import ChallengeSubmitDialog from '@/components/ChallengeSubmitDialog';
 import BoardQrModal from '@/components/BoardQrModal';
-import { formatNgn } from '@/lib/ui';
+import { errorTextStyle, formatNgn } from '@/lib/ui';
 import type { Challenge } from '@/lib/creator-types';
 
 /**
@@ -20,11 +20,15 @@ export default function ChallengeDetailPage() {
   const [showSubmit, setShowSubmit] = useState(false);
   const [showQr, setShowQr] = useState(false);
 
-  const { data: challenges } = useQuery({
+  const {
+    data: challenges,
+    isError: challengesFailed,
+    error: challengesError,
+  } = useQuery({
     queryKey: ['creator', 'challenges'],
     queryFn: async () => {
       const res = await creatorApi.getChallenges();
-      return res.success ? (res.data as Challenge[]) : [];
+      return creatorApi.assertSuccess<Challenge[]>(res);
     },
   });
   const challenge = (challenges ?? []).find((c) => c.id === challengeId);
@@ -32,6 +36,13 @@ export default function ChallengeDetailPage() {
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Challenge</h1>
+      {challengesFailed && (
+        // Without the list the header cannot resolve this challenge; say that
+        // rather than rendering as if the challenge did not exist.
+        <p style={errorTextStyle()}>
+          Challenge details unavailable ({creatorApi.errorMessage(challengesError)}).
+        </p>
+      )}
       {challenge && (
         <div
           style={{

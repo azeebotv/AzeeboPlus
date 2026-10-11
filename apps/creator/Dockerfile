@@ -1,4 +1,4 @@
-FROM node:22.16.0-alpine AS builder
+FROM node:22.16.0-alpine@sha256:41e4389f3d988d2ed55392df4db1420ad048ae53324a8e2b7c6d19508288107e AS builder
 WORKDIR /app
 
 RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
@@ -18,7 +18,7 @@ RUN pnpm --filter @azeebo/creator build:client
 RUN pnpm --filter @azeebo/creator prisma generate
 RUN pnpm --filter @azeebo/creator run build
 
-FROM node:22.16.0-alpine AS runner
+FROM node:22.16.0-alpine@sha256:41e4389f3d988d2ed55392df4db1420ad048ae53324a8e2b7c6d19508288107e AS runner
 WORKDIR /app
 
 LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"
@@ -30,18 +30,18 @@ RUN apk add --no-cache tini && \
     adduser -S nodejs -u 65532 && \
     for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/creator/package.json ./apps/creator/
+COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --chown=nodejs:nodejs apps/creator/package.json ./apps/creator/
 # Copy workspace packages so @azeebo/shared-types, @azeebo/security,
 # @azeebo/logger, etc. are resolvable at runtime (pnpm install creates
 # symlinks under node_modules pointing into packages/).
-COPY packages ./packages
+COPY --chown=nodejs:nodejs packages ./packages
 
 RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
-COPY --from=builder /app/apps/creator/dist ./apps/creator/dist
-COPY --from=builder /app/apps/creator/prisma ./apps/creator/prisma
-COPY --from=builder /app/apps/creator/src/generated ./apps/creator/src/generated
+COPY --chown=nodejs:nodejs --from=builder /app/apps/creator/dist ./apps/creator/dist
+COPY --chown=nodejs:nodejs --from=builder /app/apps/creator/prisma ./apps/creator/prisma
+COPY --chown=nodejs:nodejs --from=builder /app/apps/creator/src/generated ./apps/creator/src/generated
 
 RUN chown -R nodejs:nodejs /app
 

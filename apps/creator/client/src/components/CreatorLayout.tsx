@@ -105,9 +105,14 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated || !user) {
-      navigate('/login');
+      // /login hands off to the web app, so carry the page the creator actually
+      // wanted; it is restored after the round trip.
+      const intended = `${location.pathname}${location.search}`;
+      navigate(intended === '/login' ? '/login' : `/login?next=${encodeURIComponent(intended)}`, {
+        replace: true,
+      });
     }
-  }, [isLoading, isAuthenticated, user, navigate]);
+  }, [isLoading, isAuthenticated, user, navigate, location.pathname, location.search]);
 
   if (isLoading) {
     return (

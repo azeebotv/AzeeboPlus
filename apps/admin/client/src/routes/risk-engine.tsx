@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -115,7 +116,7 @@ export default function RiskEnginePage() {
       if (riskFilter) params.set('riskLevel', riskFilter);
       return apiFetch<RiskClassification[]>(`/api/v1/analytics/risk/classifications?${params}`);
     },
-    refetchInterval: 30000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const statsQuery = useQuery({

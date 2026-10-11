@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
 import { useAuth } from '@/context/AuthContext';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -80,7 +81,7 @@ export default function CapacityLedgerPage() {
       if (domainFilter) params.set('domain', domainFilter);
       return apiFetch<CapacityEntry[]>(`/api/v1/analytics/capacity/entries?${params}`);
     },
-    refetchInterval: 30000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const summaryQuery = useQuery({

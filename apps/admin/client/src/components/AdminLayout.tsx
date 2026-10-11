@@ -6,7 +6,9 @@ import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
 import { adminApi } from '@/lib/api/admin';
 import type { StaleFlagMetrics } from '@/lib/admin-types';
 import StaleFlagSummary from './StaleFlagSummary';
+import QueryErrorToasts from './QueryErrorToasts';
 import { Icon } from './Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /** Minimal shape of the universe-feature-flag rows used for the stale list. */
 interface StaleUniverseFlagRow {
@@ -181,6 +183,12 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: 'Tipping',
         icon: 'gem',
         description: 'Creator tipping & direct gifts',
+      },
+      {
+        href: '/partner-banks',
+        label: 'Borrow Partners',
+        icon: 'shield',
+        description: 'Banks approved to lend on the Borrow page',
       },
     ],
   },
@@ -375,7 +383,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         : { available: false, fetchedAt: null, staleRunning: {}, autoDisabled: {} };
     },
     staleTime: 30_000,
-    refetchInterval: 30_000,
+    refetchInterval: pollingIntervals.dashboard,
   });
   const autoDisabledKeys = new Set(
     Object.entries(staleMetrics?.autoDisabled ?? {})
@@ -396,7 +404,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       });
       return res.success ? (res.data?.total ?? 0) : 0;
     },
-    refetchInterval: 60_000,
+    refetchInterval: pollingIntervals.idle,
   });
 
   const badgeFor = (href: string): number => {
@@ -435,9 +443,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated || !user) {
-      navigate('/login');
+      // /login hands off to the web app, so carry the page the admin actually
+      // wanted; it is restored after the round trip.
+      const intended = `${location.pathname}${location.search}`;
+      navigate(
+        intended === '/login'
+          ? '/login'
+          : `/login?next=${encodeURIComponent(intended)}`,
+        { replace: true }
+      );
     }
-  }, [isLoading, isAuthenticated, user, navigate]);
+  }, [isLoading, isAuthenticated, user, navigate, location.pathname, location.search]);
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
@@ -460,7 +476,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (!activeSectionId) return;
     setCollapsedSections((prev) =>
-      prev[activeSectionId] ? { ...prev, [activeSectionId]: false } : prev,
+      prev[activeSectionId] ? { ...prev, [activeSectionId]: false } : prev
     );
   }, [activeSectionId]);
 
@@ -1071,6 +1087,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         >
           {children}
         </main>
+        <QueryErrorToasts />
       </div>
     </div>
   );

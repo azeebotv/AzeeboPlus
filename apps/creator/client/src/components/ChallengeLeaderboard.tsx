@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { creatorApi } from '@/lib/api/creator';
 import { useAuth } from '@/context/AuthContext';
 import { formatNgn, errorTextStyle } from '@/lib/ui';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /** One ranked row on a challenge's leaderboard (winner-first, position is 1-based). */
 export interface LeaderboardEntry {
@@ -27,7 +28,7 @@ interface LeaderboardData {
  * How often the board re-polls for new winners/review results. Deliberately
  * modest — the board is a spectator surface, not an operations dashboard.
  */
-const LEADERBOARD_REFRESH_MS = 15_000;
+const LEADERBOARD_REFRESH_MS = pollingIntervals.standard;
 
 /**
  * Challenge leaderboard, rendered two ways:

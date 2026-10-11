@@ -74,7 +74,7 @@ export class ArchivedContentSweeperService implements OnModuleInit, OnModuleDest
     }
     this.timer = setInterval(() => void this.sweep(), intervalMs);
     // Never hold the process open on the sweeper's account.
-    this.timer.unref?.();
+    (this.timer as unknown as { unref?: () => void })?.unref?.();
     this.logger.log(
       `Archived-content sweeper armed: interval ${Math.round(intervalMs / 1000)}s, TTL ${this.ttlDays}d`
     );

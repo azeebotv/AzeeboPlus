@@ -21,6 +21,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ArchivedContentSweeperService } from './archived-content-sweeper.service';
 import { FeatureFlagService, creatorFlags } from '@azeebo/feature-flags';
+import { ListContentQueryDto } from './dto/list-content-query.dto';
 
 interface AuthRequest extends Request {
   user: { id: string; email: string; role: string };
@@ -61,13 +62,16 @@ export class CreatorController {
   @Get('content')
   async getContent(
     @Request() req: AuthRequest,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
-    @Query('status') status?: string
+    @Query() query: ListContentQueryDto
   ): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
-      data: await this.creatorService.getContent(req.user.id, Number(page), Number(limit), status),
+      data: await this.creatorService.getContent(
+        req.user.id,
+        query.page ?? 1,
+        query.limit ?? 20,
+        query.status
+      ),
     };
   }
 

@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { SystemSetting } from '@/lib/admin-types';
-import { unwrapList, asRecord, str as asStr } from '@/lib/payload';
+import { unwrapList, asRecord, requireData, assertSuccess, str as asStr } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
+import QueryErrorBanner from '@/components/QueryErrorBanner';
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('general');
   const [editKey, setEditKey] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [testingKey, setTestingKey] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<Record<string, { ok: boolean; message: string }>>(
@@ -42,11 +44,18 @@ export default function SettingsPage() {
     }
   };
 
-  const { data: settings = [], isLoading } = useQuery({
+  const {
+    data: settings = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ['admin', 'settings'],
     queryFn: async () => {
-      const res = await adminApi.getAllSettings();
-      return res.success ? unwrapList<SystemSetting>(res.data).items : [];
+      const data = requireData(await adminApi.getAllSettings(), []);
+      return unwrapList<SystemSetting>(data).items;
     },
   });
 
@@ -63,15 +72,15 @@ export default function SettingsPage() {
   const rolesQuery = useQuery({
     queryKey: ['admin', 'settings-roles'],
     queryFn: async () => {
-      const res = await adminApi.getAccessRoles();
-      return res.success ? unwrapList<SystemSetting>(res.data).items : [];
+      const data = requireData(await adminApi.getAccessRoles(), []);
+      return unwrapList<SystemSetting>(data).items;
     },
   });
   const adminsQuery = useQuery({
     queryKey: ['admin', 'settings-admins'],
     queryFn: async () => {
-      const res = await adminApi.getAccessAdmins();
-      return res.success ? unwrapList<SystemSetting>(res.data).items : [];
+      const data = requireData(await adminApi.getAccessAdmins(), []);
+      return unwrapList<SystemSetting>(data).items;
     },
   });
   const invalidateAccess = () => {
@@ -125,8 +134,7 @@ export default function SettingsPage() {
   const ipRulesQuery = useQuery({
     queryKey: ['admin', 'settings-ip-rules'],
     queryFn: async () => {
-      const res = await adminApi.getIpRules();
-      return res.success ? asRecord(res.data) : {};
+      return asRecord(requireData(await adminApi.getIpRules(), {}));
     },
   });
   if (!ipLoaded && ipRulesQuery.data && Object.keys(ipRulesQuery.data).length > 0) {
@@ -161,12 +169,16 @@ export default function SettingsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ key, value }: { key: string; value: unknown }) =>
-      adminApi.updateSetting(key, value),
+    // apiFetch resolves a failed write, so without assertSuccess this closed the
+    // editor as if the setting had saved.
+    mutationFn: async ({ key, value }: { key: string; value: unknown }) =>
+      assertSuccess(await adminApi.updateSetting(key, value)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
+      setSaveError(null);
       setEditKey(null);
     },
+    onError: (e: Error) => setSaveError(e.message || 'Failed to save setting'),
   });
 
   // Export/import + bulk save (backend routes previously unused).
@@ -334,6 +346,32 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+
+      {isError && (
+        <QueryErrorBanner
+          title="Settings unavailable."
+          body="Values below are not loaded, so saving here could overwrite settings you cannot see."
+          detail={error?.message}
+          onRetry={() => void refetch()}
+          retrying={isFetching}
+        />
+      )}
+      {saveError && (
+        <div
+          role="alert"
+          style={{
+            padding: '10px 14px',
+            borderRadius: 8,
+            border: '1px solid rgba(204,28,28,0.4)',
+            backgroundColor: 'rgba(204,28,28,0.12)',
+            color: 'var(--admin-red-light)',
+            fontSize: 13,
+            marginBottom: 16,
+          }}
+        >
+          {saveError}
+        </div>
+      )}
 
       {isLoading ? (
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>

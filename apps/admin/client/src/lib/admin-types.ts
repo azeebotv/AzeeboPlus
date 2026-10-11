@@ -417,6 +417,39 @@ export interface BundlePassAdmin {
   _count?: { subscriptions: number };
 }
 
+/**
+ * Approved lending partner shown on the public Borrow page. Money and rate
+ * columns are Prisma Decimals, which serialize to decimal STRINGS — read them
+ * with num() for display and never do arithmetic on the parsed value.
+ */
+export interface PartnerBankAdmin {
+  id: string;
+  slug: string;
+  name: string;
+  productName: string | null;
+  logoUrl: string | null;
+  licenceRef: string | null;
+  registrationNumber: string | null;
+  minAmount: string;
+  maxAmount: string;
+  minTenorMonths: number;
+  maxTenorMonths: number;
+  interestRateMin: string;
+  interestRateMax: string;
+  feeDisclosure: string | null;
+  totalCostExample: string | null;
+  eligibility: string | null;
+  applyUrl: string;
+  termsUrl: string | null;
+  privacyUrl: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  /** Dev/placeholder row — the public page labels it as sample data. */
+  isSample: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LiveEventAdmin {
   id: string;
   title: string;

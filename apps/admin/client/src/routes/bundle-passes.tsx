@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { BundlePassAdmin, AdminUniverse } from '@/lib/admin-types';
-import { unwrapList } from '@/lib/payload';
+import { assertSuccess, requireData, unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
+import QueryErrorBanner from '@/components/QueryErrorBanner';
 
 const TIER_COLORS: Record<string, string> = {
   standard: 'var(--admin-blue)',
@@ -29,22 +30,37 @@ export default function BundlePassesPage() {
     isActive: true,
   });
 
-  const { data: bundles = [], isLoading } = useQuery({
+  const {
+    data: bundles = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ['admin', 'bundle-passes'],
     queryFn: async () => {
-      const res = await adminApi.getBundlePasses();
-      return res.success ? unwrapList<BundlePassAdmin>(res.data).items : [];
+      // requireData, not `res.success ? … : []`: a failed read must surface as a
+      // query error, otherwise the page shows "No bundles found" while the service is down.
+      const data = requireData(await adminApi.getBundlePasses(), []);
+      return unwrapList<BundlePassAdmin>(data).items;
     },
   });
 
   // Real universe list for the multi-select (replaces the hardcoded map +
   // free-text comma input that let invalid ids through).
-  const { data: universes = [] } = useQuery({
+  const {
+    data: universes = [],
+    isError: universesError,
+    error: universesFetchError,
+    refetch: refetchUniverses,
+    isFetching: universesFetching,
+  } = useQuery({
     queryKey: ['admin', 'universes-for-bundles'],
     queryFn: async () => {
-      const res = await adminApi.getAllUniverses(1, 100);
+      const data = requireData(await adminApi.getAllUniverses(1, 100), []);
       // The universes endpoint paginates as { data: [...], meta } — not items.
-      return unwrapList<AdminUniverse>(res.data, 'data').items;
+      return unwrapList<AdminUniverse>(data, 'data').items;
     },
   });
   const universeName = (uid: string) => {
@@ -53,7 +69,8 @@ export default function BundlePassesPage() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: Record<string, unknown>) => adminApi.createBundlePass(data),
+    mutationFn: async (data: Record<string, unknown>) =>
+      assertSuccess(await adminApi.createBundlePass(data)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'bundle-passes'] });
       closeModal();
@@ -62,8 +79,8 @@ export default function BundlePassesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      adminApi.updateBundlePass(id, data),
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      assertSuccess(await adminApi.updateBundlePass(id, data)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'bundle-passes'] });
       closeModal();
@@ -72,7 +89,7 @@ export default function BundlePassesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => adminApi.deleteBundlePass(id),
+    mutationFn: async (id: string) => assertSuccess(await adminApi.deleteBundlePass(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'bundle-passes'] });
       setDeleteConfirm(null);
@@ -194,7 +211,9 @@ export default function BundlePassesPage() {
             <Icon name="package" size={28} color="var(--admin-orange)" />
             <span>Bundle Passes</span>
           </h1>
-          <p style={{ color: 'var(--admin-text-muted)' }}>{bundles.length} bundles</p>
+          <p style={{ color: 'var(--admin-text-muted)' }}>
+            {isError ? 'Bundle list unavailable' : `${bundles.length} bundles`}
+          </p>
         </div>
         <button
           onClick={openCreate}
@@ -221,6 +240,14 @@ export default function BundlePassesPage() {
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
           Loading...
         </p>
+      ) : isError ? (
+        <QueryErrorBanner
+          title="Bundle list unavailable."
+          body="The bundles below are unknown, not absent — retry before creating or deleting anything."
+          detail={error?.message}
+          onRetry={() => void refetch()}
+          retrying={isFetching}
+        />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {bundles.map((b) => {
@@ -500,9 +527,30 @@ export default function BundlePassesPage() {
               >
                 Universes <span style={{ color: 'var(--admin-red)' }}>*</span>
               </label>
-              {universes.length === 0 ? (
+              {universesError ? (
+                <p style={{ color: 'var(--admin-red-light)', fontSize: 12 }}>
+                  Universes could not be loaded, so this bundle cannot be assigned one.{' '}
+                  {universesFetchError?.message}{' '}
+                  <button
+                    type="button"
+                    onClick={() => void refetchUniverses()}
+                    disabled={universesFetching}
+                    style={{
+                      border: 0,
+                      background: 'transparent',
+                      color: 'var(--admin-orange)',
+                      cursor: universesFetching ? 'default' : 'pointer',
+                      fontWeight: 600,
+                      padding: 0,
+                      fontSize: 12,
+                    }}
+                  >
+                    {universesFetching ? 'Retrying…' : 'Retry'}
+                  </button>
+                </p>
+              ) : universes.length === 0 ? (
                 <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>
-                  Universes could not be loaded — check the Universes service.
+                  No universes exist yet — create one before building a bundle.
                 </p>
               ) : (
                 <div

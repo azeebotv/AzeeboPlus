@@ -5,6 +5,7 @@ import { adminApi } from '@/lib/api/admin';
 import { asArray } from '@/lib/payload';
 import type { TippingConfig } from '@/lib/admin-types';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 interface CreatorTipInfo {
   creatorId: string;
@@ -61,7 +62,7 @@ export default function TippingPage() {
       // not crash on creators.reduce().
       return asArray<CreatorTipInfo>(res.data);
     },
-    refetchInterval: 60_000,
+    refetchInterval: pollingIntervals.idle,
   });
 
   const totalAmount = creators.reduce((s, c) => s + c.totalAmount, 0);

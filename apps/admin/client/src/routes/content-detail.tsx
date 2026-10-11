@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import { asRecord, asArray, str, num } from '@/lib/payload';
+import { asRecord, asArray, requireData, str, num } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 /**
@@ -41,7 +41,9 @@ export default function ContentDetailPage() {
     enabled: Boolean(id),
     queryFn: async () => {
       const res = await adminApi.getContentItem(id as string);
-      return asRecord(res.success ? res.data : null);
+      // A failed detail read must not render as an empty record: the admin would
+      // see blank fields on a real item and could "fix" it by overwriting them.
+      return asRecord(requireData(res));
     },
   });
 

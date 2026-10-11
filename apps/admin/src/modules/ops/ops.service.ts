@@ -995,6 +995,7 @@ export async function resolvePoolTrackingIssueUrl(
     GITHUB_TOKEN?: string;
     GITHUB_REPOSITORY?: string;
     GITHUB_API_BASE_URL?: string;
+    [key: string]: string | undefined;
   } = process.env,
   now = Date.now(),
   cacheFile = POOL_TRACKING_CACHE_FILE
@@ -2154,10 +2155,11 @@ export class OpsService {
         });
         child.on('error', () => done(null));
         child.on('close', (code) => done(code === 0 ? out : null));
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           done(null);
           child.kill('SIGKILL');
-        }, timeoutMs).unref();
+        }, timeoutMs);
+        (timer as unknown as { unref?: () => void })?.unref?.();
       } catch {
         done(null);
       }

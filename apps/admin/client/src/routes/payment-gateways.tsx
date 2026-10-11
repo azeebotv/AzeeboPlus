@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { PaymentGateway, WebhookEvent } from '@/lib/admin-types';
+import { requireData } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 export default function PaymentGatewaysPage() {
@@ -48,8 +49,7 @@ export default function PaymentGatewaysPage() {
       // The endpoint returns a dashboard envelope {items, recentIntents,
       // total} — cast the items array out (an unguarded cast of res.data
       // crashed this page: `gateways.map is not a function`).
-      if (!res.success) return [];
-      const d = res.data as unknown;
+      const d = requireData(res, []) as unknown;
       const list: unknown[] = Array.isArray(d)
         ? d
         : Array.isArray((d as { items?: unknown[] }).items)

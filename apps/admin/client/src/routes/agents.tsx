@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
 import { useAuth } from '@/context/auth-context';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /* ── Types (mirror of the analytics-service agent-registry contract) ───────── */
 
@@ -718,7 +719,7 @@ export default function AgentsPage() {
       if (statusFilter) params.set('status', statusFilter);
       return apiFetch<AgentRegistry[]>(`/api/v1/analytics/agents?${params}`);
     },
-    refetchInterval: 30000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const statsQuery = useQuery({

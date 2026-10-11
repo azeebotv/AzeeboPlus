@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import { asRecord, asArray, str, num } from '@/lib/payload';
+import { asRecord, asArray, requireData, str, num } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 /**
@@ -45,7 +45,8 @@ export default function PlanDetailPage() {
     enabled: Boolean(id),
     queryFn: async () => {
       const res = await adminApi.getSubscriptionPlanById(id as string);
-      return asRecord(res.success ? res.data : null);
+      // See content-detail: an unreadable plan must not render as an empty one.
+      return asRecord(requireData(res));
     },
   });
 

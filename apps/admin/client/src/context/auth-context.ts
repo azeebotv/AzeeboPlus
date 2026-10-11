@@ -5,7 +5,11 @@ export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  /**
+   * A live web session that is not an admin. Distinct from "signed out" so the
+   * hand-off page can explain it instead of bouncing the user into a login loop.
+   */
+  roleDenied: boolean;
   logout: () => Promise<void>;
 }
 

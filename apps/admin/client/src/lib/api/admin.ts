@@ -29,6 +29,7 @@ import type {
   WalletStats,
   LiveEventAdmin,
   BundlePassAdmin,
+  PartnerBankAdmin,
   PayoutRequest,
   PayoutStats,
   TippingConfig,
@@ -713,6 +714,24 @@ export const adminApi = {
     }),
   deleteBundlePass: (id: string) =>
     apiFetch<unknown>(`/api/v1/subscription/bundles/${id}`, { method: 'DELETE' }),
+
+  // ─── Borrow: approved lending partners ────────────────────────────────────
+  // Wallet-service admin surface; the public /borrow/banks read is a separate
+  // unauthenticated route, so this list includes inactive rows too.
+  getPartnerBanks: (limit = 100) =>
+    apiFetch<PartnerBankAdmin[]>(`/api/v1/borrow/admin/banks?page=1&limit=${limit}`),
+  createPartnerBank: (data: Record<string, unknown>) =>
+    apiFetch<PartnerBankAdmin>('/api/v1/borrow/admin/banks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updatePartnerBank: (id: string, data: Record<string, unknown>) =>
+    apiFetch<PartnerBankAdmin>(`/api/v1/borrow/admin/banks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deletePartnerBank: (id: string) =>
+    apiFetch<unknown>(`/api/v1/borrow/admin/banks/${id}`, { method: 'DELETE' }),
 
   // ─── Live Events (PPV) ────────────────────────────────────────────────────
   listLiveEvents: (status?: string) => {

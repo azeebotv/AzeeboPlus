@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { EngagementMetrics, EngagementTrend } from '@/lib/admin-types';
-import { asArray, isRecord, num } from '@/lib/payload';
+import { asArray, asRecord, num, requireData } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 /**
@@ -15,7 +15,9 @@ export default function EngagementPage() {
     queryKey: ['admin', 'engagement'],
     queryFn: async () => {
       const res = await adminApi.getEngagementMetrics();
-      const d: Record<string, unknown> = isRecord(res.data) ? res.data : {};
+      // requireData guards against the outage, asRecord against a partial
+      // payload — only the second one deserves a zero.
+      const d = asRecord(requireData(res, null));
       const m: EngagementMetrics = {
         totalViews: num(d.totalViews),
         totalContent: num(d.totalContent),
@@ -31,7 +33,7 @@ export default function EngagementPage() {
     queryKey: ['admin', 'engagement-trends', '30d'],
     queryFn: async () => {
       const res = await adminApi.getEngagementTrends('30d');
-      return asArray<EngagementTrend>(res.data).map((t) => ({
+      return asArray<EngagementTrend>(requireData(res, null)).map((t) => ({
         date: String(t?.date ?? ''),
         newUsers: num(t?.newUsers),
         publishedContent: num(t?.publishedContent),

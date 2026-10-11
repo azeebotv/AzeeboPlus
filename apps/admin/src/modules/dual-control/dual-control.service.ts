@@ -120,7 +120,7 @@ export class DualControlService {
 
     const { actionType, description, amount, currency, targetUserIds } = input;
 
-    if (!ALLOWED_ACTION_TYPES.includes(actionType as never)) {
+    if (!ALLOWED_ACTION_TYPES.includes(actionType as DualControlActionType)) {
       throw new BadRequestException(
         `Invalid action type: ${actionType}. Allowed: ${ALLOWED_ACTION_TYPES.join(', ')}`
       );

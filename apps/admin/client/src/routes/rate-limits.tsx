@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /** Usage-bar color: calm until near the ceiling. */
 const usageColor = (pct: number) =>
@@ -17,7 +18,7 @@ export default function RateLimitsPage() {
       if (!res.success) throw new Error('gateway rate-limit metrics unavailable');
       return res.data;
     },
-    refetchInterval: autoRefresh ? 30000 : false,
+    refetchInterval: autoRefresh ? pollingIntervals.dashboard : false,
   });
 
   if (isError) {

@@ -5,11 +5,12 @@ import { Icon } from '@/components/Icons';
 
 export default function CreatorsPage() {
   const queryClient = useQueryClient();
-  const { data: creators = [], isLoading } = useQuery({
+  const { data: creators, isLoading, isError, error, refetch } = useQuery<AdminCreator[]>({
     queryKey: ['admin', 'creators'],
     queryFn: async () => {
       const res = await adminApi.getCreators();
-      if (res.success && res.data) {
+      if (!res.success) throw new Error(res.message || 'Failed to load creators');
+      if (res.data) {
         const d = res.data as unknown as AdminCreator[] | { items: AdminCreator[] };
         return Array.isArray(d) ? d : d.items || [];
       }
@@ -30,11 +31,43 @@ export default function CreatorsPage() {
           <Icon name="users" size={28} color="var(--admin-orange)" />
           <span>Creators</span>
         </h1>
-        <p style={{ color: 'var(--admin-text-muted)' }}>{creators.length} registered creators</p>
+        {!isLoading && !isError && (
+          <p style={{ color: 'var(--admin-text-muted)' }}>{(creators ?? []).length} registered creators</p>
+        )}
       </div>
 
       {isLoading ? (
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+      ) : isError ? (
+        <div
+          style={{
+            padding: 32,
+            borderRadius: 12,
+            border: '1px solid var(--admin-red)',
+            backgroundColor: 'rgba(204,28,28,0.08)',
+            textAlign: 'center',
+          }}
+        >
+          <p style={{ color: 'var(--admin-red)', fontWeight: 600, marginBottom: 8 }}>Failed to load creators</p>
+          <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 16 }}>
+            {error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.'}
+          </p>
+          <button
+            onClick={() => refetch()}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 8,
+              border: '1px solid var(--admin-red)',
+              backgroundColor: 'transparent',
+              color: 'var(--admin-red)',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
+        </div>
       ) : (
         <div
           style={{
@@ -43,7 +76,7 @@ export default function CreatorsPage() {
             gap: 16,
           }}
         >
-          {creators.map((c) => (
+          {(creators ?? []).map((c) => (
             <div
               key={c.id}
               style={{
@@ -109,7 +142,7 @@ export default function CreatorsPage() {
               </div>
             </div>
           ))}
-          {creators.length === 0 && (
+          {(creators ?? []).length === 0 && (
             <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)', gridColumn: '1/-1' }}>
               No creators found
             </p>

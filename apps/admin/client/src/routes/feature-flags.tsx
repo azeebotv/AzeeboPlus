@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { adminApi } from '@/lib/api/admin';
-import { asArray } from '@/lib/payload';
+import { asArray, requireData } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 interface UniverseFeatureFlagRow {
@@ -118,22 +118,22 @@ export default function FeatureFlagsPage() {
   const { data: flags = [], isLoading } = useQuery({
     queryKey: ['admin', 'feature-flags'],
     queryFn: async () => {
-      const res = await adminApi.listFeatureFlags();
+      const data = requireData(await adminApi.listFeatureFlags(), []);
       // Backend getAll() returns a bare array — but never trust it: a future
       // envelope (or an error object) used to crash the whole tree with
       // "flags.filter is not a function". Coerce through the shared guard.
-      return asArray<UniverseFeatureFlagRow>(res.success ? res.data : null);
+      return asArray<UniverseFeatureFlagRow>(data);
     },
   });
 
   const { data: universes = [] } = useQuery({
     queryKey: ['admin', 'universes'],
     queryFn: async () => {
-      const res = await adminApi.getAllUniverses();
+      const data = requireData(await adminApi.getAllUniverses(), []);
       // getAllUniverses returns the paginated envelope { data: [...], meta }
       // — NOT a bare array (a bare-array cast crashed this page with
       // "universes.filter is not a function" before the payload helpers).
-      return asArray<AdminUniverseOption>(res.success ? res.data : null, 'data');
+      return asArray<AdminUniverseOption>(data, 'data');
     },
   });
 
@@ -376,7 +376,7 @@ export default function FeatureFlagsPage() {
     queryKey: ['admin', 'recently-deleted-universe-flags'],
     queryFn: async () => {
       const res = await adminApi.listRecentlyDeletedUniverseFlags();
-      return res.data ?? [];
+      return requireData(res, []);
     },
   });
   const [showDeleted, setShowDeleted] = useState(false);

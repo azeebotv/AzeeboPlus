@@ -9,6 +9,19 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Split long-lived vendor code into stable chunks so app-code deploys
+        // don't invalidate the browser cache for framework/chart libraries.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (/[\\/]node_modules[\\/](recharts|victory-vendor|d3-[a-z-]+)[\\/]/.test(id)) return 'charts';
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom)[\\/]/.test(id)) return 'react-vendor';
+          if (/[\\/]node_modules[\\/]lucide-react[\\/]/.test(id)) return 'ui';
+          return 'vendor';
+        },
+      },
+    },
   },
   resolve: {
     alias: {

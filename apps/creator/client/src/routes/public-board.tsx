@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
 import { formatNgn, errorTextStyle } from '@/lib/ui';
 import { statusColor, statusText } from '@/components/ChallengeLeaderboard';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /**
  * Public read-only challenge board at /boards/:challengeId.
@@ -17,7 +18,7 @@ import { statusColor, statusText } from '@/components/ChallengeLeaderboard';
  * shared links unfurl a preview card in chat apps and social platforms.
  */
 
-const PUBLIC_BOARD_REFRESH_MS = 15_000;
+const PUBLIC_BOARD_REFRESH_MS = pollingIntervals.standard;
 
 interface PublicBoard {
   challenge: { id: string; title: string; prize?: number | string; endDate?: string };

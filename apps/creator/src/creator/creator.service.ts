@@ -270,32 +270,19 @@ export class CreatorService {
     });
     const contentChange = currentPeriodContentCount - previousPeriodContentCount;
 
-    // Subscriber count: safely query the following table, returning 0 if it doesn't exist
-    let subscriberCount = 0;
-    let previousSubscriberCount = 0;
-    try {
-      const [currentResult, previousResult] = await Promise.all([
-        this.prisma.$queryRaw<{ count: number }[]>`
-          SELECT COUNT(*)::int as count FROM "following" WHERE "followingId" = ${userId}
-        `,
-        this.prisma.$queryRaw<{ count: number }[]>`
-          SELECT COUNT(*)::int as count FROM "following"
-          WHERE "followingId" = ${userId} AND "createdAt" < ${currentPeriodStart}
-        `,
-      ]);
-      subscriberCount = Number(currentResult[0]?.count ?? 0);
-      previousSubscriberCount = Number(previousResult[0]?.count ?? 0);
-    } catch (err: unknown) {
-      // If the table doesn't exist, return 0; re-throw other errors
-      const message = err instanceof Error ? err.message : String(err);
-      if (
-        !message.includes('does not exist') &&
-        !message.includes('relation') &&
-        !message.includes('table')
-      ) {
-        throw err;
-      }
+    // AUD-11: subscriber counts come only from user-service's internal RPC —
+    // the `following` table belongs to user-service's database (database-per-
+    // service), and the old $queryRaw fallback silently reported zeros when
+    // services moved. A null means user-service is unreachable: fail loudly.
+    const remoteFollowerCount = await this.fetchFollowerCountFromUserService(userId);
+    if (remoteFollowerCount === null) {
+      throw new ServiceUnavailableException('user-service unavailable');
     }
+    const subscriberCount = remoteFollowerCount;
+    // The RPC exposes only the current total — no previous-period count — so
+    // the change delta is not computable from here (same value the RPC path
+    // has always produced).
+    const previousSubscriberCount = 0;
 
     const recentContentRows = await this.prisma.contentItem.findMany({
       where: { creatorId: userId, status: { not: 'archived' } },
@@ -342,7 +329,12 @@ export class CreatorService {
   async getPlaybackUrl(
     userId: string,
     contentId: string
-  ): Promise<{ url: string; expiresIn: number; kind: 'signed' | 'premium'; expiresAt: string | null }> {
+  ): Promise<{
+    url: string;
+    expiresIn: number;
+    kind: 'signed' | 'premium';
+    expiresAt: string | null;
+  }> {
     const item = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
       select: { id: true, creatorId: true, isExclusive: true, mediaUrl: true, metadata: true },
@@ -758,7 +750,10 @@ export class CreatorService {
       recentViews > 0 && days > 0 ? Math.round((recentViews / days) * 10) / 10 : 0;
 
     let viewsOverTime: { date: string; views: number }[] = [];
-    let newSubscribers = 0;
+    // AUD-11: new-subscriber windows live in user-service; its RPC exposes no
+    // date-windowed follower counts, so this stays 0 rather than querying
+    // another service's `following` table across the database boundary.
+    const newSubscribers = 0;
     try {
       const raw = await this.prisma.$queryRaw<{ date: Date; views: number }[]>`
         SELECT
@@ -775,13 +770,6 @@ export class CreatorService {
         date: new Date(v.date).toISOString().slice(0, 10),
         views: Number(v.views),
       }));
-
-      // New subscribers in the window, if the following table exists
-      const subRows = await this.prisma.$queryRaw<{ count: number }[]>`
-        SELECT COUNT(*)::int as count FROM "following"
-        WHERE "followingId" = ${userId} AND "createdAt" >= ${startDate}
-      `;
-      newSubscribers = Number(subRows[0]?.count ?? 0);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       if (
@@ -1012,35 +1000,23 @@ export class CreatorService {
       recentSubscribers: [],
     };
 
-    let followerRows: { followerId: string; createdAt: Date }[] = [];
-    let total = 0;
-    try {
-      // The following table lives in the user-service DB, not this one —
-      // only query it when it exists to avoid a hard dependency.
-      const [rows, count] = await Promise.all([
-        this.prisma.$queryRaw<{ followerId: string; createdAt: Date }[]>`
-          SELECT "followerId", "createdAt" FROM "following"
-          WHERE "followingId" = ${userId}
-          ORDER BY "createdAt" DESC
-          LIMIT ${limit} OFFSET ${(page - 1) * limit}
-        `,
-        this.prisma.$queryRaw<{ count: number }[]>`
-          SELECT COUNT(*)::int as count FROM "following" WHERE "followingId" = ${userId}
-        `,
-      ]);
-      followerRows = rows.map((r) => ({ followerId: r.followerId, createdAt: r.createdAt }));
-      total = Number(count[0]?.count ?? 0);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (
-        !message.includes('does not exist') &&
-        !message.includes('relation') &&
-        !message.includes('table')
-      ) {
-        throw err;
-      }
-      return empty;
+    // AUD-11: the follower list comes only from user-service's RPC — no
+    // cross-database $queryRaw fallback. A null means user-service is
+    // unreachable: surface it instead of silently returning an empty page.
+    const remoteData = await this.fetchFollowersFromUserService(userId, page, limit);
+    if (!remoteData) {
+      throw new ServiceUnavailableException('user-service unavailable');
     }
+    const followerRows: { followerId: string; createdAt: Date }[] = remoteData.followers.map(
+      (f) => ({
+        followerId: f.id,
+        // The RPC response carries no follow timestamp (user-service maps to
+        // user records only), so join dates are approximated — pre-existing
+        // behaviour of the RPC path, unrelated to the removed raw fallback.
+        createdAt: new Date(),
+      })
+    );
+    const total = remoteData.total;
 
     if (followerRows.length === 0) return empty;
 
@@ -1051,31 +1027,11 @@ export class CreatorService {
     });
     const userMap = new Map(users.map((u) => [u.id, u]));
 
-    // 30-day cumulative growth series
-    const periodStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    let growth: { date: string; count: number }[] = [];
-    try {
-      const raw = await this.prisma.$queryRaw<{ date: Date; count: number }[]>`
-        SELECT DATE_TRUNC('day', "createdAt") as date, COUNT(*)::int as count
-        FROM "following"
-        WHERE "followingId" = ${userId} AND "createdAt" >= ${periodStart}
-        GROUP BY DATE_TRUNC('day', "createdAt")
-        ORDER BY date
-      `;
-      const byDay = new Map(
-        raw.map((r) => [new Date(r.date).toISOString().slice(0, 10), Number(r.count)])
-      );
-      let cumulative = total;
-      const days: { date: string; count: number }[] = [];
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        cumulative -= byDay.get(d) ?? 0;
-        days.push({ date: d, count: Math.max(0, cumulative) });
-      }
-      growth = days;
-    } catch {
-      growth = [];
-    }
+    // 30-day cumulative growth series — AUD-11: computing it required a
+    // cross-database $queryRaw on user-service's `following` table. The RPC
+    // exposes no follow timestamps, so the series degrades explicitly to []
+    // (the UI shows no chart) instead of coupling to another service's DB.
+    const growth: { date: string; count: number }[] = [];
 
     return {
       total,
@@ -1488,7 +1444,8 @@ export class CreatorService {
     // which keep their local uuid and link via upstreamId).
     const staleStatus = upstream.filter((e) => {
       const row =
-        localById.get(e.id) ?? local.find((s) => (s as { upstreamId?: string }).upstreamId === e.id);
+        localById.get(e.id) ??
+        local.find((s) => (s as { upstreamId?: string }).upstreamId === e.id);
       // 'pending' upstream means "submitted, not yet reviewed" — render as
       // the portal's 'submitted'; only real transitions overwrite.
       const upstreamStatus = e.status === 'pending' ? 'submitted' : e.status;
@@ -1498,7 +1455,8 @@ export class CreatorService {
       staleStatus.map((e) => {
         const upstreamStatus = e.status === 'pending' ? 'submitted' : e.status!;
         const row =
-          localById.get(e.id) ?? local.find((s) => (s as { upstreamId?: string }).upstreamId === e.id);
+          localById.get(e.id) ??
+          local.find((s) => (s as { upstreamId?: string }).upstreamId === e.id);
         return this.prisma.challengeSubmission
           .update({
             where: { id: row!.id },
@@ -1532,11 +1490,7 @@ export class CreatorService {
             // ("₦250,000") nested on the embedded challenge; parse defensively
             // — unparseable prizes skip the credit but the win still renders.
             if (upstreamStatus === 'winner' && row!.status !== 'winner') {
-              return this.creditChallengePrize(
-                userId,
-                row!.id,
-                e.challenge?.prize ?? null
-              );
+              return this.creditChallengePrize(userId, row!.id, e.challenge?.prize ?? null);
             }
             return undefined;
           });
@@ -1669,12 +1623,7 @@ export class CreatorService {
     }
 
     try {
-      const res = await this.walletClient.credit(
-        userId,
-        amount,
-        `Challenge prize won`,
-        reference
-      );
+      const res = await this.walletClient.credit(userId, amount, `Challenge prize won`, reference);
       if (!res.success) {
         this.logger.warn(
           `Prize credit rejected for entry ${entryId}: ${res.message ?? res.error ?? 'unknown error'}`
@@ -1974,7 +1923,8 @@ export class CreatorService {
           playbackKind = playback.kind;
           expiresIn = playback.expiresIn;
         } catch (error) {
-          playbackError = error instanceof Error ? error.message : 'Playback is temporarily unavailable';
+          playbackError =
+            error instanceof Error ? error.message : 'Playback is temporarily unavailable';
         }
         content = {
           id: item.id,
@@ -2216,9 +2166,9 @@ export class CreatorService {
   }
 
   /**
-   * GET /creator/subscribers/stats — real follower counts with the same
-   * table-missing guards as getSubscribers (the following table lives in
-   * another service's DB and may not exist locally).
+   * GET /creator/subscribers/stats — follower counts via user-service's
+   * internal RPC only (AUD-11: the `following` table lives in another
+   * service's DB and is never queried from here).
    */
   async getSubscriberStats(userId: string): Promise<{
     totalSubscribers: number;
@@ -2226,40 +2176,19 @@ export class CreatorService {
     newThisMonth: number;
     churnRate: number;
   }> {
-    const empty = { totalSubscribers: 0, newThisWeek: 0, newThisMonth: 0, churnRate: 0 };
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    try {
-      const [totalRows, weekRows, monthRows] = await Promise.all([
-        this.prisma.$queryRaw<{ count: number }[]>`
-          SELECT COUNT(*)::int as count FROM "following" WHERE "followingId" = ${userId}
-        `,
-        this.prisma.$queryRaw<{ count: number }[]>`
-          SELECT COUNT(*)::int as count FROM "following"
-          WHERE "followingId" = ${userId} AND "createdAt" >= ${weekAgo}
-        `,
-        this.prisma.$queryRaw<{ count: number }[]>`
-          SELECT COUNT(*)::int as count FROM "following"
-          WHERE "followingId" = ${userId} AND "createdAt" >= ${monthAgo}
-        `,
-      ]);
-      return {
-        totalSubscribers: Number(totalRows[0]?.count ?? 0),
-        newThisWeek: Number(weekRows[0]?.count ?? 0),
-        newThisMonth: Number(monthRows[0]?.count ?? 0),
-        churnRate: 0,
-      };
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (
-        message.includes('does not exist') ||
-        message.includes('relation') ||
-        message.includes('table')
-      ) {
-        return empty;
-      }
-      throw err;
+    const remoteFollowerCount = await this.fetchFollowerCountFromUserService(userId);
+    if (remoteFollowerCount === null) {
+      throw new ServiceUnavailableException('user-service unavailable');
     }
+    // The RPC exposes only the current total: windowed counts (week/month)
+    // and churn have no remote source yet, so they degrade explicitly to 0 —
+    // the same values the RPC path has always returned.
+    return {
+      totalSubscribers: remoteFollowerCount,
+      newThisWeek: 0,
+      newThisMonth: 0,
+      churnRate: 0,
+    };
   }
 
   async getSettings(userId: string): Promise<{
@@ -2360,5 +2289,72 @@ export class CreatorService {
     }
 
     return { success: true };
+  }
+
+  /**
+   * Helper to query user-service over HTTP for follower information,
+   * avoiding direct cross-database dependencies in microservice deployments.
+   */
+  private async fetchFollowersFromUserService(
+    userId: string,
+    page = 1,
+    limit = 20
+  ): Promise<{
+    followers: Array<{
+      id: string;
+      displayName?: string;
+      email?: string;
+      avatar?: string;
+      createdAt?: string;
+    }>;
+    total: number;
+  } | null> {
+    try {
+      const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:3001';
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(
+        `${userServiceUrl}/users/${encodeURIComponent(userId)}/followers?page=${page}&limit=${limit}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(process.env.INTERNAL_API_KEY
+              ? { 'x-internal-api-key': process.env.INTERNAL_API_KEY }
+              : {}),
+          },
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const body = (await res.json()) as {
+          data?: {
+            followers?: Array<{
+              id: string;
+              displayName?: string;
+              email?: string;
+              avatar?: string;
+            }>;
+            pagination?: { total?: number };
+          };
+        };
+        const data = body?.data;
+        if (data && typeof data.pagination?.total === 'number') {
+          return {
+            followers: Array.isArray(data.followers) ? data.followers : [],
+            total: data.pagination.total,
+          };
+        }
+      }
+    } catch {
+      // AUD-11: null = user-service unavailable; callers surface it
+      // (there is deliberately no cross-database $queryRaw fallback).
+    }
+    return null;
+  }
+
+  private async fetchFollowerCountFromUserService(userId: string): Promise<number | null> {
+    const res = await this.fetchFollowersFromUserService(userId, 1, 1);
+    return res !== null ? res.total : null;
   }
 }

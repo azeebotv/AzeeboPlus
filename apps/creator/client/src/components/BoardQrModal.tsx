@@ -76,14 +76,22 @@ export default function BoardQrModal({
     if (!dataUrl) return;
     const w = window.open('', '_blank', 'width=520,height=680');
     if (!w) return;
+    // challengeTitle is creator-controlled; entity-escape every interpolation
+    // (notably the <title> element) so a crafted title can't break out.
+    const esc = (s: string) =>
+      s.replace(/[&<>"']/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!
+      );
+    const title = esc(challengeTitle ?? 'Challenge');
+    const url = esc(boardUrl);
     w.document.write(
-      `<!DOCTYPE html><html><head><title>${challengeTitle ?? 'Challenge'} — board QR</title>` +
+      `<!DOCTYPE html><html><head><title>${title} — board QR</title>` +
         `<style>body{font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:40px;gap:12px}` +
         `img{width:420px;height:420px}h2{margin:0}p{color:#555;margin:0;font-size:14px}</style></head><body>` +
-        `<h2>${(challengeTitle ?? 'Challenge board').replace(/</g, '&lt;')}</h2>` +
+        `<h2>${esc(challengeTitle ?? 'Challenge board')}</h2>` +
         `<p>Scan to view the live leaderboard</p>` +
         `<img src="${dataUrl}" alt="Board QR" />` +
-        `<p style="word-break:break-all">${boardUrl.replace(/</g, '&lt;')}</p>` +
+        `<p style="word-break:break-all">${url}</p>` +
         `</body></html>`
     );
     w.document.close();

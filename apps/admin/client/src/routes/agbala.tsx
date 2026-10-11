@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { Storyworld } from '@/lib/admin-types';
-import { asArray, unwrapList, assertSuccess } from '@/lib/payload';
+import { asArray, requireData, unwrapList, assertSuccess } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 /**
@@ -132,22 +132,19 @@ export default function AgbalaPage() {
   const storyworldsQ = useQuery({
     queryKey: ['admin', 'agbala', 'storyworlds'],
     queryFn: async () => {
-      const res = await adminApi.getStoryworlds();
-      if (res.success && res.data) {
-        // Accept bare array or { items } envelope via the shared guard.
-        const list = asArray<Record<string, unknown>>(res.data);
-        // vertical-service returns name/status/locationCount; the page
-        // contract (and Storyworld type) uses title/isPublished/pathCount —
-        // normalize here so upstream field drift can't blank the cards.
-        return list.map((s) => ({
-          ...s,
-          title: (s.title as string) ?? (s.name as string) ?? '(untitled)',
-          isPublished:
-            (s.isPublished as boolean | undefined) ??
-            (s.status === 'active' || s.status === 'published'),
-        })) as unknown as Storyworld[];
-      }
-      return [];
+      const data = requireData(await adminApi.getStoryworlds(), []);
+      // Accept bare array or { items } envelope via the shared guard.
+      const list = asArray<Record<string, unknown>>(data);
+      // vertical-service returns name/status/locationCount; the page
+      // contract (and Storyworld type) uses title/isPublished/pathCount —
+      // normalize here so upstream field drift can't blank the cards.
+      return list.map((s) => ({
+        ...s,
+        title: (s.title as string) ?? (s.name as string) ?? '(untitled)',
+        isPublished:
+          (s.isPublished as boolean | undefined) ??
+          (s.status === 'active' || s.status === 'published'),
+      })) as unknown as Storyworld[];
     },
   });
 
@@ -155,8 +152,8 @@ export default function AgbalaPage() {
     queryKey: ['admin', 'agbala', 'characters', selectedSw],
     queryFn: async () => {
       // Nested route: characters list requires the storyworld id.
-      const res = await adminApi.getCharacters(selectedSw as string);
-      return res.success ? asArray<CharacterRow>(res.data) : [];
+      const data = requireData(await adminApi.getCharacters(selectedSw as string), []);
+      return asArray<CharacterRow>(data);
     },
     enabled: tab === 'characters' && !!selectedSw,
   });
@@ -164,8 +161,8 @@ export default function AgbalaPage() {
   const quizzesQ = useQuery({
     queryKey: ['admin', 'agbala', 'quizzes', selectedSw],
     queryFn: async () => {
-      const res = await adminApi.getQuizzes(selectedSw);
-      return res.success ? asArray<QuizRow>(res.data) : [];
+      const data = requireData(await adminApi.getQuizzes(selectedSw), []);
+      return asArray<QuizRow>(data);
     },
     enabled: tab === 'quizzes',
   });
@@ -173,12 +170,10 @@ export default function AgbalaPage() {
   const reviewQueueQ = useQuery({
     queryKey: ['admin', 'agbala', 'review-queue', queuePage],
     queryFn: async () => {
-      const res = await adminApi.getReviewQueue(queuePage);
+      const data = requireData(await adminApi.getReviewQueue(queuePage), []);
       // Upstream returns the paginated envelope under data; unwrapList
       // handles both that shape and a bare array fallback.
-      const { items, total } = res.success
-        ? unwrapList<ReviewQueueItem>(res.data)
-        : { items: [] as ReviewQueueItem[], total: null };
+      const { items, total } = unwrapList<ReviewQueueItem>(data);
       return { items, total: total ?? items.length };
     },
     enabled: tab === 'moderation',

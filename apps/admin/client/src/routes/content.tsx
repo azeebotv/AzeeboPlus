@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
-import { unwrapList, asArray } from '@/lib/payload';
+import { requireData, unwrapList, asArray } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 interface ContentItem {
   id: string;
@@ -44,48 +44,46 @@ export default function ContentPage() {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['admin', 'content', page, statusFilter, search],
     queryFn: async () => {
-      const res = await adminApi.getContentList({
-        page,
-        limit: 20,
-        status: statusFilter || undefined,
-        search: search || undefined,
-      });
-      return res.success ? unwrapList<ContentItem>(res.data) : { items: [], total: 0 };
+      const data = requireData(
+        await adminApi.getContentList({
+          page,
+          limit: 20,
+          status: statusFilter || undefined,
+          search: search || undefined,
+        }),
+        []
+      );
+      return unwrapList<ContentItem>(data);
     },
   });
 
   const { data: categories = [] } = useQuery({
     queryKey: ['admin', 'categories'],
     queryFn: async () => {
-      const res = await adminApi.getContentCategories();
+      const data = requireData(await adminApi.getContentCategories(), []);
       // Backend includes _count.contentItems — surface it on the rows.
-      return res.success
-        ? unwrapList<{ id: string; name: string; _count?: { contentItems?: number } }>(res.data)
-            .items
-        : [];
+      return unwrapList<{ id: string; name: string; _count?: { contentItems?: number } }>(data)
+        .items;
     },
   });
 
   const { data: tags = [] } = useQuery({
     queryKey: ['admin', 'tags'],
     queryFn: async () => {
-      const res = await adminApi.getContentTags();
-      return res.success ? unwrapList<{ id: string; name: string }>(res.data).items : [];
+      const data = requireData(await adminApi.getContentTags(), []);
+      return unwrapList<{ id: string; name: string }>(data).items;
     },
   });
 
   const { data: stats } = useQuery({
     queryKey: ['admin', 'content-stats'],
     queryFn: async () => {
-      const res = await adminApi.getContentStats();
-      if (!res.success) return null;
-      const d = res.data as {
+      return requireData(await adminApi.getContentStats(), null) as {
         total?: number;
         byStatus?: Record<string, number>;
         createdLast7Days?: number;
         createdLast30Days?: number;
-      };
-      return d ?? null;
+      } | null;
     },
   });
 
@@ -182,11 +180,8 @@ export default function ContentPage() {
   const { data: creators = [] } = useQuery({
     queryKey: ['admin', 'creators-for-content'],
     queryFn: async () => {
-      const res = await adminApi.getCreators(1, 100);
-      return asArray<{ id: string; displayName?: string; email: string }>(
-        res.success ? res.data : null,
-        'users'
-      );
+      const data = requireData(await adminApi.getCreators(1, 100), null);
+      return asArray<{ id: string; displayName?: string; email: string }>(data, 'users');
     },
   });
 

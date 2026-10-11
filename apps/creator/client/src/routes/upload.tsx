@@ -56,11 +56,16 @@ export default function UploadPage() {
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [activeUpload, setActiveUpload] = useState<{ name: string; size: number } | null>(null);
 
-  const { data: uploads, isLoading } = useQuery({
+  const {
+    data: uploads,
+    isLoading,
+    isError: uploadsFailed,
+    error: uploadsError,
+  } = useQuery({
     queryKey: ['creator', 'uploads'],
     queryFn: async () => {
       const res = await creatorApi.getUploads();
-      return res.success ? (res.data as UploadProgress[]) : [];
+      return creatorApi.assertSuccess<UploadProgress[]>(res);
     },
   });
 
@@ -312,6 +317,10 @@ export default function UploadPage() {
             </h3>
             {isLoading ? (
               <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 20 }}>Loading...</p>
+            ) : uploadsFailed ? (
+              <p style={{ color: 'var(--creator-red)', fontSize: 13, textAlign: 'center', padding: 20 }}>
+                {creatorApi.errorMessage(uploadsError)}
+              </p>
             ) : uploads && uploads.length > 0 ? (
               uploads.map((u: UploadProgress) => (
                 <div key={u.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--creator-border-light)' }}>

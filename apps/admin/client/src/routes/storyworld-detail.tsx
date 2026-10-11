@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import { asRecord, asArray, str, num, assertSuccess } from '@/lib/payload';
+import { asRecord, asArray, requireData, str, num, assertSuccess } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 /**
@@ -129,7 +129,7 @@ export default function StoryworldDetailPage() {
     enabled: Boolean(id),
     queryFn: async () => {
       const res = await adminApi.getStoryworlds();
-      const worlds = asArray<Record<string, unknown>>(res.success ? res.data : null);
+      const worlds = asArray<Record<string, unknown>>(requireData(res, []));
       return worlds.find((w) => str(w.id) === id) ?? null;
     },
   });
@@ -140,7 +140,7 @@ export default function StoryworldDetailPage() {
     enabled: Boolean(id),
     queryFn: async () => {
       const res = await adminApi.getStoryworldById(id as string);
-      return asArray<Record<string, unknown>>(res.success ? res.data : null);
+      return asArray<Record<string, unknown>>(requireData(res, []));
     },
   });
 
@@ -161,7 +161,7 @@ export default function StoryworldDetailPage() {
         limit: CHAR_PAGE_SIZE,
         search: charSearch || undefined,
       });
-      const env = res.success && res.data ? (res.data as Record<string, unknown>) : null;
+      const env = requireData(res, null) as Record<string, unknown> | null;
       return {
         items: asArray<Record<string, unknown>>(env).map(asRecord),
         total: num(env?.total, 0),
@@ -194,7 +194,7 @@ export default function StoryworldDetailPage() {
         limit: PATH_PAGE_SIZE,
         search: pathSearch || undefined,
       });
-      const env = res.success && res.data ? (res.data as Record<string, unknown>) : null;
+      const env = requireData(res, null) as Record<string, unknown> | null;
       return {
         items: asArray<Record<string, unknown>>(env),
         total: num(env?.total, 0),
@@ -303,7 +303,7 @@ export default function StoryworldDetailPage() {
     enabled: Boolean(id),
     queryFn: async () => {
       const res = await adminApi.getQuizzes(id as string);
-      const env = res.success && res.data ? (res.data as Record<string, unknown>) : null;
+      const env = requireData(res, null) as Record<string, unknown> | null;
       return asArray<Record<string, unknown>>(env);
     },
   });

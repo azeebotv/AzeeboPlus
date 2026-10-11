@@ -19,7 +19,7 @@ export default function AnalyticsPage() {
     queryKey: ['creator', 'analytics', period],
     queryFn: async () => {
       const res = await creatorApi.getAnalytics(period);
-      return res.success ? (res.data as AnalyticsData) : null;
+      return creatorApi.assertSuccess<AnalyticsData>(res);
     },
   });
 
