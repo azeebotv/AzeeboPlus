@@ -59,7 +59,7 @@ function initializeExperiments() {
       id: 'cta-button-color',
       name: 'CTA Button Color Test',
       variants: [
-        { id: 'control', name: 'Orange CTA', weight: 50, config: { ctaColor: '#E8420A' } },
+        { id: 'control', name: 'Orange CTA', weight: 50, config: { ctaColor: '#EC691F' } },
         { id: 'variant-a', name: 'Green CTA', weight: 50, config: { ctaColor: '#10B981' } },
       ],
       traffic: 100,

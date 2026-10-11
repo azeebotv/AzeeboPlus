@@ -172,25 +172,41 @@ describe('AppHeader', () => {
 
   /* ─── Navigation visibility ─── */
 
-  describe('main navigation (Home, Browse, Library)', () => {
+  describe('main navigation (Browse, Live, Games, Rewards)', () => {
     it('is visible for authenticated users', () => {
       renderHeader();
       // Desktop nav exists with aria-label
       expect(screen.getByRole('navigation', { name: /main navigation/i })).toBeTruthy();
       // Links appear in both desktop nav and mobile drawer — check at least 2 of each
-      expect(screen.getAllByText('Home').length).toBeGreaterThanOrEqual(2);
       expect(screen.getAllByText('Browse').length).toBeGreaterThanOrEqual(2);
-      expect(screen.getAllByText('Library').length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByText('Live').length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByText('Games').length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByText('Rewards').length).toBeGreaterThanOrEqual(2);
     });
 
     it('is hidden for guest users', () => {
       renderHeader({ isAuthenticated: false, user: null });
       // No nav element with aria-label
       expect(screen.queryByRole('navigation', { name: /main navigation/i })).toBeNull();
-      // No Home/Browse/Library links at all
-      expect(screen.queryByText('Home')).toBeNull();
+      // No top-level nav links at all
       expect(screen.queryByText('Browse')).toBeNull();
-      expect(screen.queryByText('Library')).toBeNull();
+      expect(screen.queryByText('Games')).toBeNull();
+      expect(screen.queryByText('Rewards')).toBeNull();
+    });
+  });
+
+  /* ─── Cart (passes & bundles) icon — Figma redesign ─── */
+
+  describe('header cart icon', () => {
+    it('links to bundles for authenticated users', () => {
+      renderHeader();
+      const cart = screen.getByRole('link', { name: /passes, tickets and bundles/i });
+      expect(cart.getAttribute('href')).toBe('/bundles');
+    });
+
+    it('is hidden for guest users', () => {
+      renderHeader({ isAuthenticated: false, user: null });
+      expect(screen.queryByRole('link', { name: /passes, tickets and bundles/i })).toBeNull();
     });
   });
 
