@@ -1,4 +1,4 @@
-# Tasks — Frontend (Web, Mobile, Admin, Creator)
+# Tasks — Frontend (Web, Mobile, TV, Admin, Creator)
 
 > Derived from AZP-TAA-001 R2.0 Technical Architecture Authority
 > Cross-referenced with actual project codebase state
@@ -193,6 +193,40 @@
 | Creator earnings dashboard | TAA §68 | ✅ Implemented |
 | Payout request flow | TAA §68 | ✅ Implemented |
 | Earnings analytics | TAA §68 | ✅ Implemented |
+
+---
+
+## 5. Connected TV App (`apps/tv`)
+
+### 5.1 D-Pad Focus & Spatial Navigation
+| Task | Standard | Status | Priority |
+|------|----------|--------|----------|
+| 10-foot UI layout with focus rings and spatial navigation | Android TV / tvOS | ✅ Implemented | P0 |
+| D-pad directional navigation (up/down/left/right/enter/back) | TAA §6 | ✅ Implemented | P0 |
+| Auto-scroll focused items into view | Android TV | ✅ Implemented | P0 |
+| Focus trap within modal dialogues and playback overlays | WCAG 2.2 AA | ✅ Implemented | P1 |
+
+### 5.2 10-foot Playback & Telemetry
+| Task | Standard | Status | Priority |
+|------|----------|--------|----------|
+| Fullscreen video player with D-pad overlay controls | TAA §10 | ✅ Implemented | P0 |
+| Play/pause, 10s seek forward/backward via remote keys | TAA §10 | ✅ Implemented | P0 |
+| Track watch progress and persist to content service | TAA §10 | ✅ Implemented | P0 |
+| Subtitle selection and audio track toggle via remote | TAA §70 | ✅ Implemented | P1 |
+
+### 5.3 Device Linking & Auth
+| Task | Standard | Status | Priority |
+|------|----------|--------|----------|
+| QR Code & 6-character device code linking flow | TAA §49 | ✅ Implemented | P0 |
+| Auth poll/WebSocket confirmation from mobile/web | TAA §49 | ✅ Implemented | P0 |
+| Guest browsing mode for discovery before sign-in | PRD §5 | ✅ Implemented | P0 |
+
+### 5.4 TV Lifecycle & Performance
+| Task | Standard | Status | Priority |
+|------|----------|--------|----------|
+| App backgrounding and memory reclamation on TV suspend | Android TV | ✅ Implemented | P1 |
+| High-contrast typography for 10-foot viewing distance | WCAG 2.2 AA | ✅ Implemented | P1 |
+| Fast cold start without blocking network splash | Core Web/App Vitals | ✅ Implemented | P1 |
 
 ---
 

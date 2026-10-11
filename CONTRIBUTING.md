@@ -6,8 +6,8 @@ Thank you for your interest in contributing to Azeebo+! This guide will help you
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 9+
+- Node.js >= 22.0.0
+- pnpm >= 10.33.2
 - PostgreSQL 15+
 - Redis 7+
 
@@ -15,8 +15,8 @@ Thank you for your interest in contributing to Azeebo+! This guide will help you
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-org/azeebo-plus.git
-   cd azeebo-plus
+   git clone https://github.com/azeebotv/AzeeboPlus.git
+   cd AzeeboPlus
    ```
 
 2. Install dependencies:
@@ -24,15 +24,16 @@ Thank you for your interest in contributing to Azeebo+! This guide will help you
    pnpm install
    ```
 
-3. Set up environment:
+3. Set up environment and local databases:
    ```bash
-   cp .env.example .env
-   # Edit .env with your local settings
+   ./scripts/local-dev.sh setup
+   ./scripts/local-dev.sh db setup
+   ./scripts/local-dev.sh db seed
    ```
 
 4. Start services:
    ```bash
-   ./start-all.sh
+   ./scripts/local-dev.sh start --quick
    ```
 
 ## Development Workflow

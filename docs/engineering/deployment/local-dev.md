@@ -1,31 +1,26 @@
 # Local Development Setup
 
 ## Prerequisites
-- Node.js 18+
-- pnpm
+- Node.js >= 22.0.0
+- pnpm >= 10.33.2
 - Docker & Docker Compose
-- PostgreSQL (via Docker)
+- PostgreSQL 15+ & Redis 7+ (via Docker or local services)
 
 ## Quick Start
 
 ```bash
 # Clone and install
-git clone https://github.com/azeebotv/azeebo-plus.git
-cd azeebo-plus
-cp .env.example .env
+git clone https://github.com/azeebotv/AzeeboPlus.git
+cd AzeeboPlus
 pnpm install
 
-# Start databases
-docker compose up -d postgres redis
+# Set up environment and local databases
+./scripts/local-dev.sh setup
+./scripts/local-dev.sh db setup
+./scripts/local-dev.sh db seed
 
-# Run migrations
-pnpm run db:migrate
-
-# Seed data
-pnpm run seed
-
-# Start all services
-pnpm run dev
+# Start services
+./scripts/local-dev.sh start --quick
 ```
 
 ## Service Ports
@@ -39,9 +34,10 @@ pnpm run dev
 | user-service | 3001 |
 | wallet-service | 3002 |
 | payment-service | 3003 |
+| analytics-service | 3008 |
 
 ## Environment Variables
-Copy `.env.example` to `.env` and configure:
+The canonical environment bootstrap is handled by `./scripts/local-dev.sh setup`, creating root and workspace `.env` files from templates:
 - `DATABASE_URL` — PostgreSQL connection string
 - `REDIS_URL` — Redis connection string
 - `JWT_ACCESS_SECRET` — JWT signing secret (min 64 chars)
@@ -50,22 +46,24 @@ Copy `.env.example` to `.env` and configure:
 
 ## Database Management
 ```bash
-# Create migration
+# Create migration for a specific service
 cd services/core/wallet-service
-pnpm exec prisma migrate dev --name add_vote_table
+pnpm exec prisma migrate dev --name add_wallet_feature
 
-# Apply all migrations
-pnpm run db:migrate
+# Apply all migrations across active services
+./scripts/local-dev.sh db migrate
 
-# Reset (dev only)
-pnpm run db:reset
+# Reset database (dev only)
+./scripts/local-dev.sh db reset
+
+# Seed all services
+./scripts/local-dev.sh db seed
 ```
 
-## Testing
+## Verification & Testing
 ```bash
-pnpm run test              # All tests
-pnpm run test:watch        # Watch mode
-pnpm run test:cov          # Coverage report
 pnpm run typecheck         # Type checking
 pnpm run lint              # Linting
+pnpm run check:route-contracts # Verify client-gateway API contracts
+pnpm run test:sweep        # Controlled test sweep across workspaces
 ```

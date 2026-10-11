@@ -41,8 +41,8 @@ Run migrations for services with schema changes:
 cd services/universes/reality-service
 npx prisma migrate deploy
 
-# Verify migration applied
-npx prisma db push --accept-data-loss 2>&1 | head -5
+# Verify migration applied safely
+npx prisma migrate status
 ```
 
 ### 3. Package Dependencies

@@ -16,14 +16,13 @@
 ## 2. Quick Start
 
 ```bash
-git clone https://github.com/azeebotv/azeebo-plus.git
-cd azeebo-plus
-cp .env.example .env
+git clone https://github.com/azeebotv/AzeeboPlus.git
+cd AzeeboPlus
 pnpm install
-docker compose up -d postgres redis
-pnpm run db:migrate
-pnpm run seed
-pnpm run dev
+./scripts/local-dev.sh setup
+./scripts/local-dev.sh db setup
+./scripts/local-dev.sh db seed
+./scripts/local-dev.sh start --quick
 ```
 
 Access: Web (4000), API Gateway (3013), Creator Portal (4014), Admin (4016), TV App (8082).
@@ -70,7 +69,7 @@ Format: `type(scope): description` (types: `feat`, `fix`, `docs`, `refactor`, `t
 ### Pull Requests
 
 - Under 400 lines, target `develop` (or `main` for hotfixes)
-- Pre-check: `pnpm run typecheck`, `pnpm run lint`, `pnpm run test` must pass
+- Pre-check: `pnpm run typecheck`, `pnpm run lint`, `pnpm run test:sweep`, `pnpm run check:route-contracts` must pass
 - Squash and merge, 1 approval required
 
 ---
@@ -78,9 +77,10 @@ Format: `type(scope): description` (types: `feat`, `fix`, `docs`, `refactor`, `t
 ## 5. Running Locally
 
 ```bash
-pnpm run dev                    # All services
-pnpm --filter @azeebo/reality-service run start:dev  # Single service
-docker compose up               # Docker all-in-one
+./scripts/local-dev.sh start --quick               # Quick start core services & apps
+./scripts/local-dev.sh start                       # Interactive startup
+./scripts/local-dev.sh workspace <service-or-app>  # Single service or app
+pnpm --filter @azeebo/reality-service run start:dev # Direct pnpm filter
 ```
 
 ---
@@ -93,9 +93,10 @@ Each service has its own PostgreSQL database with `azeebo_` prefix (e.g., `azeeb
 
 ```bash
 cd services/core/wallet-service
-pnpm exec prisma migrate dev --name add_vote_table  # Create
-pnpm run db:migrate   # Apply all
-pnpm run db:reset     # Reset (dev only)
+pnpm exec prisma migrate dev --name add_wallet_feature  # Create
+./scripts/local-dev.sh db migrate                      # Apply all
+./scripts/local-dev.sh db reset                        # Reset (dev only)
+./scripts/local-dev.sh db seed                         # Seed
 ```
 
 Rules: reversible migrations, UUIDs for PKs, indexes on frequently queried columns.
@@ -105,10 +106,10 @@ Rules: reversible migrations, UUIDs for PKs, indexes on frequently queried colum
 ## 7. Testing
 
 ```bash
-pnpm run test            # All tests
-pnpm run test:watch      # Watch mode
-pnpm run test:cov        # Coverage
+pnpm run test            # Monorepo test sweep
+pnpm run test:sweep      # Fast sweep across workspaces
 pnpm --filter @azeebo/reality-service run test  # Per-service
+pnpm run check:route-contracts                 # Route contract enforcement
 ```
 
 **Coverage targets:** Wallet/Payment 90%+, Auth/Security 90%+, Core 80%+, Universe 70%+.

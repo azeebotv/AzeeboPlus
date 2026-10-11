@@ -20,7 +20,7 @@ the parent authority doc.
 
 | File | Area |
 |------|------|
-| [tasks-backend.md](tasks/tasks-backend.md) | 28 backend services across 6 service groups |
+| [tasks-backend.md](tasks/tasks-backend.md) | 29 backend services (28 domain services + 1 API gateway) across 6 service groups |
 | [tasks-frontend.md](tasks/tasks-frontend.md) | Web, Mobile, Admin, Creator surfaces |
 | [tasks-mobile.md](tasks/tasks-mobile.md) | Mobile app (Expo) specifics |
 | [tasks-ai-ml.md](tasks/tasks-ai-ml.md) | AI/ML and intelligence services |

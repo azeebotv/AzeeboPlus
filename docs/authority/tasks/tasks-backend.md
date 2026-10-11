@@ -1,7 +1,7 @@
 # Tasks — Backend Services
 
 > Derived from AZP-TAA-001 R2.0 Technical Architecture Authority
-> 28 services across 6 groups, plus shared packages
+> 29 backend services (28 domain services + 1 API Gateway) across 6 groups, plus shared packages
 
 ---
 

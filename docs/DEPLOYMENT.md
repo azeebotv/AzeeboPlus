@@ -147,7 +147,7 @@ docker run -d \
 ### New Variables (Required for Full Functionality)
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ANALYTICS_SERVICE_URL` | Analytics service URL for event tracking | `http://localhost:3040` |
+| `ANALYTICS_SERVICE_URL` | Analytics service URL for event tracking | `http://localhost:3008` |
 | `WS_CORS_ORIGIN` | WebSocket CORS origin | `https://app.azeeboplus.com` |
 | `FEATURE_FLAG_REDIS_URL` | Redis URL for feature flags | `redis://localhost:6379` |
 | `EVENT_BUS_REDIS_URL` | Redis URL for event bus | `redis://localhost:6379` |
@@ -165,6 +165,22 @@ docker run -d \
 | `/health` | 4000 | Web app health |
 | `/health` | 4014 | Creator Portal health |
 | `/health` | 4016 | Admin Panel health |
+| `/health` | 3008 | Analytics service health |
+
+> **Exposure note (`docker-compose.prod.yml`):** only the four rows above
+> (3013/4000/4014/4016) are published to the host. All 28 internal services
+> use `expose:` only — reach them from inside the compose network
+> (`http://<service>:<port>`) or through the gateway. Do not add host `ports:`
+> back for internal services (AUD-02); health-check them via the gateway's
+> `/api/v1/<service>/health` routes instead.
+
+### Analytics Service Endpoint Contract
+- **Port:** `3008` (authoritative service port)
+- **Local Host:** `http://localhost:3008`
+- **Internal Docker / Fleet:** `http://analytics-service:3008`
+- **Gateway Proxied Route:** `/api/v1/analytics/track`
+- **Direct Upstream Ingestion:** `POST /v1/analytics/track`
+- **Health Check:** `GET /health`
 
 ### Health Check Configuration
 ```yaml
@@ -182,14 +198,14 @@ healthcheck:
 
 ### Running Migrations
 ```bash
-# Generate Prisma clients
+# Generate Prisma clients across workspaces
 pnpm run prisma:generate
 
-# Run migrations for all services
-pnpm run prisma:migrate
+# Run migrations for local fleet
+./scripts/local-dev.sh db migrate
 
-# Run migrations for specific service
-pnpm --filter @azeebo/auth-service run prisma:migrate
+# Run production migration deploy for a specific service
+pnpm --filter @azeebo/auth-service exec prisma migrate deploy
 ```
 
 ### Migration Strategy

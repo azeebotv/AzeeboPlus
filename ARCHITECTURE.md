@@ -232,7 +232,9 @@ azeebo_lifestyle     azeebo_vertical      azeebo_creator       azeebo_sports
 azeebo_live_event    azeebo_notification  azeebo_reward        azeebo_referral
 azeebo_messaging     azeebo_engagement    azeebo_subscription  azeebo_queue
 azeebo_support       azeebo_moderation    azeebo_analytics     azeebo_recommendation
-azeebo_admin         azeebo_creator
+
+App-specific databases:
+azeebo_admin (Admin Portal ops & audit)
 ```
 
 ### 6.2 Concurrency & Financial Safety
