@@ -4,6 +4,12 @@
 
 set -e
 
+# AUD-15: an immutable release tag is mandatory — a silent fallback to
+# `:latest` (or a hardcoded one, as generate_app had) defeats rollback and
+# makes every deploy un-reproducible. Fail before writing any manifest.
+# Usage: IMAGE_TAG=$(git rev-parse --short HEAD) bash k8s/generate-deployments.sh
+: "${IMAGE_TAG:?IMAGE_TAG is required (immutable release tag, e.g. git SHA or release version)}"
+
 NS="azeebo"
 OUTDIR="k8s"
 
@@ -23,7 +29,9 @@ generate_deployment() {
   local cpu="$5"
   local mem="$6"
   local health="$7"
-  local image="ghcr.io/vmnl/${shortname}:latest"
+  local tag="${IMAGE_TAG}"
+  local registry="${IMAGE_REGISTRY:-ghcr.io/vmnl}"
+  local image="${registry}/${shortname}:${tag}"
 
   cat <<YAML
 ---
@@ -123,7 +131,10 @@ generate_app() {
   local replicas="$3"
   local cpu="$4"
   local mem="$5"
-  local image="ghcr.io/vmnl/azeebo-${name}:latest"
+  # AUD-15: was hardcoded to :latest and ignored IMAGE_REGISTRY — frontends
+  # now resolve the same tag/registry path as the services above.
+  local registry="${IMAGE_REGISTRY:-ghcr.io/vmnl}"
+  local image="${registry}/azeebo-${name}:${IMAGE_TAG}"
 
   cat <<YAML
 ---

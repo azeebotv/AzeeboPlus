@@ -169,7 +169,12 @@ requirepass $REDIS_PASSWORD
 dir /var/lib/redis
  logfile ""
 REDISCONF
+# redis runs as the `redis` user (supervisord user=redis); the config contains
+# requirepass so keep it out of world-readability.
+chown root:redis /etc/redis/redis.conf
+chmod 640 /etc/redis/redis.conf
 mkdir -p /var/lib/redis 2>/dev/null || true
+chown redis:redis /var/lib/redis 2>/dev/null || true
 
 # ============================================================
 # 6. Configure PgBouncer
@@ -233,6 +238,10 @@ gosu postgres sh -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"
 # Also add the superuser
 gosu postgres sh -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname = '$POSTGRES_USER' AND password IS NOT NULL;\"" >> /etc/pgbouncer/userlist.txt 2>/dev/null || true
 chmod 600 /etc/pgbouncer/userlist.txt 2>/dev/null || true
+# pgbouncer runs as the `pgbouncer` user (supervisord user=pgbouncer) and needs
+# read access to its userlist plus write access to its runtime/log dirs.
+chown pgbouncer:pgbouncer /etc/pgbouncer/pgbouncer.ini /etc/pgbouncer/userlist.txt 2>/dev/null || true
+chown -R pgbouncer:pgbouncer /var/run/pgbouncer /var/log/pgbouncer 2>/dev/null || true
 echo "    PgBouncer userlist generated."
 
 # ============================================================
@@ -280,14 +289,14 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
   # Check if prisma_migrations table exists and has stuck failures
   # Find migrations that are not cleanly applied (started but not finished, or finished but still rolling back)
   failed_migrations=$(PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -t -A -c \
-    "SELECT migration_name FROM prisma_migrations WHERE (finished_at IS NULL AND started_at IS NOT NULL) OR (rolling_back_at IS NOT NULL AND rolled_back_at IS NULL) LIMIT 50" 2>/dev/null || echo "")
+    "SELECT migration_name FROM _prisma_migrations WHERE (finished_at IS NULL AND started_at IS NOT NULL) OR (rolling_back_at IS NOT NULL AND rolled_back_at IS NULL) LIMIT 50" 2>/dev/null || echo "")
 
   if [ -n "$failed_migrations" ]; then
     echo "    Resolving stuck migrations for $svc_name..."
     while IFS= read -r migration_name; do
       [ -z "$migration_name" ] && continue
       echo "      Resolving: $migration_name"
-      DATABASE_URL="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public" \
+      DATABASE_URL="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public" DIRECT_DATABASE_URL="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public" \
         prisma migrate resolve --rolled-back "$migration_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
         echo "      WARNING: Could not resolve $migration_name (may already be resolved)"
     done <<< "$failed_migrations"
@@ -299,29 +308,42 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
   echo "    Migrating $svc_name..."
 
   db_url="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public"
-  migrate_output=$(DATABASE_URL="$db_url" \
+  migrate_output=$(DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
     prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1) || {
     if echo "$migrate_output" | grep -q "P3005"; then
       echo "    P3005: database exists with untracked tables for $svc_name"
-      echo "    Baseline approach: mark all migrations as applied, then re-deploy..."
-      if [ -d "$svc_dir/prisma/migrations" ]; then
-        for migration_dir in "$svc_dir/prisma/migrations"/*/; do
-          [ -d "$migration_dir" ] || continue
-          migration_name=$(basename "$migration_dir")
-          DATABASE_URL="$db_url" \
-            prisma migrate resolve --applied "$migration_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
-            echo "      WARNING: Could not baseline $migration_name"
-        done
-        echo "    Re-running migration for $svc_name after baseline..."
-        DATABASE_URL="$db_url" \
-          prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
-          echo "    FATAL: Migration still failed for $svc_name after baseline"
-          echo "    Migration output:"
-          echo "$migrate_output" | head -20
+      # Baseline (marking migrations applied WITHOUT executing their SQL) is
+      # only safe when the DB state is known to match the final migration —
+      # e.g. a volume seeded from coolify-init.sql. It must never run
+      # implicitly: a wrong guess silently desyncs the ledger from the schema.
+      if [ "$ALLOW_UNSAFE_BASELINE" = "true" ]; then
+        echo "    ALLOW_UNSAFE_BASELINE=true — baselining all migrations as applied..."
+        if [ -d "$svc_dir/prisma/migrations" ]; then
+          for migration_dir in "$svc_dir/prisma/migrations"/*/; do
+            [ -d "$migration_dir" ] || continue
+            migration_name=$(basename "$migration_dir")
+            DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
+              prisma migrate resolve --applied "$migration_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
+              echo "      WARNING: Could not baseline $migration_name"
+          done
+          echo "    Re-running migration for $svc_name after baseline..."
+          DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
+            prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
+            echo "    FATAL: Migration still failed for $svc_name after baseline"
+            echo "    Migration output:"
+            echo "$migrate_output" | head -20
+            exit 1
+          }
+        else
+          echo "    FATAL: No migrations directory found for $svc_name"
           exit 1
-        }
+        fi
       else
-        echo "    FATAL: No migrations directory found for $svc_name"
+        echo "    FATAL: Refusing to baseline $svc_name automatically."
+        echo "    Baseline marks migrations applied WITHOUT executing their SQL — only"
+        echo "    do this when the database already matches the final schema."
+        echo "    Re-run with ALLOW_UNSAFE_BASELINE=true to accept that risk, or baseline manually:"
+        echo "      prisma migrate resolve --applied <migration_name> --schema=$svc_dir/prisma/schema.prisma"
         exit 1
       fi
     elif echo "$migrate_output" | grep -q "P3018"; then
@@ -330,23 +352,23 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
       failed_migration=$(echo "$migrate_output" | grep -oP 'Migration name: \K.*' | head -1 || true)
       if [ -n "$failed_migration" ]; then
         echo "    Resolving: $failed_migration"
-        DATABASE_URL="$db_url" \
+        DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
           prisma migrate resolve --rolled-back "$failed_migration" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || true
       fi
       # Also resolve any stuck migrations in the table
       stuck_migrations=$(PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -t -A -c \
-        "SELECT migration_name FROM prisma_migrations WHERE finished_at IS NULL AND started_at IS NOT NULL LIMIT 50" 2>/dev/null || echo "")
+        "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL AND started_at IS NOT NULL LIMIT 50" 2>/dev/null || echo "")
       if [ -n "$stuck_migrations" ]; then
         while IFS= read -r stuck_name; do
           [ -z "$stuck_name" ] && continue
           echo "    Resolving stuck: $stuck_name"
-          DATABASE_URL="$db_url" \
+          DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
             prisma migrate resolve --rolled-back "$stuck_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || true
         done <<< "$stuck_migrations"
       fi
-      # SAFETY: Only allow schema drop in non-production environments.
-      # In production, P3018 should be resolved manually to prevent data loss.
-      if [ "$NODE_ENV" = "production" ] && [ "$ALL_IN_ONE" != "true" ]; then
+      # SAFETY: Never allow schema drop in production, all-in-one or not.
+      # P3018 should be resolved manually in production to prevent data loss.
+      if [ "$NODE_ENV" = "production" ]; then
         echo "    FATAL: P3018 recovery with schema drop is NOT allowed in production."
         echo "    Resolve the stuck migration manually:"
         echo "      prisma migrate resolve --rolled-back <migration_name> --schema=$svc_dir/prisma/schema.prisma"
@@ -357,7 +379,7 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
       PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -c \
         "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" >/dev/null 2>&1 || true
       echo "    Re-running migration for $svc_name..."
-      DATABASE_URL="$db_url" \
+      DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
         prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
         echo "    FATAL: Migration still failed for $svc_name after P3018 resolve"
         echo "    Migration output:"

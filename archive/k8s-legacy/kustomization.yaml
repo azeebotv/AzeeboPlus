@@ -7,7 +7,9 @@ resources:
   # Base
   - base/namespace.yaml
   - base/configmap.yaml
-  - base/secrets.yaml
+  # Secrets are provisioned by the External Secrets Operator, not committed.
+  # See base/external-secret.yaml (kept as a reference even in this archive).
+  - base/external-secret.yaml
   - base/network-policy.yaml
   - base/pdb.yaml
 

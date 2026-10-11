@@ -1,6 +1,9 @@
 # Kubernetes Deployment — Azeebo+
 
-This directory contains production-grade Kubernetes manifests for all **29 backend services**, **3 frontend apps**, and **2 infrastructure services**.
+> [!NOTE]
+> **Deployment Truth Reconciliation (AUD-28):** The canonical production deployment target in CD (`.github/workflows/cd.yml`) ships the all-in-one container (`Dockerfile.all-in-one` / `deploy/docker-compose.all-in-one.yml`) to Coolify with digest tracking. The Kubernetes manifests in this directory represent a microservice-per-pod architecture overlay. When deploying via Kubernetes, override image tags to match git commit digests (`ghcr.io/${REPO}:${SHA}`) rather than `:latest`.
+
+This directory contains Kubernetes manifests for all **29 backend services**, **3 frontend apps**, and **2 infrastructure services**.
 
 ---
 

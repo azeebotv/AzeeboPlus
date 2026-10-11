@@ -35,7 +35,7 @@ x-common-env: &common-env
   JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30m}
   JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
   INTERNAL_API_KEY: ${INTERNAL_API_KEY}
-  GATEWAY_SECRET: ${GATEWAY_SECRET:-${INTERNAL_API_KEY}}
+  GATEWAY_SECRET: ${GATEWAY_SECRET}
   JWT_AUDIENCE: azeebo-api
   JWT_ISSUER: azeebo-auth
   # Gateway
@@ -62,8 +62,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-azeebo}
       POSTGRES_INITDB_ARGS: "--data-checksums"
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./deploy/init-scripts:/docker-entrypoint-initdb.d:ro
@@ -93,8 +91,6 @@ services:
       --maxmemory-policy allkeys-lru
       --appendonly yes
       --appendfsync everysec
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -125,8 +121,8 @@ services:
       PORT: "3000"
       SERVICE_NAME: auth-service
       AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -157,8 +153,8 @@ services:
       PORT: "3001"
       SERVICE_NAME: user-service
       USER_DB_PASSWORD: ${USER_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     depends_on:
       postgres:
         condition: service_healthy
@@ -189,8 +185,8 @@ services:
       PORT: "3002"
       SERVICE_NAME: wallet-service
       WALLET_DB_PASSWORD: ${WALLET_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3002:3002"
+    expose:
+      - "3002"
     depends_on:
       postgres:
         condition: service_healthy
@@ -226,8 +222,8 @@ services:
       FLW_SECRET_KEY: ${FLW_SECRET_KEY:-}
       FLW_WEBHOOK_SECRET: ${FLW_WEBHOOK_SECRET:-}
       WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
-    ports:
-      - "3003:3003"
+    expose:
+      - "3003"
     depends_on:
       postgres:
         condition: service_healthy
@@ -258,8 +254,8 @@ services:
       PORT: "3004"
       SERVICE_NAME: content-service
       CONTENT_DB_PASSWORD: ${CONTENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3004:3004"
+    expose:
+      - "3004"
     depends_on:
       postgres:
         condition: service_healthy
@@ -290,8 +286,8 @@ services:
       PORT: "3005"
       SERVICE_NAME: search-service
       SEARCH_DB_PASSWORD: ${SEARCH_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3005:3005"
+    expose:
+      - "3005"
     depends_on:
       postgres:
         condition: service_healthy
@@ -326,8 +322,8 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
-    ports:
-      - "3019:3019"
+    expose:
+      - "3019"
     depends_on:
       postgres:
         condition: service_healthy
@@ -358,8 +354,11 @@ services:
       PORT: "3020"
       SERVICE_NAME: knowledge-service
       KNOWLEDGE_DB_PASSWORD: ${KNOWLEDGE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3020:3020"
+    # AUD-01: never publish internal service ports on the host — the knowledge
+    # graph API (grants, units, projections) is reachable only through the
+    # gateway, which enforces auth, rate limits, and the public-path rules.
+    expose:
+      - "3020"
     depends_on:
       postgres:
         condition: service_healthy
@@ -403,8 +402,8 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
-    ports:
-      - "3006:3006"
+    expose:
+      - "3006"
     depends_on:
       postgres:
         condition: service_healthy
@@ -435,8 +434,8 @@ services:
       PORT: "3007"
       SERVICE_NAME: reward-service
       REWARD_DB_PASSWORD: ${REWARD_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3007:3007"
+    expose:
+      - "3007"
     depends_on:
       postgres:
         condition: service_healthy
@@ -467,8 +466,8 @@ services:
       PORT: "3023"
       SERVICE_NAME: engagement-service
       ENGAGEMENT_DB_PASSWORD: ${ENGAGEMENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3023:3023"
+    expose:
+      - "3023"
     depends_on:
       postgres:
         condition: service_healthy
@@ -499,8 +498,8 @@ services:
       PORT: "3024"
       SERVICE_NAME: messaging-service
       MESSAGING_DB_PASSWORD: ${MESSAGING_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3024:3024"
+    expose:
+      - "3024"
     depends_on:
       postgres:
         condition: service_healthy
@@ -531,8 +530,8 @@ services:
       PORT: "3025"
       SERVICE_NAME: referral-service
       REFERRAL_DB_PASSWORD: ${REFERRAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3025:3025"
+    expose:
+      - "3025"
     depends_on:
       postgres:
         condition: service_healthy
@@ -563,8 +562,8 @@ services:
       PORT: "3026"
       SERVICE_NAME: subscription-service
       SUBSCRIPTION_DB_PASSWORD: ${SUBSCRIPTION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3026:3026"
+    expose:
+      - "3026"
     depends_on:
       postgres:
         condition: service_healthy
@@ -599,8 +598,8 @@ services:
       PORT: "3008"
       SERVICE_NAME: analytics-service
       ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3008:3008"
+    expose:
+      - "3008"
     depends_on:
       postgres:
         condition: service_healthy
@@ -631,8 +630,8 @@ services:
       PORT: "3009"
       SERVICE_NAME: recommendation-service
       RECOMMENDATION_DB_PASSWORD: ${RECOMMENDATION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3009:3009"
+    expose:
+      - "3009"
     depends_on:
       postgres:
         condition: service_healthy
@@ -667,8 +666,8 @@ services:
       PORT: "3010"
       SERVICE_NAME: reality-service
       REALITY_DB_PASSWORD: ${REALITY_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3010:3010"
+    expose:
+      - "3010"
     depends_on:
       postgres:
         condition: service_healthy
@@ -699,8 +698,8 @@ services:
       PORT: "3011"
       SERVICE_NAME: movie-service
       MOVIE_DB_PASSWORD: ${MOVIE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3011:3011"
+    expose:
+      - "3011"
     depends_on:
       postgres:
         condition: service_healthy
@@ -731,8 +730,8 @@ services:
       PORT: "3012"
       SERVICE_NAME: comedy-service
       COMEDY_DB_PASSWORD: ${COMEDY_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3012:3012"
+    expose:
+      - "3012"
     depends_on:
       postgres:
         condition: service_healthy
@@ -763,8 +762,8 @@ services:
       PORT: "3014"
       SERVICE_NAME: games-service
       GAMES_DB_PASSWORD: ${GAMES_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3014:3014"
+    expose:
+      - "3014"
     depends_on:
       postgres:
         condition: service_healthy
@@ -795,8 +794,8 @@ services:
       PORT: "3016"
       SERVICE_NAME: lifestyle-service
       LIFESTYLE_DB_PASSWORD: ${LIFESTYLE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3016:3016"
+    expose:
+      - "3016"
     depends_on:
       postgres:
         condition: service_healthy
@@ -827,8 +826,8 @@ services:
       PORT: "3017"
       SERVICE_NAME: vertical-service
       VERTICAL_DB_PASSWORD: ${VERTICAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3017:3017"
+    expose:
+      - "3017"
     depends_on:
       postgres:
         condition: service_healthy
@@ -859,8 +858,8 @@ services:
       PORT: "3018"
       SERVICE_NAME: creator-service
       CREATOR_DB_PASSWORD: ${CREATOR_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3018:3018"
+    expose:
+      - "3018"
     depends_on:
       postgres:
         condition: service_healthy
@@ -891,8 +890,8 @@ services:
       PORT: "3021"
       SERVICE_NAME: sports-service
       SPORTS_DB_PASSWORD: ${SPORTS_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3021:3021"
+    expose:
+      - "3021"
     depends_on:
       postgres:
         condition: service_healthy
@@ -923,8 +922,8 @@ services:
       PORT: "3027"
       SERVICE_NAME: live-event-service
       LIVE_EVENT_DB_PASSWORD: ${LIVE_EVENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3027:3027"
+    expose:
+      - "3027"
     depends_on:
       postgres:
         condition: service_healthy
@@ -959,8 +958,8 @@ services:
       PORT: "3015"
       SERVICE_NAME: queue-service
       QUEUE_DB_PASSWORD: ${QUEUE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3015:3015"
+    expose:
+      - "3015"
     depends_on:
       postgres:
         condition: service_healthy
@@ -991,8 +990,8 @@ services:
       PORT: "3022"
       SERVICE_NAME: moderation-service
       MODERATION_DB_PASSWORD: ${MODERATION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3022:3022"
+    expose:
+      - "3022"
     depends_on:
       postgres:
         condition: service_healthy
@@ -1023,8 +1022,8 @@ services:
       PORT: "3028"
       SERVICE_NAME: support-service
       SUPPORT_DB_PASSWORD: ${SUPPORT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
-    ports:
-      - "3028:3028"
+    expose:
+      - "3028"
     depends_on:
       postgres:
         condition: service_healthy
@@ -1058,8 +1057,12 @@ services:
       <<: *common-env
       PORT: "3013"
       SERVICE_NAME: api-gateway
+      # AUD-04: explicit upstream for the knowledge route. Every other route
+      # relies on the SERVICE_CONFIGS fallbackUrl; pinning this one makes the
+      # correct port visible at the deployment layer and overridable per env.
+      KNOWLEDGE_SERVICE_URL: ${KNOWLEDGE_SERVICE_URL:-http://knowledge-service:3020}
     ports:
-      - "${GATEWAY_PORT:-3013}:3013"
+      - "127.0.0.1:${GATEWAY_PORT:-3013}:3013"
     depends_on:
       postgres:
         condition: service_healthy
@@ -1098,7 +1101,7 @@ services:
       NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-wss://app.azeeboplus.com}
       API_GATEWAY_URL: http://api-gateway:3013
     ports:
-      - "${WEB_PORT:-4000}:4000"
+      - "127.0.0.1:${WEB_PORT:-4000}:4000"
     depends_on:
       api-gateway:
         condition: service_healthy
@@ -1126,7 +1129,7 @@ services:
       NODE_ENV: production
       API_GATEWAY_URL: http://api-gateway:3013
     ports:
-      - "${ADMIN_PORT:-4016}:4016"
+      - "127.0.0.1:${ADMIN_PORT:-4016}:4016"
     depends_on:
       api-gateway:
         condition: service_healthy
@@ -1154,7 +1157,7 @@ services:
       NODE_ENV: production
       API_GATEWAY_URL: http://api-gateway:3013
     ports:
-      - "${CREATOR_PORT:-4014}:4014"
+      - "127.0.0.1:${CREATOR_PORT:-4014}:4014"
     depends_on:
       api-gateway:
         condition: service_healthy

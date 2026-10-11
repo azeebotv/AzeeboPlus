@@ -15,7 +15,7 @@
 # ============================================================
 # Stage 1: Build — compile everything
 # ============================================================
-FROM node:22.16.0-bookworm-slim AS builder
+FROM node:22.16.0-bookworm-slim@sha256:048ed02c5fd52e86fda6fbd2f6a76cf0d4492fd6c6fee9e2c463ed5108da0e34 AS builder
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
@@ -94,6 +94,9 @@ COPY . .
 
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_URL}
+
+ARG COMMIT_SHA=""
+ENV COMMIT_SHA=${COMMIT_SHA}
 
 ARG NEXT_PUBLIC_BASE_URL=""
 ARG NEXT_PUBLIC_AUTH_URL=""
@@ -389,7 +392,7 @@ RUN echo "Cache bust: $CACHEBUST" && \
 # ============================================================
 # Stage 2: Runtime — lean image with production deps only
 # ============================================================
-FROM node:22.16.0-bookworm-slim
+FROM node:22.16.0-bookworm-slim@sha256:048ed02c5fd52e86fda6fbd2f6a76cf0d4492fd6c6fee9e2c463ed5108da0e34
 
 # Stage 2 RUNs pipe find(1) output; keep pipefail semantics identical to the
 # builder stage so a failed find is never silently swallowed under /bin/sh.
@@ -422,6 +425,9 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
+
+ARG COMMIT_SHA=""
+ENV COMMIT_SHA=${COMMIT_SHA}
 
 WORKDIR /app
 
@@ -582,7 +588,9 @@ RUN useradd -r -s /bin/false -u 65532 nodejs && \
     chown -R nodejs:nodejs /app && \
     gosu nodejs true
 
-EXPOSE 80 443 3013 4000 4014 4016
+# Only the public edge needs to be reachable; internal services talk over
+# localhost inside the container and stay unmapped.
+EXPOSE 80 443
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=5 --start-period=300s \
   CMD ["curl", "-f", "http://localhost:80/health"]

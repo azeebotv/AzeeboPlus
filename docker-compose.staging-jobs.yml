@@ -45,6 +45,36 @@ services:
       - azeebo-internal
       - azeebo-network
 
+  data-retention:
+    build:
+      context: .
+      dockerfile: docker/data-retention.Dockerfile
+    container_name: azeebo-data-retention
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: azeebo
+      # No baked-in credentials — the shared .env MUST provide this.
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?data-retention requires POSTGRES_PASSWORD}
+      # Retention windows in days; defaults inside the script mirror
+      # @azeebo/shared-types DEFAULT_RETENTION_POLICIES.
+      PII_RETENTION_DAYS: ${PII_RETENTION_DAYS:-1095}
+      SENSITIVE_PII_RETENTION_DAYS: ${SENSITIVE_PII_RETENTION_DAYS:-730}
+      INTERNAL_RETENTION_DAYS: ${INTERNAL_RETENTION_DAYS:-365}
+      JOB_INTERVAL: ${DATA_RETENTION_INTERVAL:-86400}
+      JOB_OFFSET: ${DATA_RETENTION_OFFSET:-7200}
+    # No depends_on: postgres lives in docker-compose.prod.yml (not mergeable
+    # cross-file). The nightly loop simply fails-and-retries until the staging
+    # stack (same project) has postgres reachable.
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - azeebo-internal
+
   # Ships ALL azeebo-* container logs on the shared network to Loki
   # (monitoring stack: docker/docker-compose.monitoring.yml).
   promtail:
