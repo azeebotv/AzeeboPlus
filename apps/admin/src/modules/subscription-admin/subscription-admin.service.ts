@@ -37,6 +37,25 @@ interface UpstreamPlan {
 }
 
 /**
+ * Promo codes are kept in `system_settings.value`, an untyped JSON column, so
+ * this is the only shape guarantee they have. A `type` rather than an
+ * `interface` because Prisma's JSON input types are index-signature shaped and
+ * interfaces do not get an implicit one.
+ */
+type PromoCode = {
+  id: string;
+  code: string;
+  discountType: 'percent' | 'flat';
+  discountValue: number;
+  maxUses: number | null;
+  usedCount: number;
+  expiresAt: string | null;
+  status: 'active' | 'expired';
+  applicablePlanIds: string[];
+  createdAt: string;
+};
+
+/**
  * Admin subscriptions — a live proxy to subscription-service's real admin
  * endpoints (its DB is the source of truth users actually subscribe against).
  * The previous implementation read a shadow plan store in system_settings and
@@ -76,9 +95,11 @@ export class SubscriptionAdminService {
       ...init,
       headers: { ...this.upstreamHeaders(), ...(init?.headers || {}) },
     });
-    const body = (await res.json().catch(() => null)) as
-      | { success?: boolean; data?: T; message?: string }
-      | null;
+    const body = (await res.json().catch(() => null)) as {
+      success?: boolean;
+      data?: T;
+      message?: string;
+    } | null;
     if (!res.ok || !body) {
       // Upstream rate limits are protective, not failures — surface them as
       // such instead of an opaque 502 (the delete route allows 5/min).
@@ -208,7 +229,10 @@ export class SubscriptionAdminService {
         features: Array.isArray(data.features)
           ? data.features.map(String)
           : typeof data.features === 'string'
-            ? (data.features as string).split(',').map((f) => f.trim()).filter(Boolean)
+            ? (data.features as string)
+                .split(',')
+                .map((f) => f.trim())
+                .filter(Boolean)
             : [],
         tier: String(data.tier || 'basic'),
         isActive: data.status ? data.status === 'active' : true,
@@ -229,7 +253,10 @@ export class SubscriptionAdminService {
       payload.features = Array.isArray(data.features)
         ? data.features.map(String)
         : typeof data.features === 'string'
-          ? (data.features as string).split(',').map((f) => f.trim()).filter(Boolean)
+          ? (data.features as string)
+              .split(',')
+              .map((f) => f.trim())
+              .filter(Boolean)
           : [];
     }
     if (data.isActive !== undefined) payload.isActive = data.isActive === true;
@@ -255,14 +282,14 @@ export class SubscriptionAdminService {
 
   // ─── Promo Codes (interim storage in system_settings) ─────────────────────────
 
-  private async readPromoCodes(): Promise<any[]> {
+  private async readPromoCodes(): Promise<PromoCode[]> {
     const key = 'subscription.promo_codes';
     const row = await this.prisma.systemSettings.findUnique({ where: { key } });
     if (!row || !Array.isArray(row.value)) return [];
-    return row.value;
+    return row.value as PromoCode[];
   }
 
-  private async writePromoCodes(codes: any[]): Promise<void> {
+  private async writePromoCodes(codes: PromoCode[]): Promise<void> {
     const key = 'subscription.promo_codes';
     const existing = await this.prisma.systemSettings.findUnique({ where: { key } });
     if (existing) {
@@ -302,7 +329,7 @@ export class SubscriptionAdminService {
       throw new Error(`Promo code "${cleanCode}" already exists`);
     }
 
-    const newCode = {
+    const newCode: PromoCode = {
       id: `promo_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       code: cleanCode,
       discountType: data.discountType || 'percent',
@@ -336,4 +363,3 @@ export class SubscriptionAdminService {
     return { success: true };
   }
 }
-
