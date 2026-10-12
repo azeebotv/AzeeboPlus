@@ -69,7 +69,7 @@ describe('apiClient Idempotency-Key header', () => {
         fetchWithPinning,
       },
     }));
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     freshClient = require('../client').apiClient;
   });
 

@@ -1,10 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { MediaClientService } from '../api/clients/media-client.service';
@@ -85,12 +79,8 @@ export class ArchivedContentSweeperService implements OnModuleInit, OnModuleDest
   }
 
   private get ttlDays(): number {
-    const raw = Number(
-      this.configService.get<string>('ARCHIVED_HARD_DELETE_TTL_DAYS')
-    );
-    return Number.isFinite(raw) && raw > 0
-      ? raw
-      : ArchivedContentSweeperService.DEFAULT_TTL_DAYS;
+    const raw = Number(this.configService.get<string>('ARCHIVED_HARD_DELETE_TTL_DAYS'));
+    return Number.isFinite(raw) && raw > 0 ? raw : ArchivedContentSweeperService.DEFAULT_TTL_DAYS;
   }
 
   /**
@@ -191,9 +181,7 @@ export class ArchivedContentSweeperService implements OnModuleInit, OnModuleDest
       return 'nothing-stored';
     }
 
-    const outcomes = await Promise.all(
-      keys.map((key) => this.mediaClient.deleteObject(key))
-    );
+    const outcomes = await Promise.all(keys.map((key) => this.mediaClient.deleteObject(key)));
 
     // null = media-service unreachable/refused → defer, retry next pass.
     if (outcomes.some((o) => o === null)) {

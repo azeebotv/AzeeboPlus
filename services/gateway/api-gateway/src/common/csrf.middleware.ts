@@ -123,13 +123,12 @@ export class CsrfMiddleware implements NestMiddleware {
     // here and caps the blast radius of a leaked token at its 24h TTL.
     const registered = await this.csrfRegistry.isRegistered(cookieToken);
     if (!registered) {
-      this.logger.warn(
-        `CSRF validation failed: token not in registry [${req.method} ${req.path}]`
-      );
+      this.logger.warn(`CSRF validation failed: token not in registry [${req.method} ${req.path}]`);
       res.status(403).json({
         success: false,
         error: 'CSRF token unknown',
-        message: 'The CSRF token was not issued by this server or has expired — re-bootstrap via GET /api/v1/auth/csrf',
+        message:
+          'The CSRF token was not issued by this server or has expired — re-bootstrap via GET /api/v1/auth/csrf',
       });
       return;
     }

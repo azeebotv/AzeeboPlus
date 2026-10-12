@@ -28,10 +28,7 @@ export class ErasureConsumerService implements OnModuleInit {
         await this.eraseUserMedia(userId);
       })
       .catch((error: unknown) => {
-        this.logger.error(
-          `Failed to register ${EventTypes.USER_ERASURE_REQUESTED} handler`,
-          error
-        );
+        this.logger.error(`Failed to register ${EventTypes.USER_ERASURE_REQUESTED} handler`, error);
       });
   }
 

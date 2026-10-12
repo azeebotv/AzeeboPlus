@@ -1466,18 +1466,25 @@ export class SearchService implements OnModuleInit {
     // /v1/admin/* duplicate of this route — the gateway maps /admin to the
     // admin-backend). Return the union of both stats contracts; the legacy
     // keys stay so existing consumers keep working.
-    const [totalQueries, todayQueries, weekQueries, avgResultCount, totalSearchesToday, uniqueSearchers, fuzzy] =
-      await Promise.all([
-        this.prisma.searchQueryLog.count(),
-        this.prisma.searchQueryLog.count({ where: { createdAt: { gte: today } } }),
-        this.prisma.searchQueryLog.count({ where: { createdAt: { gte: weekAgo } } }),
-        this.prisma.searchQueryLog.aggregate({ _avg: { resultCount: true } }),
-        this.prisma.userSearch.count({ where: { createdAt: { gte: today } } }),
-        this.prisma.userSearch
-          .groupBy({ by: ['userId'], where: { createdAt: { gte: today } } })
-          .then((groups) => groups.length),
-        this.getFuzzyStatus(),
-      ]);
+    const [
+      totalQueries,
+      todayQueries,
+      weekQueries,
+      avgResultCount,
+      totalSearchesToday,
+      uniqueSearchers,
+      fuzzy,
+    ] = await Promise.all([
+      this.prisma.searchQueryLog.count(),
+      this.prisma.searchQueryLog.count({ where: { createdAt: { gte: today } } }),
+      this.prisma.searchQueryLog.count({ where: { createdAt: { gte: weekAgo } } }),
+      this.prisma.searchQueryLog.aggregate({ _avg: { resultCount: true } }),
+      this.prisma.userSearch.count({ where: { createdAt: { gte: today } } }),
+      this.prisma.userSearch
+        .groupBy({ by: ['userId'], where: { createdAt: { gte: today } } })
+        .then((groups) => groups.length),
+      this.getFuzzyStatus(),
+    ]);
 
     const topQueries = await this.prisma.searchQueryLog.groupBy({
       by: ['query'],

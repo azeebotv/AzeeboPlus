@@ -187,15 +187,12 @@ export class CdnInvalidationQueueService implements OnModuleInit, OnModuleDestro
   /** Debounced producer kick: drain once, DELAY_MS after the last enqueue. */
   private kickDrain(): void {
     if (this.drainTimer) clearTimeout(this.drainTimer);
-    this.drainTimer = setTimeout(
-      () => {
-        this.drainTimer = undefined;
-        void this.drain().catch((error: unknown) =>
-          this.logger.error(`Debounced drain failed: ${(error as Error).message}`)
-        );
-      },
-      this.drainDelayMs()
-    );
+    this.drainTimer = setTimeout(() => {
+      this.drainTimer = undefined;
+      void this.drain().catch((error: unknown) =>
+        this.logger.error(`Debounced drain failed: ${(error as Error).message}`)
+      );
+    }, this.drainDelayMs());
     (this.drainTimer as unknown as NodeJS.Timeout).unref();
   }
 
@@ -235,8 +232,7 @@ export class CdnInvalidationQueueService implements OnModuleInit, OnModuleDestro
             data: {
               key: row.key,
               reason,
-              lastError:
-                typeof meta?.cdnPurgeError === 'string' ? meta.cdnPurgeError : null,
+              lastError: typeof meta?.cdnPurgeError === 'string' ? meta.cdnPurgeError : null,
             },
           });
           result.enqueued.push({ key: row.key, uploadId: row.id, reason });
@@ -325,11 +321,7 @@ export class CdnInvalidationQueueService implements OnModuleInit, OnModuleDestro
    * Submit one invalidation covering `paths` and bookkeep every row in
    * `rows` according to the outcome (done / retry / dead-letter).
    */
-  private async submitBatch(
-    paths: string[],
-    rows: QueueRow[],
-    result: DrainResult
-  ): Promise<void> {
+  private async submitBatch(paths: string[], rows: QueueRow[], result: DrainResult): Promise<void> {
     const maxAttempts = this.maxAttempts();
     let purge: CdnPurgeResult | undefined;
     let purgeError: string | undefined;
@@ -439,7 +431,8 @@ export class CdnInvalidationQueueService implements OnModuleInit, OnModuleDestro
   }
 
   private nightlyHour(): number {
-    const h = this.configService.get<number>('MEDIA_CDN_INVALIDATION_NIGHTLY_HOUR') ??
+    const h =
+      this.configService.get<number>('MEDIA_CDN_INVALIDATION_NIGHTLY_HOUR') ??
       CdnInvalidationQueueService.DEFAULT_NIGHTLY_HOUR;
     return Number.isInteger(h) && h >= 0 && h <= 23
       ? h
@@ -447,19 +440,22 @@ export class CdnInvalidationQueueService implements OnModuleInit, OnModuleDestro
   }
 
   private maxAttempts(): number {
-    const n = this.configService.get<number>('MEDIA_CDN_INVALIDATION_MAX_ATTEMPTS') ??
+    const n =
+      this.configService.get<number>('MEDIA_CDN_INVALIDATION_MAX_ATTEMPTS') ??
       CdnInvalidationQueueService.DEFAULT_MAX_ATTEMPTS;
     return Number.isFinite(n) && n > 0 ? n : CdnInvalidationQueueService.DEFAULT_MAX_ATTEMPTS;
   }
 
   private batchSize(): number {
-    const n = this.configService.get<number>('MEDIA_CDN_INVALIDATION_BATCH_SIZE') ??
+    const n =
+      this.configService.get<number>('MEDIA_CDN_INVALIDATION_BATCH_SIZE') ??
       CdnInvalidationQueueService.DEFAULT_BATCH_SIZE;
     return Number.isFinite(n) && n > 0 ? n : CdnInvalidationQueueService.DEFAULT_BATCH_SIZE;
   }
 
   private drainDelayMs(): number {
-    const n = this.configService.get<number>('MEDIA_CDN_INVALIDATION_DRAIN_DELAY_MS') ??
+    const n =
+      this.configService.get<number>('MEDIA_CDN_INVALIDATION_DRAIN_DELAY_MS') ??
       CdnInvalidationQueueService.DEFAULT_DRAIN_DELAY_MS;
     return Number.isFinite(n) && n >= 0 ? n : CdnInvalidationQueueService.DEFAULT_DRAIN_DELAY_MS;
   }

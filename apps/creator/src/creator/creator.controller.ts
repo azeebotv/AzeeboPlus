@@ -317,7 +317,8 @@ export class CreatorController {
       success: true,
       data: await this.creatorService.getWebMonetizationSettings(req.user.id),
     };
-  }  @Patch('monetization/settings')
+  }
+  @Patch('monetization/settings')
   async patchWebMonetizationSettings(
     @Request() req: AuthRequest,
     @Body()
@@ -333,9 +334,7 @@ export class CreatorController {
       data: await this.creatorService.updateMonetization(req.user.id, {
         tipEnabled: body.tipsEnabled,
         tipMin: body.minimumTipAmount,
-        tipMax: body.customTipAmounts?.length
-          ? Math.max(...body.customTipAmounts)
-          : undefined,
+        tipMax: body.customTipAmounts?.length ? Math.max(...body.customTipAmounts) : undefined,
         payoutMethod: body.payoutMethod,
       }),
     };

@@ -459,7 +459,10 @@ export const contentApi = {
     if (!created.success || !created.data) {
       return {
         success: false,
-        error: created.error ?? { code: 'CREATE_FAILED', message: created.message ?? 'Failed to create content' },
+        error: created.error ?? {
+          code: 'CREATE_FAILED',
+          message: created.message ?? 'Failed to create content',
+        },
       };
     }
 

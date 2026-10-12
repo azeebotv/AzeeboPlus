@@ -1,10 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  INestApplication,
-  CanActivate,
-  ExecutionContext,
-  VersioningType,
-} from '@nestjs/common';
+import { INestApplication, CanActivate, ExecutionContext, VersioningType } from '@nestjs/common';
 import request from 'supertest';
 import { UploadModule } from '../upload/upload.module';
 import { S3Service } from '../upload/s3.service';
@@ -215,21 +210,19 @@ class MockAdminGuard implements CanActivate {
     it('raises the circuit-open rejection from a real S3Service on a dead endpoint', async () => {
       // A REAL S3Service pointed at a dead port: connection failures trip
       // the circuit breaker exactly like a production outage.
-      const deadS3 = new S3Service(
-        {
-          get: (key: string) => {
-            const cfg: Record<string, string> = {
-              AWS_REGION: 'us-east-1',
-              AWS_S3_BUCKET: BUCKET,
-              S3_ENDPOINT: 'http://127.0.0.1:1', // reserved port ⇒ refused
-              AWS_ACCESS_KEY_ID: 'dead',
-              AWS_SECRET_ACCESS_KEY: 'dead',
-              CDN_URL: '',
-            };
-            return cfg[key];
-          },
-        } as never
-      );
+      const deadS3 = new S3Service({
+        get: (key: string) => {
+          const cfg: Record<string, string> = {
+            AWS_REGION: 'us-east-1',
+            AWS_S3_BUCKET: BUCKET,
+            S3_ENDPOINT: 'http://127.0.0.1:1', // reserved port ⇒ refused
+            AWS_ACCESS_KEY_ID: 'dead',
+            AWS_SECRET_ACCESS_KEY: 'dead',
+            CDN_URL: '',
+          };
+          return cfg[key];
+        },
+      } as never);
 
       const deadKey = 'uploads/it-dead-store.txt';
 
@@ -326,8 +319,9 @@ class MockAdminGuard implements CanActivate {
       for (let i = 0; i < 5; i++) {
         await deadS3.getFileMetadata('uploads/circuit-probe.txt').catch(() => undefined);
       }
-      expect((deadS3 as unknown as { circuitBreaker: { isOpen(): boolean } }).circuitBreaker.isOpen())
-        .toBe(true);
+      expect(
+        (deadS3 as unknown as { circuitBreaker: { isOpen(): boolean } }).circuitBreaker.isOpen()
+      ).toBe(true);
 
       const res = await request(deadBaseUrl)
         // URI versioning is enabled (mirrors main.ts) ⇒ /v1 prefix, and the

@@ -19,7 +19,10 @@ import {
  * public Borrow page discloses.
  */
 export class CreatePartnerBankDto {
-  @ApiProperty({ description: 'URL-safe identifier used in the public page', example: 'partner-bank-a' })
+  @ApiProperty({
+    description: 'URL-safe identifier used in the public page',
+    example: 'partner-bank-a',
+  })
   @Matches(/^[a-z0-9][a-z0-9-]{1,63}$/, {
     message: 'slug must be lowercase letters, digits and hyphens (2-64 chars)',
   })
@@ -43,7 +46,9 @@ export class CreatePartnerBankDto {
   @MaxLength(500)
   logoUrl?: string;
 
-  @ApiPropertyOptional({ description: 'Regulator licence/approval reference shown beside the offer' })
+  @ApiPropertyOptional({
+    description: 'Regulator licence/approval reference shown beside the offer',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(160)
@@ -107,7 +112,10 @@ export class CreatePartnerBankDto {
   @MaxLength(2000)
   eligibility?: string;
 
-  @ApiProperty({ description: 'Partner-hosted application page — the only outbound CTA', example: 'https://apply.example.org/bank-a' })
+  @ApiProperty({
+    description: 'Partner-hosted application page — the only outbound CTA',
+    example: 'https://apply.example.org/bank-a',
+  })
   @IsUrl({ protocols: ['https'], require_tld: true })
   @MaxLength(500)
   applyUrl!: string;

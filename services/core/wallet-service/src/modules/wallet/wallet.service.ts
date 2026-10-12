@@ -574,50 +574,50 @@ export class WalletService {
         async (
           tx: Prisma.TransactionClient
         ): Promise<{ wallet: WalletRow; existingTransaction?: WalletTransaction }> => {
-        // Lock the wallet row and check balance atomically
-        const [wallet] = await tx.$queryRaw<WalletRow[]>`
+          // Lock the wallet row and check balance atomically
+          const [wallet] = await tx.$queryRaw<WalletRow[]>`
           SELECT * FROM "wallets" WHERE "userId" = ${userId} FOR UPDATE
         `;
 
-        if (!wallet) {
-          throw new NotFoundException(`Wallet not found for user ${userId}`);
-        }
-
-        if (idempotencyKey) {
-          const existingTransaction = await tx.walletTransaction.findUnique({
-            where: { idempotencyKey },
-          });
-          if (existingTransaction) {
-            return { wallet, existingTransaction };
+          if (!wallet) {
+            throw new NotFoundException(`Wallet not found for user ${userId}`);
           }
-        }
 
-        if (toNumber(wallet.balance.toString()) < withdrawDto.amount) {
-          throw new BadRequestException('Insufficient balance');
-        }
+          if (idempotencyKey) {
+            const existingTransaction = await tx.walletTransaction.findUnique({
+              where: { idempotencyKey },
+            });
+            if (existingTransaction) {
+              return { wallet, existingTransaction };
+            }
+          }
 
-        await tx.wallet.update({
-          where: { id: wallet.id },
-          data: { balance: { decrement: withdrawDto.amount } },
-        });
+          if (toNumber(wallet.balance.toString()) < withdrawDto.amount) {
+            throw new BadRequestException('Insufficient balance');
+          }
 
-        await tx.walletTransaction.create({
-          data: {
-            walletId: wallet.id,
-            type: 'withdraw',
-            amount: withdrawDto.amount,
-            status: 'processing',
-            description: withdrawDto.description || 'Withdrawal to bank account',
-            reference,
-            idempotencyKey,
-            metadata: {
-              bankAccountId: withdrawDto.bankAccountId,
+          await tx.wallet.update({
+            where: { id: wallet.id },
+            data: { balance: { decrement: withdrawDto.amount } },
+          });
+
+          await tx.walletTransaction.create({
+            data: {
+              walletId: wallet.id,
+              type: 'withdraw',
+              amount: withdrawDto.amount,
+              status: 'processing',
+              description: withdrawDto.description || 'Withdrawal to bank account',
+              reference,
+              idempotencyKey,
+              metadata: {
+                bankAccountId: withdrawDto.bankAccountId,
+              },
             },
-          },
-        });
+          });
 
-        return { wallet: (await tx.wallet.findUnique({ where: { id: wallet.id } }))! };
-      }
+          return { wallet: (await tx.wallet.findUnique({ where: { id: wallet.id } }))! };
+        }
       );
 
       if (result.existingTransaction) {
@@ -795,7 +795,9 @@ export class WalletService {
           success: true,
           data: {
             senderReference: existing.reference,
-            recipientReference: (existing.metadata as { recipientReference?: string } | null)?.recipientReference ?? existing.reference,
+            recipientReference:
+              (existing.metadata as { recipientReference?: string } | null)?.recipientReference ??
+              existing.reference,
             amount: toNumber(existing.amount.toString()),
             status: existing.status as 'completed',
             description: existing.description ?? `Transfer to user ${transferDto.recipientId}`,

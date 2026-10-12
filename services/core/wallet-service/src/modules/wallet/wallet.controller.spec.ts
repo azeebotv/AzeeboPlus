@@ -490,7 +490,11 @@ describe('WalletController', () => {
       walletService.withdraw.mockRejectedValue(new BadRequestException('Insufficient balance'));
 
       const req = { user: { id: mockUserId }, headers: {} };
-      const withdrawDto = { idempotencyKey: 'wd-ctrl-key', amount: 99999, bankAccountId: 'bank-123' };
+      const withdrawDto = {
+        idempotencyKey: 'wd-ctrl-key',
+        amount: 99999,
+        bankAccountId: 'bank-123',
+      };
 
       await expect(controller.withdraw(req, withdrawDto)).rejects.toThrow(BadRequestException);
     });
@@ -514,7 +518,12 @@ describe('WalletController', () => {
       walletService.transfer.mockResolvedValue(transferResult as never);
 
       const req = { user: { id: mockUserId }, headers: {} };
-      const transferDto = { idempotencyKey: 'trf-ctrl-key', recipientId: 'user-456', amount: 200, note: 'Payment' };
+      const transferDto = {
+        idempotencyKey: 'trf-ctrl-key',
+        recipientId: 'user-456',
+        amount: 200,
+        note: 'Payment',
+      };
       const result = await controller.transfer(req, transferDto);
 
       expect(result.success).toBe(true);

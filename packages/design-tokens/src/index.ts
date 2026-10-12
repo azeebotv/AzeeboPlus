@@ -10,7 +10,13 @@ export const BRAND_FLAME = '#EC691F';
 /** #RRGGBB -> rgba() so a single hex source of truth can feed CSS and RN alike. */
 export function withAlpha(hex: string, alpha: number): string {
   const v = hex.replace('#', '');
-  const n = v.length === 3 ? v.split('').map((c) => c + c).join('') : v;
+  const n =
+    v.length === 3
+      ? v
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : v;
   const r = parseInt(n.slice(0, 2), 16);
   const g = parseInt(n.slice(2, 4), 16);
   const b = parseInt(n.slice(4, 6), 16);
@@ -376,18 +382,102 @@ export const type: Record<
   | 'hero',
   TypeRole
 > = {
-  microLabel: { size: 10, lineHeight: 1.5, weight: '400', tracking: '0.05em', transform: 'uppercase', family: 'body' },
-  overline: { size: 12, lineHeight: 1.33, weight: '700', tracking: '0.1em', transform: 'uppercase', family: 'body' },
-  caption: { size: 12, lineHeight: 1.33, weight: '400', tracking: '0em', transform: 'none', family: 'body' },
-  body: { size: 14, lineHeight: 1.43, weight: '400', tracking: '0em', transform: 'none', family: 'body' },
-  bodyStrong: { size: 14, lineHeight: 1.43, weight: '600', tracking: '0em', transform: 'none', family: 'body' },
-  lead: { size: 16, lineHeight: 1.5, weight: '400', tracking: '0em', transform: 'none', family: 'body' },
-  subtitle: { size: 18, lineHeight: 1.5, weight: '500', tracking: '0em', transform: 'none', family: 'display' },
-  title: { size: 20, lineHeight: 1.4, weight: '600', tracking: '-0.02em', transform: 'none', family: 'display' },
-  sectionTitle: { size: 24, lineHeight: 1.5, weight: '600', tracking: '-0.02em', transform: 'none', family: 'display' },
-  heading: { size: 32, lineHeight: 1.2, weight: '700', tracking: '-0.02em', transform: 'none', family: 'display' },
-  display: { size: 48, lineHeight: 1.2, weight: '800', tracking: '-0.03em', transform: 'none', family: 'display' },
-  hero: { size: 60, lineHeight: 1.15, weight: '800', tracking: '-0.03em', transform: 'none', family: 'display' },
+  microLabel: {
+    size: 10,
+    lineHeight: 1.5,
+    weight: '400',
+    tracking: '0.05em',
+    transform: 'uppercase',
+    family: 'body',
+  },
+  overline: {
+    size: 12,
+    lineHeight: 1.33,
+    weight: '700',
+    tracking: '0.1em',
+    transform: 'uppercase',
+    family: 'body',
+  },
+  caption: {
+    size: 12,
+    lineHeight: 1.33,
+    weight: '400',
+    tracking: '0em',
+    transform: 'none',
+    family: 'body',
+  },
+  body: {
+    size: 14,
+    lineHeight: 1.43,
+    weight: '400',
+    tracking: '0em',
+    transform: 'none',
+    family: 'body',
+  },
+  bodyStrong: {
+    size: 14,
+    lineHeight: 1.43,
+    weight: '600',
+    tracking: '0em',
+    transform: 'none',
+    family: 'body',
+  },
+  lead: {
+    size: 16,
+    lineHeight: 1.5,
+    weight: '400',
+    tracking: '0em',
+    transform: 'none',
+    family: 'body',
+  },
+  subtitle: {
+    size: 18,
+    lineHeight: 1.5,
+    weight: '500',
+    tracking: '0em',
+    transform: 'none',
+    family: 'display',
+  },
+  title: {
+    size: 20,
+    lineHeight: 1.4,
+    weight: '600',
+    tracking: '-0.02em',
+    transform: 'none',
+    family: 'display',
+  },
+  sectionTitle: {
+    size: 24,
+    lineHeight: 1.5,
+    weight: '600',
+    tracking: '-0.02em',
+    transform: 'none',
+    family: 'display',
+  },
+  heading: {
+    size: 32,
+    lineHeight: 1.2,
+    weight: '700',
+    tracking: '-0.02em',
+    transform: 'none',
+    family: 'display',
+  },
+  display: {
+    size: 48,
+    lineHeight: 1.2,
+    weight: '800',
+    tracking: '-0.03em',
+    transform: 'none',
+    family: 'display',
+  },
+  hero: {
+    size: 60,
+    lineHeight: 1.15,
+    weight: '800',
+    tracking: '-0.03em',
+    transform: 'none',
+    family: 'display',
+  },
 };
 
 export const radius = {

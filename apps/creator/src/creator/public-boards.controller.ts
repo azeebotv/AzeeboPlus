@@ -78,8 +78,9 @@ export class PublicBoardsController {
    */
   private resolveViewerId(req: Request): string | null {
     const authHeader = req.headers['authorization'];
-    const token =
-      authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.cookies?.['access_token'];
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : req.cookies?.['access_token'];
     if (!token) return null;
     try {
       const payload = this.jwtService.verify<{ sub?: string }>(token, {
@@ -98,14 +99,7 @@ export class PublicBoardsController {
     @Param('challengeId') challengeId: string,
     @Res() res: Response
   ): Promise<void> {
-    const indexPath = join(
-      __dirname,
-      '..',
-      '..',
-      'client',
-      'dist',
-      'index.html'
-    );
+    const indexPath = join(__dirname, '..', '..', 'client', 'dist', 'index.html');
     if (!existsSync(indexPath)) {
       // Client not built (dev serves it via Vite instead) — nothing to tag.
       throw new NotFoundException('Client build not available');

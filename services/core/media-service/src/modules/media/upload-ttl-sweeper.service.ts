@@ -84,7 +84,8 @@ export class UploadTtlSweeperService implements OnModuleInit, OnModuleDestroy {
   }
 
   private ttlHours(): number {
-    const h = this.configService.get<number>('MEDIA_UPLOAD_TTL_HOURS') ??
+    const h =
+      this.configService.get<number>('MEDIA_UPLOAD_TTL_HOURS') ??
       UploadTtlSweeperService.DEFAULT_TTL_HOURS;
     return Number.isFinite(h) && h > 0 ? h : UploadTtlSweeperService.DEFAULT_TTL_HOURS;
   }
@@ -142,7 +143,11 @@ export class UploadTtlSweeperService implements OnModuleInit, OnModuleDestroy {
         result.protectedUnmanaged++;
         continue;
       }
-      if (referenced.has(key) || referenced.has(stem) || [...referenced].some((r) => r.includes(stem))) {
+      if (
+        referenced.has(key) ||
+        referenced.has(stem) ||
+        [...referenced].some((r) => r.includes(stem))
+      ) {
         result.protectedReferenced++;
         continue;
       }

@@ -256,9 +256,7 @@ export class CircuitBreakerProxyService {
           // bodies into "[object Object]"-style garbage — upstream multer
           // failed with "Unexpected end of form" on every file upload.
           fetchOptions.body =
-            typeof body === 'string' ||
-            body instanceof Buffer ||
-            body instanceof Uint8Array
+            typeof body === 'string' || body instanceof Buffer || body instanceof Uint8Array
               ? (body as unknown as BodyInit)
               : JSON.stringify(body);
         }
@@ -304,7 +302,8 @@ export class CircuitBreakerProxyService {
         };
       } catch (retryError) {
         lastError = retryError as Error;
-        const retryStatus = retryError instanceof UpstreamStatusError ? retryError.status : undefined;
+        const retryStatus =
+          retryError instanceof UpstreamStatusError ? retryError.status : undefined;
         const shouldRetry =
           attempt < DEFAULT_RETRY_CONFIG.retries &&
           this.shouldRetryStatus(retryStatus) &&

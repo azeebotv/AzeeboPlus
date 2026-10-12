@@ -229,7 +229,8 @@ export class FeatureFlagService {
     // gateway, all services) shares one namespace without per-consumer
     // configuration. Explicit index in the URL wins; injected `config.redis`
     // clients are the caller's connection and are NOT re-targeted.
-    this.redis = config.redis || new Redis(resolveFeatureFlagRedisUrl(redisUrl || 'redis://localhost:6379'));
+    this.redis =
+      config.redis || new Redis(resolveFeatureFlagRedisUrl(redisUrl || 'redis://localhost:6379'));
     this.prefix = config.prefix || 'feature_flags:';
     this.defaultFlags = config.defaultFlags || {};
     this.defaultValues = config.defaultValues || {};

@@ -149,7 +149,10 @@ export class BlobReconcileService {
   }
 
   private mimeTypeFromKey(key: string): string {
-    const ext = this.basename(key).match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase() ?? '';
+    const ext =
+      this.basename(key)
+        .match(/\.([a-z0-9]+)$/i)?.[1]
+        ?.toLowerCase() ?? '';
     const map: Record<string, string> = {
       jpg: 'image/jpeg',
       jpeg: 'image/jpeg',

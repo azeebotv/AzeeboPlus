@@ -21,9 +21,7 @@ describe('ImmutableAuditDbService.pseudonymizeNetworkMetadata (AUD-48)', () => {
       { ipAddress: '10.0.0.1', userAgent: 'Mozilla/5.0' },
       { ipAddress: null, userAgent: 'curl/8.0' },
     ]);
-    updateMany
-      .mockResolvedValueOnce({ count: 3 })
-      .mockResolvedValueOnce({ count: 2 });
+    updateMany.mockResolvedValueOnce({ count: 3 }).mockResolvedValueOnce({ count: 2 });
 
     const { compacted } = await service.pseudonymizeNetworkMetadata(cutoff);
 

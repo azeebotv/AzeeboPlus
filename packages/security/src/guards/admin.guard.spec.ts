@@ -2,19 +2,17 @@ import { ForbiddenException } from '@nestjs/common';
 import { AdminGuard } from './admin.guard';
 
 describe('AdminGuard', () => {
-  const makeContext = (headers: Record<string, string | undefined>, user?: unknown) => ({
-    switchToHttp: () => ({
-      getRequest: () => ({ headers, user }),
-    }),
-  }) as never;
+  const makeContext = (headers: Record<string, string | undefined>, user?: unknown) =>
+    ({
+      switchToHttp: () => ({
+        getRequest: () => ({ headers, user }),
+      }),
+    }) as never;
 
   const guard = new AdminGuard({ verify: () => ({ sub: 'u1', role: 'admin' }) } as never);
 
   it('accepts identity established by an earlier guard (cookie-only SPA flow)', () => {
-    const ctx = makeContext(
-      { cookie: 'access_token=whatever' },
-      { id: 'u1', role: 'admin' }
-    );
+    const ctx = makeContext({ cookie: 'access_token=whatever' }, { id: 'u1', role: 'admin' });
     expect(guard.canActivate(ctx)).toBe(true);
   });
 

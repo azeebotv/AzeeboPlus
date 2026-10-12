@@ -105,10 +105,7 @@ export class BorrowService {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       throw new ConflictException('A partner bank with this slug already exists');
     }
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2025'
-    ) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       throw new NotFoundException('Partner bank not found');
     }
     throw error;

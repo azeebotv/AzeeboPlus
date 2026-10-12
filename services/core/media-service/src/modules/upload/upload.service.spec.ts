@@ -410,7 +410,10 @@ describe('UploadService', () => {
 
     it('does not touch the row when upload-time eviction purges (track=false)', async () => {
       mockFeatureFlagService.isEnabled.mockResolvedValue(false);
-      mockS3Service.uploadFile.mockResolvedValue({ url: 'https://example.com/r.jpg', key: 'images/r.jpg' });
+      mockS3Service.uploadFile.mockResolvedValue({
+        url: 'https://example.com/r.jpg',
+        key: 'images/r.jpg',
+      });
       const file = {
         originalname: 'r.jpg',
         mimetype: 'image/jpeg',

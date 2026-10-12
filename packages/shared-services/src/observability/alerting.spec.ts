@@ -1,7 +1,4 @@
-import {
-  AlertingService,
-  NotificationChannelAdapter,
-} from './alerting.service';
+import { AlertingService, NotificationChannelAdapter } from './alerting.service';
 
 describe('AlertingService', () => {
   let service: AlertingService;

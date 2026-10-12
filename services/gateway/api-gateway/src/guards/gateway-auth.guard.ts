@@ -121,7 +121,8 @@ export class GatewayAuthGuard implements CanActivate {
 
     // AUD-19: Swagger docs are only public in local dev when SWAGGER_ENABLED=true
     if (requestPath.startsWith('/docs')) {
-      const isLocalDev = process.env.NODE_ENV === 'development' || process.env.DEPLOY_ENV === 'local';
+      const isLocalDev =
+        process.env.NODE_ENV === 'development' || process.env.DEPLOY_ENV === 'local';
       if (!isLocalDev || process.env.SWAGGER_ENABLED !== 'true') {
         const internalKey = request.headers['x-internal-api-key'];
         const configuredKey = this.configService.get<string>('INTERNAL_API_KEY');

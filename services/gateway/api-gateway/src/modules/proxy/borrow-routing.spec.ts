@@ -165,7 +165,12 @@ describe('ProxyController forwards /borrow', () => {
       ...overrides,
     }) as unknown as Request;
 
-  const call = (method: 'proxyGet' | 'proxyPost' | 'proxyPatch' | 'proxyDelete', path: string, res: unknown, req: Request) =>
+  const call = (
+    method: 'proxyGet' | 'proxyPost' | 'proxyPatch' | 'proxyDelete',
+    path: string,
+    res: unknown,
+    req: Request
+  ) =>
     (controller as unknown as Record<string, (s: string, r: Request, x: unknown) => Promise<void>>)[
       method
     ](path.split('/')[0], req, res);
@@ -225,7 +230,12 @@ describe('ProxyController forwards /borrow', () => {
 
   it('forwards a slug lookup', async () => {
     const res = mockRes();
-    await call('proxyGet', 'borrow/banks/sample-bank-a', res, mockReq('borrow/banks/sample-bank-a'));
+    await call(
+      'proxyGet',
+      'borrow/banks/sample-bank-a',
+      res,
+      mockReq('borrow/banks/sample-bank-a')
+    );
 
     expect(circuitBreaker.proxyRequest).toHaveBeenCalledWith(
       expect.objectContaining({ path: '/v1/borrow/banks/sample-bank-a' })
@@ -237,7 +247,9 @@ describe('ProxyController forwards /borrow', () => {
     // the public page, and a future "just cache it" change would silently reintroduce
     // a stale body that no admin write can evict.
     flagService.isEnabled.mockImplementation((key: string) =>
-      Promise.resolve(key === gatewayFlags.endpointEnforcement || key === gatewayFlags.responseCache)
+      Promise.resolve(
+        key === gatewayFlags.endpointEnforcement || key === gatewayFlags.responseCache
+      )
     );
 
     const res = mockRes();
@@ -252,7 +264,9 @@ describe('ProxyController forwards /borrow', () => {
 
   it('forwards the admin list, and never caches admin traffic', async () => {
     flagService.isEnabled.mockImplementation((key: string) =>
-      Promise.resolve(key === gatewayFlags.endpointEnforcement || key === gatewayFlags.responseCache)
+      Promise.resolve(
+        key === gatewayFlags.endpointEnforcement || key === gatewayFlags.responseCache
+      )
     );
 
     const res = mockRes();

@@ -426,7 +426,11 @@ export class AlertingService {
   /**
    * Send notifications for an alert with deduplication and retries
    */
-  private async sendNotifications(alert: Alert, rule: AlertRule, isDuplicate: boolean): Promise<void> {
+  private async sendNotifications(
+    alert: Alert,
+    rule: AlertRule,
+    isDuplicate: boolean
+  ): Promise<void> {
     for (const channel of rule.notifications) {
       if (isDuplicate) {
         this.deliveryLogs.push({

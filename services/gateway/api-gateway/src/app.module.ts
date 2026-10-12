@@ -70,9 +70,7 @@ const gatewayCacheStore = process.env.REDIS_URL
     CacheModule.register({
       isGlobal: true,
       ttl: 300_000, // 5 minutes — keep in sync with proxy controller CACHE_TTL_MS
-      ...(gatewayCacheStore
-        ? { stores: [gatewayCacheStore] }
-        : { max: 100 }), // in-memory fallback only (single replica / dev)
+      ...(gatewayCacheStore ? { stores: [gatewayCacheStore] } : { max: 100 }), // in-memory fallback only (single replica / dev)
     }),
     ThrottlerModule.forRoot({
       throttlers: [

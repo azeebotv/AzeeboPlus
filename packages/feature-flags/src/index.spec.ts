@@ -37,7 +37,9 @@ describe('resolveFeatureFlagRedisUrl (dedicated flag-cache DB index)', () => {
   });
 
   it('honors the FEATURE_FLAG_REDIS_DB override for bare URLs', () => {
-    expect(resolveFeatureFlagRedisUrl('redis://localhost:6379', '5')).toBe('redis://localhost:6379/5');
+    expect(resolveFeatureFlagRedisUrl('redis://localhost:6379', '5')).toBe(
+      'redis://localhost:6379/5'
+    );
     // Non-numeric / negative override → falls back to the default.
     expect(resolveFeatureFlagRedisUrl('redis://localhost:6379', 'banana')).toBe(
       'redis://localhost:6379/2'

@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { CreatorService } from './creator.service';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,9 +88,11 @@ function buildPrismaMock(): MockPrisma {
     challengeSubmission: {
       findUnique: jest.fn().mockResolvedValue(null),
       findFirst: jest.fn().mockResolvedValue(null),
-      create: jest.fn().mockImplementation(({ data }) =>
-        Promise.resolve({ id: 'sub-1', ...data, submittedAt: new Date() })
-      ),
+      create: jest
+        .fn()
+        .mockImplementation(({ data }) =>
+          Promise.resolve({ id: 'sub-1', ...data, submittedAt: new Date() })
+        ),
       findMany: jest.fn().mockResolvedValue([]),
       createMany: jest.fn().mockResolvedValue({ count: 0 }),
       update: jest.fn().mockResolvedValue({}),
@@ -98,9 +105,11 @@ function buildPrismaMock(): MockPrisma {
     subscriptionTier: {
       findMany: jest.fn().mockResolvedValue([]),
       findUnique: jest.fn().mockResolvedValue(null),
-      create: jest.fn().mockImplementation(({ data }) =>
-        Promise.resolve({ id: 'tier-1', ...data, createdAt: new Date(), updatedAt: new Date() })
-      ),
+      create: jest
+        .fn()
+        .mockImplementation(({ data }) =>
+          Promise.resolve({ id: 'tier-1', ...data, createdAt: new Date(), updatedAt: new Date() })
+        ),
       update: jest.fn().mockResolvedValue({}),
       delete: jest.fn().mockResolvedValue({}),
     },
@@ -118,28 +127,48 @@ function buildService(
     getWallet: jest.fn().mockResolvedValue({ success: true, data: { id: 'w1', balance: 1000 } }),
     debit: jest.fn().mockResolvedValue({ success: true }),
     credit: jest.fn().mockResolvedValue({ success: true, data: { balance: 10250 } }),
-    getPayoutRequests: jest.fn().mockResolvedValue({ success: true, data: { items: [], total: 0 } }),
+    getPayoutRequests: jest
+      .fn()
+      .mockResolvedValue({ success: true, data: { items: [], total: 0 } }),
     ...wallet,
   };
   const creatorsClient = {
     getChallenges: jest.fn().mockResolvedValue({ success: true, data: { challenges: [] } }),
     getMyChallengeEntries: jest.fn().mockResolvedValue({ success: true, data: { challenges: [] } }),
-    participateInChallenge: jest.fn().mockResolvedValue({ success: true, data: { entryId: 'entry-1' } }),
+    participateInChallenge: jest
+      .fn()
+      .mockResolvedValue({ success: true, data: { entryId: 'entry-1' } }),
     getChallengeLeaderboard: jest.fn().mockResolvedValue({
       success: true,
       data: {
         challenge: { id: 'ch-1', title: 'Dance Marathon', prize: 100 },
         totalEntries: 2,
         entries: [
-          { position: 1, entryId: 'e2', userId: 'u2', displayName: 'Winner', status: 'winner', submittedAt: new Date().toISOString() },
-          { position: 2, entryId: 'e1', userId: 'u1', displayName: 'Rookie', status: 'pending', submittedAt: new Date().toISOString() },
+          {
+            position: 1,
+            entryId: 'e2',
+            userId: 'u2',
+            displayName: 'Winner',
+            status: 'winner',
+            submittedAt: new Date().toISOString(),
+          },
+          {
+            position: 2,
+            entryId: 'e1',
+            userId: 'u1',
+            displayName: 'Rookie',
+            status: 'pending',
+            submittedAt: new Date().toISOString(),
+          },
         ],
       },
     }),
   };
   const mediaClient = {
     forwardUpload: jest.fn().mockResolvedValue(null),
-    getSignedPlaybackUrl: jest.fn().mockResolvedValue({ url: 'https://signed/x.mp4', expiresIn: 600 }),
+    getSignedPlaybackUrl: jest
+      .fn()
+      .mockResolvedValue({ url: 'https://signed/x.mp4', expiresIn: 600 }),
     getPremiumUrl: jest.fn().mockResolvedValue(null),
     deleteObject: jest.fn().mockResolvedValue('deleted'),
     ...media,
@@ -217,9 +246,7 @@ describe('CreatorService — payouts', () => {
     (prisma.creatorProfile.findUnique as jest.Mock).mockResolvedValue({ userId: 'u1' });
     const { service } = buildService(prisma);
 
-    await expect(service.requestPayout('u1', 100)).rejects.toThrow(
-      'Pending payout already exists'
-    );
+    await expect(service.requestPayout('u1', 100)).rejects.toThrow('Pending payout already exists');
   });
 
   it('rejects an invalid payout method', async () => {
@@ -267,7 +294,13 @@ describe('CreatorService — payouts', () => {
 
     const result = await service.requestPayout('u1', 250, 'paypal');
 
-    expect(result.success).toBe(true);      expect(walletClient.debit).toHaveBeenCalledWith('u1', 250, 'Payout request', expect.any(String));
+    expect(result.success).toBe(true);
+    expect(walletClient.debit).toHaveBeenCalledWith(
+      'u1',
+      250,
+      'Payout request',
+      expect.any(String)
+    );
     expect(prisma.payoutRequest.create).toHaveBeenCalledWith({
       data: { userId: 'u1', amount: 250, status: 'pending', method: 'paypal' },
     });
@@ -518,7 +551,13 @@ describe('CreatorService — challenge submissions', () => {
     expect(result.synced).toBe(false);
     expect(result.entryId).toBeUndefined();
     expect(prisma.challengeSubmission.create).toHaveBeenCalledWith({
-      data: { userId: 'u1', challengeId: 'ch1', title: 'My Entry', upstreamId: undefined, contentId: undefined },
+      data: {
+        userId: 'u1',
+        challengeId: 'ch1',
+        title: 'My Entry',
+        upstreamId: undefined,
+        contentId: undefined,
+      },
     });
   });
 
@@ -557,7 +596,9 @@ describe('CreatorService — challenge submissions', () => {
 
     it('rejects attaching content the user does not own', async () => {
       const prisma = buildPrismaMock();
-      prisma.contentItem.findUnique = jest.fn().mockResolvedValue(mockContent({ creatorId: 'someone-else' }));
+      prisma.contentItem.findUnique = jest
+        .fn()
+        .mockResolvedValue(mockContent({ creatorId: 'someone-else' }));
       const { service } = buildService(prisma);
 
       await expect(service.submitChallenge('u1', 'ch1', 'T', 'content-1')).rejects.toThrow(
@@ -567,9 +608,7 @@ describe('CreatorService — challenge submissions', () => {
 
     it('rejects attaching metadata-only uploads (no stored media key)', async () => {
       const prisma = buildPrismaMock();
-      prisma.contentItem.findUnique = jest
-        .fn()
-        .mockResolvedValue(mockContent({ metadata: {} }));
+      prisma.contentItem.findUnique = jest.fn().mockResolvedValue(mockContent({ metadata: {} }));
       const { service } = buildService(prisma);
 
       await expect(service.submitChallenge('u1', 'ch1', 'T', 'content-1')).rejects.toThrow(
@@ -608,13 +647,27 @@ describe('CreatorService — challenge submissions', () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany
       .mockResolvedValueOnce([]) // initial local read
-      .mockResolvedValueOnce([{ id: 'entry-9', userId: 'u1', challengeId: 'ch9', title: 'Title', status: 'submitted', submittedAt: new Date() }]); // post-hydration read
+      .mockResolvedValueOnce([
+        {
+          id: 'entry-9',
+          userId: 'u1',
+          challengeId: 'ch9',
+          title: 'Title',
+          status: 'submitted',
+          submittedAt: new Date(),
+        },
+      ]); // post-hydration read
     const { service, creatorsClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
       success: true,
       data: {
         challenges: [
-          { id: 'entry-9', challengeId: 'ch9', contentUrl: '/x/my_cool_video.mp4', createdAt: '2026-09-16T00:00:00Z' },
+          {
+            id: 'entry-9',
+            challengeId: 'ch9',
+            contentUrl: '/x/my_cool_video.mp4',
+            createdAt: '2026-09-16T00:00:00Z',
+          },
         ],
       },
     });
@@ -622,7 +675,9 @@ describe('CreatorService — challenge submissions', () => {
     const rows = (await service.getChallengeSubmissions('u1')) as { title: string; id: string }[];
 
     expect(prisma.challengeSubmission.createMany).toHaveBeenCalledWith({
-      data: [expect.objectContaining({ id: 'entry-9', challengeId: 'ch9', title: 'my cool video' })],
+      data: [
+        expect.objectContaining({ id: 'entry-9', challengeId: 'ch9', title: 'my cool video' }),
+      ],
       skipDuplicates: true,
     });
     expect(rows).toHaveLength(1);
@@ -632,7 +687,14 @@ describe('CreatorService — challenge submissions', () => {
   it('returns local submissions untouched when the upstream is unavailable', async () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany.mockResolvedValue([
-      { id: 'local-1', userId: 'u1', challengeId: 'ch1', title: 'T', status: 'submitted', submittedAt: new Date() },
+      {
+        id: 'local-1',
+        userId: 'u1',
+        challengeId: 'ch1',
+        title: 'T',
+        status: 'submitted',
+        submittedAt: new Date(),
+      },
     ]);
     const { service, creatorsClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockRejectedValue(new Error('down'));
@@ -647,10 +709,24 @@ describe('CreatorService — challenge submissions', () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany
       .mockResolvedValueOnce([
-        { id: 'entry-1', userId: 'u1', challengeId: 'ch1', title: 'T', status: 'submitted', submittedAt: new Date() },
+        {
+          id: 'entry-1',
+          userId: 'u1',
+          challengeId: 'ch1',
+          title: 'T',
+          status: 'submitted',
+          submittedAt: new Date(),
+        },
       ]) // initial local read
       .mockResolvedValueOnce([
-        { id: 'entry-1', userId: 'u1', challengeId: 'ch1', title: 'T', status: 'winner', submittedAt: new Date() },
+        {
+          id: 'entry-1',
+          userId: 'u1',
+          challengeId: 'ch1',
+          title: 'T',
+          status: 'winner',
+          submittedAt: new Date(),
+        },
       ]); // post-sync refetch
     const { service, creatorsClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
@@ -685,8 +761,22 @@ describe('CreatorService — challenge submissions', () => {
   it('pull-syncs under_review and rejected transitions', async () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany.mockResolvedValue([
-      { id: 'e1', userId: 'u1', challengeId: 'ch1', title: 'A', status: 'submitted', submittedAt: new Date() },
-      { id: 'e2', userId: 'u1', challengeId: 'ch2', title: 'B', status: 'submitted', submittedAt: new Date() },
+      {
+        id: 'e1',
+        userId: 'u1',
+        challengeId: 'ch1',
+        title: 'A',
+        status: 'submitted',
+        submittedAt: new Date(),
+      },
+      {
+        id: 'e2',
+        userId: 'u1',
+        challengeId: 'ch2',
+        title: 'B',
+        status: 'submitted',
+        submittedAt: new Date(),
+      },
     ]);
     const { service, creatorsClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
@@ -714,7 +804,14 @@ describe('CreatorService — challenge submissions', () => {
   it('treats upstream pending as submitted without a redundant update', async () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany.mockResolvedValue([
-      { id: 'e1', userId: 'u1', challengeId: 'ch1', title: 'A', status: 'submitted', submittedAt: new Date() },
+      {
+        id: 'e1',
+        userId: 'u1',
+        challengeId: 'ch1',
+        title: 'A',
+        status: 'submitted',
+        submittedAt: new Date(),
+      },
     ]);
     const { service, creatorsClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
@@ -744,7 +841,9 @@ describe('CreatorService — challenge submissions', () => {
     const { service, creatorsClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
       success: true,
-      data: { challenges: [{ id: 'upstream-entry-77', challengeId: 'ch1', status: 'under_review' }] },
+      data: {
+        challenges: [{ id: 'upstream-entry-77', challengeId: 'ch1', status: 'under_review' }],
+      },
     });
 
     await service.getChallengeSubmissions('u1');
@@ -758,14 +857,27 @@ describe('CreatorService — challenge submissions', () => {
   it('appends a review event when a status transition is observed', async () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany.mockResolvedValue([
-      { id: 'e1', userId: 'u1', challengeId: 'ch1', title: 'A', status: 'submitted', submittedAt: new Date() },
+      {
+        id: 'e1',
+        userId: 'u1',
+        challengeId: 'ch1',
+        title: 'A',
+        status: 'submitted',
+        submittedAt: new Date(),
+      },
     ]);
     const { service, creatorsClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
       success: true,
       data: {
         challenges: [
-          { id: 'e1', challengeId: 'ch1', status: 'winner', reviewedAt: '2026-09-17T10:00:00.000Z', reviewedByName: 'Ada' },
+          {
+            id: 'e1',
+            challengeId: 'ch1',
+            status: 'winner',
+            reviewedAt: '2026-09-17T10:00:00.000Z',
+            reviewedByName: 'Ada',
+          },
         ],
       },
     });
@@ -790,7 +902,14 @@ describe('CreatorService — challenge submissions', () => {
     // returns so the response reflects the stored note.
     prisma.challengeSubmission.findMany
       .mockResolvedValueOnce([
-        { id: 'e1', userId: 'u1', challengeId: 'ch1', title: 'A', status: 'submitted', submittedAt: new Date() },
+        {
+          id: 'e1',
+          userId: 'u1',
+          challengeId: 'ch1',
+          title: 'A',
+          status: 'submitted',
+          submittedAt: new Date(),
+        },
       ])
       .mockResolvedValueOnce([
         {
@@ -844,7 +963,14 @@ describe('CreatorService — challenge submissions', () => {
   it('credits the prize to the wallet when a transition to winner is observed', async () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany.mockResolvedValue([
-      { id: 'e1', userId: 'u1', challengeId: 'ch1', title: 'A', status: 'submitted', submittedAt: new Date() },
+      {
+        id: 'e1',
+        userId: 'u1',
+        challengeId: 'ch1',
+        title: 'A',
+        status: 'submitted',
+        submittedAt: new Date(),
+      },
     ]);
     const { service, creatorsClient, walletClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
@@ -884,26 +1010,54 @@ describe('CreatorService — challenge submissions', () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany
       .mockResolvedValueOnce([]) // nothing local yet
-      .mockResolvedValueOnce([{ id: 'entry-9', userId: 'u1', challengeId: 'ch9', title: 'T', status: 'winner', submittedAt: new Date() }]);
+      .mockResolvedValueOnce([
+        {
+          id: 'entry-9',
+          userId: 'u1',
+          challengeId: 'ch9',
+          title: 'T',
+          status: 'winner',
+          submittedAt: new Date(),
+        },
+      ]);
     const { service, creatorsClient, walletClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
       success: true,
       data: {
         challenges: [
-          { id: 'entry-9', challengeId: 'ch9', status: 'winner', challenge: { prize: 500 }, contentUrl: '/x/v.mp4', createdAt: '2026-09-20T00:00:00Z' },
+          {
+            id: 'entry-9',
+            challengeId: 'ch9',
+            status: 'winner',
+            challenge: { prize: 500 },
+            contentUrl: '/x/v.mp4',
+            createdAt: '2026-09-20T00:00:00Z',
+          },
         ],
       },
     });
 
     await service.getChallengeSubmissions('u1');
 
-    expect(walletClient.credit).toHaveBeenCalledWith('u1', 500, 'Challenge prize won', 'challenge-prize:entry-9');
+    expect(walletClient.credit).toHaveBeenCalledWith(
+      'u1',
+      500,
+      'Challenge prize won',
+      'challenge-prize:entry-9'
+    );
   });
 
   it('skips the credit when the mirror row already exists (no double-pay)', async () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany.mockResolvedValue([
-      { id: 'e1', userId: 'u1', challengeId: 'ch1', title: 'A', status: 'submitted', submittedAt: new Date() },
+      {
+        id: 'e1',
+        userId: 'u1',
+        challengeId: 'ch1',
+        title: 'A',
+        status: 'submitted',
+        submittedAt: new Date(),
+      },
     ]);
     // Mirror row from a previous sync pass.
     prisma.walletTransaction.findFirst.mockResolvedValue({ id: 'already-paid' });
@@ -911,7 +1065,9 @@ describe('CreatorService — challenge submissions', () => {
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
       success: true,
       data: {
-        challenges: [{ id: 'e1', challengeId: 'ch1', status: 'winner', challenge: { prize: '₦1,000' } }],
+        challenges: [
+          { id: 'e1', challengeId: 'ch1', status: 'winner', challenge: { prize: '₦1,000' } },
+        ],
       },
     });
 
@@ -925,16 +1081,37 @@ describe('CreatorService — challenge submissions', () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany
       .mockResolvedValueOnce([
-        { id: 'e1', userId: 'u1', challengeId: 'ch1', title: 'A', status: 'submitted', submittedAt: new Date() },
+        {
+          id: 'e1',
+          userId: 'u1',
+          challengeId: 'ch1',
+          title: 'A',
+          status: 'submitted',
+          submittedAt: new Date(),
+        },
       ])
       .mockResolvedValueOnce([
-        { id: 'e1', userId: 'u1', challengeId: 'ch1', title: 'A', status: 'winner', submittedAt: new Date() },
+        {
+          id: 'e1',
+          userId: 'u1',
+          challengeId: 'ch1',
+          title: 'A',
+          status: 'winner',
+          submittedAt: new Date(),
+        },
       ]);
     const { service, creatorsClient, walletClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
       success: true,
       data: {
-        challenges: [{ id: 'e1', challengeId: 'ch1', status: 'winner', challenge: { prize: 'Bragging rights' } }],
+        challenges: [
+          {
+            id: 'e1',
+            challengeId: 'ch1',
+            status: 'winner',
+            challenge: { prize: 'Bragging rights' },
+          },
+        ],
       },
     });
 
@@ -948,10 +1125,24 @@ describe('CreatorService — challenge submissions', () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany
       .mockResolvedValueOnce([
-        { id: 'e1', userId: 'u1', challengeId: 'ch1', title: 'A', status: 'submitted', submittedAt: new Date() },
+        {
+          id: 'e1',
+          userId: 'u1',
+          challengeId: 'ch1',
+          title: 'A',
+          status: 'submitted',
+          submittedAt: new Date(),
+        },
       ])
       .mockResolvedValueOnce([
-        { id: 'e1', userId: 'u1', challengeId: 'ch1', title: 'A', status: 'winner', submittedAt: new Date() },
+        {
+          id: 'e1',
+          userId: 'u1',
+          challengeId: 'ch1',
+          title: 'A',
+          status: 'winner',
+          submittedAt: new Date(),
+        },
       ]);
     const { service, creatorsClient } = buildService(prisma, {
       credit: jest.fn().mockRejectedValue(new Error('wallet down')),
@@ -959,7 +1150,9 @@ describe('CreatorService — challenge submissions', () => {
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
       success: true,
       data: {
-        challenges: [{ id: 'e1', challengeId: 'ch1', status: 'winner', challenge: { prize: '₦750' } }],
+        challenges: [
+          { id: 'e1', challengeId: 'ch1', status: 'winner', challenge: { prize: '₦750' } },
+        ],
       },
     });
 
@@ -972,13 +1165,22 @@ describe('CreatorService — challenge submissions', () => {
   it('does not re-credit a winner already marked locally (idempotent across syncs)', async () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany.mockResolvedValue([
-      { id: 'e1', userId: 'u1', challengeId: 'ch1', title: 'A', status: 'winner', submittedAt: new Date() },
+      {
+        id: 'e1',
+        userId: 'u1',
+        challengeId: 'ch1',
+        title: 'A',
+        status: 'winner',
+        submittedAt: new Date(),
+      },
     ]);
     const { service, creatorsClient, walletClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
       success: true,
       data: {
-        challenges: [{ id: 'e1', challengeId: 'ch1', status: 'winner', challenge: { prize: '₦500' } }],
+        challenges: [
+          { id: 'e1', challengeId: 'ch1', status: 'winner', challenge: { prize: '₦500' } },
+        ],
       },
     });
 
@@ -991,13 +1193,28 @@ describe('CreatorService — challenge submissions', () => {
     const prisma = buildPrismaMock();
     prisma.challengeSubmission.findMany
       .mockResolvedValueOnce([]) // initial local read (nothing yet)
-      .mockResolvedValueOnce([{ id: 'entry-9', userId: 'u1', challengeId: 'ch9', title: 'T', status: 'winner', submittedAt: new Date() }]);
+      .mockResolvedValueOnce([
+        {
+          id: 'entry-9',
+          userId: 'u1',
+          challengeId: 'ch9',
+          title: 'T',
+          status: 'winner',
+          submittedAt: new Date(),
+        },
+      ]);
     const { service, creatorsClient } = buildService(prisma);
     creatorsClient.getMyChallengeEntries.mockResolvedValue({
       success: true,
       data: {
         challenges: [
-          { id: 'entry-9', challengeId: 'ch9', status: 'winner', contentUrl: '/x/v.mp4', createdAt: '2026-09-16T00:00:00Z' },
+          {
+            id: 'entry-9',
+            challengeId: 'ch9',
+            status: 'winner',
+            contentUrl: '/x/v.mp4',
+            createdAt: '2026-09-16T00:00:00Z',
+          },
         ],
       },
     });
@@ -1005,7 +1222,9 @@ describe('CreatorService — challenge submissions', () => {
     await service.getChallengeSubmissions('u1');
 
     expect(prisma.challengeSubmissionReviewEvent.createMany).toHaveBeenCalledWith({
-      data: [expect.objectContaining({ submissionId: 'entry-9', fromStatus: null, toStatus: 'winner' })],
+      data: [
+        expect.objectContaining({ submissionId: 'entry-9', fromStatus: null, toStatus: 'winner' }),
+      ],
       skipDuplicates: true,
     });
   });
@@ -1040,7 +1259,15 @@ describe('CreatorService — submission detail view', () => {
     creatorsClient.getChallenges.mockResolvedValue({
       success: true,
       data: {
-        challenges: [{ id: 'ch1', title: 'Dance Marathon', prize: '5000', status: 'active', endDate: '2026-10-01T00:00:00Z' }],
+        challenges: [
+          {
+            id: 'ch1',
+            title: 'Dance Marathon',
+            prize: '5000',
+            status: 'active',
+            endDate: '2026-10-01T00:00:00Z',
+          },
+        ],
       },
     });
 
@@ -1066,9 +1293,33 @@ describe('CreatorService — submission detail view', () => {
     const prisma = buildPrismaMock();
     (prisma.challengeSubmission.findFirst as jest.Mock).mockResolvedValue({ ...baseSubmission });
     prisma.challengeSubmissionReviewEvent.findMany.mockResolvedValue([
-      { id: 'ev1', fromStatus: null, toStatus: 'submitted', reviewedAt: null, reviewedByName: null, note: 'Synced from platform', createdAt: new Date('2026-09-16T09:00:00.000Z') },
-      { id: 'ev2', fromStatus: 'submitted', toStatus: 'under_review', reviewedAt: new Date('2026-09-17T08:00:00.000Z'), reviewedByName: 'Ada Moderator', note: null, createdAt: new Date('2026-09-17T08:00:00.000Z') },
-      { id: 'ev3', fromStatus: 'under_review', toStatus: 'winner', reviewedAt: new Date('2026-09-17T10:00:00.000Z'), reviewedByName: 'Ada Moderator', note: null, createdAt: new Date('2026-09-17T10:00:00.000Z') },
+      {
+        id: 'ev1',
+        fromStatus: null,
+        toStatus: 'submitted',
+        reviewedAt: null,
+        reviewedByName: null,
+        note: 'Synced from platform',
+        createdAt: new Date('2026-09-16T09:00:00.000Z'),
+      },
+      {
+        id: 'ev2',
+        fromStatus: 'submitted',
+        toStatus: 'under_review',
+        reviewedAt: new Date('2026-09-17T08:00:00.000Z'),
+        reviewedByName: 'Ada Moderator',
+        note: null,
+        createdAt: new Date('2026-09-17T08:00:00.000Z'),
+      },
+      {
+        id: 'ev3',
+        fromStatus: 'under_review',
+        toStatus: 'winner',
+        reviewedAt: new Date('2026-09-17T10:00:00.000Z'),
+        reviewedByName: 'Ada Moderator',
+        note: null,
+        createdAt: new Date('2026-09-17T10:00:00.000Z'),
+      },
     ]);
     const { service } = buildService(prisma);
 
@@ -1101,13 +1352,21 @@ describe('CreatorService — submission detail view', () => {
 
     const ok = await service.getChallengeSubmissionDetail('u1', 'sub-1');
     expect(ok.content).toEqual(
-      expect.objectContaining({ id: 'content-1', playbackUrl: 'https://signed/x.mp4', playbackKind: 'signed' })
+      expect.objectContaining({
+        id: 'content-1',
+        playbackUrl: 'https://signed/x.mp4',
+        playbackKind: 'signed',
+      })
     );
 
     // Playback failure → error surfaced, detail still renders.
-    const { service: failing } = buildService(prisma, {}, {
-      getSignedPlaybackUrl: jest.fn().mockResolvedValue(null),
-    });
+    const { service: failing } = buildService(
+      prisma,
+      {},
+      {
+        getSignedPlaybackUrl: jest.fn().mockResolvedValue(null),
+      }
+    );
     (prisma.contentItem.findUnique as jest.Mock).mockResolvedValue({ ...storedContent });
     const degraded = await failing.getChallengeSubmissionDetail('u1', 'sub-1');
     expect(degraded.content?.playbackUrl).toBeNull();
@@ -1145,7 +1404,12 @@ describe('CreatorService — submission detail view', () => {
         success: true,
         data: {
           items: [
-            { id: 'p-other', amount: 9000, status: 'completed', metadata: { challengePrize: 'other-ch' } },
+            {
+              id: 'p-other',
+              amount: 9000,
+              status: 'completed',
+              metadata: { challengePrize: 'other-ch' },
+            },
             { id: 'p1', amount: 2000, status: 'completed', metadata: { challengePrize: 'ch1' } },
           ],
           total: 2,
@@ -1155,7 +1419,15 @@ describe('CreatorService — submission detail view', () => {
     creatorsClient.getChallenges.mockResolvedValue({
       success: true,
       data: {
-        challenges: [{ id: 'ch1', title: 'Dance Marathon', prize: '5000', status: 'active', endDate: '2026-10-01T00:00:00Z' }],
+        challenges: [
+          {
+            id: 'ch1',
+            title: 'Dance Marathon',
+            prize: '5000',
+            status: 'active',
+            endDate: '2026-10-01T00:00:00Z',
+          },
+        ],
       },
     });
 
@@ -1184,7 +1456,10 @@ describe('CreatorService — playback URLs', () => {
   it('returns a signed URL for own stored content', async () => {
     const prisma = buildPrismaMock();
     (prisma.contentItem.findUnique as jest.Mock).mockResolvedValue({
-      id: 'c1', creatorId: 'u1', isExclusive: false, mediaUrl: 'http://cdn/x.mp4',
+      id: 'c1',
+      creatorId: 'u1',
+      isExclusive: false,
+      mediaUrl: 'http://cdn/x.mp4',
       metadata: { media: { key: 'videos/x.mp4' } },
     });
     const { service, mediaClient } = buildService(prisma);
@@ -1200,12 +1475,17 @@ describe('CreatorService — playback URLs', () => {
   it('prefers the premium token URL for exclusive content', async () => {
     const prisma = buildPrismaMock();
     (prisma.contentItem.findUnique as jest.Mock).mockResolvedValue({
-      id: 'c1', creatorId: 'u1', isExclusive: true, mediaUrl: null,
+      id: 'c1',
+      creatorId: 'u1',
+      isExclusive: true,
+      mediaUrl: null,
       metadata: { media: { key: 'videos/x.mp4' } },
     });
     const { service, mediaClient } = buildService(prisma);
     mediaClient.getPremiumUrl.mockResolvedValue({
-      url: 'https://cdn/premium?token=t1', expiresIn: 600, expiresAt: '2026-09-16T23:00:00Z',
+      url: 'https://cdn/premium?token=t1',
+      expiresIn: 600,
+      expiresAt: '2026-09-16T23:00:00Z',
     });
 
     const result = await service.getPlaybackUrl('u1', 'c1');
@@ -1219,7 +1499,10 @@ describe('CreatorService — playback URLs', () => {
   it('falls back to key-based signing when the premium flow is unavailable', async () => {
     const prisma = buildPrismaMock();
     (prisma.contentItem.findUnique as jest.Mock).mockResolvedValue({
-      id: 'c1', creatorId: 'u1', isExclusive: true, mediaUrl: null,
+      id: 'c1',
+      creatorId: 'u1',
+      isExclusive: true,
+      mediaUrl: null,
       metadata: { media: { key: 'videos/x.mp4' } },
     });
     const { service, mediaClient } = buildService(prisma);
@@ -1234,7 +1517,11 @@ describe('CreatorService — playback URLs', () => {
   it('404s when the content has no stored media object', async () => {
     const prisma = buildPrismaMock();
     (prisma.contentItem.findUnique as jest.Mock).mockResolvedValue({
-      id: 'c1', creatorId: 'u1', isExclusive: false, mediaUrl: null, metadata: {},
+      id: 'c1',
+      creatorId: 'u1',
+      isExclusive: false,
+      mediaUrl: null,
+      metadata: {},
     });
     const { service } = buildService(prisma);
 
@@ -1244,7 +1531,11 @@ describe('CreatorService — playback URLs', () => {
   it('403s when another creator requests playback', async () => {
     const prisma = buildPrismaMock();
     (prisma.contentItem.findUnique as jest.Mock).mockResolvedValue({
-      id: 'c1', creatorId: 'someone-else', isExclusive: false, mediaUrl: null, metadata: {},
+      id: 'c1',
+      creatorId: 'someone-else',
+      isExclusive: false,
+      mediaUrl: null,
+      metadata: {},
     });
     const { service } = buildService(prisma);
 
@@ -1254,7 +1545,10 @@ describe('CreatorService — playback URLs', () => {
   it('503s when media-service cannot sign the URL', async () => {
     const prisma = buildPrismaMock();
     (prisma.contentItem.findUnique as jest.Mock).mockResolvedValue({
-      id: 'c1', creatorId: 'u1', isExclusive: false, mediaUrl: 'http://cdn/x.mp4',
+      id: 'c1',
+      creatorId: 'u1',
+      isExclusive: false,
+      mediaUrl: 'http://cdn/x.mp4',
       metadata: { media: { key: 'videos/x.mp4' } },
     });
     const { service, mediaClient } = buildService(prisma);
@@ -1299,7 +1593,10 @@ describe('CreatorService — upload storage status', () => {
     ]);
     const { service } = buildService(prisma);
 
-    const rows = (await service.getUploads('u1')) as { storage: string; scanStatus: string | null }[];
+    const rows = (await service.getUploads('u1')) as {
+      storage: string;
+      scanStatus: string | null;
+    }[];
 
     expect(rows[0].storage).toBe('pending');
     expect(rows[0].scanStatus).toBeNull();
@@ -1308,7 +1605,14 @@ describe('CreatorService — upload storage status', () => {
   it('treats legacy rows without pipeline metadata as unknown storage', async () => {
     const prisma = buildPrismaMock();
     prisma.contentItem.findMany.mockResolvedValue([
-      { id: 'c3', title: 'Legacy', status: 'published', createdAt: new Date(), mediaUrl: null, metadata: null },
+      {
+        id: 'c3',
+        title: 'Legacy',
+        status: 'published',
+        createdAt: new Date(),
+        mediaUrl: null,
+        metadata: null,
+      },
     ]);
     const { service } = buildService(prisma);
 
@@ -1322,9 +1626,9 @@ describe('CreatorService — upload storage status', () => {
 describe('CreatorService — profile', () => {
   it('rejects an empty display name', async () => {
     const { service } = buildService(buildPrismaMock());
-    await expect(
-      service.updateCreatorProfile('u1', { displayName: '   ' })
-    ).rejects.toThrow(BadRequestException);
+    await expect(service.updateCreatorProfile('u1', { displayName: '   ' })).rejects.toThrow(
+      BadRequestException
+    );
   });
 
   it('persists bio/socials on the profile and name/avatar on the user', async () => {
@@ -1400,10 +1704,7 @@ describe('CreatorService — delete content blob hook', () => {
       metadata: { media: { key: 'videos/abc.mp4', derivedKey: 'thumbs/abc.jpg' } },
     });
     const { service, mediaClient } = buildService(prisma, undefined, {
-      deleteObject: jest
-        .fn()
-        .mockResolvedValueOnce('deleted')
-        .mockResolvedValueOnce(null),
+      deleteObject: jest.fn().mockResolvedValueOnce('deleted').mockResolvedValueOnce(null),
     });
 
     await service.deleteContent('c1', 'u1');
@@ -1454,7 +1755,11 @@ describe('CreatorService — challenge leaderboard proxy', () => {
 
     expect(creatorsClient.getChallengeLeaderboard).toHaveBeenCalledWith('ch-1');
     expect(board.totalEntries).toBe(2);
-    expect(board.entries[0]).toMatchObject({ position: 1, displayName: 'Winner', status: 'winner' });
+    expect(board.entries[0]).toMatchObject({
+      position: 1,
+      displayName: 'Winner',
+      status: 'winner',
+    });
     expect(board.challenge.title).toBe('Dance Marathon');
   });
 

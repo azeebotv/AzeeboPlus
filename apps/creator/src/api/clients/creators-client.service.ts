@@ -105,7 +105,9 @@ export class CreatorsClientService {
       req.on('error', (error) => {
         clearTimeout(timeout);
         if (error.name === 'AbortError') {
-          reject(new HttpException('Creator Service request timed out', HttpStatus.GATEWAY_TIMEOUT));
+          reject(
+            new HttpException('Creator Service request timed out', HttpStatus.GATEWAY_TIMEOUT)
+          );
         } else {
           reject(
             new HttpException(
@@ -151,9 +153,7 @@ export class CreatorsClientService {
   }
 
   /** Ranked entries for a challenge (creator-service GET /v1/creators/challenges/:id/leaderboard). */
-  async getChallengeLeaderboard(
-    challengeId: string
-  ): Promise<
+  async getChallengeLeaderboard(challengeId: string): Promise<
     CreatorsServiceResponse<{
       challenge: { id: string; title: string; prize?: number; endDate?: string };
       totalEntries: number;

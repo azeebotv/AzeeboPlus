@@ -1,4 +1,1 @@
-export {
-  LogRedactionService,
-  pseudonymizeIdentifier,
-} from './log-redaction.service';
+export { LogRedactionService, pseudonymizeIdentifier } from './log-redaction.service';

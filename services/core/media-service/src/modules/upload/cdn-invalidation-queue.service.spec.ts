@@ -80,7 +80,11 @@ describe('CdnInvalidationQueueService', () => {
   describe('reconcile', () => {
     it('enqueues rows whose metadata.cdnPurgeStatus is failed or skipped', async () => {
       mockPrismaService.mediaUpload.findMany.mockResolvedValueOnce([
-        { id: 'u-1', key: 'videos/a.mp4', metadata: { cdnPurgeStatus: 'failed', cdnPurgeError: 'boom' } },
+        {
+          id: 'u-1',
+          key: 'videos/a.mp4',
+          metadata: { cdnPurgeStatus: 'failed', cdnPurgeError: 'boom' },
+        },
         { id: 'u-2', key: 'images/b.jpg', metadata: { cdnPurgeStatus: 'skipped' } },
       ]);
       mockPrismaService.cdnInvalidationQueue.findFirst.mockResolvedValue(null);
@@ -121,9 +125,7 @@ describe('CdnInvalidationQueueService', () => {
 
       const result = await service.reconcile();
 
-      expect(result.enqueued).toEqual([
-        { key: 'images/b.jpg', uploadId: 'u-2', reason: 'failed' },
-      ]);
+      expect(result.enqueued).toEqual([{ key: 'images/b.jpg', uploadId: 'u-2', reason: 'failed' }]);
       expect(result.errors).toEqual([{ uploadId: 'u-1', reason: 'db blip' }]);
     });
 
@@ -161,7 +163,11 @@ describe('CdnInvalidationQueueService', () => {
       expect(mockPrismaService.mediaUpload.update).toHaveBeenCalledWith({
         where: { id: 'u-1' },
         data: {
-          metadata: { scanStatus: 'clean', cdnPurgeStatus: 'invalidated', cdnPurgeInvalidationId: 'I-777' },
+          metadata: {
+            scanStatus: 'clean',
+            cdnPurgeStatus: 'invalidated',
+            cdnPurgeInvalidationId: 'I-777',
+          },
         },
       });
     });
@@ -224,13 +230,14 @@ describe('CdnInvalidationQueueService', () => {
 
       const result = await service.drain();
 
-      expect(result.retried).toEqual([
-        expect.objectContaining({ id: 'q-1', attempts: 1 }),
-      ]);
+      expect(result.retried).toEqual([expect.objectContaining({ id: 'q-1', attempts: 1 })]);
       expect(result.done).toEqual([]);
       expect(mockPrismaService.cdnInvalidationQueue.updateMany).toHaveBeenCalledWith({
         where: { id: { in: ['q-1'] } },
-        data: { attempts: { increment: 1 }, lastError: 'CDN not configured (no invalidation created)' },
+        data: {
+          attempts: { increment: 1 },
+          lastError: 'CDN not configured (no invalidation created)',
+        },
       });
     });
 

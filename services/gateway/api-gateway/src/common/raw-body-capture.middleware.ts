@@ -38,9 +38,7 @@ export class RawBodyCaptureMiddleware implements NestMiddleware {
 
     const declaredLength = Number(req.headers['content-length'] || 0);
     if (declaredLength > RawBodyCaptureMiddleware.RAW_BODY_LIMIT) {
-      this.logger.warn(
-        `Raw body too large (${declaredLength} bytes) [${req.method} ${req.path}]`
-      );
+      this.logger.warn(`Raw body too large (${declaredLength} bytes) [${req.method} ${req.path}]`);
       res.status(413).json({
         success: false,
         message: 'Payload too large',

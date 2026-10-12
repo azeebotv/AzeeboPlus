@@ -20,7 +20,9 @@ interface FakeRedisLike {
   set: (key: string, value: string, mode?: string, ttl?: number) => Promise<string | null>;
 }
 
-function makeFakeRedis(sharedStore?: Map<string, { value: string; expiresAt: number | null }>): FakeRedisLike {
+function makeFakeRedis(
+  sharedStore?: Map<string, { value: string; expiresAt: number | null }>
+): FakeRedisLike {
   const store = sharedStore ?? new Map<string, { value: string; expiresAt: number | null }>();
   return {
     status: 'ready',
@@ -63,15 +65,12 @@ describe('CsrfTokenRegistry', () => {
   });
 
   function createRegistry(client: FakeRedisLike): CsrfTokenRegistry {
-    jest.doMock(
-      'ioredis',
-      () => ({ __esModule: true, default: client, Redis: client }),
-      { virtual: false }
-    );
+    jest.doMock('ioredis', () => ({ __esModule: true, default: client, Redis: client }), {
+      virtual: false,
+    });
     // Re-import so the constructor picks up the mock via its lazy require.
     let Registry: typeof CsrfTokenRegistry;
     jest.isolateModules(() => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       ({ CsrfTokenRegistry: Registry } = require('./csrf-token-registry.service'));
     });
     // Inject the fake client directly (constructor connects lazily).

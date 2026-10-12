@@ -107,9 +107,9 @@ describe('BorrowService', () => {
     };
 
     it('rejects an inverted amount range before writing', async () => {
-      await expect(
-        service.create({ ...base, minAmount: 900000, maxAmount: 1000 })
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.create({ ...base, minAmount: 900000, maxAmount: 1000 })).rejects.toThrow(
+        BadRequestException
+      );
       expect(prisma.partnerBank.create).not.toHaveBeenCalled();
     });
 

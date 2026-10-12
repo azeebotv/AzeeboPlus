@@ -14,11 +14,14 @@ describe('isDevLoopbackRequest', () => {
       typeof isDevLoopbackRequest
     >[0];
 
-  it.each(['::1', '127.0.0.1', '::ffff:127.0.0.1', '127.0.0.1.'])('bypasses loopback IP %s in development', (ip) => {
-    setNodeEnv('development');
-    delete process.env.DISABLE_RATE_LIMITING;
-    expect(isDevLoopbackRequest(makeReq(ip))).toBe(true);
-  });
+  it.each(['::1', '127.0.0.1', '::ffff:127.0.0.1', '127.0.0.1.'])(
+    'bypasses loopback IP %s in development',
+    (ip) => {
+      setNodeEnv('development');
+      delete process.env.DISABLE_RATE_LIMITING;
+      expect(isDevLoopbackRequest(makeReq(ip))).toBe(true);
+    }
+  );
 
   it('does not bypass in NODE_ENV=test so enforcement specs keep their teeth', () => {
     setNodeEnv('test');
@@ -26,11 +29,14 @@ describe('isDevLoopbackRequest', () => {
     expect(isDevLoopbackRequest(makeReq('::1'))).toBe(false);
   });
 
-  it.each(['::2', '192.168.1.1', '10.0.0.5', 'unknown', ''])('does not bypass non-loopback IP %s', (ip) => {
-    setNodeEnv('development');
-    delete process.env.DISABLE_RATE_LIMITING;
-    expect(isDevLoopbackRequest(makeReq(ip))).toBe(false);
-  });
+  it.each(['::2', '192.168.1.1', '10.0.0.5', 'unknown', ''])(
+    'does not bypass non-loopback IP %s',
+    (ip) => {
+      setNodeEnv('development');
+      delete process.env.DISABLE_RATE_LIMITING;
+      expect(isDevLoopbackRequest(makeReq(ip))).toBe(false);
+    }
+  );
 
   it('never bypasses loopback in production', () => {
     setNodeEnv('production');

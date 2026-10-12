@@ -34,10 +34,7 @@ export class BorrowAdminController {
   @ApiOperation({ summary: 'List all partner banks, active and inactive (admin)' })
   @ApiResponse({ status: 200, description: 'Paginated partner banks' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async listAll(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number
-  ) {
+  async listAll(@Query('page') page?: number, @Query('limit') limit?: number) {
     const result = await this.borrowService.listAll({ page, limit });
     return ApiResponseWrapper.paginated(
       result.items,

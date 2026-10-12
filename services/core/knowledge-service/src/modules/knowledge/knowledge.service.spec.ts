@@ -490,10 +490,7 @@ describe('KnowledgeService', () => {
   describe('triggerCheckpoint', () => {
     const checkpoint = {
       id: 'cp-1',
-      grants: [
-        { knowledgeUnitId: 'u1' },
-        { knowledgeUnitId: 'u2' },
-      ],
+      grants: [{ knowledgeUnitId: 'u1' }, { knowledgeUnitId: 'u2' }],
     };
 
     it('should grant every knowledge unit on the checkpoint and rebuild projection', async () => {
@@ -683,9 +680,7 @@ describe('KnowledgeService', () => {
         { dependentUnitId: 'u9', dependsOnUnitId: 'u1' },
         { dependentUnitId: 'u9', dependsOnUnitId: 'u2' },
       ]);
-      mockPrisma.userKnowledgeGrant.findMany.mockResolvedValue([
-        { knowledgeUnitId: 'u9' },
-      ]);
+      mockPrisma.userKnowledgeGrant.findMany.mockResolvedValue([{ knowledgeUnitId: 'u9' }]);
 
       const result = await service.getLockedKnowledge('user-1');
 

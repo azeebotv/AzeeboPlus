@@ -51,7 +51,9 @@ describe('UploadTtlSweeperService', () => {
     expect(result.deleted).toHaveLength(1);
     expect(result.deleted[0].key).toBe('videos/aaaaaaaa-1111-4222-8333-444444444444.mp4');
     expect(result.deleted[0].ageHours).toBeGreaterThanOrEqual(29);
-    expect(mockS3.deleteFile).toHaveBeenCalledWith('videos/aaaaaaaa-1111-4222-8333-444444444444.mp4');
+    expect(mockS3.deleteFile).toHaveBeenCalledWith(
+      'videos/aaaaaaaa-1111-4222-8333-444444444444.mp4'
+    );
   });
 
   it('spares young orphans inside the TTL window (reconcile handles those)', async () => {
@@ -123,9 +125,7 @@ describe('UploadTtlSweeperService', () => {
   it('refuses to double-run while a sweep is in flight', async () => {
     let release: () => void = () => {};
     const gate = new Promise<void>((r) => (release = r));
-    mockS3.listAllObjects.mockReturnValue(
-      gate.then(() => []) as never
-    );
+    mockS3.listAllObjects.mockReturnValue(gate.then(() => []) as never);
     mockReconcile.collectReferences.mockResolvedValue(new Set());
 
     const first = service.sweep();

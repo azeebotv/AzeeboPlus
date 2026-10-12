@@ -152,7 +152,9 @@ describe('AgbalaAdminService', () => {
 
     it('throws NotFound when the storyworld does not exist', async () => {
       prismaMock.universeMap.findUnique.mockResolvedValue(null);
-      await expect(service.getPaths({ storyworldId: 'missing' })).rejects.toThrow(NotFoundException);
+      await expect(service.getPaths({ storyworldId: 'missing' })).rejects.toThrow(
+        NotFoundException
+      );
       expect(prismaMock.storyworldPath.findMany).not.toHaveBeenCalled();
     });
   });

@@ -62,7 +62,10 @@ describe('UploadController DELETE /media/:key (idempotent)', () => {
         // Pure decision logic — the real policy, no mocking needed.
         FileAccessPolicyService,
         { provide: PremiumContentService, useValue: {} },
-        { provide: CdnInvalidationQueueService, useValue: { enqueue: jest.fn().mockResolvedValue({ queued: true }) } },
+        {
+          provide: CdnInvalidationQueueService,
+          useValue: { enqueue: jest.fn().mockResolvedValue({ queued: true }) },
+        },
         { provide: MediaLifecycleService, useValue: {} },
         { provide: BlobReconcileService, useValue: {} },
         { provide: UploadTtlSweeperService, useValue: {} },
@@ -79,10 +82,7 @@ describe('UploadController DELETE /media/:key (idempotent)', () => {
       });
       mockUploadService.getFileMetadata.mockRejectedValue(notFound);
 
-      const result = await controller.deleteFile(
-        { user: ownerUser },
-        'videos/gone.mp4'
-      );
+      const result = await controller.deleteFile({ user: ownerUser }, 'videos/gone.mp4');
 
       expect(result).toEqual(
         ApiResponseWrapper.success({
@@ -120,9 +120,7 @@ describe('UploadController DELETE /media/:key (idempotent)', () => {
 
       const result = await controller.deleteFile({ user: ownerUser }, 'videos/owned.mp4');
 
-      expect(result).toEqual(
-        ApiResponseWrapper.success({ message: 'File deleted successfully' })
-      );
+      expect(result).toEqual(ApiResponseWrapper.success({ message: 'File deleted successfully' }));
       expect(mockUploadService.deleteFile).toHaveBeenCalledWith('videos/owned.mp4');
     });
 
@@ -130,9 +128,9 @@ describe('UploadController DELETE /media/:key (idempotent)', () => {
       mockUploadService.getFileMetadata.mockResolvedValue(objectOwnedByUser1);
 
       const otherUser = { id: 'user-2', role: 'user' };
-      await expect(
-        controller.deleteFile({ user: otherUser }, 'videos/owned.mp4')
-      ).rejects.toThrow(ForbiddenException);
+      await expect(controller.deleteFile({ user: otherUser }, 'videos/owned.mp4')).rejects.toThrow(
+        ForbiddenException
+      );
       expect(mockUploadService.deleteFile).not.toHaveBeenCalled();
     });
 
@@ -142,9 +140,7 @@ describe('UploadController DELETE /media/:key (idempotent)', () => {
 
       const result = await controller.deleteFile({ user: adminUser }, 'videos/owned.mp4');
 
-      expect(result).toEqual(
-        ApiResponseWrapper.success({ message: 'File deleted successfully' })
-      );
+      expect(result).toEqual(ApiResponseWrapper.success({ message: 'File deleted successfully' }));
       expect(mockUploadService.deleteFile).toHaveBeenCalledWith('videos/owned.mp4');
     });
 
@@ -155,9 +151,7 @@ describe('UploadController DELETE /media/:key (idempotent)', () => {
       const otherUser = { id: 'user-2', role: 'user' };
       const result = await controller.deleteFile({ user: otherUser }, 'videos/legacy.mp4');
 
-      expect(result).toEqual(
-        ApiResponseWrapper.success({ message: 'File deleted successfully' })
-      );
+      expect(result).toEqual(ApiResponseWrapper.success({ message: 'File deleted successfully' }));
       expect(mockUploadService.deleteFile).toHaveBeenCalledWith('videos/legacy.mp4');
     });
   });
@@ -169,9 +163,9 @@ describe('UploadController DELETE /media/:key (idempotent)', () => {
       );
       mockUploadService.getFileMetadata.mockRejectedValue(circuitOpen);
 
-      await expect(
-        controller.deleteFile({ user: ownerUser }, 'videos/live.mp4')
-      ).rejects.toThrow(ServiceUnavailableException);
+      await expect(controller.deleteFile({ user: ownerUser }, 'videos/live.mp4')).rejects.toThrow(
+        ServiceUnavailableException
+      );
       expect(mockUploadService.deleteFile).not.toHaveBeenCalled();
     });
 
@@ -183,18 +177,18 @@ describe('UploadController DELETE /media/:key (idempotent)', () => {
         )
       );
 
-      await expect(
-        controller.deleteFile({ user: ownerUser }, 'videos/live.mp4')
-      ).rejects.toThrow(ServiceUnavailableException);
+      await expect(controller.deleteFile({ user: ownerUser }, 'videos/live.mp4')).rejects.toThrow(
+        ServiceUnavailableException
+      );
     });
 
     it('re-throws arbitrary non-NotFound probe errors unchanged', async () => {
       const boom = new Error('socket hang up');
       mockUploadService.getFileMetadata.mockRejectedValue(boom);
 
-      await expect(
-        controller.deleteFile({ user: ownerUser }, 'videos/live.mp4')
-      ).rejects.toThrow(boom);
+      await expect(controller.deleteFile({ user: ownerUser }, 'videos/live.mp4')).rejects.toThrow(
+        boom
+      );
       expect(mockUploadService.deleteFile).not.toHaveBeenCalled();
     });
   });

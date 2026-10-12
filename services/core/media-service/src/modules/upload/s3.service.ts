@@ -438,7 +438,9 @@ export class S3Service {
    * Objects carry Key, Size and LastModified — everything reconcile needs to
    * backfill rows without a second HEAD per object.
    */
-  async listAllObjects(prefix?: string): Promise<{ Key?: string; Size?: number; LastModified?: Date }[]> {
+  async listAllObjects(
+    prefix?: string
+  ): Promise<{ Key?: string; Size?: number; LastModified?: Date }[]> {
     const objects: { Key?: string; Size?: number; LastModified?: Date }[] = [];
     let continuationToken: string | undefined;
 

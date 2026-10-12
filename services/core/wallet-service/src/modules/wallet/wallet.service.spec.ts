@@ -253,7 +253,11 @@ describe('WalletService', () => {
 
   describe('withdraw', () => {
     it('should withdraw funds successfully', async () => {
-      const withdrawDto = { idempotencyKey: 'wd-test-key', amount: 500, bankAccountId: 'bank-account-123' };
+      const withdrawDto = {
+        idempotencyKey: 'wd-test-key',
+        amount: 500,
+        bankAccountId: 'bank-account-123',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
       (prismaService.walletTransaction.create as jest.Mock).mockResolvedValue({
@@ -263,9 +267,7 @@ describe('WalletService', () => {
         description: 'Withdrawal to bank account',
       });
       (prismaService.wallet.update as jest.Mock).mockResolvedValue({ ...mockWallet, balance: 500 });
-      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
-        { ...mockWallet, balance: 1000 },
-      ]);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([{ ...mockWallet, balance: 1000 }]);
       (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
 
       const result = await service.withdraw('user-123', withdrawDto);
@@ -274,7 +276,11 @@ describe('WalletService', () => {
     });
 
     it('should fail with insufficient balance', async () => {
-      const withdrawDto = { idempotencyKey: 'wd-test-key', amount: 5000, bankAccountId: 'bank-account-123' };
+      const withdrawDto = {
+        idempotencyKey: 'wd-test-key',
+        amount: 5000,
+        bankAccountId: 'bank-account-123',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
 
@@ -283,7 +289,11 @@ describe('WalletService', () => {
     });
 
     it('should fail if wallet not found', async () => {
-      const withdrawDto = { idempotencyKey: 'wd-test-key', amount: 500, bankAccountId: 'bank-account-123' };
+      const withdrawDto = {
+        idempotencyKey: 'wd-test-key',
+        amount: 500,
+        bankAccountId: 'bank-account-123',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(null);
 
@@ -294,7 +304,12 @@ describe('WalletService', () => {
 
   describe('transfer', () => {
     it('should transfer funds to another user successfully', async () => {
-      const transferDto = { idempotencyKey: 'trf-test-key', recipientId: 'user-456', amount: 200, note: 'Payment' };
+      const transferDto = {
+        idempotencyKey: 'trf-test-key',
+        recipientId: 'user-456',
+        amount: 200,
+        note: 'Payment',
+      };
       const recipientWallet = { ...mockWallet, id: 'wallet-456', userId: 'user-456' };
 
       (prismaService.wallet.findUnique as jest.Mock)
@@ -317,7 +332,12 @@ describe('WalletService', () => {
     });
 
     it('should fail with insufficient balance', async () => {
-      const transferDto = { idempotencyKey: 'trf-test-key', recipientId: 'user-456', amount: 5000, note: 'Payment' };
+      const transferDto = {
+        idempotencyKey: 'trf-test-key',
+        recipientId: 'user-456',
+        amount: 5000,
+        note: 'Payment',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
 
@@ -326,7 +346,12 @@ describe('WalletService', () => {
     });
 
     it('should fail if sender wallet not found', async () => {
-      const transferDto = { idempotencyKey: 'trf-test-key', recipientId: 'user-456', amount: 200, note: 'Payment' };
+      const transferDto = {
+        idempotencyKey: 'trf-test-key',
+        recipientId: 'user-456',
+        amount: 200,
+        note: 'Payment',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(null);
 
@@ -335,7 +360,12 @@ describe('WalletService', () => {
     });
 
     it('should fail if recipient wallet not found', async () => {
-      const transferDto = { idempotencyKey: 'trf-test-key', recipientId: 'user-456', amount: 200, note: 'Payment' };
+      const transferDto = {
+        idempotencyKey: 'trf-test-key',
+        recipientId: 'user-456',
+        amount: 200,
+        note: 'Payment',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock)
         .mockResolvedValueOnce(mockWallet)

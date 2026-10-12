@@ -265,7 +265,8 @@ export class UpdatePartnerDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  city?: string;  @ApiPropertyOptional()
+  city?: string;
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   description?: string;

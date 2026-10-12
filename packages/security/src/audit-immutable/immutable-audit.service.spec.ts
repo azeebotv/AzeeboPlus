@@ -206,7 +206,10 @@ describe('ImmutableAuditService', () => {
       expect(entry.userAgent).toMatch(/^id_[0-9a-f]{12}$/);
       // The chain hash never covered ipAddress/userAgent, so it still verifies.
       expect(entry.hash).toBeDefined();
-      await expect(service.verifyIntegrity()).resolves.toMatchObject({ valid: true, totalEntries: 1 });
+      await expect(service.verifyIntegrity()).resolves.toMatchObject({
+        valid: true,
+        totalEntries: 1,
+      });
     });
 
     it('leaves entries inside the retention window untouched', async () => {

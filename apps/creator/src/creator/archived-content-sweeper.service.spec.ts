@@ -70,9 +70,7 @@ describe('ArchivedContentSweeperService', () => {
   });
 
   it('defers and does NOT stamp when media-service fails to confirm a delete', async () => {
-    mockPrisma.contentItem.findMany
-      .mockResolvedValueOnce([buildItem()])
-      .mockResolvedValueOnce([]);
+    mockPrisma.contentItem.findMany.mockResolvedValueOnce([buildItem()]).mockResolvedValueOnce([]);
     mockMediaClient.deleteObject.mockResolvedValue(null); // unreachable/refused
 
     const result = await service.sweep();
@@ -84,9 +82,7 @@ describe('ArchivedContentSweeperService', () => {
   });
 
   it('marks permanently-done when media-service confirms the object was already gone', async () => {
-    mockPrisma.contentItem.findMany
-      .mockResolvedValueOnce([buildItem()])
-      .mockResolvedValueOnce([]);
+    mockPrisma.contentItem.findMany.mockResolvedValueOnce([buildItem()]).mockResolvedValueOnce([]);
     mockMediaClient.deleteObject.mockResolvedValue('missing');
 
     const result = await service.sweep();

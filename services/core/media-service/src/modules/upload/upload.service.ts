@@ -1,4 +1,5 @@
-import { Inject,
+import {
+  Inject,
   Injectable,
   Logger,
   BadRequestException,
@@ -94,7 +95,8 @@ export class UploadService {
     @Inject(S3Service) private readonly s3Service: S3Service,
     @Inject(ConfigService) private readonly configService: ConfigService,
     @Inject(RedisService) private readonly redisService: RedisService,
-    @Inject(FileValidationService) private readonly fileValidationService: FileValidationService,    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
+    @Inject(FileValidationService) private readonly fileValidationService: FileValidationService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
     private readonly invalidationQueue: CdnInvalidationQueueService,
     private readonly prisma: PrismaService
   ) {
@@ -756,7 +758,9 @@ export class UploadService {
       await this.invalidationQueue.enqueue(key, reason);
       if (track) await this.recordPurgeOutcome(key, { cdnPurgeStatus: 'queued' });
     } catch (error) {
-      this.logger.warn(`Failed to enqueue CDN invalidation for ${key}: ${(error as Error).message}`);
+      this.logger.warn(
+        `Failed to enqueue CDN invalidation for ${key}: ${(error as Error).message}`
+      );
       if (track) {
         await this.recordPurgeOutcome(key, {
           cdnPurgeStatus: 'failed',

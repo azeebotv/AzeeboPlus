@@ -1696,7 +1696,7 @@ export class CreatorsService {
         position: i + 1,
         entryId: e.id,
         userId: e.userId,
-        displayName: nameById.get(e.userId) || `Participant ${e.userId.slice(0, 8)}`, 
+        displayName: nameById.get(e.userId) || `Participant ${e.userId.slice(0, 8)}`,
         status: e.status,
         reviewedAt: e.reviewedAt,
         reviewNote: e.reviewNote,
@@ -1849,7 +1849,7 @@ export class CreatorsService {
     const VALID_ACTIONS = ['under_review', 'winner', 'rejected'] as const;
     if (!action || !VALID_ACTIONS.includes(action)) {
       throw new BadRequestException(
-        `Invalid review action: expected one of ${VALID_ACTIONS.join(', ')}`,
+        `Invalid review action: expected one of ${VALID_ACTIONS.join(', ')}`
       );
     }
 
@@ -1958,7 +1958,9 @@ export class CreatorsService {
         },
       });
     } catch (error) {
-      this.logger.warn(`Failed to create challenge-review notification: ${(error as Error).message}`);
+      this.logger.warn(
+        `Failed to create challenge-review notification: ${(error as Error).message}`
+      );
     }
 
     // 2. Best-effort templated email via notification-service.

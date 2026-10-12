@@ -319,7 +319,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'GET', path: '/banks', description: 'List active lending partners' },
       { method: 'GET', path: '/banks/:slug', description: 'Get one lending partner' },
-      { method: 'GET', path: '/admin/banks', description: 'List all partners incl. inactive (admin)' },
+      {
+        method: 'GET',
+        path: '/admin/banks',
+        description: 'List all partners incl. inactive (admin)',
+      },
       { method: 'POST', path: '/admin/banks', description: 'Create a partner (admin)' },
       { method: 'PATCH', path: '/admin/banks/:id', description: 'Update a partner (admin)' },
       { method: 'DELETE', path: '/admin/banks/:id', description: 'Delete a partner (admin)' },
@@ -732,9 +736,13 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/redeem-options', description: 'List active rewards for redemption' },
       { method: 'POST', path: '/redeem', description: 'Redeem reward points' },
       { method: 'GET', path: '/history', description: 'Get reward history' },
-      { method: 'GET', path: '/level', description: 'Get the caller\'s reward level' },
-      { method: 'GET', path: '/balance', description: 'Get the caller\'s points balance' },
-      { method: 'GET', path: '/redeem-options', description: 'List active rewards available for redemption' },
+      { method: 'GET', path: '/level', description: "Get the caller's reward level" },
+      { method: 'GET', path: '/balance', description: "Get the caller's points balance" },
+      {
+        method: 'GET',
+        path: '/redeem-options',
+        description: 'List active rewards available for redemption',
+      },
       { method: 'GET', path: '/balance', description: 'Get points balance' },
       { method: 'GET', path: '/missions', description: 'List active missions' },
       { method: 'GET', path: '/badges', description: 'List badges' },
@@ -824,7 +832,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         path: '/risk/classifications/:actionType',
         description: 'Update risk classification',
       },
-      { method: 'POST', path: '/risk/assess/:actionType', description: 'Assess risk for an action' },
+      {
+        method: 'POST',
+        path: '/risk/assess/:actionType',
+        description: 'Assess risk for an action',
+      },
       // AOS-MA-001 — Task Router
       { method: 'POST', path: '/tasks/classifications', description: 'Create task classification' },
       { method: 'GET', path: '/tasks/classifications', description: 'List task classifications' },
@@ -1012,7 +1024,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         path: '/intelligence/creator-scores/:creatorId/calculate',
         description: 'Calculate creator score',
       },
-      { method: 'GET', path: '/intelligence/fraud-detections', description: 'List fraud detections' },
+      {
+        method: 'GET',
+        path: '/intelligence/fraud-detections',
+        description: 'List fraud detections',
+      },
       {
         method: 'POST',
         path: '/intelligence/fraud-detections',
@@ -1286,7 +1302,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'PUT', path: '/moderation/reports/:id/dismiss', description: 'Dismiss a report' },
       { method: 'GET', path: '/moderation/reports', description: 'List moderation reports' },
       { method: 'POST', path: '/moderation/safety-action', description: 'Apply a safety action' },
-      { method: 'GET', path: '/moderation/safety-actions', description: 'List recent safety actions' },
+      {
+        method: 'GET',
+        path: '/moderation/safety-actions',
+        description: 'List recent safety actions',
+      },
       {
         method: 'GET',
         path: '/moderation/reports/stats',
@@ -1439,7 +1459,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         path: '/ops/pgbouncer/foreign-persistence',
         description: 'Foreign-dialer persistence over window',
       },
-      { method: 'GET', path: '/ops/transport-flips', description: 'Recent gateway transport flips' },
+      {
+        method: 'GET',
+        path: '/ops/transport-flips',
+        description: 'Recent gateway transport flips',
+      },
       { method: 'GET', path: '/universes', description: 'List universes' },
       { method: 'GET', path: '/universes/:id', description: 'Get universe by ID' },
       { method: 'GET', path: '/universes/name/:name', description: 'Get universe by name' },
@@ -1730,11 +1754,19 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/monetization', description: 'Get monetization settings' },
       { method: 'PUT', path: '/monetization', description: 'Update monetization settings' },
       { method: 'GET', path: '/monetization/settings', description: 'Get monetization settings' },
-      { method: 'PATCH', path: '/monetization/settings', description: 'Update monetization settings' },
+      {
+        method: 'PATCH',
+        path: '/monetization/settings',
+        description: 'Update monetization settings',
+      },
       { method: 'GET', path: '/monetization/tiers', description: 'List monetization tiers' },
       { method: 'POST', path: '/monetization/tiers', description: 'Create monetization tier' },
       { method: 'PUT', path: '/monetization/tiers/:id', description: 'Update monetization tier' },
-      { method: 'DELETE', path: '/monetization/tiers/:id', description: 'Delete monetization tier' },
+      {
+        method: 'DELETE',
+        path: '/monetization/tiers/:id',
+        description: 'Delete monetization tier',
+      },
       { method: 'GET', path: '/profile', description: 'Get creator profile' },
       { method: 'PUT', path: '/profile', description: 'Update creator profile' },
       { method: 'GET', path: '/profile/:id', description: 'Get creator public profile' },
@@ -2850,7 +2882,6 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/fan-boards', description: 'Fan boards' },
       { method: 'GET', path: '/fan-contests', description: 'Fan contests' },
       { method: 'POST', path: '/fan-contests/:id/enter', description: 'Enter fan contest' },
-
     ],
   },
   {
@@ -3128,7 +3159,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'GET', path: '/characters', description: 'Vertical characters' },
       { method: 'GET', path: '/characters/:slug', description: 'Character details' },
-      { method: 'GET', path: '/characters/:slug/relationships', description: 'Character relationships' },
+      {
+        method: 'GET',
+        path: '/characters/:slug/relationships',
+        description: 'Character relationships',
+      },
       { method: 'GET', path: '/storyworlds', description: 'Vertical storyworlds' },
       { method: 'GET', path: '/storyworlds/:slug', description: 'Storyworld details' },
       {
@@ -3701,7 +3736,6 @@ export class ProxyController {
     };
   }
 
-
   // ─── Legacy unversioned routes: /api/:service/*path ────────────────
 
   @Get(':service/*path')
@@ -4219,7 +4253,9 @@ export class ProxyController {
 
       // SECURITY (AUD-01): Only forward identity headers if verified by GatewayAuthGuard
       // Never trust client-supplied x-user-* headers on unauthenticated or public paths.
-      const verifiedUser = (req as Request & { user?: { sub?: string; id?: string; email?: string; role?: string } }).user;
+      const verifiedUser = (
+        req as Request & { user?: { sub?: string; id?: string; email?: string; role?: string } }
+      ).user;
       if (verifiedUser && typeof verifiedUser === 'object') {
         const uid = verifiedUser.sub || verifiedUser.id;
         if (uid) headers['x-user-id'] = uid;

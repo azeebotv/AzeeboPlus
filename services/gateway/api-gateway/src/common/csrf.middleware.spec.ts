@@ -39,7 +39,13 @@ function makeRegistry(available = true): CsrfTokenRegistry {
 
 type Ctx = {
   req: Partial<Request> & { cookies?: Record<string, string>; path?: string };
-  res: Partial<Response> & { cookies: Record<string, string>; body?: unknown; status: jest.Mock; json: jest.Mock; header: jest.Mock };
+  res: Partial<Response> & {
+    cookies: Record<string, string>;
+    body?: unknown;
+    status: jest.Mock;
+    json: jest.Mock;
+    header: jest.Mock;
+  };
   next: NextFunction & { called?: boolean };
 };
 
@@ -102,7 +108,9 @@ describe('CsrfMiddleware × CsrfTokenRegistry', () => {
   it('accepts a mutation whose cookie==header token IS in the registry', async () => {
     const registry = makeRegistry();
     // Mint+register first (bootstrap).
-    await (registry as unknown as { register: (t: string) => Promise<void> }).register('a'.repeat(64));
+    await (registry as unknown as { register: (t: string) => Promise<void> }).register(
+      'a'.repeat(64)
+    );
 
     const mw = makeMiddleware(registry);
     const ctx = makeCtx('PUT', { cookie: 'a'.repeat(64), header: 'a'.repeat(64) });
@@ -126,7 +134,9 @@ describe('CsrfMiddleware × CsrfTokenRegistry', () => {
 
   it('still rejects mismatched cookie/header before consulting the registry', async () => {
     const registry = makeRegistry();
-    await (registry as unknown as { register: (t: string) => Promise<void> }).register('a'.repeat(64));
+    await (registry as unknown as { register: (t: string) => Promise<void> }).register(
+      'a'.repeat(64)
+    );
 
     const mw = makeMiddleware(registry);
     const ctx = makeCtx('PUT', { cookie: 'a'.repeat(64), header: 'c'.repeat(64) });
@@ -151,7 +161,9 @@ describe('CsrfMiddleware × CsrfTokenRegistry', () => {
 
   it('echoes the still-registered token in the response header without re-minting when a valid CSRF cookie is present', async () => {
     const registry = makeRegistry();
-    await (registry as unknown as { register: (t: string) => Promise<void> }).register('a'.repeat(64));
+    await (registry as unknown as { register: (t: string) => Promise<void> }).register(
+      'a'.repeat(64)
+    );
     (registry.register as jest.Mock).mockClear(); // the seeding call above shouldn't count
     const mw = makeMiddleware(registry);
     const ctx = makeCtx('GET', { cookie: 'a'.repeat(64) });
