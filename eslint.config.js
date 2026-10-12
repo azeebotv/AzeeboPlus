@@ -219,7 +219,10 @@ module.exports = [
           leadingUnderscore: 'allow',
         },
       ],
-      'no-console': 'warn',
+      // The critical misuse is accidental debug output, which
+      // azeebo-custom/no-console-log bans outright. warn/error stay allowed here
+      // so the two rules share one boundary (see that rule's header).
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       'azeebo-custom/no-console-log': 'error',
       // Catch blocks must not fabricate hardcoded 4xx statuses — mapAndThrow
       // (packages/security) preserves real causes (Prisma/upstream/network)
