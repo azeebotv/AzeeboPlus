@@ -67,9 +67,7 @@ describe('foreignBurstAlert (pure decision)', () => {
 
   it('stays quiet within the suppression window', () => {
     const now = 10_000_000;
-    expect(
-      foreignBurstAlert(baseRow, opts({ now, lastAlertAt: now - 59 * 60_000 }))
-    ).toBeNull();
+    expect(foreignBurstAlert(baseRow, opts({ now, lastAlertAt: now - 59 * 60_000 }))).toBeNull();
     // Just past the hour → fires again.
     expect(
       foreignBurstAlert(baseRow, opts({ now, lastAlertAt: now - 61 * 60_000 }))

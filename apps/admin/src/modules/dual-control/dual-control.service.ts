@@ -1,4 +1,11 @@
-import { Inject, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit.service';
 
@@ -14,13 +21,7 @@ const ALLOWED_ACTION_TYPES = [
 
 export type DualControlActionType = (typeof ALLOWED_ACTION_TYPES)[number];
 
-const ALLOWED_STATUSES = [
-  'pending',
-  'first_approved',
-  'approved',
-  'rejected',
-  'executed',
-] as const;
+const ALLOWED_STATUSES = ['pending', 'first_approved', 'approved', 'rejected', 'executed'] as const;
 
 /** Virtual status for the governance drill-down: anything awaiting a human
  * decision (first or second round), matching the dashboard's
@@ -87,7 +88,9 @@ export class DualControlService {
     monthStart.setHours(0, 0, 0, 0);
     const [totalPending, awaitingFirst, awaitingSecond, executedThisMonth] = await Promise.all([
       // Anything still short of full approval counts as pending overall.
-      this.prisma.dualControlRequest.count({ where: { status: { in: ['pending', 'first_approved'] } } }),
+      this.prisma.dualControlRequest.count({
+        where: { status: { in: ['pending', 'first_approved'] } },
+      }),
       this.prisma.dualControlRequest.count({ where: { status: 'pending' } }),
       this.prisma.dualControlRequest.count({ where: { status: 'first_approved' } }),
       this.prisma.dualControlRequest.count({
@@ -97,7 +100,12 @@ export class DualControlService {
 
     return {
       actions,
-      stats: { totalPending, awaitingFirstApproval: awaitingFirst, awaitingSecondApproval: awaitingSecond, executedThisMonth },
+      stats: {
+        totalPending,
+        awaitingFirstApproval: awaitingFirst,
+        awaitingSecondApproval: awaitingSecond,
+        executedThisMonth,
+      },
     };
   }
 
@@ -199,7 +207,9 @@ export class DualControlService {
     if (request.status === 'first_approved') {
       // The two approvals must come from different admins.
       if (request.firstApprover === actorId) {
-        throw new ConflictException('This request already has your approval — a second, distinct admin must approve');
+        throw new ConflictException(
+          'This request already has your approval — a second, distinct admin must approve'
+        );
       }
       const updated = await this.prisma.dualControlRequest.update({
         where: { id },
@@ -264,13 +274,22 @@ export class DualControlService {
 
   private async toDto(r: DualControlRequestRow): Promise<DualControlRequestDto> {
     const requester = r.requestedBy
-      ? await this.prisma.user.findUnique({ where: { id: r.requestedBy }, select: { displayName: true } })
+      ? await this.prisma.user.findUnique({
+          where: { id: r.requestedBy },
+          select: { displayName: true },
+        })
       : null;
     const first = r.firstApprover
-      ? await this.prisma.user.findUnique({ where: { id: r.firstApprover }, select: { displayName: true } })
+      ? await this.prisma.user.findUnique({
+          where: { id: r.firstApprover },
+          select: { displayName: true },
+        })
       : null;
     const second = r.secondApprover
-      ? await this.prisma.user.findUnique({ where: { id: r.secondApprover }, select: { displayName: true } })
+      ? await this.prisma.user.findUnique({
+          where: { id: r.secondApprover },
+          select: { displayName: true },
+        })
       : null;
 
     return {

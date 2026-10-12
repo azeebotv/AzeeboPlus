@@ -276,10 +276,7 @@ describe('DualControlService — request creation', () => {
 
   it('requires currency when an amount is provided', async () => {
     await expect(
-      service.create(
-        { actionType: 'large_refund', description: 'x', amount: 100 },
-        'admin-a'
-      )
+      service.create({ actionType: 'large_refund', description: 'x', amount: 100 }, 'admin-a')
     ).rejects.toThrow('Currency is required when an amount is provided');
   });
 

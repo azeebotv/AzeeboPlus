@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Param,
-  Query,
-  Body,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Query, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SupportAdminService } from './support-admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -59,19 +50,13 @@ export class SupportAdminController {
 
   @Put('tickets/:id/assign')
   @ApiOperation({ summary: 'Assign support ticket to agent' })
-  async assignTicket(
-    @Param('id') id: string,
-    @Body('assignedTo') assignedTo: string
-  ) {
+  async assignTicket(@Param('id') id: string, @Body('assignedTo') assignedTo: string) {
     return this.supportService.assignTicket(id, assignedTo);
   }
 
   @Post('tickets/:id/reply')
   @ApiOperation({ summary: 'Reply to support ticket' })
-  async replyTicket(
-    @Param('id') id: string,
-    @Body('body') body: string
-  ) {
+  async replyTicket(@Param('id') id: string, @Body('body') body: string) {
     return this.supportService.addReply(id, body);
   }
 }

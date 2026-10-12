@@ -111,9 +111,7 @@ describe('opsRedisUrl (dedicated ops DB index)', () => {
     expect(opsRedisUrl('redis://:s3cret@redis.internal:6379')).toBe(
       'redis://:s3cret@redis.internal:6379/1'
     );
-    expect(opsRedisUrl('rediss://redis.example.com')).toBe(
-      'rediss://redis.example.com/1'
-    );
+    expect(opsRedisUrl('rediss://redis.example.com')).toBe('rediss://redis.example.com/1');
   });
 
   it('leaves an explicit index untouched (operator choice wins)', () => {
@@ -357,69 +355,65 @@ describeLive('RedisTransportStore (live Redis — real Lua script)', () => {
  * (RUN_LIVE_REDIS=1).
  */
 describeLive('RedisTransportStore locality smoke (ops:transport keys stay in their DB)', () => {
-  it(
-    "writes ops:transport:* keys ONLY into the store's resolved Redis DB",
-    async () => {
-      const store = new RedisTransportStore(); // production resolution path
-      const resolved = new URL(opsRedisUrl());
-      expect(store.dbIndex).not.toBeNull();
-      expect(store.dbIndex).toBe(redisDbFromUrl(resolved.toString()));
-      const dbIndex = store.dbIndex as number;
+  it("writes ops:transport:* keys ONLY into the store's resolved Redis DB", async () => {
+    const store = new RedisTransportStore(); // production resolution path
+    const resolved = new URL(opsRedisUrl());
+    expect(store.dbIndex).not.toBeNull();
+    expect(store.dbIndex).toBe(redisDbFromUrl(resolved.toString()));
+    const dbIndex = store.dbIndex as number;
 
-      // Mirror the module-private BASELINE_KEY / FLIPS_KEY names.
-      const ownedKeys = ['ops:transport:baseline', 'ops:transport:flips'];
+    // Mirror the module-private BASELINE_KEY / FLIPS_KEY names.
+    const ownedKeys = ['ops:transport:baseline', 'ops:transport:flips'];
 
-      const sweep: Redis[] = [];
+    const sweep: Redis[] = [];
+    try {
+      const boot = new Redis(resolved.toString());
+      let dbCount = 16; // vanilla default when CONFIG is disabled (managed Redis)
       try {
-        const boot = new Redis(resolved.toString());
-        let dbCount = 16; // vanilla default when CONFIG is disabled (managed Redis)
-        try {
-          const cfg = (await boot.config('GET', 'databases')) as unknown as string[];
-          dbCount = Number(cfg?.[1]) || dbCount;
-        } catch {
-          /* CONFIG disabled — sweep the vanilla default */
-        }
-        await boot.quit();
-
-        for (let index = 0; index < dbCount; index += 1) {
-          sweep.push(
-            new Redis({
-              host: resolved.hostname,
-              port: Number(resolved.port) || 6379,
-              db: index,
-              lazyConnect: false,
-              maxRetriesPerRequest: 1,
-              connectTimeout: 1_000,
-              commandTimeout: 5_000,
-            }),
-          );
-        }
-
-        // Real HASH writes through the real script path: one baseline field,
-        // one flip inside the hold window.
-        await store.commitTransport('locality-smoke-svc', 4_000, 'localhost');
-        await store.commitTransport('locality-smoke-svc', 4_000, 'ipv4');
-
-        // Positive control: the store's OWN DB must hold its two keys, so a
-        // silently broken sweep can never pass vacuously.
-        const ownKeys = await sweep[dbIndex].keys('ops:transport:*');
-        for (const key of ownedKeys) expect(ownKeys).toContain(key);
-
-        const offenders: Array<{ db: number; keys: string[] }> = [];
-        for (let index = 0; index < sweep.length; index += 1) {
-          if (index === dbIndex) continue;
-          const stray = await sweep[index].keys('ops:transport:*');
-          if (stray.length > 0) offenders.push({ db: index, keys: stray.sort() });
-        }
-        expect(offenders).toEqual([]);
-        // DB 0 is the reserved/generic namespace — call it out by name.
-        expect(await sweep[0].keys('ops:transport:*')).toEqual([]);
-      } finally {
-        await Promise.allSettled(sweep.map((c) => c.quit()));
-        await store.flushForTests();
-        await store.close(); // closes only the client it owns
+        const cfg = (await boot.config('GET', 'databases')) as unknown as string[];
+        dbCount = Number(cfg?.[1]) || dbCount;
+      } catch {
+        /* CONFIG disabled — sweep the vanilla default */
       }
-    },
-    30_000,
-  );
+      await boot.quit();
+
+      for (let index = 0; index < dbCount; index += 1) {
+        sweep.push(
+          new Redis({
+            host: resolved.hostname,
+            port: Number(resolved.port) || 6379,
+            db: index,
+            lazyConnect: false,
+            maxRetriesPerRequest: 1,
+            connectTimeout: 1_000,
+            commandTimeout: 5_000,
+          })
+        );
+      }
+
+      // Real HASH writes through the real script path: one baseline field,
+      // one flip inside the hold window.
+      await store.commitTransport('locality-smoke-svc', 4_000, 'localhost');
+      await store.commitTransport('locality-smoke-svc', 4_000, 'ipv4');
+
+      // Positive control: the store's OWN DB must hold its two keys, so a
+      // silently broken sweep can never pass vacuously.
+      const ownKeys = await sweep[dbIndex].keys('ops:transport:*');
+      for (const key of ownedKeys) expect(ownKeys).toContain(key);
+
+      const offenders: Array<{ db: number; keys: string[] }> = [];
+      for (let index = 0; index < sweep.length; index += 1) {
+        if (index === dbIndex) continue;
+        const stray = await sweep[index].keys('ops:transport:*');
+        if (stray.length > 0) offenders.push({ db: index, keys: stray.sort() });
+      }
+      expect(offenders).toEqual([]);
+      // DB 0 is the reserved/generic namespace — call it out by name.
+      expect(await sweep[0].keys('ops:transport:*')).toEqual([]);
+    } finally {
+      await Promise.allSettled(sweep.map((c) => c.quit()));
+      await store.flushForTests();
+      await store.close(); // closes only the client it owns
+    }
+  }, 30_000);
 });

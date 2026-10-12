@@ -29,7 +29,10 @@ const H = 3_600_000;
 /** Newest-first ledger rows (as the query orders them). */
 const ledgerRows = (hoursAgo: number[], detail: string | null) =>
   hoursAgo
-    .map((h, i) => ({ detail: Array.isArray(detail) ? detail[i] : detail, ranAt: new Date(Date.now() - h * H) }))
+    .map((h, i) => ({
+      detail: Array.isArray(detail) ? detail[i] : detail,
+      ranAt: new Date(Date.now() - h * H),
+    }))
     .sort((a, b) => b.ranAt.getTime() - a.ranAt.getTime());
 
 const flaggedDetail = (ws: string, conns = 2) =>
@@ -168,7 +171,9 @@ describe('ops pgbouncer endpoint shape (stubbed Prisma CI smoke)', () => {
       trackingIssueUrl: null,
     });
     expect(violations).toEqual(
-      expect.arrayContaining([expect.stringMatching(/connHistory: expected an array parallel to history/)])
+      expect.arrayContaining([
+        expect.stringMatching(/connHistory: expected an array parallel to history/),
+      ])
     );
   });
 });

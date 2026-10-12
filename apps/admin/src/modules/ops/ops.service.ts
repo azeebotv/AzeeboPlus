@@ -285,7 +285,7 @@ export function assertForeignPersistenceShape(data: unknown): string[] {
   p(Array.isArray(d.rows), 'rows: expected an array');
   p(
     d.trackingIssueUrl === null || typeof d.trackingIssueUrl === 'string',
-    'trackingIssueUrl: expected a string or null — the card\'s tracking-issue link contract (undefined breaks the degrade branch)'
+    "trackingIssueUrl: expected a string or null — the card's tracking-issue link contract (undefined breaks the degrade branch)"
   );
   if (typeof d.detail !== 'undefined') {
     p(typeof d.detail === 'string', 'detail: expected a string when present');
@@ -1035,7 +1035,8 @@ export async function resolvePoolTrackingIssueUrl(
     if (!res.ok) throw new Error(`search HTTP ${res.status}`);
     const payload = (await res.json()) as { items?: Array<{ number: number; html_url?: string }> };
     const hit = payload.items?.[0];
-    const url = hit?.html_url ?? (hit ? `${apiBase.replace(/\/+$/, '')}/${repo}/issues/${hit.number}` : null);
+    const url =
+      hit?.html_url ?? (hit ? `${apiBase.replace(/\/+$/, '')}/${repo}/issues/${hit.number}` : null);
     if (url) {
       try {
         writeFileSync(cacheFile, JSON.stringify({ url, at: now }), 'utf8');
@@ -1195,11 +1196,8 @@ export function transportStoreStatus(
   redisDb: number | null;
 } {
   const validDb =
-    typeof dbIndex === 'number' && Number.isInteger(dbIndex) && dbIndex >= 0
-      ? dbIndex
-      : null;
-  const where =
-    validDb !== null ? `on Redis DB ${validDb}` : 'on an unconfirmed Redis DB';
+    typeof dbIndex === 'number' && Number.isInteger(dbIndex) && dbIndex >= 0 ? dbIndex : null;
+  const where = validDb !== null ? `on Redis DB ${validDb}` : 'on an unconfirmed Redis DB';
   return degraded
     ? {
         mode: 'memory',
@@ -2175,7 +2173,7 @@ export class OpsService {
    * (transport-store.ts), which compares against the fleet-wide persisted
    * baseline atomically — flips survive restarts and are detected across
    * replicas. Redis unreachable → per-process fallback (fail-open).
-   */  async getServiceHealth(): Promise<{
+   */ async getServiceHealth(): Promise<{
     services: ServiceHealthResult[];
     /** Services whose answering transport changed since the previous sweep —
      * a family flip usually means someone re-bound the service. */
@@ -2189,7 +2187,7 @@ export class OpsService {
       redisDb: number | null;
     };
     checkedAt: string;
-  }>{
+  }> {
     const probes = PROBED_SERVICES.map(async (svc): Promise<ServiceHealthResult> => {
       const healthPath = svc.name === 'live-event-service' ? '/health' : '/v1/health';
       // Family-failover probe: tries localhost → [::1] → 127.0.0.1 so a
@@ -2736,11 +2734,7 @@ export class OpsService {
         now - lastAlertAt < LEDGER_CADENCE_SUPPRESS_MS
       );
       if (!alert) return produced;
-      await writeFile(
-        TRANSPORT_STORE_STATE_FILE,
-        JSON.stringify(now),
-        'utf8'
-      );
+      await writeFile(TRANSPORT_STORE_STATE_FILE, JSON.stringify(now), 'utf8');
       produced.push({
         at: new Date(now).toISOString(),
         level: alert.level,
@@ -2749,7 +2743,9 @@ export class OpsService {
       });
     } catch (e) {
       // A broken watchdog must never break the health page.
-      this.logger.warn(`transport-store alert check failed (status unaffected): ${(e as Error).message}`);
+      this.logger.warn(
+        `transport-store alert check failed (status unaffected): ${(e as Error).message}`
+      );
     }
     return produced;
   }
@@ -2769,16 +2765,13 @@ export class OpsService {
     try {
       // Resolved per call (not module load) so specs can point the state
       // file at a scratch path and set their own threshold via env.
-      const stateFile =
-        process.env.FOREIGN_BURST_STATE_FILE || FOREIGN_BURST_STATE_FILE;
+      const stateFile = process.env.FOREIGN_BURST_STATE_FILE || FOREIGN_BURST_STATE_FILE;
       const threshold = Number(
         process.env.POOL_FOREIGN_PEAK_CONNS ?? FOREIGN_BURST_PEAK_CONNS_DEFAULT
       );
       const fp = await this.getForeignPersistence(48);
       const rows = fp?.rows ?? [];
-      const offenders = rows.filter(
-        (r) => !r.approved && r.peakConns >= threshold && !r.sustained
-      );
+      const offenders = rows.filter((r) => !r.approved && r.peakConns >= threshold && !r.sustained);
       let suppressed: Record<string, number> = {};
       try {
         suppressed = JSON.parse(await readFile(stateFile, 'utf8'));

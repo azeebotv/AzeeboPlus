@@ -272,4 +272,3 @@ export class WalletManagementService {
     return { id: updated.id, status: updated.status };
   }
 }
-

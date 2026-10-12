@@ -40,12 +40,12 @@ describe('parseDatabaseUrlBudget', () => {
     expect(parseDatabaseUrlBudget('postgresql://a@h/db?connection_limit=0').connectionLimit).toBe(
       null
     );
-    expect(
-      parseDatabaseUrlBudget('postgresql://a@h/db?connection_limit=2.5').connectionLimit
-    ).toBe(null);
-    expect(
-      parseDatabaseUrlBudget('postgresql://a@h/db?connection_limit=abc').connectionLimit
-    ).toBe(null);
+    expect(parseDatabaseUrlBudget('postgresql://a@h/db?connection_limit=2.5').connectionLimit).toBe(
+      null
+    );
+    expect(parseDatabaseUrlBudget('postgresql://a@h/db?connection_limit=abc').connectionLimit).toBe(
+      null
+    );
   });
 
   it('never throws on garbage input — flags unknown instead', () => {

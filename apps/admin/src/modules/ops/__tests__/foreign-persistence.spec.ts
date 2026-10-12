@@ -239,9 +239,7 @@ describe('computeForeignPassTrend', () => {
   });
 
   it('degenerate inputs stay finite (no buckets=0, no division by zero)', () => {
-    expect(computeForeignPassTrend([], 0, NOW).buckets).toHaveLength(
-      FOREIGN_PASS_TREND_BUCKETS
-    );
+    expect(computeForeignPassTrend([], 0, NOW).buckets).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
     expect(computeForeignPassTrend([], 0, NOW).bucketSeconds).toBeGreaterThanOrEqual(1);
     expect(computeForeignPassTrend([NOW], 0, NOW, 0).buckets).toHaveLength(1);
     // Zero window: a single instant — but the pass is still counted
@@ -278,13 +276,11 @@ describe('computeForeignPassTrend', () => {
   it('connHistory: peak wins within one bucket; nulls never mask a number', () => {
     // Three passes in the same bucket: null conns, then 3, then 7 — the
     // peak (7) must survive, and the unrecorded ones must not reset it.
-    const trend = computeForeignPassTrend(
-      [NOW - W, NOW - W + 1, NOW - W + 2],
-      W,
-      NOW,
-      4,
-      [null, 3, 7]
-    );
+    const trend = computeForeignPassTrend([NOW - W, NOW - W + 1, NOW - W + 2], W, NOW, 4, [
+      null,
+      3,
+      7,
+    ]);
     expect(trend.connBuckets).toEqual([7, null, null, null]);
   });
 
@@ -317,7 +313,9 @@ describe('computeForeignPassTrend', () => {
   it('attributed rows carry their project; unmatched workspaces own their group', () => {
     const detail = (ws: string) =>
       `pgbouncer 62/200 clients; foreign direct clients (context, not violations): ${ws}(python 777, 2 conns)`;
-    const rows = rowsAt([2, 1], (i) => detail(i === 0 ? '/Users/x/YCN/services/gateway' : '/mystery/proj'));
+    const rows = rowsAt([2, 1], (i) =>
+      detail(i === 0 ? '/Users/x/YCN/services/gateway' : '/mystery/proj')
+    );
     const out = computeForeignPersistence(rows, {
       minSpanHours: 1,
       projectRootsRaw: '/Users/x/YCN=YCN, /Users/x/YCN/services/gateway=Gateway',
@@ -339,10 +337,15 @@ describe('computeForeignPassTrend', () => {
   it('attribution sorts group-mates together within equal spans', () => {
     const detail = (ws: string) =>
       `pgbouncer 62/200 clients; foreign direct clients (context, not violations): ${ws}(python 777, 2 conns)`;
-    const mk = (ws: string, h: number) => ({ detail: detail(ws), ranAt: new Date(Date.now() - h * H) });
-    const rows = [mk('/Users/x/YCN/services/search', 2), mk('/Users/x/YCN/services/auth', 2), mk('/loner', 2)].sort(
-      (a, b) => b.ranAt.getTime() - a.ranAt.getTime()
-    );
+    const mk = (ws: string, h: number) => ({
+      detail: detail(ws),
+      ranAt: new Date(Date.now() - h * H),
+    });
+    const rows = [
+      mk('/Users/x/YCN/services/search', 2),
+      mk('/Users/x/YCN/services/auth', 2),
+      mk('/loner', 2),
+    ].sort((a, b) => b.ranAt.getTime() - a.ranAt.getTime());
     const out = computeForeignPersistence(rows, {
       minSpanHours: 1,
       projectRootsRaw: '/Users/x/YCN=YCN',

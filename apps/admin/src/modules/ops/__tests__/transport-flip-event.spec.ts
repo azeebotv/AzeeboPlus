@@ -1,7 +1,4 @@
-import {
-  renderTransportFlipEventDetail,
-  parseTransportFlipEventDetail,
-} from '../ops.service';
+import { renderTransportFlipEventDetail, parseTransportFlipEventDetail } from '../ops.service';
 
 /**
  * Unit tests for the transport-flip-EVENT ledger codec (ops.service.ts).
@@ -46,10 +43,7 @@ describe('renderTransportFlipEventDetail / parseTransportFlipEventDetail', () =>
   });
 
   it('accepts an ISO ranAt string as well as a Date', () => {
-    const parsed = parseTransportFlipEventDetail(
-      renderTransportFlipEventDetail(FLIP),
-      AT
-    );
+    const parsed = parseTransportFlipEventDetail(renderTransportFlipEventDetail(FLIP), AT);
     expect(parsed?.detectedAt).toBe(AT);
   });
 
@@ -57,14 +51,9 @@ describe('renderTransportFlipEventDetail / parseTransportFlipEventDetail', () =>
     expect(parseTransportFlipEventDetail(null, new Date())).toBeNull();
     expect(parseTransportFlipEventDetail('', new Date())).toBeNull();
     expect(
-      parseTransportFlipEventDetail(
-        'pgbouncer 62/200 clients; no pooler bypasses',
-        new Date()
-      )
+      parseTransportFlipEventDetail('pgbouncer 62/200 clients; no pooler bypasses', new Date())
     ).toBeNull();
-    expect(
-      parseTransportFlipEventDetail('service=only-one-key', new Date())
-    ).toBeNull();
+    expect(parseTransportFlipEventDetail('service=only-one-key', new Date())).toBeNull();
     // from/to are the identity of a transition — without them the row is
     // foreign and must be skipped by the trend, not rendered as garbage.
     expect(

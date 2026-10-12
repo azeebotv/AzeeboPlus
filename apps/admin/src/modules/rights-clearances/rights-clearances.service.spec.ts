@@ -145,7 +145,8 @@ describe('RightsClearancesService', () => {
       expect(call.where.expiryDate.gt).toBeInstanceOf(Date);
       expect(call.where.expiryDate.lte).toBeInstanceOf(Date);
       // ~30-day window: lte must be roughly 30 days ahead of gt (now).
-      const days = (call.where.expiryDate.lte.getTime() - call.where.expiryDate.gt.getTime()) / 86400000;
+      const days =
+        (call.where.expiryDate.lte.getTime() - call.where.expiryDate.gt.getTime()) / 86400000;
       expect(days).toBeGreaterThan(29.9);
       expect(days).toBeLessThan(30.1);
       // Expiry-driven lists sort by soonest expiry, not recency.
@@ -214,9 +215,9 @@ describe('RightsClearancesService', () => {
     });
 
     it('refuses decision values outside the closed status set', async () => {
-      await expect(
-        service.updateStatus('rc-1', 'expired' as never, 'admin-a')
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateStatus('rc-1', 'expired' as never, 'admin-a')).rejects.toThrow(
+        BadRequestException
+      );
       expect(prisma.rightsClearance.update).not.toHaveBeenCalled();
     });
 
