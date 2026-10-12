@@ -1,13 +1,4 @@
-import {
-  Inject,
-  Controller,
-  Get,
-  Post,
-  UseGuards,
-  Request,
-  Body,
-  Res,
-} from '@nestjs/common';
+import { Inject, Controller, Get, Post, UseGuards, Request, Body, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Response } from 'express';
 import { COOKIE_OPTIONS } from './auth-cookie.controller.js';
