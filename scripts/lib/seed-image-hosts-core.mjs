@@ -43,6 +43,12 @@ const LINK_HOST_EXEMPTIONS = new Set([
   // Slack webhook endpoints (admin-data-freshness notifications): outbound
   // HTTP POST targets, never image-optimizer input.
   'hooks.slack.com',
+  // `partner_banks.applyUrl` in the wallet seed: where a viewer is sent to
+  // submit a loan application, rendered as an <a>. The path is a bank slug
+  // rather than a link-shaped word, so the path exemptions below cannot name
+  // it, and allowlisting the host in `images.remotePatterns` would be worse —
+  // that would hand the image optimizer a domain we only ever hyperlink to.
+  'apply.example.org',
 ]);
 
 /**
