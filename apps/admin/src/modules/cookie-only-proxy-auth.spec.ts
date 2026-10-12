@@ -98,10 +98,10 @@ describe('admin proxies — cookie-only auth integration', () => {
       { AdminLiveEventsProxyController },
       { CreatorsProxyController },
     ] = await Promise.all([
-        import('./analytics-proxy/analytics-proxy.controller'),
-        import('./live-events-proxy/live-events-proxy.controller'),
-        import('./creators-proxy/creators-proxy.controller'),
-      ]);
+      import('./analytics-proxy/analytics-proxy.controller'),
+      import('./live-events-proxy/live-events-proxy.controller'),
+      import('./creators-proxy/creators-proxy.controller'),
+    ]);
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -143,8 +143,7 @@ describe('admin proxies — cookie-only auth integration', () => {
         {
           provide: ConfigService,
           useValue: {
-            getOrThrow: (key: string) =>
-              key === 'JWT_ACCESS_SECRET' ? JWT_SECRET : undefined,
+            getOrThrow: (key: string) => (key === 'JWT_ACCESS_SECRET' ? JWT_SECRET : undefined),
             get: () => undefined,
           },
         },
@@ -212,7 +211,9 @@ describe('admin proxies — cookie-only auth integration', () => {
     {
       label: 'agbala (storyworlds list)',
       adminPath: '/v1/admin/agbala/storyworlds',
-      expectedUpstreamPath: '/v1/vertical/storyworlds',
+      // Reads go to the agbala-admin surface, not the public /vertical/storyworlds
+      // route: that one is ServiceAuthGuard-surfaced and 403s the proxy.
+      expectedUpstreamPath: '/v1/vertical/agbala/storyworlds',
       transport: 'bearer',
     },
     {
@@ -232,9 +233,7 @@ describe('admin proxies — cookie-only auth integration', () => {
         .expect((r) => {
           // The core contract: no auth rejection of any kind.
           if (r.status === 401 || r.status === 403) {
-            throw new Error(
-              `proxy rejected a cookie-only SPA request: ${r.status} ${c.adminPath}`
-            );
+            throw new Error(`proxy rejected a cookie-only SPA request: ${r.status} ${c.adminPath}`);
           }
         });
       expect(res.status).toBe(200);
