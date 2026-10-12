@@ -53,10 +53,14 @@ describe('MediaService.statObject', () => {
   it('keeps every other storage failure on the 5xx side', async () => {
     // A credential refusal and an unreachable endpoint are our problem. Neither
     // may reach the client as a 4xx that implies they uploaded wrong.
-    send.mockRejectedValue(Object.assign(new Error('InvalidAccessKeyId'), { name: 'SignatureDoesNotMatch' }));
+    send.mockRejectedValue(
+      Object.assign(new Error('InvalidAccessKeyId'), { name: 'SignatureDoesNotMatch' })
+    );
     await expect(service.statObject('uploads/c1/m1')).rejects.toMatchObject({ status: 500 });
 
-    send.mockRejectedValue(Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' }));
+    send.mockRejectedValue(
+      Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' })
+    );
     const outage = await service.statObject('uploads/c1/m1').catch((e) => e);
     expect(outage).toBeInstanceOf(HttpException);
     expect(outage.getStatus()).toBe(503);

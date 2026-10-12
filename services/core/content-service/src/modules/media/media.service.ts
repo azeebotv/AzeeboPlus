@@ -1,7 +1,12 @@
 import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, GetObjectCommand, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+  HeadObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'node:crypto';
 import sharp from 'sharp';
@@ -150,7 +155,9 @@ export class MediaService {
   async statObject(key: string): Promise<{ size: number; contentType?: string }> {
     if (!key) throw new NotFoundException('Object key not provided');
     try {
-      const head = await this.s3Client.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
+      const head = await this.s3Client.send(
+        new HeadObjectCommand({ Bucket: this.bucketName, Key: key })
+      );
       return { size: head.ContentLength ?? 0, contentType: head.ContentType };
     } catch (error) {
       // allowed-fabricated-4xx: a key that is not there and a bucket that cannot

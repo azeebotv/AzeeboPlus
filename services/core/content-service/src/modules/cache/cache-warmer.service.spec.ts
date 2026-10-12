@@ -21,14 +21,16 @@ describe('CacheWarmerService', () => {
     };
     mockPrisma = {
       contentItem: {
-        findMany: jest.fn().mockResolvedValue([
-          { id: 'item-1', title: 'Test Item', viewCount: 100, createdAt: new Date() },
-        ]),
+        findMany: jest
+          .fn()
+          .mockResolvedValue([
+            { id: 'item-1', title: 'Test Item', viewCount: 100, createdAt: new Date() },
+          ]),
       },
       category: {
-        findMany: jest.fn().mockResolvedValue([
-          { id: 'cat-1', name: 'Nollywood', slug: 'nollywood' },
-        ]),
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ id: 'cat-1', name: 'Nollywood', slug: 'nollywood' }]),
       },
       universeFeatureFlag: {
         findMany: jest.fn().mockResolvedValue([{ id: 'flag-1', isEnabled: true }]),
