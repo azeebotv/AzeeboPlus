@@ -52,7 +52,7 @@ export { referralApi } from './referral';
 export { creatorApi } from './creator';
 export { supportApi } from './support';
 export { moderationApi } from './moderation';
-export { apiClient } from './client';
+export { apiClient, generateIdempotencyKey } from './client';
 export type {
   ReportReason,
   ReportData,

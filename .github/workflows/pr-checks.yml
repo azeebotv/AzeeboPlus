@@ -412,6 +412,10 @@ jobs:
       # somewhere the schema does not declare, or a skipped rewrite) that
       # would otherwise only surface as confusing type errors below.
       - run: node scripts/check-prisma-client-stale.mjs
+      # Workspace packages resolve through their built dist/ (gitignored, so
+      # absent on a fresh checkout); build them before root tsc or every
+      # @azeebo/* import fails with TS2307.
+      - run: pnpm --filter "./packages/**" run build
       # Repo-root tsc peaked past the runner's default heap on this branch
       # (exit 134 / OOM); give it explicit headroom.
       - run: pnpm run typecheck

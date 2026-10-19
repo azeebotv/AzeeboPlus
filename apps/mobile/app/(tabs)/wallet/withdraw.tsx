@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AmountInput } from '../../../src/components/AmountInput';
-import { walletApi } from '@azeebo/react-data';
+import { walletApi, generateIdempotencyKey } from '@azeebo/react-data';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
 import { walletPresetAmounts, walletLimits } from '../../../src/config/prices';
 import { colors } from '../../../src/theme';
@@ -134,6 +134,9 @@ export default function WithdrawFundsScreen() {
                 amount: parseFloat(amount),
                 bankCode: bankName,
                 accountNumber,
+                // One key per confirmed submission: a retried request reuses it
+                // (server dedupes), a fresh submit gets a fresh key (AUD-03).
+                idempotencyKey: generateIdempotencyKey(),
               });
 
               Alert.alert('Success', 'Withdrawal request submitted!', [
