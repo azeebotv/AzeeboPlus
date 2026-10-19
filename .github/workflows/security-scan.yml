@@ -33,6 +33,9 @@ jobs:
     permissions:
       contents: read # checkout of a private repo; a permissions block with
                      # only security-events: write strips the default contents grant
+      actions: read  # the CodeQL action fetches its own workflow run for
+                     # status reporting; without this the finalize step dies
+                     # with "Resource not accessible by integration"
       security-events: write
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
