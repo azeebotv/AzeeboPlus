@@ -567,8 +567,10 @@ export class WalletService {
       await this.assertFraudChecksPass(userId, 'withdraw', withdrawDto.amount);
 
       const reference = `WD-${randomUUID()}`;
-      const idempotencyKey =
-        withdrawDto.idempotencyKey || idempotencyKeyHeader || `withdraw-${randomUUID()}`;
+      // The DTO requires a client key; the header is an alias for clients
+      // that send it there. Never synthesize a server-side key: a fresh key
+      // per retry re-opens the duplicate-withdrawal window (AUD-03).
+      const idempotencyKey = withdrawDto.idempotencyKey || idempotencyKeyHeader || undefined;
 
       const result = await this.prisma.$transaction(
         async (
@@ -707,8 +709,9 @@ export class WalletService {
 
       const senderReference = `TRF-OUT-${randomUUID()}`;
       const recipientReference = `TRF-IN-${randomUUID()}`;
-      const idempotencyKey =
-        transferDto.idempotencyKey || idempotencyKeyHeader || `transfer-${randomUUID()}`;
+      // Same contract as withdraw: client key required by the DTO, header
+      // accepted as an alias, never a synthesized per-request key (AUD-03).
+      const idempotencyKey = transferDto.idempotencyKey || idempotencyKeyHeader || undefined;
 
       const updatedSenderWallet = await this.prisma.$transaction(
         async (

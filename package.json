@@ -40,7 +40,8 @@
     "sweep:flags": "node scripts/sweep-flag-usage.mjs",
     "generate:flags:docs": "node scripts/generate-flag-registry-table.mjs",
     "check:flags:docs": "node scripts/generate-flag-registry-table.mjs --check",
-    "typecheck": "tsc --noEmit && pnpm --filter @azeebo/admin --filter @azeebo/creator run typecheck:client",
+    "typecheck": "node scripts/check-dist-stale.mjs && tsc --noEmit && pnpm --filter @azeebo/admin --filter @azeebo/creator run typecheck:client",
+    "check:dist-stale": "node scripts/check-dist-stale.mjs",
     "prisma:generate": "bash scripts/generate-prisma-clients.sh",
     "test": "pnpm run prisma:generate && pnpm -r run test",
     "test:sweep": "node scripts/test-sweep.mjs",
@@ -142,10 +143,6 @@
       "sanitize-html": ">=2.17.7 <3",
       "sharp": ">=0.35.4 <1",
       "undici": ">=7.29.1 <8"
-    },
-    "patchedDependencies": {
-      "@react-native/gradle-plugin@0.85.3": "patches/@react-native__gradle-plugin@0.85.3.patch",
-      "expo-web-browser@14.0.2": "patches/expo-web-browser@14.0.2.patch"
     }
   }
 }

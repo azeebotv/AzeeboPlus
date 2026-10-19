@@ -115,6 +115,16 @@ export interface FeatureFlagConfig {
    * still fail loudly. Set false to keep strict (throw) semantics.
    */
   failClosedOnRedisError?: boolean;
+  /**
+   * When true, a Redis READ failure serves the last-known (expired) cache entry
+   * instead of falling back to the registered default. Matters for kill-switch
+   * flags that default ON — e.g. `universe.<slug>.enabled`: during a Redis
+   * outage the plain fail-closed path re-enables universes ops had disabled.
+   * Last-known-state keeps the operator's intent; a flag with no cached entry
+   * still falls back to its default. Implies failClosedOnRedisError (strict
+   * throw wins when disabled). Default false.
+   */
+  staleOnRedisError?: boolean;
 }
 
 interface CacheEntry {
@@ -187,6 +197,49 @@ export function resolveFeatureFlagRedisUrl(
 /** Metadata key used by the @FeatureFlag decorator (shared with the NestJS glue). */
 export const FEATURE_FLAG_KEY = 'feature_flag_key';
 
+/**
+ * Deployment-level default overrides: `FEATURE_FLAG_DEFAULT_<KEY>` env vars
+ * override the registered `defaultFlags`/`defaultValues` for `<key>` (flag keys
+ * are snake_case, so the suffix lowercases straight back into a key:
+ * `FEATURE_FLAG_DEFAULT_WEB_DARK_MODE` → `web_dark_mode`). Env wins over code
+ * defaults — it is the ops-side knob documented in README/DEPLOYMENT-CHECKLIST.
+ */
+export const FEATURE_FLAG_DEFAULT_ENV_PREFIX = 'FEATURE_FLAG_DEFAULT_';
+
+/** Parses one env override value: booleans, numbers, variant strings; empty → ignored. */
+export function parseFlagDefaultEnvValue(raw: string): FlagValue | null {
+  const value = raw.trim();
+  if (value === '') return null;
+  if (/^true$/i.test(value)) return true;
+  if (/^false$/i.test(value)) return false;
+  if (/^-?\d+(\.\d+)?$/.test(value)) return Number(value);
+  return value;
+}
+
+/**
+ * Collects `FEATURE_FLAG_DEFAULT_*` overrides from an env map. Boolean values
+ * land in `booleans` (default on/off); numeric/variant values land in `values`
+ * and imply the flag is active by default — the same semantics `getAllFlagsWithDefaults`
+ * applies to registered `defaultValues`.
+ */
+export function flagDefaultsFromEnv(env: Record<string, string | undefined> = process.env): {
+  booleans: Record<string, boolean>;
+  values: Record<string, FlagValue>;
+} {
+  const booleans: Record<string, boolean> = {};
+  const values: Record<string, FlagValue> = {};
+  for (const [envKey, raw] of Object.entries(env)) {
+    if (!envKey.startsWith(FEATURE_FLAG_DEFAULT_ENV_PREFIX) || raw === undefined) continue;
+    const key = envKey.slice(FEATURE_FLAG_DEFAULT_ENV_PREFIX.length).toLowerCase();
+    if (!key) continue;
+    const parsed = parseFlagDefaultEnvValue(raw);
+    if (parsed === null) continue;
+    if (typeof parsed === 'boolean') booleans[key] = parsed;
+    else values[key] = parsed;
+  }
+  return { booleans, values };
+}
+
 /** Service for managing feature flags backed by Redis, with percentage rollouts and user targeting. */
 export class FeatureFlagService {
   private readonly redis: Redis;
@@ -206,6 +259,7 @@ export class FeatureFlagService {
   private readonly onAutoDisabled?: FeatureFlagConfig['onAutoDisabled'];
   private readonly onRedisError?: FeatureFlagConfig['onRedisError'];
   private readonly failClosedOnRedisError: boolean;
+  private readonly staleOnRedisError: boolean;
   private readonly autoDisableAfterDays: number;
   private readonly cache = new Map<string, CacheEntry>();
   /** Full-list snapshot cache (bootstrap path). Invalidated on every write. */
@@ -232,8 +286,15 @@ export class FeatureFlagService {
     this.redis =
       config.redis || new Redis(resolveFeatureFlagRedisUrl(redisUrl || 'redis://localhost:6379'));
     this.prefix = config.prefix || 'feature_flags:';
-    this.defaultFlags = config.defaultFlags || {};
-    this.defaultValues = config.defaultValues || {};
+    this.defaultFlags = { ...config.defaultFlags };
+    this.defaultValues = { ...config.defaultValues };
+    // FEATURE_FLAG_DEFAULT_<KEY> env overrides win over registered defaults.
+    const envDefaults = flagDefaultsFromEnv();
+    Object.assign(this.defaultFlags, envDefaults.booleans);
+    for (const [key, value] of Object.entries(envDefaults.values)) {
+      this.defaultValues[key] = value;
+      this.defaultFlags[key] = true;
+    }
     this.publicFlagKeys = new Set(config.publicFlagKeys || []);
     this.cacheTtlMs = config.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
     this.listCacheTtlMs = config.listCacheTtlMs ?? DEFAULT_LIST_CACHE_TTL_MS;
@@ -247,6 +308,7 @@ export class FeatureFlagService {
     this.onAutoDisabled = config.onAutoDisabled;
     this.onRedisError = config.onRedisError;
     this.failClosedOnRedisError = config.failClosedOnRedisError ?? true;
+    this.staleOnRedisError = config.staleOnRedisError ?? false;
     this.autoDisableAfterDays = config.autoDisableAfterDays ?? DEFAULT_AUTO_DISABLE_AFTER_DAYS;
   }
 
@@ -332,6 +394,11 @@ export class FeatureFlagService {
     } catch (error) {
       if (this.failClosedOnRedisError) {
         this.reportRedisError(key, error);
+        // staleOnRedisError: `cached` here is by definition expired (fresh
+        // entries returned above) — the last-known state beats the default.
+        if (this.staleOnRedisError && cached) {
+          return cached.flag;
+        }
         return null;
       }
       throw error;
@@ -349,13 +416,64 @@ export class FeatureFlagService {
     return flag;
   }
 
-  /** Batch flag fetch (cache-aware). */
+  /**
+   * Batch flag fetch (cache-aware): fresh entries serve from the in-process
+   * cache; uncached keys cost ONE Redis MGET round-trip instead of a sequential
+   * get per key. Missing/invalid entries are cached as nulls (same TTL as
+   * getFlag) so a cold keyspace doesn't re-hit Redis every call. On Redis read
+   * failure with failClosedOnRedisError, fetched keys simply fall back to
+   * defaults (per-key error reporting mirrors getFlag).
+   */
   async getFlags(keys: string[]): Promise<Map<string, FeatureFlag>> {
     const result = new Map<string, FeatureFlag>();
-    for (const key of keys) {
-      const flag = await this.getFlag(key);
-      if (flag) result.set(key, flag);
+    const missing: string[] = [];
+    const now = Date.now();
+    for (const key of new Set(keys)) {
+      const cached = this.cache.get(`${this.prefix}${key}`);
+      if (cached && cached.expiresAt > now) {
+        this.onCacheHit?.(key);
+        if (cached.flag) result.set(key, cached.flag);
+      } else {
+        missing.push(key);
+      }
     }
+    if (missing.length === 0) return result;
+
+    let rows: (string | null)[];
+    try {
+      rows = await this.redis.mget(missing.map((key) => `${this.prefix}${key}`));
+    } catch (error) {
+      if (this.failClosedOnRedisError) {
+        for (const key of missing) {
+          this.reportRedisError(key, error);
+          // Same per-key stale path as getFlag: an expired cache entry (any
+          // entry still in the map here is expired) beats the default.
+          if (this.staleOnRedisError) {
+            const stale = this.cache.get(`${this.prefix}${key}`);
+            // A stale *negative* entry means "wasn't stored" — the map only
+            // carries found flags, so callers use defaults, as before.
+            if (stale?.flag) result.set(key, stale.flag);
+          }
+        }
+        return result;
+      }
+      throw error;
+    }
+    const expiresAt = Date.now() + this.cacheTtlMs;
+    missing.forEach((key, i) => {
+      this.onCacheMiss?.(key);
+      const data = rows[i];
+      let flag: FeatureFlag | null = null;
+      if (data) {
+        try {
+          flag = JSON.parse(data) as FeatureFlag;
+        } catch {
+          flag = null;
+        }
+      }
+      this.cache.set(`${this.prefix}${key}`, { flag, expiresAt });
+      if (flag) result.set(key, flag);
+    });
     return result;
   }
 
@@ -488,7 +606,7 @@ export class FeatureFlagService {
     const lastWarn = this.redisErrorWarnedAt.get(key) ?? 0;
     if (now - lastWarn >= STALE_WARN_THROTTLE_MS) {
       this.redisErrorWarnedAt.set(key, now);
-      // eslint-disable-next-line no-console
+
       console.warn(
         `[feature-flags] Redis read failed for "${key}" — serving default (fail-closed): ${err.message}`
       );
@@ -604,7 +722,7 @@ export class FeatureFlagService {
     const lastWarn = this.staleWarnedAt.get(key) ?? 0;
     if (now - lastWarn >= STALE_WARN_THROTTLE_MS) {
       this.staleWarnedAt.set(key, now);
-      // eslint-disable-next-line no-console
+
       console.warn(
         `[feature-flags] Flag "${key}" is still ENABLED past its staleAfter ` +
           `(${flag.staleAfter}) — remove it or renew the expiry (admin stale report)`
@@ -643,7 +761,7 @@ export class FeatureFlagService {
     const lastWarn = this.autoDisabledWarnedAt.get(key) ?? 0;
     if (now - lastWarn >= STALE_WARN_THROTTLE_MS) {
       this.autoDisabledWarnedAt.set(key, now);
-      // eslint-disable-next-line no-console
+
       console.warn(
         `[feature-flags] Flag "${key}" AUTO-DISABLED (self-disable safety): past ` +
           `staleAfter ${flag.staleAfter} + grace — renew the expiry or remove it`
@@ -653,7 +771,6 @@ export class FeatureFlagService {
     if (this.autoDisableInFlight.has(key)) return;
     const pending = this.persistAutoDisable(key)
       .catch((error: unknown) => {
-        // eslint-disable-next-line no-console
         console.warn(
           `[feature-flags] Auto-disable persist failed for "${key}": ${(error as Error).message}`
         );

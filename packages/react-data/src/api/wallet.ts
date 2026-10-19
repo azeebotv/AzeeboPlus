@@ -91,6 +91,8 @@ export const walletApi = {
     amount: number;
     bankCode: string;
     accountNumber: string;
+    /** Stable per-intent key so a retried withdrawal dedupes server-side. */
+    idempotencyKey: string;
   }): Promise<ApiResponse<{ message: string }>> => {
     return apiClient.post<ApiResponse<{ message: string }>>('/v1/wallet/withdraw', data);
   },
@@ -130,6 +132,8 @@ export const walletApi = {
     recipientId: string;
     amount: number;
     description?: string;
+    /** Stable per-intent key so a retried transfer dedupes server-side. */
+    idempotencyKey: string;
   }): Promise<ApiResponse<{ message: string; transactionId: string }>> => {
     return apiClient.post<ApiResponse<{ message: string; transactionId: string }>>(
       '/v1/wallet/transfer',

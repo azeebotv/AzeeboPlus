@@ -78,29 +78,48 @@ describe('foreignBurstAlert (pure decision)', () => {
 describe('checkForeignBurstAlert (checker integration, stubbed Prisma)', () => {
   let scratchState: string;
   let prevThreshold: string | undefined;
+  let prevTrackingUrl: string | undefined;
 
   const makePrismaStub = (rows: Array<{ detail: string | null; ranAt: Date }>) =>
     ({ $queryRaw: async () => rows }) as unknown as OpsService['prisma'];
 
-  const ledgerRows = (hoursAgo: number[], conns: number) =>
-    hoursAgo
+  const ledgerRows = (hoursAgo: number[], conns: number) => {
+    // ONE captured base: per-iteration Date.now() makes a "24h" span a few
+    // microseconds short, and the sustained boundary (>= 24h - 1e-9) then
+    // flips on loop timing instead of semantics.
+    const base = Date.now();
+    return hoursAgo
       .map((h) => ({
         detail: `pgbouncer 62/200 clients; foreign direct clients (context, not violations): /Users/other/fleet(python 777, ${conns} conns)`,
-        ranAt: new Date(Date.now() - h * H),
+        ranAt: new Date(base - h * H),
       }))
       .sort((a, b) => b.ranAt.getTime() - a.ranAt.getTime());
+  };
 
   beforeAll(() => {
     scratchState = path.join(os.tmpdir(), `azeebo-foreign-burst-spec-${process.pid}.json`);
     prevThreshold = process.env.POOL_FOREIGN_PEAK_CONNS;
+    prevTrackingUrl = process.env.POOL_TRACKING_ISSUE_URL;
     process.env.POOL_FOREIGN_PEAK_CONNS = '20';
     process.env.FOREIGN_BURST_STATE_FILE = scratchState;
+    // The sustained branch makes getForeignPersistence resolve the tracking-issue
+    // link — pin the override so the spec never depends on ambient GitHub env
+    // (a configured GITHUB_REPOSITORY+token would otherwise add a live fetch).
+    process.env.POOL_TRACKING_ISSUE_URL = 'https://github.test/azeebo/issues/000';
   });
 
   afterAll(async () => {
     if (prevThreshold === undefined) delete process.env.POOL_FOREIGN_PEAK_CONNS;
     else process.env.POOL_FOREIGN_PEAK_CONNS = prevThreshold;
+    if (prevTrackingUrl === undefined) delete process.env.POOL_TRACKING_ISSUE_URL;
+    else process.env.POOL_TRACKING_ISSUE_URL = prevTrackingUrl;
     delete process.env.FOREIGN_BURST_STATE_FILE;
+    await fs.rm(scratchState, { force: true });
+  });
+
+  beforeEach(async () => {
+    // Each case owns its suppression state — no order dependency between
+    // the burst, sustained, and recovery tests.
     await fs.rm(scratchState, { force: true });
   });
 
@@ -123,12 +142,16 @@ describe('checkForeignBurstAlert (checker integration, stubbed Prisma)', () => {
   });
 
   it('does not fire for a sustained dialer even at a huge peak', async () => {
-    // 25 hourly passes → 25h span → sustained → the nightly tracker's lane.
-    const rows = Array.from({ length: 25 }, (_, i) => ({
-      detail: `pgbouncer 62/200 clients; foreign direct clients (context, not violations): /Users/other/fleet(python 777, 99 conns)`,
-      ranAt: new Date(Date.now() - i * H),
-    })).sort((a, b) => b.ranAt.getTime() - a.ranAt.getTime());
-    const svc = new OpsService(makePrismaStub(rows));
+    // 25 hourly passes → 24h span → sustained → the nightly tracker's lane.
+    // Built through ledgerRows so the span is exactly 24h (see note there).
+    const svc = new OpsService(
+      makePrismaStub(
+        ledgerRows(
+          Array.from({ length: 25 }, (_, i) => i),
+          99
+        )
+      )
+    );
     const alerts = await svc['checkForeignBurstAlert']();
     expect(alerts).toHaveLength(0);
   });

@@ -408,7 +408,7 @@ export const api = new ApiClient(resolvedApiUrl);
 // Re-export the standalone fetch helper
 // ---------------------------------------------------------------------------
 
-export { apiFetch, resolvedApiUrl } from './base';
+export { apiFetch, resolvedApiUrl, generateIdempotencyKey } from './base';
 
 // ---------------------------------------------------------------------------
 // Re-export ALL types for backward compatibility

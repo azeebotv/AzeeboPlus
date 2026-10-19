@@ -1,113 +1,71 @@
-'use client';
-import { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { api } from '@/lib/api';
-import { PageShell } from '@/components/layout/PageShell';
-import { PageHero } from '@/components/layout/PageHero';
-import MusicTrackList from '@/components/music/MusicTrackList';
-import { OptimizedImage } from '@/components/OptimizedImage';
-import { ScrollReveal } from '@/components/motion/ScrollReveal';
-import { extractTracks } from '@/lib/music';
-import { Mic } from 'lucide-react';
-import analytics from '@/lib/analytics';
+import { Metadata } from 'next';
+import { resolvedApiUrl } from '@/lib/api';
+import ArtistDetailClient from './ArtistDetailClient';
 
-interface Artist {
-  id: string;
-  name: string;
-  avatar?: string;
-  bio?: string;
-  genre?: string;
-  trackCount?: number;
-  followerCount?: number;
-  socialLinks?: { platform: string; url: string }[];
+interface Props {
+  params: Promise<{
+    id: string;
+  }>;
 }
 
-export default function ArtistDetailPage(): React.JSX.Element {
-  const params = useParams();
-  const id = params?.id as string;
+interface ArtistMetadata {
+  name: string;
+  bio?: string;
+  avatar?: string;
+  genre?: string;
+}
 
-  useEffect(() => {
-    analytics.pageView('music-artist');
-  }, [id]);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const canonical = `/music/artists/${id}`;
+  try {
+    const res = await fetch(`${resolvedApiUrl}/api/v1/lifestyle/music/artists/${id}`, {
+      next: { revalidate: 60 },
+    });
+    const body = (await res.json()) as { success?: boolean; data?: ArtistMetadata };
+    const artist = body.success && body.data ? body.data : undefined;
 
-  const artistQuery = useQuery({
-    queryKey: ['music', 'artist', id],
-    queryFn: async () => {
-      const res = await api.request<Artist>(`/api/v1/lifestyle/music/artists/${id}`);
-      if (res.success && res.data) return res.data;
-      return null;
-    },
-    staleTime: 60000,
-    enabled: !!id,
-  });
+    if (!artist) {
+      return {
+        title: 'Artist Not Found',
+        description: 'The requested artist could not be found.',
+        alternates: { canonical },
+      };
+    }
 
-  const tracksQuery = useQuery({
-    queryKey: ['music', 'artist', id, 'tracks'],
-    queryFn: async () => {
-      const res = await api.request<unknown>(`/api/v1/lifestyle/music?artistId=${id}`);
-      if (res.success && res.data) return extractTracks(res.data);
-      return [];
-    },
-    staleTime: 60000,
-    enabled: !!id,
-  });
+    const description =
+      artist.bio ||
+      (artist.genre
+        ? `${artist.name} — ${artist.genre} artist on Azeebo+`
+        : `Listen to ${artist.name} on Azeebo+`);
 
-  const artist = artistQuery.data;
-  const tracks = tracksQuery.data ?? [];
+    return {
+      title: artist.name,
+      description,
+      alternates: { canonical },
+      openGraph: {
+        title: artist.name,
+        description,
+        type: 'profile',
+        images: artist.avatar ? [{ url: artist.avatar }] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: artist.name,
+        description,
+        images: artist.avatar ? [artist.avatar] : [],
+      },
+    };
+  } catch {
+    return {
+      title: 'Music Artists',
+      description: 'Discover artists on Azeebo+',
+      alternates: { canonical },
+    };
+  }
+}
 
-  return (
-    <PageShell activeNav="Music">
-      <PageHero
-        eyebrow="Music"
-        title={artist?.name || 'Artist'}
-        subtitle={artist?.bio}
-        accentColor="var(--color-az-universe-lifestyle)"
-        rightElement={
-          artist?.avatar ? (
-            <OptimizedImage
-              src={artist.avatar}
-              alt={artist?.name || 'Artist'}
-              width={160}
-              height={160}
-              className="size-32 rounded-full object-cover sm:size-40"
-            />
-          ) : (
-            <div className="flex size-32 items-center justify-center rounded-full bg-az-flame/15 text-az-flame sm:size-40">
-              <Mic size={48} strokeWidth={1.5} aria-hidden="true" />
-            </div>
-          )
-        }
-      >
-        <div className="flex flex-col gap-2">
-          {artist?.genre && <p className="az-subtitle text-az-ink-muted">{artist.genre}</p>}
-          <div className="az-caption flex gap-6 text-az-ink-muted">
-            {artist?.trackCount != null && <span>{artist.trackCount} tracks</span>}
-            {artist?.followerCount != null && (
-              <span>{artist.followerCount.toLocaleString()} followers</span>
-            )}
-          </div>
-          <Link
-            href="/music"
-            className="az-caption inline-block text-az-ink-muted transition-colors hover:text-az-ink"
-          >
-            ← Back to Music
-          </Link>
-        </div>
-      </PageHero>
-
-      <section className="py-10 sm:py-12">
-        <ScrollReveal>
-          <h2 className="az-section-title mb-6 text-az-ink">Tracks</h2>
-          <MusicTrackList
-            tracks={tracks}
-            isLoading={tracksQuery.isLoading}
-            error={tracksQuery.error?.message}
-            onRetry={() => tracksQuery.refetch()}
-          />
-        </ScrollReveal>
-      </section>
-    </PageShell>
-  );
+export default async function ArtistDetailPage({ params }: Props): Promise<React.JSX.Element> {
+  const { id } = await params;
+  return <ArtistDetailClient id={id} />;
 }

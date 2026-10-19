@@ -43,7 +43,14 @@ const PACKAGES_DIR = path.join(ROOT, 'packages');
 const ENV_VALIDATOR_PATH = 'packages/shared-types/src/env-validation.ts';
 
 // Runtime/CI plumbing keys — never reported.
-const IGNORED_EXACT = new Set(['NODE_ENV', 'PORT', 'NODE_OPTIONS', 'FORCE_COLOR', 'NO_COLOR', 'TZ']);
+const IGNORED_EXACT = new Set([
+  'NODE_ENV',
+  'PORT',
+  'NODE_OPTIONS',
+  'FORCE_COLOR',
+  'NO_COLOR',
+  'TZ',
+]);
 const IGNORED_PREFIXES = ['npm_', 'NPQ_', 'PNPM_', 'NEXT_', 'CI_'];
 
 const isIgnored = (key) =>
@@ -52,7 +59,11 @@ const isIgnored = (key) =>
 // Keys documented in examples by convention even when this specific service
 // doesn't read them (shared bootstrap/logging template).
 const CONVENTIONAL_EXAMPLE_KEYS = new Set([
-  'SERVICE_NAME', 'LOG_LEVEL', 'LOG_FORMAT', 'RATE_LIMIT_TTL', 'RATE_LIMIT_MAX',
+  'SERVICE_NAME',
+  'LOG_LEVEL',
+  'LOG_FORMAT',
+  'RATE_LIMIT_TTL',
+  'RATE_LIMIT_MAX',
 ]);
 
 // ---------------------------------------------------------------------------
@@ -63,7 +74,9 @@ function discoverServices() {
   if (!fs.existsSync(SERVICES_DIR)) return services;
   for (const domain of fs.readdirSync(SERVICES_DIR, { withFileTypes: true })) {
     if (!domain.isDirectory()) continue;
-    for (const name of fs.readdirSync(path.join(SERVICES_DIR, domain.name), { withFileTypes: true })) {
+    for (const name of fs.readdirSync(path.join(SERVICES_DIR, domain.name), {
+      withFileTypes: true,
+    })) {
       if (!name.isDirectory()) continue;
       const dir = path.join(SERVICES_DIR, domain.name, name.name);
       if (fs.existsSync(path.join(dir, 'package.json'))) {
@@ -125,7 +138,8 @@ function parseEnvExample(dir) {
 // ---------------------------------------------------------------------------
 const GET_OR_THROW_RE = /\.getOrThrow(?:<[^>]*>)?\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]/g;
 const GET_RE = /\.get(?:<[^>]*>)?\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]\s*(?:,)/g;
-const PROCESS_ENV_RE = /process\.env(?:\.([A-Z][A-Z0-9_]{2,})|\[\s*['"]([A-Z][A-Z0-9_]{2,})['"]\s*\])/g;
+const PROCESS_ENV_RE =
+  /process\.env(?:\.([A-Z][A-Z0-9_]{2,})|\[\s*['"]([A-Z][A-Z0-9_]{2,})['"]\s*\])/g;
 const PRISMA_ENV_RE = /env\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]\s*\)/g;
 // Declarative indirection (api-gateway route table, media-service upload
 // pipeline): `envKey: 'SOME_SERVICE_URL'` — the value is read dynamically via
@@ -151,18 +165,34 @@ function findEnvReads(dir) {
     const rel = path.relative(dir, file);
     for (const m of content.matchAll(GET_OR_THROW_RE)) note(strict, m[1], rel, m.index, content);
     for (const m of content.matchAll(GET_RE)) note(soft, m[1], rel, m.index, content);
-    for (const m of content.matchAll(PROCESS_ENV_RE)) note(soft, m[1] ?? m[2], rel, m.index, content);
+    for (const m of content.matchAll(PROCESS_ENV_RE))
+      note(soft, m[1] ?? m[2], rel, m.index, content);
     for (const m of content.matchAll(ENV_KEY_DECL_RE)) note(soft, m[1], rel, m.index, content);
   }
 
-  // prisma schema env("KEY") counts as a strict read (Prisma errors without it)
+  // Prisma schema env refs: `url = env("KEY")` is a real boot-time read
+  // (Prisma errors without it), but `directUrl = env("KEY")` is a migration-
+  // time property — the generated client never reads it, so its absence is a
+  // documentation gap, not a boot failure (AUD-89).
+  const migrationOnly = new Map(); // key -> location
   const schema = path.join(dir, 'prisma', 'schema.prisma');
   if (fs.existsSync(schema)) {
     const content = fs.readFileSync(schema, 'utf8');
-    for (const m of content.matchAll(PRISMA_ENV_RE)) note(strict, m[1], 'prisma/schema.prisma', m.index, content);
+    const urlRe = /\burl\s*=\s*env\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]\s*\)/g;
+    const directUrlRe = /\bdirectUrl\s*=\s*env\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]\s*\)/g;
+    for (const m of content.matchAll(urlRe))
+      note(strict, m[1], 'prisma/schema.prisma', m.index, content);
+    for (const m of content.matchAll(directUrlRe)) {
+      if (isIgnored(m[1])) continue;
+      const line = content.slice(0, m.index).split('\n').length;
+      if (!migrationOnly.has(m[1]) && !strict.has(m[1])) {
+        migrationOnly.set(m[1], `prisma/schema.prisma:${line}`);
+      }
+      anyRead.add(m[1]);
+    }
   }
 
-  return { strict, soft, anyRead };
+  return { strict, soft, anyRead, migrationOnly };
 }
 
 // ---------------------------------------------------------------------------
@@ -198,7 +228,12 @@ function collectDeployedEnvKeys() {
     }
     for (const e of entries) {
       const full = path.join(root, e.name);
-      if (e.isFile() && /^(docker-compose.*\.yml|Dockerfile.*|workflows)$/.test(e.name) === false && !/docker-compose.*\.yml|Dockerfile.*/.test(e.name)) continue;
+      if (
+        e.isFile() &&
+        /^(docker-compose.*\.yml|Dockerfile.*|workflows)$/.test(e.name) === false &&
+        !/docker-compose.*\.yml|Dockerfile.*/.test(e.name)
+      )
+        continue;
       if (e.name === 'workflows') {
         for (const wf of fs.readdirSync(full)) {
           if (wf.endsWith('.yml')) {
@@ -233,7 +268,10 @@ function collectGlobalReaders() {
   for (const schema of fs.readdirSync(SERVICES_DIR, { withFileTypes: true }).flatMap((d) => {
     const domainDir = path.join(SERVICES_DIR, d.name);
     return d.isDirectory()
-      ? fs.readdirSync(domainDir, { withFileTypes: true }).filter((s) => s.isDirectory()).map((s) => path.join(domainDir, s.name, 'prisma', 'schema.prisma'))
+      ? fs
+          .readdirSync(domainDir, { withFileTypes: true })
+          .filter((s) => s.isDirectory())
+          .map((s) => path.join(domainDir, s.name, 'prisma', 'schema.prisma'))
       : [];
   })) {
     if (!fs.existsSync(schema)) continue;
@@ -250,22 +288,38 @@ const { required: validatorRequired } = parseEnvValidator();
 const deployedKeys = collectDeployedEnvKeys();
 const globalReaders = collectGlobalReaders();
 const all = discoverServices();
-const targets = args.length ? all.filter((s) => args.some((f) => s.name === f || s.name.endsWith(f))) : all;
+const targets = args.length
+  ? all.filter((s) => args.some((f) => s.name === f || s.name.endsWith(f)))
+  : all;
 if (!targets.length) {
   console.error(`No matching services for: ${args.join(', ')}`);
   process.exit(1);
 }
 
 console.log(`Checking env consistency for ${targets.length} service(s)`);
-console.log(`Validator: ${ENV_VALIDATOR_PATH} — required keys: ${[...validatorRequired].sort().join(', ') || '(none)'}\n`);
+console.log(
+  `Validator: ${ENV_VALIDATOR_PATH} — required keys: ${[...validatorRequired].sort().join(', ') || '(none)'}\n`
+);
 
 let failures = 0;
 const report = [];
 
 for (const { name, dir } of targets) {
   const example = parseEnvExample(dir);
-  const { strict, soft } = findEnvReads(dir);
+  const { strict, soft, migrationOnly } = findEnvReads(dir);
   const findings = [];
+
+  // directUrl-only refs (migration-time) are advisory: document them, but
+  // they never crash a boot, so they must not block the gate (AUD-89).
+  for (const [key, loc] of migrationOnly) {
+    if (example && example.keys.has(key)) continue;
+    findings.push({
+      kind: 'MISSING-MIGRATION-VAR',
+      key,
+      detail: `directUrl at ${loc} — Prisma CLI/migration-time only, ignored by the generated client at boot; document it in .env.example`,
+      blocking: false,
+    });
+  }
 
   for (const [key, loc] of strict) {
     if (!example || !example.keys.has(key)) {
@@ -300,7 +354,13 @@ for (const { name, dir } of targets) {
       }
     }
     for (const key of example.keys.keys()) {
-      if (strict.has(key) || soft.has(key) || deployedKeys.has(key) || CONVENTIONAL_EXAMPLE_KEYS.has(key)) continue;
+      if (
+        strict.has(key) ||
+        soft.has(key) ||
+        deployedKeys.has(key) ||
+        CONVENTIONAL_EXAMPLE_KEYS.has(key)
+      )
+        continue;
       findings.push({
         kind: 'STALE-EXAMPLE',
         key,
@@ -314,7 +374,9 @@ for (const { name, dir } of targets) {
   failures += hard.length;
   const icon = hard.length ? '🔴' : findings.length ? '🟠' : '✅';
   const status = hard.length ? 'FAIL' : findings.length ? 'WARN' : 'CLEAN';
-  console.log(`  ${name.padEnd(28)} ${icon} ${status}${findings.length ? ` (${findings.length})` : ''}`);
+  console.log(
+    `  ${name.padEnd(28)} ${icon} ${status}${findings.length ? ` (${findings.length})` : ''}`
+  );
   for (const f of findings) {
     console.log(`      ${f.blocking ? '✗' : '⚠'} ${f.kind}: ${f.key} — ${f.detail}`);
   }
@@ -338,7 +400,11 @@ console.log(
 );
 
 if (failures > 0) {
-  console.log(`\n${failures} blocking finding(s). Add the keys to the service's .env.example (or fix the code/validator).`);
+  console.log(
+    `\n${failures} blocking finding(s). Add the keys to the service's .env.example (or fix the code/validator).`
+  );
   process.exit(1);
 }
-console.log('✅ .env.example files cover every boot-required key; validator rules match real reads');
+console.log(
+  '✅ .env.example files cover every boot-required key; validator rules match real reads'
+);

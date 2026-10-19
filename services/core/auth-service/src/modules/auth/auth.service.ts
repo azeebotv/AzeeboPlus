@@ -946,7 +946,7 @@ export class AuthService {
     selectRoleDto: SelectRoleDto,
     ipAddress?: string,
     userAgent?: string
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ success: boolean; message: string; access_token?: string }> {
     const user = await this.authRepository.findById(userId);
     if (!user) {
       throw new BadRequestException('User not found');
@@ -959,7 +959,7 @@ export class AuthService {
       );
     }
 
-    await this.authRepository.updateRole(userId, selectRoleDto.role);
+    const updated = await this.authRepository.updateRole(userId, selectRoleDto.role);
 
     this.auditLogService.log({
       actor: userId,
@@ -977,7 +977,16 @@ export class AuthService {
       role: selectRoleDto.role,
     });
 
-    return { success: true, message: 'Role selected successfully' };
+    // Hand back a freshly minted access token: the one the caller is presenting
+    // still claims the previous role, and the panels gate on /auth/me, which
+    // echoes the claim. Without this a user who just chose 'creator' is told they
+    // are not a creator until their old token expires. Deliberately not a session
+    // rotation — that would invalidate the refresh token on their other devices.
+    return {
+      success: true,
+      message: 'Role selected successfully',
+      access_token: this.signAccessToken(updated),
+    };
   }
 
   async requestOtp(requestOtpDto: RequestOtpDto): Promise<{ success: boolean; message: string }> {
@@ -1181,16 +1190,16 @@ export class AuthService {
     });
   }
 
-  async generateTokens(user: UserEntity): Promise<{
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: string;
-  }> {
+  /**
+   * Mint an access token from the caller's *current* record rather than from
+   * claims already inside a token. `role` is a JWT claim that nothing re-reads
+   * per request, so anything that changes it has to re-mint or the subject keeps
+   * acting under the old role until the token expires.
+   */
+  private signAccessToken(user: UserEntity): string {
     const jwtAccessSecret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
-    const jwtRefreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
 
-    const now = Math.floor(Date.now() / 1000);
-    const accessToken = this.jwtService.sign(
+    return this.jwtService.sign(
       {
         iss: this.configService.get<string>('JWT_ISSUER', 'azeebo-auth'),
         aud: this.configService.get<string>('JWT_AUDIENCE', 'azeebo-api'),
@@ -1199,13 +1208,24 @@ export class AuthService {
         email: user.email,
         role: user.role,
         type: 'access',
-        iat: now,
+        iat: Math.floor(Date.now() / 1000),
       } as Record<string, unknown>,
       {
         expiresIn: this.accessTokenExpiry as StringValue,
         secret: jwtAccessSecret,
       }
     );
+  }
+
+  async generateTokens(user: UserEntity): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: string;
+  }> {
+    const jwtRefreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
+
+    const now = Math.floor(Date.now() / 1000);
+    const accessToken = this.signAccessToken(user);
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + this.refreshTokenExpiryDays);

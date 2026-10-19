@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { getBaseUrl } from '../lib/site-url';
+import { UNIVERSE_SLUGS, universeEnabledKey } from '../lib/flags';
 
 // AUD-65: enumerate per-type content lists instead of only /featured, page
 // through each source, and degrade to the static set when the gateway is
@@ -62,6 +63,43 @@ function entry(
     changeFrequency: 'weekly',
     priority,
   };
+}
+
+/** Universe landing segments → canonical slug, for sentinel visibility. */
+const UNIVERSE_LANDING_SEGMENTS: Record<string, string> = {
+  music: 'music',
+  movies: 'movie',
+  lifestyle: 'lifestyle',
+  comedy: 'comedy',
+  reality: 'reality',
+  sports: 'sports',
+  games: 'games',
+  vertical: 'vertical',
+};
+
+/**
+ * Slugs the admin has disabled (`universe.<slug>.enabled` sentinels from the
+ * gateway bootstrap). A fetch failure returns an empty set — over-inclusion
+ * is harmless for a sitemap, while failing the whole feed is not.
+ */
+async function fetchDisabledUniverseSlugs(): Promise<Set<string>> {
+  try {
+    const res = await fetch(`${gatewayUrl}/api/v1/feature-flags/bootstrap`, {
+      next: { revalidate: REVALIDATE },
+    });
+    if (!res.ok) return new Set();
+    const body = (await res.json()) as {
+      data?: { flags?: Array<{ key: string; enabled: boolean }> };
+    };
+    const flags = body?.data?.flags;
+    if (!Array.isArray(flags)) return new Set();
+    const byKey = new Map(flags.map((f) => [f.key, f]));
+    return new Set(
+      UNIVERSE_SLUGS.filter((slug) => byKey.get(universeEnabledKey(slug))?.enabled === false)
+    );
+  } catch {
+    return new Set();
+  }
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -133,7 +171,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
   ];
 
-  const [movies, music, comedy, reality, sports, games, events] = await Promise.all([
+  const [disabledSlugs, movies, music, comedy, reality, sports, games, events] = await Promise.all([
+    fetchDisabledUniverseSlugs(),
     fetchPaged((p) => `/api/v1/content?universe=movie&page=${p}&limit=${PAGE_SIZE}`),
     fetchPaged((p) => `/api/v1/content?universe=music&page=${p}&limit=${PAGE_SIZE}`),
     fetchPaged((p) => `/api/v1/content?universe=comedy&page=${p}&limit=${PAGE_SIZE}`),
@@ -152,11 +191,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   };
 
-  push(movies, (i) => `/movies/${i.id}`, 0.7);
-  for (const universe of [music, comedy, reality, sports, games]) {
-    push(universe, (i) => `/watch/${i.id}`, 0.7);
+  // Disabled universes surface no content URLs either; the fetch above may
+  // still have returned rows (feed caches), so gate at the push.
+  if (!disabledSlugs.has('movie')) push(movies, (i) => `/movies/${i.id}`, 0.7);
+  for (const [slug, universe] of [
+    ['music', music],
+    ['comedy', comedy],
+    ['reality', reality],
+    ['sports', sports],
+    ['games', games],
+  ] as const) {
+    if (!disabledSlugs.has(slug)) push(universe, (i) => `/watch/${i.id}`, 0.7);
   }
-  push(events, (i) => `/lifestyle/events/${i.id}`, 0.6);
+  if (!disabledSlugs.has('lifestyle')) push(events, (i) => `/lifestyle/events/${i.id}`, 0.6);
 
-  return [...staticPages, ...dynamicPages];
+  // Drop landing pages for universes the admin has hidden.
+  const disabledLandings = new Set(
+    Object.entries(UNIVERSE_LANDING_SEGMENTS)
+      .filter(([, slug]) => disabledSlugs.has(slug))
+      .map(([segment]) => `${baseUrl}/${segment}`)
+  );
+
+  return [...staticPages.filter((page) => !disabledLandings.has(page.url)), ...dynamicPages];
 }

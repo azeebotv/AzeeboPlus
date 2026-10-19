@@ -189,6 +189,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'GET', path: '/me', description: 'Get current user profile' },
       { method: 'PATCH', path: '/me', description: 'Update current user profile' },
+      { method: 'DELETE', path: '/me', description: 'Request account erasure' },
       { method: 'POST', path: '/me/complete-profile', description: 'Complete profile setup' },
       { method: 'GET', path: '/me/preferences', description: 'Get user preferences' },
       { method: 'PUT', path: '/me/preferences', description: 'Update user preferences' },
@@ -203,6 +204,12 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/me/continue-watching', description: 'Get continue watching' },
       { method: 'GET', path: '/me/privacy-settings', description: 'Get privacy settings' },
       { method: 'PUT', path: '/me/privacy-settings', description: 'Update privacy settings' },
+      { method: 'GET', path: '/me/export', description: 'Export user data archive' },
+      {
+        method: 'GET',
+        path: '/me/deletion-status',
+        description: 'Status of scheduled account deletion',
+      },
       { method: 'GET', path: '/:id', description: 'Get user by ID' },
       { method: 'POST', path: '/:id/follow', description: 'Follow a user' },
       { method: 'DELETE', path: '/:id/follow', description: 'Unfollow a user' },
@@ -826,7 +833,6 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       // AOS-MA-001 — Risk Engine
       { method: 'POST', path: '/risk/classifications', description: 'Create risk classification' },
       { method: 'GET', path: '/risk/classifications', description: 'List risk classifications' },
-      { method: 'GET', path: '/risk', description: 'Risk engine overview' },
       {
         method: 'PUT',
         path: '/risk/classifications/:actionType',
@@ -840,7 +846,6 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       // AOS-MA-001 — Task Router
       { method: 'POST', path: '/tasks/classifications', description: 'Create task classification' },
       { method: 'GET', path: '/tasks/classifications', description: 'List task classifications' },
-      { method: 'GET', path: '/tasks', description: 'Task router overview' },
       {
         method: 'GET',
         path: '/tasks/classifications/stats',
@@ -859,7 +864,6 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       // AOS-MA-001 — Capacity Ledger
       { method: 'POST', path: '/capacity/entries', description: 'Record capacity entry' },
       { method: 'GET', path: '/capacity/entries', description: 'List capacity entries' },
-      { method: 'GET', path: '/capacity', description: 'Capacity ledger overview' },
       {
         method: 'GET',
         path: '/capacity/summary/:period',
@@ -1478,6 +1482,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'DELETE', path: '/universes/:id', description: 'Delete universe' },
       { method: 'PUT', path: '/universes/:id/toggle', description: 'Toggle universe enabled' },
       { method: 'PUT', path: '/universes/:id/feature-flags', description: 'Update feature flag' },
+      {
+        method: 'POST',
+        path: '/universes/:id/resync',
+        description: 'Re-publish universe flag sentinels from DB truth',
+      },
       {
         method: 'POST',
         path: '/universes/feature-flags/prune-stale',

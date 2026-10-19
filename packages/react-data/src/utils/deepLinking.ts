@@ -1,5 +1,4 @@
 import * as Linking from 'expo-linking';
-import { useRouter } from 'expo-router';
 import { logger } from './logger';
 
 const PREFIX = Linking.createURL('/');
@@ -20,6 +19,12 @@ export interface DeepLinkData {
   id?: string;
   params?: Record<string, string>;
   rawUrl: string;
+}
+
+// Structural instead of `ReturnType<typeof useRouter>`: importing expo-router here makes the
+// app bundle this package's own copy of the router, giving the app two router singletons.
+export interface DeepLinkRouter {
+  push: (href: string) => void;
 }
 
 export class DeepLinkService {
@@ -120,7 +125,7 @@ export class DeepLinkService {
    * Handle an incoming deep link by parsing it and navigating to the correct screen.
    * Call this from the app's URL event listener (Linking.addEventListener('url', ...)).
    */
-  static handleDeepLink(url: string, router: ReturnType<typeof useRouter>): boolean {
+  static handleDeepLink(url: string, router: DeepLinkRouter): boolean {
     const data = this.parseUrl(url);
     if (!data) {
       logger.warn('Failed to handle deep link', undefined, { url });

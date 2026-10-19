@@ -49,10 +49,63 @@ export default function UniversesPage() {
     },
   });
 
+  // Redis publish drift: toggle/bulk responses carry flagSync { ok, failedKeys }
+  // — a failed sentinel publish means the DB state is right but the runtime
+  // store (and therefore services/clients) still shows the OLD state. Surface it
+  // per card with a one-click Re-sync (POST :id/resync republishes from DB truth).
+  const [syncIssues, setSyncIssues] = useState<Record<string, string[]>>({});
+  const recordSyncIssues = (
+    rows: AdminUniverse[],
+    flagSync: unknown,
+    fallbackId?: string
+  ): void => {
+    const sync =
+      flagSync && typeof flagSync === 'object'
+        ? (flagSync as { ok?: boolean; failedKeys?: unknown })
+        : null;
+    if (!sync) return;
+    if (sync.ok) {
+      if (fallbackId) {
+        setSyncIssues((prev) => {
+          if (!(fallbackId in prev)) return prev;
+          const rest = { ...prev };
+          delete rest[fallbackId];
+          return rest;
+        });
+      }
+      return;
+    }
+    const failedKeys = Array.isArray(sync.failedKeys) ? (sync.failedKeys as string[]) : [];
+    const byId: Record<string, string[]> = {};
+    for (const key of failedKeys) {
+      // universe.<name>.enabled → find the row whose name matches.
+      const name = key.replace(/^universe\./, '').replace(/\.enabled$/, '');
+      const row = rows.find((u) => u.name === name);
+      const id = row?.id ?? fallbackId;
+      if (id) (byId[id] ??= []).push(key);
+    }
+    setSyncIssues((prev) => ({ ...prev, ...byId }));
+  };
+
   const toggleMutation = useMutation({
     mutationFn: ({ id, isEnabled }: { id: string; isEnabled: boolean }) =>
       adminApi.toggleUniverse(id, isEnabled),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] }),
+    onSuccess: (res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
+      recordSyncIssues(
+        universes,
+        (res.data as { flagSync?: unknown } | undefined)?.flagSync,
+        vars.id
+      );
+    },
+  });
+
+  const resyncMutation = useMutation({
+    mutationFn: (id: string) => adminApi.resyncUniverse(id),
+    onSuccess: (res, id) => {
+      recordSyncIssues(universes, res.data?.flagSync, id);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -89,9 +142,10 @@ export default function UniversesPage() {
   const bulkToggleMutation = useMutation({
     mutationFn: ({ ids, isEnabled }: { ids: string[]; isEnabled: boolean }) =>
       adminApi.bulkToggleUniverses(ids, isEnabled),
-    onSuccess: () => {
+    onSuccess: (res) => {
       setBulkSelection(new Set());
       queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
+      recordSyncIssues(universes, (res.data as { flagSync?: unknown } | undefined)?.flagSync);
     },
   });
 
@@ -546,6 +600,43 @@ export default function UniversesPage() {
                     {u.isEnabled ? 'Enabled' : 'Disabled'}
                   </button>
                 </div>
+                {syncIssues[u.id] && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 12px',
+                      marginBottom: 12,
+                      borderRadius: 10,
+                      border: '1px solid rgba(180, 120, 20, 0.4)',
+                      backgroundColor: 'rgba(180, 120, 20, 0.12)',
+                      color: 'var(--admin-amber)',
+                      fontSize: 12,
+                    }}
+                  >
+                    <span>
+                      Not synced to Redis — services still see the previous state (
+                      {syncIssues[u.id]?.join(', ')}).
+                    </span>
+                    <button
+                      onClick={() => resyncMutation.mutate(u.id)}
+                      disabled={resyncMutation.isPending}
+                      style={{
+                        padding: '3px 10px',
+                        borderRadius: 999,
+                        border: '1px solid currentColor',
+                        background: 'transparent',
+                        color: 'inherit',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {resyncMutation.isPending ? 'Re-syncing…' : 'Re-sync'}
+                    </button>
+                  </div>
+                )}
                 {u.description && (
                   <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 12 }}>
                     {u.description}

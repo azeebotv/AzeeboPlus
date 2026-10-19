@@ -4,6 +4,7 @@ import { AuthProvider } from '../context/AuthContext';
 import { FlagsProvider } from '../context/FlagsContext';
 import { WalletProvider } from '../context/WalletContext';
 import { MaintenanceGate } from '../components/layout/MaintenanceGate';
+import { UniverseGate } from '../components/layout/UniverseGate';
 import AnnouncementBanner from '../components/layout/AnnouncementBanner';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -123,9 +124,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
                               <AnnouncementBanner />
                               <CookieConsent />
                               <MaintenanceGate>
-                                <main id="main-content" role="main">
-                                  {children}
-                                </main>
+                                <UniverseGate>
+                                  <main id="main-content" role="main">
+                                    {children}
+                                  </main>
+                                </UniverseGate>
                               </MaintenanceGate>
                             </KeyboardNavigationProvider>
                           </ToastProvider>

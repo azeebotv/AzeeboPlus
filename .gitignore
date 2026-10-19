@@ -125,3 +125,6 @@ scripts/*.local.ts
 
 # Scripts TypeScript compilation output
 .scripts-out/
+
+# Expo CLI state created when the CLI is run from the repo root in this monorepo
+/.expo/

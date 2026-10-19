@@ -14,7 +14,7 @@ import { FeatureFlagService, FeatureFlagConfig, FEATURE_FLAG_KEY } from './core'
 export const FeatureFlag = (key: string): MethodDecorator & ClassDecorator =>
   SetMetadata(FEATURE_FLAG_KEY, key);
 
-/** Guard that enforces @FeatureFlag decorators (deny-by-default) and legacy header opt-in. */
+/** Guard that enforces @FeatureFlag decorators (deny-by-default). Undecorated handlers are not gated. */
 @Injectable()
 export class FeatureFlagGuard implements CanActivate {
   constructor(
@@ -28,22 +28,18 @@ export class FeatureFlagGuard implements CanActivate {
     const anonymousId = request.anonymousId as string | undefined;
 
     // Deny-by-default: any handler/controller decorated with @FeatureFlag is
-    // blocked unless the flag evaluates to true for the caller.
+    // blocked unless the flag evaluates to true for the caller. The legacy
+    // x-feature-flag request-header opt-in was removed — a client-supplied
+    // flag name let callers self-enable any stored flag on guarded routes
+    // that had no decorator.
     const flaggedKey = this.reflector?.getAllAndOverride<string>(FEATURE_FLAG_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
-    if (flaggedKey) {
-      return this.featureFlagService.isEnabled(flaggedKey, userId, anonymousId);
-    }
-
-    // Legacy opt-in: a client may send x-feature-flag to reach experimental
-    // endpoints. Absent the header, the request is allowed (opt-in, not gating).
-    const headerKey = request.headers['x-feature-flag'] as string | undefined;
-    if (!headerKey) {
+    if (!flaggedKey) {
       return true;
     }
-    return this.featureFlagService.isEnabled(headerKey, userId, anonymousId);
+    return this.featureFlagService.isEnabled(flaggedKey, userId, anonymousId);
   }
 }
 

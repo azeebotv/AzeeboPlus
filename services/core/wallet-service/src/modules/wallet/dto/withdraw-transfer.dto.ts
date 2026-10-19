@@ -1,17 +1,18 @@
-import { IsString, IsNumber, IsOptional, IsPositive, Min } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNumber, IsOptional, IsNotEmpty, IsPositive, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class WithdrawWalletDto {
   /**
    * Client-generated key that is stable across retries. Prevents duplicate
-   * withdrawals when a request times out and is replayed. May also be
-   * supplied via the Idempotency-Key header (sent automatically by the
-   * shared http-client); falls back to a server-generated unique key.
+   * withdrawals when a request times out and is replayed. The shared
+   * http-client also sends it as the Idempotency-Key header; either source
+   * satisfies the guard, but the body key is required so every client
+   * acknowledges the contract explicitly (AUD-03).
    */
-  @ApiPropertyOptional({ example: 'withdraw-0b9e6c1e-2b7a-4f3d-9c1a-8f2e7d6c5b4a' })
+  @ApiProperty({ example: 'withdraw-0b9e6c1e-2b7a-4f3d-9c1a-8f2e7d6c5b4a' })
   @IsString()
-  @IsOptional()
-  idempotencyKey?: string;
+  @IsNotEmpty()
+  idempotencyKey!: string;
 
   @ApiPropertyOptional({ example: 100 })
   @IsNumber()
@@ -32,14 +33,15 @@ export class WithdrawWalletDto {
 export class TransferWalletDto {
   /**
    * Client-generated key that is stable across retries. Prevents duplicate
-   * transfers when a request times out and is replayed. May also be
-   * supplied via the Idempotency-Key header (sent automatically by the
-   * shared http-client); falls back to a server-generated unique key.
+   * transfers when a request times out and is replayed. The shared
+   * http-client also sends it as the Idempotency-Key header; either source
+   * satisfies the guard, but the body key is required so every client
+   * acknowledges the contract explicitly (AUD-03).
    */
-  @ApiPropertyOptional({ example: 'transfer-0b9e6c1e-2b7a-4f3d-9c1a-8f2e7d6c5b4a' })
+  @ApiProperty({ example: 'transfer-0b9e6c1e-2b7a-4f3d-9c1a-8f2e7d6c5b4a' })
   @IsString()
-  @IsOptional()
-  idempotencyKey?: string;
+  @IsNotEmpty()
+  idempotencyKey!: string;
 
   @ApiPropertyOptional({ example: 50 })
   @IsNumber()

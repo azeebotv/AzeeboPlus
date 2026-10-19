@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AuthShell from '@/components/auth/AuthShell';
 import { Alert, AuthField, Spinner } from '@/components/auth/FormBits';
@@ -160,15 +160,15 @@ export default function LoginPage(): React.JSX.Element {
         </motion.div>
 
         <motion.div variants={fieldVariants} className="grid grid-cols-2 gap-3">
+          {/* Provider sign-in is disabled, not merely hidden: the OAuth browser round
+              trip has no callback route and the provider routes are POST-only, so any
+              navigation from here lands the user on a 404. */}
           <motion.button
             type="button"
             className="az-btn-social"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            aria-label="Continue with Google"
-            onClick={() => {
-              window.location.href = `${process.env.NEXT_PUBLIC_AUTH_URL || ''}/api/v1/auth/social/google`;
-            }}
+            aria-label="Continue with Google (unavailable)"
+            disabled
+            aria-disabled="true"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -192,18 +192,19 @@ export default function LoginPage(): React.JSX.Element {
           <motion.button
             type="button"
             className="az-btn-social"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            aria-label="Continue with Apple"
-            onClick={() => {
-              window.location.href = `${process.env.NEXT_PUBLIC_AUTH_URL || ''}/api/v1/auth/social/apple`;
-            }}
+            aria-label="Continue with Apple (unavailable)"
+            disabled
+            aria-disabled="true"
           >
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
             </svg>
           </motion.button>
         </motion.div>
+
+        <motion.p variants={fieldVariants} className="az-body -mt-2 text-center text-az-ink/55">
+          Google and Apple sign-in aren&apos;t available yet — log in with your password.
+        </motion.p>
 
         <motion.p variants={fieldVariants} className="az-body pt-2 text-center text-az-ink/70">
           Don&apos;t have an account yet?{' '}

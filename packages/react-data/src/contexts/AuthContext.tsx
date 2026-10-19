@@ -15,6 +15,7 @@ import {
   type User,
   type ApiResponse,
   type DeviceLinkPollResponse,
+  type SelectableRole,
 } from '../api';
 import { useStorage } from '../hooks/useStorage';
 import { useSecureStorage } from '../hooks/useSecureStorage';
@@ -54,6 +55,13 @@ interface AuthContextType {
     response: ApiResponse<DeviceLinkPollResponse>
   ) => Promise<{ success: boolean; message?: string }>;
   refreshUser: () => Promise<void>;
+  /**
+   * Self-selects the account role. `creator` includes every viewer privilege, so
+   * there are only two choices. Adopts the re-minted access token the endpoint
+   * returns — without it the stored bearer token keeps claiming the previous
+   * role until it expires.
+   */
+  selectRole: (role: SelectableRole) => Promise<{ success: boolean; message?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -378,6 +386,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const selectRole = async (role: SelectableRole) => {
+    try {
+      const result = await authApi.selectRole(role);
+      if (!result.success) {
+        return { success: false, message: result.message || 'Failed to select role' };
+      }
+      if (result.access_token) {
+        await setSecureItem('accessToken', result.access_token);
+        apiClient.setToken(result.access_token);
+      }
+      await refreshUser();
+      return { success: true };
+    } catch (error: unknown) {
+      logger.error('Role selection error', error);
+      const message = error instanceof Error ? error.message : 'An error occurred';
+      return { success: false, message };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -394,6 +421,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resendOTP,
         completeDeviceLink,
         refreshUser,
+        selectRole,
       }}
     >
       {children}

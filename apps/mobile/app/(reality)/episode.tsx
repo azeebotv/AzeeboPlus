@@ -54,7 +54,7 @@ export default function EpisodePlayerScreen() {
     isPlaying,
     currentTime,
     duration: playerDuration,
-    togglePlayPause,
+    togglePlay,
     seek,
     error: playerError,
   } = useAzeeboVideoPlayer({
@@ -191,7 +191,7 @@ export default function EpisodePlayerScreen() {
             <View style={styles.playOverlay}>
               <TouchableOpacity
                 style={styles.playButton}
-                onPress={togglePlayPause}
+                onPress={togglePlay}
                 accessibilityLabel="Play"
                 accessibilityRole="button"
               >
@@ -225,7 +225,7 @@ export default function EpisodePlayerScreen() {
 
               <TouchableOpacity
                 style={styles.controlButtonLarge}
-                onPress={togglePlayPause}
+                onPress={togglePlay}
                 accessibilityLabel={isPlaying ? 'Pause' : 'Play'}
                 accessibilityRole="button"
               >
@@ -397,13 +397,13 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   playOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
   playerErrorOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',

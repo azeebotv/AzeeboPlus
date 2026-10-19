@@ -1,5 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import {
+  INestApplication,
+  ExecutionContext,
+  NestInterceptor,
+  ValidationPipe,
+} from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { WalletController } from './wallet.controller.js';
@@ -103,6 +108,30 @@ const mockWalletService = {
       transactions: [],
     },
   }),
+  withdraw: jest.fn().mockResolvedValue({
+    success: true,
+    data: {
+      transactionId: 'WD-contract-123',
+      amount: 100,
+      status: 'processing',
+      description: 'Withdrawal to bank account',
+      balance: 100000,
+      bonusBalance: 5000,
+      promoBalance: 0,
+    },
+  }),
+  transfer: jest.fn().mockResolvedValue({
+    success: true,
+    data: {
+      transactionId: 'TR-contract-123',
+      amount: 100,
+      status: 'completed',
+      description: 'Transfer',
+      balance: 100000,
+      bonusBalance: 5000,
+      promoBalance: 0,
+    },
+  }),
 };
 
 // Unique per jest run: a live Redis (REDIS_URL set) keeps idempotency keys
@@ -156,6 +185,15 @@ describe('Wallet Controller Contract Tests', () => {
     app.useGlobalInterceptors({
       intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
     } as NestInterceptor);
+    // Mirror main.ts: DTO validation (incl. the required idempotency key on
+    // withdraw/transfer) must run at the HTTP boundary (AUD-03).
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+      })
+    );
     app.setGlobalPrefix('v1');
     await app.init();
     await app.listen(0);
@@ -211,6 +249,64 @@ describe('Wallet Controller Contract Tests', () => {
         expect.objectContaining({
           success: true,
         })
+      );
+    });
+  });
+
+  describe('POST /v1/wallet/withdraw — idempotency contract (AUD-03)', () => {
+    it('rejects a withdrawal without a body idempotency key', async () => {
+      const response = await request(baseUrl)
+        .post('/v1/wallet/withdraw')
+        .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `contract-wd-nokey-${runId}`)
+        .send({ amount: 100, bankAccountId: 'bank-123' });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('accepts a keyed withdrawal and passes the key through to the service', async () => {
+      const key = `contract-wd-${runId}-1`;
+      const response = await request(baseUrl)
+        .post('/v1/wallet/withdraw')
+        .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', key)
+        .send({ amount: 100, bankAccountId: 'bank-123', idempotencyKey: key });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual(expect.objectContaining({ success: true }));
+      expect(mockWalletService.withdraw).toHaveBeenCalledWith(
+        'user-123',
+        expect.objectContaining({ idempotencyKey: key }),
+        key
+      );
+    });
+  });
+
+  describe('POST /v1/wallet/transfer — idempotency contract (AUD-03)', () => {
+    it('rejects a transfer without a body idempotency key', async () => {
+      const response = await request(baseUrl)
+        .post('/v1/wallet/transfer')
+        .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `contract-tr-nokey-${runId}`)
+        .send({ amount: 100, recipientId: 'user-456' });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('accepts a keyed transfer and passes the key through to the service', async () => {
+      const key = `contract-tr-${runId}-1`;
+      const response = await request(baseUrl)
+        .post('/v1/wallet/transfer')
+        .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', key)
+        .send({ amount: 100, recipientId: 'user-456', idempotencyKey: key });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual(expect.objectContaining({ success: true }));
+      expect(mockWalletService.transfer).toHaveBeenCalledWith(
+        'user-123',
+        expect.objectContaining({ idempotencyKey: key }),
+        key
       );
     });
   });

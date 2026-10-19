@@ -14,7 +14,7 @@ export function gatewayPath(endpoint: string): string {
  * (mirrors @azeebo/http-client). Uniqueness only — not a secret — so a
  * Math.random v4 is fine, and Hermes has no crypto.randomUUID.
  */
-function generateIdempotencyKey(): string {
+export function generateIdempotencyKey(): string {
   return 'idemp-xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === 'x' ? r : (r & 0x3) | 0x8;

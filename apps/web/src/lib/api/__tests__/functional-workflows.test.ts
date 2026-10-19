@@ -439,9 +439,15 @@ describe('Functional Workflow — Wallet & Payments', () => {
     const result = await wallet.transfer(500, 'recipient-user-id');
 
     expect(result.success).toBe(true);
-    expect(client.request).toHaveBeenCalledWith('/api/v1/wallet/transfer', {
-      method: 'POST',
-      body: JSON.stringify({ amount: 500, recipientId: 'recipient-user-id' }),
+    expect(client.request).toHaveBeenCalledWith(
+      '/api/v1/wallet/transfer',
+      expect.objectContaining({ method: 'POST' })
+    );
+    const transferBody = JSON.parse(client.request.mock.calls[0][1].body);
+    expect(transferBody).toEqual({
+      amount: 500,
+      recipientId: 'recipient-user-id',
+      idempotencyKey: expect.any(String),
     });
   });
 
@@ -454,12 +460,15 @@ describe('Functional Workflow — Wallet & Payments', () => {
     const result = await wallet.withdraw(2000, { bankCode: '058', accountNumber: '0123456789' });
 
     expect(result.success).toBe(true);
-    expect(client.request).toHaveBeenCalledWith('/api/v1/wallet/withdraw', {
-      method: 'POST',
-      body: JSON.stringify({
-        amount: 2000,
-        bankDetails: { bankCode: '058', accountNumber: '0123456789' },
-      }),
+    expect(client.request).toHaveBeenCalledWith(
+      '/api/v1/wallet/withdraw',
+      expect.objectContaining({ method: 'POST' })
+    );
+    const withdrawBody = JSON.parse(client.request.mock.calls[0][1].body);
+    expect(withdrawBody).toEqual({
+      amount: 2000,
+      bankDetails: { bankCode: '058', accountNumber: '0123456789' },
+      idempotencyKey: expect.any(String),
     });
   });
 });

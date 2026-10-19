@@ -5,6 +5,8 @@ import { KnowledgeModule } from './modules/knowledge/knowledge.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlagModule } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -15,6 +17,15 @@ import { ServiceAuthGuard } from '@azeebo/security';
     DatabaseModule,
     KnowledgeModule,
     HealthModule,
+    // Kill-switch engine + Prometheus flag metrics, matching every other
+    // service (search-service pattern). No knowledge flags registered yet —
+    // this wires the guard/service so routes CAN be gated (and metrics
+    // observed) the moment one is added.
+    FlagMetricsModule.register({ service: 'knowledge-service', path: 'flag-metrics' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('knowledge-service'),
+    }),
   ],
   providers: [
     // SECURITY (AUD-01): deny-by-default auth on every route, matching the

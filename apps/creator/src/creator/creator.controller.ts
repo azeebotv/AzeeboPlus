@@ -21,6 +21,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ArchivedContentSweeperService } from './archived-content-sweeper.service';
 import { FeatureFlagService, creatorFlags } from '@azeebo/feature-flags';
+import { UNIVERSE_SLUGS, universeEnabledKey } from '@azeebo/shared-types';
 import { ListContentQueryDto } from './dto/list-content-query.dto';
 
 interface AuthRequest extends Request {
@@ -43,10 +44,15 @@ export class CreatorController {
   async getFlags(): Promise<{ success: boolean; data: unknown }> {
     const all = await this.featureFlagService.getAllFlagsWithDefaults();
     const uiKeys = new Set(Object.values(creatorFlags));
+    // Universe visibility sentinels ride along: the upload universe picker
+    // hides disabled universes client-side (server truth stays /public/universes).
+    const sentinelKeys = new Set(UNIVERSE_SLUGS.map(universeEnabledKey));
     return {
       success: true,
-      data: all.filter((f) =>
-        uiKeys.has(f.key as (typeof creatorFlags)[keyof typeof creatorFlags])
+      data: all.filter(
+        (f) =>
+          uiKeys.has(f.key as (typeof creatorFlags)[keyof typeof creatorFlags]) ||
+          sentinelKeys.has(f.key)
       ),
     };
   }

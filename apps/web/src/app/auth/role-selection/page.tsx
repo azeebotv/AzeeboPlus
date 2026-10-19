@@ -1,13 +1,19 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Film, Laptop, Users } from 'lucide-react';
+import { Film, Users } from 'lucide-react';
 import { webLogger } from '@/lib/logger';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, type ApiResponse } from '@/lib/api';
+import { refreshAuthCookie } from '@/lib/cookie-utils';
+import { useAuth } from '@/context/AuthContext';
 import AuthShell from '@/components/auth/AuthShell';
 import { Alert, Spinner } from '@/components/auth/FormBits';
 
-type Role = 'user' | 'creator' | 'both';
+type Role = 'user' | 'creator';
+
+// /auth/select-role answers flat — {success, message, access_token} with no
+// `data` wrapper, unlike the login/register envelopes.
+export type SelectRoleResult = ApiResponse<never> & { access_token?: string };
 
 const ROLES: {
   id: Role;
@@ -28,14 +34,7 @@ const ROLES: {
     title: 'Creator',
     icon: Film,
     description: 'Build your audience and brand',
-    sub: 'Showcase your talent, reach millions and connect',
-  },
-  {
-    id: 'both',
-    title: 'Creator & User',
-    icon: Laptop,
-    description: 'Experience the best of both worlds',
-    sub: 'Consume content and create your journey',
+    sub: 'Publish and get paid — a Creator account keeps full viewer access',
   },
 ];
 
@@ -44,18 +43,27 @@ export default function RoleSelectionPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState<Role | null>(null);
   const router = useRouter();
+  const { refreshUser } = useAuth();
 
   const handleRoleSelection = async (role: Role): Promise<void> => {
     setIsLoading(true);
     setError(null);
     setActive(role);
     try {
-      const result = await apiFetch('/v1/auth/select-role', {
+      const result = (await apiFetch<SelectRoleResult>('/v1/auth/select-role', {
         method: 'POST',
         body: JSON.stringify({ role }),
-      });
+      })) as SelectRoleResult;
       if (!result.success) {
         throw new Error(result.message || 'Failed to select role');
+      }
+      // The access token the browser is presenting still claims the previous
+      // role, and the panels gate on /auth/me, which echoes that claim. Adopt
+      // the re-minted one before moving on, otherwise a user who just chose
+      // 'creator' is told they are not a creator until the old token expires.
+      if (result.access_token) {
+        await refreshAuthCookie(result.access_token);
+        await refreshUser();
       }
       router.push('/auth/profile-setup');
     } catch (err) {

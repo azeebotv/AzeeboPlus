@@ -7,6 +7,8 @@ import {
   universeFlagKey,
   resolveFeatureFlagRedisUrl,
   FEATURE_FLAG_REDIS_DB_DEFAULT,
+  flagDefaultsFromEnv,
+  parseFlagDefaultEnvValue,
 } from './index';
 
 describe('resolveFeatureFlagRedisUrl (dedicated flag-cache DB index)', () => {
@@ -67,14 +69,84 @@ describe('resolveFeatureFlagRedisUrl (dedicated flag-cache DB index)', () => {
   });
 });
 
+describe('FEATURE_FLAG_DEFAULT_<KEY> env overrides', () => {
+  it('parses booleans, numbers and variant strings; ignores empty values', () => {
+    expect(parseFlagDefaultEnvValue('true')).toBe(true);
+    expect(parseFlagDefaultEnvValue('FALSE')).toBe(false);
+    expect(parseFlagDefaultEnvValue(' 50 ')).toBe(50);
+    expect(parseFlagDefaultEnvValue('-3.5')).toBe(-3.5);
+    expect(parseFlagDefaultEnvValue('blue')).toBe('blue');
+    expect(parseFlagDefaultEnvValue('')).toBeNull();
+    expect(parseFlagDefaultEnvValue('   ')).toBeNull();
+  });
+
+  it('maps env names back to snake_case flag keys', () => {
+    const out = flagDefaultsFromEnv({
+      FEATURE_FLAG_DEFAULT_WEB_DARK_MODE: 'false',
+      FEATURE_FLAG_DEFAULT_ANALYTICS_SAMPLING_RATE: '50',
+      FEATURE_FLAG_DEFAULT_UI_VARIANT: 'blue',
+      FEATURE_FLAG_DEFAULT_: 'true', // empty key → ignored
+      FEATURE_FLAG_REDIS_URL: 'redis://x', // not a default override
+    });
+    expect(out).toEqual({
+      booleans: { web_dark_mode: false },
+      values: { analytics_sampling_rate: 50, ui_variant: 'blue' },
+    });
+  });
+
+  it('overrides registered boolean defaults when no flag is stored', async () => {
+    process.env.FEATURE_FLAG_DEFAULT_NEW_FEATURE = 'true';
+    try {
+      const { service } = makeService(); // registered default: new_feature=false
+      await expect(service.isEnabled('new_feature')).resolves.toBe(true);
+    } finally {
+      delete process.env.FEATURE_FLAG_DEFAULT_NEW_FEATURE;
+    }
+  });
+
+  it('numeric override surfaces via getValue, isEnabled and getPublicFlags', async () => {
+    process.env.FEATURE_FLAG_DEFAULT_ANALYTICS_SAMPLING_RATE = '50';
+    try {
+      const { service } = makeService({ publicFlagKeys: ['analytics_sampling_rate'] });
+      await expect(service.getValue('analytics_sampling_rate')).resolves.toBe(50);
+      await expect(service.isEnabled('analytics_sampling_rate')).resolves.toBe(true);
+      const publicFlags = await service.getPublicFlags();
+      expect(publicFlags.find((f) => f.key === 'analytics_sampling_rate')).toEqual({
+        key: 'analytics_sampling_rate',
+        enabled: true,
+        value: 50,
+      });
+    } finally {
+      delete process.env.FEATURE_FLAG_DEFAULT_ANALYTICS_SAMPLING_RATE;
+    }
+  });
+
+  it('never overrides a STORED flag — env only replaces the fallback default', async () => {
+    process.env.FEATURE_FLAG_DEFAULT_NEW_FEATURE = 'true';
+    try {
+      const { service } = makeService();
+      await service.setFlag({ key: 'new_feature', enabled: false });
+      await expect(service.isEnabled('new_feature')).resolves.toBe(false);
+    } finally {
+      delete process.env.FEATURE_FLAG_DEFAULT_NEW_FEATURE;
+    }
+  });
+});
+
 /** Minimal in-memory Redis stand-in implementing the surface the service uses. */
 class FakeRedis {
   private store = new Map<string, string>();
   public getCalls = 0;
+  public mgetCalls = 0;
 
   async get(key: string): Promise<string | null> {
     this.getCalls += 1;
     return this.store.get(key) ?? null;
+  }
+
+  async mget(keys: string[]): Promise<(string | null)[]> {
+    this.mgetCalls += 1;
+    return keys.map((key) => this.store.get(key) ?? null);
   }
 
   async set(key: string, value: string): Promise<'OK'> {
@@ -103,6 +175,10 @@ class FakeRedis {
 /** Redis stand-in whose reads/writes all reject (simulates an outage). */
 class FailingRedis extends FakeRedis {
   async get(): Promise<string | null> {
+    throw new Error('ECONNREFUSED');
+  }
+
+  async mget(): Promise<(string | null)[]> {
     throw new Error('ECONNREFUSED');
   }
 
@@ -197,6 +273,108 @@ describe('FeatureFlagService', () => {
       await expect(service.setFlag({ key: 'alpha', enabled: true })).rejects.toThrow(
         'ECONNREFUSED'
       );
+    });
+  });
+
+  describe('staleOnRedisError (serve last-known state during an outage)', () => {
+    type CtorConfig = ConstructorParameters<typeof FeatureFlagService>[0];
+    /** FakeRedis whose reads succeed until `startOutage()` is called. */
+    const makeOutageService = (config: CtorConfig = {}) => {
+      const redis = new FakeRedis();
+      let down = false;
+      const realGet = redis.get.bind(redis);
+      const realMget = redis.mget.bind(redis);
+      redis.get = async (key: string) => {
+        if (down) throw new Error('ECONNREFUSED');
+        return realGet(key);
+      };
+      redis.mget = async (keys: string[]) => {
+        if (down) throw new Error('ECONNREFUSED');
+        return realMget(keys);
+      };
+      // cacheTtlMs 0: every cached entry is expired on the next read, so the
+      // outage path exercises the stale branch instead of a fresh cache hit.
+      const service = new FeatureFlagService({
+        redis: redis as unknown as never,
+        cacheTtlMs: 0,
+        defaultFlags: { 'universe.comedy.enabled': true, kill_switch: true },
+        ...config,
+      });
+      return { service, redis, startOutage: () => (down = true) };
+    };
+
+    it('serves an expired cached DISABLED sentinel instead of the ON default when Redis fails', async () => {
+      const { service, startOutage } = makeOutageService({ staleOnRedisError: true });
+      await service.setFlag({ key: 'universe.comedy.enabled', enabled: false });
+      await expect(service.isEnabled('universe.comedy.enabled')).resolves.toBe(false);
+      startOutage();
+      // Without staleOnRedisError this read falls back to the ON default and
+      // silently RE-ENABLES the universe ops disabled.
+      await expect(service.isEnabled('universe.comedy.enabled')).resolves.toBe(false);
+    });
+
+    it('still reports the Redis error while serving stale', async () => {
+      const onRedisError = jest.fn();
+      const { service, startOutage } = makeOutageService({
+        staleOnRedisError: true,
+        onRedisError,
+      });
+      await service.setFlag({ key: 'universe.comedy.enabled', enabled: false });
+      await service.isEnabled('universe.comedy.enabled');
+      startOutage();
+      await service.isEnabled('universe.comedy.enabled');
+      expect(onRedisError).toHaveBeenCalledWith('universe.comedy.enabled', expect.any(Error));
+    });
+
+    it('falls back to the registered default when nothing was ever cached', async () => {
+      const { service, startOutage } = makeOutageService({ staleOnRedisError: true });
+      startOutage();
+      await expect(service.isEnabled('kill_switch')).resolves.toBe(true);
+    });
+
+    it('off by default: an expired entry does NOT beat the fallback default', async () => {
+      const { service, startOutage } = makeOutageService(); // staleOnRedisError unset
+      await service.setFlag({ key: 'universe.comedy.enabled', enabled: false });
+      await expect(service.isEnabled('universe.comedy.enabled')).resolves.toBe(false);
+      startOutage();
+      await expect(service.isEnabled('universe.comedy.enabled')).resolves.toBe(true);
+    });
+
+    it('strict failClosedOnRedisError still throws (stale does not override strict)', async () => {
+      const { service, startOutage } = makeOutageService({
+        staleOnRedisError: true,
+        failClosedOnRedisError: false,
+      });
+      startOutage();
+      await expect(service.isEnabled('kill_switch')).rejects.toThrow('ECONNREFUSED');
+    });
+
+    it('getFlags batch serves stale per-key and defaults per-absent-key', async () => {
+      const { service, startOutage } = makeOutageService({ staleOnRedisError: true });
+      await service.setFlag({ key: 'universe.comedy.enabled', enabled: false });
+      await service.setFlag({ key: 'sports_enabled', enabled: true });
+      // Seed the in-process cache (one MGET) before the outage starts.
+      const seeded = await service.getFlags(['universe.comedy.enabled', 'sports_enabled']);
+      expect(seeded.size).toBe(2);
+      startOutage();
+      const stale = await service.getFlags([
+        'universe.comedy.enabled',
+        'sports_enabled',
+        'never_cached',
+      ]);
+      expect(stale.get('universe.comedy.enabled')?.enabled).toBe(false);
+      expect(stale.get('sports_enabled')?.enabled).toBe(true);
+      expect(stale.has('never_cached')).toBe(false);
+      await expect(service.isEnabled('never_cached')).resolves.toBe(false);
+    });
+
+    it('evaluateMany reflects last-known states during an outage', async () => {
+      const { service, startOutage } = makeOutageService({ staleOnRedisError: true });
+      await service.setFlag({ key: 'universe.comedy.enabled', enabled: false });
+      await service.evaluateMany(['universe.comedy.enabled'], 'user-1'); // seed cache
+      startOutage();
+      const map = await service.evaluateMany(['universe.comedy.enabled'], 'user-1');
+      expect(map['universe.comedy.enabled']).toBe(false);
     });
   });
 
@@ -323,6 +501,53 @@ describe('FeatureFlagService', () => {
       await service.setFlag({ key: 'on_flag', enabled: true });
       const result = await service.evaluateMany(['on_flag', 'new_feature', 'unknown']);
       expect(result).toEqual({ on_flag: true, new_feature: false, unknown: false });
+    });
+
+    it('getFlags fetches uncached keys with ONE MGET round-trip', async () => {
+      const { service, redis } = makeService();
+      await redis.set('feature_flags:a', JSON.stringify({ key: 'a', enabled: true }));
+      await redis.set('feature_flags:b', JSON.stringify({ key: 'b', enabled: false }));
+      await redis.set('feature_flags:c', 'not json');
+
+      const flags = await service.getFlags(['a', 'b', 'c', 'missing']);
+      expect([...flags.keys()].sort()).toEqual(['a', 'b']);
+      expect(redis.mgetCalls).toBe(1);
+      expect(redis.getCalls).toBe(0); // batch path never falls back to per-key GET
+
+      // Second call is fully served from the cache — including the null
+      // negatives for the invalid JSON and the absent key.
+      const again = await service.getFlags(['a', 'b', 'c', 'missing']);
+      expect(again.get('a')?.enabled).toBe(true);
+      expect(again.has('c')).toBe(false);
+      expect(again.has('missing')).toBe(false);
+      expect(redis.mgetCalls).toBe(1);
+    });
+
+    it('getFlags mixes cache hits and one MGET for the rest', async () => {
+      const { service, redis } = makeService();
+      await service.setFlag({ key: 'hot', enabled: true });
+      await service.isEnabled('hot'); // populates the cache via GET
+      const getBefore = redis.getCalls;
+      const flags = await service.getFlags(['hot', 'cold']);
+      expect(flags.has('hot')).toBe(true);
+      expect(flags.has('cold')).toBe(false);
+      expect(redis.mgetCalls).toBe(1);
+      expect(redis.getCalls).toBe(getBefore); // 'hot' came from the cache
+    });
+
+    it('getFlags degrades to defaults on MGET failure (fail-closed)', async () => {
+      const redis = new FailingRedis();
+      const onRedisError = jest.fn();
+      const service = new FeatureFlagService({
+        redis: redis as unknown as never,
+        defaultFlags: { kill_switch: true, new_feature: false },
+        failClosedOnRedisError: true,
+        onRedisError,
+      });
+      const result = await service.evaluateMany(['kill_switch', 'new_feature']);
+      expect(result).toEqual({ kill_switch: true, new_feature: false });
+      expect(onRedisError).toHaveBeenCalledWith('kill_switch', expect.any(Error));
+      expect(onRedisError).toHaveBeenCalledWith('new_feature', expect.any(Error));
     });
 
     it('getPublicFlags only returns isPublic flags with evaluated state', async () => {
@@ -691,7 +916,7 @@ describe('FeatureFlagService', () => {
       expect(events).toEqual(['miss:flip_flag', 'hit:flip_flag', 'miss:flip_flag']);
     });
 
-    it('covers the batch evaluateMany path (each key through getFlag)', async () => {
+    it('covers the batch evaluateMany path (one MGET fetch for uncached keys)', async () => {
       const events: string[] = [];
       const { service, redis } = makeService({
         onCacheHit: (key) => events.push(`hit:${key}`),
@@ -845,7 +1070,7 @@ describe('FeatureFlagGuard', () => {
     await expect(guard.canActivate(context)).resolves.toBe(true);
   });
 
-  it('allows by default when no decorator and no header are present', async () => {
+  it('allows by default when no decorator is present', async () => {
     const redis = new FakeRedis();
     const service = new FeatureFlagService({ redis: redis as unknown as never });
     const guard = new FeatureFlagGuard(service);
@@ -857,18 +1082,37 @@ describe('FeatureFlagGuard', () => {
     await expect(guard.canActivate(context)).resolves.toBe(true);
   });
 
-  it('evaluates the legacy x-feature-flag header when present', async () => {
+  it('ignores the removed legacy x-feature-flag header (no self-enable)', async () => {
     const redis = new FakeRedis();
     const service = new FeatureFlagService({ redis: redis as unknown as never });
-    await service.setFlag({ key: 'experiment', enabled: true });
+    await service.setFlag({ key: 'experiment', enabled: false });
+
+    // Undecorated route: header must not gate or enable — request just passes.
     const guard = new FeatureFlagGuard(service);
-    const context = {
+    const headerContext = {
       switchToHttp: () => ({
         getRequest: () => ({ headers: { 'x-feature-flag': 'experiment' }, user: { id: 'u1' } }),
       }),
       getHandler: () => ({}),
       getClass: () => ({}),
     } as never;
-    await expect(guard.canActivate(context)).resolves.toBe(true);
+    await expect(guard.canActivate(headerContext)).resolves.toBe(true);
+
+    // Decorated route: a disabled flag denies even when the client names an
+    // enabled flag in the header — the decorator is the only input.
+    const redis2 = new FakeRedis();
+    const service2 = new FeatureFlagService({ redis: redis2 as unknown as never });
+    await service2.setFlag({ key: 'other_flag', enabled: true });
+    const decoratedGuard = new FeatureFlagGuard(service2, {
+      getAllAndOverride: () => 'experiment',
+    } as never);
+    const decoratedContext = {
+      switchToHttp: () => ({
+        getRequest: () => ({ headers: { 'x-feature-flag': 'other_flag' }, user: { id: 'u1' } }),
+      }),
+      getHandler: () => ({}),
+      getClass: () => ({}),
+    } as never;
+    await expect(decoratedGuard.canActivate(decoratedContext)).resolves.toBe(false);
   });
 });

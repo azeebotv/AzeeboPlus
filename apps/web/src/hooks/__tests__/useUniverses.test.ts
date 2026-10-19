@@ -32,6 +32,19 @@ vi.mock('../../lib/api', () => ({
   },
 }));
 
+// Flag state used by the hook's sentinel visibility filter. Default:
+// bootstrap ready, every universe enabled (unless a test overrides).
+const flagState = {
+  ready: true,
+  universeEnabled: vi.fn((_name: string) => true),
+};
+vi.mock('../../context/FlagsContext', () => ({
+  useFlags: () => ({
+    ready: flagState.ready,
+    universeEnabled: flagState.universeEnabled,
+  }),
+}));
+
 import { api } from '../../lib/api';
 
 const mockGetUniverses = vi.mocked(api.universe.getUniverses);
@@ -46,9 +59,66 @@ describe('useUniverses', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    flagState.ready = true;
+    flagState.universeEnabled = vi.fn((_name: string) => true);
     mockGetUniverses.mockResolvedValue({
       success: true,
       data: MOCK_UNIVERSES,
+    });
+  });
+
+  describe('universe visibility sentinels', () => {
+    it('hides a universe whose sentinel evaluates disabled', async () => {
+      flagState.universeEnabled = vi.fn((name: string) => name !== 'comedy');
+      const { result } = renderHook(() => useUniverses());
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(result.current.universes.map((u) => u.id)).toEqual(['movie', 'music']);
+      expect(flagState.universeEnabled).toHaveBeenCalledWith('comedy');
+      expect(flagState.universeEnabled).toHaveBeenCalledWith('movie');
+    });
+
+    it('shows everything before bootstrap is ready (never blank on load)', async () => {
+      flagState.ready = false;
+      flagState.universeEnabled = vi.fn(() => false);
+      const { result } = renderHook(() => useUniverses());
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(result.current.universes).toHaveLength(3);
+      expect(flagState.universeEnabled).not.toHaveBeenCalled();
+    });
+
+    it('re-filters when the sentinel flips off without a refetch', async () => {
+      const { result, rerender } = renderHook(() => useUniverses());
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+      expect(result.current.universes).toHaveLength(3);
+
+      // FlagsContext hands a new universeEnabled callback whenever the flag
+      // map updates — the memo re-runs and comedy disappears.
+      flagState.universeEnabled = vi.fn((name: string) => name !== 'comedy');
+      rerender();
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(result.current.universes.map((u) => u.id)).toEqual(['movie', 'music']);
+    });
+
+    it('isUniverseEnabled and getUniverse respect the sentinel filter', async () => {
+      flagState.universeEnabled = vi.fn((name: string) => name !== 'comedy');
+      const { result } = renderHook(() => useUniverses());
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(result.current.isUniverseEnabled('comedy')).toBe(false);
+      expect(result.current.getUniverse('movie')).toBeDefined();
     });
   });
 

@@ -1,8 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, generateIdempotencyKey } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import PageShell from '@/components/layout/PageShell';
@@ -91,6 +91,11 @@ export default function WithdrawPage(): React.JSX.Element {
     loadData();
   }, [selectedAccount]);
 
+  // Stable per-intent key: a retry of the SAME withdrawal (e.g. after a
+  // timeout) must reuse the key so the server can dedupe; a fresh key is
+  // minted only after a confirmed success (AUD-03).
+  const withdrawKeyRef = useRef<string | null>(null);
+
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     const numAmount = parseFloat(amount);
@@ -107,10 +112,13 @@ export default function WithdrawPage(): React.JSX.Element {
         body: JSON.stringify({
           amount: numAmount,
           bankAccountId: selectedMethod === 'bank_transfer' ? selectedAccount : undefined,
-          method: selectedMethod,
+          // NOTE: the server's ValidationPipe runs forbidNonWhitelisted, so
+          // only DTO fields are accepted here (no `method` passthrough).
+          idempotencyKey: (withdrawKeyRef.current ??= generateIdempotencyKey()),
         }),
       });
       if (!result.success) throw new Error(result.message || 'Failed to process withdrawal');
+      withdrawKeyRef.current = null;
       toast.showToast('Withdrawal request submitted successfully!', 'success');
       router.push('/wallet/transactions');
     } catch (error: unknown) {

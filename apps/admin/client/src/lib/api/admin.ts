@@ -508,6 +508,12 @@ export const adminApi = {
     }),
 
   getUniverseStats: () => apiFetch<unknown>('/api/v1/admin/universes/stats'),
+  resyncUniverse: (id: string) =>
+    apiFetch<{
+      name?: string;
+      isEnabled?: boolean;
+      flagSync?: { ok: boolean; failedKeys: string[] };
+    }>(`/api/v1/admin/universes/${id}/resync`, { method: 'POST' }),
   cloneUniverse: (id: string, data: Record<string, unknown>) =>
     apiFetch<unknown>(`/api/v1/admin/universes/${id}/copy`, {
       method: 'POST',

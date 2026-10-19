@@ -24,6 +24,7 @@ import {
   gatewayFlags,
   webFlags,
   mobileFlags,
+  tvFlags,
   universeEnabledKey,
 } from '@azeebo/feature-flags';
 import { UNIVERSE_SLUGS } from '@azeebo/shared-types';
@@ -96,6 +97,10 @@ const gatewayCacheStore = process.env.REDIS_URL
     // disable them instantly during incidents.
     FeatureFlagModule.register({
       global: true,
+      // Universe visibility sentinels default ON: during a Redis outage the
+      // plain fail-closed path would re-enable universes ops disabled, so the
+      // gateway serves last-known state from the expired cache instead.
+      staleOnRedisError: true,
       defaultFlags: {
         [gatewayFlags.maintenanceMode]: false,
         [gatewayFlags.newRoutes]: true,
@@ -121,6 +126,8 @@ const gatewayCacheStore = process.env.REDIS_URL
         [mobileFlags.lowDataDefault]: false,
         [mobileFlags.pushEnabled]: true,
         [mobileFlags.biometricAuth]: false,
+        // Client-driven TV flags served via GET /feature-flags/bootstrap.
+        [tvFlags.autoplay]: true,
         // Per-universe nav sentinels: universe.<name>.enabled keyed by the
         // canonical DB universe names (admin toggles these via the admin app;
         // web/mobile hide nav entries when disabled). Derived from the shared
@@ -147,6 +154,7 @@ const gatewayCacheStore = process.env.REDIS_URL
         mobileFlags.lowDataDefault,
         mobileFlags.pushEnabled,
         mobileFlags.biometricAuth,
+        tvFlags.autoplay,
         ...UNIVERSE_SLUGS.map(universeEnabledKey),
       ],
     }),

@@ -31,10 +31,18 @@ describe('ContentFeedService (content_recommended_rail + universe bridge)', () =
 
   const mockFlagService = {
     isEnabled: jest.fn().mockResolvedValue(false),
-    getFlag: jest.fn().mockResolvedValue(null),
+    // Batched bridge lookup: resolves a Map of ONLY the stored keys (a key
+    // missing from the map means "no row" → default-enabled, unchanged bridge
+    // semantics).
+    getFlags: jest.fn().mockResolvedValue(new Map()),
   };
 
+  /** Fake `getFlags` over a record of explicitly-stored flag rows. */
+  const stored = (rows: Record<string, boolean>) =>
+    Promise.resolve(new Map(Object.entries(rows).map(([key, enabled]) => [key, { key, enabled }])));
+
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ContentFeedService,
@@ -46,6 +54,12 @@ describe('ContentFeedService (content_recommended_rail + universe bridge)', () =
     }).compile();
 
     service = module.get<ContentFeedService>(ContentFeedService);
+
+    mockPrismaService.watchHistory.findMany.mockResolvedValue([]);
+    mockRedisService.get.mockResolvedValue(null);
+    mockRedisService.set.mockResolvedValue('OK');
+    mockFlagService.isEnabled.mockResolvedValue(false);
+    mockFlagService.getFlags.mockResolvedValue(new Map());
   });
 
   it('should be defined', () => {
@@ -88,7 +102,7 @@ describe('ContentFeedService (content_recommended_rail + universe bridge)', () =
         { id: 'u-2', name: 'games' },
       ]);
       // No stored rows in the Redis bridge → both default-enabled.
-      mockFlagService.getFlag.mockResolvedValue(null);
+      mockFlagService.getFlags.mockResolvedValue(new Map());
 
       const ids = await service.getEnabledUniverseIds('discovery_enabled');
 
@@ -97,23 +111,33 @@ describe('ContentFeedService (content_recommended_rail + universe bridge)', () =
       expect(mockPrismaService.universe.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ select: { id: true, name: true } })
       );
-      // The bridge looks up the canonical Redis key per universe.
-      expect(mockFlagService.getFlag).toHaveBeenCalledWith('universe.reality.discovery_enabled');
-      expect(mockFlagService.getFlag).toHaveBeenCalledWith('universe.games.discovery_enabled');
+      // ONE batched lookup containing the canonical key per universe — both the
+      // feature bridge row and the visibility sentinel.
+      expect(mockFlagService.getFlags).toHaveBeenCalledTimes(1);
+      const requestedKeys = mockFlagService.getFlags.mock.calls[0][0] as string[];
+      expect(requestedKeys).toEqual(
+        expect.arrayContaining([
+          'universe.reality.discovery_enabled',
+          'universe.games.discovery_enabled',
+          'universe.reality.enabled',
+          'universe.games.enabled',
+        ])
+      );
     });
 
     it('caches the universe set by feature key', async () => {
       jest.clearAllMocks();
       mockPrismaService.universe.findMany.mockResolvedValue([{ id: 'u-1', name: 'reality' }]);
       // Stateful cache: a write makes the next read hit.
-      const stored = new Map<string, string>();
+      const storedCache = new Map<string, string>();
       mockRedisService.get.mockImplementation((key: string) =>
-        Promise.resolve(stored.get(key) ?? null)
+        Promise.resolve(storedCache.get(key) ?? null)
       );
       mockRedisService.set.mockImplementation((key: string, value: string) => {
-        stored.set(key, String(value));
+        storedCache.set(key, String(value));
         return Promise.resolve('OK');
       });
+      mockFlagService.getFlags.mockResolvedValue(new Map());
 
       await service.getEnabledUniverseIds('discovery_enabled');
       await service.getEnabledUniverseIds('discovery_enabled');
@@ -132,14 +156,38 @@ describe('ContentFeedService (content_recommended_rail + universe bridge)', () =
         { id: 'u-2', name: 'games' },
       ]);
       // games has an explicitly-disabled row in the Redis bridge.
-      mockFlagService.getFlag.mockImplementation((key: string) =>
-        Promise.resolve(key === 'universe.games.discovery_enabled' ? { key, enabled: false } : null)
+      mockFlagService.getFlags.mockImplementation(() =>
+        stored({ 'universe.games.discovery_enabled': false })
       );
 
       const ids = await service.getEnabledUniverseIds('discovery_enabled');
 
       expect(ids).toEqual(['u-1']);
       expect(ids).not.toContain('u-2');
+    });
+
+    it('excludes a universe whose visibility sentinel is disabled even when the feature bridge is enabled', async () => {
+      mockPrismaService.universe.findMany.mockResolvedValue([
+        { id: 'u-1', name: 'reality' },
+        { id: 'u-2', name: 'comedy' },
+      ]);
+      // comedy is DISABLED at the universe level (admin toggle) — nothing it
+      // carries may surface, regardless of per-feature rows.
+      mockFlagService.getFlags.mockImplementation(() =>
+        stored({ 'universe.comedy.enabled': false, 'universe.comedy.discovery_enabled': true })
+      );
+
+      const ids = await service.getEnabledUniverseIds('discovery_enabled');
+
+      expect(ids).toEqual(['u-1']);
+    });
+
+    it('treats a missing sentinel row as visible (default-open like the gateway)', async () => {
+      mockPrismaService.universe.findMany.mockResolvedValue([{ id: 'u-1', name: 'reality' }]);
+      mockFlagService.getFlags.mockResolvedValue(new Map());
+
+      const ids = await service.getEnabledUniverseIds('discovery_enabled');
+      expect(ids).toEqual(['u-1']);
     });
 
     it('applies the discovery filter to the home feed rails', async () => {
@@ -156,6 +204,50 @@ describe('ContentFeedService (content_recommended_rail + universe bridge)', () =
         })
       );
       expect(contentFlags.recommendedRail).toBe('content_recommended_rail');
+    });
+
+    it.each([
+      ['getFeatured', () => service.getFeatured()],
+      ['getFeaturedSlides', () => service.getFeaturedSlides()],
+      ['getPopularInRegion', () => service.getPopularInRegion()],
+    ])('applies the universe filter to %s (main + fallback queries)', async (_name, call) => {
+      mockPrismaService.universe.findMany.mockResolvedValue([
+        { id: 'u-1', name: 'reality' },
+        { id: 'u-2', name: 'comedy' },
+      ]);
+      mockFlagService.getFlags.mockImplementation(() =>
+        stored({ 'universe.comedy.enabled': false })
+      );
+      mockPrismaService.contentItem.findMany.mockResolvedValue([]); // empty → fallback also runs
+
+      await call();
+
+      expect(mockPrismaService.contentItem.findMany).toHaveBeenCalled();
+      for (const callArgs of mockPrismaService.contentItem.findMany.mock.calls) {
+        expect(callArgs[0].where).toEqual(expect.objectContaining({ universeId: { in: ['u-1'] } }));
+      }
+    });
+
+    it('getVisibleUniverseIds consults only the sentinel (no discovery bridge)', async () => {
+      mockPrismaService.universe.findMany.mockResolvedValue([
+        { id: 'u-1', name: 'reality' },
+        { id: 'u-2', name: 'comedy' },
+      ]);
+      mockFlagService.getFlags.mockImplementation(() =>
+        stored({ 'universe.comedy.enabled': false })
+      );
+
+      const ids = await service.getVisibleUniverseIds();
+
+      expect(ids).toEqual(['u-1']);
+      const requestedKeys = mockFlagService.getFlags.mock.calls[0][0] as string[];
+      expect(requestedKeys).toContain('universe.reality.enabled');
+      expect(requestedKeys).not.toContain('universe.reality.discovery_enabled');
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        'universe-features:enabled',
+        expect.any(String),
+        300
+      );
     });
   });
 });

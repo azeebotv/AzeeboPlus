@@ -74,12 +74,18 @@ describe('Mobile Wallet API', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
-    await walletApi.withdraw({ amount: 500, bankCode: '001', accountNumber: '1234567890' });
+    await walletApi.withdraw({
+      amount: 500,
+      bankCode: '001',
+      accountNumber: '1234567890',
+      idempotencyKey: 'test-wd-key',
+    });
 
     expect(mockedClient.post).toHaveBeenCalledWith('/v1/wallet/withdraw', {
       amount: 500,
       bankCode: '001',
       accountNumber: '1234567890',
+      idempotencyKey: 'test-wd-key',
     });
   });
 

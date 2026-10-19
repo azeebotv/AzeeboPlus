@@ -1,5 +1,14 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  ReactNode,
+} from 'react';
 import { walletApi, type WalletBalance, type Transaction } from '../api';
+import { generateIdempotencyKey } from '../api/client';
 import { useAuth } from './AuthContext';
 
 interface WalletContextType {
@@ -97,12 +106,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Per-intent idempotency keys: a retry of the SAME action (timeout, flaky
+  // network) reuses the key so the wallet-service dedupes; a confirmed
+  // success rotates it so the next distinct action gets a fresh key (AUD-03).
+  const withdrawKeyRef = useRef<string | null>(null);
+  const transferKeyRef = useRef<string | null>(null);
+
   const withdraw = async (amount: number, bankCode: string, accountNumber: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await walletApi.withdraw({ amount, bankCode, accountNumber });
+      const response = await walletApi.withdraw({
+        amount,
+        bankCode,
+        accountNumber,
+        idempotencyKey: (withdrawKeyRef.current ??= generateIdempotencyKey()),
+      });
       if (response.success) {
+        withdrawKeyRef.current = null;
         await getWallet();
         await getTransactions();
         return { success: true };
@@ -121,8 +142,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await walletApi.transfer({ recipientId, amount, description });
+      const response = await walletApi.transfer({
+        recipientId,
+        amount,
+        description,
+        idempotencyKey: (transferKeyRef.current ??= generateIdempotencyKey()),
+      });
       if (response.success) {
+        transferKeyRef.current = null;
         await getWallet();
         await getTransactions();
         return { success: true };

@@ -1,4 +1,11 @@
-export type { User, AuthResponse, ApiResponse, Device } from './auth';
+export type {
+  User,
+  AuthResponse,
+  ApiResponse,
+  Device,
+  SelectRoleResponse,
+  SelectableRole,
+} from './auth';
 export type {
   DeviceLinkInitResponse,
   DeviceLinkStatus,

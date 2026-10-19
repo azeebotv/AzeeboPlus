@@ -300,6 +300,34 @@ describe('WalletService', () => {
       const result = await service.withdraw('user-123', withdrawDto);
       expect(result.success).toBe(false);
     });
+
+    it('replays the existing transaction for a duplicate idempotency key instead of debiting again', async () => {
+      const withdrawDto = {
+        idempotencyKey: 'wd-duplicate-key',
+        amount: 500,
+        bankAccountId: 'bank-account-123',
+      };
+      const existing = {
+        ...mockTransaction,
+        type: 'debit' as const,
+        status: 'processing' as const,
+        reference: 'WD-existing',
+        description: 'Withdrawal to bank account',
+      };
+
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([{ ...mockWallet, balance: 1000 }]);
+      (prismaService.walletTransaction.findUnique as jest.Mock).mockResolvedValue(existing);
+      (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
+
+      const result = await service.withdraw('user-123', withdrawDto);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(
+        expect.objectContaining({ transactionId: 'WD-existing', status: 'processing' })
+      );
+      expect(prismaService.walletTransaction.create).not.toHaveBeenCalled();
+      expect(prismaService.wallet.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('transfer', () => {

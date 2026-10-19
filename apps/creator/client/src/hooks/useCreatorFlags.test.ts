@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { CREATOR_FLAG_KEYS, CREATOR_FLAG_DEFAULTS, resolveCreatorFlag } from './useCreatorFlags';
+import {
+  CREATOR_FLAG_KEYS,
+  CREATOR_FLAG_DEFAULTS,
+  resolveCreatorFlag,
+  resolveUniverseVisible,
+  visibleUniverseSlugs,
+} from './useCreatorFlags';
 
 const flag = (key: string, enabled: boolean) => ({ key, enabled });
 
@@ -27,5 +33,26 @@ describe('resolveCreatorFlag', () => {
 
   it('falls back to off for unregistered keys', () => {
     expect(resolveCreatorFlag([], 'creator_unknown_flag')).toBe(false);
+  });
+});
+
+describe('universe visibility sentinels', () => {
+  it('a stored-disabled sentinel hides the universe, an enabled one keeps it', () => {
+    const flags = [flag('universe.comedy.enabled', false), flag('universe.reality.enabled', true)];
+    expect(resolveUniverseVisible(flags, 'comedy')).toBe(false);
+    expect(resolveUniverseVisible(flags, 'reality')).toBe(true);
+  });
+
+  it('an absent sentinel means default-visible (never blanks the picker)', () => {
+    expect(resolveUniverseVisible([], 'movie')).toBe(true);
+  });
+
+  it('the picker excludes disabled universes and the creator role slug', () => {
+    const flags = [flag('universe.sports.enabled', false)];
+    const slugs = visibleUniverseSlugs(flags);
+    expect(slugs).not.toContain('sports');
+    expect(slugs).not.toContain('creator');
+    expect(slugs).toContain('reality');
+    expect(slugs).toContain('movie');
   });
 });

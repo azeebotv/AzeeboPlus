@@ -152,13 +152,13 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/validation run build && \
     pnpm --filter @azeebo/error-handling run build && \
+    pnpm --filter @azeebo/security run build && \
     pnpm --filter @azeebo/logger run build && \
     pnpm --filter @azeebo/api-client run build && \
     pnpm --filter @azeebo/design-tokens run build && \
     pnpm --filter @azeebo/analytics-sdk run build && \
     pnpm --filter @azeebo/feature-flags run build && \
     pnpm --filter @azeebo/shared-services run build && \
-    pnpm --filter @azeebo/security run build && \
     pnpm --filter @azeebo/flag-metrics run build && \
     pnpm --filter @azeebo/queue-policy run build && \
     pnpm --filter @azeebo/ui run build && \

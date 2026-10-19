@@ -1054,6 +1054,13 @@ select:focus-visible {
 .az-btn-social:hover {
   background: var(--color-az-glass-fill-active);
 }
+.az-btn-social:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.az-btn-social:disabled:hover {
+  background: var(--color-az-glass-fill-hover);
+}
 
 /* Brand input field — frosted translucent panel, 16px corners */
 .az-input {

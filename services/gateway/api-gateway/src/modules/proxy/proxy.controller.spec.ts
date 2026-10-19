@@ -113,6 +113,17 @@ describe('Proxy Controller - API Contract Verification', () => {
     expect(userEndpoints).toContain('/me/saved');
   });
 
+  // The endpoints manifest doubles as the deny-by-default allowlist
+  // (gateway_endpoint_enforcement), so a client call whose method+path pair is
+  // missing here never reaches user-service once that flag is on.
+  it('declares the users data-rights endpoints the web client calls', () => {
+    const usersRoute = SERVICE_CONFIGS.find((r) => r.path === '/users');
+    const pairs = usersRoute?.endpoints?.map((e) => `${e.method} ${e.path}`) || [];
+    expect(pairs).toContain('DELETE /me');
+    expect(pairs).toContain('GET /me/export');
+    expect(pairs).toContain('GET /me/deletion-status');
+  });
+
   it('should have wallet endpoints', () => {
     const walletRoute = SERVICE_CONFIGS.find((r) => r.path === '/wallet');
     const walletEndpoints = walletRoute?.endpoints?.map((e) => e.path) || [];

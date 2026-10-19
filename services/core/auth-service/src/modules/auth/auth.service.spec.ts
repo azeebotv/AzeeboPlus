@@ -19,6 +19,7 @@ import {
 } from '@nestjs/common';
 import { CacheService } from '@azeebo/shared-services';
 import { AuditLogService } from '../audit/audit.service.js';
+import { SelectableRole } from './dto/select-role.dto.js';
 import { FeatureFlagService, authFlags } from '@azeebo/feature-flags';
 import * as bcrypt from 'bcrypt';
 
@@ -794,6 +795,61 @@ describe('AuthService', () => {
       });
 
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('selectRole', () => {
+    it('hands back an access token carrying the new role', async () => {
+      (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (authRepository.updateRole as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        role: 'creator',
+      });
+      (jwtService.sign as jest.Mock).mockReturnValue('fresh-access-token');
+
+      const result = await service.selectRole(mockUser.id, { role: SelectableRole.CREATOR });
+
+      expect(result.access_token).toBe('fresh-access-token');
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ sub: mockUser.id, role: 'creator', type: 'access' }),
+        expect.anything()
+      );
+    });
+
+    it('does not rotate the refresh session, which would sign out the user elsewhere', async () => {
+      (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (authRepository.updateRole as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        role: 'creator',
+      });
+
+      await service.selectRole(mockUser.id, { role: SelectableRole.CREATOR });
+
+      expect(authRepository.createSession).not.toHaveBeenCalled();
+      expect(authRepository.deleteSessionByUserId).not.toHaveBeenCalled();
+    });
+
+    it('rejects self-promotion to a role that is not selectable', async () => {
+      (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+
+      await expect(
+        service.selectRole(mockUser.id, { role: 'admin' as unknown as SelectableRole })
+      ).rejects.toThrow(BadRequestException);
+      expect(authRepository.updateRole).not.toHaveBeenCalled();
+      expect(jwtService.sign).not.toHaveBeenCalled();
+    });
+
+    it('rejects the retired `both` spelling, which the DTO is expected to map upstream', async () => {
+      // `creator` subsumes the viewer role, so `both` means `creator`; the
+      // request pipe performs that mapping before this guard runs. Reaching the
+      // service with it means the mapping was bypassed, which is a bug, not a
+      // role the account may hold.
+      (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+
+      await expect(
+        service.selectRole(mockUser.id, { role: 'both' as unknown as SelectableRole })
+      ).rejects.toThrow(BadRequestException);
+      expect(authRepository.updateRole).not.toHaveBeenCalled();
     });
   });
 

@@ -70,7 +70,6 @@ export function configureCors(app: INestApplication, options: CorsOptions): void
       'X-Correlation-Id',
       'X-CSRF-Token',
       'Idempotency-Key',
-      'X-Feature-Flag',
       // The web app keys anonymous feature-flag rollout buckets with this id
       // (GET /feature-flags/bootstrap); omitting it fails the preflight, so the
       // whole flag bootstrap is blocked in the browser rather than degrading.

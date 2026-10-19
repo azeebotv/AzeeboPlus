@@ -178,4 +178,23 @@ describe('Mobile Auth API', () => {
       expect(mockedClient.post).toHaveBeenCalledWith('/auth/otp/send');
     });
   });
+
+  describe('selectRole', () => {
+    it('posts the chosen role and returns the flat answer with the re-minted token', async () => {
+      // The endpoint answers {success, message, access_token} with no `data`
+      // envelope; the token has to survive verbatim for AuthContext to adopt it.
+      const answer = {
+        success: true,
+        message: 'Role selected successfully',
+        access_token: 'fresh-access-token',
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mockedClient.post.mockResolvedValue(answer as any);
+
+      const result = await authApi.selectRole('creator');
+
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/select-role', { role: 'creator' });
+      expect(result).toEqual(answer);
+    });
+  });
 });

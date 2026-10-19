@@ -534,7 +534,12 @@ describe('WalletController', () => {
       walletService.transfer.mockRejectedValue(new BadRequestException('Insufficient balance'));
 
       const req = { user: { id: mockUserId }, headers: {} };
-      const transferDto = { recipientId: 'user-456', amount: 99999, note: 'Payment' };
+      const transferDto = {
+        recipientId: 'user-456',
+        amount: 99999,
+        note: 'Payment',
+        idempotencyKey: 'tr-ctrl-insufficient-balance',
+      };
 
       await expect(controller.transfer(req, transferDto)).rejects.toThrow(BadRequestException);
     });
