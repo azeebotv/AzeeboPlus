@@ -132,10 +132,14 @@ CREATE TABLE IF NOT EXISTS universe_feature_flags (
 CREATE TABLE IF NOT EXISTS system_settings (
   id text PRIMARY KEY, "createdAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE IF NOT EXISTS _CategoryToContentItem (
+-- Quoted: Prisma's implicit M2M join tables are mixed-case, and every
+-- federation reference quotes them — an unquoted identifier here would fold to
+-- lowercase and IMPORT FOREIGN SCHEMA LIMIT TO ("_CategoryToContentItem")
+-- would silently import nothing (no error, missing relation at query time).
+CREATE TABLE IF NOT EXISTS "_CategoryToContentItem" (
   "A" text NOT NULL, "B" text NOT NULL, PRIMARY KEY ("A", "B")
 );
-CREATE TABLE IF NOT EXISTS _ContentItemToTag (
+CREATE TABLE IF NOT EXISTS "_ContentItemToTag" (
   "A" text NOT NULL, "B" text NOT NULL, PRIMARY KEY ("A", "B")
 );
 CREATE TABLE IF NOT EXISTS refunds (
