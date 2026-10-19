@@ -380,10 +380,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Request account erasure (NDPA / GDPR Right to Erasure)' })
   @ApiResponse({ status: 200, description: 'Account scheduled for deletion' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async deleteAccount(
-    @Request() req: AuthenticatedRequest,
-    @Body('reason') reason?: string
-  ) {
+  async deleteAccount(@Request() req: AuthenticatedRequest, @Body('reason') reason?: string) {
     const result = await this.usersService.scheduleDataDeletion(this.getUserId(req), reason);
     return ApiResponseWrapper.success(result);
   }
