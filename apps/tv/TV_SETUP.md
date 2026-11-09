@@ -116,7 +116,7 @@ pnpm ios
 ## Roadmap to production
 
 1. **Auth on TV**: email/password works today; add device-link sign-in
-   (`azeebo.tv/link` + code) — typing an email on a D-pad is hostile UX.
+   (`app.azeeboplus.com/link` + code) — typing an email on a D-pad is hostile UX.
 2. **TV commerce**: QR-code-to-phone handoff for Paystack/Flutterwave
    checkout (render `authorizationUrl` as a QR on screen).
 3. **Leanback banner asset**: replace the placeholder `assets/tv-banner.png`

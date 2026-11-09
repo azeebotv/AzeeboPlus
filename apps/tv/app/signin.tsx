@@ -27,11 +27,11 @@ import { colors, tvTypography, tvSpacing, tvRadius } from '../src/theme';
 // Activation page shown on the TV for the user to visit on a phone/browser.
 // Env-overridable so staging TVs don't send users to the production link page
 // (falls back to prod when EXPO_PUBLIC_ACTIVATION_URL is unset).
-const ACTIVATION_URL = process.env.EXPO_PUBLIC_ACTIVATION_URL || 'https://azeebo.tv/link';
+const ACTIVATION_URL = process.env.EXPO_PUBLIC_ACTIVATION_URL || 'https://app.azeeboplus.com/link';
 const MAX_CONSECUTIVE_POLL_ERRORS = 5;
 
 /**
- * Human-readable name for the approval card on azeebo.tv/link — the user
+ * Human-readable name for the approval card on the /link page — the user
  * verifies "Living Room TV" before granting access. Uses the OS-reported
  * device name when available (e.g. "Living Room's Chromecast"); in Expo Go
  * it's unavailable, so we fall back to a plain label.
