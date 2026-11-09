@@ -626,6 +626,7 @@ export { PRIVACY_POLICY, checkConsentCompliance } from './privacy-policy';
 // Universe slugs + key builders (single source of truth for universe-scoped
 // feature-flag keys and nav sentinels — see universe.ts).
 export { UNIVERSE_SLUGS, universeEnabledKey, universeFlagKey } from './universe';
+export { BASE_DOMAIN, DOMAINS, ORIGINS, getCdnBaseUrl, getPublicBaseUrl } from './domains';
 export type { Universe, UniverseSlug } from './universe';
 
 // Universe-specific types

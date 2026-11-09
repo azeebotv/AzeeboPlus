@@ -3,6 +3,8 @@
  * P-005: Add CDN verification
  */
 
+import { getCdnBaseUrl } from '@azeebo/shared-types';
+
 export interface CDNConfig {
   provider: 'cloudflare' | 'cloudfront' | 'fastly' | 'akamai';
   baseUrl: string;
@@ -15,14 +17,12 @@ export interface CDNConfig {
   };
 }
 
+const CDN_BASE_URL = getCdnBaseUrl();
+
 export const CDN_CONFIG: CDNConfig = {
   provider: 'cloudflare',
-  baseUrl: 'https://cdn.azeeboplus.com',
-  staticAssetDomains: [
-    'https://cdn.azeeboplus.com',
-    'https://fonts.googleapis.com',
-    'https://fonts.gstatic.com',
-  ],
+  baseUrl: CDN_BASE_URL,
+  staticAssetDomains: [CDN_BASE_URL, 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
   cacheHeaders: {
     staticAssets: 'public, max-age=31536000, immutable',
     htmlPages: 'no-cache, no-store, must-revalidate',

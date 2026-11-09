@@ -116,6 +116,25 @@ jobs:
       # or the shared env validator requires — i.e. a service that cannot
       # boot when someone follows .env.example verbatim.
       - run: node scripts/check-env-consistency.mjs
+      # Staging hostnames in tracked deploy/ and workflow files must sit under
+      # the canonical platform domain. A foreign staging host splits CORS
+      # origins, OAuth redirect URIs and CDN config across two domains.
+      - run: node scripts/check-staging-hostnames.mjs
+      # Compose files, workflows, Dockerfiles, .env.example templates and the
+      # tracked deploy/ tree must read hostnames from the domain registry
+      # (deploy/domains.env), never hardcode a host on ANY domain — a stale host
+      # on the previous domain (api.staging.<old-domain>) is exactly what a
+      # registry-only check missed. Env templates may repeat a *current*
+      # registry host (dotenv cannot interpolate), but an invented subdomain or
+      # a foreign domain fails there too. Docs and the generated CDN config are
+      # excluded (their own gates own them). Legitimate third parties are
+      # declared with reasons in scripts/domain-literal-allowlist.json.
+      - run: node scripts/check-domain-literals.mjs
+      # deploy/cdn-config.json carries hostnames in four places (API origin,
+      # CloudFront aliases, CORS allowlist, CSP connect-src). They are generated
+      # from the domain registry; a hand edit that misses one splits CORS, the
+      # CSP and the edge aliases across two hosts and only fails at runtime.
+      - run: node scripts/generate-cdn-config.mjs --check
       # Every seeder media URL must route through the shared host registry
       # (scripts/seeders/seed-image-hosts.ts) and every registered host must
       # be allowlisted in apps/web/next.config.js — a seed host missing from
@@ -142,6 +161,7 @@ jobs:
       - run: node scripts/check-expo-routes.mjs
       - run: node scripts/sweep-flag-usage.mjs
       - run: node scripts/generate-flag-registry-table.mjs --check
+      - run: node scripts/generate-domain-env.mjs --check
 
   pool-budget-pr:
     name: Postgres Pool Budget
