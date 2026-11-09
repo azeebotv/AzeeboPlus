@@ -12,7 +12,11 @@ import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { Prisma, WalletTransaction } from '../../prisma/client/index.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { FundWalletDto } from './dto/fund-wallet.dto.js';
-import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto.js';
+import {
+  WithdrawWalletDto,
+  TransferWalletDto,
+  resolveWithdrawalDestination,
+} from './dto/withdraw-transfer.dto.js';
 import { WalletResponse } from './interfaces/wallet-response.interface.js';
 import { toNumber, addDecimals } from '@azeebo/utils';
 import { CacheService, cacheKey, RedisService } from '@azeebo/shared-services';
@@ -508,6 +512,12 @@ export class WalletService {
         throw new BadRequestException('Amount must be greater than 0');
       }
 
+      // The client's provider/method choice is recorded, not acted on: the
+      // pending transaction is settled by whichever provider confirms it, and
+      // keeping the request alongside the record is what lets reconciliation
+      // explain a mismatch later.
+      const requestedProvider = fundWalletDto.provider ?? fundWalletDto.paymentMethod;
+
       const transaction = await this.prisma.walletTransaction.create({
         data: {
           walletId: wallet.id,
@@ -516,6 +526,11 @@ export class WalletService {
           status: 'pending',
           description: 'Wallet funding',
           reference: fundWalletDto.reference,
+          provider: requestedProvider,
+          metadata: {
+            ...(requestedProvider ? { requestedProvider } : {}),
+            ...(fundWalletDto.email ? { payerEmail: fundWalletDto.email } : {}),
+          } as Prisma.InputJsonValue,
           idempotencyKey,
         },
       });
@@ -524,6 +539,7 @@ export class WalletService {
         transactionId: transaction.id,
         amount: fundWalletDto.amount,
         reference: fundWalletDto.reference,
+        requestedProvider,
       });
 
       return {
@@ -565,6 +581,17 @@ export class WalletService {
   ): Promise<WalletResponse> {
     try {
       await this.assertFraudChecksPass(userId, 'withdraw', withdrawDto.amount);
+
+      // Three destination shapes reach this method: a linked bank-account id,
+      // the mobile pair (bankCode + accountNumber) and the web object
+      // (bankDetails). Normalizing here means the payout record always carries
+      // whichever the caller supplied instead of rejecting two of the three.
+      const destination = resolveWithdrawalDestination(withdrawDto);
+      if (!destination) {
+        throw new BadRequestException(
+          'A withdrawal destination is required (bankAccountId or bank account details)'
+        );
+      }
 
       const reference = `WD-${randomUUID()}`;
       // The DTO requires a client key; the header is an alias for clients
@@ -612,9 +639,7 @@ export class WalletService {
               description: withdrawDto.description || 'Withdrawal to bank account',
               reference,
               idempotencyKey,
-              metadata: {
-                bankAccountId: withdrawDto.bankAccountId,
-              },
+              metadata: destination as unknown as Prisma.InputJsonValue,
             },
           });
 
@@ -655,7 +680,8 @@ export class WalletService {
       this.trackAnalyticsEvent('wallet_withdrawal_initiated', userId, {
         transactionId: reference,
         amount: withdrawDto.amount,
-        bankAccountId: withdrawDto.bankAccountId,
+        bankAccountId: destination.bankAccountId,
+        hasBankAccountDetails: Boolean(destination.accountNumber),
       });
 
       return {

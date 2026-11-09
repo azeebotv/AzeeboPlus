@@ -226,7 +226,10 @@ export class PaymentsController {
     @Request() req: { user: { sub: string; id: string } },
     @Body() verifyPaymentDto: VerifyPaymentDto
   ): Promise<VerifyPaymentResponse> {
-    return this.paymentsService.verifyPayment(req.user.id, verifyPaymentDto.transactionId);
+    // The intent id and the provider reference are both valid handles; the
+    // lookup accepts either so a checkout return URL can verify directly.
+    const handle = verifyPaymentDto.transactionId ?? verifyPaymentDto.reference!;
+    return this.paymentsService.verifyPayment(req.user.id, handle);
   }
 
   @Get('history')
@@ -335,7 +338,8 @@ export class PaymentsController {
     return this.paymentsService.requestRefund(
       req.user.id,
       requestRefundDto.transactionId,
-      requestRefundDto.reason
+      requestRefundDto.reason,
+      requestRefundDto.idempotencyKey
     );
   }
 }

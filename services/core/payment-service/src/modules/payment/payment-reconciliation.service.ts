@@ -148,6 +148,10 @@ export class PaymentReconciliationService {
           matched++;
         }
       }
+
+      // A short batch means this was the last page. Checking here (not only on
+      // the next empty page) keeps a non-advancing cursor from looping forever.
+      if (payments.length < BATCH_SIZE) break;
     }
 
     this.logger.log(

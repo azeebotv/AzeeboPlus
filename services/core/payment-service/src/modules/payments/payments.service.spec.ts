@@ -351,6 +351,35 @@ describe('PaymentsService', () => {
       expect(result.success).toBe(true);
       expect(result.data?.status).toBe('completed');
     });
+
+    it('resolves a provider reference, scoped to the caller, when it is not an intent id', async () => {
+      const userId = 'user-123';
+      const reference = 'ref_from_checkout';
+
+      prisma.paymentIntent.findUnique.mockResolvedValue(null);
+      prisma.paymentIntent.findFirst.mockResolvedValue({
+        id: 'pay-123',
+        userId,
+        amount: new Decimal(1000),
+        currency: 'NGN',
+        status: 'completed',
+        description: null,
+        providerReference: reference,
+        metadata: {},
+        completedAt: new Date(),
+        idempotencyKey: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const result = await service.verifyPayment(userId, reference);
+
+      expect(prisma.paymentIntent.findFirst).toHaveBeenCalledWith({
+        where: { userId, providerReference: reference },
+      });
+      expect(result.success).toBe(true);
+      expect(result.data?.status).toBe('completed');
+    });
   });
 
   describe('race conditions & idempotency', () => {
