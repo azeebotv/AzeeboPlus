@@ -11,6 +11,7 @@
 ## 1. Executive Summary
 
 This document establishes the canonical design-system tokens and component-state matrix across all five Azeebo+ surfaces (`apps/web`, `apps/mobile`, `apps/admin`, `apps/creator`, and `apps/tv`), resolving:
+
 - **DS-10-02**: Cross-surface token and component contracts.
 - **DS-10-05**: Unified state and user-feedback vocabulary.
 
@@ -22,26 +23,27 @@ In compliance with **AZP-PDDMA-001** and **AZP-TAA-001 R2.0**, this specificatio
 
 ### 2.1 Color Palette & Semantic Surfaces
 
-| Token Name | Hex Value | Semantic Role | WCAG Ratio on Canvas |
-|---|---|---|---|
-| `--color-canvas-base` | `#0B090E` | Deep obsidian background for Web/Mobile | N/A |
-| `--color-canvas-admin` | `#0F172A` | Slate dark base for Admin/Operations | N/A |
-| `--color-canvas-creator` | `#1A0A0A` | Warm burgundy-tinted base for Creator | N/A |
-| `--color-surface-card` | `#140E18` | Elevated card & list background | 1.15:1 to canvas |
-| `--color-surface-elevated` | `#1F1626` | Popovers, modals, dropdowns | 1.35:1 to canvas |
-| `--color-brand-primary` | `#E8420A` | Primary interactive accent & CTAs | 4.8:1 on base (AA) |
-| `--color-brand-gradient-end` | `#CC1C1C` | Brand CTA gradient terminus | 4.2:1 on base |
-| `--color-text-primary` | `#F5F0EB` | High-emphasis headers and body copy | 14.8:1 (AAA) |
-| `--color-text-secondary` | `#9A8A7A` | Metadata, subtitles, labels | 6.2:1 (AA) |
-| `--color-text-muted` | `#66584C` | Disabled state text, placeholders | 3.5:1 (large only) |
-| `--color-status-success` | `#10B981` | Success alerts, completed states | 5.1:1 (AA) |
-| `--color-status-warning` | `#F59E0B` | In-progress, review pending | 5.8:1 (AA) |
-| `--color-status-error` | `#EF4444` | Failure, rejection, destructive action | 4.6:1 (AA) |
-| `--color-focus-ring` | `#F97316` | High-visibility focus indicator ring | 3:1 graphical minimum |
+| Token Name                   | Hex Value | Semantic Role                           | WCAG Ratio on Canvas                                                    |
+| ---------------------------- | --------- | --------------------------------------- | ----------------------------------------------------------------------- |
+| `--color-canvas-base`        | `#0B090E` | Deep obsidian background for Web/Mobile | N/A                                                                     |
+| `--color-canvas-admin`       | `#0F172A` | Slate dark base for Admin/Operations    | N/A                                                                     |
+| `--color-canvas-creator`     | `#1A0A0A` | Warm burgundy-tinted base for Creator   | N/A                                                                     |
+| `--color-surface-card`       | `#140E18` | Elevated card & list background         | 1.15:1 to canvas                                                        |
+| `--color-surface-elevated`   | `#1F1626` | Popovers, modals, dropdowns             | 1.35:1 to canvas                                                        |
+| `--color-brand-primary`      | `#E8420A` | Primary interactive accent & CTAs       | 4.9:1 on base (AA)                                                      |
+| `--color-brand-gradient-end` | `#D64545` | Brand CTA gradient terminus             | 4.5:1 on base (AA body text)                                            |
+| `--color-text-primary`       | `#F5F0EB` | High-emphasis headers and body copy     | 17.5:1 (AAA)                                                            |
+| `--color-text-secondary`     | `#9A8A7A` | Metadata, subtitles, labels             | 5.9:1 (AA)                                                              |
+| `--color-text-muted`         | `#88817B` | Disabled state text, placeholders       | 5.2:1 on canvas, 5.0:1 on card, 4.6:1 on elevated (AA on every surface) |
+| `--color-status-success`     | `#10B981` | Success alerts, completed states        | 7.8:1 (AAA)                                                             |
+| `--color-status-warning`     | `#F59E0B` | In-progress, review pending             | 9.2:1 (AAA)                                                             |
+| `--color-status-error`       | `#EF4444` | Failure, rejection, destructive action  | 5.3:1 (AA)                                                              |
+| `--color-focus-ring`         | `#F97316` | High-visibility focus indicator ring    | 7.1:1 on base (exceeds 3:1 graphical minimum)                           |
 
 ### 2.2 Spacing & Radii Matrix
 
 Derived from a strict 4px/8px modular grid:
+
 - **Spacing:** `xs: 4px`, `sm: 8px`, `md: 12px`, `lg: 16px`, `xl: 24px`, `xxl: 32px`, `xxxl: 48px`
 - **Radii:** `sm: 4px`, `md: 8px` (inputs/buttons), `lg: 12px` (cards), `xl: 16px` (modals/hero), `pill: 9999px` (tags/chips)
 
@@ -93,20 +95,24 @@ Every interactive surface, form, and data presentation component MUST implement 
 ## 4. Platform-Specific Interaction Exceptions
 
 ### 4.1 Web (`apps/web`)
+
 - Full keyboard tab navigation with visible outline (`--color-focus-ring`).
 - Responsive fluid containers with `@media (prefers-reduced-motion)` honoring.
 
 ### 4.2 Mobile (`apps/mobile`)
+
 - Minimum touch target: `44x44px` on all buttons, chips, and list rows.
 - Dynamic color scheme support (dark/light system overrides).
 - Thumbnails render via `<Image>` with fallback to themed placeholder.
 
 ### 4.3 Admin & Creator (`apps/admin`, `apps/creator`)
+
 - Mutation buttons are locked (`disabled`) during pending mutations to prevent duplicate submission.
 - Toggles utilize `role="switch"`, `aria-checked`, and `aria-label` for screen reader accessibility.
 - Financial numbers never render synthetic zeroes when queries fail.
 
 ### 4.4 TV 10-Foot UI (`apps/tv`)
+
 - Focus-driven remote D-pad navigation with distinct visual focus rings (minimum 3px border).
 - Safe area margins: 48px horizontal, 27px vertical (overscan protection).
 - Typography scaled for 10-foot viewing distance (minimum 16px for captions, 24px for body text).
@@ -115,7 +121,7 @@ Every interactive surface, form, and data presentation component MUST implement 
 
 ## 5. Verification & Compliance Checklist
 
-- [x] High contrast ratios meet WCAG 2.2 AA (minimum 4.5:1 for body copy).
+- [x] High contrast ratios meet WCAG 2.2 AA (minimum 4.5:1 for body copy). **Met** as of 2026-11-05 (DD-08): `--color-text-muted` was `#66584C` (2.9:1) and is now `#88817B`; `--color-brand-gradient-end` was `#CC1C1C` (3.5:1) and is now `#D64545`. Ratios recomputed from the hex values on 2026-11-04 and re-verified after the change on 2026-11-05. Note both replacements clear the threshold narrowly (`#D64545` is 4.53:1 on `--color-canvas-base`), so any further darkening of the canvas or lightening of the gradient needs a re-measure.
 - [x] State matrix covers loading, data, empty, retryable error, and gated states.
 - [x] Touch/remote focus accessibility requirements documented.
 - [x] Component contracts established across all 5 surfaces.

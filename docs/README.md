@@ -44,6 +44,7 @@ Welcome to the central documentation index for the Azeebo+ digital entertainment
 - [auth-device-link-rollout.md](./auth-device-link-rollout.md) - TV and mobile device cross-authentication linking architecture
 - [archive-restore-runbook.md](./archive-restore-runbook.md) - Database backup, archiving, and disaster recovery procedures
 - [runbooks/](./runbooks/) - Operational runbooks and incident response procedures
+- [runbooks/social-auth-provider-credentials.md](./runbooks/social-auth-provider-credentials.md) - Google/Apple sign-in credential setup, verification, and rotation (staging)
 
 ---
 

@@ -9,11 +9,11 @@
   /* ==========================================================================
      1. Brand Logo Extracted Colors
      ========================================================================== */
-  --brand-crimson: #e5251c;   /* Stop 1: Deep Flame Red */
-  --brand-scarlet: #f3501a;   /* Stop 2: Core Azeebo Brand Red-Orange */
-  --brand-flame: #ff6b00;     /* Stop 3: Electric Tangerine Orange */
-  --brand-amber: #ffa02e;     /* Stop 4: Sunset Gold */
-  --brand-coral: #fa8128;     /* Accent Glow */
+  --brand-crimson: #e5251c; /* Stop 1: Deep Flame Red */
+  --brand-scarlet: #f3501a; /* Stop 2: Core Azeebo Brand Red-Orange */
+  --brand-flame: #ff6b00; /* Stop 3: Electric Tangerine Orange */
+  --brand-amber: #ffa02e; /* Stop 4: Sunset Gold */
+  --brand-coral: #fa8128; /* Accent Glow */
 
   /* Brand Primary Aliases */
   --brand-primary: #f3501a;
@@ -22,20 +22,39 @@
   --brand-primary-glow: rgba(243, 80, 26, 0.4);
 
   /* Gradients */
-  --gradient-brand-flame: linear-gradient(135deg, #e5251c 0%, #f3501a 38%, #ff6b00 72%, #ffa02e 100%);
-  --gradient-brand-subtle: linear-gradient(135deg, rgba(229, 37, 28, 0.15) 0%, rgba(243, 80, 26, 0.05) 100%);
-  --gradient-vanta-glow: radial-gradient(circle at top center, rgba(243, 80, 26, 0.16) 0%, rgba(5, 5, 5, 0) 70%);
-  --gradient-cinema-scrim: linear-gradient(180deg, transparent 0%, rgba(5, 5, 5, 0.6) 60%, #050505 100%);
+  --gradient-brand-flame: linear-gradient(
+    135deg,
+    #e5251c 0%,
+    #f3501a 38%,
+    #ff6b00 72%,
+    #ffa02e 100%
+  );
+  --gradient-brand-subtle: linear-gradient(
+    135deg,
+    rgba(229, 37, 28, 0.15) 0%,
+    rgba(243, 80, 26, 0.05) 100%
+  );
+  --gradient-vanta-glow: radial-gradient(
+    circle at top center,
+    rgba(243, 80, 26, 0.16) 0%,
+    rgba(5, 5, 5, 0) 70%
+  );
+  --gradient-cinema-scrim: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(5, 5, 5, 0.6) 60%,
+    #050505 100%
+  );
 
   /* ==========================================================================
      2. Vanta Black True Dark Mode Surfaces (OLED Ready)
      ========================================================================== */
-  --vanta-black: #050505;        /* 0% Lightness Canvas */
-  --vanta-surface-0: #09090c;    /* Deep layer */
-  --vanta-surface-1: #0f0f14;    /* Standard card container */
-  --vanta-surface-2: #15151c;    /* Elevated cards & dialogs */
-  --vanta-surface-3: #1c1c26;    /* Active / hover state */
-  --vanta-surface-input: #111116;/* Form input background */
+  --vanta-black: #050505; /* 0% Lightness Canvas */
+  --vanta-surface-0: #09090c; /* Deep layer */
+  --vanta-surface-1: #0f0f14; /* Standard card container */
+  --vanta-surface-2: #15151c; /* Elevated cards & dialogs */
+  --vanta-surface-3: #1c1c26; /* Active / hover state */
+  --vanta-surface-input: #111116; /* Form input background */
 
   /* Glassmorphism Specs */
   --glass-vanta-bg: rgba(15, 15, 20, 0.72);
@@ -46,19 +65,20 @@
 
   /* Shadows & Illuminations */
   --shadow-vanta-card: 0 10px 30px -5px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(255, 255, 255, 0.05);
-  --shadow-vanta-elevated: 0 20px 45px -10px rgba(0, 0, 0, 0.9), 0 0 1px 1px rgba(255, 255, 255, 0.08);
+  --shadow-vanta-elevated:
+    0 20px 45px -10px rgba(0, 0, 0, 0.9), 0 0 1px 1px rgba(255, 255, 255, 0.08);
   --shadow-brand-glow: 0 0 35px rgba(243, 80, 26, 0.35);
   --shadow-brand-glow-subtle: 0 0 18px rgba(243, 80, 26, 0.2);
 
   /* ==========================================================================
      3. High-Contrast Dark Mode Typography
      ========================================================================== */
-  --text-vanta-primary: #ffffff;      /* 100% white */
-  --text-vanta-secondary: #cbd5e1;    /* Slate-300: High readable secondary */
-  --text-vanta-tertiary: #94a3b8;     /* Slate-400: Metadata */
-  --text-vanta-muted: #64748b;        /* Slate-500: Subdued captions */
-  --text-vanta-accent: #ff6b00;       /* Orange highlight */
-  --text-vanta-inverse: #050505;      /* Dark text for gradient buttons */
+  --text-vanta-primary: #ffffff; /* 100% white */
+  --text-vanta-secondary: #cbd5e1; /* Slate-300: High readable secondary */
+  --text-vanta-tertiary: #94a3b8; /* Slate-400: Metadata */
+  --text-vanta-muted: #6a778e; /* Slate-500 lifted to 4.5:1 AA on #050505 (was #64748b at 4.28:1) */
+  --text-vanta-accent: #ff6b00; /* Orange highlight */
+  --text-vanta-inverse: #050505; /* Dark text for gradient buttons */
 
   /* ==========================================================================
      4. Universe Dynamic Themes
