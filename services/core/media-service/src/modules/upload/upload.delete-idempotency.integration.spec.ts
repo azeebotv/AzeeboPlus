@@ -9,6 +9,7 @@ import { FileValidationService } from '../../common/services/file-validation.ser
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { FeatureFlagGuard, FeatureFlagModule, FeatureFlagService } from '@azeebo/feature-flags';
+import { EventBusModule, EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 
 /**
@@ -95,11 +96,26 @@ class MockAdminGuard implements CanActivate {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         UploadModule,
+        // UploadModule declares ErasureConsumerService (injects EVENT_BUS_SERVICE).
+        // EventBusModule is @Global() and app.module registers it; a spec that
+        // imports UploadModule alone is outside that scope, so DI fails before
+        // any of these tests run — including when S3_INTEGRATION opts them in.
+        EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'media-service-test', {
+          enableEnhanced: false,
+        }),
         // Global FeatureFlagModule registration mirrors app.module; the stub
         // redis keeps the real (overridden below) service from connecting.
         FeatureFlagModule.register({ global: true, redis: { quit: jest.fn() } as never }),
       ],
     })
+      // subscribe() must return a promise: the consumer chains .catch() on it.
+      .overrideProvider(EVENT_BUS_SERVICE)
+      .useValue({
+        subscribe: jest.fn().mockResolvedValue(undefined),
+        unsubscribe: jest.fn().mockResolvedValue(undefined),
+        publish: jest.fn().mockResolvedValue(undefined),
+        disconnect: jest.fn().mockResolvedValue(undefined),
+      })
       .overrideProvider(RedisService)
       .useValue({ get: jest.fn(), set: jest.fn(), del: jest.fn(), keys: jest.fn() })
       .overrideProvider(PrismaService)
@@ -251,9 +267,20 @@ class MockAdminGuard implements CanActivate {
       const moduleFixture: TestingModule = await Test.createTestingModule({
         imports: [
           UploadModule,
+          // Same global registration as above; this second app needs it too.
+          EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'media-service-test', {
+            enableEnhanced: false,
+          }),
           FeatureFlagModule.register({ global: true, redis: { quit: jest.fn() } as never }),
         ],
       })
+        .overrideProvider(EVENT_BUS_SERVICE)
+        .useValue({
+          subscribe: jest.fn().mockResolvedValue(undefined),
+          unsubscribe: jest.fn().mockResolvedValue(undefined),
+          publish: jest.fn().mockResolvedValue(undefined),
+          disconnect: jest.fn().mockResolvedValue(undefined),
+        })
         .overrideProvider(RedisService)
         .useValue({ get: jest.fn(), set: jest.fn(), del: jest.fn(), keys: jest.fn() })
         .overrideProvider(PrismaService)

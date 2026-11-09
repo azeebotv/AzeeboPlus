@@ -31,6 +31,7 @@ describe('UsersService', () => {
     userPreferences: {
       findUnique: jest.fn(),
       upsert: jest.fn(),
+      create: jest.fn(),
       deleteMany: jest.fn(),
     },
     watchHistory: {
@@ -92,6 +93,51 @@ describe('UsersService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('completeProfileSetup', () => {
+    beforeEach(() => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: '1',
+        email: 'jane@example.com',
+        displayName: null,
+      });
+      mockPrismaService.user.update.mockResolvedValue({ id: '1' });
+      mockPrismaService.userPreferences.findUnique.mockResolvedValue(null);
+      mockPrismaService.userPreferences.create.mockResolvedValue({
+        darkMode: false,
+        notifications: {},
+        contentPreferences: ['comedy'],
+      });
+    });
+
+    it('writes the web client’s avatarUrl through to the avatar column', async () => {
+      await service.completeProfileSetup(
+        '1',
+        { avatarUrl: 'https://cdn.example.com/a.png' } as never,
+        'jane@example.com'
+      );
+
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ avatar: 'https://cdn.example.com/a.png' }),
+        })
+      );
+    });
+
+    it('leaves displayName and avatar untouched when only interests are posted', async () => {
+      await service.completeProfileSetup(
+        '1',
+        { interests: ['comedy'] } as never,
+        'jane@example.com'
+      );
+
+      const updateCall = mockPrismaService.user.update.mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      };
+      expect(updateCall.data).not.toHaveProperty('displayName');
+      expect(updateCall.data).not.toHaveProperty('avatar');
+    });
   });
 
   describe('getPreferences', () => {

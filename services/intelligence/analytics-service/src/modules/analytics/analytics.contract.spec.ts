@@ -40,6 +40,7 @@ jest.mock('class-validator', () => ({
   IsPhoneNumber: () => () => {},
   IsEnum: () => () => {},
   IsBoolean: () => () => {},
+  IsNumber: () => () => {},
   MinLength: () => () => {},
   MaxLength: () => () => {},
   ArrayMinSize: () => () => {},

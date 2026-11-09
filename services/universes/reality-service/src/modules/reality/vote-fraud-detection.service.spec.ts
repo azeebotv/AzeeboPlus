@@ -11,7 +11,7 @@ describe('VoteFraudDetectionService', () => {
       findMany: jest.fn(),
       findUnique: jest.fn(),
     },
-    $queryRawUnsafe: jest.fn(),
+    $queryRaw: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -31,7 +31,7 @@ describe('VoteFraudDetectionService', () => {
   describe('checkVote', () => {
     it('should allow vote when no fraud detected', async () => {
       mockPrisma.vote.count.mockResolvedValue(0);
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([{ count: 0 }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: 0 }]);
       mockPrisma.vote.findMany.mockResolvedValue([]);
 
       const result = await service.checkVote({
@@ -50,7 +50,7 @@ describe('VoteFraudDetectionService', () => {
       mockPrisma.vote.count
         .mockResolvedValueOnce(6) // per minute
         .mockResolvedValueOnce(0); // per hour
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([{ count: 0 }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: 0 }]);
       mockPrisma.vote.findMany.mockResolvedValue([]);
 
       const result = await service.checkVote({
@@ -68,7 +68,7 @@ describe('VoteFraudDetectionService', () => {
       mockPrisma.vote.count
         .mockResolvedValueOnce(0) // per minute
         .mockResolvedValueOnce(31); // per hour
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([{ count: 0 }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: 0 }]);
       mockPrisma.vote.findMany.mockResolvedValue([]);
 
       const result = await service.checkVote({
@@ -85,7 +85,7 @@ describe('VoteFraudDetectionService', () => {
       mockPrisma.vote.count
         .mockResolvedValueOnce(6) // per minute
         .mockResolvedValueOnce(31); // per hour
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([{ count: 25 }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: 25 }]);
       mockPrisma.vote.findMany.mockResolvedValue([]);
 
       const blockResult = await service.checkVote({
@@ -103,7 +103,7 @@ describe('VoteFraudDetectionService', () => {
       mockPrisma.vote.count
         .mockResolvedValueOnce(6) // per minute
         .mockResolvedValueOnce(0);
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([{ count: 15 }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: 15 }]);
       mockPrisma.vote.findMany.mockResolvedValue([]);
 
       const result = await service.checkVote({
@@ -121,7 +121,7 @@ describe('VoteFraudDetectionService', () => {
       mockPrisma.vote.count
         .mockResolvedValueOnce(4) // per minute (super limit is 3)
         .mockResolvedValueOnce(0);
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([{ count: 0 }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: 0 }]);
       mockPrisma.vote.findMany.mockResolvedValue([]);
 
       const result = await service.checkVote({
@@ -139,7 +139,7 @@ describe('VoteFraudDetectionService', () => {
         .mockResolvedValueOnce(0) // per minute
         .mockResolvedValueOnce(0) // per hour
         .mockResolvedValueOnce(21); // same contestant
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([{ count: 0 }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: 0 }]);
       mockPrisma.vote.findMany.mockResolvedValue([]);
 
       const result = await service.checkVote({
@@ -157,7 +157,7 @@ describe('VoteFraudDetectionService', () => {
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([{ count: 0 }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: 0 }]);
       mockPrisma.vote.findMany.mockResolvedValue([
         { contestantId: 'c1' },
         { contestantId: 'c2' },
@@ -187,7 +187,7 @@ describe('VoteFraudDetectionService', () => {
         voteType: 'regular',
       });
 
-      expect(mockPrisma.$queryRawUnsafe).not.toHaveBeenCalled();
+      expect(mockPrisma.$queryRaw).not.toHaveBeenCalled();
     });
   });
 

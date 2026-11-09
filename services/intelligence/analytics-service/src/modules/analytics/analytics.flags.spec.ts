@@ -4,6 +4,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
 import { FeatureFlagService } from '@azeebo/feature-flags';
+import { PIIMinimizationService } from './pii-minimization.service.js';
 
 jest.mock('axios', () => ({ default: { get: jest.fn() } }));
 
@@ -47,6 +48,7 @@ describe('AnalyticsService flags', () => {
           },
         },
         { provide: FeatureFlagService, useValue: flags },
+        PIIMinimizationService,
       ],
     }).compile();
     return module.get<AnalyticsService>(AnalyticsService);

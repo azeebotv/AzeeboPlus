@@ -1,5 +1,5 @@
-import { IsString, IsOptional, IsArray, IsEnum } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsOptional, IsArray, IsEnum, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum UserRole {
   USER = 'user',
@@ -15,9 +15,17 @@ export enum AdminUserRole {
 }
 
 export class CompleteProfileSetupDto {
-  @ApiProperty({ example: 'John Doe' })
+  /**
+   * Optional: the handler falls back to the email prefix when it is absent, and
+   * onboarding is split across two screens — the interests step posts only
+   * `{ interests }`. Requiring it turned that step into a 400.
+   */
+  @ApiPropertyOptional({ example: 'John Doe' })
+  @IsOptional()
   @IsString()
-  displayName!: string;
+  @MinLength(1)
+  @MaxLength(50)
+  displayName?: string;
 
   @ApiProperty({ example: 'John Doe', required: false })
   @IsString()
@@ -33,6 +41,16 @@ export class CompleteProfileSetupDto {
   @IsString()
   @IsOptional()
   avatar?: string;
+
+  /**
+   * The web setup screen posts the uploaded image as `avatarUrl`. It is the
+   * same value as `avatar`; the service reads `avatar ?? avatarUrl`, so older
+   * app builds keep working instead of failing on a non-whitelisted property.
+   */
+  @ApiPropertyOptional({ example: 'https://example.com/avatar.jpg' })
+  @IsString()
+  @IsOptional()
+  avatarUrl?: string;
 
   @ApiProperty({ example: 'john@example.com', required: false })
   @IsString()

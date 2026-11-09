@@ -68,7 +68,14 @@ export class FundCreatorDto {
 }
 
 export class UpdateTierDto {
+  /**
+   * Optional: `POST /creators/subscribe/:id` defaults a missing tier to 'free'
+   * (`body.tier || 'free'`), and the web subscribe button sends no body at all.
+   * Without `@IsOptional()` the pipe required the field and every such request
+   * was a 400 before the default could apply.
+   */
   @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   tier?: string;
 }

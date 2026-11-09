@@ -717,6 +717,10 @@ export class UsersService {
         where: { id: userId },
       });
 
+      // `avatar` is the canonical field; `avatarUrl` is what the web setup
+      // screen posts, and both name the same uploaded image.
+      const avatar = dto.avatar ?? dto.avatarUrl;
+
       if (!user && email) {
         user = await this.prisma.user.create({
           data: {
@@ -736,7 +740,7 @@ export class UsersService {
         where: { id: userId },
         data: {
           ...(dto.displayName && { displayName: dto.displayName }),
-          ...(dto.avatar && { avatar: dto.avatar }),
+          ...(avatar && { avatar }),
           ...(dto.role && { role: dto.role }),
         },
         select: {

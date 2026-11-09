@@ -17,7 +17,6 @@ import { FeatureFlagModule } from '@azeebo/feature-flags';
 import { authFlags, subscriptionFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 import { EventBusModule } from '@azeebo/event-bus';
-import { SocialAuthModule } from './modules/social-auth/social-auth.module.js';
 import { DeviceLinkModule } from './modules/device-link/device-link.module.js';
 
 @Module({
@@ -72,7 +71,9 @@ import { DeviceLinkModule } from './modules/device-link/device-link.module.js';
         [subscriptionFlags.deviceLimits]: false,
       },
     }),
-    SocialAuthModule,
+    // Social sign-in is registered by AuthModule alone: it owns the only
+    // SocialAuthController bound to `auth/social` (see
+    // modules/auth/social/social.route-table.spec.ts).
     DeviceLinkModule,
   ],
   providers: [

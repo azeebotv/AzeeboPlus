@@ -66,7 +66,9 @@ describe('Service Auth Guard Tests', () => {
 
     const mockReq = { headers: { authorization: 'Bearer invalid-token' } };
 
-    await expect(authGuard.canActivate(mockContext(mockReq))).rejects.toThrow('Invalid or expired token.');
+    await expect(authGuard.canActivate(mockContext(mockReq))).rejects.toThrow(
+      'Invalid or expired token.'
+    );
   });
 });
 

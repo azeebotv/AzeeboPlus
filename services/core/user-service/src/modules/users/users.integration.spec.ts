@@ -4,6 +4,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { CacheService } from '@azeebo/shared-services';
 import { ConfigService } from '@nestjs/config';
 import { FeatureFlagService } from '@azeebo/feature-flags';
+import { EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 import { NotFoundException } from '@nestjs/common';
 
 jest.mock('../database/prisma.service');
@@ -86,6 +87,19 @@ describe('UsersService Integration', () => {
           provide: FeatureFlagService,
           useValue: {
             isEnabled: jest.fn().mockResolvedValue(false),
+          },
+        },
+        // UsersService injects the event bus. EventBusModule is @Global() and
+        // app.module registers it, but this spec declares UsersService
+        // directly, so the token has to be supplied here or dependency
+        // resolution fails before any test runs.
+        {
+          provide: EVENT_BUS_SERVICE,
+          useValue: {
+            subscribe: jest.fn().mockResolvedValue(undefined),
+            unsubscribe: jest.fn().mockResolvedValue(undefined),
+            publish: jest.fn().mockResolvedValue(undefined),
+            disconnect: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

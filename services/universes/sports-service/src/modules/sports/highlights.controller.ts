@@ -1,11 +1,4 @@
-import {
-  Inject,
-  Controller,
-  Get,
-  Param,
-  NotFoundException,
-  UseGuards,
-} from '@nestjs/common';
+import { Inject, Controller, Get, Param, NotFoundException, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service.js';

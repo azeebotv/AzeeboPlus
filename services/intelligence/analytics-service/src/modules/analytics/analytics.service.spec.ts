@@ -158,7 +158,11 @@ describe('AnalyticsService', () => {
 
       mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 2 });
 
-      const result = await service.ingestEvents(events, { analytics: false, marketing: false }, '1.0');
+      const result = await service.ingestEvents(
+        events,
+        { analytics: false, marketing: false },
+        '1.0'
+      );
 
       expect(result.success).toBe(true);
       // login is essential; consent_state is appended as the ledger record

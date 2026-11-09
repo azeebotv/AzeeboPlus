@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 export interface SearchResult {
@@ -28,12 +28,30 @@ export interface SearchQualityMetrics {
 }
 
 @Injectable()
-export class SearchIntelligenceService {
+export class SearchIntelligenceService implements OnModuleDestroy {
   private readonly zeroResultBuffer: ZeroResultEvent[] = [];
   private readonly BUFFER_FLUSH_INTERVAL = 60_000;
+  /**
+   * Held so it can be released. A discarded interval handle keeps the event
+   * loop alive forever: any process that boots this module (and every test
+   * that compiles the graph) hangs on exit instead of finishing. `unref()`
+   * means the timer never holds the process open, and `onModuleDestroy` stops
+   * it outright when the app shuts down.
+   */
+  private readonly flushTimer: NodeJS.Timeout;
 
   constructor(private readonly prisma: PrismaService) {
-    setInterval(() => this.flushZeroResultBuffer(), this.BUFFER_FLUSH_INTERVAL);
+    // `lib: DOM` declares setInterval as returning number; at runtime under Node
+    // it is a Timeout, which is what `unref`/`clearInterval` expect here.
+    this.flushTimer = setInterval(
+      () => this.flushZeroResultBuffer(),
+      this.BUFFER_FLUSH_INTERVAL
+    ) as unknown as NodeJS.Timeout;
+    this.flushTimer.unref?.();
+  }
+
+  onModuleDestroy(): void {
+    clearInterval(this.flushTimer);
   }
 
   /**

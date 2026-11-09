@@ -17,6 +17,7 @@ import { AvatarService } from './avatar.service.js';
 import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 import { CacheService } from '@azeebo/shared-services';
 import { FeatureFlagGuard, FeatureFlagService, userFlags } from '@azeebo/feature-flags';
+import { EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 
 describe('Users Controller Contract Tests', () => {
   let app: INestApplication;
@@ -107,6 +108,19 @@ describe('Users Controller Contract Tests', () => {
             isEnabled: jest
               .fn()
               .mockImplementation((key: string) => Promise.resolve(key !== userFlags.profileV2)),
+          },
+        },
+        // UsersService injects the event bus. EventBusModule is @Global() and
+        // app.module registers it, but this spec declares UsersService
+        // directly, so the token has to be supplied here or dependency
+        // resolution fails before any test runs.
+        {
+          provide: EVENT_BUS_SERVICE,
+          useValue: {
+            subscribe: jest.fn().mockResolvedValue(undefined),
+            unsubscribe: jest.fn().mockResolvedValue(undefined),
+            publish: jest.fn().mockResolvedValue(undefined),
+            disconnect: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
