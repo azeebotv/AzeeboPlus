@@ -188,6 +188,12 @@ describe('AppModule shared-module instance counts (A-3/A-13 regression guard)', 
         { key: 'mobile_autoplay', enabled: true },
         { key: 'web_autoplay', enabled: true },
         { key: 'web_maintenance_mode', enabled: false },
+        // The web login page gates the Google/Apple buttons on these two
+        // (prd-social-login.md FR-7). A provider missing from this payload does
+        // not fail loudly — the button just never renders — so the bootstrap
+        // contract is pinned here rather than discovered in production.
+        { key: 'auth_social_google', enabled: true },
+        { key: 'auth_social_apple', enabled: true },
       ])
     );
 

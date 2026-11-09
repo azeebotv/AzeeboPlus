@@ -8,33 +8,16 @@
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
-    "types": [
-      "jest",
-      "node",
-      "supertest"
-    ],
+    "types": ["jest", "node", "supertest"],
     "paths": {
-      "@azeebo/*": [
-        "../../../packages/*/dist"
-      ],
-      "@prisma/client": [
-        "./src/prisma/client"
-      ],
-      "@recommendation/*": [
-        "./*"
-      ],
-      "@/*": [
-        "src/*"
-      ],
-      "@modules/*": [
-        "src/modules/*"
-      ],
-      "@config/*": [
-        "src/config/*"
-      ],
-      "@common/*": [
-        "src/common/*"
-      ]
+      "@azeebo/security/log-redaction": ["../../../packages/security/dist/log-redaction"],
+      "@azeebo/*": ["../../../packages/*/dist"],
+      "@prisma/client": ["./src/prisma/client"],
+      "@recommendation/*": ["./*"],
+      "@/*": ["src/*"],
+      "@modules/*": ["src/modules/*"],
+      "@config/*": ["src/config/*"],
+      "@common/*": ["src/common/*"]
     },
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -44,11 +27,6 @@
     "strictPropertyInitialization": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

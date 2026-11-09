@@ -60,6 +60,15 @@ jest.mock('ioredis', () => {
     expire = jest.fn(async () => 1);
     ttl = jest.fn(async () => -1);
     exists = jest.fn(async () => 0);
+    // EventBusService is instantiated as part of this graph: its constructor
+    // calls `redis.duplicate()` and subscribes on the duplicate, so the fake has
+    // to cover the pub/sub surface too — otherwise the guard fails on the
+    // double, not on the registration it is asserting.
+    duplicate = jest.fn(() => new FakeRedis());
+    publish = jest.fn(async () => 1);
+    subscribe = jest.fn(async () => 1);
+    unsubscribe = jest.fn(async () => 0);
+    disconnect = jest.fn(async () => 'OK' as never);
   }
   // ioredis is imported both as default (`import Redis from 'ioredis'`) and
   // named (`import { Redis } from 'ioredis'`) across the graph — cover both.

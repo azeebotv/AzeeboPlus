@@ -1,3 +1,5 @@
+const { sharedModuleNameMapper } = require('../../jest.shared.config.js');
+
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'ts-jest',
@@ -5,15 +7,11 @@ module.exports = {
   rootDir: 'src',
   testMatch: ['**/*.spec.ts', '**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
-  collectCoverageFrom: [
-    '**/*.ts',
-    '!**/*.spec.ts',
-    '!**/*.test.ts',
-    '!**/index.ts',
-  ],
+  collectCoverageFrom: ['**/*.ts', '!**/*.spec.ts', '!**/*.test.ts', '!**/index.ts'],
   coverageDirectory: '../coverage',
   verbose: true,
   moduleNameMapper: {
     '^@azeebo/http-client$': '<rootDir>/../../http-client/src/index.ts',
+    ...sharedModuleNameMapper,
   },
 };

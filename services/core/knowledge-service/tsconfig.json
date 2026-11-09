@@ -9,6 +9,7 @@
     "incremental": true,
     "types": ["jest", "node"],
     "paths": {
+      "@azeebo/security/log-redaction": ["../../../packages/security/dist/log-redaction"],
       "@azeebo/*": ["../../../packages/*/dist"]
     }
   },

@@ -1,3 +1,5 @@
+const { sharedModuleNameMapper } = require('../../jest.shared.config.js');
+
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'src',
@@ -5,9 +7,7 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
-  transformIgnorePatterns: [
-    'node_modules/(?!(@azeebo|uuid)/)',
-  ],
+  transformIgnorePatterns: ['node_modules/(?!(@azeebo|uuid)/)'],
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
@@ -22,6 +22,6 @@ module.exports = {
     },
   },
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
+    ...sharedModuleNameMapper,
   },
 };

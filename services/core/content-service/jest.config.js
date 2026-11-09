@@ -1,3 +1,5 @@
+const { sharedModuleNameMapper } = require('../../../jest.shared.config.js');
+
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'src',
@@ -7,11 +9,10 @@ module.exports = {
   },
   transformIgnorePatterns: [
     '/node_modules/(?!.*\.pnpm/(htmlparser2|domhandler|domutils|dom-serializer|entities|sanitize-html|css-select|boolbase|css-what|nth-check)/)',
-    '/packages/validation(?!.*sanitize)',
   ],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
     '^sanitize-html$': '<rootDir>/__mocks__/sanitize-html.ts',
+    ...sharedModuleNameMapper,
   },
   collectCoverageFrom: [
     '**/*.(t|j)s',

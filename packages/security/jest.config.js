@@ -1,3 +1,5 @@
+const { sharedModuleNameMapper } = require('../../jest.shared.config.js');
+
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'src',
@@ -18,5 +20,8 @@ module.exports = {
       functions: 40,
       lines: 46,
     },
+  },
+  moduleNameMapper: {
+    ...sharedModuleNameMapper,
   },
 };

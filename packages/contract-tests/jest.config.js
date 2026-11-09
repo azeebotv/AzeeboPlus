@@ -1,3 +1,5 @@
+const { sharedModuleNameMapper } = require('../../jest.shared.config.js');
+
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'ts-jest',
@@ -9,14 +11,9 @@ module.exports = {
     // Service sources (e.g. creator-service's wallet-payloads.ts) use
     // NodeNext-style './x.js' relative imports; map them to the real .ts
     // files so ts-jest can compile them.
-    '^(\\.{1,2}/.*)\\.js$': '$1',
+    ...sharedModuleNameMapper,
   },
-  collectCoverageFrom: [
-    '**/*.ts',
-    '!**/*.spec.ts',
-    '!**/*.pact.spec.ts',
-    '!**/index.ts',
-  ],
+  collectCoverageFrom: ['**/*.ts', '!**/*.spec.ts', '!**/*.pact.spec.ts', '!**/index.ts'],
   coverageDirectory: '../coverage',
   verbose: true,
 };
