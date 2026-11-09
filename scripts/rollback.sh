@@ -8,18 +8,50 @@
 #
 # Usage: ./rollback.sh <previous-tag>
 # Example: ./rollback.sh v1.2.3
+#
+# Env overrides:
+#   ENVIRONMENT=staging|production   selects the container-name suffix (staging)
+#   COMPOSE_FILE=<path>              defaults to docker-compose.prod.yml, the
+#                                    stack both environments run
 # ============================================================
 
 set -euo pipefail
 
+# ---- Domain registry ----
+# Compose interpolates ${APP_HOST}, ${STAGING_HOST}, ${API_HOST}, ... from the
+# process environment. Without the registry loaded, a rollback started from a
+# plain shell brings containers up with EMPTY hostnames — broken CORS, CSP and
+# canonical URLs, at the worst possible moment. Load them first; the helper
+# resolves deploy/domains.env from its own path (so the caller's cwd does not
+# matter) and exits non-zero if the file is missing, which is the fail-fast an
+# incident path wants.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/domain-env.sh
+. "${SCRIPT_DIR}/lib/domain-env.sh"
+
 # ---- Configuration ----
 PREVIOUS_TAG="${1:-}"
 ENVIRONMENT="${ENVIRONMENT:-staging}"
-COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.${ENVIRONMENT}.yml}"
+# There is no docker-compose.staging.yml — the staging stack runs the same
+# multi-service file as production, with its own .env (see the header of
+# docker-compose.staging-jobs.yml: `docker compose -f docker-compose.prod.yml
+# -p azeebo-staging`). Deriving the filename from ENVIRONMENT asked for a file
+# that has never existed, so the default staging rollback died on a missing
+# path. Keep the override: COMPOSE_FILE=<path> for an unusual topology.
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
 HEALTH_CHECK_URL="${HEALTH_CHECK_URL:-http://localhost:3000/health}"
 HEALTH_CHECK_RETRIES="${HEALTH_CHECK_RETRIES:-30}"
 HEALTH_CHECK_INTERVAL="${HEALTH_CHECK_INTERVAL:-2}"
 ROLLBACK_LOG="/var/log/azeebo/rollback_$(date +%Y%m%d_%H%M%S).log"
+
+# Fail before stopping anything: a rollback that cannot find its compose file
+# must not take the stack down first and then discover the path is wrong.
+if [[ ! -f "${COMPOSE_FILE}" ]]; then
+    echo "ERROR: Compose file not found: ${COMPOSE_FILE}" >&2
+    echo "Set COMPOSE_FILE=<path> or run from the repository root. Tracked compose files:" >&2
+    ls docker-compose*.yml deploy/docker-compose*.yml 2>/dev/null | sed 's/^/  /' >&2 || true
+    exit 1
+fi
 
 # Service definitions
 SERVICES=(
@@ -357,6 +389,11 @@ main() {
     log "=================================================="
     log "Starting Azeebo+ rollback to tag: ${PREVIOUS_TAG}"
     log "Environment: ${ENVIRONMENT}"
+    # Registry hosts the compose file will interpolate — printed so the operator
+    # can see which domain this rollback converges on before containers move.
+    log "App host: ${APP_HOST}"
+    log "API host: ${API_HOST}"
+    log "Staging host: ${STAGING_HOST}"
     log "=================================================="
     
     # Create log directory if it doesn't exist
