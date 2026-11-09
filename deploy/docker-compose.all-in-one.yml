@@ -20,21 +20,21 @@ services:
     pull_policy: always
     container_name: azeebo-all-in-one
     labels:
-      - "azeebo.service=all-in-one"
-      - "azeebo.category=infrastructure"
-      - "azeebo.port=3013,4000,4014,4016"
-      - "org.opencontainers.image.source=https://github.com/azeebotv/AzeeboPlus"
-      - "org.opencontainers.image.description=Azeebo+ All-in-One Production Container"
-      - "org.opencontainers.image.licenses=Proprietary"
-      - "com.azeeboplus.tier=production"
+      - 'azeebo.service=all-in-one'
+      - 'azeebo.category=infrastructure'
+      - 'azeebo.port=3013,4000,4014,4016'
+      - 'org.opencontainers.image.source=https://github.com/azeebotv/AzeeboPlus'
+      - 'org.opencontainers.image.description=Azeebo+ All-in-One Production Container'
+      - 'org.opencontainers.image.licenses=Proprietary'
+      - 'com.azeeboplus.tier=production'
     ports:
-      - "3013:3013"   # API Gateway
-      - "4000:4000"   # Web App
-      - "4014:4014"   # Creator Portal
-      - "4016:4016"   # Admin Panel
+      - '3013:3013' # API Gateway
+      - '4000:4000' # Web App
+      - '4014:4014' # Creator Portal
+      - '4016:4016' # Admin Panel
     environment:
       NODE_ENV: production
-      ALL_IN_ONE: "true"
+      ALL_IN_ONE: 'true'
 
       # PostgreSQL
       POSTGRES_USER: ${POSTGRES_USER:-azeebo}
@@ -79,16 +79,16 @@ services:
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
 
       # Frontend
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://${APP_HOST}}
       API_GATEWAY_URL: http://localhost:3013
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:80,https://localhost:443,https://app.azeeboplus.com}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:80,https://localhost:443,https://app.azeeboplus.com}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:80,https://localhost:443,https://${APP_HOST}}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:80,https://localhost:443,https://${APP_HOST}}
 
       # Analytics (NEW - required for event tracking)
       ANALYTICS_SERVICE_URL: http://localhost:3008
 
       # WebSocket (NEW - required for messaging/realtime)
-      WS_CORS_ORIGIN: ${WS_CORS_ORIGIN:-https://app.azeeboplus.com}
+      WS_CORS_ORIGIN: ${WS_CORS_ORIGIN:-https://${APP_HOST}}
 
       # Feature Flags (NEW - required for content-service)
       FEATURE_FLAG_REDIS_URL: redis://:${REDIS_PASSWORD}@localhost:6379
@@ -139,7 +139,7 @@ services:
     stop_grace_period: 60s
 
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3013/health"]
+      test: ['CMD', 'curl', '-sf', 'http://localhost:3013/health']
       interval: 10s
       timeout: 5s
       retries: 30
@@ -149,7 +149,7 @@ services:
       resources:
         limits:
           memory: 12G
-          cpus: "4.0"
+          cpus: '4.0'
 
 volumes:
   postgres-data:

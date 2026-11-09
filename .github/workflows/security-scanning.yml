@@ -72,6 +72,8 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
+          # Without exit-code the action always passes, even with findings.
+          exit-code: '1'
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@87ef0dc97def48aa960fbf026a2563ee9dbdb470 # v3
         if: always()
@@ -96,4 +98,3 @@ jobs:
       # Service Dockerfiles must be byte-identical to the template rendered
       # with each service's args, and every FROM must be digest-pinned.
       - run: node scripts/check-dockerfile-drift.mjs
-

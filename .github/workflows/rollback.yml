@@ -28,13 +28,35 @@ permissions:
   packages: read
 
 jobs:
+  resolve-domains:
+    name: Resolve platform domains
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      staging_url: ${{ steps.urls.outputs.staging_url }}
+      production_url: ${{ steps.urls.outputs.production_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Derive URLs from domain registry
+        id: urls
+        run: |
+          node scripts/generate-domain-env.mjs --check
+          . deploy/domains.env
+          echo "staging_url=https://${STAGING_HOST}" >> "$GITHUB_OUTPUT"
+          echo "production_url=https://${BASE_DOMAIN}" >> "$GITHUB_OUTPUT"
+
   rollback:
     name: Rollback to ${{ inputs.target_tag }} on ${{ inputs.environment }}
+    needs: [resolve-domains]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
       name: ${{ inputs.environment }}
-      url: ${{ inputs.environment == 'staging' && 'https://staging.azeeboplus.com' || 'https://azeeboplus.com' }}
+      url: ${{ inputs.environment == 'staging' && (vars.STAGING_BASE_URL || needs.resolve-domains.outputs.staging_url) || (vars.PRODUCTION_BASE_URL || needs.resolve-domains.outputs.production_url) }}
 
     steps:
       - name: Checkout code
@@ -172,4 +194,3 @@ jobs:
           slack-message: "🚨 *Rollback Failed*\n\nEnvironment: `${{ inputs.environment }}`\nTarget Tag: `${{ inputs.target_tag }}`\nTriggered by: ${{ github.actor }}\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-

@@ -26,6 +26,25 @@ const SRC_EXTS = new Set(['.ts', '.tsx']);
 /** Default excludes when a package has no tsconfig of its own. */
 const DEFAULT_EXCLUDES = [/\.spec\.[^.]+$/, /\.test\.[^.]+$/, /\/__tests__\//];
 
+/**
+ * Turns a tsconfig `exclude` glob into a matcher for absolute paths.
+ * Returns null for entries we can ignore (node_modules/dist, or anything not
+ * under src/), so only real compile exclusions are applied.
+ */
+function excludePattern(raw) {
+  const glob = raw.replace(/^\.\//, '').replace(/\\/g, '/');
+  if (!glob.startsWith('src/') && !glob.startsWith('**/')) return null;
+  // Anchor on the package-relative portion: `/src/<glob>` anywhere in the path.
+  const tail = glob.replace(/^\*\*\//, '');
+  const escaped = tail
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*\*\//g, '\u0000')
+    .replace(/\*\*/g, '.*')
+    .replace(/\*/g, '[^/]*')
+    .replace(/\u0000/g, '(?:.*/)?');
+  return new RegExp(`/${escaped}$`);
+}
+
 function excludesFor(pkgDir) {
   const cfgPath = join(pkgDir, 'tsconfig.json');
   if (!existsSync(cfgPath)) return DEFAULT_EXCLUDES;
@@ -37,10 +56,16 @@ function excludesFor(pkgDir) {
       if (typeof raw !== 'string') continue;
       if (raw.includes('*.spec') || raw.includes('*.test')) {
         patterns.push(/\.(spec|test)\.[^.]+$/);
-      } else if (raw === '**/__tests__' || raw.includes('__tests__')) {
-        patterns.push(/\/__tests__\//);
+        continue;
       }
-      // node_modules/dist entries are irrelevant: we only scan src/.
+      if (raw === '**/__tests__' || raw.includes('__tests__')) {
+        patterns.push(/\/__tests__\//);
+        continue;
+      }
+      // Remaining globs (e.g. `src/prisma/client/**/*`, `src/generated/**`) are
+      // generated code that tsc does not compile, so it cannot make dist stale.
+      const re = excludePattern(raw);
+      if (re) patterns.push(re);
     }
     return patterns;
   } catch {
@@ -89,8 +114,7 @@ function mtimeOf(files, pick) {
 }
 
 // ---------------------------------------------------------------------------
-// Main: one line per stale package; exit 1 if any (or if none checkable but
-// every dist is missing — that case surfaces as a tsc module error anyway).
+// Main: one line per stale package; exit 1 if any, or if nothing was checked.
 // ---------------------------------------------------------------------------
 let pkgDirs = [];
 try {
@@ -116,6 +140,14 @@ for (const pkgDir of pkgDirs) {
   if (newestSrc > oldestDist) {
     stale.push(basename(pkgDir));
   }
+}
+
+if (checked === 0) {
+  // Zero checked means the gate verified nothing, so it must not pass. Fires
+  // when no package has both src/ and dist/ (e.g. packages were never built).
+  console.error('❌ check-dist-stale: no package has both src/ and dist/ to check.');
+  console.error('Fix: pnpm --filter "./packages/**" run build');
+  process.exit(1);
 }
 
 if (stale.length > 0) {

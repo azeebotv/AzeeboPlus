@@ -21,6 +21,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Hostnames (APP_HOST, ADMIN_HOST, ...) for compose interpolation.
+source "$ROOT/scripts/lib/domain-env.sh"
+
 COMPOSE="docker-compose.all-in-one.yml"
 ENV_FILE=".env.staging"
 

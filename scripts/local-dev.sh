@@ -87,6 +87,58 @@ HEALTH_CHECK_INTERVAL=2
 # All services use user 'azeebo' with password from env or default for local dev
 DB_USER="${DB_USER:-azeebo}"
 DB_PASS="${DB_PASS:-azeebo_dev_2024}"
+
+# Admin role used for bootstrap DDL (CREATE ROLE / CREATE DATABASE).
+# Installations differ: stock Postgres packages ship a "postgres" superuser,
+# while dev stacks (e.g. FlyEnv) create only the OS user or a custom role and
+# no "postgres" at all. Resolve once against the live server; PGADMIN_USER
+# overrides auto-detection.
+resolve_pg_admin() {
+  if [[ -n "${PGADMIN_USER:-}" ]]; then
+    return 0
+  fi
+  local candidate
+  for candidate in "$(id -un)" "$DB_USER" "postgres"; do
+    if psql -U "$candidate" -d postgres -tc "SELECT 1" >/dev/null 2>&1; then
+      PGADMIN_USER="$candidate"
+      log_debug "Postgres admin role: $PGADMIN_USER"
+      return 0
+    fi
+  done
+  log_error "No usable Postgres admin role (tried $(id -un), $DB_USER, postgres). Set PGADMIN_USER."
+  return 1
+}
+# Kill dev-runner processes whose listeners are already gone but whose
+# watchers (nest --watch / tsx watch / vite / next) still live. Port sweeps
+# cannot see these listenerless parents; across restart sessions they
+# accumulate ~2.5k file descriptors each (chokidar) until macOS hits
+# kern.maxfiles and every new boot fails with "Too many open files in
+# system". Scoped to this repo's paths so unrelated node processes survive.
+reap_runner_orphans() {
+  local killed=0 pid cmd cwd
+  while IFS= read -r pid; do
+    [[ -z "$pid" ]] && continue
+    cmd="$(ps -o command= -p "$pid" 2>/dev/null)" || continue
+    case "$cmd" in
+      *"nest.js start"*|*"tsx/dist/cli"*|*"pnpm start:dev"*|*"pnpm dev"*|*"next/dist/bin/next"*|*"vite.js"*)
+        # argv is often relative ("node ./node_modules/..."), so scope by
+        # the process working directory instead of the command line.
+        cwd="$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | head -1)"
+        case "$cwd" in
+          "$ROOT_DIR"|"$ROOT_DIR"/*)
+            kill "$pid" 2>/dev/null && killed=$((killed + 1)) || true
+            ;;
+        esac
+        ;;
+    esac
+  done < <(pgrep -f "nest\.js start|tsx/dist/cli|pnpm start:dev|pnpm dev|next/dist/bin/next|vite\.js" 2>/dev/null || true)
+  if (( killed > 0 )); then
+    sleep 1
+    log_info "  reaped $killed orphaned runner/watcher process(es)"
+  fi
+  return 0
+}
+
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_BASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}"
@@ -425,9 +477,15 @@ DB_SERVICES=(
 setup_multi_db() {
   section "Setting Up Per-Service Databases"
 
+  resolve_pg_admin || return 1
+
   # Ensure the azeebo user exists
-  psql -U postgres -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" 2>/dev/null | grep -q 1 || \
-    psql -U postgres -c "CREATE USER $DB_USER WITH SUPERUSER PASSWORD '$DB_PASS';" 2>/dev/null
+  # Admin DDL targets the maintenance DB explicitly: without -d, psql
+  # defaults to a database named after the connecting role, which usually
+  # doesn't exist — the connection error is swallowed by 2>/dev/null and
+  # set -e aborts setup with no message.
+  psql -U "$PGADMIN_USER" -d postgres -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" 2>/dev/null | grep -q 1 || \
+    psql -U "$PGADMIN_USER" -d postgres -c "CREATE USER $DB_USER WITH SUPERUSER PASSWORD '$DB_PASS';" 2>/dev/null
   log_ok "User '$DB_USER' ready"
 
   local created=0
@@ -435,10 +493,10 @@ setup_multi_db() {
     IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
 
     # Create database if it doesn't exist
-    if psql -U postgres -tc "SELECT 1 FROM pg_database WHERE datname='$db_name'" 2>/dev/null | grep -q 1; then
+    if psql -U "$PGADMIN_USER" -d postgres -tc "SELECT 1 FROM pg_database WHERE datname='$db_name'" 2>/dev/null | grep -q 1; then
       log_debug "  $db_name: exists"
     else
-      psql -U postgres -c "CREATE DATABASE $db_name OWNER $DB_USER;" 2>/dev/null
+      psql -U "$PGADMIN_USER" -d postgres -c "CREATE DATABASE $db_name OWNER $DB_USER;" 2>/dev/null
       log_ok "  $db_name: created"
       created=$((created + 1))
     fi
@@ -570,9 +628,12 @@ run_migrations() {
 
     local db_url="${DB_BASE_URL}/${db_name}?schema=public"
     log_info "  [$count] $svc_name -> $db_name..."
+    # DIRECT_DATABASE_URL: 28 schemas declare directUrl; services without a
+    # per-service .env get it only from here (local dev points both at the
+    # same database — no proxy in the way).
     local migrate_output
     set +e
-    migrate_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma migrate deploy 2>&1)"
+    migrate_output="$(cd "$service_dir" && DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" pnpm exec prisma migrate deploy 2>&1)"
     local rc=$?
     set -e
 
@@ -586,7 +647,7 @@ run_migrations() {
         log_info "  [$count] $svc_name: migration history stuck, using db push..."
         local push_output
         set +e
-        push_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma db push --accept-data-loss 2>&1)"
+        push_output="$(cd "$service_dir" && DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" pnpm exec prisma db push --accept-data-loss 2>&1)"
         local push_rc=$?
         set -e
         if [[ $push_rc -eq 0 ]]; then
@@ -623,9 +684,10 @@ db_reset() {
     return 0
   fi
 
+  resolve_pg_admin || return 1
   for entry in "${DB_SERVICES[@]}"; do
     IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
-    psql -U postgres -c "DROP DATABASE IF EXISTS $db_name;" 2>/dev/null
+    psql -U "$PGADMIN_USER" -d postgres -c "DROP DATABASE IF EXISTS $db_name;" 2>/dev/null
     log_info "  Dropped $db_name"
   done
 
@@ -689,6 +751,11 @@ FRONTEND_SERVICES=(
   "@azeebo/web|apps/web|4000"
   "@azeebo/admin|apps/admin|4016"
   "@azeebo/creator|apps/creator|4014"
+  # Vite dev servers for the two hybrid apps' SPAs — their backends above
+  # only serve APIs (creator's root 404s by design; the SPA lives on 5174).
+  # Ports must match each client/vite.config.ts (dev-port-drift gate).
+  "@azeebo/admin-client|apps/admin|5173"
+  "@azeebo/creator-client|apps/creator|5174"
 )
 
 ALL_SERVICE_GROUPS=(
@@ -768,9 +835,20 @@ start_service() {
   export NODE_ENV="development"
   export PORT="$port"
 
+  # Search's index-population job reads the content DB through its own
+  # pool; without CONTENT_DATABASE_URL every scheduled run failed (the key
+  # lives only in each machine's gitignored service .env otherwise).
+  if [[ "$pkg" == "@azeebo/search-service" && -z "${CONTENT_DATABASE_URL:-}" ]]; then
+    export CONTENT_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST:-127.0.0.1}:${DB_PORT:-5432}/azeebo_content?schema=public"
+    log_debug "  $pkg: defaulted CONTENT_DATABASE_URL -> azeebo_content"
+  fi
+
   local run_cmd_str
 
-  if [[ "$dir" == "apps/web" ]]; then
+  if [[ "$pkg" == *-client ]]; then
+    # Vite SPA dev server for the hybrid apps (web uses Next instead).
+    run_cmd_str="cd \"$service_dir\" && pnpm dev:client"
+  elif [[ "$dir" == "apps/web" ]]; then
     export NEXT_PUBLIC_API_URL="http://localhost:3013"
     export WATCHPACK_POLLING=true
     export CHOKIDAR_USEPOLLING=true
@@ -955,10 +1033,11 @@ cmd_start() {
 
   # Kill any orphaned processes from previous sessions before starting
   section "Cleaning up orphaned processes"
+  reap_runner_orphans
   local all_ports=(
     3000 3001 3002 3003 3004 3005 3006 3007 3008 3009
     3010 3011 3012 3013 3014 3015 3016 3017 3018 3019
-    3020 3021 3022 3023 3024 3025 3026 3027 3028 4000 4014 4016
+    3020 3021 3022 3023 3024 3025 3026 3027 3028 4000 4014 4016 5173 5174
   )
   local cleaned=0
   for port in "${all_ports[@]}"; do
@@ -1107,10 +1186,11 @@ cmd_start_interactive() {
 cmd_stop() {
   section "Stopping All Services"
   local stopped=0
+  reap_runner_orphans
   local all_ports=(
     3000 3001 3002 3003 3004 3005 3006 3007 3008 3009
     3010 3011 3012 3013 3014 3015 3016 3017 3018 3019
-    3020 3021 3022 3023 3024 3025 3026 3027 3028 4000 4014 4016
+    3020 3021 3022 3023 3024 3025 3026 3027 3028 4000 4014 4016 5173 5174
   )
   for port in "${all_ports[@]}"; do
     local pids
@@ -1183,8 +1263,9 @@ cmd_db() {
         IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
         if [[ "$svc_name" == "$service" ]]; then
           log_warn "Resetting database for $service ($db_name)..."
-          psql -U postgres -c "DROP DATABASE IF EXISTS $db_name;" 2>/dev/null
-          psql -U postgres -c "CREATE DATABASE $db_name OWNER $DB_USER;" 2>/dev/null
+          resolve_pg_admin || return 1
+          psql -U "$PGADMIN_USER" -d postgres -c "DROP DATABASE IF EXISTS $db_name;" 2>/dev/null
+          psql -U "$PGADMIN_USER" -d postgres -c "CREATE DATABASE $db_name OWNER $DB_USER;" 2>/dev/null
           local db_url="${DB_BASE_URL}/${db_name}?schema=public"
           if [[ -f "$ROOT_DIR/$svc_dir/prisma/schema.prisma" ]]; then
             local migrate_out

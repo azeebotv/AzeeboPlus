@@ -80,13 +80,54 @@ test('excluded test files do not mark a dist stale', () => {
   }
 });
 
-test('packages without dist are skipped, not failed', () => {
+test('generated code excluded by tsconfig does not mark dist stale', () => {
+  const old = new Date(Date.now() - 60_000);
+  const recent = new Date(Date.now() - 1_000);
+  const root = makeFixture({
+    'packages/demo/src/index.ts': old,
+    // `prisma generate` rewrites this tree after the last build.
+    'packages/demo/src/prisma/client/runtime/index-browser.d.ts': recent,
+    'packages/demo/dist/index.js': old,
+  });
+  try {
+    writeFileSync(
+      join(root, 'packages/demo/tsconfig.json'),
+      JSON.stringify({ exclude: ['node_modules', 'dist', 'src/prisma/client/**/*'] })
+    );
+    const res = run(root);
+    assert.equal(res.status, 0, res.stderr);
+    assert.match(res.stdout, /1 package dists fresh/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('a package without dist is skipped, but zero checked packages fails', () => {
+  const recent = new Date(Date.now() - 1_000);
+  const old = new Date(Date.now() - 60_000);
+  const root = makeFixture({
+    'packages/src-only/src/index.ts': recent,
+    'packages/demo/src/index.ts': old,
+    'packages/demo/dist/index.js': recent,
+  });
+  try {
+    // src-only has no dist and is skipped; demo is checked and fresh.
+    const res = run(root);
+    assert.equal(res.status, 0, res.stderr);
+    assert.match(res.stdout, /1 package dists fresh/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('zero checked packages fails instead of passing vacuously', () => {
   const recent = new Date(Date.now() - 1_000);
   const root = makeFixture({ 'packages/src-only/src/index.ts': recent });
   try {
     const res = run(root);
-    assert.equal(res.status, 0, res.stderr);
-    assert.match(res.stdout, /0 package dists fresh/);
+    assert.equal(res.status, 1);
+    assert.match(res.stderr, /no package has both src\/ and dist\//);
+    assert.doesNotMatch(res.stdout, /dists fresh/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

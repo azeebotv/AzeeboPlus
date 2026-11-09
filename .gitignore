@@ -31,6 +31,7 @@ npm-debug.log*
 !.env.example
 deploy/*.env
 !deploy/*.env.example
+!deploy/domains.env
 deploy/.env.*
 .figma-mcp.env
 

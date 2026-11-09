@@ -35,7 +35,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SERVICES_DIR = path.join(ROOT, 'services');
@@ -136,8 +136,22 @@ function parseEnvExample(dir) {
 // ---------------------------------------------------------------------------
 // 2. Code reads — strict (getOrThrow) vs soft (get) vs process.env (soft)
 // ---------------------------------------------------------------------------
-const GET_OR_THROW_RE = /\.getOrThrow(?:<[^>]*>)?\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]/g;
-const GET_RE = /\.get(?:<[^>]*>)?\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]\s*(?:,)/g;
+export const GET_OR_THROW_RE = /\.getOrThrow(?:<[^>]*>)?\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]/g;
+// Two shapes are a `.get()` read: with a default (`get('KEY', fallback)`) and
+// without one (`get('KEY')`). The trailing comma used to be mandatory, which
+// made the no-default form invisible — the common case for a key that is
+// genuinely required, so `.env.example` entries for those keys were reported
+// STALE-EXAMPLE ("documented but nothing reads it") even though the service
+// reads them on every boot. `.getOrThrow` cannot match here: the literal `(`
+// has to follow `get`, and that spelling has `OrThrow` in between.
+//
+// Only config-like receivers count (`configService`, `config`, `cfg`, or any
+// identifier containing `config`/`Cfg`). Matching any `.get(` made Maps, Redis
+// clients, and Headers look like env reads. Whitespace and `?.` are allowed
+// between receiver and `.get`, because chained calls span lines, e.g.
+// `configService\n    .get<string>('ALLOWED_ORIGINS')`.
+export const GET_RE =
+  /\b(?:configService|config|cfg|\w*[cC]onfig\w*|\w*Cfg)\s*\??\.\s*get(?:<[^>]*>)?\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]\s*[,)]/g;
 const PROCESS_ENV_RE =
   /process\.env(?:\.([A-Z][A-Z0-9_]{2,})|\[\s*['"]([A-Z][A-Z0-9_]{2,})['"]\s*\])/g;
 const PRISMA_ENV_RE = /env\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]\s*\)/g;
@@ -146,7 +160,7 @@ const PRISMA_ENV_RE = /env\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]\s*\)/g;
 // configService.get(record.envKey), which the literal-read regexes cannot see.
 const ENV_KEY_DECL_RE = /\benvKey:\s*['"]([A-Z][A-Z0-9_]{2,})['"]/g;
 
-function findEnvReads(dir) {
+export function findEnvReads(dir) {
   const strict = new Map(); // key -> location
   const soft = new Map();
   const anyRead = new Set();
@@ -283,128 +297,137 @@ function collectGlobalReaders() {
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
-const args = process.argv.slice(2);
-const { required: validatorRequired } = parseEnvValidator();
-const deployedKeys = collectDeployedEnvKeys();
-const globalReaders = collectGlobalReaders();
-const all = discoverServices();
-const targets = args.length
-  ? all.filter((s) => args.some((f) => s.name === f || s.name.endsWith(f)))
-  : all;
-if (!targets.length) {
-  console.error(`No matching services for: ${args.join(', ')}`);
-  process.exit(1);
-}
-
-console.log(`Checking env consistency for ${targets.length} service(s)`);
-console.log(
-  `Validator: ${ENV_VALIDATOR_PATH} — required keys: ${[...validatorRequired].sort().join(', ') || '(none)'}\n`
-);
-
-let failures = 0;
-const report = [];
-
-for (const { name, dir } of targets) {
-  const example = parseEnvExample(dir);
-  const { strict, soft, migrationOnly } = findEnvReads(dir);
-  const findings = [];
-
-  // directUrl-only refs (migration-time) are advisory: document them, but
-  // they never crash a boot, so they must not block the gate (AUD-89).
-  for (const [key, loc] of migrationOnly) {
-    if (example && example.keys.has(key)) continue;
-    findings.push({
-      kind: 'MISSING-MIGRATION-VAR',
-      key,
-      detail: `directUrl at ${loc} — Prisma CLI/migration-time only, ignored by the generated client at boot; document it in .env.example`,
-      blocking: false,
-    });
+function main() {
+  const args = process.argv.slice(2);
+  const { required: validatorRequired } = parseEnvValidator();
+  const deployedKeys = collectDeployedEnvKeys();
+  const globalReaders = collectGlobalReaders();
+  const all = discoverServices();
+  const targets = args.length
+    ? all.filter((s) => args.some((f) => s.name === f || s.name.endsWith(f)))
+    : all;
+  if (!targets.length) {
+    console.error(`No matching services for: ${args.join(', ')}`);
+    process.exit(1);
   }
 
-  for (const [key, loc] of strict) {
-    if (!example || !example.keys.has(key)) {
+  console.log(`Checking env consistency for ${targets.length} service(s)`);
+  console.log(
+    `Validator: ${ENV_VALIDATOR_PATH} — required keys: ${[...validatorRequired].sort().join(', ') || '(none)'}\n`
+  );
+
+  let failures = 0;
+  const report = [];
+
+  for (const { name, dir } of targets) {
+    const example = parseEnvExample(dir);
+    const { strict, soft, migrationOnly } = findEnvReads(dir);
+    const findings = [];
+
+    // directUrl-only refs (migration-time) are advisory: document them, but
+    // they never crash a boot, so they must not block the gate (AUD-89).
+    for (const [key, loc] of migrationOnly) {
+      if (example && example.keys.has(key)) continue;
       findings.push({
-        kind: 'MISSING-REQUIRED',
+        kind: 'MISSING-MIGRATION-VAR',
         key,
-        detail: `getOrThrow at ${loc} — boot crashes without it, but .env.example omits it`,
-        blocking: true,
-      });
-    }
-  }
-  for (const [key, loc] of soft) {
-    if ((!example || !example.keys.has(key)) && strict.has(key) === false) {
-      findings.push({
-        kind: 'MISSING-SOFT',
-        key,
-        detail: `optional read at ${loc} not documented in .env.example`,
+        detail: `directUrl at ${loc} — Prisma CLI/migration-time only, ignored by the generated client at boot; document it in .env.example`,
         blocking: false,
       });
     }
-  }
-  if (example) {
-    for (const key of validatorRequired) {
-      if (isIgnored(key)) continue;
-      if (!example.keys.has(key) && !strict.has(key)) {
+
+    for (const [key, loc] of strict) {
+      if (!example || !example.keys.has(key)) {
         findings.push({
-          kind: 'MISSING-VALIDATOR-REQUIRED',
+          kind: 'MISSING-REQUIRED',
           key,
-          detail: `validator requires it (no default) and validateEnvironment runs at boot; document it in .env.example`,
+          detail: `getOrThrow at ${loc} — boot crashes without it, but .env.example omits it`,
           blocking: true,
         });
       }
     }
-    for (const key of example.keys.keys()) {
-      if (
-        strict.has(key) ||
-        soft.has(key) ||
-        deployedKeys.has(key) ||
-        CONVENTIONAL_EXAMPLE_KEYS.has(key)
-      )
-        continue;
-      findings.push({
-        kind: 'STALE-EXAMPLE',
-        key,
-        detail: 'documented in .env.example but nothing in this service reads it',
-        blocking: false,
-      });
+    for (const [key, loc] of soft) {
+      if ((!example || !example.keys.has(key)) && strict.has(key) === false) {
+        findings.push({
+          kind: 'MISSING-SOFT',
+          key,
+          detail: `optional read at ${loc} not documented in .env.example`,
+          blocking: false,
+        });
+      }
     }
+    if (example) {
+      for (const key of validatorRequired) {
+        if (isIgnored(key)) continue;
+        if (!example.keys.has(key) && !strict.has(key)) {
+          findings.push({
+            kind: 'MISSING-VALIDATOR-REQUIRED',
+            key,
+            detail: `validator requires it (no default) and validateEnvironment runs at boot; document it in .env.example`,
+            blocking: true,
+          });
+        }
+      }
+      for (const key of example.keys.keys()) {
+        if (
+          strict.has(key) ||
+          soft.has(key) ||
+          deployedKeys.has(key) ||
+          CONVENTIONAL_EXAMPLE_KEYS.has(key)
+        )
+          continue;
+        findings.push({
+          kind: 'STALE-EXAMPLE',
+          key,
+          detail: 'documented in .env.example but nothing in this service reads it',
+          blocking: false,
+        });
+      }
+    }
+
+    const hard = findings.filter((f) => f.blocking);
+    failures += hard.length;
+    const icon = hard.length ? '🔴' : findings.length ? '🟠' : '✅';
+    const status = hard.length ? 'FAIL' : findings.length ? 'WARN' : 'CLEAN';
+    console.log(
+      `  ${name.padEnd(28)} ${icon} ${status}${findings.length ? ` (${findings.length})` : ''}`
+    );
+    for (const f of findings) {
+      console.log(`      ${f.blocking ? '✗' : '⚠'} ${f.kind}: ${f.key} — ${f.detail}`);
+    }
+    report.push({ name, status });
   }
 
-  const hard = findings.filter((f) => f.blocking);
-  failures += hard.length;
-  const icon = hard.length ? '🔴' : findings.length ? '🟠' : '✅';
-  const status = hard.length ? 'FAIL' : findings.length ? 'WARN' : 'CLEAN';
-  console.log(
-    `  ${name.padEnd(28)} ${icon} ${status}${findings.length ? ` (${findings.length})` : ''}`
+  // Validator overreach: required keys nobody reads and nothing deploys.
+  const overreach = [...validatorRequired].filter(
+    (key) => !isIgnored(key) && !globalReaders.has(key) && !deployedKeys.has(key)
   );
-  for (const f of findings) {
-    console.log(`      ${f.blocking ? '✗' : '⚠'} ${f.kind}: ${f.key} — ${f.detail}`);
+  if (overreach.length) {
+    failures += overreach.length;
+    console.log(
+      `\n  ✗ VALIDATOR-OVERREACH — required in ${ENV_VALIDATOR_PATH} but read by nothing:`
+    );
+    for (const key of overreach) console.log(`      ✗ ${key}`);
   }
-  report.push({ name, status });
-}
 
-// Validator overreach: required keys nobody reads and nothing deploys.
-const overreach = [...validatorRequired].filter(
-  (key) => !isIgnored(key) && !globalReaders.has(key) && !deployedKeys.has(key)
-);
-if (overreach.length) {
-  failures += overreach.length;
-  console.log(`\n  ✗ VALIDATOR-OVERREACH — required in ${ENV_VALIDATOR_PATH} but read by nothing:`);
-  for (const key of overreach) console.log(`      ✗ ${key}`);
-}
-
-console.log(
-  `\nSummary: ${targets.length} checked · ${report.filter((r) => r.status === 'CLEAN').length} clean · ` +
-    `${report.filter((r) => r.status === 'WARN').length} warn · ${report.filter((r) => r.status === 'FAIL').length} fail` +
-    (overreach.length ? ` · ${overreach.length} validator overreach` : '')
-);
-
-if (failures > 0) {
   console.log(
-    `\n${failures} blocking finding(s). Add the keys to the service's .env.example (or fix the code/validator).`
+    `\nSummary: ${targets.length} checked · ${report.filter((r) => r.status === 'CLEAN').length} clean · ` +
+      `${report.filter((r) => r.status === 'WARN').length} warn · ${report.filter((r) => r.status === 'FAIL').length} fail` +
+      (overreach.length ? ` · ${overreach.length} validator overreach` : '')
   );
-  process.exit(1);
+
+  if (failures > 0) {
+    console.log(
+      `\n${failures} blocking finding(s). Add the keys to the service's .env.example (or fix the code/validator).`
+    );
+    process.exit(1);
+  }
+  console.log(
+    '✅ .env.example files cover every boot-required key; validator rules match real reads'
+  );
 }
-console.log(
-  '✅ .env.example files cover every boot-required key; validator rules match real reads'
-);
+
+// Run only when invoked directly; tests import the scanners above.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}

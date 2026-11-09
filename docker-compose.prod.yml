@@ -24,7 +24,7 @@ x-common-env: &common-env
   DATABASE_URL: postgresql://azeebo:${POSTGRES_PASSWORD}@postgres:5432/azeebo?schema=public&sslmode=require
   REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
   REDIS_HOST: redis
-  REDIS_PORT: "6379"
+  REDIS_PORT: '6379'
   REDIS_PASSWORD: ${REDIS_PASSWORD}
   # Event bus (Redis pub/sub) — used by services that publish/subscribe
   # domain events (wallet-service, creator-service wallet snapshots, ...)
@@ -41,13 +41,13 @@ x-common-env: &common-env
   # Gateway
   API_GATEWAY_URL: http://api-gateway:3013
   # CORS
-  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://app.azeeboplus.com,https://admin.azeeboplus.com,https://creator.azeeboplus.com}
+  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://${APP_HOST},https://${ADMIN_HOST},https://${CREATOR_HOST}}
   # Logging
   LOG_LEVEL: ${LOG_LEVEL:-info}
   LOG_FORMAT: json
   # Rate Limiting
-  RATE_LIMIT_TTL: "60"
-  RATE_LIMIT_MAX: "100"
+  RATE_LIMIT_TTL: '60'
+  RATE_LIMIT_MAX: '100'
 
 services:
   # ============================================================
@@ -61,12 +61,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-azeebo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-azeebo}
-      POSTGRES_INITDB_ARGS: "--data-checksums"
+      POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./deploy/init-scripts:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-azeebo} -d ${POSTGRES_DB:-azeebo}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-azeebo} -d ${POSTGRES_DB:-azeebo}']
       interval: 10s
       timeout: 5s
       retries: 30
@@ -77,7 +77,7 @@ services:
       resources:
         limits:
           memory: 2G
-          cpus: "2.0"
+          cpus: '2.0'
     networks:
       - azeebo-internal
 
@@ -94,7 +94,7 @@ services:
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
       interval: 10s
       timeout: 5s
       retries: 30
@@ -103,7 +103,7 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: "1.0"
+          cpus: '1.0'
     networks:
       - azeebo-internal
 
@@ -118,18 +118,24 @@ services:
     container_name: azeebo-auth
     environment:
       <<: *common-env
-      PORT: "3000"
+      PORT: '3000'
       SERVICE_NAME: auth-service
       AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3000"
+      - '3000'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -139,7 +145,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -150,18 +156,24 @@ services:
     container_name: azeebo-user
     environment:
       <<: *common-env
-      PORT: "3001"
+      PORT: '3001'
       SERVICE_NAME: user-service
       USER_DB_PASSWORD: ${USER_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3001"
+      - '3001'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -171,7 +183,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -182,18 +194,24 @@ services:
     container_name: azeebo-wallet
     environment:
       <<: *common-env
-      PORT: "3002"
+      PORT: '3002'
       SERVICE_NAME: wallet-service
       WALLET_DB_PASSWORD: ${WALLET_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3002"
+      - '3002'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3002/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3002/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -203,7 +221,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -214,7 +232,7 @@ services:
     container_name: azeebo-payment
     environment:
       <<: *common-env
-      PORT: "3003"
+      PORT: '3003'
       SERVICE_NAME: payment-service
       PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
@@ -223,14 +241,20 @@ services:
       FLW_WEBHOOK_SECRET: ${FLW_WEBHOOK_SECRET:-}
       WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
     expose:
-      - "3003"
+      - '3003'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3003/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3003/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -240,7 +264,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -251,18 +275,24 @@ services:
     container_name: azeebo-content
     environment:
       <<: *common-env
-      PORT: "3004"
+      PORT: '3004'
       SERVICE_NAME: content-service
       CONTENT_DB_PASSWORD: ${CONTENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3004"
+      - '3004'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3004/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3004/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -272,7 +302,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -283,18 +313,24 @@ services:
     container_name: azeebo-search
     environment:
       <<: *common-env
-      PORT: "3005"
+      PORT: '3005'
       SERVICE_NAME: search-service
       SEARCH_DB_PASSWORD: ${SEARCH_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3005"
+      - '3005'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3005/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3005/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -304,7 +340,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -315,7 +351,7 @@ services:
     container_name: azeebo-media
     environment:
       <<: *common-env
-      PORT: "3019"
+      PORT: '3019'
       SERVICE_NAME: media-service
       MEDIA_DB_PASSWORD: ${MEDIA_DB_PASSWORD:-${POSTGRES_PASSWORD}}
       AWS_REGION: ${AWS_REGION:-}
@@ -323,14 +359,20 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
     expose:
-      - "3019"
+      - '3019'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3019/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3019/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -340,7 +382,7 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: "1.0"
+          cpus: '1.0'
     networks:
       - azeebo-internal
 
@@ -351,21 +393,27 @@ services:
     container_name: azeebo-knowledge
     environment:
       <<: *common-env
-      PORT: "3020"
+      PORT: '3020'
       SERVICE_NAME: knowledge-service
       KNOWLEDGE_DB_PASSWORD: ${KNOWLEDGE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     # AUD-01: never publish internal service ports on the host — the knowledge
     # graph API (grants, units, projections) is reachable only through the
     # gateway, which enforces auth, rate limits, and the public-path rules.
     expose:
-      - "3020"
+      - '3020'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3020/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3020/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -375,7 +423,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -390,7 +438,7 @@ services:
     container_name: azeebo-notification
     environment:
       <<: *common-env
-      PORT: "3006"
+      PORT: '3006'
       SERVICE_NAME: notification-service
       NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
@@ -403,14 +451,20 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
     expose:
-      - "3006"
+      - '3006'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3006/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3006/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -420,7 +474,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -431,18 +485,24 @@ services:
     container_name: azeebo-reward
     environment:
       <<: *common-env
-      PORT: "3007"
+      PORT: '3007'
       SERVICE_NAME: reward-service
       REWARD_DB_PASSWORD: ${REWARD_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3007"
+      - '3007'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3007/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3007/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -452,7 +512,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -463,18 +523,24 @@ services:
     container_name: azeebo-engagement
     environment:
       <<: *common-env
-      PORT: "3023"
+      PORT: '3023'
       SERVICE_NAME: engagement-service
       ENGAGEMENT_DB_PASSWORD: ${ENGAGEMENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3023"
+      - '3023'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3023/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3023/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -484,7 +550,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -495,18 +561,24 @@ services:
     container_name: azeebo-messaging
     environment:
       <<: *common-env
-      PORT: "3024"
+      PORT: '3024'
       SERVICE_NAME: messaging-service
       MESSAGING_DB_PASSWORD: ${MESSAGING_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3024"
+      - '3024'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3024/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3024/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -516,7 +588,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -527,18 +599,24 @@ services:
     container_name: azeebo-referral
     environment:
       <<: *common-env
-      PORT: "3025"
+      PORT: '3025'
       SERVICE_NAME: referral-service
       REFERRAL_DB_PASSWORD: ${REFERRAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3025"
+      - '3025'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3025/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3025/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -548,7 +626,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -559,18 +637,24 @@ services:
     container_name: azeebo-subscription
     environment:
       <<: *common-env
-      PORT: "3026"
+      PORT: '3026'
       SERVICE_NAME: subscription-service
       SUBSCRIPTION_DB_PASSWORD: ${SUBSCRIPTION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3026"
+      - '3026'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3026/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3026/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -580,7 +664,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -595,18 +679,24 @@ services:
     container_name: azeebo-analytics
     environment:
       <<: *common-env
-      PORT: "3008"
+      PORT: '3008'
       SERVICE_NAME: analytics-service
       ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3008"
+      - '3008'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3008/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3008/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -616,7 +706,7 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: "1.0"
+          cpus: '1.0'
     networks:
       - azeebo-internal
 
@@ -627,18 +717,24 @@ services:
     container_name: azeebo-recommendation
     environment:
       <<: *common-env
-      PORT: "3009"
+      PORT: '3009'
       SERVICE_NAME: recommendation-service
       RECOMMENDATION_DB_PASSWORD: ${RECOMMENDATION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3009"
+      - '3009'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3009/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3009/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -648,7 +744,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -663,18 +759,24 @@ services:
     container_name: azeebo-reality
     environment:
       <<: *common-env
-      PORT: "3010"
+      PORT: '3010'
       SERVICE_NAME: reality-service
       REALITY_DB_PASSWORD: ${REALITY_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3010"
+      - '3010'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3010/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3010/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -684,7 +786,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -695,18 +797,24 @@ services:
     container_name: azeebo-movie
     environment:
       <<: *common-env
-      PORT: "3011"
+      PORT: '3011'
       SERVICE_NAME: movie-service
       MOVIE_DB_PASSWORD: ${MOVIE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3011"
+      - '3011'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3011/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3011/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -716,7 +824,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -727,18 +835,24 @@ services:
     container_name: azeebo-comedy
     environment:
       <<: *common-env
-      PORT: "3012"
+      PORT: '3012'
       SERVICE_NAME: comedy-service
       COMEDY_DB_PASSWORD: ${COMEDY_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3012"
+      - '3012'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3012/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3012/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -748,7 +862,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -759,18 +873,24 @@ services:
     container_name: azeebo-games
     environment:
       <<: *common-env
-      PORT: "3014"
+      PORT: '3014'
       SERVICE_NAME: games-service
       GAMES_DB_PASSWORD: ${GAMES_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3014"
+      - '3014'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3014/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3014/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -780,7 +900,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -791,18 +911,24 @@ services:
     container_name: azeebo-lifestyle
     environment:
       <<: *common-env
-      PORT: "3016"
+      PORT: '3016'
       SERVICE_NAME: lifestyle-service
       LIFESTYLE_DB_PASSWORD: ${LIFESTYLE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3016"
+      - '3016'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3016/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3016/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -812,7 +938,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -823,18 +949,24 @@ services:
     container_name: azeebo-vertical
     environment:
       <<: *common-env
-      PORT: "3017"
+      PORT: '3017'
       SERVICE_NAME: vertical-service
       VERTICAL_DB_PASSWORD: ${VERTICAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3017"
+      - '3017'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3017/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3017/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -844,7 +976,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -855,18 +987,24 @@ services:
     container_name: azeebo-creator-svc
     environment:
       <<: *common-env
-      PORT: "3018"
+      PORT: '3018'
       SERVICE_NAME: creator-service
       CREATOR_DB_PASSWORD: ${CREATOR_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3018"
+      - '3018'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3018/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3018/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -876,7 +1014,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -887,18 +1025,24 @@ services:
     container_name: azeebo-sports
     environment:
       <<: *common-env
-      PORT: "3021"
+      PORT: '3021'
       SERVICE_NAME: sports-service
       SPORTS_DB_PASSWORD: ${SPORTS_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3021"
+      - '3021'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3021/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3021/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -908,7 +1052,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -919,18 +1063,24 @@ services:
     container_name: azeebo-live-event
     environment:
       <<: *common-env
-      PORT: "3027"
+      PORT: '3027'
       SERVICE_NAME: live-event-service
       LIVE_EVENT_DB_PASSWORD: ${LIVE_EVENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3027"
+      - '3027'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3027/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3027/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -940,7 +1090,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -955,18 +1105,24 @@ services:
     container_name: azeebo-queue
     environment:
       <<: *common-env
-      PORT: "3015"
+      PORT: '3015'
       SERVICE_NAME: queue-service
       QUEUE_DB_PASSWORD: ${QUEUE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3015"
+      - '3015'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3015/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3015/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -976,7 +1132,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -987,18 +1143,24 @@ services:
     container_name: azeebo-moderation
     environment:
       <<: *common-env
-      PORT: "3022"
+      PORT: '3022'
       SERVICE_NAME: moderation-service
       MODERATION_DB_PASSWORD: ${MODERATION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3022"
+      - '3022'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3022/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3022/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -1008,7 +1170,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -1019,18 +1181,24 @@ services:
     container_name: azeebo-support
     environment:
       <<: *common-env
-      PORT: "3028"
+      PORT: '3028'
       SERVICE_NAME: support-service
       SUPPORT_DB_PASSWORD: ${SUPPORT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
     expose:
-      - "3028"
+      - '3028'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3028/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3028/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -1040,7 +1208,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
 
@@ -1055,14 +1223,14 @@ services:
     container_name: azeebo-gateway
     environment:
       <<: *common-env
-      PORT: "3013"
+      PORT: '3013'
       SERVICE_NAME: api-gateway
       # AUD-04: explicit upstream for the knowledge route. Every other route
       # relies on the SERVICE_CONFIGS fallbackUrl; pinning this one makes the
       # correct port visible at the deployment layer and overridable per env.
       KNOWLEDGE_SERVICE_URL: ${KNOWLEDGE_SERVICE_URL:-http://knowledge-service:3020}
     ports:
-      - "127.0.0.1:${GATEWAY_PORT:-3013}:3013"
+      - '127.0.0.1:${GATEWAY_PORT:-3013}:3013'
     depends_on:
       postgres:
         condition: service_healthy
@@ -1071,7 +1239,13 @@ services:
       auth-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3013/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3013/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -1081,7 +1255,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-internal
       - azeebo-public
@@ -1097,16 +1271,22 @@ services:
     container_name: azeebo-web
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}
-      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-wss://app.azeeboplus.com}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://${APP_HOST}}
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-wss://${APP_HOST}}
       API_GATEWAY_URL: http://api-gateway:3013
     ports:
-      - "127.0.0.1:${WEB_PORT:-4000}:4000"
+      - '127.0.0.1:${WEB_PORT:-4000}:4000'
     depends_on:
       api-gateway:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:4000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:4000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -1116,7 +1296,7 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: "1.0"
+          cpus: '1.0'
     networks:
       - azeebo-public
 
@@ -1129,12 +1309,18 @@ services:
       NODE_ENV: production
       API_GATEWAY_URL: http://api-gateway:3013
     ports:
-      - "127.0.0.1:${ADMIN_PORT:-4016}:4016"
+      - '127.0.0.1:${ADMIN_PORT:-4016}:4016'
     depends_on:
       api-gateway:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:4016').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:4016').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -1144,7 +1330,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-public
 
@@ -1157,12 +1343,18 @@ services:
       NODE_ENV: production
       API_GATEWAY_URL: http://api-gateway:3013
     ports:
-      - "127.0.0.1:${CREATOR_PORT:-4014}:4014"
+      - '127.0.0.1:${CREATOR_PORT:-4014}:4014'
     depends_on:
       api-gateway:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:4014').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:4014').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -1172,7 +1364,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
     networks:
       - azeebo-public
 

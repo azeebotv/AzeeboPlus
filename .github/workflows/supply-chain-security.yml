@@ -95,7 +95,7 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'release'
     needs: [vulnerability-scan, sbom-generation]
     permissions:
-      id-token: write   # Required for SLSA provenance
+      id-token: write # Required for SLSA provenance
       contents: write
       attestations: write
     steps:
@@ -142,15 +142,18 @@ jobs:
         run: |
           echo "Checking for copyleft licenses..."
           # List all licenses
-          pnpm licenses ls --prod 2>/dev/null || echo "License check skipped (pnpm version may not support this command)"
+          # Fail closed: a failed listing must not look like a clean license check.
+          pnpm licenses ls --prod
+          pnpm licenses ls --prod --json > licenses.json
+          test -s licenses.json
 
-          # Block known problematic licenses
-          BLOCKED_LICENSES="GPL-3.0|AGPL-3.0|SSPL-1.0|EUPL-1.1"
-          BLOCKED=$(pnpm licenses ls --prod --json 2>/dev/null | jq -r '.[]? | .licenses[]?' | grep -iE "$BLOCKED_LICENSES" || true)
+          # `pnpm licenses ls --json` is keyed by license expression (e.g. "GPL-3.0",
+          # "(MIT OR GPL-3.0)"). Match whole license tokens so LGPL-3.0 is not blocked.
+          BLOCKED_LICENSES='(^|[ (])(A?GPL-3\.0|SSPL-1\.0|EUPL-1\.1)(-only|-or-later)?($|[ )])'
+          BLOCKED=$(jq -r 'keys[]' licenses.json | grep -E "$BLOCKED_LICENSES" || true)
           if [ -n "$BLOCKED" ]; then
             echo "::error::Blocked copyleft licenses found:"
             echo "$BLOCKED"
             exit 1
           fi
           echo "No blocked licenses found."
-

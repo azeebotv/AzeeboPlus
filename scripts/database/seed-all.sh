@@ -38,10 +38,17 @@ warn()  { printf "${YELLOW}[WARN]${RESET}  %s\n" "$*"; }
 err()   { printf "${RED}[ERR]${RESET}   %s\n" "$*" >&2; }
 
 run_sql() {
-  local db="$1" sql="$2"
-  psql -U "$DB_USER" -d "$db" -c "$sql" 2>/dev/null || {
-    warn "Some statements in $db may have already existed (idempotent)"
-  }
+  local db="$1" sql="$2" out
+  # Surface psql's real error instead of swallowing it: the old
+  # `2>/dev/null || warn "idempotent"` reported syntax/FK errors as benign
+  # re-runs while every caller still printed [OK] — five broken seed
+  # statements hid behind it for months.
+  if ! out=$(psql -U "$DB_USER" -d "$db" -c "$sql" 2>&1); then
+    warn "statement failed in $db (not idempotency — real error):"
+    printf '%s\n' "$out" | sed 's/^/    /' >&2
+  else
+    printf '%s\n' "$out"
+  fi
 }
 
 run_file() {
@@ -77,7 +84,7 @@ seed_auth_db() {
       ('a0000001-0000-0000-0000-000000000009', 'banned@azeeboplus.com', '${demo_hash}', 'Chukwu M', NULL, 'user', true, '2025-02-20T00:00:00Z', NOW()),
       ('a0000001-0000-0000-0000-000000000010', 'unverified@azeeboplus.com', '${demo_hash}', 'Yemi O', NULL, 'user', false, '2025-05-01T00:00:00Z', NOW()),
       ('a0000001-0000-0000-0000-000000000011', 'sportscreator@azeeboplus.com', '${demo_hash}', 'Chinedu Sports', '/images/placeholders/avatars/100x100_03.png', 'creator', true, '2025-05-10T00:00:00Z', NOW()),
-      ('a0000001-0000-0000-0000-000000000012', 'gamer@azeeboplus.com', '${demo_hash}', 'Tunde Gaming', '/images/placeholders/avatars/100x100_04.png', 'creator', true, '2025-06-01T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000012', 'gamer@azeeboplus.com', '${demo_hash}', 'Tunde Gaming', '/images/placeholders/avatars/100x100_04.png', 'creator', true, '2025-06-01T00:00:00Z', NOW())
     ON CONFLICT (email) DO UPDATE SET
       password = EXCLUDED.password,
       role = EXCLUDED.role,
@@ -90,6 +97,61 @@ seed_auth_db() {
 }
 
 # ============================================================
+# Mirror: azeebo_auth.users → a service DB's own users table
+# ============================================================
+# Every service whose Prisma schema declares `users` also FKs it (creator:
+# watch_history, saved_items, wallets, payment_intents, payout_requests,
+# challenge_submissions, creator_profiles, notifications, tips, …), but the
+# real user rows live ONLY in azeebo_auth. Without this mirror those FKs dangle
+# against an empty local table — that is the "creator DB FKs to a local empty
+# users table" drift: every insert/join through them fails or silently 500s.
+#
+# Column sets legitimately differ per DB (azeebo_content carries
+# isActive/isEmailVerified, azeebo_creator carries password/preferences), so
+# we intersect BOTH sides' column lists and refuse to run if a
+# NOT-NULL-without-default column of the target would be left unset.
+# Idempotent: staging table + ON CONFLICT (id) DO NOTHING.
+#   usage: mirror_users_into <database>
+mirror_users_into() {
+  local db="$1" auth_cols target_cols common qcols missing csv
+  auth_cols="$(psql "${DB_URL}/azeebo_auth" -X -tAq -v ON_ERROR_STOP=1 \
+    -c "SELECT column_name FROM information_schema.columns WHERE table_name='users' AND table_schema='public' ORDER BY column_name")"
+  target_cols="$(psql "${DB_URL}/$db" -X -tAq -v ON_ERROR_STOP=1 \
+    -c "SELECT column_name FROM information_schema.columns WHERE table_name='users' AND table_schema='public' ORDER BY column_name")"
+  if [ -z "$target_cols" ]; then
+    err "$db has no users table to mirror into"
+    return 1
+  fi
+  common="$(comm -12 <(printf '%s\n' "$auth_cols" | sort) <(printf '%s\n' "$target_cols" | sort) | grep . || true)"
+  if [ -z "$common" ]; then
+    err "$db.users shares no columns with azeebo_auth.users — refusing to mirror"
+    return 1
+  fi
+
+  # Refuse if a NOT-NULL/no-default target column would be omitted.
+  missing="$(psql "${DB_URL}/$db" -X -tAq -v ON_ERROR_STOP=1 \
+    -c "SELECT column_name FROM information_schema.columns WHERE table_name='users' AND table_schema='public' AND is_nullable='NO' AND column_default IS NULL ORDER BY column_name" \
+    | while IFS= read -r c; do printf '%s\n' "$common" | grep -qx "$c" || printf '%s\n' "$c"; done | grep . || true)"
+  if [ -n "$missing" ]; then
+    err "cannot mirror users into $db: required column(s) absent from azeebo_auth.users: $(printf '%s ' $missing)"
+    return 1
+  fi
+
+  qcols="$(printf '%s\n' "$common" | sed 's/.*/"&"/' | paste -sd, -)"
+  csv="$(mktemp "${TMPDIR:-/tmp}/azeebo-users-mirror.XXXXXX")"
+  psql "${DB_URL}/azeebo_auth" -X -q -v ON_ERROR_STOP=1 \
+    -c "\copy (SELECT $qcols FROM users ORDER BY id) TO STDOUT WITH (FORMAT csv)" >"$csv"
+  psql "${DB_URL}/$db" -X -q -v ON_ERROR_STOP=1 <<SQL
+CREATE TEMP TABLE _mirror_users_stage (LIKE users);
+\\copy _mirror_users_stage ($qcols) FROM '$csv' WITH (FORMAT csv)
+INSERT INTO users ($qcols) SELECT $qcols FROM _mirror_users_stage ON CONFLICT (id) DO NOTHING;
+SELECT '  users in $db: ' || COUNT(*) FROM users;
+SQL
+  rm -f "$csv"
+  ok "  Users mirrored from azeebo_auth into $db"
+}
+
+# ============================================================
 # Seed: User Database
 # ============================================================
 seed_user_db() {
@@ -97,15 +159,15 @@ seed_user_db() {
 
   # User roles
   run_sql "azeebo_user" "
-    INSERT INTO \"user_roles\" (id, \"userId\", role, \"grantedBy\", \"createdAt\")
+    INSERT INTO \"user_roles\" (id, \"userId\", role, \"grantedBy\", \"createdAt\", \"updatedAt\")
     VALUES
-      ('b0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'admin', 'system', '2025-01-01T00:00:00Z'),
-      ('b0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000002', 'moderator', 'a0000001-0000-0000-0000-000000000001', '2025-01-15T00:00:00Z'),
-      ('b0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-02-01T00:00:00Z'),
-      ('b0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-02-15T00:00:00Z'),
-      ('b0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-03-01T00:00:00Z'),
-      ('b0000001-0000-0000-0000-000000000011', 'a0000001-0000-0000-0000-000000000011', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-03-10T00:00:00Z'),
-      ('b0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-04-01T00:00:00Z')
+      ('b0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'admin', 'system', '2025-01-01T00:00:00Z', '2025-01-01T00:00:00Z'),
+      ('b0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000002', 'moderator', 'a0000001-0000-0000-0000-000000000001', '2025-01-15T00:00:00Z', '2025-01-15T00:00:00Z'),
+      ('b0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-02-01T00:00:00Z', '2025-02-01T00:00:00Z'),
+      ('b0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-02-15T00:00:00Z', '2025-02-15T00:00:00Z'),
+      ('b0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-03-01T00:00:00Z', '2025-03-01T00:00:00Z'),
+      ('b0000001-0000-0000-0000-000000000011', 'a0000001-0000-0000-0000-000000000011', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-03-10T00:00:00Z', '2025-03-10T00:00:00Z'),
+      ('b0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-04-01T00:00:00Z', '2025-04-01T00:00:00Z')
     ON CONFLICT (id) DO NOTHING;
   "
   ok "  User roles seeded"
@@ -114,17 +176,16 @@ seed_user_db() {
   run_sql "azeebo_user" "
     INSERT INTO \"user_profiles\" (id, \"userId\", \"displayName\", avatar, bio, location, \"isPublic\", \"createdAt\", \"updatedAt\")
     VALUES
-      ('c0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'Admin Chidi', '/images/placeholders/avatars/100x100_05.png
-      ('c0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000002', 'Mod Amina', '/images/placeholders/avatars/100x100_06.png
-      ('c0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', 'Tunde Creates', '/images/placeholders/avatars/100x100_07.png
-      ('c0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_08.png
-      ('c0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', 'Emeka Studios', '/images/placeholders/avatars/100x100_09.png
-      ('c0000001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000006', 'Kemi Watch', '/images/placeholders/avatars/100x100_10.png
-      ('c0000001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000007', 'Olumide F', '/images/placeholders/avatars/100x100_11.png
-      ('c0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', 'Fatima A', '/images/placeholders/avatars/100x100_12.png
-      ('c0000001-0000-0000-0000-000000000011', 'a0000001-0000-0000-0000-000000000011', 'Chinedu Sports', '/images/placeholders/avatars/100x100_01.png
-      ('c0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'Tunde Gaming', '/images/placeholders/avatars/100x100_02.png
-      ('c0000001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000009', 'Chukwu M', NULL, 'Former user (banned)', NULL, false, '2025-02-20T00:00:00Z', '2025-02-20T00:00:00Z'),
+      ('c0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'Admin Chidi', '/images/placeholders/avatars/100x100_05.png', 'Platform administrator', 'Lagos', true, '2025-01-01T00:00:00Z', '2025-01-01T00:00:00Z'),
+      ('c0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000002', 'Mod Amina', '/images/placeholders/avatars/100x100_06.png', 'Community moderator', 'Abuja', true, '2025-01-15T00:00:00Z', '2025-01-15T00:00:00Z'),
+      ('c0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', 'Tunde Creates', '/images/placeholders/avatars/100x100_07.png', 'Vlogs and creator content', 'Lagos', true, '2025-02-01T00:00:00Z', '2025-02-01T00:00:00Z'),
+      ('c0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 'Ngozi Vibes', '/images/placeholders/avatars/100x100_08.png', 'Lifestyle and fashion', 'Port Harcourt', true, '2025-02-15T00:00:00Z', '2025-02-15T00:00:00Z'),
+      ('c0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', 'Emeka Studios', '/images/placeholders/avatars/100x100_09.png', 'Films and series', 'Enugu', true, '2025-03-01T00:00:00Z', '2025-03-01T00:00:00Z'),
+      ('c0000001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000006', 'Kemi Watch', '/images/placeholders/avatars/100x100_10.png', 'Always streaming', 'Lagos', true, '2025-03-15T00:00:00Z', '2025-03-15T00:00:00Z'),
+      ('c0000001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000007', 'Olumide F', '/images/placeholders/avatars/100x100_11.png', 'Comedy fan', 'Ibadan', true, '2025-04-01T00:00:00Z', '2025-04-01T00:00:00Z'),
+      ('c0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', 'Fatima A', '/images/placeholders/avatars/100x100_12.png', 'Nollywood buff', 'Kano', true, '2025-04-15T00:00:00Z', '2025-04-15T00:00:00Z'),
+      ('c0000001-0000-0000-0000-000000000011', 'a0000001-0000-0000-0000-000000000011', 'Chinedu Sports', '/images/placeholders/avatars/100x100_01.png', 'Sports highlights', 'Abuja', true, '2025-05-10T00:00:00Z', '2025-05-10T00:00:00Z'),
+      ('c0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'Tunde Gaming', '/images/placeholders/avatars/100x100_02.png', 'Gaming creator', 'Lagos', true, '2025-06-01T00:00:00Z', '2025-06-01T00:00:00Z'),      ('c0000001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000009', 'Chukwu M', NULL, 'Former user (banned)', NULL, false, '2025-02-20T00:00:00Z', '2025-02-20T00:00:00Z'),
       ('c0000001-0000-0000-0000-000000000010', 'a0000001-0000-0000-0000-000000000010', 'Yemi O', NULL, 'Unverified account', NULL, false, '2025-05-01T00:00:00Z', '2025-05-01T00:00:00Z')
     ON CONFLICT (id) DO UPDATE SET \"displayName\" = EXCLUDED.\"displayName\", avatar = EXCLUDED.avatar, bio = EXCLUDED.bio, location = EXCLUDED.\"location\", \"isPublic\" = EXCLUDED.\"isPublic\";
   "
@@ -135,7 +196,30 @@ seed_user_db() {
 # Seed: Content Database (Universes + Categories)
 # ============================================================
 seed_content_db() {
-  info "Seeding azeebo_content (universes, categories, tags, 30 content items)..."
+  info "Seeding azeebo_content (users, universes, categories, tags, 30 content items)..."
+
+  # content_items.creatorId FKs content.users(id) — seed the authors first
+  # (this block was missing entirely; every fresh DB failed the FK below).
+  # ON CONFLICT (id) DO NOTHING tolerates the three rows a prior partial run
+  # may have left behind.
+  run_sql "azeebo_content" "
+    INSERT INTO users (id, email, \"displayName\", role, \"isActive\", \"isEmailVerified\", \"createdAt\", \"updatedAt\")
+    VALUES
+      ('a0000001-0000-0000-0000-000000000001', 'admin@azeeboplus.com', 'Admin Chidi', 'admin', true, true, '2025-01-01T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000002', 'moderator@azeeboplus.com', 'Mod Amina', 'moderator', true, true, '2025-01-15T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000003', 'creator1@azeeboplus.com', 'Tunde Creates', 'creator', true, true, '2025-02-01T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000004', 'creator2@azeeboplus.com', 'Ngozi Vibes', 'creator', true, true, '2025-02-15T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000005', 'creator3@azeeboplus.com', 'Emeka Studios', 'creator', true, true, '2025-03-01T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000006', 'user1@azeeboplus.com', 'Kemi Watch', 'user', true, true, '2025-03-15T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000007', 'user2@azeeboplus.com', 'Olumide F', 'user', true, true, '2025-04-01T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000008', 'user3@azeeboplus.com', 'Fatima A', 'user', true, true, '2025-04-15T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000009', 'banned@azeeboplus.com', 'Chukwu M', 'user', true, true, '2025-02-20T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000010', 'unverified@azeeboplus.com', 'Yemi O', 'user', true, false, '2025-05-01T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000011', 'sportscreator@azeeboplus.com', 'Chinedu Sports', 'creator', true, true, '2025-05-10T00:00:00Z', NOW()),
+      ('a0000001-0000-0000-0000-000000000012', 'gamer@azeeboplus.com', 'Tunde Gaming', 'creator', true, true, '2025-06-01T00:00:00Z', NOW())
+    ON CONFLICT (id) DO NOTHING;
+  "
+  ok "  Content authors seeded (12)"
 
   # Universes — matches Docker demo seed
   run_sql "azeebo_content" "
@@ -301,7 +385,7 @@ seed_wallet_db() {
 seed_media_db() {
   info "Seeding azeebo_media..."
   run_sql "azeebo_media" "
-    INSERT INTO media_uploads (id, \"userId\", filename, \"originalName\", mimetype, size, key, \"cdnUrl\", folder, status, metadata, \"createdAt\", \"updatedAt\")
+    INSERT INTO media_uploads (id, \"userId\", \"fileName\", \"originalName\", \"mimeType\", size, key, \"cdnUrl\", folder, status, metadata, \"createdAt\", \"updatedAt\")
     VALUES
       ('m0000000-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000003', 'tunde-avatar.png', 'tunde-avatar.png', 'image/png', 15360, 'avatars/tunde-avatar.png', '/images/placeholders/avatars/100x100_03.png', 'avatars', 'uploaded', '{}', NOW(), NOW()),
       ('m0000000-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000001', 'platform-logo.png', 'platform-logo.png', 'image/png', 81920, 'logos/platform-logo.png', '/assets/logo.png', 'logos', 'uploaded', '{}', NOW(), NOW()),
@@ -316,6 +400,12 @@ seed_media_db() {
 # ============================================================
 seed_creator_db() {
   info "Seeding azeebo_creator..."
+
+  # creator_profiles.userId and every other user FK here reference
+  # azeebo_creator.users(id) — mirror the auth users FIRST, otherwise the
+  # profiles below (and any portal join) dangle against an empty table.
+  mirror_users_into "azeebo_creator"
+
   run_sql "azeebo_creator" "
     INSERT INTO creator_profiles (id, \"userId\", \"displayName\", bio, verified, \"createdAt\", \"updatedAt\")
     VALUES
@@ -388,11 +478,11 @@ seed_notification_db() {
 seed_analytics_db() {
   info "Seeding azeebo_analytics..."
   run_sql "azeebo_analytics" "
-    INSERT INTO analytics_events (id, event_type, user_id, entity_type, entity_id, metadata, created_at)
+    INSERT INTO product_events (id, \"eventName\", \"userId\", metadata, \"createdAt\")
     VALUES
-      ('ae000000-0000-0000-0000-000000000001', 'platform_launch', 'a0000001-0000-0000-0000-000000000001', 'system', 'azeebo', '{\"version\": \"1.0.0\", \"env\": \"development\"}', NOW()),
-      ('ae000000-0000-0000-0000-000000000002', 'content_view', 'a0000001-0000-0000-0000-000000000006', 'content', 'cnt00001-0000-0000-0000-000000000001', '{\"universe\": \"reality\"}', NOW()),
-      ('ae000000-0000-0000-0000-000000000003', 'content_view', 'a0000001-0000-0000-0000-000000000007', 'content', 'cnt00001-0000-0000-0000-000000000018', '{\"universe\": \"movies\"}', NOW())
+      ('ae000000-0000-0000-0000-000000000001', 'platform_launch', 'a0000001-0000-0000-0000-000000000001', '{\"version\": \"1.0.0\", \"env\": \"development\"}', NOW()),
+      ('ae000000-0000-0000-0000-000000000002', 'content_view', 'a0000001-0000-0000-0000-000000000006', '{\"universe\": \"reality\", \"entityType\": \"content\", \"entityId\": \"cnt00001-0000-0000-0000-000000000001\"}', NOW()),
+      ('ae000000-0000-0000-0000-000000000003', 'content_view', 'a0000001-0000-0000-0000-000000000007', '{\"universe\": \"movies\", \"entityType\": \"content\", \"entityId\": \"cnt00001-0000-0000-0000-000000000018\"}', NOW())
     ON CONFLICT (id) DO NOTHING;
   "
   ok "Analytics database seeded (3 events)"
@@ -481,9 +571,12 @@ SQL
   info "  users ← azeebo_auth.users"
   "${psql_auth[@]}" -c "\copy (SELECT id, email, password, \"displayName\", avatar, role::text, preferences FROM users ORDER BY id) TO STDOUT WITH (FORMAT csv)" \
     | "${psql_admin[@]}" -c "\copy tmp_admin_users (id, email, password, \"displayName\", avatar, role, preferences) FROM STDIN WITH (FORMAT csv)"
+  # role::\"UserRole\": the staging table holds text (the CSV pipe drops
+  # types), but azeebo_admin.users.role is the UserRole enum — casting the
+  # label back to the enum; both enums carry identical labels.
   "${psql_admin[@]}" -c "
     INSERT INTO users (id, email, password, \"displayName\", avatar, role, preferences, \"createdAt\", \"updatedAt\")
-    SELECT id, email, password, \"displayName\", avatar, role, preferences, COALESCE(\"createdAt\", NOW()), NOW() FROM tmp_admin_users
+    SELECT id, email, password, \"displayName\", avatar, role::\"UserRole\", preferences, COALESCE(\"createdAt\", NOW()), NOW() FROM tmp_admin_users
     ON CONFLICT (id) DO UPDATE SET
       email = EXCLUDED.email,
       password = EXCLUDED.password,

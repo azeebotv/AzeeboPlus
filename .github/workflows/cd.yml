@@ -102,6 +102,11 @@ jobs:
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
+      - name: Load platform domains from registry
+        run: |
+          node scripts/generate-domain-env.mjs --check
+          grep -v '^#' deploy/domains.env >> "$GITHUB_ENV"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
@@ -116,7 +121,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://staging.azeeboplus.com' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || format('https://{0}', env.STAGING_HOST) }}
             COMMIT_SHA=${{ github.sha }}
 
       - name: Login to GHCR
@@ -198,7 +203,7 @@ jobs:
         run: |
           if [ -z "${{ vars.STAGING_HEALTH_URL }}" ]; then
             echo "::error::STAGING_HEALTH_URL GitHub variable is not set."
-            echo "::error::Set it to your staging server URL (e.g. https://staging.azeeboplus.com)"
+            echo "::error::Set it to your staging server URL (e.g. the STAGING_HOST from deploy/domains.env)"
             echo "::error::Without it, health checks would silently test localhost on the runner."
             exit 1
           fi
@@ -386,7 +391,6 @@ jobs:
               --restart unless-stopped \
               ghcr.io/${{ github.repository }}:production-${{ github.sha }}
 
-
   health-check-production:
     name: Health Check (Production)
     runs-on: ubuntu-latest
@@ -399,7 +403,7 @@ jobs:
         run: |
           if [ -z "${{ vars.PRODUCTION_HEALTH_URL }}" ]; then
             echo "::error::PRODUCTION_HEALTH_URL GitHub variable is not set."
-            echo "::error::Set it to your production URL (e.g. https://app.azeeboplus.com)"
+            echo "::error::Set it to your production URL (e.g. the APP_HOST from deploy/domains.env)"
             exit 1
           fi
           if [ -z "${{ vars.PRODUCTION_BASE_URL }}" ]; then

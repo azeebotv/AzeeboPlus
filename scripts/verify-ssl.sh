@@ -8,13 +8,16 @@
 #   ./scripts/verify-ssl.sh [domain] [port]
 #
 # Arguments:
-#   domain  - Domain to check (default: app.azeeboplus.com)
+#   domain  - Domain to check (default: APP_HOST from deploy/domains.env)
 #   port    - Port to check (default: 443)
 # ============================================================
 set -euo pipefail
 
+# ---- Domain registry ----
+source "$(dirname "$0")/lib/domain-env.sh"
+
 # ---- Configuration ----
-DOMAIN="${1:-app.azeeboplus.com}"
+DOMAIN="${1:-$APP_HOST}"
 PORT="${2:-443}"
 WARN_DAYS="${WARN_DAYS:-30}"
 CRITICAL_DAYS="${CRITICAL_DAYS:-7}"

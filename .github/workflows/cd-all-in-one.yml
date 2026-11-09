@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       no_cache:
-        description: "Force full rebuild (skip all cache)"
+        description: 'Force full rebuild (skip all cache)'
         required: false
         type: boolean
         default: true
@@ -43,6 +43,11 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Load platform domains from registry
+        run: |
+          node scripts/generate-domain-env.mjs --check
+          grep -v '^#' deploy/domains.env >> "$GITHUB_ENV"
 
       - name: Print build info
         run: |
@@ -81,7 +86,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://staging.azeeboplus.com' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || format('https://{0}', env.STAGING_HOST) }}
 
       - name: Build and push (no cache)
         if: ${{ inputs.no_cache }}
@@ -96,7 +101,7 @@ jobs:
           cache-to: ''
           no-cache: true
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://staging.azeeboplus.com' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || format('https://{0}', env.STAGING_HOST) }}
 
       - name: Print image info
         run: |

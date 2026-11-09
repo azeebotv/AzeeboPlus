@@ -8,6 +8,17 @@ set -e
 # migrations, then hands off to supervisord.
 # ============================================================
 
+# Platform hostnames (APP_HOST, ADMIN_HOST, BASE_DOMAIN, ...) are generated from
+# the domain registry at image build time (see Dockerfile.all-in-one).
+DOMAIN_ENV_FILE="/etc/azeebo/domains.env"
+if [ ! -f "$DOMAIN_ENV_FILE" ]; then
+  echo "ERROR: $DOMAIN_ENV_FILE is missing; the image was built without the domain registry." >&2
+  exit 1
+fi
+set -a
+. "$DOMAIN_ENV_FILE"
+set +a
+
 POSTGRES_DATA="/var/lib/postgresql/data"
 POSTGRES_USER="${POSTGRES_USER:-azeebo}"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
@@ -591,7 +602,7 @@ JWT_REFRESH_SECRET="$(printf '%s' "$JWT_REFRESH_SECRET" | tr -d '\r\n')"
 GATEWAY_SECRET="$(printf '%s' "$GATEWAY_SECRET" | tr -d '\r\n')"
 WEBHOOK_SECRET="$(printf '%s' "$WEBHOOK_SECRET" | tr -d '\r\n')"
 # In all-in-one mode, localhost origins are expected for inter-service communication
-ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-https://app.azeeboplus.com,https://admin.azeeboplus.com,https://creator.azeeboplus.com}"
+ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-https://${APP_HOST},https://${ADMIN_HOST},https://${CREATOR_HOST}}"
 REDIS_URL_VAL="redis://:${REDIS_PASSWORD}@127.0.0.1:6379"
 
 # Service URLs (all services run on localhost in all-in-one mode)
@@ -927,8 +938,8 @@ export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL}"
 export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL}"
 export LIVE_EVENT_SERVICE_URL="${LIVE_EVENT_SERVICE_URL}"
 export KNOWLEDGE_SERVICE_URL="${KNOWLEDGE_SERVICE_URL}"
-export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}"
-export NEXT_PUBLIC_API_BASE_URL="${NEXT_PUBLIC_API_BASE_URL:-${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}}"
+export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://${APP_HOST}}"
+export NEXT_PUBLIC_API_BASE_URL="${NEXT_PUBLIC_API_BASE_URL:-${NEXT_PUBLIC_API_URL:-https://${APP_HOST}}}"
 export PAYSTACK_SECRET_KEY="${PAYSTACK_SECRET_KEY:-}"
 export PAYSTACK_WEBHOOK_SECRET="${PAYSTACK_WEBHOOK_SECRET:-}"
 export FLUTTERWAVE_SECRET_KEY="${FLW_SECRET_KEY:-}"
@@ -970,7 +981,7 @@ if [ ! -f /app/certs/server.crt ] || [ ! -f /app/certs/server.key ]; then
     -keyout /app/certs/server.key \
     -out /app/certs/server.crt \
     -subj "/C=NG/ST=Lagos/L=Lagos/O=Azeebo+/CN=$SSL_DOMAIN" \
-    -addext "subjectAltName=DNS:$SSL_DOMAIN,DNS:localhost,DNS:*.azeeboplus.com,IP:127.0.0.1" \
+    -addext "subjectAltName=DNS:$SSL_DOMAIN,DNS:localhost,DNS:*.${BASE_DOMAIN},IP:127.0.0.1" \
     2>&1
   chmod 600 /app/certs/server.key
   chmod 644 /app/certs/server.crt
