@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { ORIGINS } from '@azeebo/shared-types';
 import { configureCors } from '@azeebo/security';
 import { upstreamAuthMiddleware } from './common/upstream-auth.middleware';
 
@@ -144,7 +145,7 @@ async function bootstrap() {
 
   // CORS configuration — aligned with shared security package
   const allowedOrigins = process.env.ADMIN_ALLOWED_ORIGINS?.split(',') || [
-    'https://admin.azeeboplus.com',
+    ORIGINS.admin,
     'http://localhost:4016',
     'http://localhost:5173',
   ];

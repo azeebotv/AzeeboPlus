@@ -141,6 +141,23 @@ describe('ArchivedContentSweeperService', () => {
 
     expect(second.scanned).toBe(0);
   });
+
+  it('never rejects on a failed pass (timer path must not crash the process)', async () => {
+    // A P2022-style DB error used to escape sweep() as an unhandled rejection
+    // and kill the whole portal; the class contract is "failures never throw
+    // out of sweep()" — a bad pass resolves to a no-op result instead.
+    mockPrisma.contentItem.findMany.mockRejectedValue(
+      new Error('The column `content_items.archivedAt` does not exist')
+    );
+
+    await expect(service.sweep()).resolves.toEqual({
+      scanned: 0,
+      purged: 0,
+      nothingStored: 0,
+      deferred: 0,
+      alreadyGone: 0,
+    });
+  });
 });
 
 // Tokens kept separate so the import stays at the top with real types.

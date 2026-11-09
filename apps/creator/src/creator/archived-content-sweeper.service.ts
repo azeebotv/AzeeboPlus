@@ -95,6 +95,13 @@ export class ArchivedContentSweeperService implements OnModuleInit, OnModuleDest
     this.running = true;
     try {
       return await this.runPass();
+    } catch (error) {
+      // A bad pass must never escape sweep(): on the timer path a rejection
+      // would be unhandled and crash the whole portal (Node >=15), and admin
+      // triggers should get a no-op result, not a 500. Log and retry next
+      // interval — the idempotent mediaPurgedAt marker means nothing is lost.
+      this.logger.error(`Archived-content sweep pass failed: ${error}`);
+      return { scanned: 0, purged: 0, nothingStored: 0, deferred: 0, alreadyGone: 0 };
     } finally {
       this.running = false;
     }

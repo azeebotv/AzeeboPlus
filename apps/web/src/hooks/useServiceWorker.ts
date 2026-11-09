@@ -70,7 +70,6 @@ export function useServiceWorker(): ServiceWorkerState & {
         }
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.warn('[SW] Registration failed:', err);
     }
   }, [isSupported]);
