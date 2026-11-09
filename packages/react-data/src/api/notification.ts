@@ -17,6 +17,8 @@ export interface NotificationPreferences {
   };
 }
 
+export type PushDeviceType = 'ios' | 'android' | 'web';
+
 export const notificationApi = {
   getNotifications: async (
     page = 1,
@@ -57,9 +59,13 @@ export const notificationApi = {
     );
   },
 
-  registerPushToken: async (token: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/v1/notifications/register-token', {
+  registerPushToken: async (
+    token: string,
+    deviceType: PushDeviceType
+  ): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.post<ApiResponse<{ message: string }>>('/v1/notifications/push-tokens', {
       token,
+      deviceType,
     });
   },
 
@@ -70,9 +76,13 @@ export const notificationApi = {
   updatePreferences: async (
     preferences: Partial<NotificationPreferences>
   ): Promise<ApiResponse<NotificationPreferences>> => {
+    // The server whitelists flat channel flags plus categoryOverrides; the
+    // client's per-type `types` map is sent as categoryOverrides.
+    const { types, ...channels } = preferences;
+    const body = types !== undefined ? { ...channels, categoryOverrides: types } : channels;
     return apiClient.put<ApiResponse<NotificationPreferences>>(
-      '/v1/notifications/settings',
-      preferences
+      '/v1/notifications/preferences',
+      body
     );
   },
 };

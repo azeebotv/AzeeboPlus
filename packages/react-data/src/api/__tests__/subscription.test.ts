@@ -82,11 +82,8 @@ describe('Mobile Subscription API', () => {
   describe('getSubscriptionHistory', () => {
     it('should GET /v1/subscription/history with pagination', async () => {
       mockedClient.get.mockResolvedValue({
-        items: [],
-        total: 0,
-        page: 1,
-        limit: 20,
-        totalPages: 0,
+        subscriptions: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
       });
 
       await subscriptionApi.getSubscriptionHistory(1, 20);

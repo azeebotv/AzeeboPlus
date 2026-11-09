@@ -66,13 +66,14 @@ describe('Mobile Notification API', () => {
   });
 
   describe('registerPushToken', () => {
-    it('should POST /v1/notifications/register-token with token', async () => {
+    it('should POST /v1/notifications/push-tokens with token and deviceType', async () => {
       mockedClient.post.mockResolvedValue({ success: true, data: { message: 'Registered' } });
 
-      await notificationApi.registerPushToken('push-tok-123');
+      await notificationApi.registerPushToken('push-tok-123', 'ios');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/notifications/register-token', {
+      expect(mockedClient.post).toHaveBeenCalledWith('/v1/notifications/push-tokens', {
         token: 'push-tok-123',
+        deviceType: 'ios',
       });
     });
   });
@@ -90,14 +91,28 @@ describe('Mobile Notification API', () => {
   });
 
   describe('updatePreferences', () => {
-    it('should PUT /v1/notifications/settings', async () => {
+    it('should PUT /v1/notifications/preferences with flat channel flags', async () => {
       const prefs = { email: true, push: false };
       mockedClient.put.mockResolvedValue({ success: true, data: prefs });
 
       const result = await notificationApi.updatePreferences(prefs);
 
-      expect(mockedClient.put).toHaveBeenCalledWith('/v1/notifications/settings', prefs);
+      expect(mockedClient.put).toHaveBeenCalledWith('/v1/notifications/preferences', prefs);
       expect(result.data).toEqual(prefs);
+    });
+
+    it('maps the client types map to categoryOverrides (server rejects `types`)', async () => {
+      mockedClient.put.mockResolvedValue({ success: true, data: {} });
+
+      await notificationApi.updatePreferences({
+        push: true,
+        types: { newContent: false } as never,
+      });
+
+      expect(mockedClient.put).toHaveBeenCalledWith('/v1/notifications/preferences', {
+        push: true,
+        categoryOverrides: { newContent: false },
+      });
     });
   });
 });

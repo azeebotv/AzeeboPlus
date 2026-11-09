@@ -35,6 +35,18 @@ export class PushNotificationService {
       const privateKey = this.configService.get('FIREBASE_PRIVATE_KEY')?.replace(/\\n/g, '\n');
 
       if (projectId && clientEmail && privateKey) {
+        // Dev .env files carry `FIREBASE_PRIVATE_KEY=your-firebase-private-key`;
+        // handing that to cert() throws FirebaseAppError "Failed to parse
+        // private key" (ERROR + stack) even though the graceful path below
+        // handles absence fine. Detect non-PEM values up front and take the
+        // warn path instead — real keys always contain the PEM header after
+        // the \n unescape.
+        if (!privateKey.includes('-----BEGIN')) {
+          this.logger.warn(
+            'FIREBASE_PRIVATE_KEY is not a PEM (placeholder value?) — push notifications disabled'
+          );
+          return;
+        }
         if (getApps().length === 0) {
           this.app = initializeApp({
             credential: cert({ projectId, clientEmail, privateKey }),

@@ -40,14 +40,15 @@ export default function SubscriptionHistoryScreen() {
     try {
       const response = await subscriptionApi.getSubscriptionHistory(pageNum, 20);
       if (response.success && response.data) {
-        const newItems = response.data.items || [];
+        const newItems = response.data.subscriptions || [];
         if (pageNum === 1) {
           setSubscriptions(newItems);
         } else {
           setSubscriptions((prev) => [...prev, ...newItems]);
         }
-        setTotalPages(response.data.totalPages || 1);
-        setHasMore(pageNum < (response.data.totalPages || 1));
+        const pages = response.data.pagination?.totalPages || 1;
+        setTotalPages(pages);
+        setHasMore(pageNum < pages);
       }
     } catch (error) {
       logger.error('Failed to load subscription history', error);

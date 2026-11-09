@@ -5,6 +5,7 @@ import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
+import { Platform } from 'react-native';
 import { logger } from '@azeebo/react-data/utils/logger';
 
 interface NotificationContextType {
@@ -77,7 +78,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
 
       const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-      const response = await notificationApi.registerPushToken(token);
+      const deviceType = Platform.OS === 'ios' ? 'ios' : 'android';
+      const response = await notificationApi.registerPushToken(token, deviceType);
       if (!response.success) {
         logger.warn('Failed to register push token with backend');
       }
