@@ -8,6 +8,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import AuthShell from '@/components/auth/AuthShell';
 import { Alert, AuthField, Spinner } from '@/components/auth/FormBits';
 import { isAbsoluteTarget, safeRedirectTarget } from '@/lib/first-party-redirect';
+import { socialAuthErrorMessage } from '@/lib/social-auth-errors';
+import { useFlags } from '@/context/FlagsContext';
+import {
+  SOCIAL_PROVIDER_FLAGS,
+  socialAuthorizeUrl,
+  type SocialProvider,
+} from '@/lib/social-authorize';
 
 const formVariants = {
   hidden: {},
@@ -29,14 +36,41 @@ export default function LoginPage(): React.JSX.Element {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  // Which provider the browser is being handed off to, so the button can show
+  // progress and lock the form while the navigation is in flight.
+  const [pendingProvider, setPendingProvider] = useState<SocialProvider | null>(null);
   const { login } = useAuth();
+  const { isEnabled } = useFlags();
   const router = useRouter();
   const searchParams = useSearchParams();
   // Panels outside this origin hand their users here to sign in, so the target
   // may be a first-party absolute URL; anything else falls back to /home.
   const redirectTo = safeRedirectTarget(searchParams.get('redirect'));
+  // A failed provider round trip returns here with a mapped code rather than
+  // raw JSON; it surfaces through the same Alert as a bad password.
+  const [error, setError] = useState<string | null>(() =>
+    socialAuthErrorMessage(searchParams.get('error'))
+  );
+
+  // A provider is offered only when its kill switch is on. Fails closed by
+  // design: the flag store returns false until bootstrap resolves, so a
+  // gateway outage hides the buttons rather than exposing a dead path.
+  const providerEnabled: Record<SocialProvider, boolean> = {
+    google: isEnabled(SOCIAL_PROVIDER_FLAGS.google),
+    apple: isEnabled(SOCIAL_PROVIDER_FLAGS.apple),
+  };
+  const enabledProviders = (['google', 'apple'] as const).filter((p) => providerEnabled[p]);
+  const isBusy = isLoading || pendingProvider !== null;
+
+  const startProvider = (provider: SocialProvider): void => {
+    if (isBusy) return;
+    setError(null);
+    setPendingProvider(provider);
+    // Full navigation, not router.push: the authorize endpoint answers with a
+    // 302 to the provider, which the App Router cannot render.
+    window.location.assign(socialAuthorizeUrl(provider, redirectTo));
+  };
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -155,56 +189,81 @@ export default function LoginPage(): React.JSX.Element {
           </motion.button>
         </motion.div>
 
-        <motion.div variants={fieldVariants} className="az-divider">
-          or
-        </motion.div>
+        {enabledProviders.length > 0 && (
+          <motion.div variants={fieldVariants} className="az-divider">
+            or
+          </motion.div>
+        )}
 
-        <motion.div variants={fieldVariants} className="grid grid-cols-2 gap-3">
-          {/* Provider sign-in is disabled, not merely hidden: the OAuth browser round
-              trip has no callback route and the provider routes are POST-only, so any
-              navigation from here lands the user on a 404. */}
-          <motion.button
-            type="button"
-            className="az-btn-social"
-            aria-label="Continue with Google (unavailable)"
-            disabled
-            aria-disabled="true"
+        {enabledProviders.length > 0 && (
+          <motion.div
+            variants={fieldVariants}
+            className={`grid gap-3 ${enabledProviders.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}
+            data-social-providers
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-          </motion.button>
-          <motion.button
-            type="button"
-            className="az-btn-social"
-            aria-label="Continue with Apple (unavailable)"
-            disabled
-            aria-disabled="true"
-          >
-            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-            </svg>
-          </motion.button>
-        </motion.div>
+            {providerEnabled.google && (
+              <motion.button
+                type="button"
+                className="az-btn-social"
+                aria-label={
+                  pendingProvider === 'google' ? 'Redirecting to Google…' : 'Continue with Google'
+                }
+                aria-busy={pendingProvider === 'google' ? 'true' : undefined}
+                disabled={isBusy}
+                onClick={() => startProvider('google')}
+              >
+                {pendingProvider === 'google' ? (
+                  <Spinner />
+                ) : (
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
+                  </svg>
+                )}
+              </motion.button>
+            )}
 
-        <motion.p variants={fieldVariants} className="az-body -mt-2 text-center text-az-ink/55">
-          Google and Apple sign-in aren&apos;t available yet — log in with your password.
-        </motion.p>
+            {providerEnabled.apple && (
+              <motion.button
+                type="button"
+                className="az-btn-social"
+                aria-label={
+                  pendingProvider === 'apple' ? 'Redirecting to Apple…' : 'Continue with Apple'
+                }
+                aria-busy={pendingProvider === 'apple' ? 'true' : undefined}
+                disabled={isBusy}
+                onClick={() => startProvider('apple')}
+              >
+                {pendingProvider === 'apple' ? (
+                  <Spinner />
+                ) : (
+                  <svg
+                    className="h-5 w-5"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                  </svg>
+                )}
+              </motion.button>
+            )}
+          </motion.div>
+        )}
 
         <motion.p variants={fieldVariants} className="az-body pt-2 text-center text-az-ink/70">
           Don&apos;t have an account yet?{' '}

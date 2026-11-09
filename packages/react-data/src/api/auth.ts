@@ -162,12 +162,4 @@ export const authApi = {
   }): Promise<ApiResponse<AuthResponse>> => {
     return apiClient.post<ApiResponse<AuthResponse>>('/auth/social/google', data);
   },
-
-  appleLogin: async (data: {
-    identityToken: string;
-    email: string;
-    displayName?: string;
-  }): Promise<ApiResponse<AuthResponse>> => {
-    return apiClient.post<ApiResponse<AuthResponse>>('/auth/social/apple', data);
-  },
 };

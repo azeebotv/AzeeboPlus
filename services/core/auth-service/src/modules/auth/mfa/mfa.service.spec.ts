@@ -25,9 +25,22 @@ jest.mock('qrcode', () => ({
   toDataURL: jest.fn().mockResolvedValue('data:image/png;base64,...'),
 }));
 
+// `generateMfaSecret` hashes five backup codes with bcrypt at cost 12 — about
+// 1.9 s of CPU when the machine is idle, and 5.3 s measured with the box at
+// load 129, which is the timeout this spec kept hitting on its one test that
+// does real crypto. The 5 s default was the bug, not the hashing: it is the
+// same floor roles.guard.integration.spec.ts sets for its own slow work.
+jest.setTimeout(30000);
+
 describe('MfaService', () => {
   let service: MfaService;
   let authRepository: jest.Mocked<AuthRepository>;
+
+  // The otpauth mock is a single module-level object, and `clearAllMocks()`
+  // clears calls without restoring implementations — so without this, the
+  // `null` a previous test installs decides the next one. Ordering happened to
+  // hide it; any reorder or `--randomize` run would fail.
+  const otpauthMock = jest.requireMock('otpauth') as { _mockValidate: jest.Mock };
 
   const mockUser = {
     id: 'user-123',
@@ -45,6 +58,10 @@ describe('MfaService', () => {
   };
 
   beforeEach(async () => {
+    // Default: a code the TOTP validates (delta 0). Tests that need a rejected
+    // code override this locally instead of leaving it set for the next one.
+    otpauthMock._mockValidate.mockReturnValue(0);
+
     authRepository = {
       findById: jest.fn(),
       update: jest.fn(),
@@ -104,8 +121,7 @@ describe('MfaService', () => {
     });
 
     it('should fail with invalid code', async () => {
-      const OTPAuth = require('otpauth');
-      OTPAuth._mockValidate.mockReturnValue(null);
+      otpauthMock._mockValidate.mockReturnValue(null);
 
       authRepository.findById.mockResolvedValue({
         ...mockUser,

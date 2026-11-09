@@ -25,6 +25,7 @@ import {
   webFlags,
   mobileFlags,
   tvFlags,
+  authFlags,
   universeEnabledKey,
 } from '@azeebo/feature-flags';
 import { UNIVERSE_SLUGS } from '@azeebo/shared-types';
@@ -128,6 +129,11 @@ const gatewayCacheStore = process.env.REDIS_URL
         [mobileFlags.biometricAuth]: false,
         // Client-driven TV flags served via GET /feature-flags/bootstrap.
         [tvFlags.autoplay]: true,
+        // Provider kill switches the web login page must reflect: the social
+        // buttons appear only when their flag is on, so turning a provider off
+        // is a UI change and not just a server 503 (prd-social-login.md FR-7).
+        [authFlags.socialGoogle]: true,
+        [authFlags.socialApple]: true,
         // Per-universe nav sentinels: universe.<name>.enabled keyed by the
         // canonical DB universe names (admin toggles these via the admin app;
         // web/mobile hide nav entries when disabled). Derived from the shared
@@ -155,6 +161,11 @@ const gatewayCacheStore = process.env.REDIS_URL
         mobileFlags.pushEnabled,
         mobileFlags.biometricAuth,
         tvFlags.autoplay,
+        // Login provider switches — public because the button visibility is
+        // the whole point of the flag. Exposing an enabled/disabled boolean
+        // reveals nothing about the client secret behind it.
+        authFlags.socialGoogle,
+        authFlags.socialApple,
         ...UNIVERSE_SLUGS.map(universeEnabledKey),
       ],
     }),
