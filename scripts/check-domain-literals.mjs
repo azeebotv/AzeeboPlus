@@ -24,9 +24,11 @@
 // Two surfaces are deliberately out of scope (see isScannedSurface):
 //   - Markdown: docs quote hostnames verbatim on purpose, and
 //     scripts/check-docs-consistency.mjs owns them.
-//   - deploy/cdn-config.json: generated from the registry, and
-//     scripts/generate-cdn-config.mjs --check fails if it drifts from a fresh
-//     generation — scanning it would only re-assert the generator's output.
+//   - generated artifacts (deploy/domains.env, deploy/cdn-config.json): they
+//     ARE the registry export, so every host in them is a registry host by
+//     construction. Their freshness is checked by generate-domain-env.mjs
+//     --check / generate-cdn-config.mjs --check; scanning them would only
+//     re-assert the generator's output.
 //
 // .env.example templates get one concession: dotenv cannot interpolate
 // deploy/domains.env, so a literal copy of a *current* registry host is allowed
@@ -73,8 +75,8 @@ export const SCAN_GLOBS = [
   'deploy/*',
 ];
 
-/** Machine-generated from the registry; its own --check gate diffs it. */
-export const GENERATED_FILES = new Set(['deploy/cdn-config.json']);
+/** Machine-generated from the registry; their own --check gates diff them. */
+export const GENERATED_FILES = new Set(['deploy/domains.env', 'deploy/cdn-config.json']);
 
 /** Prose quotes hostnames deliberately; docs consistency has its own gate. */
 export const DOCUMENTATION_SUFFIXES = ['.md', '.mdx'];

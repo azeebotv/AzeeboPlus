@@ -303,9 +303,13 @@ test('the deploy/ tree is a scanned surface, minus generated files and prose', (
   ]) {
     assert.equal(isScannedSurface(file), true, `${file} should be scanned`);
   }
-  // Generated from the registry, verified by generate-cdn-config --check.
-  assert.equal(isScannedSurface('deploy/cdn-config.json'), false);
-  assert.ok(GENERATED_FILES.has('deploy/cdn-config.json'));
+  // Generated from the registry, verified by the generators' --check modes.
+  // deploy/domains.env lives inside the deploy/ glob, so without this it would
+  // be reported against itself (every line is a registry host by design).
+  for (const generated of ['deploy/cdn-config.json', 'deploy/domains.env']) {
+    assert.equal(isScannedSurface(generated), false, `${generated} is generated`);
+    assert.ok(GENERATED_FILES.has(generated), `${generated} must be declared generated`);
+  }
   // Docs quote hosts on purpose; check-docs-consistency owns them.
   assert.equal(isScannedSurface('deploy/README.md'), false);
 });
