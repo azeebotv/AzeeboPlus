@@ -1,3 +1,4 @@
+import { ORIGINS } from '@azeebo/shared-types';
 import Constants from 'expo-constants';
 import { certificatePinningService } from '../utils/certificatePinning';
 import { logger } from '../utils/logger';
@@ -63,7 +64,7 @@ class ApiClientClass {
           | Record<string, string>
           | undefined
       )?.apiBaseURL ||
-      (__DEV__ ? 'http://localhost:3013' : 'https://api.azeeboplus.com'),
+      (__DEV__ ? 'http://localhost:3013' : ORIGINS.api),
     token: null,
   };
   private refreshToken: string | null = null;

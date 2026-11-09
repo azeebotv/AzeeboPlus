@@ -1,3 +1,4 @@
+import { getPublicBaseUrl } from '@azeebo/shared-types';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
@@ -41,7 +42,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com'),
+  metadataBase: new URL(getPublicBaseUrl()),
   title: {
     default: 'Azeebo+ - Premium Content Streaming',
     template: '%s | Azeebo+',

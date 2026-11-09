@@ -8,7 +8,7 @@ import { createHelmetConfig, configureCors } from '@azeebo/security';
 import cookieParser from 'cookie-parser';
 import { LoggingInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
-import { validateEnvironment } from '@azeebo/shared-types';
+import { ORIGINS, validateEnvironment } from '@azeebo/shared-types';
 
 async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
@@ -52,11 +52,7 @@ async function bootstrap(): Promise<void> {
   app.useGlobalInterceptors(new LoggingInterceptor(), new ResponseSanitizationInterceptor());
 
   // Allow-listed origins — prefer env var, fall back to production defaults
-  const defaultOrigins = [
-    'https://app.azeeboplus.com',
-    'https://creator.azeeboplus.com',
-    'https://admin.azeeboplus.com',
-  ];
+  const defaultOrigins = [ORIGINS.app, ORIGINS.creator, ORIGINS.admin];
 
   const originsEnv = process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN;
   let allowedOrigins: string[];
