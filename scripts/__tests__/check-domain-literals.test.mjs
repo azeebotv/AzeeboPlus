@@ -244,17 +244,36 @@ test('scans Dockerfiles and tracked .env.example templates', () => {
   );
 });
 
-test('an .env.example may repeat a current registry host but may not invent one', () => {
+test('an .env.example may repeat a registry host only on a managed key', () => {
   const options = { baseDomain: REGISTRY.baseDomain };
   const hosts = registryHosts(REGISTRY);
+  // Managed keys: CDN_BASE_URL in the root template, CORS_ORIGIN in staging's.
   withFiles(
     {
-      '.env.example':
-        'CDN_BASE_URL=https://cdn.azeeboplus.com\n' +
+      '.env.example': '# CDN_BASE_URL=https://cdn.azeeboplus.com\n',
+      'deploy/staging.env.example':
         'CORS_ORIGIN=https://www.staging.azeeboplus.com,https://admin.staging.azeeboplus.com\n',
     },
     (dir, files) => {
       assert.deepEqual(findHardcodedHosts(dir, files, hosts, new Set(), options), []);
+    }
+  );
+
+  // Same host on a key the sync script does not own is drift: nothing would
+  // regenerate it on a rename.
+  withFiles(
+    {
+      '.env.example': 'SOME_URL=https://cdn.azeeboplus.com\n',
+      'apps/web/.env.example': '# see https://app.azeeboplus.com for the login page\n',
+    },
+    (dir, files) => {
+      assert.deepEqual(
+        findHardcodedHosts(dir, files, hosts, new Set(), options).map((f) => [f.host, f.kind]),
+        [
+          ['cdn.azeeboplus.com', 'unmanaged-template-host'],
+          ['app.azeeboplus.com', 'unmanaged-template-host'],
+        ]
+      );
     }
   );
 

@@ -31,6 +31,8 @@
     "reconcile:ledger": "node scripts/reconcile-prisma-ledger.mjs",
     "check:env": "node scripts/check-env-consistency.mjs",
     "check:staging-hosts": "node scripts/check-staging-hostnames.mjs",
+    "check:env-hosts": "node scripts/sync-env-example-hosts.mjs --check",
+    "generate:env-hosts": "node scripts/sync-env-example-hosts.mjs",
     "check:domain-literals": "node scripts/check-domain-literals.mjs",
     "generate:cdn-config": "node scripts/generate-cdn-config.mjs",
     "check:cdn-hosts": "node scripts/generate-cdn-config.mjs --check",

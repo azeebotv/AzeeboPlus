@@ -125,10 +125,11 @@ jobs:
       # (deploy/domains.env), never hardcode a host on ANY domain — a stale host
       # on the previous domain (api.staging.<old-domain>) is exactly what a
       # registry-only check missed. Env templates may repeat a *current*
-      # registry host (dotenv cannot interpolate), but an invented subdomain or
-      # a foreign domain fails there too. Docs and the generated CDN config are
-      # excluded (their own gates own them). Legitimate third parties are
-      # declared with reasons in scripts/domain-literal-allowlist.json.
+      # registry host only on a key scripts/sync-env-example-hosts.mjs owns
+      # (dotenv cannot interpolate), so a rename regenerates it; any other
+      # template literal, an invented subdomain or a foreign domain fails.
+      # Docs and the generated CDN config are excluded (their own gates own
+      # them). Third parties are declared in scripts/domain-literal-allowlist.json.
       - run: node scripts/check-domain-literals.mjs
       # deploy/cdn-config.json carries hostnames in four places (API origin,
       # CloudFront aliases, CORS allowlist, CSP connect-src). They are generated
@@ -162,6 +163,10 @@ jobs:
       - run: node scripts/sweep-flag-usage.mjs
       - run: node scripts/generate-flag-registry-table.mjs --check
       - run: node scripts/generate-domain-env.mjs --check
+      # .env.example templates cannot interpolate, so their platform hosts are
+      # generated in place from the registry instead of typed by hand; this
+      # fails when a template still points at the previous domain.
+      - run: node scripts/sync-env-example-hosts.mjs --check
 
   pool-budget-pr:
     name: Postgres Pool Budget

@@ -30,9 +30,11 @@
 //     --check / generate-cdn-config.mjs --check; scanning them would only
 //     re-assert the generator's output.
 //
-// .env.example templates get one concession: dotenv cannot interpolate
+// .env.example templates get one narrow concession: dotenv cannot interpolate
 // deploy/domains.env, so a literal copy of a *current* registry host is allowed
-// there. Deploy scripts do not get that concession (they can source
+// on a key that scripts/sync-env-example-hosts.mjs generates (and --check
+// verifies). A registry literal on any other key is an unmanaged-template-host.
+// Deploy scripts do not get that concession at all (they can source
 // scripts/lib/domain-env.sh). Everything else fails as before — an invented
 // subdomain (auth.<env>.<base-domain>) or a host on a foreign domain (the old
 // brand domain) is drift whether or not it currently resolves.
@@ -61,6 +63,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REGISTRY_RELATIVE_PATH } from './generate-domain-env.mjs';
+import { lineKey, managedKeysFor } from './sync-env-example-hosts.mjs';
 
 export const SCAN_GLOBS = [
   'docker-compose*.yml',
@@ -87,11 +90,20 @@ export function isScannedSurface(file) {
   return !DOCUMENTATION_SUFFIXES.some((suffix) => file.endsWith(suffix));
 }
 
-/** Files where a literal copy of a current registry host is tolerated. */
+/**
+ * Files where a literal copy of a current registry host is tolerated — but only
+ * on a key the sync script owns (see sync-env-example-hosts.mjs), so the value
+ * is regenerated on a rename instead of being typed by hand.
+ */
 export const ENV_TEMPLATE_SUFFIX = '.env.example';
 
 export function allowsRegistryLiterals(file) {
   return file.endsWith(ENV_TEMPLATE_SUFFIX);
+}
+
+/** True when `file` declares `key` as a generated (registry-owned) value. */
+export function isManagedTemplateKey(file, key) {
+  return Boolean(key) && allowsRegistryLiterals(file) && managedKeysFor(file).has(key);
 }
 
 export const ALLOWLIST_RELATIVE_PATH = 'scripts/domain-literal-allowlist.json';
@@ -196,8 +208,9 @@ export function extractHosts(line) {
 /**
  * Returns [{ file, line, host, kind, registry }] for every hardcoded host.
  * `registry: true` marks a literal copy of a registry host, which has the more
- * specific fix (read it from deploy/domains.env) — except in .env.example
- * templates, where that literal is permitted and not reported.
+ * specific fix (read it from deploy/domains.env). In .env.example templates a
+ * registry literal is permitted only on a managed key, where the sync script
+ * regenerates it; anywhere else it is an unmanaged-template-host.
  */
 export function findHardcodedHosts(
   root,
@@ -215,12 +228,16 @@ export function findHardcodedHosts(
       for (const host of extractHosts(text)) {
         if (isIgnoredHost(host, allowlist)) continue;
         const kind = classifyHost(host, registryHostSet, baseDomain);
-        if (kind === 'registry' && allowsRegistryLiterals(file)) continue;
+        if (kind === 'registry' && isManagedTemplateKey(file, lineKey(text))) continue;
+        // Only templates can carry an "unmanaged" host; elsewhere the fix is
+        // still to read the registry value.
+        const reported =
+          kind === 'registry' && allowsRegistryLiterals(file) ? 'unmanaged-template-host' : kind;
         violations.push({
           file,
           line: i + 1,
           host,
-          kind,
+          kind: reported,
           registry: kind === 'registry',
         });
       }
@@ -263,6 +280,7 @@ function main() {
   const violations = findHardcodedHosts(root, files, hosts, allowlist, { baseDomain });
   if (violations.length > 0) {
     const fromRegistry = violations.filter((v) => v.kind === 'registry');
+    const unmanagedTemplate = violations.filter((v) => v.kind === 'unmanaged-template-host');
     const unregistered = violations.filter((v) => v.kind === 'unregistered-subdomain');
     const foreign = violations.filter((v) => v.kind === 'foreign-domain');
     console.error(
@@ -275,6 +293,12 @@ function main() {
       console.error(
         '\nregistry hosts: read the value from deploy/domains.env (see scripts/lib/domain-env.sh)\n' +
           'or a ${VAR:-default} built from it.'
+      );
+    }
+    if (unmanagedTemplate.length > 0) {
+      console.error(
+        '\n.env.example hosts: declare the key in scripts/sync-env-example-hosts.mjs so the value\n' +
+          'is generated from the domain registry (run that script to rewrite it), or drop the host.'
       );
     }
     if (unregistered.length > 0) {
