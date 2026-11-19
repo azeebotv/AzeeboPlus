@@ -8,7 +8,7 @@
 // Re-export base tokens from design-tokens package for consistency
 import { brand, colors as tokenColors } from '@azeebo/design-tokens';
 
-export { zIndex, themes } from '@azeebo/design-tokens';
+export { brand, zIndex, themes } from '@azeebo/design-tokens';
 
 // ── Brand Colors ──────────────────────────────────────────────
 export const colors = {

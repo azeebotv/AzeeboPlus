@@ -120,12 +120,23 @@ export default function ContentCard({
         </div>
       </Link>
 
-      {/* Title */}
+      {/* Title & Figma Meta (rating + location) */}
       <div className="mt-2 px-0.5">
         <p className="az-body-strong truncate text-az-ink">{item.title}</p>
-        {item.creator?.name && (
-          <p className="az-caption mt-0.5 truncate text-az-ink-muted">{item.creator.name}</p>
-        )}
+        <div className="mt-0.5 flex items-center justify-between text-xs text-az-ink-muted">
+          {item.creator?.name ? (
+            <p className="az-caption truncate">{item.creator.name}</p>
+          ) : (item as unknown as { location?: string })?.location ? (
+            <span className="az-caption flex items-center gap-1 truncate">
+              📍 {(item as unknown as { location?: string }).location}
+            </span>
+          ) : null}
+          {(item as unknown as { rating?: number })?.rating ? (
+            <span className="flex items-center gap-0.5 text-az-accent-gold font-medium ml-auto flex-shrink-0">
+              ★ {Number((item as unknown as { rating?: number }).rating).toFixed(1)}
+            </span>
+          ) : null}
+        </div>
       </div>
     </motion.div>
   );
