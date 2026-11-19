@@ -34,6 +34,7 @@
     "check:env-hosts": "node scripts/sync-env-example-hosts.mjs --check",
     "generate:env-hosts": "node scripts/sync-env-example-hosts.mjs",
     "check:domain-literals": "node scripts/check-domain-literals.mjs",
+    "check:suppressions": "node scripts/check-dead-suppressions.mjs",
     "generate:cdn-config": "node scripts/generate-cdn-config.mjs",
     "check:cdn-hosts": "node scripts/generate-cdn-config.mjs --check",
     "check:upstreams": "node scripts/check-gateway-upstreams.mjs",
@@ -55,6 +56,8 @@
     "tokens:css": "tsx scripts/generate-design-tokens.ts",
     "tokens:css:check": "tsx scripts/generate-design-tokens.ts --check",
     "check:design-coverage": "node scripts/figma-route-coverage.mjs",
+    "audit:visual": "node scripts/visual-audit.mjs",
+    "audit:visual:update": "node scripts/visual-audit.mjs --update",
     "docs-sync": "ts-node --project tsconfig.scripts.json scripts/docs-sync.ts",
     "docs-sync:watch": "nodemon --watch services --exec ts-node --project tsconfig.scripts.json scripts/docs-sync.ts",
     "check:docs": "node scripts/check-docs-consistency.mjs",
@@ -76,7 +79,9 @@
     "audit:orphan-blobs": "node scripts/find-orphan-blobs.mjs",
     "ops:data-retention": "node scripts/data-retention.mjs",
     "ops:licenses": "node scripts/check-licenses.mjs",
-    "ops:archive-cleanup": "node scripts/archive-cleanup.mjs"
+    "ops:archive-cleanup": "node scripts/archive-cleanup.mjs",
+    "test:rollback-e2e": "ROLLBACK_E2E=1 node --test scripts/__tests__/rollback-local-registry.test.mjs",
+    "test:all-in-one-e2e": "ALL_IN_ONE_E2E=1 node --test scripts/__tests__/all-in-one-smoke.test.mjs"
   },
   "dependencies": {
     "glob": "^13.0.6",

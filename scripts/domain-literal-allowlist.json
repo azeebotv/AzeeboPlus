@@ -1,5 +1,5 @@
 {
-  "$comment": "Third-party hosts that may appear literally in compose files, workflows, Dockerfiles and .env.example templates. Every entry needs a reason. Hosts on our own domains are never allowed here — read them from deploy/domains.env (generated from packages/shared-types/src/platform-domains.json). Loopback, single-label service DNS, .internal/.local/.test suffixes and RFC example.* domains are ignored by the checker and must not be listed.",
+  "$comment": "Third-party hosts that may appear literally in compose files, workflows, Dockerfiles, .env.example templates and deploy/ configs — whether written as a URL, a host-ish key value or a bare token. Every entry needs a reason AND must still be referenced by a tracked file: check-domain-literals.mjs fails when an entry no longer appears anywhere in the repo, because a dead exception hides the next hardcoded use of that host. Hosts on our own domains are never allowed here — read them from deploy/domains.env (generated from packages/shared-types/src/platform-domains.json). Loopback, single-label service DNS, .internal/.local/.test suffixes and RFC example.* domains are ignored by the checker and must not be listed.",
   "allowedHosts": [
     {
       "host": "github.com",
@@ -12,10 +12,6 @@
     {
       "host": "ghcr.io",
       "reason": "Container registry the deploy workflows push to and pull from."
-    },
-    {
-      "host": "registry.npmjs.org",
-      "reason": "Package registry fetched during CI installs."
     },
     {
       "host": "docker.io",

@@ -109,6 +109,7 @@ playwright-report/
 .check-live-schema-lock-out/
 .reconcile-prisma-ledger-out/
 .pool-forecast-out/
+.visual-audit-out/
 
 .drift-live-out/
 

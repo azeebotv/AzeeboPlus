@@ -13,6 +13,13 @@
  * deploy/domains.env), but an invented subdomain or a foreign domain still
  * fails there.
  *
+ * The bare-token cases pin the shape every earlier matcher missed: a host with
+ * no URL, host-ish key or Host: header around it (an nginx server_name, a
+ * canary VirtualService `hosts:` item). The rule is TLD-gated so identifiers
+ * like `github.sha` and `steps.meta.outputs.tags` stay silent, and comment
+ * lines are exempt from bare detection only — an explicit URL in prose is
+ * still reported.
+ *
  * Run via the CI conventions job: `node --test scripts/__tests__/*.test.mjs`
  */
 
@@ -26,12 +33,17 @@ import { tmpdir } from 'node:os';
 import {
   ALLOWLIST_RELATIVE_PATH,
   GENERATED_FILES,
+  KNOWN_TLDS,
   SCAN_GLOBS,
   classifyHost,
+  extractBareHosts,
   extractHosts,
   findHardcodedHosts,
+  findStaleAllowlistEntries,
+  isCommentLine,
   isIgnoredHost,
   isScannedSurface,
+  listRepositoryFiles,
   loadAllowlist,
   registryHosts,
 } from '../check-domain-literals.mjs';
@@ -173,6 +185,161 @@ test('loadAllowlist rejects entries without a real reason', () => {
   );
 });
 
+test('every allowlisted host uses a TLD the bare-token matcher knows', () => {
+  // `extractBareHosts` gates bare tokens on KNOWN_TLDS. An allowlisted host
+  // ending in a TLD that set does not contain can never silence a bare
+  // occurrence (an nginx server_name, a canary VirtualService `hosts:` item),
+  // so the allowlist and the matcher would drift apart silently: the entry
+  // looks like it grants an exception while doing nothing.
+  const allow = loadAllowlist(ROOT);
+  assert.ok(
+    allow.size > 0,
+    `${ALLOWLIST_RELATIVE_PATH} declares no hosts — this test would pass vacuously`
+  );
+
+  const tldOf = (host) => host.slice(host.lastIndexOf('.') + 1);
+  const unknown = [...allow]
+    .filter((host) => !KNOWN_TLDS.has(tldOf(host)))
+    .map((host) => `${host} (tld "${tldOf(host)}")`);
+
+  assert.deepEqual(
+    unknown,
+    [],
+    `allowlisted hosts whose TLD is missing from KNOWN_TLDS — add the TLD to the list or fix the host:\n  ${unknown.join('\n  ')}`
+  );
+
+  // Prove the invariant rather than trusting the TLD list alone: a bare form of
+  // every entry must be visible to the matcher, which is what makes the
+  // allowlist entry effective outside URLs and host-ish keys.
+  const invisible = [...allow].filter(
+    (host) => !extractBareHosts(`      server_name ${host};`).includes(host)
+  );
+  assert.deepEqual(
+    invisible,
+    [],
+    `allowlisted hosts the bare-token matcher cannot see:\n  ${invisible.join('\n  ')}`
+  );
+});
+
+test('an allowlist entry no tracked file mentions is stale', () => {
+  // The rot this check exists for: the host a reason was written about is
+  // gone, but the exception stays and quietly forgives the next hardcoded use.
+  withFiles(
+    {
+      [ALLOWLIST_RELATIVE_PATH]: JSON.stringify({
+        allowedHosts: [
+          { host: 'live-vendor.io', reason: 'Still referenced below in the compose file.' },
+          { host: 'dead-vendor.io', reason: 'Left over from a provider we migrated off.' },
+        ],
+      }),
+      'docker-compose.demo.yml': '      SENTRY_DSN_URL: https://live-vendor.io/e/1\n',
+    },
+    (dir, files) => {
+      assert.deepEqual(findStaleAllowlistEntries(dir, files, loadAllowlist(dir)), ['dead-vendor.io']);
+    }
+  );
+});
+
+test('evidence is any tracked file, matched case-insensitively, including subdomains', () => {
+  // Deliberately looser than the host matcher: a host named only in a runbook,
+  // a test or as a subdomain is still in use, and pruning it would be wrong.
+  withFiles(
+    {
+      [ALLOWLIST_RELATIVE_PATH]: JSON.stringify({
+        allowedHosts: [
+          { host: 'sentry.io', reason: 'Error-reporting ingest endpoint.' },
+          { host: 'gmail.com', reason: 'Developer SMTP relay documented in templates.' },
+        ],
+      }),
+      'docs/runbook.md': 'Errors land in SENTRY.IO under the platform project.\n',
+      'services/core/auth-service/.env.example': 'SMTP_HOST=smtp.gmail.com\n',
+    },
+    (dir, files) => {
+      assert.deepEqual(findStaleAllowlistEntries(dir, files, loadAllowlist(dir)), []);
+    }
+  );
+});
+
+test('a nested host references its own entry and its parent, but not the reverse', () => {
+  // Plain substring semantics were the point of the check, and the single-pass
+  // matcher must not lose them: one longest-first match may swallow the whole
+  // token, so a matched host credits every allowlisted host it contains.
+  const allow = new Set(['amazonaws.com', 's3.amazonaws.com']);
+  withFiles(
+    { 'deploy/x.conf': 'proxy_pass https://s3.amazonaws.com/bucket;\n' },
+    (dir, files) => {
+      assert.deepEqual(findStaleAllowlistEntries(dir, files, allow), []);
+    }
+  );
+  withFiles({ 'deploy/x.conf': 'proxy_pass https://amazonaws.com/;\n' }, (dir, files) => {
+    // Mentioning the parent does not prove the bucket subdomain is still used.
+    assert.deepEqual(findStaleAllowlistEntries(dir, files, allow), ['s3.amazonaws.com']);
+  });
+});
+
+test('the allowlist file is not evidence for its own entries', () => {
+  // Without this exclusion every entry would reference itself and the check
+  // would be a no-op — the failure mode a naive substring scan has.
+  withFiles(
+    {
+      [ALLOWLIST_RELATIVE_PATH]: JSON.stringify({
+        allowedHosts: [{ host: 'nowhere.io', reason: 'Only named in this very file.' }],
+      }),
+    },
+    (dir, files) => {
+      assert.deepEqual(findStaleAllowlistEntries(dir, files, loadAllowlist(dir)), ['nowhere.io']);
+    }
+  );
+});
+
+test('a dead allowlist entry fails the gate end to end', () => {
+  const registry = JSON.stringify(REGISTRY);
+  const run = (extraFiles) => {
+    let result;
+    withFiles(
+      {
+        [REGISTRY_RELATIVE_PATH]: registry,
+        'docker-compose.demo.yml': 'services:\n  db:\n    image: postgres:16-alpine\n',
+        [ALLOWLIST_RELATIVE_PATH]: JSON.stringify({
+          allowedHosts: [{ host: 'migrated-away.io', reason: 'Provider we no longer call.' }],
+        }),
+        ...extraFiles,
+      },
+      (dir) => {
+        execFileSync('git', ['init', '-q'], { cwd: dir });
+        execFileSync('git', ['add', '-A'], { cwd: dir });
+        result = spawnSync(process.execPath, [SCRIPT, '--root', dir], { encoding: 'utf8' });
+      }
+    );
+    return result;
+  };
+
+  const dead = run({});
+  assert.equal(dead.status, 1, dead.stdout + dead.stderr);
+  assert.match(dead.stderr, /stale allowlist entries \(1\)/);
+  assert.match(dead.stderr, /\bmigrated-away\.io\b/);
+  assert.match(dead.stderr, /domain-literal-allowlist\.json/);
+
+  // A file outside the scan surface still counts as a reference, so a host only
+  // used by a test or a script keeps its entry and the gate stays green.
+  const referenced = run({
+    'scripts/uses-provider.mjs': "export const BASE = 'https://api.migrated-away.io';\n",
+  });
+  assert.equal(referenced.status, 0, referenced.stdout + referenced.stderr);
+  assert.match(referenced.stdout, /All 1 allowlisted hosts are still referenced/);
+});
+
+test('no allowlist entry in this repository is stale', () => {
+  // The gate itself, asserted against the real tree: adding an entry no file
+  // mentions now fails CI rather than waiting for someone to notice.
+  const stale = findStaleAllowlistEntries(ROOT, listRepositoryFiles(ROOT), loadAllowlist(ROOT));
+  assert.deepEqual(
+    stale,
+    [],
+    `these allowlist entries are no longer referenced anywhere — remove them:\n  ${stale.join('\n  ')}`
+  );
+});
+
 test('an allowlisted host silences the gate end to end', () => {
   const compose =
     "      - 'org.opencontainers.image.source=https://github.com/azeebotv/AzeeboPlus'\n";
@@ -301,6 +468,116 @@ test('an .env.example may repeat a registry host only on a managed key', () => {
       assert.deepEqual(
         findHardcodedHosts(dir, files, hosts, new Set(), options).map((f) => f.kind),
         ['registry']
+      );
+    }
+  );
+});
+
+test('flags a bare hostname token with no URL, key or header around it', () => {
+  // The shape every earlier matcher missed: a host as a plain YAML list item.
+  // A canary VirtualService `hosts:` entry is the real-world case.
+  withFiles(
+    {
+      'deploy/canary-config.yaml': 'spec:\n  hosts:\n    - api.azeeboplus.com\n    - api-gateway\n',
+    },
+    (dir, files) => {
+      const found = findHardcodedHosts(dir, files, registryHosts(REGISTRY), new Set(), {
+        baseDomain: REGISTRY.baseDomain,
+      });
+      assert.deepEqual(
+        found.map((f) => [f.line, f.host, f.kind]),
+        [[3, 'api.azeeboplus.com', 'registry']]
+      );
+    }
+  );
+});
+
+test('flags a bare token on a foreign domain and a bare host with a port', () => {
+  withFiles(
+    {
+      'deploy/staging.env.example': 'DOCKER_REGISTRY=registry.azeebo.ng\n',
+      // server_name is not a host-ish key, and the port must not hide the host.
+      'deploy/nginx.conf': '      server_name www.azeeboplus.com api.azeeboplus.com:3013;\n',
+    },
+    (dir, files) => {
+      const found = findHardcodedHosts(dir, files, registryHosts(REGISTRY), new Set(), {
+        baseDomain: REGISTRY.baseDomain,
+      });
+      assert.deepEqual(found.map((f) => f.host).sort(), [
+        'api.azeeboplus.com',
+        'registry.azeebo.ng',
+        'www.azeeboplus.com',
+      ]);
+    }
+  );
+});
+
+test('never mistakes dotted identifiers, filenames or refs for bare hosts', () => {
+  const line =
+    '      ${{ github.sha }} ${{ steps.meta.outputs.tags }} ' +
+    'const tag = report.host; router.push(path); store.get(x.placeholder); ' +
+    'apiVersion: networking.istio.io/v1beta1; ' +
+    'run: node scripts/deploy/domains.env.js --config nginx.conf';
+  withFiles({ 'deploy/entrypoint.sh': line }, (dir, files) => {
+    assert.deepEqual(findHardcodedHosts(dir, files, registryHosts(REGISTRY)), []);
+    assert.deepEqual(extractBareHosts(line), []);
+  });
+});
+
+test('a bare host in prose is ignored, an explicit URL in prose is not', () => {
+  // Prose naming a host is documentation; a URL states a real endpoint, which
+  // the URL matcher has always reported in comments and still does.
+  const prose = '# Current live values for app.azeeboplus.com (SPKI sha256, base64):\n';
+  assert.equal(isCommentLine(prose.trimEnd()), true);
+  assert.deepEqual(extractBareHosts(prose), []);
+
+  withFiles({ 'apps/tv/.env.example': prose }, (dir, files) => {
+    assert.deepEqual(findHardcodedHosts(dir, files, registryHosts(REGISTRY)), []);
+  });
+
+  withFiles(
+    { 'apps/web/.env.example': '# see https://app.azeeboplus.com for the login page\n' },
+    (dir, files) => {
+      assert.deepEqual(
+        findHardcodedHosts(dir, files, registryHosts(REGISTRY), new Set(), {
+          baseDomain: REGISTRY.baseDomain,
+        }).map((f) => [f.host, f.kind]),
+        [['app.azeeboplus.com', 'unmanaged-template-host']]
+      );
+    }
+  );
+});
+
+test('bare tokens only count when the last label is a known TLD', () => {
+  assert.ok(KNOWN_TLDS.has('com') && KNOWN_TLDS.has('ng') && KNOWN_TLDS.has('io'));
+  for (const token of ['github.sha', 'report.host', 'report.services', 'router.push']) {
+    assert.equal(KNOWN_TLDS.has(token.split('.').pop()), false, `${token} must not qualify`);
+  }
+  // A known TLD with a path after it is still a ref, not a host.
+  assert.deepEqual(extractBareHosts('      apiVersion: networking.istio.io/v1beta1\n'), []);
+  // A trailing port keeps the host.
+  assert.deepEqual(extractBareHosts('      proxy_pass api.azeeboplus.com:3013;\n'), [
+    'api.azeeboplus.com',
+  ]);
+});
+
+test('an allowlisted bare third-party host is silent', () => {
+  withFiles(
+    {
+      'deploy/staging.env.example':
+        'MAIL_HOST=smtp.sendgrid.net\nPAY_API=paystack.co\n' +
+        // A registry reference is a ref, not a bare host: silent without an entry.
+        'IMAGE_REPO=ghcr.io/azeebotv/azeebo-all-in-one\n',
+    },
+    (dir, files) => {
+      const allow = new Set(['sendgrid.net', 'paystack.co']);
+      assert.deepEqual(findHardcodedHosts(dir, files, registryHosts(REGISTRY), allow), []);
+      // Without the declaration both are drift; the image ref stays silent.
+      assert.deepEqual(
+        findHardcodedHosts(dir, files, registryHosts(REGISTRY))
+          .map((f) => f.host)
+          .sort(),
+        ['paystack.co', 'smtp.sendgrid.net']
       );
     }
   );

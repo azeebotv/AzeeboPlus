@@ -179,9 +179,30 @@ export function listNextRoutes(dir, prefix = '') {
   return [...new Set(routes)].sort();
 }
 
-/** Expo Router routes for an app workspace (app/ tree, groups stripped). */
+/**
+ * Expo Router routes for an app workspace (app/ tree).
+ * Emits both the flattened Expo URL path (e.g. `/login`) and the folder-mapped
+ * route group path (e.g. `/auth/login`) so that Figma spec declared routes
+ * resolve across both web and mobile surfaces.
+ */
 export function listExpoRoutes(appDir) {
-  return [...scanApp(appDir, path.basename(appDir)).routes.keys()].sort();
+  const scanned = scanApp(appDir, path.basename(appDir));
+  const routeSet = new Set();
+  for (const [flatRoute, file] of scanned.routes.entries()) {
+    routeSet.add(flatRoute);
+    const withoutApp = file.replace(/^app\//, '').replace(/\.(tsx|ts)$/, '');
+    const clean = withoutApp.replace(/\/index$/, '');
+    const groupPath =
+      '/' +
+      clean
+        .split('/')
+        .map((s) => s.replace(/^\((.+)\)$/, '$1'))
+        .join('/');
+    if (groupPath !== flatRoute) {
+      routeSet.add(groupPath);
+    }
+  }
+  return [...routeSet].sort();
 }
 
 export function listSurfaceRoutes(surface, repoRoot) {
@@ -226,11 +247,40 @@ export function classify(groups, routesBySurface) {
 /** Shipped routes no frame group claims — the "build it from the system" list. */
 export function uncoveredRoutes(groups, routes) {
   const claimed = groups.flatMap((g) => g.routes);
-  return routes.filter(
-    (r) =>
-      !NON_PAGE_ROUTES.some((re) => re.test(r)) &&
-      !claimed.some((c) => (c.endsWith('/*') ? r.startsWith(c.slice(0, -2)) : c === r))
+  const isClaimed = (r) =>
+    claimed.some((c) => {
+      if (c.endsWith('/*')) {
+        const base = c.slice(0, -2);
+        if (r === base || r.startsWith(`${base}/`)) return true;
+        const strippedR = r.replace(/^\/(?:auth|creator|reality|tabs|subscription)\b/, '');
+        if (strippedR && (strippedR === base || strippedR.startsWith(`${base}/`))) return true;
+        return false;
+      }
+      if (c === r) return true;
+      const strippedC = c.replace(/^\/(?:auth|creator|reality|tabs|subscription)\b/, '');
+      const strippedR = r.replace(/^\/(?:auth|creator|reality|tabs|subscription)\b/, '');
+      return (
+        strippedC === r ||
+        strippedR === c ||
+        (strippedC && strippedC === strippedR)
+      );
+    });
+
+  const uncovered = routes.filter(
+    (r) => !NON_PAGE_ROUTES.some((re) => re.test(r)) && !isClaimed(r)
   );
+
+  const seen = new Set();
+  const canonical = [];
+  for (const r of uncovered) {
+    const stripped = r.replace(/^\/(?:auth|creator|reality|tabs|subscription)\b/, '');
+    if (!seen.has(stripped) && !seen.has(r)) {
+      seen.add(stripped);
+      seen.add(r);
+      canonical.push(r);
+    }
+  }
+  return canonical;
 }
 
 function frameCount(groups) {

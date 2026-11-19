@@ -8,6 +8,7 @@ const noDeadClassOverride = require('./packages/eslint-rules/no-dead-class-overr
 const noRetiredBrandAlias = require('./packages/eslint-rules/no-retired-brand-alias');
 const noOffSystemColorUtility = require('./packages/eslint-rules/no-off-system-color-utility');
 const noUndefinedAzUtility = require('./packages/eslint-rules/no-undefined-az-utility');
+const noLowContrastPair = require('./packages/eslint-rules/no-low-contrast-pair');
 const requireSharedRouteBoundary = require('./packages/eslint-rules/require-shared-route-boundary');
 const noConsoleLog = require('./packages/eslint-rules/no-console-log');
 const requireMapAndThrow = require('./packages/eslint-rules/require-map-and-throw');
@@ -19,37 +20,78 @@ const requireMapAndThrow = require('./packages/eslint-rules/require-map-and-thro
  * override can never drop it. Register NEW palette colors here, not inline.
  */
 const HEX_ALLOW_LIST = [
-  '#000000', '#FFFFFF', '#00000000',
+  '#000000',
+  '#FFFFFF',
+  '#00000000',
   // Brand colors — `#E8420A`/`#CC1C1C`/`#FF6B35` are the RETIRED accent. They
   // survive only in the internal consoles and the fixtures below; RETIRED_ACCENT
   // re-bans them everywhere else, ahead of this list. New code must not use
   // them at all.
-  '#E8420A', '#1A0A0A', '#F5F0EB', '#9A8A7A',
-  '#E5E4E2', '#555', '#000', '#fff',
-  '#a855f7', '#2A1A1A',
-  '#14532D', '#B91C1C', '#1E40AF',
-  '#F5F5F5', '#E0E0E0', '#757575',
-  '#424242', '#212121', '#F44336', '#2196F3',
-  '#4CAF50', '#FF9800', '#9C27B0',
+  '#E8420A',
+  '#1A0A0A',
+  '#F5F0EB',
+  '#9A8A7A',
+  '#E5E4E2',
+  '#555',
+  '#000',
+  '#fff',
+  '#a855f7',
+  '#2A1A1A',
+  '#14532D',
+  '#B91C1C',
+  '#1E40AF',
+  '#F5F5F5',
+  '#E0E0E0',
+  '#757575',
+  '#424242',
+  '#212121',
+  '#F44336',
+  '#2196F3',
+  '#4CAF50',
+  '#FF9800',
+  '#9C27B0',
   // Additional design system colors
-  '#06b6d4', '#1A1A1A', '#1E90FF', '#32CD32',
-  '#4ade80', '#607D8B', '#8b5cf6',
-  '#A78BFA', '#C0C0C0', '#C41E3A', '#CC1C1C',
-  '#CD7F32', '#D1D5DB', '#D97706', '#EC4899',
-  '#FF6B35', '#FFD700',
+  '#06b6d4',
+  '#1A1A1A',
+  '#1E90FF',
+  '#32CD32',
+  '#4ade80',
+  '#607D8B',
+  '#8b5cf6',
+  '#A78BFA',
+  '#C0C0C0',
+  '#C41E3A',
+  '#CC1C1C',
+  '#CD7F32',
+  '#D1D5DB',
+  '#D97706',
+  '#EC4899',
+  '#FF6B35',
+  '#FFD700',
   '#fbbf24',
   // Third-party social brand colors
-  '#1DA1F2', '#1877F2', '#25D366',
+  '#1DA1F2',
+  '#1877F2',
+  '#25D366',
   // Dashboard/analytics colors
-  '#10B981', '#F59E0B', '#3B82F6', '#EF4444',
-  '#10B98120', '#F59E0B20',
+  '#10B981',
+  '#F59E0B',
+  '#3B82F6',
+  '#EF4444',
+  '#10B98120',
+  '#F59E0B20',
   '#6B7280',
   // Creator app theme colors
-  '#140808', '#0D0505', '#6A5A4A', '#6B5A4A',
+  '#140808',
+  '#0D0505',
+  '#6A5A4A',
+  '#6B5A4A',
   '#0D3B2E',
   // Semantic state accents (success/sky variants, see
   // --color-success-500 and the dashboard palette).
-  '#34D399', '#38BDF8', '#22c55e',
+  '#34D399',
+  '#38BDF8',
+  '#22c55e',
 ];
 
 /**
@@ -88,6 +130,18 @@ module.exports = [
       '**/generated/**',
     ],
   },
+  // An exception that suppresses nothing is drift: the rule it names was
+  // renamed, removed, or never fired at that site. ESLint knows which
+  // directives suppressed a problem — flat config reports unused ones at
+  // "warn", which `eslint src` prints and still exits 0 on — so raise it to an
+  // error and let a stale `// eslint-disable-next-line` fail the lint job.
+  // No `files` key on purpose: linterOptions propagates to every config below.
+  // scripts/__tests__/check-dead-suppressions.test.mjs pins this setting.
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
+  },
   // Base config for TypeScript files
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -111,6 +165,7 @@ module.exports = [
           'no-retired-brand-alias': noRetiredBrandAlias,
           'no-off-system-color-utility': noOffSystemColorUtility,
           'no-undefined-az-utility': noUndefinedAzUtility,
+          'no-low-contrast-pair': noLowContrastPair,
           'require-shared-route-boundary': requireSharedRouteBoundary,
           'no-console-log': noConsoleLog,
           'require-map-and-throw': requireMapAndThrow,
@@ -308,6 +363,17 @@ module.exports = [
       // the rule itself: only a workspace that owns the generated stylesheet is
       // measured, so services and packages resolve the severity inertly.
       'azeebo-custom/no-undefined-az-utility': 'error',
+      // The colour rules keep the vocabulary consistent; this one keeps it
+      // LEGIBLE. A solid light fill under the theme's white ink fails AA:
+      // flame (#EC691F) measures 3.18:1 — the pairing the 2026-11-10 sweep found
+      // on 152 of 177 pages — and the amber step marker (#f59e0b) measures
+      // 2.15:1. Which fills are measured, and with which ink they pass, is data
+      // (`packages/eslint-rules/contrast-pairs.json`), so a new light surface is
+      // one table entry rather than another rule. Translucent fills
+      // (`bg-az-flame/10`) and large-text roles are exempt; the brand gradient is
+      // left to the rendered audit (`scripts/visual-audit.mjs`), which measures
+      // the actual font size and gradient stops.
+      'azeebo-custom/no-low-contrast-pair': 'error',
     },
   },
   // The shared component library is consumed by every public web page, but it

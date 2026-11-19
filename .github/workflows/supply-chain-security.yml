@@ -119,7 +119,8 @@ jobs:
         uses: actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45 # v2
         if: github.event_name == 'release' && env.CONTAINER_DIGEST != ''
         with:
-          subject-name: 'ghcr.io/${{ github.repository }}'
+          # Must match the image cd.yml publishes (see REGISTRY/IMAGE_NAME there).
+          subject-name: 'ghcr.io/azeebotv/azeebo-all-in-one'
           subject-digest: '${{ env.CONTAINER_DIGEST }}'
           push-to-registry: true
 

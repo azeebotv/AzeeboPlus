@@ -1,0 +1,5 @@
+{
+  "description": "Justified exceptions for scripts/visual-audit.mjs. Every entry needs a reason; an entry that stops excusing a finding fails the gate (regenerate with --update after deleting the cause).",
+  "generatedAt": "2026-11-10T00:00:00.000Z",
+  "allowlist": []
+}

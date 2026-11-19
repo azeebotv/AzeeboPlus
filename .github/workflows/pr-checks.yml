@@ -129,8 +129,16 @@ jobs:
       # (dotenv cannot interpolate), so a rename regenerates it; any other
       # template literal, an invented subdomain or a foreign domain fails.
       # Docs and the generated CDN config are excluded (their own gates own
-      # them). Third parties are declared in scripts/domain-literal-allowlist.json.
+      # them). Third parties are declared in scripts/domain-literal-allowlist.json,
+      # and an entry that no tracked file mentions any more fails too — a dead
+      # exception hides the next hardcoded use of that host.
       - run: node scripts/check-domain-literals.mjs
+      # Ignore files are exceptions too: a *literal* un-ignore (`!scripts/build.sh`)
+      # whose file no longer exists silently stops protecting a path the build
+      # needs. Dead un-ignores fail; unmatched guards are advisory (--strict to
+      # escalate). Dead `eslint-disable` directives are reported by ESLint itself
+      # (linterOptions.reportUnusedDisableDirectives: 'error' in eslint.config.js).
+      - run: node scripts/check-dead-suppressions.mjs
       # deploy/cdn-config.json carries hostnames in four places (API origin,
       # CloudFront aliases, CORS allowlist, CSP connect-src). They are generated
       # from the domain registry; a hand edit that misses one splits CORS, the
@@ -167,6 +175,115 @@ jobs:
       # generated in place from the registry instead of typed by hand; this
       # fails when a template still points at the previous domain.
       - run: node scripts/sync-env-example-hosts.mjs --check
+
+  # Renders every static route on all three web surfaces and fails on what a
+  # reader would call broken: horizontal overflow, text cut off with no
+  # ellipsis, images that fail to decode, and text below WCAG AA contrast
+  # against the colour actually behind it.
+  #
+  # Why it exists: the 2026-11-10 sweep found white-on-flame at 3.18:1 on 152 of
+  # 177 pages and admin/creator links that landed on a blank document. Every
+  # unit test passed, because nothing rendered a page. Routes come from the
+  # source tree (Next's app/ pages, each portal's route table), so a new screen
+  # is audited without touching the gate.
+  #
+  # Zero tolerance with a justified allowlist
+  # (scripts/visual-audit-allowlist.json): a finding fails unless an entry names
+  # it and says why. An entry that no longer excuses anything fails too, so an
+  # exception cannot outlive the defect it was written for. --update only prunes
+  # matched entries; it never invents a reason.
+  #
+  # Scope: the web app, against its production build, with the mock gateway the
+  # performance-budget job uses (SSR fetches cannot be stubbed from the browser).
+  # Both sign-in states are audited: as a guest (protected routes bounce to
+  # /auth/login) and signed in (`--signed-in`, so /wallet, /settings, … render
+  # their real layout; `/` then bounces to /home, which is audited on its own
+  # line). The admin and creator portals are supported by the same script (`--app
+  # admin|creator`, see docs/runbooks/visual-audit.md) but are not gated here
+  # yet: a first full pass measured 221 findings in the admin portal alone
+  # (legacy #E8420A text at 4.47:1, #CC1C1C at 3.21:1, a 127px sideways scroll
+  # from the mobile sidebar). That is a design-token pass, not a CI switch —
+  # gating it now would either block every PR or bury the signal in an
+  # allowlist.
+  visual-audit-pr:
+    name: Visual Audit (contrast, overflow, images)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Generate Prisma clients
+        run: pnpm run prisma:generate
+      # Workspace packages ship from dist/ and `next build` cannot resolve them
+      # until they are built (analytics-sdk, feature-flags/registries, ...).
+      - name: Build workspace packages
+        run: pnpm --filter './packages/**' run build
+      - name: Install Chromium
+        run: pnpm --filter @azeebo/web exec playwright install chromium --with-deps
+      - name: Build web app
+        # Bake the gateway origin in: with output:standalone, next start serves
+        # the config from build time, so a runtime env alone is ignored.
+        run: API_GATEWAY_URL=http://localhost:3013 pnpm --filter @azeebo/web build
+      # Server-side fetches (SSR) happen before the browser sees the page and
+      # cannot be stubbed, so every page would render its error state and the
+      # gate would measure the error UI instead of the layout.
+      - name: Start mock API gateway
+        run: |
+          node scripts/build-mock-api.mjs &
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:3013/api/v1/public/settings > /dev/null 2>&1 && break || sleep 1
+          done
+          curl -sf http://localhost:3013/api/v1/public/settings > /dev/null
+      - name: Start web app
+        run: |
+          # apps/web builds with output:standalone, which `next start` refuses to
+          # serve (it logs "does not work with output: standalone" and answers
+          # 500). Run the traced server directly, with the static chunks and
+          # public/ copied into the standalone tree the way a container image
+          # would.
+          cp -R apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static
+          cp -R apps/web/public apps/web/.next/standalone/apps/web/public
+          PORT=3000 HOSTNAME=127.0.0.1 node apps/web/.next/standalone/apps/web/server.js &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:3000 > /dev/null 2>&1 && break || sleep 2
+          done
+          curl -sf http://127.0.0.1:3000 > /dev/null || { echo 'web app did not start'; exit 1; }
+      # Two sign-in states, because they are different layouts. As a guest the
+      # protected routes (/wallet, /settings, /messages, …) 307 to /auth/login,
+      # so signed-in screens were never rendered at all; signed in, `/` 307s to
+      # /home, so the guest homepage is the one that is unreachable. Each state
+      # is measured on its own and fails on its own findings.
+      - name: Run visual audit (guest)
+        run: |
+          node scripts/visual-audit.mjs \
+            --app web \
+            --base-url http://127.0.0.1:3000 \
+            --json-out .visual-audit-out/guest/report.json \
+            --screenshots .visual-audit-out/guest \
+            --verbose
+      - name: Run visual audit (signed in)
+        run: |
+          node scripts/visual-audit.mjs \
+            --app web \
+            --signed-in \
+            --base-url http://127.0.0.1:3000 \
+            --json-out .visual-audit-out/signed-in/report.json \
+            --screenshots .visual-audit-out/signed-in \
+            --verbose
+      - name: Upload visual audit report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: visual-audit-report
+          path: .visual-audit-out/
+          if-no-files-found: ignore
 
   pool-budget-pr:
     name: Postgres Pool Budget
@@ -617,6 +734,7 @@ jobs:
         tv-bundle-pr,
         test-pr,
         integration-test-pr,
+        visual-audit-pr,
       ]
 
     steps:

@@ -17,6 +17,13 @@ on:
 env:
   NODE_VERSION: '22.16.0'
   PNPM_VERSION: '10.33.2'
+  # ONE image identity for every path: build, push, SSH deploy, rollback and the
+  # compose files (docker-compose.all-in-one.yml). `github.repository` must not
+  # be used for image refs — it preserves repo casing (AzeeboPlus) and Docker
+  # rejects uppercase repository names, so those tags never resolved. The
+  # package also has to match what deploy/ and rollback.yml reference.
+  REGISTRY: ghcr.io
+  IMAGE_NAME: azeebotv/azeebo-all-in-one
 
 # Baseline: deny-by-default; each job grants only what it needs (see
 # docs/WORKFLOW_IDENTITIES.md). Deployment contexts must never inherit
@@ -117,7 +124,7 @@ jobs:
           file: ./Dockerfile.all-in-one
           push: false
           load: true
-          tags: ghcr.io/${{ github.repository }}:staging-${{ github.sha }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -133,14 +140,15 @@ jobs:
 
       - name: Push image
         run: |
-          docker tag ghcr.io/${{ github.repository }}:staging-${{ github.sha }} ghcr.io/${{ github.repository }}:staging
-          docker push ghcr.io/${{ github.repository }}:staging-${{ github.sha }}
-          docker push ghcr.io/${{ github.repository }}:staging
+          IMAGE="${REGISTRY}/${IMAGE_NAME}"
+          docker tag "${IMAGE}:staging-${{ github.sha }}" "${IMAGE}:staging"
+          docker push "${IMAGE}:staging-${{ github.sha }}"
+          docker push "${IMAGE}:staging"
           # Push immutable production tag for this commit SHA
-          docker tag ghcr.io/${{ github.repository }}:staging-${{ github.sha }} ghcr.io/${{ github.repository }}:production-${{ github.sha }}
-          docker push ghcr.io/${{ github.repository }}:production-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:staging-${{ github.sha }} ghcr.io/${{ github.repository }}:latest
-          docker push ghcr.io/${{ github.repository }}:latest
+          docker tag "${IMAGE}:staging-${{ github.sha }}" "${IMAGE}:production-${{ github.sha }}"
+          docker push "${IMAGE}:production-${{ github.sha }}"
+          docker tag "${IMAGE}:staging-${{ github.sha }}" "${IMAGE}:latest"
+          docker push "${IMAGE}:latest"
 
       - name: Validate deployment mechanism configured
         env:
@@ -156,6 +164,22 @@ jobs:
       # secrets.* is FORBIDDEN in if: conditionals (GitHub rejects the whole
       # workflow file — zero jobs, run named by file path). Evaluate into env
       # instead; env context is allowed in step-level if:.
+      # Coolify's deploy API accepts uuid / tag (a Coolify *resource* tag) /
+      # force — not a Docker tag, and no compose_file. The image tag a Compose
+      # app deploys comes from compose interpolation, so set IMAGE_TAG on the
+      # app (variable used by docker-compose.all-in-one.yml) and then trigger.
+      # Best effort: without the three API secrets the trigger still runs, but
+      # the app deploys whatever IMAGE_TAG it currently holds.
+      - name: Select image tag in Coolify (Staging)
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_STAGING_WEBHOOK }}
+          COOLIFY_API_URL: ${{ secrets.COOLIFY_API_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+        if: env.COOLIFY_WEBHOOK != ''
+        run: |
+          bash scripts/coolify-set-image-tag.sh "staging-${{ github.sha }}"
+
       - name: Deploy to Coolify (Staging)
         env:
           COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_STAGING_WEBHOOK }}
@@ -163,7 +187,7 @@ jobs:
         run: |
           curl --fail-with-body --max-time 30 --retry 3 -X POST "$COOLIFY_WEBHOOK" \
             -H "Content-Type: application/json" \
-            -d "{\"tag\": \"staging-${{ github.sha }}\", \"compose_file\": \"docker-compose.all-in-one.yml\"}"
+            -d '{"force":false}'
 
       - name: Deploy via SSH (Fallback)
         env:
@@ -178,7 +202,7 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             cd /opt/azeebo
-            docker pull ghcr.io/${{ github.repository }}:staging-${{ github.sha }}
+            docker pull "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}"
             docker stop azeebo-staging || true
             docker rm azeebo-staging || true
             docker run -d \
@@ -189,7 +213,7 @@ jobs:
               -p 4016:4016 \
               --env-file /opt/azeebo/.env.staging \
               --restart unless-stopped \
-              ghcr.io/${{ github.repository }}:staging-${{ github.sha }}
+              "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}"
 
   health-check-staging:
     name: Health Check (Staging)
@@ -199,6 +223,8 @@ jobs:
       contents: read
     needs: [deploy-staging]
     steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
       - name: Validate staging URL variables are configured
         run: |
           if [ -z "${{ vars.STAGING_HEALTH_URL }}" ]; then
@@ -227,17 +253,24 @@ jobs:
             sleep 10
           done
 
-      - name: Verify deployed commit SHA
+      # The running artifact and the tag Coolify will serve must both be this
+      # run's build. A green /health alone cannot distinguish a fresh deploy
+      # from the container Coolify never replaced, and the removed SHA step
+      # passed outright when commitSha was absent or "dev". The script also
+      # writes the verified tag/commit to $GITHUB_STEP_SUMMARY, so reviewers
+      # can read which build shipped from the run page.
+      - name: Verify running image tag
+        env:
+          HEALTH_URL: ${{ vars.STAGING_HEALTH_URL }}
+          # Coolify rolls the deployment over asynchronously; give it a window
+          # to serve the new build before failing as the wrong tag.
+          VERIFY_WAIT_S: '180'
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_STAGING_WEBHOOK }}
+          COOLIFY_API_URL: ${{ secrets.COOLIFY_API_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
         run: |
-          HEALTH_URL="${{ vars.STAGING_HEALTH_URL }}"
-          EXPECTED_SHA="${{ github.sha }}"
-          DEPLOYED_INFO=$(curl -sf "${HEALTH_URL}/version" || curl -sf "${HEALTH_URL}/health" || echo "{}")
-          DEPLOYED_SHA=$(echo "$DEPLOYED_INFO" | jq -r '.commitSha // .info.apiGateway.commitSha // .details.apiGateway.commitSha // empty')
-          if [ -n "$DEPLOYED_SHA" ] && [ "$DEPLOYED_SHA" != "dev" ] && [ "$DEPLOYED_SHA" != "$EXPECTED_SHA" ]; then
-            echo "❌ Deployed SHA mismatch! Expected: $EXPECTED_SHA, Deployed: $DEPLOYED_SHA"
-            exit 1
-          fi
-          echo "✅ Deployed artifact verified (SHA: ${DEPLOYED_SHA:-matched})"
+          bash scripts/verify-deployed-image-tag.sh "staging-${{ github.sha }}" "$HEALTH_URL"
 
       - name: Verify all services
         run: |
@@ -356,6 +389,16 @@ jobs:
           fi
           echo "Deployment mechanism verified."
 
+      - name: Select image tag in Coolify (Production)
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}
+          COOLIFY_API_URL: ${{ secrets.COOLIFY_API_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+        if: env.COOLIFY_WEBHOOK != ''
+        run: |
+          bash scripts/coolify-set-image-tag.sh "production-${{ github.sha }}"
+
       - name: Deploy to Coolify (Production)
         env:
           COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}
@@ -363,7 +406,7 @@ jobs:
         run: |
           curl --fail-with-body --max-time 30 --retry 3 -X POST "$COOLIFY_WEBHOOK" \
             -H "Content-Type: application/json" \
-            -d "{\"tag\": \"${{ github.sha }}\"}"
+            -d '{"force":false}'
 
       - name: Deploy via SSH (Fallback)
         env:
@@ -378,7 +421,7 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             cd /opt/azeebo
-            docker pull ghcr.io/${{ github.repository }}:production-${{ github.sha }}
+            docker pull "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:production-${{ github.sha }}"
             docker stop azeebo || true
             docker rm azeebo || true
             docker run -d \
@@ -389,7 +432,7 @@ jobs:
               -p 4016:4016 \
               --env-file /opt/azeebo/.env.production \
               --restart unless-stopped \
-              ghcr.io/${{ github.repository }}:production-${{ github.sha }}
+              "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:production-${{ github.sha }}"
 
   health-check-production:
     name: Health Check (Production)
@@ -399,6 +442,8 @@ jobs:
       contents: read
     needs: [deploy-production]
     steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
       - name: Validate production URL variables are configured
         run: |
           if [ -z "${{ vars.PRODUCTION_HEALTH_URL }}" ]; then
@@ -426,17 +471,18 @@ jobs:
             sleep 10
           done
 
-      - name: Verify deployed commit SHA
+      # Same gate as staging; the verified tag is recorded in the step summary
+      # for anyone reviewing what production is actually serving.
+      - name: Verify running image tag
+        env:
+          HEALTH_URL: ${{ vars.PRODUCTION_HEALTH_URL }}
+          VERIFY_WAIT_S: '180'
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}
+          COOLIFY_API_URL: ${{ secrets.COOLIFY_API_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
         run: |
-          HEALTH_URL="${{ vars.PRODUCTION_HEALTH_URL }}"
-          EXPECTED_SHA="${{ github.sha }}"
-          DEPLOYED_INFO=$(curl -sf "${HEALTH_URL}/version" || curl -sf "${HEALTH_URL}/health" || echo "{}")
-          DEPLOYED_SHA=$(echo "$DEPLOYED_INFO" | jq -r '.commitSha // .info.apiGateway.commitSha // .details.apiGateway.commitSha // empty')
-          if [ -n "$DEPLOYED_SHA" ] && [ "$DEPLOYED_SHA" != "dev" ] && [ "$DEPLOYED_SHA" != "$EXPECTED_SHA" ]; then
-            echo "❌ Deployed SHA mismatch! Expected: $EXPECTED_SHA, Deployed: $DEPLOYED_SHA"
-            exit 1
-          fi
-          echo "✅ Deployed artifact verified (SHA: ${DEPLOYED_SHA:-matched})"
+          bash scripts/verify-deployed-image-tag.sh "production-${{ github.sha }}" "$HEALTH_URL"
 
       - name: Verify all services
         run: |

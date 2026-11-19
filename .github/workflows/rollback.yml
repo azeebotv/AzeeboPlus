@@ -19,6 +19,13 @@ on:
         description: 'Docker image tag to rollback to (e.g. staging-abc1234 or a previous SHA)'
         required: true
 
+env:
+  # Same identity cd.yml publishes and the compose files interpolate. Never
+  # derive image refs from github.repository: it preserves casing (AzeeboPlus)
+  # and Docker rejects uppercase repository names.
+  REGISTRY: ghcr.io
+  IMAGE_NAME: azeebotv/azeebo-all-in-one
+
 permissions:
   contents: read
   # The verify step reads the GHCR package version list to confirm the
@@ -75,6 +82,19 @@ jobs:
             echo "✅ Tag $TAG confirmed in GHCR"
           fi
 
+      # Coolify deploys the tag its Compose app resolves from IMAGE_TAG; its
+      # deploy API's `tag` parameter means a Coolify resource-tag group, so it
+      # cannot select a Docker tag. Set IMAGE_TAG, then trigger.
+      - name: Select image tag in Coolify (Staging)
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_STAGING_WEBHOOK }}
+          COOLIFY_API_URL: ${{ secrets.COOLIFY_API_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+        if: inputs.environment == 'staging' && env.COOLIFY_WEBHOOK != ''
+        run: |
+          bash scripts/coolify-set-image-tag.sh "${{ inputs.target_tag }}"
+
       - name: Rollback via Coolify (Staging)
         env:
           COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_STAGING_WEBHOOK }}
@@ -83,8 +103,18 @@ jobs:
           echo "🔄 Triggering Coolify staging rollback to ${{ inputs.target_tag }}..."
           curl -fsSL -X POST "$COOLIFY_WEBHOOK" \
             -H "Content-Type: application/json" \
-            -d "{\"tag\": \"${{ inputs.target_tag }}\"}"
+            -d '{"force":false}'
           echo "✅ Coolify staging rollback triggered"
+
+      - name: Select image tag in Coolify (Production)
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}
+          COOLIFY_API_URL: ${{ secrets.COOLIFY_API_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+        if: inputs.environment == 'production' && env.COOLIFY_WEBHOOK != ''
+        run: |
+          bash scripts/coolify-set-image-tag.sh "${{ inputs.target_tag }}"
 
       - name: Rollback via Coolify (Production)
         env:
@@ -94,7 +124,7 @@ jobs:
           echo "🔄 Triggering Coolify production rollback to ${{ inputs.target_tag }}..."
           curl -fsSL -X POST "$COOLIFY_WEBHOOK" \
             -H "Content-Type: application/json" \
-            -d "{\"tag\": \"${{ inputs.target_tag }}\"}"
+            -d '{"force":false}'
           echo "✅ Coolify production rollback triggered"
 
       - name: Rollback via SSH (Fallback — Staging)
@@ -108,8 +138,8 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            echo "🔄 Rolling back staging to ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}"
-            docker pull ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}
+            echo "🔄 Rolling back staging to ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.target_tag }}"
+            docker pull "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.target_tag }}"
             docker stop azeebo-staging || true
             docker rm azeebo-staging || true
             docker run -d \
@@ -120,7 +150,7 @@ jobs:
               -p 4016:4016 \
               --env-file /opt/azeebo/.env.staging \
               --restart unless-stopped \
-              ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}
+              "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.target_tag }}"
             echo "✅ Staging rollback complete"
 
       - name: Rollback via SSH (Fallback — Production)
@@ -134,8 +164,8 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            echo "🔄 Rolling back production to ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}"
-            docker pull ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}
+            echo "🔄 Rolling back production to ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.target_tag }}"
+            docker pull "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.target_tag }}"
             docker stop azeebo || true
             docker rm azeebo || true
             docker run -d \
@@ -146,36 +176,42 @@ jobs:
               -p 4016:4016 \
               --env-file /opt/azeebo/.env.production \
               --restart unless-stopped \
-              ghcr.io/${{ github.repository }}:${{ inputs.target_tag }}
+              "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.target_tag }}"
             echo "✅ Production rollback complete"
 
-      - name: Verify rollback health
+      # Same gate as cd.yml, so a rollback is proven the way a deploy is: a
+      # green /health only says something answers, not that the tag we restored
+      # is the build running. --rollback additionally accepts a moving tag
+      # (latest, staging) and titles the step summary a rollback, naming the tag
+      # that was restored and the commit that came back up.
+      - name: Verify restored image tag
+        env:
+          HEALTH_URL: ${{ inputs.environment == 'staging' && vars.STAGING_HEALTH_URL || vars.PRODUCTION_HEALTH_URL }}
+          VERIFY_ENVIRONMENT: ${{ inputs.environment }}
+          # A Coolify rollback rolls the container over asynchronously.
+          VERIFY_WAIT_S: '180'
+          COOLIFY_WEBHOOK: ${{ inputs.environment == 'staging' && secrets.COOLIFY_STAGING_WEBHOOK || secrets.COOLIFY_PRODUCTION_WEBHOOK }}
+          COOLIFY_API_URL: ${{ secrets.COOLIFY_API_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
         run: |
-          if [ "${{ inputs.environment }}" = "staging" ]; then
-            HEALTH_URL="${{ vars.STAGING_HEALTH_URL }}"
-          else
-            HEALTH_URL="${{ vars.PRODUCTION_HEALTH_URL }}"
-          fi
-
           if [ -z "$HEALTH_URL" ]; then
-            echo "::warning::Health URL variable not set — skipping rollback verification"
+            # Still leave a record: a run page with no rollback statement is
+            # how "did the rollback actually land?" becomes a Slack thread.
+            echo "::warning::Health URL variable not set — rollback not verified"
+            {
+              echo "### Rollback verification — ${VERIFY_ENVIRONMENT}"
+              echo
+              echo "**Restored build:** \`${{ inputs.target_tag }}\`"
+              echo
+              echo "| Field | Value |"
+              echo "|-------|-------|"
+              echo "| Result | ⚠️ not verified — no health URL is configured for this environment |"
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
-          echo "⏳ Waiting 30s for container restart..."
-          sleep 30
-
-          echo "🔍 Verifying health at ${HEALTH_URL}..."
-          for i in {1..10}; do
-            if curl -sf --max-time 10 "${HEALTH_URL}/health" > /dev/null 2>&1; then
-              echo "✅ Health check passed after rollback"
-              exit 0
-            fi
-            echo "  Attempt $i/10 — retrying in 10s..."
-            sleep 10
-          done
-          echo "❌ Health check failed after rollback — manual investigation needed"
-          exit 1
+          bash scripts/verify-deployed-image-tag.sh --rollback "${{ inputs.target_tag }}" "$HEALTH_URL"
 
       - name: Notify Slack — Rollback Success
         if: success()

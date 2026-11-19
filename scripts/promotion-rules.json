@@ -76,6 +76,10 @@
     {
       "id": "azeebo-custom/no-undefined-az-utility",
       "ratchet": "scripts/no-undefined-az-utility-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-low-contrast-pair",
+      "ratchet": "scripts/no-low-contrast-pair-baseline.json"
     }
   ]
 }

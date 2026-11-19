@@ -66,9 +66,9 @@ permissions:
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, Major-Upgrade]
   push:
-    branches: [main, develop]
+    branches: [main, develop, Major-Upgrade]
   workflow_dispatch:
 
 env:
@@ -218,6 +218,9 @@ jobs:
 
       - name: Service health smoke checks (nginx → gateway → services)
         run: bash scripts/docker-smoke-tests.sh http://localhost:80
+
+      - name: All-in-one dynamic gateway routing table & health smoke test
+        run: ALL_IN_ONE_E2E=1 ALL_IN_ONE_IMAGE=azeebo-all-in-one:smoke node --test scripts/__tests__/all-in-one-smoke.test.mjs
 
       # Full gateway sweep: every registered GET route, minted dev token,
       # fails on any 5xx. Uses the same secrets the container was booted with.
