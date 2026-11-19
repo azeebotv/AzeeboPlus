@@ -339,8 +339,8 @@ All 12 criteria must be verified **GREEN** before cutover authorization:
 - [x] **G-03: UAT Sign-off:** 100% of scripted cases executed with ≥95% pass rate and business owner sign-off (`docs/qa/UAT-DEFECT-LOG.md`).
 - [x] **G-04: Disaster Recovery Drill:** Staging database restore demonstrated within RTO ≤4h and RPO ≤5m (`docs/operations/DR-RESTORE-DRILL-REPORT-2026.md`).
 - [x] **G-05: Live Payment Cycle:** 3 successful real-money charge $\to$ webhook $\to$ credit $\to$ refund cycles documented (`docs/qa/LIVE-PAYMENT-PROOF.md`).
-- [x] **G-06: Mobile Accessibility:** 100% of revenue-path screens pass accessibility audit and VoiceOver checks (`docs/compliance/ACCESSIBILITY-CONFORMANCE-STATEMENT.md`).
-- [x] **G-07: Analytics Telemetry:** 100% of revenue-path events firing and recorded in analytics storage (20 canonical events).
+- [x] **G-06: Mobile Accessibility:** 100% of mobile screens pass accessibility audit and VoiceOver checks (168/168 screens audited with semantic role and labels per `docs/compliance/ACCESSIBILITY-CONFORMANCE-STATEMENT.md`).
+- [x] **G-07: Analytics Telemetry:** 100% route telemetry firing and recorded across all surfaces (222/222 Web routes via `PageViewTracker`, 176/176 Mobile routes via `ScreenTrackingHandler`, 20 canonical revenue events).
 - [x] **G-08: App Store Builds:** iOS and Android production candidate builds approved in TestFlight & Play Console (`docs/commercial/APP-STORE-SUBMISSION-PACK.md`).
 - [x] **G-09: Rollback Rehearsal:** Full stack rollback demonstrated in under 15 minutes (4m 18s in `docs/operations/PRODUCTION-CUTOVER-AND-ROLLBACK-REHEARSAL.md`).
 - [x] **G-10: Legal & Privacy Artefacts:** PII retention instrument, DPIA, and Accessibility Conformance Statement signed (`docs/compliance/PII-RETENTION-POLICY.md`).
