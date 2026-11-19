@@ -71,7 +71,7 @@ jobs:
 
       - name: Build and push (cached)
         if: ${{ !inputs.no_cache }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile.all-in-one
@@ -85,7 +85,7 @@ jobs:
 
       - name: Build and push (no cache)
         if: ${{ inputs.no_cache }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile.all-in-one
