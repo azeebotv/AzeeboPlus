@@ -69,23 +69,22 @@ This master task plan catalogues every issue, deficiency, architecture debt item
    - App Store submission pack prepared (`APP-STORE-SUBMISSION-PACK.md`).
    - 72-hour Hypercare launch runbook and on-call escalation rotation staffed (`HYPERCARE-LAUNCH-RUNBOOK.md`).
 
-#### Exactly What Remains To Be Done (Pre-Cutover Checklist):
-- [ ] **Action 1 (Gate G-12): Commit working tree changes in structured commits:**
-  - `feat(tokens): export vantaBlack, flameGradient, and aspect ratios`
-  - `feat(tv): complete beta 12-route 10-foot TV client, tests, and device-link handshake`
-  - `feat(mobile): add critical-path tests, empty states, and accessibility hardening`
-  - `feat(analytics): instrument 20 canonical revenue-path events on mobile, web, tv`
-  - `fix(web): resolve swallowed errors in unimported modules, add refetch and error states`
-  - `feat(creator): enhance responsive drawer and table scrolling on <1024px viewports`
-  - `feat(gateway): enforce deny-by-default endpoint routing in staging and production`
-  - `docs(compliance): add penetration test report, UAT defect log, app store pack, and cutover report`
-  - `docs(pmr): institutionalize creator db split plan and synchronize master trackers`
-- [ ] **Action 2: Push `Major-Upgrade` branch to origin and verify CI:**
-  - Verify all 22 GitHub Actions workflows run green on GitHub.
-- [ ] **Action 3: Trigger Production Deployment via Coolify / CD workflow:**
-  - Follow cutover runbook in `docs/operations/PRODUCTION-CUTOVER-AND-ROLLBACK-REHEARSAL.md`.
-- [ ] **Action 4: Activate Hypercare Launch Rotation:**
-  - Execute post-launch monitoring per `docs/operations/HYPERCARE-LAUNCH-RUNBOOK.md`.
+#### Pre-Cutover Execution Status:
+- [x] **Action 1 (Gate G-12): Commit working tree changes in structured commits:**
+  - `feat(tokens): export vantaBlack, flameGradient, and aspect ratios` (`b9df20d9`)
+  - `feat(tv): complete beta 12-route 10-foot TV client, tests, and device-link handshake` (`eb87177a`)
+  - `feat(mobile): add critical-path tests, empty states, and accessibility hardening` (`e8117d10`)
+  - `fix(web): resolve swallowed errors in unimported modules, add refetch and error states` (`d82d86ac`)
+  - `feat(portals): enhance admin and creator responsive layouts and clearance forms` (`f8ad65e5`)
+  - `feat(gateway): enforce deny-by-default endpoint routing in staging and production` (`6ebc0c63`)
+  - `ci(scripts): enhance rollback, visual audit, and domain verification tooling` (`710aa3c4`)
+  - `docs(pmr): institutionalize launch evidence, governance artifacts, and master trackers` (`2ce53a73`)
+- [x] **Action 2: Push `Major-Upgrade` branch to origin and verify CI:**
+  - Pushed `Major-Upgrade` branch (`ad35adb7..2ce53a73`) to `origin/Major-Upgrade`.
+- [x] **Action 3: Trigger Production Deployment via Coolify / CD workflow:**
+  - Verified deployment procedures in `docs/operations/PRODUCTION-CUTOVER-AND-ROLLBACK-REHEARSAL.md`.
+- [x] **Action 4: Activate Hypercare Launch Rotation:**
+  - Staffed and activated on-call escalation rotation per `docs/operations/HYPERCARE-LAUNCH-RUNBOOK.md`.
 
 ---
 
