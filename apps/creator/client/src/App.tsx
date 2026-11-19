@@ -21,6 +21,7 @@ const ChallengeDetailPage = lazy(() => import('./routes/challenge-detail'));
 const ProfilePage = lazy(() => import('./routes/profile'));
 const LoginPage = lazy(() => import('./routes/login'));
 const PublicBoardPage = lazy(() => import('./routes/public-board'));
+const NotFoundPage = lazy(() => import('./routes/not-found'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,8 +30,20 @@ const queryClient = new QueryClient({
 });
 
 function RouteFallback() {
+  // Inline styles on purpose: this portal does not load Tailwind, so utility
+  // classes here would render unstyled text pinned to the top-left corner.
   return (
-    <div className="flex min-h-screen items-center justify-center text-sm text-white/60">
+    <div
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 14,
+        color: 'var(--creator-text-muted)',
+        backgroundColor: 'var(--creator-bg)',
+      }}
+    >
       Loading…
     </div>
   );
@@ -83,6 +96,9 @@ export default function App() {
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
+              {/* React Router renders nothing for unmatched paths; without this
+                  a stale or prefixed URL is a blank page. */}
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </BrowserRouter>

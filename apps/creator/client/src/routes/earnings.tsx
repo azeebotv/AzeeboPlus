@@ -147,50 +147,52 @@ export default function EarningsPage() {
             ) : history.isError ? (
               <p style={errorTextStyle()}>{creatorApi.errorMessage(history.error)}</p>
             ) : history.data && history.data.items.length > 0 ? (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr style={{ color: 'var(--creator-text-muted)', textAlign: 'left' }}>
-                    <th style={{ padding: '8px 0', fontWeight: 500 }}>Date</th>
-                    <th style={{ padding: '8px 0', fontWeight: 500 }}>Type</th>
-                    <th style={{ padding: '8px 0', fontWeight: 500 }}>Description</th>
-                    <th style={{ padding: '8px 0', fontWeight: 500, textAlign: 'right' }}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.data.items.map((entry: EarningsEntry) => (
-                    <tr
-                      key={entry.id}
-                      style={{
-                        borderTop: '1px solid var(--creator-border-light)',
-                      }}
-                    >
-                      <td style={{ padding: '10px 0' }}>{formatDate(entry.createdAt)}</td>
-                      <td style={{ padding: '10px 0', textTransform: 'capitalize' }}>
-                        {entry.type.replace(/_/g, ' ')}
-                      </td>
-                      <td style={{ padding: '10px 0', color: 'var(--creator-text-muted)' }}>
-                        {entry.description?.includes('Challenge prize') ? (
-                          <span style={{ color: 'var(--creator-text)' }}>
-                            <span aria-hidden>🏆</span> Challenge prize
-                          </span>
-                        ) : (
-                          (entry.description ?? '—')
-                        )}
-                      </td>
-                      <td
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', minWidth: 480, borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ color: 'var(--creator-text-muted)', textAlign: 'left' }}>
+                      <th style={{ padding: '8px 0', fontWeight: 500 }}>Date</th>
+                      <th style={{ padding: '8px 0', fontWeight: 500 }}>Type</th>
+                      <th style={{ padding: '8px 0', fontWeight: 500 }}>Description</th>
+                      <th style={{ padding: '8px 0', fontWeight: 500, textAlign: 'right' }}>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.data.items.map((entry: EarningsEntry) => (
+                      <tr
+                        key={entry.id}
                         style={{
-                          padding: '10px 0',
-                          textAlign: 'right',
-                          fontWeight: 600,
-                          color: 'var(--creator-green)',
+                          borderTop: '1px solid var(--creator-border-light)',
                         }}
                       >
-                        +{formatNgn(entry.amount)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <td style={{ padding: '10px 0' }}>{formatDate(entry.createdAt)}</td>
+                        <td style={{ padding: '10px 0', textTransform: 'capitalize' }}>
+                          {entry.type.replace(/_/g, ' ')}
+                        </td>
+                        <td style={{ padding: '10px 0', color: 'var(--creator-text-muted)' }}>
+                          {entry.description?.includes('Challenge prize') ? (
+                            <span style={{ color: 'var(--creator-text)' }}>
+                              <span aria-hidden>🏆</span> Challenge prize
+                            </span>
+                          ) : (
+                            (entry.description ?? '—')
+                          )}
+                        </td>
+                        <td
+                          style={{
+                            padding: '10px 0',
+                            textAlign: 'right',
+                            fontWeight: 600,
+                            color: 'var(--creator-green)',
+                          }}
+                        >
+                          +{formatNgn(entry.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <p style={{ color: 'var(--creator-text-muted)', fontSize: 13 }}>
                 No earnings recorded yet.

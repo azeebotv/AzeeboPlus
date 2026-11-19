@@ -57,6 +57,7 @@ const DualControlPage = lazy(() => import('./routes/dual-control'));
 const TalentClearancePage = lazy(() => import('./routes/talent-clearance'));
 const LifestyleGuidesPage = lazy(() => import('./routes/lifestyle-guides'));
 const LoginPage = lazy(() => import('./routes/login'));
+const NotFoundPage = lazy(() => import('./routes/not-found'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,8 +66,20 @@ const queryClient = new QueryClient({
 });
 
 function RouteFallback() {
+  // Inline styles on purpose: this portal does not load Tailwind, so utility
+  // classes here would render unstyled text pinned to the top-left corner.
   return (
-    <div className="flex h-64 items-center justify-center text-sm text-white/50">
+    <div
+      style={{
+        display: 'flex',
+        height: '100vh',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 14,
+        color: 'var(--admin-text-muted)',
+        backgroundColor: 'var(--admin-bg)',
+      }}
+    >
       Loading…
     </div>
   );
@@ -159,6 +172,9 @@ export default function App() {
                 <Route path="talent-clearance" element={<TalentClearancePage />} />
                 <Route path="lifestyle-guides" element={<LifestyleGuidesPage />} />
               </Route>
+              {/* React Router renders nothing for unmatched paths; without this
+                  a stale or prefixed URL is a blank page. */}
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
