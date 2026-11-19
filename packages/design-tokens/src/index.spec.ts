@@ -114,4 +114,16 @@ describe('Design Tokens', () => {
     expect(themes.dark).toBeDefined();
     expect(themes.light).toBeDefined();
   });
+
+  it('should export canonical aspect-ratio manifest tokens (DD-05)', () => {
+    const { aspectRatios, aspectRatioValues } = require('./index');
+    expect(aspectRatios).toBeDefined();
+    expect(aspectRatios.poster).toBe('3:4');
+    expect(aspectRatios.feed).toBe('4:5');
+    expect(aspectRatios.landscape).toBe('16:9');
+    expect(aspectRatios.square).toBe('1:1');
+    expect(aspectRatios.story).toBe('9:16');
+    expect(aspectRatioValues.poster).toBe(0.75);
+    expect(aspectRatioValues.square).toBe(1);
+  });
 });

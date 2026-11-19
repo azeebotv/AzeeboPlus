@@ -111,6 +111,18 @@ Every interactive surface, form, and data presentation component MUST implement 
 - Toggles utilize `role="switch"`, `aria-checked`, and `aria-label` for screen reader accessibility.
 - Financial numbers never render synthetic zeroes when queries fail.
 
+### 4.3.1 Text on solid light fills (`--color-az-flame` and the rest of the table)
+
+- `--color-az-flame` (`#EC691F`) is a _light_ accent: white on it measures **3.18:1**, below the 4.5:1 AA floor for the 12–14px type this platform uses on chips, pills, badges and selected tabs. White on `--color-az-scarlet` (`#E31E24`) still passes at 4.69:1.
+- The same holds for every other light fill, measured the same way: `--color-az-warning-500` **2.15:1**, `--color-az-success-500` **2.28:1**, `--color-az-accent-gold` **1.67:1**, `--color-az-accent-silver` **1.82:1**, `--color-az-accent-bronze` **3.14:1**, `--color-az-error-500` **3.76:1**, `--color-az-secondary-500` **3.68:1**. The deep surface ink clears all of them (5.09–11.48:1). A destructive fill that must keep white ink uses step 600 (`--color-az-error-600`, 4.83:1) with an `error-700` hover, never step 500.
+- Never pair `text-az-ink` (white) with a solid `bg-az-flame` surface. Use `text-az-surface-root` instead — `#0F0F0F` on `#EC691F` is **6.03:1**. Opacity variants (`bg-az-flame/10`) sit on the dark canvas and keep the normal ink.
+- The brand gradient (`from-az-flame to-az-scarlet`) is a _large-text_ surface only. White clears 3.18:1 on the flame stop and deep ink clears 4.09:1 on the scarlet stop — both below 4.5:1, both above the 3:1 large-text floor. Chips, pills, tabs, badges and compact buttons (12–14px) use `bg-az-flame` with `text-az-surface-root`; only labels at 24px / 18.66px bold may sit on the gradient (`.az-btn-primary`).
+- The same rule governs gradient **text** (`.az-text-gradient`): its scarlet stop is 4.23:1 on the page root, so it is for display type. Inline emphasis at body size uses `text-az-flame` (6.24:1). The visual audit measures each opaque stop of clipped text against the layer behind it, so a gradient label that drops below AA is caught rather than read as transparent.
+- Categorical badges are fills, not text: the tier swatches (`bg-az-secondary-500`, `bg-az-category-violet`, `bg-az-warning-500`) carry white at 3.68:1, 4.23:1 and 2.15:1, and `#0F0F0F` at 5.19:1, 4.53:1 and 8.93:1 — use the deep ink.
+- Enforced statically by the `no-low-contrast-pair` ESLint rule (`packages/eslint-rules`), so the pairing fails `pnpm lint` instead of waiting for the rendered audit. The rule is driven by a measured table (`packages/eslint-rules/contrast-pairs.json`), so a new light fill is one entry: token, hex, done. It computes each ratio from the hexes, derives both spellings (`bg-az-warning-500`, `bg-[var(--color-az-warning-500)]`), and a test re-reads every hex from `apps/web/src/styles/design-tokens.css` so the table cannot drift from the shipped theme. Solid fills only, with the gradient, large-text roles, translucent washes and corrected dark ink exempt.
+- Verified 2026-11-10/11 by a full-route visual sweep (desktop 1440×900 and mobile 390×844, 177 web routes, now gated on every PR by `visual-audit-pr`): every remaining contrast failure traced back to these pairings. A static hex audit cannot catch them, because both classes come from tokens.
+- Still open (brand decision, not a code defect): `--color-az-scarlet` as _text_ on the dark canvas is 4.09–4.23:1 — fine for large/bold display type, short of AA for body copy.
+
 ### 4.4 TV 10-Foot UI (`apps/tv`)
 
 - Focus-driven remote D-pad navigation with distinct visual focus rings (minimum 3px border).

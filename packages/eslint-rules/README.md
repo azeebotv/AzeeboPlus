@@ -25,17 +25,17 @@ plugins: {
 
 ## Shipped rules
 
-| Rule                                                | Type       | Severity in this repo                                                    | Purpose                                                                                                            |
-| --------------------------------------------------- | ---------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| [`require-map-and-throw`](#require-map-and-throw)   | problem    | `error` repo-wide (canary ratchet at 0)                                  | Ban fabricated 4xx statuses in catch blocks                                                                        |
-| [`no-console-log`](#no-console-log)                 | problem    | `error` (off in logger/scripts)                                          | Ban `console.log` in favor of the structured logger                                                                |
-| [`no-hex-colors`](#no-hex-colors)                   | suggestion | `error` repo-wide (token migration complete, baseline canary at 0)       | Ban hardcoded hex colors in favor of design tokens                                                                 |
-| [`no-arbitrary-hex-class`](#no-arbitrary-hex-class) | suggestion | `error` repo-wide (baseline canary at 0, no allowList)                   | Ban raw hex inside Tailwind arbitrary values (`bg-[#0b090e]`)                                                      |
-| [`no-dead-class-override`](#no-dead-class-override) | problem    | `error` repo-wide (canary baseline at 0)                                 | Ban Tailwind utilities that can never beat an unlayered `.az-*` class; `--fix` drops them                          |
-| [`no-retired-brand-alias`](#no-retired-brand-alias) | suggestion | `error` repo-wide (canary baseline at 0; 238 refs converted in apps/web) | Ban the pre-design-system `var(--brand-*)`/`var(--hp-*)` alias layer in favour of `--color-az-*`; `--fix` swaps it |
-| [`no-off-system-color-utility`](#no-off-system-color-utility) | suggestion | `error` repo-wide (canary baseline at 0; 459 apps/web + 458 packages/ui occurrences converted) | Ban raw Tailwind palette colours (`bg-amber-500`) plus the two vocabulary layers Tailwind v4 generates nothing for (`bg-primary-500`, `bg-bg-primary`) |
-| [`require-shared-route-boundary`](#require-shared-route-boundary) | problem | `error` repo-wide (canary baseline at 0) | Require `src/app/**/error.tsx` and `loading.tsx` to render the shared `RouteErrorFallback` / `RouteLoading` |
-| [`no-undefined-az-utility`](#no-undefined-az-utility) | problem | `error` repo-wide, apps/web by walk-up and packages/ui by config pin (canary baseline at 0) | Ban `az-*` classes with no generated token or shared rule behind them, which Tailwind compiles to nothing |
+| Rule                                                              | Type       | Severity in this repo                                                                          | Purpose                                                                                                                                                |
+| ----------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --- | ----------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [`require-map-and-throw`](#require-map-and-throw)                 | problem    | `error` repo-wide (canary ratchet at 0)                                                        | Ban fabricated 4xx statuses in catch blocks                                                                                                            |
+| [`no-console-log`](#no-console-log)                               | problem    | `error` (off in logger/scripts)                                                                | Ban `console.log` in favor of the structured logger                                                                                                    |
+| [`no-hex-colors`](#no-hex-colors)                                 | suggestion | `error` repo-wide (token migration complete, baseline canary at 0)                             | Ban hardcoded hex colors in favor of design tokens                                                                                                     |
+| [`no-arbitrary-hex-class`](#no-arbitrary-hex-class)               | suggestion | `error` repo-wide (baseline canary at 0, no allowList)                                         | Ban raw hex inside Tailwind arbitrary values (`bg-[#0b090e]`)                                                                                          |
+| [`no-dead-class-override`](#no-dead-class-override)               | problem    | `error` repo-wide (canary baseline at 0)                                                       | Ban Tailwind utilities that can never beat an unlayered `.az-*` class; `--fix` drops them                                                              |
+| [`no-retired-brand-alias`](#no-retired-brand-alias)               | suggestion | `error` repo-wide (canary baseline at 0; 238 refs converted in apps/web)                       | Ban the pre-design-system `var(--brand-*)`/`var(--hp-*)` alias layer in favour of `--color-az-*`; `--fix` swaps it                                     |
+| [`no-off-system-color-utility`](#no-off-system-color-utility)     | suggestion | `error` repo-wide (canary baseline at 0; 459 apps/web + 458 packages/ui occurrences converted) | Ban raw Tailwind palette colours (`bg-amber-500`) plus the two vocabulary layers Tailwind v4 generates nothing for (`bg-primary-500`, `bg-bg-primary`) |
+| [`require-shared-route-boundary`](#require-shared-route-boundary) | problem    | `error` repo-wide (canary baseline at 0)                                                       | Require `src/app/**/error.tsx` and `loading.tsx` to render the shared `RouteErrorFallback` / `RouteLoading`                                            |     | [`no-undefined-az-utility`](#no-undefined-az-utility) | problem | `error` repo-wide, apps/web by walk-up and packages/ui by config pin (canary baseline at 0) | Ban `az-*` classes with no generated token or shared rule behind them, which Tailwind compiles to nothing |
+| [`no-low-contrast-pair`](#no-low-contrast-pair)                   | problem    | `error` repo-wide (canary baseline at 0)                                                       | Ban light ink on a solid light fill — one rule, one measured table (`contrast-pairs.json`)                                                             |
 
 ---
 
@@ -558,7 +558,7 @@ card-bg,card-border,divider}` surface layer behind the same sweep.
 `PageHero` used to take a bare hue word and build the value at render time:
 
 ```tsx
-`var(--brand-${accentColor}, ${accentColor})`   // accentColor="orange"
+`var(--brand-${accentColor}, ${accentColor})`; // accentColor="orange"
 ```
 
 No `var(--brand-orange)` literal ever existed, so the rule could not see the most
@@ -596,7 +596,7 @@ the two retyped status hues (26 more references, all `--fix`ed), and the compose
 `packages/design-tokens` emits five semantic ramps —
 `--color-az-{error,success,warning,primary,secondary}` at 50–900 — plus the eight
 `--color-az-universe-*` branding hues. Tailwind ships its own palette alongside
-them, and several of those ramps are *the same hexes*: `az-warning-500` is
+them, and several of those ramps are _the same hexes_: `az-warning-500` is
 `#f59e0b` (amber-500), `az-error-500` is `#ef4444` (red-500), `az-secondary-500`
 is `#3b82f6` (blue-500), `az-success-500` is `#22c55e` (green-500).
 
@@ -636,7 +636,7 @@ renders:
 - Anything in the generated `az-*` vocabulary — including the `az-category-*`
   and `az-surface-auth-*` tokens the campaign added while writing this rule.
 
-The violet family (`purple`, `violet`, `pink`, `fuchsia`) *is* banned now. It was
+The violet family (`purple`, `violet`, `pink`, `fuchsia`) _is_ banned now. It was
 left out while no Figma frame defined a premium purple and the eight
 `--color-az-universe-*` hues were branding rather than a ramp: the only way to
 satisfy the rule would have been to invent a token, which puts an unmeasured
@@ -705,7 +705,7 @@ alias (`border-[var(--brand-orange)]`) that reached ~200 files purely because
 each scaffold copied the last scaffold.
 
 They now all import `RouteErrorFallback` / `RouteLoading`. This rule keeps that
-true for the *next* route rather than relying on its author having read the
+true for the _next_ route rather than relying on its author having read the
 migration note: a new boundary either uses the shared component or carries an
 explicit escape comment, so a real exception is a visible, reviewable decision
 instead of silent divergence.
@@ -743,7 +743,7 @@ Migrated first, gated second: the conversion was verified at 219/219 and 217/217
 before the rule went live, so it ships at `error` with a
 `scripts/require-shared-route-boundary-baseline.json` canary at 0 — the
 fully-gated posture, same as `no-retired-brand-alias`. There is no warn block and
-no ratchet to climb; the lint failure *is* the migration.
+no ratchet to climb; the lint failure _is_ the migration.
 
 ---
 
@@ -829,6 +829,120 @@ build's scan scope.
 
 ---
 
+## `no-low-contrast-pair`
+
+> '{{ink}}' on '{{surface}}' measures {{ratio}}:1, below WCAG AA's {{floor}}:1
+> floor. Use '{{alternative}}' ({{alternativeRatio}}:1) on this fill, or move
+> the label to a darker surface / large text.
+
+### Why
+
+The platform's light fills are light: `--color-az-flame` (`#EC691F`) measures
+**3.18:1** under white, `--color-az-warning-500` (`#f59e0b`) **2.15:1**, the
+reward metals **1.67–3.14:1**. All of them clear AA under the deep surface ink
+(`--color-az-surface-root`, `#0F0F0F`) at **6.03–11.48:1**.
+
+Every other gate passes these pairings: both classes are real tokens, the CSS
+compiles, `no-off-system-color-utility` and `no-undefined-az-utility` have
+nothing to say, and code review sees one correct-looking chip. It only fails
+where a browser measures it — which is how the 2026-11-10 visual sweep found
+white-on-flame on 152 of 177 pages (selected tabs, filter chips, tier badges,
+compact CTAs), and why `bg-az-warning-500 text-az-ink` survived on a dual-control
+step marker while its flame sibling was being fixed. The rendered audit
+(`scripts/visual-audit.mjs`) catches what ships; this rule catches the markup
+before it gets there.
+
+### The table is the rule
+
+Which fill is measured, how it measures, and which ink fixes it live in
+[`packages/eslint-rules/contrast-pairs.json`](contrast-pairs.json) — one entry
+per design token:
+
+```json
+{ "token": "warning-500", "color": "#f59e0b" }
+```
+
+The rule derives both spellings a page can write (`bg-az-warning-500`,
+`bg-[var(--color-az-warning-500)]`), computes the WCAG ratio from the two hex
+values, and reports the first deep ink in the table that clears the floor. So:
+
+- **a new light fill is one entry, not a new rule** — the flame-only rule this
+  replaced could not see the amber step marker, the tier swatches or the
+  destructive buttons beside it;
+- **no ratio is hand-typed**, so a palette change cannot leave a stale number in
+  a message;
+- the test re-reads every hex from
+  `apps/web/src/styles/design-tokens.css` and fails when the table and the
+  shipped theme disagree, and asserts the invariant the rule relies on (every
+  enforced fill has a deep ink that clears the floor);
+- fills where white _does_ pass (`bg-az-scarlet` 4.69:1, `bg-az-primary-500`
+  4.69:1, `bg-az-error-600` 4.83:1) are listed too, so a reviewer can see the
+  pass is deliberate rather than wonder what the rule missed.
+
+### What it flags
+
+A class list that pairs a white ink with a **solid** light fill:
+
+```html
+<button class="bg-az-flame text-az-ink">Register</button>
+<!--           ^^^^^^^^^^^^        ^^^^^^^^^^^ 3.18:1 -->
+<span class="bg-az-warning-500 text-az-ink">step 2</span>
+<!--                                        ^^^^^^^^^^ 2.15:1 -->
+<div class="text-az-ink hover:bg-az-accent-gold">…</div>
+```
+
+Branches are analysed separately, not merged: an active tab that is
+`bg-az-flame text-az-ink` and an idle tab that is `text-az-ink/60` produces one
+report, and the idle branch — painted on the dark glass panel — is left alone.
+The report lands on the string that carries the ink.
+
+### What it deliberately does NOT flag
+
+- **Translucent fills** (`bg-az-flame/10`, `bg-az-accent-gold/15`). They sit on
+  the dark canvas, where the light ink is correct — the reward-tier badges are
+  exactly this shape.
+- **Gradients** (`from-az-flame to-az-scarlet` with `text-az-ink`). Whether a
+  label passes depends on the stop under each glyph and on its computed size and
+  weight, neither of which a class list resolves. The rendered audit measures the
+  actual stops.
+- **Large-text roles** (`az-heading`, `az-title`, `text-4xl`, …). At 24px, or
+  18.66px bold, AA's floor is 3:1, so the rule uses the table's `largeText`
+  threshold for them; a fill that fails even 3:1 (`bg-az-accent-gold`, 1.67:1) is
+  still reported. The audit verifies the real font size rather than trusting the
+  role name.
+- **Lists that also name a deep ink** (`text-az-surface-root`, `text-black`).
+  The author has already paired the fill with the dark ink; if both inks are
+  present that is a cascade question (`no-dead-class-override`), not a legibility
+  one.
+- **Pseudo-element fills** (`file:bg-az-flame`) paired with base ink: the picker
+  button's fill is not behind the input's own text. `file:text-az-ink` on the
+  same variant is flagged.
+
+### Options
+
+| Option            | Default | Meaning                                                                 |
+| ----------------- | ------- | ----------------------------------------------------------------------- |
+| `tablePath`       | —       | Read a different contrast table (used by the rule's tests).             |
+| `ignoreLargeText` | `true`  | `false` enforces the body-text floor at every size, ignoring text roles |
+
+### Campaign posture
+
+Shipped at `error` with a total-0 canary baseline
+(`scripts/no-low-contrast-pair-baseline.json`). The flame-only predecessor
+corrected the 25 flame sites across 22 files (creator analytics tabs, lifestyle
+CTAs, quiz option markers, the streak calendar, both confirm dialogs, the
+file-picker button). Generalising to the table then found 23 more in 14 files —
+white on `bg-az-success-500` step markers and "Watch Now" buttons (2.28:1),
+white on `bg-az-accent-silver`/`gold` (1.82:1 / 1.67:1), white on
+`bg-az-warning-500` tier swatches (2.15:1), and destructive buttons on
+`bg-az-error-500` (3.76:1) whose hover step was also too light. All 23 were
+corrected before the rule went live: light fills took `text-az-surface-root`, and
+the destructive buttons that keep white ink moved to `bg-az-error-600`
+(4.83:1) with an `error-700` hover. Both `check-lint-warning-ratchet.mjs` and
+`check-rule-promotion.mjs` cover it.
+
+---
+
 ## Suppression policy
 
 Suppressions are the exception, and the mechanism depends on the rule:
@@ -876,6 +990,23 @@ backgroundColor: '#F5F0EB',
 If a disable comment appears more than twice for the same reason, extend the
 central `allowList` (colors) or fix the architecture (logging) instead.
 
+### Dead suppressions are errors
+
+A suppression that suppresses nothing is drift too, and both halves are gated:
+
+- **`eslint-disable` directives.** `eslint.config.js` sets
+  `linterOptions.reportUnusedDisableDirectives: 'error'`, so a directive whose
+  rule was renamed, removed, or never fired at that site fails `pnpm lint`.
+  Flat config defaults this to a warning, which `eslint src` prints while still
+  exiting 0 — that is the state this setting replaces. Nothing to remember:
+  delete the comment.
+- **Ignore files.** `scripts/check-dead-suppressions.mjs` fails when a
+  _literal_ un-ignore (`!scripts/build.sh`) names a path that no longer exists,
+  because the build then silently stops receiving that file. Unmatched globs
+  and guards (`*.log`, `!*.tfvars.example`) are advisory — they exist to catch
+  artifacts that do not exist yet — and `--strict` lists them as failures for a
+  one-off cleanup.
+
 ---
 
 ## Testing the rules
@@ -890,6 +1021,9 @@ node --test scripts/__tests__/require-map-and-throw.test.mjs
 
 ## Adding a new rule
 
+0. If the rule would only say "this ink may not sit on that fill", do not write
+   it: add the fill to `contrast-pairs.json` and `no-low-contrast-pair` measures
+   it, computes the ratio and reports the ink to use instead.
 1. Create `packages/eslint-rules/<rule-name>.js` (CommonJS) with
    `meta` (`type`, `docs.description`, `schema`, `messages`) and
    `create(context)`; use `meta.messages` ids rather than raw strings.

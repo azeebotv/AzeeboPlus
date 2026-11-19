@@ -1,0 +1,147 @@
+{
+  "$comment": [
+    "The measured ink/surface table behind `azeebo-custom/no-low-contrast-pair`.",
+    "",
+    "One rule, one table: a new solid fill is an entry here, not a new rule.",
+    "Each entry names a design token (`--color-az-<token>`) and the colour the",
+    "generated theme paints for it. The rule derives both spellings a page can",
+    "write — `bg-az-<token>` and `bg-[var(--color-az-<token>)]` — and computes",
+    "the WCAG 2.2 ratio from the two hex values, so no ratio is ever hand-typed",
+    "and stale. scripts/__tests__/no-low-contrast-pair.test.mjs re-reads every",
+    "hex here from apps/web/src/styles/design-tokens.css and fails when the two",
+    "drift, and it asserts the invariant the rule relies on: every fill that",
+    "enforces a floor must have a deep ink that clears it.",
+    "",
+    "Which entries matter: the rule enforces only the pairings whose white ink",
+    "falls under `thresholds.bodyText`. The rest are listed because they are",
+    "measured too — `bg-az-scarlet` (4.69:1), `bg-az-primary-500` (4.69:1) and",
+    "`bg-az-error-600` (4.83:1) pass, so white ink there is deliberate and a",
+    "reviewer can see that rather than wondering whether the rule missed them.",
+    "",
+    "The five semantic ramps are listed at every step a solid fill can be",
+    "written from (300–700); a chip, pill, swatch or button cannot slip through",
+    "on a step nobody remembered. Brand flame/scarlet, the reward-tier metals",
+    "and the categorical violets complete the set.",
+    "",
+    "Adding a fill: add the token and its hex from the generated stylesheet.",
+    "Do not add translucent fills (`bg-az-flame/15`): they sit on the dark",
+    "canvas and keep the light ink on purpose, and the rule skips them by",
+    "design."
+  ],
+  "thresholds": {
+    "bodyText": 4.5,
+    "largeText": 3
+  },
+  "inks": {
+    "light": [
+      {
+        "utility": "text-az-ink",
+        "color": "#FFFFFF",
+        "role": "the theme's white ink (--color-az-ink)"
+      },
+      {
+        "utility": "text-white",
+        "color": "#FFFFFF",
+        "role": "Tailwind's own white; the same pixel, a different utility"
+      }
+    ],
+    "deep": [
+      {
+        "utility": "text-az-surface-root",
+        "color": "#0F0F0F",
+        "role": "the root surface ink — what every light fill should carry"
+      },
+      {
+        "utility": "text-black",
+        "color": "#000000",
+        "role": "Tailwind black; the same intent as the root surface ink"
+      }
+    ]
+  },
+  "surfaces": [
+    {
+      "token": "flame",
+      "color": "#EC691F",
+      "note": "Brand flame — light end of the CTA gradient; chips, tabs, compact CTAs."
+    },
+    {
+      "token": "scarlet",
+      "color": "#E31E24",
+      "note": "Brand scarlet — white passes at 4.69:1; listed so the pass is visible."
+    },
+    { "token": "primary-300", "color": "#f18a76" },
+    { "token": "primary-400", "color": "#EC691F" },
+    {
+      "token": "primary-500",
+      "color": "#E31E24",
+      "note": "Primary CTA red — white passes at 4.69:1, unlike its flame neighbour."
+    },
+    { "token": "primary-600", "color": "#c2181d" },
+    { "token": "primary-700", "color": "#9c1317" },
+    { "token": "secondary-300", "color": "#93c5fd" },
+    { "token": "secondary-400", "color": "#60a5fa" },
+    {
+      "token": "secondary-500",
+      "color": "#3b82f6",
+      "note": "Blue — links, info states, `standard` bundle and carrier swatches."
+    },
+    { "token": "secondary-600", "color": "#2563eb" },
+    { "token": "secondary-700", "color": "#1d4ed8" },
+    { "token": "success-300", "color": "#86efac" },
+    { "token": "success-400", "color": "#4ade80" },
+    {
+      "token": "success-500",
+      "color": "#22c55e",
+      "note": "Green — success states and completed step markers."
+    },
+    { "token": "success-600", "color": "#16a34a" },
+    { "token": "success-700", "color": "#15803d" },
+    { "token": "warning-300", "color": "#fcd34d" },
+    { "token": "warning-400", "color": "#fbbf24" },
+    {
+      "token": "warning-500",
+      "color": "#f59e0b",
+      "note": "Amber — warnings, ratings, `ultimate` bundle and tier swatches; the worst pairing in the app at 2.15:1."
+    },
+    { "token": "warning-600", "color": "#d97706" },
+    { "token": "warning-700", "color": "#b45309" },
+    { "token": "error-300", "color": "#fca5a5" },
+    { "token": "error-400", "color": "#f87171" },
+    {
+      "token": "error-500",
+      "color": "#ef4444",
+      "note": "Red — destructive and error states."
+    },
+    {
+      "token": "error-600",
+      "color": "#dc2626",
+      "note": "The destructive-fill step that keeps white ink lawful (4.83:1)."
+    },
+    { "token": "error-700", "color": "#b91c1c" },
+    {
+      "token": "accent-gold",
+      "color": "#fbbf24",
+      "note": "Reward-tier gold; also the offline banner fill."
+    },
+    {
+      "token": "accent-silver",
+      "color": "#c0c0c0",
+      "note": "Reward-tier silver and platinum."
+    },
+    {
+      "token": "accent-bronze",
+      "color": "#cd7f32",
+      "note": "Reward-tier bronze."
+    },
+    {
+      "token": "category-violet",
+      "color": "#8b5cf6",
+      "note": "Categorical premium hue — `premium` tier swatches, genre badges."
+    },
+    {
+      "token": "category-violet-light",
+      "color": "#a78bfa",
+      "note": "The lighter categorical violet step, used on selected dark rows."
+    }
+  ]
+}

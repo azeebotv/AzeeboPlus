@@ -26,6 +26,11 @@ export function withAlpha(hex: string, alpha: number): string {
 export const brand = {
   scarlet: BRAND_SCARLET,
   flame: BRAND_FLAME,
+  /** Vanta Black base canvas (#0B090E) */
+  vantaBlack: '#0B090E',
+  /** Flame multi-stop brand gradient */
+  flameGradient: 'linear-gradient(135deg, #E5251C 0%, #E8420A 50%, #FFA02E 100%)',
+  flameRamp: ['#E5251C', '#E8420A', '#FFA02E'],
   /** Dominant brand treatment: 144 fills across the captured frames. */
   gradientCss: `linear-gradient(135deg, ${BRAND_SCARLET} 0%, ${BRAND_FLAME} 100%)`,
   /** React Native has no CSS gradients; consumers layer two Expo.LinearGradient stops. */
@@ -618,3 +623,10 @@ export { easing, duration, animation, generateAnimationsCSS } from './animations
  */
 export { pollingIntervals } from './polling';
 export type { PollingIntervalName } from './polling';
+
+/**
+ * Aspect-ratio manifest (PMR Task DD-05)
+ */
+export { aspectRatios, aspectRatioValues } from './aspect-ratios';
+export type { AspectRatioName } from './aspect-ratios';
+

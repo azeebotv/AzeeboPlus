@@ -478,7 +478,7 @@ export function BottomNavigation({
                 <span
                   className={`
                   absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1.5 rounded-full text-xs font-medium flex items-center justify-center
-                  ${isActive ? 'bg-az-primary-500 text-white' : 'bg-az-error-500 text-white'}
+                  ${isActive ? 'bg-az-primary-500 text-white' : 'bg-az-error-600 text-white'}
                 `}
                 >
                   {item.badge}

@@ -232,7 +232,7 @@ export function ConfirmDialog({
               px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors duration-200
               ${
                 variant === 'danger'
-                  ? 'bg-az-error-500 hover:bg-az-error-600'
+                  ? 'bg-az-error-600 hover:bg-az-error-700'
                   : 'bg-az-primary-500 hover:bg-az-primary-600'
               }
             `}

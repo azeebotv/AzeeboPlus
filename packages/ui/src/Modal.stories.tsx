@@ -136,7 +136,7 @@ export const ConfirmDialogDanger: StoryObj = {
       <>
         <button
           onClick={() => setIsOpen(true)}
-          className="px-4 py-2 text-sm font-medium text-white bg-az-error-500 rounded-lg hover:bg-az-error-600 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-white bg-az-error-600 rounded-lg hover:bg-az-error-700 transition-colors"
         >
           Delete Account
         </button>

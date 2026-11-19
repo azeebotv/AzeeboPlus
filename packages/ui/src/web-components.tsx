@@ -51,9 +51,9 @@ export function Button({
       'bg-transparent text-az-ink-dim hover:text-az-ink hover:bg-az-surface-panel focus:ring-az-glass-border rounded-lg',
     outline:
       'border-2 border-az-glass-border text-az-ink hover:border-az-primary-500 hover:text-az-primary-400 focus:ring-az-primary-500 rounded-lg',
-    danger: 'bg-az-error-500 text-white hover:bg-az-error-600 focus:ring-az-error-500 rounded-lg',
+    danger: 'bg-az-error-600 text-white hover:bg-az-error-700 focus:ring-az-error-500 rounded-lg',
     success:
-      'bg-az-success-500 text-white hover:bg-az-success-600 focus:ring-az-success-500 rounded-lg',
+      'bg-az-success-500 text-az-surface-root hover:bg-az-success-600 focus:ring-az-success-500 rounded-lg',
     warning:
       'bg-az-warning-500 text-az-surface-root hover:bg-az-warning-600 focus:ring-az-warning-500 rounded-lg',
   };
