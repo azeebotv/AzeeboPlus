@@ -3576,6 +3576,12 @@ export class ProxyController {
     this.UPSTREAM_TIMEOUT = this.configService.get<number>('UPSTREAM_TIMEOUT', 5000);
   }
 
+  private extractPathParam(req: Request): string {
+    const rawPathParam = req.params['path'] ?? req.params[0] ?? '';
+    const rawPath = Array.isArray(rawPathParam) ? rawPathParam.join('/') : rawPathParam;
+    return typeof rawPath === 'string' ? rawPath : String(rawPath || '');
+  }
+
   // ─── Versioned routes with path: /api/:version/:service/*path ──────
 
   @Get(':version/:service/*path')
@@ -3590,7 +3596,7 @@ export class ProxyController {
       'GET',
       version,
       service,
-      (req.params['path'] as string) || '',
+      this.extractPathParam(req),
       req,
       res
     );
@@ -3608,7 +3614,7 @@ export class ProxyController {
       'POST',
       version,
       service,
-      (req.params['path'] as string) || '',
+      this.extractPathParam(req),
       req,
       res
     );
@@ -3626,7 +3632,7 @@ export class ProxyController {
       'PUT',
       version,
       service,
-      (req.params['path'] as string) || '',
+      this.extractPathParam(req),
       req,
       res
     );
@@ -3644,7 +3650,7 @@ export class ProxyController {
       'PATCH',
       version,
       service,
-      (req.params['path'] as string) || '',
+      this.extractPathParam(req),
       req,
       res
     );
@@ -3662,7 +3668,7 @@ export class ProxyController {
       'DELETE',
       version,
       service,
-      (req.params['path'] as string) || '',
+      this.extractPathParam(req),
       req,
       res
     );
@@ -3763,7 +3769,7 @@ export class ProxyController {
       'GET',
       version,
       service,
-      (req.params['path'] as string) || '',
+      this.extractPathParam(req),
       req,
       res
     );
@@ -3781,7 +3787,7 @@ export class ProxyController {
       'POST',
       version,
       service,
-      (req.params['path'] as string) || '',
+      this.extractPathParam(req),
       req,
       res
     );
@@ -3799,7 +3805,7 @@ export class ProxyController {
       'PUT',
       version,
       service,
-      (req.params['path'] as string) || '',
+      this.extractPathParam(req),
       req,
       res
     );
@@ -3817,7 +3823,7 @@ export class ProxyController {
       'PATCH',
       version,
       service,
-      (req.params['path'] as string) || '',
+      this.extractPathParam(req),
       req,
       res
     );
@@ -3835,7 +3841,7 @@ export class ProxyController {
       'DELETE',
       version,
       service,
-      (req.params['path'] as string) || '',
+      this.extractPathParam(req),
       req,
       res
     );
@@ -3868,11 +3874,13 @@ export class ProxyController {
     method: string,
     version: string,
     service: string,
-    path: string,
+    path: unknown,
     req: Request,
     res: Response
   ): Promise<void> {
-    return this.proxyRequest(method, version, service, path, req, res);
+    const rawPath = Array.isArray(path) ? path.join('/') : path;
+    const cleanPath = typeof rawPath === 'string' ? rawPath : String(rawPath || '');
+    return this.proxyRequest(method, version, service, cleanPath, req, res);
   }
 
   private async findRoute(service: string): Promise<ServiceRoute | undefined> {
@@ -3915,11 +3923,13 @@ export class ProxyController {
    * (/api/wallet/v1/balance). Declared ':param' segments match any
    * non-empty segment. Routes without an endpoints manifest stay open.
    */
-  private isDeclaredEndpoint(route: ServiceRoute, method: string, subPath: string): boolean {
+  private isDeclaredEndpoint(route: ServiceRoute, method: string, subPath: unknown): boolean {
     if (!route.endpoints || route.endpoints.length === 0) {
       return true;
     }
-    const requestSegments = (subPath || '').split('/').filter(Boolean);
+    const rawPath = Array.isArray(subPath) ? subPath.join('/') : subPath;
+    const cleanPath = typeof rawPath === 'string' ? rawPath : String(rawPath || '');
+    const requestSegments = cleanPath.split('/').filter(Boolean);
     if (requestSegments.length > 0 && /^v\d+$/.test(requestSegments[0])) {
       requestSegments.shift();
     }
@@ -4027,10 +4037,13 @@ export class ProxyController {
     method: string,
     version: string,
     service: string,
-    subPath: string,
+    subPath: unknown,
     req: Request,
     res: Response
   ): Promise<void> {
+    const rawSubPath = Array.isArray(subPath) ? subPath.join('/') : subPath;
+    const cleanSubPath = typeof rawSubPath === 'string' ? rawSubPath : String(rawSubPath || '');
+
     let requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
     if (requestId && !/^[a-zA-Z0-9\-]{1,128}$/.test(requestId)) {
       requestId = randomUUID();
@@ -4086,7 +4099,7 @@ export class ProxyController {
     // Deny-by-default endpoint allowlist (gateway_endpoint_enforcement,
     // default off): only method+path pairs declared in the route's endpoints
     // manifest are forwarded upstream.
-    if (endpointEnforcement && !this.isDeclaredEndpoint(route, method, subPath)) {
+    if (endpointEnforcement && !this.isDeclaredEndpoint(route, method, cleanSubPath)) {
       res.setHeader(this.REQUEST_ID_HEADER, requestId);
       res.status(HttpStatus.NOT_FOUND).json({ message: 'Endpoint not found' });
       return;
