@@ -14,7 +14,10 @@ Azeebo+ uses a single-container "all-in-one" deployment strategy for simplicity,
 ## Deployment Architecture
 
 ### All-in-One Container
-- **Image:** `ghcr.io/azeebotv/azeebo-all-in-one:dev`
+- **Image:** `ghcr.io/azeebotv/azeebo-all-in-one:${IMAGE_TAG:-dev}`
+- **Tags published by CI:** `staging-<sha>` (immutable), `staging` (moving), `production-<sha>` (immutable), `latest`
+- **Version selection:** the Compose app interpolates `IMAGE_TAG`, so a deploy (or rollback) picks a tag by setting that variable on the Coolify app — `cd.yml`/`rollback.yml` do it through `scripts/coolify-set-image-tag.sh` when `COOLIFY_API_URL`, `COOLIFY_API_TOKEN` and `COOLIFY_APP_UUID` are configured.
+- **Version verification:** the post-deploy health job runs `scripts/verify-deployed-image-tag.sh <env>-<sha> <health-url>`. It fails the deploy unless the running container reports that commit from `/version` (a missing or `dev` commit fails too) and, when the deploy went through Coolify, unless the app's `IMAGE_TAG` equals the tag this run published. A Coolify deploy with no API credentials fails closed rather than skipping the tag check. The result — image tag, expected commit, commit actually running, Coolify `IMAGE_TAG` — is written to the run's **step summary**, and a success also emits a `Deploy verified` notice annotation, so reviewers see which build shipped without expanding the log.
 - **Ports:** 3013 (API Gateway), 4000 (Web), 4014 (Creator Portal), 4016 (Admin)
 - **Resources:** 12GB memory, 4 CPUs
 - **Health Check:** `curl -sf http://localhost:80/health`
@@ -50,7 +53,7 @@ Azeebo+ uses a single-container "all-in-one" deployment strategy for simplicity,
 |-----|-------------|
 | Deploy to Staging | Build, generate Prisma clients, deploy to staging |
 | Deploy to Production | Deploy to production (requires staging success) |
-| Post-Deploy Health Check | Verify health endpoints after deployment |
+| Post-Deploy Health Check | Verify health endpoints, then the running image tag; records the verified tag in the step summary |
 
 ### 3. All-in-One Image Build (`.github/workflows/cd-all-in-one.yml`)
 **Trigger:** Push to `Dev-Branch` or manual dispatch
@@ -158,6 +161,30 @@ docker run -d \
 
 ## Health Checks
 
+### Which build is live?
+
+Every environment has exactly one answer, and the deploy gate records it. Three
+places report the same build, so a mismatch is always visible:
+
+| Question | Where to look |
+|----------|---------------|
+| Which tag did this run publish and verify? | The run's **Summary** page — the `Verify running image tag` step appends a *Deploy verification — staging/production* table with the image tag, expected commit, the commit `/version` actually reported, and Coolify's `IMAGE_TAG`. A failed gate writes the same table with the reason it refused. |
+| Which tag is Coolify configured to serve? | Coolify app → Environment Variables → `IMAGE_TAG` (must equal `<env>-<sha>` from the table). |
+| What is the container actually running? | `curl -fsS https://<env-health-url>/version \| jq -r .commitSha` — the commit must match the tag's SHA. |
+
+A tag alone is not proof: the tag is a pointer, and `commitSha` from `/version`
+is the only identity the running container can produce. `commitSha=dev` (or an
+absent field) means the image was built without `COMMIT_SHA` and cannot be
+attributed to any tag — the deploy fails instead of guessing.
+
+To check the same thing by hand after a deploy (or before a rollback):
+
+```bash
+# Same gate the workflow runs; prints the artifact + selector result
+COOLIFY_API_URL=... COOLIFY_API_TOKEN=... COOLIFY_APP_UUID=... \
+  ./scripts/verify-deployed-image-tag.sh production-1a2b3c4d https://api.azeeboplus.com
+```
+
 ### Endpoints
 | Endpoint | Port | Description |
 |----------|------|-------------|
@@ -236,19 +263,34 @@ docker exec azeebo tail -f /var/log/supervisor/auth-service.log
 ## Rollback
 
 ### Manual Rollback
-```bash
-# Stop current container
-docker stop azeebo
 
-# Start previous version
-docker run -d --name azeebo ghcr.io/azeebotv/azeebo-all-in-one:previous-tag
+`scripts/rollback.sh` pulls the target tag first, replaces the container, and
+restores the previous image automatically if the new one fails its health check.
+
+```bash
+# Already-published tags look like: dev, <short-sha>, staging-<sha>, production-<sha>
+ENVIRONMENT=production ./scripts/rollback.sh production-1a2b3c4
+
+# Preview the resolved plan without changing the container
+ENVIRONMENT=production ./scripts/rollback.sh production-1a2b3c4 --dry-run
 ```
 
 ### Automated Rollback
 ```bash
 # Use GitHub Actions rollback workflow
-gh workflow run rollback.yml -f environment=production
+gh workflow run rollback.yml -f environment=production -f target_tag=<tag>
 ```
+
+A rollback is verified the same way a deploy is. After restoring the tag, the
+run's `Verify restored image tag` step compares `/version` against the tag and
+checks Coolify's `IMAGE_TAG`, then writes a **Rollback verification** block to
+the run summary naming the tag that was restored and the commit that came back
+up — so "which build is live now?" is answered on the run page, not in logs.
+
+A moving tag (`latest`, `staging`, a bare `<sha>`) is accepted here because a
+rollback may legitimately restore one: the tag names no commit, so the reported
+`/version` commit is recorded instead of compared, and the summary says so. An
+SSH rollback skips the Coolify selector (it never moved there) and says that too.
 
 ---
 

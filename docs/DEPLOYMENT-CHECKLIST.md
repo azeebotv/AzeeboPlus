@@ -277,7 +277,8 @@ docker push ghcr.io/azeebotv/azeebo-all-in-one:dev
 # - Create project in Coolify UI
 # - Select "Docker Compose" type
 # - Point to docker-compose.all-in-one.yml
-# - Add environment variables
+# - Add environment variables (including IMAGE_TAG=<tag>; the compose file
+#   deploys ghcr.io/azeebotv/azeebo-all-in-one:${IMAGE_TAG:-dev})
 # - Deploy
 ```
 
@@ -309,16 +310,21 @@ docker run -d \
 # Option 1: Use rollback workflow
 gh workflow run rollback.yml -f environment=production
 
-# Option 2: Manual rollback
-docker stop azeebo-all-in-one
+# Option 2: Manual rollback (pulls the tag, replaces the container,
+# restores the previous image if the health check fails)
+ENVIRONMENT=production ./scripts/rollback.sh <tag>
+
+# Option 3: By hand, on the deploy host — keep every port and the env file,
+# otherwise the services come up unreachable or without secrets
+docker stop azeebo && docker rm azeebo
 docker run -d \
-  --name azeebo-all-in-one \
+  --name azeebo \
   -p 3013:3013 \
   -p 4000:4000 \
   -p 4014:4014 \
   -p 4016:4016 \
-  --env-file .env \
-  ghcr.io/azeebotv/azeebo-all-in-one:previous-tag
+  --env-file /opt/azeebo/.env.production \
+  ghcr.io/azeebotv/azeebo-all-in-one:<tag>
 ```
 
 ---
