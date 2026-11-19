@@ -70,7 +70,10 @@ export function WatchPartyOverlay({
     queryKey: ['watch-parties'],
     queryFn: async () => {
       const result = await apiFetch<PartyState[]>('/watch-parties/my');
-      return result.success ? result.data || [] : [];
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Failed to fetch active watch parties');
+      }
+      return result.data;
     },
   });
 
@@ -80,7 +83,10 @@ export function WatchPartyOverlay({
     queryFn: async () => {
       if (!activeParty?.id) return null;
       const result = await apiFetch<PartyState>(`/watch-parties/${activeParty.id}`);
-      return result.success ? result.data : null;
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Failed to fetch watch party details');
+      }
+      return result.data;
     },
     enabled: !!activeParty?.id,
     refetchInterval: pollingIntervals.live, // Poll for updates
@@ -92,7 +98,10 @@ export function WatchPartyOverlay({
     queryFn: async () => {
       if (!activeParty?.id) return [];
       const result = await apiFetch<ChatMessage[]>(`/watch-parties/${activeParty.id}/chat`);
-      return result.success ? result.data || [] : [];
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Failed to fetch chat messages');
+      }
+      return result.data;
     },
     enabled: !!activeParty?.id && showChat,
     refetchInterval: pollingIntervals.realtime,
@@ -101,10 +110,14 @@ export function WatchPartyOverlay({
   // Create party mutation
   const createMutation = useMutation({
     mutationFn: async () => {
-      return apiFetch('/watch-parties', {
+      const result = await apiFetch('/watch-parties', {
         method: 'POST',
         body: JSON.stringify({ contentId, title: contentTitle }),
       });
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Failed to create watch party');
+      }
+      return result;
     },
     onSuccess: (result) => {
       if (result.success && result.data) {
@@ -118,10 +131,14 @@ export function WatchPartyOverlay({
   // Join party mutation
   const joinMutation = useMutation({
     mutationFn: async (code: string) => {
-      return apiFetch('/watch-parties/join', {
+      const result = await apiFetch('/watch-parties/join', {
         method: 'POST',
         body: JSON.stringify({ inviteCode: code }),
       });
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Failed to join watch party');
+      }
+      return result;
     },
     onSuccess: (result) => {
       if (result.success && result.data) {
@@ -136,7 +153,11 @@ export function WatchPartyOverlay({
   const leaveMutation = useMutation({
     mutationFn: async () => {
       if (!activeParty) return;
-      return apiFetch(`/watch-parties/${activeParty.id}/leave`, { method: 'POST' });
+      const result = await apiFetch(`/watch-parties/${activeParty.id}/leave`, { method: 'POST' });
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to leave watch party');
+      }
+      return result;
     },
     onSuccess: () => {
       setActiveParty(null);
@@ -148,10 +169,14 @@ export function WatchPartyOverlay({
   const playbackMutation = useMutation({
     mutationFn: async (state: { isPlaying?: boolean; currentTime?: number }) => {
       if (!activeParty) return;
-      return apiFetch(`/watch-parties/${activeParty.id}/playback`, {
+      const result = await apiFetch(`/watch-parties/${activeParty.id}/playback`, {
         method: 'POST',
         body: JSON.stringify(state),
       });
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to update playback state');
+      }
+      return result;
     },
   });
   void playbackMutation; // Used in useEffect above
@@ -160,10 +185,14 @@ export function WatchPartyOverlay({
   const chatMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!activeParty) return;
-      return apiFetch(`/watch-parties/${activeParty.id}/chat`, {
+      const result = await apiFetch(`/watch-parties/${activeParty.id}/chat`, {
         method: 'POST',
         body: JSON.stringify({ content }),
       });
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to send message');
+      }
+      return result;
     },
     onSuccess: () => {
       setChatInput('');
@@ -259,7 +288,7 @@ export function WatchPartyOverlay({
                 onClick={() => setShowChat(!showChat)}
                 className={`cursor-pointer rounded-az-control p-2 transition-colors ${
                   showChat
-                    ? 'bg-az-flame text-az-ink'
+                    ? 'bg-az-flame text-az-surface-root'
                     : 'bg-az-ink/10 text-az-ink/60 hover:text-az-ink'
                 }`}
               >

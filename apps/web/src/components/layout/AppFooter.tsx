@@ -241,7 +241,7 @@ export default function AppFooter({
                     <button
                       type="submit"
                       disabled={newsletterStatus === 'loading'}
-                      className="px-5 py-2.5 rounded-az-card text-sm font-semibold text-az-ink transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 bg-[image:var(--gradient-az-cta)] shadow-az-glow"
+                      className="az-cta-small px-5 py-2.5 rounded-az-card text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 shadow-az-glow"
                     >
                       {newsletterStatus === 'loading' ? (
                         <svg

@@ -52,7 +52,10 @@ export default function TippingPanel({
     queryKey: ['tip-stats', creatorId],
     queryFn: async () => {
       const res = await api.creator.getTipStats(creatorId);
-      return res.success && res.data ? res.data : null;
+      if (!res.success || !res.data) {
+        throw new Error(res.message || 'Failed to load tip stats');
+      }
+      return res.data;
     },
   });
 
@@ -60,14 +63,21 @@ export default function TippingPanel({
     queryKey: ['tip-leaderboard', creatorId],
     queryFn: async () => {
       const res = await api.creator.getTipLeaderboard(creatorId);
-      return res.success && res.data ? res.data.entries : [];
+      if (!res.success || !res.data) {
+        throw new Error(res.message || 'Failed to load tip leaderboard');
+      }
+      return res.data.entries || [];
     },
   });
 
   const tipMutation = useMutation({
     mutationFn: async () => {
       const finalAmount = useCustom ? Number(customAmount) : amount;
-      return api.creator.sendTip(creatorId, finalAmount, message || undefined);
+      const res = await api.creator.sendTip(creatorId, finalAmount, message || undefined);
+      if (!res.success) {
+        throw new Error(res.message || 'Failed to send tip');
+      }
+      return res;
     },
   });
 
@@ -188,6 +198,8 @@ export default function TippingPanel({
         <p className="az-label">Top Supporters</p>
         {leaderboardQuery.isLoading ? (
           <p className="az-caption text-az-ink-muted">Loading...</p>
+        ) : leaderboardQuery.isError ? (
+          <p className="az-caption text-az-error-500">Failed to load leaderboard</p>
         ) : leaderboardQuery.data && leaderboardQuery.data.length > 0 ? (
           <div className="flex flex-col gap-1.5">
             {leaderboardQuery.data.slice(0, 5).map((entry, i) => {

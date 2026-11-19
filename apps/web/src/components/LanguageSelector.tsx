@@ -43,7 +43,7 @@ export function LanguageSelector() {
                 onClick={() => handleSelect(locale.code)}
                 className={`flex items-center gap-3 w-full px-4 py-3 border-none text-sm text-left cursor-pointer ${
                   currentLocale === locale.code
-                    ? 'bg-az-flame text-az-ink'
+                    ? 'bg-az-flame text-az-surface-root'
                     : 'bg-transparent text-az-ink'
                 }`}
               >

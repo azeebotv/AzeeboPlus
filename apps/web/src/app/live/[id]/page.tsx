@@ -197,8 +197,12 @@ function LiveEventDetailContent(): React.JSX.Element {
               type="button"
               onClick={() => purchaseMutation.mutate()}
               disabled={purchaseMutation.isPending}
-              className={`w-full rounded-az-control py-3 az-body-strong text-az-ink transition-all ${
-                purchaseMutation.isPending ? 'bg-az-ink/20' : 'bg-az-flame'
+              className={`w-full rounded-az-control py-3 az-body-strong transition-all ${
+                // The flame fill is a light accent; its label needs the deep
+                // ink (6.03:1). The pending wash stays on the regular ink.
+                purchaseMutation.isPending
+                  ? 'bg-az-ink/20 text-az-ink'
+                  : 'bg-az-flame text-az-surface-root'
               }`}
             >
               {purchaseMutation.isPending
@@ -224,7 +228,7 @@ function LiveEventDetailContent(): React.JSX.Element {
               href={event.streamUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="az-body-strong mt-3 block rounded-az-control bg-az-success-500 py-3 text-center text-az-ink transition-all"
+              className="az-body-strong mt-3 block rounded-az-control bg-az-success-500 py-3 text-center text-az-surface-root transition-all"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >

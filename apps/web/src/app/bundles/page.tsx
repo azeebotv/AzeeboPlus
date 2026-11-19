@@ -120,7 +120,7 @@ function BundlesPageContent(): React.JSX.Element {
         aria-pressed={selected}
         className={`az-body-strong whitespace-nowrap rounded-az-pill px-4 py-2 transition-colors ${
           selected
-            ? 'bg-az-flame text-az-ink'
+            ? 'bg-az-flame text-az-surface-root'
             : 'border border-az-glass-border bg-az-glass-fill text-az-ink-muted hover:text-az-ink'
         }`}
       >
@@ -180,8 +180,11 @@ function BundlesPageContent(): React.JSX.Element {
               >
                 <div className="p-6">
                   <div className="mb-3 flex items-center justify-between">
+                    {/* Deep ink, not white: the tier swatches carry white at
+                        2.15:1 (amber), 3.68:1 (blue) and 4.23:1 (violet); the
+                        same fills hold #0F0F0F at 8.93, 5.19 and 4.53:1. */}
                     <span
-                      className={`az-caption rounded-az-pill px-2.5 py-1 text-az-ink ${TIER_COLORS[bundle.tier] || 'bg-az-glass-card'}`}
+                      className={`az-caption rounded-az-pill px-2.5 py-1 text-az-surface-root ${TIER_COLORS[bundle.tier] || 'bg-az-glass-card'}`}
                     >
                       {bundle.tier.toUpperCase()}
                     </span>

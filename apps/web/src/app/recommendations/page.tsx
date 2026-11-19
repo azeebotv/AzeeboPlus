@@ -109,8 +109,10 @@ export default function RecommendationsPage(): React.JSX.Element {
   const chipClasses = (active: boolean): string =>
     [
       'az-body-strong flex items-center gap-2 whitespace-nowrap rounded-az-pill border px-4 py-2 transition-all',
+      // Solid flame + deep ink: a 14px chip cannot carry the gradient (white on
+      // the flame stop is 3.18:1, dark ink on scarlet 4.09:1).
       active
-        ? 'border-transparent bg-gradient-to-br from-az-flame to-az-scarlet text-az-ink shadow-az-glow'
+        ? 'border-transparent bg-az-flame text-az-surface-root shadow-az-glow'
         : 'border-az-ink/15 text-az-ink/60 hover:border-az-glass-border-hover hover:bg-az-glass-fill hover:text-az-ink',
     ].join(' ');
 

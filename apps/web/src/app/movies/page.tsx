@@ -174,7 +174,7 @@ function MoviesPageContent(): React.JSX.Element {
                       alt={movie.title}
                       className="w-full h-44 sm:h-48 object-cover"
                     />
-                    <span className="absolute top-2 right-2 px-2.5 py-0.5 rounded-az-pill text-xs font-semibold bg-az-flame text-az-ink">
+                    <span className="absolute top-2 right-2 px-2.5 py-0.5 rounded-az-pill text-xs font-semibold bg-az-flame text-az-surface-root">
                       Premium
                     </span>
                     <div className="absolute inset-0 az-scrim" />

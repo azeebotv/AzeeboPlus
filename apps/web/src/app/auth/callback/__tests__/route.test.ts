@@ -173,6 +173,7 @@ describe('OAuth callback route', () => {
         method: 'POST',
         body: form,
       });
+      req.formData = async () => form;
 
       const res = await POST(req);
 
@@ -194,6 +195,7 @@ describe('OAuth callback route', () => {
         method: 'POST',
         body: form,
       });
+      req.formData = async () => form;
       await POST(req);
 
       const [url, init] = fetchMock.mock.calls[0];
@@ -208,6 +210,7 @@ describe('OAuth callback route', () => {
         method: 'POST',
         body: form,
       });
+      req.formData = async () => form;
       const res = await POST(req);
       expect(locationOf(res)).toContain('error=cancelled');
     });

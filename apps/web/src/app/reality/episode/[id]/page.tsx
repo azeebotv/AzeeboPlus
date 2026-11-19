@@ -127,7 +127,7 @@ export default function RealityDynamicEpisodePlayerPage(): React.JSX.Element {
           <button
             type="button"
             onClick={togglePlay}
-            className="flex size-20 items-center justify-center rounded-full bg-az-flame/90 text-az-ink shadow-az-glow transition-transform hover:scale-110 hover:bg-az-flame"
+            className="flex size-20 items-center justify-center rounded-full bg-az-flame/90 text-az-surface-root shadow-az-glow transition-transform hover:scale-110 hover:bg-az-flame"
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? (
@@ -161,7 +161,7 @@ export default function RealityDynamicEpisodePlayerPage(): React.JSX.Element {
       <div className="az-glass space-y-4 p-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <span className="az-overline mb-2 inline-block rounded-az-pill bg-az-flame px-3 py-1 text-az-ink">
+            <span className="az-overline mb-2 inline-block rounded-az-pill bg-az-flame px-3 py-1 text-az-surface-root">
               Reality S{episode.seasonNumber} E{episode.episodeNumber}
             </span>
             <h1 className="az-headline text-2xl text-az-ink sm:text-3xl">{episode.title}</h1>

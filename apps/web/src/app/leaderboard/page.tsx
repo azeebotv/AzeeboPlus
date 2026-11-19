@@ -94,8 +94,10 @@ export default function LeaderboardPage(): React.JSX.Element {
                 key={key}
                 onClick={() => setTimeframe(key)}
                 className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all ${
+                  // 12px label: the gradient's flame stop holds white at only
+                  // 3.18:1, so the active tab is solid flame with deep ink (6.03:1).
                   active
-                    ? 'bg-gradient-to-r from-az-scarlet to-az-flame text-az-ink shadow-az-glow'
+                    ? 'bg-az-flame text-az-surface-root shadow-az-glow'
                     : 'bg-az-glass-fill hover:bg-az-glass-card text-az-ink/60 hover:text-az-ink border border-az-ink/5'
                 }`}
               >

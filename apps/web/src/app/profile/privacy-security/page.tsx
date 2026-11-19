@@ -245,7 +245,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
           disabled={isDeleting}
           className={`cursor-pointer rounded-az-pill border border-az-error-500 px-6 py-2.5 az-body-strong ${
             confirmingDelete
-              ? 'bg-az-error-500 text-az-ink'
+              ? 'bg-az-error-600 text-az-ink'
               : 'bg-transparent text-az-error-500 hover:bg-az-error-500/10'
           } disabled:cursor-wait disabled:opacity-60`}
         >

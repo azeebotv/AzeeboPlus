@@ -152,7 +152,7 @@ function OfferDetailContent() {
                   className={`w-full py-4 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg ${
                     claimed
                       ? 'bg-az-success-500/20 text-az-success-400 border border-az-success-500/30'
-                      : 'bg-[var(--color-az-flame)] text-az-ink hover:bg-[var(--color-az-flame)]/90 shadow-[var(--color-az-flame)]/25'
+                      : 'bg-[var(--color-az-flame)] text-az-surface-root hover:bg-[var(--color-az-flame)]/90 shadow-[var(--color-az-flame)]/25'
                   }`}
                 >
                   {claimed ? (

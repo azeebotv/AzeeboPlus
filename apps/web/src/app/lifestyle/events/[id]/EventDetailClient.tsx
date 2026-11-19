@@ -334,7 +334,7 @@ export default function EventDetailClient({ id }: { id: string }): React.JSX.Ele
                         className={`w-full py-3 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                           rsvped
                             ? 'bg-az-success-500/20 text-az-success-400 border border-az-success-500/30'
-                            : 'bg-[var(--color-az-flame)] text-az-ink hover:bg-[var(--color-az-flame)]/90 shadow-lg shadow-[var(--color-az-flame)]/25'
+                            : 'bg-[var(--color-az-flame)] text-az-surface-root hover:bg-[var(--color-az-flame)]/90 shadow-lg shadow-[var(--color-az-flame)]/25'
                         }`}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}

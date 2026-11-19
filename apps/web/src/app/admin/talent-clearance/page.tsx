@@ -238,13 +238,13 @@ export default function TalentClearancePage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleStatusChange(clearance.id, 'approved')}
-                            className="rounded-az-control bg-az-success-500 px-3 py-1 text-xs text-az-ink transition-colors hover:bg-az-success-600"
+                            className="rounded-az-control bg-az-success-500 px-3 py-1 text-xs text-az-surface-root transition-colors hover:bg-az-success-600"
                           >
                             Approve
                           </button>
                           <button
                             onClick={() => handleStatusChange(clearance.id, 'rejected')}
-                            className="rounded-az-control bg-az-error-500 px-3 py-1 text-xs text-az-ink transition-colors hover:bg-az-error-600"
+                            className="rounded-az-control bg-az-error-600 px-3 py-1 text-xs text-az-ink transition-colors hover:bg-az-error-700"
                           >
                             Reject
                           </button>

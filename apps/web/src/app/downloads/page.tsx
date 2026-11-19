@@ -200,14 +200,16 @@ export default function DownloadsPage(): React.JSX.Element {
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  // 12px label: solid flame + deep ink (6.03:1); the gradient's
+                  // flame stop holds white at only 3.18:1.
                   active
-                    ? 'bg-gradient-to-r from-az-scarlet to-az-flame text-az-ink shadow-az-glow'
+                    ? 'bg-az-flame text-az-surface-root shadow-az-glow'
                     : 'bg-az-glass-fill text-az-ink/60 hover:text-az-ink hover:bg-az-glass-card border border-az-ink/5'
                 }`}
               >
                 <span>{f.charAt(0).toUpperCase() + f.slice(1)}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-az-ink/20 text-az-ink' : 'bg-az-glass-fill text-az-ink/40'}`}
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-az-surface-root/20 text-az-surface-root' : 'bg-az-glass-fill text-az-ink/40'}`}
                 >
                   {count}
                 </span>
@@ -407,7 +409,7 @@ export default function DownloadsPage(): React.JSX.Element {
                   deleteAll();
                   setShowDeleteAll(false);
                 }}
-                className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-az-ink bg-az-error-600 hover:bg-az-error-500 transition-colors shadow-lg"
+                className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-az-ink bg-az-error-600 hover:bg-az-error-700 transition-colors shadow-lg"
               >
                 Delete All
               </button>

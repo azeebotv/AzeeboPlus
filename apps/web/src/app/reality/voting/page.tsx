@@ -154,7 +154,7 @@ function VotingPageContent(): React.JSX.Element {
                             className="h-14 w-14 rounded-full object-cover sm:h-16 sm:w-16"
                           />
                           {contestant.status === 'danger' && (
-                            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-az-error-500 text-xs text-az-ink">
+                            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-az-error-500 text-xs text-az-surface-root">
                               !
                             </span>
                           )}

@@ -199,7 +199,7 @@ export default function StreakPage(): React.JSX.Element {
                       <div
                         className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-xs font-bold mx-auto transition-all ${
                           day.active
-                            ? 'bg-[var(--color-az-flame)] text-az-ink shadow-az-glow'
+                            ? 'bg-[var(--color-az-flame)] text-az-surface-root shadow-az-glow'
                             : day.isToday
                               ? 'border-2 border-[var(--color-az-flame)] bg-[var(--color-az-flame)]/15 text-az-ink'
                               : 'bg-az-glass-fill text-az-ink/40 border border-az-ink/5'

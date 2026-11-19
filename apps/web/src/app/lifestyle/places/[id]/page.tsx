@@ -239,7 +239,7 @@ function PlaceDetailContent(): React.JSX.Element {
                     <div className="pt-4 border-t border-az-ink/5 space-y-2">
                       <Link
                         href={`/lifestyle/itineraries`}
-                        className="block w-full py-2.5 rounded-full text-xs font-bold text-center text-az-ink bg-[var(--color-az-flame)] hover:bg-[var(--color-az-flame)]/90 transition-all shadow-md shadow-[var(--color-az-flame)]/25"
+                        className="block w-full py-2.5 rounded-full text-xs font-bold text-center text-az-surface-root bg-[var(--color-az-flame)] hover:bg-[var(--color-az-flame)]/90 transition-all shadow-md shadow-[var(--color-az-flame)]/25"
                       >
                         Explore in City Itinerary
                       </Link>

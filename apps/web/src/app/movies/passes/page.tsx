@@ -210,7 +210,7 @@ function PassesPageContent(): React.JSX.Element {
             >
               <GlowCard universe="movies" className="relative flex h-full flex-col p-6">
                 {pass.isPopular && (
-                  <span className="az-body absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-az-pill bg-az-flame px-4 py-1 text-az-ink">
+                  <span className="az-body absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-az-pill bg-az-flame px-4 py-1 text-az-surface-root">
                     Most Popular
                   </span>
                 )}

@@ -92,7 +92,7 @@ function SocialPageContent(): React.JSX.Element {
             </p>
             <Link
               href="/lifestyle"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-az-ink bg-[var(--color-az-flame)] hover:bg-[var(--color-az-flame)]/90 transition-all shadow-lg shadow-[var(--color-az-flame)]/25"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-az-surface-root bg-[var(--color-az-flame)] hover:bg-[var(--color-az-flame)]/90 transition-all shadow-lg shadow-[var(--color-az-flame)]/25"
             >
               <Compass className="w-3.5 h-3.5" />
               Explore Lifestyle Hub

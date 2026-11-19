@@ -111,7 +111,7 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
                 onClick={() => setTab(t)}
                 className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${
                   isActive
-                    ? 'bg-[var(--color-az-flame)] text-az-ink shadow-lg'
+                    ? 'bg-[var(--color-az-flame)] text-az-surface-root shadow-lg'
                     : 'text-az-ink/60 hover:text-az-ink'
                 }`}
               >

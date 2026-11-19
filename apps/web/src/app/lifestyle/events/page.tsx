@@ -225,7 +225,7 @@ function EventsPageContent(): React.JSX.Element {
                           className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
                             isGoing
                               ? 'bg-az-success-500/20 text-az-success-400 border border-az-success-500/30'
-                              : 'bg-[var(--color-az-flame)] text-az-ink hover:bg-[var(--color-az-flame)]/90 shadow-md shadow-[var(--color-az-flame)]/25'
+                              : 'bg-[var(--color-az-flame)] text-az-surface-root hover:bg-[var(--color-az-flame)]/90 shadow-md shadow-[var(--color-az-flame)]/25'
                           }`}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}

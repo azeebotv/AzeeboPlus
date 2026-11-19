@@ -176,7 +176,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     isCompleted
                       ? 'bg-az-success-500/20 text-az-success-400 border-az-success-500/30'
                       : isActive
-                        ? 'bg-az-flame text-az-ink border-az-flame'
+                        ? 'bg-az-flame text-az-surface-root border-az-flame'
                         : 'bg-az-ink/5 text-az-ink/40 border-az-ink/10'
                   }`}
                 >
@@ -236,7 +236,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     whileTap={{ scale: 0.98 }}
                   >
                     {plan.isPopular && (
-                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-3 bg-az-flame text-az-ink">
+                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-3 bg-az-flame text-az-surface-root">
                         Popular
                       </span>
                     )}

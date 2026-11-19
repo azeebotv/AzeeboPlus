@@ -196,7 +196,7 @@ export default function AddFundsPage(): React.JSX.Element {
                   onClick={() => setAmount(quickAmount.toString())}
                   className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all border ${
                     amount === quickAmount.toString()
-                      ? 'bg-az-flame text-az-ink border-az-flame shadow-md shadow-az-flame/20'
+                      ? 'bg-az-flame text-az-surface-root border-az-flame shadow-md shadow-az-flame/20'
                       : 'bg-az-glass-fill hover:bg-az-glass-card text-az-ink/80 border-az-glass-border'
                   }`}
                 >

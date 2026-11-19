@@ -488,6 +488,71 @@ class Analytics {
   }): void {
     this.track('nav_clicked', params);
   }
+
+  // --- 20 Canonical Revenue-Path Events (PMR Task 06.2 / R-11 / G-07) ---
+  authCompleted(method: string, userId?: string, referralCode?: string): void {
+    this.track('auth_completed', { method, userId, referralCode });
+  }
+
+  voteSubmitted(showId: string, contestantId: string, votes: number, amount: number): void {
+    this.track('vote_submitted', { showId, contestantId, votes, amount });
+  }
+
+  supervoteSubmitted(showId: string, contestantId: string, votes: number, amount: number): void {
+    this.track('supervote_submitted', { showId, contestantId, votes, amount });
+  }
+
+  ppvTicketPurchased(ticketId: string, eventId: string, amount: number): void {
+    this.track('ppv_ticket_purchased', { ticketId, eventId, amount });
+  }
+
+  cinemaPassPurchased(passId: string, passName: string, amount: number): void {
+    this.track('cinema_pass_purchased', { passId, passName, amount });
+  }
+
+  creatorTipped(creatorId: string, amount: number, tier?: string): void {
+    this.track('creator_tipped', { creatorId, amount, tier });
+  }
+
+  creatorPayoutRequested(amount: number, method?: string): void {
+    this.track('creator_payout_requested', { amount, method });
+  }
+
+  merchandiseCheckoutStarted(cartId: string, itemCount: number, totalAmount: number): void {
+    this.track('merchandise_checkout_started', { cartId, itemCount, totalAmount });
+  }
+
+  merchandisePurchased(orderId: string, totalAmount: number, items: Array<{ id: string; price: number }>): void {
+    this.track('merchandise_purchased', { orderId, totalAmount, items });
+  }
+
+  predictionStaked(predictionId: string, universe: string, stakeAmount: number, potentialWin: number): void {
+    this.track('prediction_staked', { predictionId, universe, stakeAmount, potentialWin });
+  }
+
+  predictionWon(predictionId: string, winAmount: number): void {
+    this.track('prediction_won', { predictionId, winAmount });
+  }
+
+  predictionLost(predictionId: string, lostAmount: number): void {
+    this.track('prediction_lost', { predictionId, lostAmount });
+  }
+
+  videoPlaybackStarted(contentId: string, title?: string, universe?: string, isPremium?: boolean): void {
+    this.track('video_playback_started', { contentId, title, universe, isPremium });
+  }
+
+  videoPlaybackCompleted(contentId: string, watchDuration: number, totalDuration?: number): void {
+    this.track('video_playback_completed', { contentId, watchDuration, totalDuration });
+  }
+
+  checkoutAbandoned(itemType: string, itemId: string, amount: number, step?: string): void {
+    this.track('checkout_abandoned', { itemType, itemId, amount, step });
+  }
+
+  checkoutFailed(itemType: string, itemId: string, amount: number, error: string): void {
+    this.track('checkout_failed', { itemType, itemId, amount, error });
+  }
 }
 
 export const analytics = new Analytics();

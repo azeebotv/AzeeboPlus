@@ -85,7 +85,7 @@ export default function MovieDetailPage(): React.JSX.Element {
               <div className="absolute inset-0 az-scrim--hero" />
 
               <div className="relative z-10 max-w-2xl">
-                <span className="az-caption inline-block rounded-az-pill bg-az-flame px-3 py-1 font-bold uppercase tracking-wider text-az-ink mb-4">
+                <span className="az-caption inline-block rounded-az-pill bg-az-flame px-3 py-1 font-bold uppercase tracking-wider text-az-surface-root mb-4">
                   {movie.contentType || 'Movie'}
                 </span>
                 <h1 className="az-headline text-3xl sm:text-5xl text-az-ink mb-4">{movie.title}</h1>

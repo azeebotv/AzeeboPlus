@@ -282,7 +282,7 @@ export default function QuizDetailPage(): React.JSX.Element {
                           <span
                             className={`w-8 h-8 rounded-xl border flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
                               isSelected
-                                ? 'border-[var(--color-az-flame)] bg-[var(--color-az-flame)] text-az-ink'
+                                ? 'border-[var(--color-az-flame)] bg-[var(--color-az-flame)] text-az-surface-root'
                                 : 'border-az-ink/20 bg-az-glass-fill text-az-ink/60 group-hover:border-az-ink/40'
                             }`}
                           >

@@ -43,8 +43,10 @@ const MOBILE_ROW_IDLE_CLS = 'text-az-ink/60 bg-transparent';
 const ACTIVE_DOT_CLS = 'bg-az-flame';
 const IDLE_DOT_CLS = 'bg-transparent';
 
-// Canonical brand CTA (scarlet → flame) with the design system's glow shadow.
-const CTA_CLS = 'bg-[image:var(--gradient-az-cta)] shadow-az-glow';
+// Brand CTA for a 14px label: `.az-cta-small` (solid flame, deep ink, 6.03:1).
+// The scarlet → flame gradient could not carry white at this size — 3.18:1 at
+// the flame end — see the class's rationale in globals.css.
+const CTA_CLS = 'az-cta-small shadow-az-glow';
 
 const ICON_ACTION_CLS =
   'p-2.5 rounded-az-card text-az-ink/50 hover:text-az-ink hover:bg-az-ink/6 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame';
@@ -763,7 +765,7 @@ export default function AppHeader({
                     />
                   </svg>
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-az-ink bg-az-flame">
+                    <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-az-surface-root bg-az-flame">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
@@ -882,7 +884,7 @@ export default function AppHeader({
                             <div className="flex gap-2">
                               <button
                                 onClick={handleLogout}
-                                className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-az-ink bg-az-error-500 hover:bg-az-error-600 transition-colors"
+                                className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-az-ink bg-az-error-600 hover:bg-az-error-700 transition-colors"
                               >
                                 {t('appHeader.yesSignOut')}
                               </button>
@@ -911,7 +913,7 @@ export default function AppHeader({
                 </Link>
                 <Link
                   href="/auth/register"
-                  className={`px-4 py-1.5 rounded-full text-sm font-semibold text-az-ink transition-all hover:scale-105 ${CTA_CLS}`}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all hover:scale-105 ${CTA_CLS}`}
                 >
                   {t('auth.register')}
                 </Link>
@@ -1133,7 +1135,7 @@ export default function AppHeader({
                 <Link
                   href="/auth/register"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block w-full text-center px-4 py-2.5 rounded-full text-sm font-semibold text-az-ink transition-all ${CTA_CLS}`}
+                  className={`block w-full text-center px-4 py-2.5 rounded-full text-sm font-semibold transition-all ${CTA_CLS}`}
                 >
                   Sign up
                 </Link>

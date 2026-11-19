@@ -153,7 +153,7 @@ export default function RealityShowViewerPage(): React.JSX.Element {
                   </Link>
                   <Link
                     href={`/vote?showId=${show.id}`}
-                    className="rounded-az-pill px-6 py-3.5 az-body-strong bg-az-flame text-az-ink transition-all hover:opacity-90"
+                    className="rounded-az-pill px-6 py-3.5 az-body-strong bg-az-flame text-az-surface-root transition-all hover:opacity-90"
                   >
                     Vote Now
                   </Link>
@@ -199,7 +199,7 @@ export default function RealityShowViewerPage(): React.JSX.Element {
                       <h4 className="az-caption truncate font-semibold text-az-ink">{c.name}</h4>
                       <Link
                         href={`/vote?showId=${show.id}&contestantId=${c.id}`}
-                        className="az-caption mt-3 block w-full rounded-az-pill py-1.5 font-bold text-az-ink bg-az-flame/80 transition-colors hover:bg-az-flame"
+                        className="az-caption mt-3 block w-full rounded-az-pill py-1.5 font-bold text-az-surface-root bg-az-flame/80 transition-colors hover:bg-az-flame"
                       >
                         Vote
                       </Link>

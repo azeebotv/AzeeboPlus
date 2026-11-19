@@ -80,7 +80,7 @@ function TonightPageContent(): React.JSX.Element {
           <div className="flex items-center gap-2">
             <Link
               href="/lifestyle/tonight"
-              className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[var(--color-az-flame)] text-az-ink shadow-lg shadow-[var(--color-az-flame)]/25 flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[var(--color-az-flame)] text-az-surface-root shadow-lg shadow-[var(--color-az-flame)]/25 flex items-center gap-1.5"
             >
               <Moon className="w-3 h-3" />
               Tonight

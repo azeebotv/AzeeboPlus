@@ -22,7 +22,7 @@ export default function ThemeToggle() {
           onClick={() => setTheme(option.value)}
           className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
             theme === option.value
-              ? 'bg-az-flame text-az-ink'
+              ? 'bg-az-flame text-az-surface-root'
               : 'bg-az-glass-card text-az-ink/70 hover:bg-az-ink/20'
           }`}
           whileHover={{ scale: 1.05 }}

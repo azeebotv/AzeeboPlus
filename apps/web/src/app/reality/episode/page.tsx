@@ -202,7 +202,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
           <button
             type="button"
             onClick={handlePlayPause}
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-az-flame text-2xl text-az-ink transition-colors"
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-az-flame text-2xl text-az-surface-root transition-colors"
           >
             {isPlaying ? 'Pause' : 'Play'}
           </button>

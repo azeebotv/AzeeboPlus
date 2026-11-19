@@ -279,7 +279,7 @@ export default function CreatorUploadPage(): React.JSX.Element {
                     type="file"
                     accept="video/*,image/*,audio/*"
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    className="w-full text-az-ink/50 text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--color-az-flame)] file:text-az-ink hover:file:opacity-90 cursor-pointer"
+                    className="w-full text-az-ink/50 text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--color-az-flame)] file:text-az-surface-root hover:file:opacity-90 cursor-pointer"
                   />
                   {file && (
                     <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-az-success-500/10 border border-az-success-500/20 text-az-success-400 text-xs font-medium">

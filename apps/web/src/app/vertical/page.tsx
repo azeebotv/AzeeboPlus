@@ -66,14 +66,15 @@ function VerticalPageContent(): React.JSX.Element {
             <div className="absolute inset-0 az-scrim--hero" aria-hidden="true" />
             <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
               <div className="mb-4 flex items-center gap-2">
-                <span className="az-overline rounded-az-pill bg-az-flame px-3 py-1 text-az-ink">
+                <span className="az-overline rounded-az-pill bg-az-flame px-3 py-1 text-az-surface-root">
                   Premium
                 </span>
                 <span className="az-overline rounded-az-pill bg-az-scarlet/20 px-3 py-1 text-az-flame">
                   {series[0].contentType || 'Vertical'}
                 </span>
               </div>
-              <h2 className="az-heading mb-2 text-az-ink sm:az-display">{series[0].title}</h2>
+              {/* Page-level heading: this hero is the only title on the route. */}
+              <h1 className="az-heading mb-2 text-az-ink sm:az-display">{series[0].title}</h1>
               <p className="az-lead mb-6 max-w-2xl text-az-ink-muted">{series[0].description}</p>
               <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
                 <Link href={`/watch/${series[0].id}`}>
@@ -131,7 +132,7 @@ function VerticalPageContent(): React.JSX.Element {
                       height={192}
                       className="h-48 w-full object-cover"
                     />
-                    <span className="az-overline absolute top-2 right-2 rounded-az-pill bg-az-flame px-2.5 py-0.5 text-az-ink">
+                    <span className="az-overline absolute top-2 right-2 rounded-az-pill bg-az-flame px-2.5 py-0.5 text-az-surface-root">
                       Premium
                     </span>
                     <div className="absolute inset-0 az-scrim" aria-hidden="true" />

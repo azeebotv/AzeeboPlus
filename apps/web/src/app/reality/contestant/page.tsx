@@ -87,7 +87,7 @@ export default function ContestantProfilePage(): React.JSX.Element {
       <PageShell maxWidth="lg">
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <p className="az-title mb-4 text-az-ink">Contestant not found</p>
+            <h1 className="az-title mb-4 text-az-ink">Contestant not found</h1>
             <button
               type="button"
               onClick={() => router.back()}

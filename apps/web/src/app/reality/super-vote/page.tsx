@@ -240,7 +240,7 @@ export default function SuperVotePage(): React.JSX.Element {
               }`}
             >
               {pkg.isPopular && (
-                <span className="az-overline absolute -top-3 right-4 rounded-az-pill bg-az-flame px-3 py-1 text-az-ink">
+                <span className="az-overline absolute -top-3 right-4 rounded-az-pill bg-az-flame px-3 py-1 text-az-surface-root">
                   Most Popular
                 </span>
               )}

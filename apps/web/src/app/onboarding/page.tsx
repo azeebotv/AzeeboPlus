@@ -272,7 +272,7 @@ export default function OnboardingPage(): React.JSX.Element {
                 <div
                   className={`flex size-10 shrink-0 items-center justify-center rounded-az-control transition-colors ${
                     active
-                      ? 'bg-az-flame text-az-ink shadow-md shadow-az-flame/30'
+                      ? 'bg-az-flame text-az-surface-root shadow-md shadow-az-flame/30'
                       : 'bg-az-glass-card text-az-ink/70'
                   }`}
                 >

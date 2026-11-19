@@ -72,7 +72,7 @@ function GamesPageContent(): React.JSX.Element {
             glowColor="color-mix(in srgb, var(--color-az-secondary-500) 25%, transparent)"
             actions={
               <>
-                <span className="az-overline rounded-az-pill bg-az-flame px-3 py-1 text-az-ink">
+                <span className="az-overline rounded-az-pill bg-az-flame px-3 py-1 text-az-surface-root">
                   Premium
                 </span>
                 <Link href={`/watch/${games[0].id}`}>
@@ -141,7 +141,7 @@ function GamesPageContent(): React.JSX.Element {
                       height={192}
                       className="w-full h-44 sm:h-48 object-cover"
                     />
-                    <span className="az-overline absolute top-2 right-2 rounded-az-pill bg-az-flame px-2.5 py-0.5 text-az-ink">
+                    <span className="az-overline absolute top-2 right-2 rounded-az-pill bg-az-flame px-2.5 py-0.5 text-az-surface-root">
                       Premium
                     </span>
                     <div className="absolute inset-0 az-scrim" />

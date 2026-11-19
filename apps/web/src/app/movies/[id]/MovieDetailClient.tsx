@@ -149,7 +149,7 @@ export default function MovieDetailClient({ id }: { id: string }): React.JSX.Ele
                 >
                   <div className="flex items-center gap-2 mb-3">
                     {movie.isPremium && (
-                      <span className="px-3 py-1 rounded-az-pill text-xs font-semibold bg-az-flame text-az-ink">
+                      <span className="px-3 py-1 rounded-az-pill text-xs font-semibold bg-az-flame text-az-surface-root">
                         Premium
                       </span>
                     )}

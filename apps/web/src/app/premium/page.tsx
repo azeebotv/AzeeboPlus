@@ -254,7 +254,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
         </div>
         <Link
           href="/bundles"
-          className="az-body-strong rounded-az-pill bg-gradient-to-r from-az-flame to-az-scarlet px-6 py-2.5 text-center text-az-ink transition-transform hover:scale-105 active:scale-95"
+          className="az-body-strong rounded-az-pill bg-az-flame px-6 py-2.5 text-center text-az-surface-root transition-transform hover:scale-105 active:scale-95"
         >
           View Bundles
         </Link>
@@ -266,7 +266,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
         {plans.map((plan) => (
           <div key={plan.id} className="az-glass relative p-6">
             {plan.isPopular && (
-              <span className="az-body absolute -top-3 left-1/2 -translate-x-1/2 rounded-az-pill bg-az-flame px-4 py-1 text-az-ink">
+              <span className="az-body absolute -top-3 left-1/2 -translate-x-1/2 rounded-az-pill bg-az-flame px-4 py-1 text-az-surface-root">
                 Most Popular
               </span>
             )}
@@ -336,7 +336,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
                 disabled={isPurchasing || walletBalance < confirmPlan.price}
                 className={`w-full rounded-az-pill py-3 az-body-strong transition-colors ${
                   walletBalance >= confirmPlan.price
-                    ? 'cursor-pointer border-none bg-az-success-500 text-az-ink hover:bg-az-success-600'
+                    ? 'cursor-pointer border-none bg-az-success-500 text-az-surface-root hover:bg-az-success-600'
                     : 'cursor-not-allowed border-none bg-az-surface-raised text-az-ink-muted'
                 }`}
               >

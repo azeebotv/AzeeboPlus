@@ -96,7 +96,7 @@ function CrossoversPageContent(): React.JSX.Element {
                       />
                       <div className="absolute inset-0 az-scrim" />
                       <div className="absolute top-2 left-2">
-                        <span className="az-overline rounded-az-pill bg-az-flame px-2.5 py-1 text-az-ink">
+                        <span className="az-overline rounded-az-pill bg-az-flame px-2.5 py-1 text-az-surface-root">
                           CROSSOVER
                         </span>
                       </div>

@@ -71,7 +71,7 @@ function PremieresPageContent(): React.JSX.Element {
                     Coming Soon
                   </span>
                   {featured.isExclusive && (
-                    <span className="az-caption rounded-az-pill bg-az-flame px-3 py-1 font-semibold text-az-ink">
+                    <span className="az-caption rounded-az-pill bg-az-flame px-3 py-1 font-semibold text-az-surface-root">
                       Azeebo+ Exclusive
                     </span>
                   )}

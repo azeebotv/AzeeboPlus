@@ -893,7 +893,9 @@ select:focus-visible {
   left: 16px;
   z-index: 10000;
   background: var(--brand-orange);
-  color: #ffffff;
+  /* Flame (#EC691F) is a light accent: white on it measures 3.18:1, under the
+     4.5:1 AA floor for 14px text. The deep surface ink measures 6.03:1. */
+  color: var(--color-az-surface-root);
   padding: 12px 24px;
   border-radius: 8px;
   font-weight: 600;
@@ -948,7 +950,12 @@ select:focus-visible {
   border-radius: var(--radius-az-pill);
 }
 
-/* Brand gradient text — Figma's accent for inline emphasis */
+/* Brand gradient text — Figma's accent for display type.
+   Large text only (24px, or 18.66px bold): the scarlet stop is 4.23:1 on the
+   page root and the flame stop 6.24:1, so the gradient clears AA's 3:1 large-text
+   floor but not 4.5:1. Inline emphasis at body size uses `text-az-flame`
+   (6.24:1) instead — white-on-gradient's failure at 3.18:1 was the same trap on
+   the CTA side. */
 .az-text-gradient {
   background: var(--gradient-az-cta);
   -webkit-background-clip: text;
@@ -990,6 +997,24 @@ select:focus-visible {
 
 /* Brand primary button — Figma draws this as the scarlet->flame gradient
    panel with 20px corners, not the earlier solid-red pill. */
+/* Small-label CTA. The scarlet → flame brand gradient cannot carry a 14px
+   label: white reaches only 3.18:1 against the flame stop, and the deep surface
+   ink is 4.48:1 against scarlet. Solid flame with the deep ink is 6.03:1, so
+   every CTA whose label is below WCAG large-text size (18.66px bold) uses this
+   instead of the gradient. The gradient stays on `.az-btn-primary`, whose
+   20px/700 label is large text. */
+.az-cta-small {
+  background: var(--color-az-flame);
+  color: var(--color-az-surface-root);
+}
+
+/* The brand CTA gradient (scarlet → flame) cannot carry body-size white text:
+   against the flame stop it measures 3.18:1, and dark ink against the scarlet
+   stop is 4.48:1 — neither reaches AA's 4.5:1. At 20px/700 the label is WCAG
+   "large text" (≥18.66px bold), where the floor is 3:1, and white clears both
+   stops (3.18 and 4.69). The 16px label this replaced failed on every CTA in
+   the app; scripts/visual-audit.mjs now measures gradient stops, so a future
+   size cut fails the gate instead of shipping. */
 .az-btn-primary {
   background: var(--gradient-az-cta);
   color: var(--color-az-ink);
@@ -998,7 +1023,7 @@ select:focus-visible {
   border: none;
   width: 100%;
   padding: 1rem 1.25rem;
-  font-size: var(--text-az-lead);
+  font-size: var(--text-az-title);
   cursor: pointer;
   transition:
     box-shadow var(--transition-fast),
@@ -1026,10 +1051,16 @@ select:focus-visible {
 }
 
 /* Compact CTA for tight spaces (a phone mockup screen, a chip-width toolbar). */
+/* The small variant drops to a 12px overline label, which is below WCAG large
+   text — so it takes the same treatment as `.az-cta-small`: solid flame, deep
+   ink (6.03:1). Left on the gradient, white measured 3.18:1 and every compact
+   CTA using this modifier failed AA. */
 .az-btn-primary--sm {
   font-size: var(--text-az-overline);
   letter-spacing: 0.06em;
   padding: 0.7rem 1.75rem;
+  background: var(--color-az-flame);
+  color: var(--color-az-surface-root);
 }
 
 /* Brand social button — Figma draws both providers with the same frost fill the

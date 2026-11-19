@@ -181,7 +181,7 @@ function BundleDetailContent(): React.JSX.Element {
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                     paymentMethod === 'wallet'
-                      ? 'bg-[var(--color-az-flame)] text-az-ink'
+                      ? 'bg-[var(--color-az-flame)] text-az-surface-root'
                       : 'bg-az-glass-card'
                   }`}
                 >
@@ -205,7 +205,7 @@ function BundleDetailContent(): React.JSX.Element {
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                     paymentMethod === 'external'
-                      ? 'bg-[var(--color-az-flame)] text-az-ink'
+                      ? 'bg-[var(--color-az-flame)] text-az-surface-root'
                       : 'bg-az-glass-card'
                   }`}
                 >

@@ -41,8 +41,11 @@ interface ContentResponse {
 /* Sidebar filter rows: the active row carries the brand gradient, idle rows
    stay frosted. Kept as constants because `az-*` shared classes and their
    utilities cannot mix in one className expression (no-dead-class-override). */
+// Solid flame, deep ink: the scarlet stop of the brand gradient carries only
+// 4.09:1 of dark ink at this 14px label size, and white on the flame stop is
+// 3.18:1. The gradient stays on labels at large-text size (see globals.css).
 const FILTER_ITEM_ACTIVE =
-  'w-full rounded-az-control bg-gradient-to-r from-az-flame to-az-scarlet px-3 py-2 text-left az-body-strong text-az-ink transition-colors';
+  'w-full rounded-az-control bg-az-flame px-3 py-2 text-left az-body-strong text-az-surface-root transition-colors';
 const FILTER_ITEM_IDLE =
   'w-full rounded-az-control px-3 py-2 text-left az-body text-az-ink-muted transition-colors hover:bg-az-glass-fill hover:text-az-ink';
 
@@ -568,7 +571,7 @@ export default function BrowsePage(): React.JSX.Element {
                       <span className="az-caption text-az-ink-muted">
                         {item.creator?.name || 'Azeebo Originals'}
                       </span>
-                      <span className="az-micro-label rounded-az-pill bg-az-glass-card px-2.5 py-1 font-bold uppercase tracking-wider text-az-ink transition-colors group-hover:bg-az-flame">
+                      <span className="az-micro-label rounded-az-pill bg-az-glass-card px-2.5 py-1 font-bold uppercase tracking-wider text-az-ink transition-colors group-hover:bg-az-flame group-hover:text-az-surface-root">
                         Watch
                       </span>
                     </div>

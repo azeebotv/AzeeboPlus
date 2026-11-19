@@ -206,7 +206,7 @@ export default function CreatorSignupPage(): React.JSX.Element {
                 step === s.num
                   ? 'scale-105 bg-az-scarlet text-az-ink shadow-az-glow ring-4 ring-az-scarlet/20'
                   : step > s.num
-                    ? 'bg-az-success-500 text-az-ink'
+                    ? 'bg-az-success-500 text-az-surface-root'
                     : 'bg-az-glass-card text-az-ink/40'
               }`}
             >

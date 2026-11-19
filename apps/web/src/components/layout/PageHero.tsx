@@ -45,7 +45,13 @@ export function PageHero({
      alias layer stays reachable only from globals.css. */
   const effectiveEyebrowColor = accentColor ?? eyebrowColor;
   return (
-    <div className={`relative mb-8 sm:mb-10 ${className}`}>
+    /* overflow-x-clip: the ambient glow below is deliberately larger than the
+       hero and offset to one side. Without clipping, a 600px glow painted from
+       a 33% offset pushed the document 218px wide on a 390px viewport, so every
+       page using PageHero scrolled sideways on mobile. Clip on x only — the
+       glow still bleeds above the hero, and `clip` (not `hidden`) avoids
+       turning the hero into a scroll container. */
+    <div className={`relative overflow-x-clip mb-8 sm:mb-10 ${className}`}>
       {/* Background ambient lighting */}
       <AmbientGlow
         color={glowColor}

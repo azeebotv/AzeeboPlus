@@ -869,7 +869,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                   aria-label="Like"
                   className={`flex items-center gap-2 px-4 py-2 rounded-az-pill text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame ${
                     isLiked
-                      ? 'bg-[image:var(--gradient-az-cta)] text-az-ink'
+                      ? 'az-cta-small'
                       : 'border border-az-glass-border-hover text-az-ink/60 hover:text-az-ink'
                   }`}
                 >
@@ -911,9 +911,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                     onClick={toggleSubscribe}
                     aria-pressed={isSubscribed}
                     className={`flex items-center gap-2 px-4 py-2 rounded-az-pill text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame ${
-                      isSubscribed
-                        ? 'border border-az-glass-border text-az-ink'
-                        : 'bg-[image:var(--gradient-az-cta)] text-az-ink'
+                      isSubscribed ? 'border border-az-glass-border text-az-ink' : 'az-cta-small'
                     }`}
                   >
                     {isSubscribed ? 'Subscribed' : 'Subscribe'}

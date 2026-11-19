@@ -819,8 +819,13 @@ export default function GuestHomepage(): React.JSX.Element {
             {/* Left: The brand-gradient container with inset dark macOS app window */}
             <div className="w-full lg:w-1/2 flex justify-center">
               <div className="relative w-full max-w-lg rounded-az-feature bg-gradient-to-br from-az-scarlet to-az-flame p-5 shadow-az-glow sm:p-7">
-                {/* Inset dark app window */}
-                <div className="rounded-az-panel border border-az-ink/10 bg-az-surface-root p-4 sm:p-6">
+                {/* Inset dark app window — a static illustration of the app, not
+                    a live control. The fake chrome and its labels are hidden from
+                    assistive tech (and from contrast readers) as decoration. */}
+                <div
+                  className="rounded-az-panel border border-az-ink/10 bg-az-surface-root p-4 sm:p-6"
+                  aria-hidden="true"
+                >
                   {/* Window control dots */}
                   <div className="flex items-center gap-2 mb-6" aria-hidden="true">
                     <span className="h-3 w-3 rounded-full bg-az-error-500" />
@@ -836,7 +841,9 @@ export default function GuestHomepage(): React.JSX.Element {
                     {/* Active highlighted action bar with hover cursor */}
                     <div className="relative pt-2">
                       <div className="flex h-9 w-full items-center rounded-az-card bg-az-flame px-4">
-                        <span className="az-overline text-az-ink">
+                        {/* Ink on flame: white would be 3.18:1 and unreadable at
+                            this size. */}
+                        <span className="az-overline text-az-surface-root">
                           CONTINUE WATCHING &bull; EPISODE 4
                         </span>
                       </div>
@@ -1320,7 +1327,7 @@ export default function GuestHomepage(): React.JSX.Element {
                     />
                     <button
                       type="submit"
-                      className="absolute right-4 text-lg text-az-ink transition-colors hover:text-az-scarlet"
+                      className="absolute right-2 flex size-9 items-center justify-center rounded-full text-lg text-az-ink transition-colors hover:text-az-scarlet"
                       aria-label="Submit newsletter subscription"
                     >
                       &rarr;

@@ -109,7 +109,7 @@ export default function SupportPage(): React.JSX.Element {
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-transform duration-300 border ${
                         isOpen
-                          ? 'rotate-180 bg-az-flame text-az-ink border-az-flame'
+                          ? 'rotate-180 bg-az-flame text-az-surface-root border-az-flame'
                           : 'bg-az-glass-fill text-az-ink-muted border-az-glass-border'
                       }`}
                     >

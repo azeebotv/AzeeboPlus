@@ -102,7 +102,7 @@ export default function TransactionsPage(): React.JSX.Element {
                   aria-selected={filters.type === t}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
                     filters.type === t
-                      ? 'bg-az-flame text-az-ink border-az-flame shadow-sm shadow-az-flame/20'
+                      ? 'bg-az-flame text-az-surface-root border-az-flame shadow-sm shadow-az-flame/20'
                       : 'bg-az-glass-fill hover:bg-az-glass-card text-az-ink/70 border-az-glass-border'
                   }`}
                 >
@@ -129,7 +129,7 @@ export default function TransactionsPage(): React.JSX.Element {
                   aria-selected={filters.status === s}
                   className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
                     filters.status === s
-                      ? 'bg-az-flame text-az-ink border-az-flame shadow-sm shadow-az-flame/20'
+                      ? 'bg-az-flame text-az-surface-root border-az-flame shadow-sm shadow-az-flame/20'
                       : 'bg-az-glass-fill hover:bg-az-glass-card text-az-ink/70 border-az-glass-border'
                   }`}
                 >

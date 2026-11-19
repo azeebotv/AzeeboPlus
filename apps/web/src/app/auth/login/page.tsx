@@ -267,9 +267,11 @@ export default function LoginPage(): React.JSX.Element {
 
         <motion.p variants={fieldVariants} className="az-body pt-2 text-center text-az-ink/70">
           Don&apos;t have an account yet?{' '}
+          {/* Solid flame, not gradient text: at 14px the scarlet stop is
+              4.23:1 on the page root, under AA's 4.5:1 for body size. */}
           <a
             href="/auth/register"
-            className="az-body-strong az-text-gradient transition-opacity hover:opacity-85"
+            className="az-body-strong text-az-flame transition-opacity hover:opacity-85"
           >
             Register for free
           </a>

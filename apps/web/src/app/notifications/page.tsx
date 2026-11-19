@@ -219,15 +219,19 @@ export default function NotificationsPage(): React.JSX.Element {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition-all flex items-center gap-2 ${
+                  // 12px label: the gradient's flame stop holds white at only
+                  // 3.18:1, so the active tab is solid flame with deep ink.
                   active
-                    ? 'bg-gradient-to-r from-az-scarlet to-az-flame text-az-ink shadow-az-glow'
+                    ? 'bg-az-flame text-az-surface-root shadow-az-glow'
                     : 'bg-az-glass-fill hover:bg-az-glass-card text-az-ink/60 hover:text-az-ink border border-az-ink/5'
                 }`}
               >
                 <span>{label}</span>
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
-                    active ? 'bg-az-ink/20 text-az-ink' : 'bg-az-glass-fill text-az-ink/40'
+                    active
+                      ? 'bg-az-surface-root/20 text-az-surface-root'
+                      : 'bg-az-glass-fill text-az-ink/40'
                   }`}
                 >
                   {count}

@@ -153,7 +153,7 @@ export default function TippingPage(): React.JSX.Element {
             aria-pressed={activeTab === tab}
             className={`cursor-pointer rounded-az-pill border px-5 py-2.5 az-body-strong transition-colors ${
               activeTab === tab
-                ? 'border-az-flame bg-az-flame text-az-ink'
+                ? 'border-az-flame bg-az-flame text-az-surface-root'
                 : 'border-az-glass-border-hover bg-az-glass-fill text-az-ink hover:bg-az-glass-fill-hover'
             }`}
           >

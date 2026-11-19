@@ -188,7 +188,7 @@ function GameDetailPageContent(): React.JSX.Element {
                     <ol className="mb-8 space-y-3">
                       {game.howToPlay.map((step, index) => (
                         <li key={index} className="flex items-start gap-3">
-                          <span className="az-overline flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-az-flame text-az-ink">
+                          <span className="az-overline flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-az-flame text-az-surface-root">
                             {index + 1}
                           </span>
                           <span className="az-body text-az-ink/70">{step}</span>

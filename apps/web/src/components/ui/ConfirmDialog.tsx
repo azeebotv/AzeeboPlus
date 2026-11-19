@@ -89,7 +89,7 @@ export function ConfirmDialog({
           </button>
           <button
             onClick={onConfirm}
-            className={`min-h-[44px] px-5 py-2.5 text-sm font-medium text-az-ink rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all inline-flex items-center justify-center ${
+            className={`min-h-[44px] px-5 py-2.5 text-sm font-medium text-az-surface-root rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all inline-flex items-center justify-center ${
               destructive
                 ? 'bg-az-error-500 hover:bg-az-error-600 focus-visible:ring-az-error-500'
                 : 'bg-az-flame hover:bg-az-scarlet focus-visible:ring-az-flame'

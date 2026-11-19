@@ -214,9 +214,9 @@ export default function DualControlPage() {
   const stepCircle = (state: 'done' | 'waiting' | 'idle') =>
     `flex size-6 items-center justify-center rounded-full az-micro-label ${
       state === 'done'
-        ? 'bg-az-success-500 text-az-ink'
+        ? 'bg-az-success-500 text-az-surface-root'
         : state === 'waiting'
-          ? 'bg-az-warning-500 text-az-ink'
+          ? 'bg-az-warning-500 text-az-surface-root'
           : 'bg-az-glass-fill-hover text-az-ink-muted'
     }`;
 

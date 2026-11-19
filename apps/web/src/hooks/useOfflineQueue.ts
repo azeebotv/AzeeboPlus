@@ -49,14 +49,28 @@ export function useOfflineQueue() {
       options: { method: string; body?: string | object; headers?: Record<string, string> } = {
         method: 'POST',
       }
-    ): Promise<{ success: boolean; data?: T; queued: boolean }> => {
+    ): Promise<{ success: boolean; data?: T; queued: boolean; error?: string }> => {
       // If online, try to send immediately
       if (isOnline) {
         try {
           const result = await apiFetch<T>(url, options as Parameters<typeof apiFetch>[1]);
-          return { success: result.success, data: result.data, queued: false };
+          if (result.success) {
+            return { success: true, data: result.data, queued: false };
+          }
+          // Differentiate network/transport failure from client validation failure
+          const status = (result as { statusCode?: number }).statusCode ?? 0;
+          const isNetworkOrTransient = status === 0 || status === 408 || status === 429 || status >= 500;
+          if (!isNetworkOrTransient) {
+            // Client error (4xx) - reject immediately rather than queueing an invalid request
+            return {
+              success: false,
+              data: undefined,
+              queued: false,
+              error: (result as { message?: string }).message || 'Request failed',
+            };
+          }
         } catch {
-          // If network fails, queue it
+          // If network throws unexpectedly, proceed to queue
         }
       }
 

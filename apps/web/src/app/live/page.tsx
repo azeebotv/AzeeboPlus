@@ -75,13 +75,13 @@ function LiveEventsPageContent(): React.JSX.Element {
   const statusPillClass = (status: string): string => {
     switch (status) {
       case 'live':
-        return 'bg-az-success-500 text-az-ink';
+        return 'bg-az-success-500 text-az-surface-root';
       case 'scheduled':
-        return 'bg-az-flame text-az-ink';
+        return 'bg-az-flame text-az-surface-root';
       case 'ended':
         return 'bg-az-ink/20 text-az-ink-muted';
       case 'cancelled':
-        return 'bg-az-error-500 text-az-ink';
+        return 'bg-az-error-500 text-az-surface-root';
       default:
         return 'bg-az-ink/20 text-az-ink-muted';
     }

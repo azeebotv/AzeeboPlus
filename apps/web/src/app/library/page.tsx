@@ -202,8 +202,10 @@ export default function LibraryPage(): React.JSX.Element {
               aria-selected={activeSection === section.id}
               onClick={() => setActiveSection(section.id as typeof activeSection)}
               className={`az-body-strong whitespace-nowrap rounded-az-pill px-5 py-2 transition-colors sm:px-6 sm:py-2.5 ${
+                // 14px label: white on the gradient's flame stop is 3.18:1, deep
+                // ink on scarlet 4.09:1 — solid flame with deep ink is 6.03:1.
                 activeSection === section.id
-                  ? 'bg-gradient-to-br from-az-flame to-az-scarlet text-az-ink shadow-az-glow'
+                  ? 'bg-az-flame text-az-surface-root shadow-az-glow'
                   : 'border border-az-ink/15 text-az-ink/60 hover:text-az-ink'
               }`}
               whileHover={{ scale: 1.05 }}

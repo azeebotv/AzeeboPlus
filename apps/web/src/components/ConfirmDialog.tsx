@@ -62,7 +62,7 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onConfirm}
-            className={`px-5 py-2.5 rounded-full text-sm font-semibold text-az-ink transition-colors ${
+            className={`px-5 py-2.5 rounded-full text-sm font-semibold text-az-surface-root transition-colors ${
               destructive
                 ? 'bg-az-error-500 hover:bg-az-error-600'
                 : 'bg-az-flame hover:bg-az-scarlet'

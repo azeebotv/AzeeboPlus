@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchAgbalaStoryworlds } from '../api';
 import type { AgbalaStoryworld } from '../types';
 
@@ -9,19 +9,22 @@ export function useAgbalaStoryworlds() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await fetchAgbalaStoryworlds();
-        setStoryworlds(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load storyworlds');
-      } finally {
-        setLoading(false);
-      }
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchAgbalaStoryworlds();
+      setStoryworlds(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load storyworlds');
+    } finally {
+      setLoading(false);
     }
-    load();
   }, []);
 
-  return { storyworlds, loading, error };
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return { storyworlds, loading, error, refetch: load };
 }

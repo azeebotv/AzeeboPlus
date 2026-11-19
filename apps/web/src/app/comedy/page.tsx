@@ -73,9 +73,12 @@ function ComedyPageContent(): React.JSX.Element {
             >
               Browse Comedy
             </Link>
+            {/* Flame text on the ink-white pill measured 3.18:1, so the primary
+                action is flame with the deep surface ink on it instead — the
+                same pairing `.az-btn-primary` uses. */}
             <Link
               href="/creators/upload"
-              className="az-body-strong inline-block rounded-az-pill bg-az-ink px-6 py-3 text-az-flame transition-all hover:bg-az-ink-dim"
+              className="az-body-strong inline-block rounded-az-pill bg-az-flame px-6 py-3 text-az-surface-root transition-all hover:brightness-110"
             >
               Submit Your Clip
             </Link>

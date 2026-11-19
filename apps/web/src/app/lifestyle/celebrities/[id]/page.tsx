@@ -121,7 +121,7 @@ function CelebrityDetailContent(): React.JSX.Element {
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <Link
                   href={`/watch/${celebrity.id}`}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs font-bold text-az-ink bg-[var(--color-az-flame)] hover:bg-[var(--color-az-flame)]/90 transition-all shadow-lg shadow-[var(--color-az-flame)]/25"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs font-bold text-az-surface-root bg-[var(--color-az-flame)] hover:bg-[var(--color-az-flame)]/90 transition-all shadow-lg shadow-[var(--color-az-flame)]/25"
                 >
                   <Play className="w-4 h-4 fill-white" />
                   Watch Video Feature

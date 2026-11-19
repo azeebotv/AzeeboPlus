@@ -126,7 +126,7 @@ function ItineraryDetailContent() {
                   .map((stop, i) => (
                     <ScrollReveal key={i} delay={i * 0.08}>
                       <GlowCard className="p-5 rounded-2xl border border-az-glass-border flex items-start gap-4">
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-az-ink font-bold text-xs shrink-0 bg-[var(--color-az-flame)] shadow-md shadow-[var(--color-az-flame)]/30 mt-0.5">
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-az-surface-root font-bold text-xs shrink-0 bg-[var(--color-az-flame)] shadow-md shadow-[var(--color-az-flame)]/30 mt-0.5">
                           {i + 1}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -161,7 +161,7 @@ function ItineraryDetailContent() {
                 <button
                   type="button"
                   onClick={() => alert('Itinerary route saved to your local offline cache.')}
-                  className="px-5 py-2.5 rounded-full text-xs font-bold text-az-ink bg-[var(--color-az-flame)] hover:bg-[var(--color-az-flame)]/90 transition-all shadow-md shadow-[var(--color-az-flame)]/25 whitespace-nowrap"
+                  className="px-5 py-2.5 rounded-full text-xs font-bold text-az-surface-root bg-[var(--color-az-flame)] hover:bg-[var(--color-az-flame)]/90 transition-all shadow-md shadow-[var(--color-az-flame)]/25 whitespace-nowrap"
                 >
                   Save Route
                 </button>

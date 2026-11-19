@@ -55,7 +55,7 @@ function FilmsContent() {
                 onClick={() => setGenre(g)}
                 className={`az-body-strong whitespace-nowrap rounded-az-pill px-4 py-2 transition-all ${
                   genre === g
-                    ? 'bg-az-flame text-az-ink shadow-az-glow'
+                    ? 'bg-az-flame text-az-surface-root shadow-az-glow'
                     : 'bg-az-ink/5 text-az-ink/50 hover:text-az-ink/70'
                 }`}
               >
@@ -116,7 +116,7 @@ function FilmsContent() {
                   </div>
                   {film.isExclusive && (
                     <div className="absolute top-2 right-2">
-                      <span className="az-micro-label rounded-az-control bg-az-flame px-2 py-0.5 font-bold text-white">
+                      <span className="az-micro-label rounded-az-control bg-az-flame px-2 py-0.5 font-bold text-az-surface-root">
                         EXCLUSIVE
                       </span>
                     </div>

@@ -149,7 +149,7 @@ export default function GameplayPage(): React.JSX.Element {
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-az-glass-border">
               <div className="flex items-center gap-2">
                 <span className="az-overline text-az-ink/50">Question</span>
-                <span className="az-caption rounded-az-pill bg-az-flame px-2.5 py-0.5 font-bold text-az-ink">
+                <span className="az-caption rounded-az-pill bg-az-flame px-2.5 py-0.5 font-bold text-az-surface-root">
                   {currentQuestion + 1}/{questions.length}
                 </span>
               </div>

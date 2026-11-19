@@ -233,12 +233,16 @@ export default function SettingsPage(): React.JSX.Element {
                   type="button"
                   onClick={() => setLocalSettings({ ...settings, downloadQuality: q.id })}
                   className={`text-center transition-all ${
-                    isSelected ? 'az-btn-primary shadow-lg shadow-az-flame/20 text-az-ink' : ''
+                    // 12px label: the compact primary treatment is solid flame
+                    // with deep ink; the gradient cannot carry white this small.
+                    isSelected
+                      ? 'az-btn-primary az-btn-primary--sm shadow-lg shadow-az-flame/20'
+                      : ''
                   }`}
                 >
                   <p className="font-bold text-xs uppercase tracking-wider">{q.label}</p>
                   <p
-                    className={`text-[10px] mt-0.5 ${isSelected ? 'text-az-ink/80' : 'text-az-ink/40'}`}
+                    className={`text-[10px] mt-0.5 ${isSelected ? 'text-az-surface-root' : 'text-az-ink/40'}`}
                   >
                     {q.sub}
                   </p>

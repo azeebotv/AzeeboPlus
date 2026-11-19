@@ -185,7 +185,7 @@ export default function VotePage(): React.JSX.Element {
                       aria-pressed={selectedShowId === show.id}
                       className={`rounded-az-control px-4 py-2 az-body whitespace-nowrap transition-all ${
                         selectedShowId === show.id
-                          ? 'bg-az-flame text-az-ink shadow-az-glow'
+                          ? 'bg-az-flame text-az-surface-root shadow-az-glow'
                           : 'bg-az-glass-fill text-az-ink/70 hover:bg-az-glass-card'
                       }`}
                     >
@@ -299,7 +299,7 @@ export default function VotePage(): React.JSX.Element {
                         <div className="flex items-center gap-2">
                           <span className="az-body-strong text-az-ink">{pkg.label}</span>
                           {pkg.popular && (
-                            <span className="az-micro-label rounded-az-pill bg-az-flame px-2 py-0.5 uppercase text-az-ink">
+                            <span className="az-micro-label rounded-az-pill bg-az-flame px-2 py-0.5 uppercase text-az-surface-root">
                               Popular
                             </span>
                           )}

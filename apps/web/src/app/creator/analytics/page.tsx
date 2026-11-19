@@ -98,7 +98,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                   onClick={() => setTimeRange(range)}
                   className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
                     isActive
-                      ? 'bg-[var(--color-az-flame)] text-az-ink shadow-lg'
+                      ? 'bg-[var(--color-az-flame)] text-az-surface-root shadow-lg'
                       : 'text-az-ink/60 hover:text-az-ink'
                   }`}
                 >

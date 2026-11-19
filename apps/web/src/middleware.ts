@@ -43,6 +43,18 @@ const adminRoutes = ['/admin'];
 const ADMIN_HOST = process.env.ADMIN_APP_URL || 'http://localhost:5173';
 const CREATOR_HOST = process.env.CREATOR_APP_URL || 'http://localhost:5174';
 
+/**
+ * The standalone portals are mounted at their own origin root (admin Vite
+ * routes are `/overview`, `/users`, …), while this app owns the `/admin` and
+ * `/creator` prefixes. Redirecting with the prefix intact lands on a path the
+ * portal has no route for, which renders an empty document — so strip it.
+ */
+function portalPath(pathname: string, prefix: string): string {
+  const stripped = pathname.slice(prefix.length);
+  if (!stripped) return '/';
+  return stripped.startsWith('/') ? stripped : `/${stripped}`;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -182,8 +194,8 @@ export function middleware(request: NextRequest) {
   // --- Admin route redirect to standalone app ---
   // Redirect admin pages to the standalone admin portal
   if (adminRoutes.some((route) => pathname.startsWith(route))) {
-    // Preserve the path when redirecting to the standalone admin app
-    const adminUrl = new URL(pathname, ADMIN_HOST);
+    // Preserve the path *below* /admin; the portal routes from its own root.
+    const adminUrl = new URL(portalPath(pathname, '/admin'), ADMIN_HOST);
     return addSecurityHeaders(NextResponse.redirect(adminUrl));
   }
 
@@ -195,8 +207,11 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/creator/') ||
     pathname.startsWith('/creators/dashboard')
   ) {
-    // Preserve the path when redirecting to the standalone creator app
-    const creatorUrl = new URL(pathname, CREATOR_HOST);
+    // Preserve the path below /creator (or /creators/dashboard) — the portal
+    // routes from its own root, where the dashboard is the index route.
+    const creatorUrl = pathname.startsWith('/creators/dashboard')
+      ? new URL('/', CREATOR_HOST)
+      : new URL(portalPath(pathname, '/creator'), CREATOR_HOST);
     return addSecurityHeaders(NextResponse.redirect(creatorUrl));
   }
 

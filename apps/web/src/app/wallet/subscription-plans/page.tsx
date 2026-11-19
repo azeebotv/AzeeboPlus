@@ -255,7 +255,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                       disabled={subscribing === confirmPlan.id || !canAffordWallet}
                       className={`w-full py-3.5 px-4 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                         canAffordWallet
-                          ? 'bg-az-success-600 hover:bg-az-success-500 text-az-ink shadow-lg'
+                          ? 'bg-az-success-600 hover:bg-az-success-500 text-az-surface-root shadow-lg'
                           : 'bg-az-glass-fill text-az-ink/30 border border-az-ink/5 cursor-not-allowed'
                       }`}
                     >
