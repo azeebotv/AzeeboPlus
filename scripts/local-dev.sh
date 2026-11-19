@@ -881,9 +881,11 @@ start_service() {
       return 1
     fi
 
-    # HTTP health check (try versioned and unversioned paths)
+    # HTTP health check (try versioned, live, and unversioned paths)
     if curl -sf "http://localhost:$port/api/health" >/dev/null 2>&1 || \
        curl -sf "http://localhost:$port/v1/health" >/dev/null 2>&1 || \
+       curl -sf "http://localhost:$port/v1/health/live" >/dev/null 2>&1 || \
+       curl -sf "http://localhost:$port/health/live" >/dev/null 2>&1 || \
        curl -sf "http://localhost:$port/health" >/dev/null 2>&1 || \
        curl -sf "http://localhost:$port/" >/dev/null 2>&1; then
       log_ok "  $pkg healthy on port $port (PID $pid, ${waited}s)"
@@ -1031,6 +1033,11 @@ cmd_start() {
   fi
   validate_env || return 1
 
+  # Ensure local PgBouncer is running (services configured with pgbouncer on 6432)
+  if [[ -f "$ROOT_DIR/scripts/database/start-pgbouncer.mjs" ]] && command -v pgbouncer &>/dev/null; then
+    node "$ROOT_DIR/scripts/database/start-pgbouncer.mjs" || log_warn "PgBouncer startup failed; direct connections may be used"
+  fi
+
   # Kill any orphaned processes from previous sessions before starting
   section "Cleaning up orphaned processes"
   reap_runner_orphans
@@ -1119,7 +1126,9 @@ cmd_start() {
   log_ok "Services started in ${elapsed}s. Check .logs/ for output."
   log_info "Press Ctrl+C to stop all services."
   echo ""
-  wait || true
+  while true; do
+    sleep 2
+  done
 }
 
 cmd_start_interactive() {
