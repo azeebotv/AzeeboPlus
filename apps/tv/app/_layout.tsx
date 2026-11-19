@@ -46,8 +46,15 @@ function RootNavigator() {
                   }}
                 >
                   <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen name="browse" options={{ headerShown: false }} />
+                  <Stack.Screen name="search" options={{ headerShown: false }} />
+                  <Stack.Screen name="library" options={{ headerShown: false }} />
                   <Stack.Screen name="signin" options={{ headerShown: false }} />
                   <Stack.Screen name="settings" options={{ headerShown: false }} />
+                  <Stack.Screen name="auth/device-link" options={{ headerShown: false }} />
+                  <Stack.Screen name="profile/account" options={{ headerShown: false }} />
+                  <Stack.Screen name="detail/[id]" options={{ headerShown: false }} />
+                  <Stack.Screen name="live/[id]" options={{ headerShown: false }} />
                   <Stack.Screen name="wallet/fund" options={{ headerShown: false }} />
                   <Stack.Screen name="watch/[contentId]" options={{ headerShown: false }} />
                 </Stack>
