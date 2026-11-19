@@ -29,13 +29,41 @@ export class UserManagementService {
   ) {}
 
   async getUsers(page = 1, limit = 20, role?: string, search?: string): Promise<unknown> {
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Math.min(100, Number(limit) || 20));
     const where: Prisma.UserWhereInput = {};
 
     if (role && role !== 'all') {
-      where.role = role as Prisma.EnumUserRoleFilter<'User'>;
-    }
-
-    if (search) {
+      if (role === 'creator') {
+        const creatorFilter: Prisma.UserWhereInput = {
+          OR: [
+            { role: 'creator' },
+            { creatorProfile: { isNot: null } },
+          ],
+        };
+        if (search) {
+          where.AND = [
+            creatorFilter,
+            {
+              OR: [
+                { email: { contains: search, mode: 'insensitive' } },
+                { displayName: { contains: search, mode: 'insensitive' } },
+              ],
+            },
+          ];
+        } else {
+          where.OR = creatorFilter.OR;
+        }
+      } else {
+        where.role = role as Prisma.EnumUserRoleFilter<'User'>;
+        if (search) {
+          where.OR = [
+            { email: { contains: search, mode: 'insensitive' } },
+            { displayName: { contains: search, mode: 'insensitive' } },
+          ];
+        }
+      }
+    } else if (search) {
       where.OR = [
         { email: { contains: search, mode: 'insensitive' } },
         { displayName: { contains: search, mode: 'insensitive' } },
@@ -45,8 +73,8 @@ export class UserManagementService {
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
-        take: limit,
-        skip: (page - 1) * limit,
+        take: limitNum,
+        skip: (pageNum - 1) * limitNum,
         orderBy: { createdAt: 'desc' },
         include: {
           wallet: true,
@@ -57,25 +85,30 @@ export class UserManagementService {
       this.prisma.user.count({ where }),
     ]);
 
+    const mappedUsers = users.map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.displayName,
+      displayName: u.displayName,
+      role: u.role,
+      createdAt: u.createdAt,
+      isActive: !u.isSuspended,
+      status: u.isSuspended ? 'suspended' : 'active',
+      suspensionStatus: u.isSuspended ? 'suspended' : 'active',
+      // Creator verification state (null for non-creators) so the directory
+      // can render a correct Verify/Unverify toggle without a detail fetch.
+      isVerified: u.creatorProfile?.verified ?? (u.role === 'creator' && u.isVerified) ?? false,
+      walletBalance: u.wallet?.balance || 0,
+      contentCount: u._count.contentItems,
+    }));
+
     return {
-      users: users.map((u) => ({
-        id: u.id,
-        email: u.email,
-        displayName: u.displayName,
-        role: u.role,
-        createdAt: u.createdAt,
-        isActive: !u.isSuspended,
-        suspensionStatus: u.isSuspended ? 'suspended' : 'active',
-        // Creator verification state (null for non-creators) so the directory
-        // can render a correct Verify/Unverify toggle without a detail fetch.
-        isVerified: u.creatorProfile?.verified ?? null,
-        walletBalance: u.wallet?.balance || 0,
-        contentCount: u._count.contentItems,
-      })),
+      users: mappedUsers,
+      items: mappedUsers,
       total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
     };
   }
 
@@ -339,21 +372,29 @@ export class UserManagementService {
   ): Promise<unknown> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      include: { creatorProfile: true },
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    if (user.role !== 'creator') {
+    if (user.role !== 'creator' && !user.creatorProfile) {
       throw new BadRequestException('User is not a creator');
     }
 
     // creator_profiles is a postgres_fdw FOREIGN table here — ON CONFLICT
     // (Prisma upsert) is not supported through FDW, so find-then-write.
-    const existing = await this.prisma.creatorProfile.findUnique({ where: { userId } });
+    const existing = user.creatorProfile;
     const profile = existing
       ? await this.prisma.creatorProfile.update({ where: { userId }, data: { verified } })
       : await this.prisma.creatorProfile.create({ data: { userId, verified } });
+
+    if (user.role !== 'creator' && verified) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { role: 'creator', isVerified: true },
+      });
+    }
 
     await this.auditService.log({
       actorId,
@@ -370,8 +411,9 @@ export class UserManagementService {
       data: {
         id: user.id,
         email: user.email,
+        name: user.displayName,
         displayName: user.displayName,
-        role: user.role,
+        role: verified ? 'creator' : user.role,
         isVerified: profile.verified,
       },
     };
@@ -390,7 +432,12 @@ export class UserManagementService {
         where: { role: 'user' },
       }),
       this.prisma.user.count({
-        where: { role: 'creator' },
+        where: {
+          OR: [
+            { role: 'creator' },
+            { creatorProfile: { isNot: null } },
+          ],
+        },
       }),
     ]);
 

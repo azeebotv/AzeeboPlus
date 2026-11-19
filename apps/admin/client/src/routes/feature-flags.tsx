@@ -129,7 +129,7 @@ export default function FeatureFlagsPage() {
   const { data: universes = [] } = useQuery({
     queryKey: ['admin', 'universes'],
     queryFn: async () => {
-      const data = requireData(await adminApi.getAllUniverses(), []);
+      const data = requireData(await adminApi.getAllUniverses(1, 100), []);
       // getAllUniverses returns the paginated envelope { data: [...], meta }
       // — NOT a bare array (a bare-array cast crashed this page with
       // "universes.filter is not a function" before the payload helpers).

@@ -25,6 +25,7 @@ import { PruneStaleUniverseFlagsDto } from './dto/prune-stale-universe-flags.dto
 import { RestoreUniverseFlagsDto } from './dto/restore-universe-flags.dto';
 import { QueryUniverseDto } from './dto/query-universe.dto';
 import { BulkToggleUniverseDto } from './dto/bulk-toggle-universe.dto';
+import { ToggleUniverseDto } from './dto/toggle-universe.dto';
 import { CloneUniverseDto } from './dto/clone-universe.dto';
 import { ImportUniversesBodyDto } from './dto/import-universe.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -226,9 +227,10 @@ export class UniverseManagementController {
   @Put(':id/toggle')
   async toggleUniverse(
     @Param('id') id: string,
-    @Body('isEnabled') isEnabled: boolean,
+    @Body() dto: ToggleUniverseDto,
     @Req() req: AdminRequest
   ) {
+    const isEnabled = dto?.isEnabled === true;
     this.logger.log(`Toggling universe ${id} to ${isEnabled ? 'enabled' : 'disabled'}`);
     const result = await this.universeManagementService.toggleUniverse(
       id,

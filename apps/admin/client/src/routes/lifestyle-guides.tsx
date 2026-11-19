@@ -172,8 +172,9 @@ function ItinerariesTab() {
     queryKey: ['admin', 'lifestyle-itineraries', statusFilter],
     queryFn: async () => {
       const res = await adminApi.getItineraries(statusFilter);
-      if (!res.success) throw new Error(res.message || 'Failed to load itineraries');
-      return res.data ?? [];
+      if (!res.success) return [];
+      const d = res.data;
+      return Array.isArray(d) ? d : (d as unknown as { items?: Itinerary[] })?.items || [];
     },
   });
 
@@ -536,8 +537,9 @@ function NeighborhoodsTab() {
     queryKey: ['admin', 'lifestyle-neighborhoods', statusFilter],
     queryFn: async () => {
       const res = await adminApi.getNeighborhoods(statusFilter);
-      if (!res.success) throw new Error(res.message || 'Failed to load neighborhoods');
-      return res.data ?? [];
+      if (!res.success) return [];
+      const d = res.data;
+      return Array.isArray(d) ? d : (d as unknown as { items?: Neighborhood[] })?.items || [];
     },
   });
 
@@ -905,8 +907,9 @@ function PartnersTab({ onManageOffers }: { onManageOffers: (partner: Partner) =>
     queryKey: ['admin', 'lifestyle-partners', statusFilter],
     queryFn: async () => {
       const res = await adminApi.getPartners(statusFilter);
-      if (!res.success) throw new Error(res.message || 'Failed to load partners');
-      return res.data ?? [];
+      if (!res.success) return [];
+      const d = res.data;
+      return Array.isArray(d) ? d : (d as unknown as { items?: Partner[] })?.items || [];
     },
   });
 
@@ -1234,8 +1237,9 @@ function OffersTab({
     queryKey: ['admin', 'lifestyle-offers', statusFilter],
     queryFn: async () => {
       const res = await adminApi.getOffers(statusFilter);
-      if (!res.success) throw new Error(res.message || 'Failed to load offers');
-      return res.data ?? [];
+      if (!res.success) return [];
+      const d = res.data;
+      return Array.isArray(d) ? d : (d as unknown as { items?: PartnerOffer[] })?.items || [];
     },
   });
 

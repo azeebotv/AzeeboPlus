@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { SystemSetting } from '@/lib/admin-types';
@@ -6,19 +6,44 @@ import { unwrapList, asRecord, requireData, assertSuccess, str as asStr } from '
 import { Icon } from '@/components/Icons';
 import QueryErrorBanner from '@/components/QueryErrorBanner';
 
+type SettingTab =
+  | 'general'
+  | 'access'
+  | 'security'
+  | 'integrations'
+  | 'notifications'
+  | 'compliance'
+  | 'localization';
+
+interface TabDef {
+  id: SettingTab;
+  label: string;
+  icon: string;
+  description: string;
+}
+
+const TABS: TabDef[] = [
+  { id: 'general', label: 'general', icon: 'settings', description: 'Platform identity, branding, and core operational defaults' },
+  { id: 'access', label: 'access', icon: 'users', description: 'Admin user accounts, permissions, and role definitions' },
+  { id: 'security', label: 'security', icon: 'shield', description: 'IP whitelisting, blacklisting, and rate limit policies' },
+  { id: 'integrations', label: 'integrations', icon: 'sliders', description: 'External gateways, SMS/email relays, and third-party APIs' },
+  { id: 'notifications', label: 'notifications', icon: 'bell', description: 'Delivery channels, alerts, and system broadcasts' },
+  { id: 'compliance', label: 'compliance', icon: 'checkCircle', description: 'Data privacy, terms enforcement, and retention windows' },
+  { id: 'localization', label: 'localization', icon: 'globe', description: 'Currencies, timezone standards, and regional languages' },
+];
+
 export default function SettingsPage() {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState('general');
+  const [tab, setTab] = useState<SettingTab>('general');
+  const [search, setSearch] = useState('');
   const [editKey, setEditKey] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [testingKey, setTestingKey] = useState<string | null>(null);
-  const [testResults, setTestResults] = useState<Record<string, { ok: boolean; message: string }>>(
-    {}
-  );
+  const [testResults, setTestResults] = useState<Record<string, { ok: boolean; message: string }>>({});
+  const [togglingKey, setTogglingKey] = useState<string | null>(null);
 
   const handleTest = async (key: string) => {
-    // extract provider name e.g. integrations.paystack -> paystack
     const provider = key.includes('.') ? (key.split('.')[1] as string) : key;
     setTestingKey(key);
     try {
@@ -68,6 +93,7 @@ export default function SettingsPage() {
     sendInvite: true,
   });
   const [accessError, setAccessError] = useState('');
+  const [showAddAdmin, setShowAddAdmin] = useState(false);
 
   const rolesQuery = useQuery({
     queryKey: ['admin', 'settings-roles'],
@@ -76,6 +102,7 @@ export default function SettingsPage() {
       return unwrapList<SystemSetting>(data).items;
     },
   });
+
   const adminsQuery = useQuery({
     queryKey: ['admin', 'settings-admins'],
     queryFn: async () => {
@@ -83,6 +110,7 @@ export default function SettingsPage() {
       return unwrapList<SystemSetting>(data).items;
     },
   });
+
   const invalidateAccess = () => {
     queryClient.invalidateQueries({ queryKey: ['admin', 'settings-admins'] });
     queryClient.invalidateQueries({ queryKey: ['admin', 'settings-roles'] });
@@ -101,14 +129,17 @@ export default function SettingsPage() {
       invalidateAccess();
       setAccessError('');
       setAdminForm({ email: '', displayName: '', role: 'admin', password: '', sendInvite: true });
+      setShowAddAdmin(false);
     },
     onError: (e: Error) => setAccessError(e.message || 'Failed to create admin'),
   });
+
   const removeAdminMutation = useMutation({
     mutationFn: (email: string) => adminApi.removeAccessAdmin(email),
     onSuccess: invalidateAccess,
     onError: (e: Error) => setAccessError(e.message || 'Failed to remove admin'),
   });
+
   const updateRoleMutation = useMutation({
     mutationFn: ({ role, value }: { role: string; value: Record<string, unknown> }) =>
       adminApi.updateAccessRole(role, {
@@ -130,6 +161,7 @@ export default function SettingsPage() {
   });
   const [ipLoaded, setIpLoaded] = useState(false);
   const [ipError, setIpError] = useState('');
+  const [ipSuccess, setIpSuccess] = useState(false);
 
   const ipRulesQuery = useQuery({
     queryKey: ['admin', 'settings-ip-rules'],
@@ -137,6 +169,7 @@ export default function SettingsPage() {
       return asRecord(requireData(await adminApi.getIpRules(), {}));
     },
   });
+
   if (!ipLoaded && ipRulesQuery.data && Object.keys(ipRulesQuery.data).length > 0) {
     const d = ipRulesQuery.data;
     setIpForm({
@@ -147,6 +180,7 @@ export default function SettingsPage() {
     });
     setIpLoaded(true);
   }
+
   const saveIpRulesMutation = useMutation({
     mutationFn: () =>
       adminApi.updateIpRules({
@@ -164,24 +198,34 @@ export default function SettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'settings-ip-rules'] });
       setIpError('');
+      setIpSuccess(true);
+      setTimeout(() => setIpSuccess(false), 3000);
     },
     onError: (e: Error) => setIpError(e.message || 'Failed to save IP rules'),
   });
 
   const updateMutation = useMutation({
-    // apiFetch resolves a failed write, so without assertSuccess this closed the
-    // editor as if the setting had saved.
     mutationFn: async ({ key, value }: { key: string; value: unknown }) =>
       assertSuccess(await adminApi.updateSetting(key, value)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
       setSaveError(null);
       setEditKey(null);
+      setTogglingKey(null);
     },
-    onError: (e: Error) => setSaveError(e.message || 'Failed to save setting'),
+    onError: (e: Error) => {
+      setSaveError(e.message || 'Failed to save setting');
+      setTogglingKey(null);
+    },
   });
 
-  // Export/import + bulk save (backend routes previously unused).
+  // Direct boolean toggle helper
+  const handleToggleBoolean = (key: string, currentValue: boolean) => {
+    setTogglingKey(key);
+    updateMutation.mutate({ key, value: !currentValue });
+  };
+
+  // Export / Import
   const [importFeedback, setImportFeedback] = useState<string | null>(null);
   const handleExport = async () => {
     const res = await adminApi.exportSettings();
@@ -198,7 +242,8 @@ export default function SettingsPage() {
     a.download = `azeebo-settings-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setImportFeedback('Settings exported.');
+    setImportFeedback('Configuration successfully exported.');
+    setTimeout(() => setImportFeedback(null), 4000);
   };
 
   const handleImportFile = async (file: File) => {
@@ -206,12 +251,13 @@ export default function SettingsPage() {
       const parsed = JSON.parse(await file.text());
       const res = await adminApi.importSettings(parsed, 'merge');
       setImportFeedback(
-        res.success ? 'Settings imported.' : `Import failed: ${res.message || 'unknown error'}`
+        res.success ? 'Settings merged successfully.' : `Import failed: ${res.message || 'unknown error'}`
       );
       if (res.success) queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
     } catch {
       setImportFeedback('Import failed: file is not valid JSON.');
     }
+    setTimeout(() => setImportFeedback(null), 5000);
   };
 
   const handleImportClick = () => {
@@ -225,15 +271,10 @@ export default function SettingsPage() {
     input.click();
   };
 
-  /**
-   * The edit input always yields a string, but settings can be boolean or
-   * numeric. Restoring the original value's type on save prevents writing
-   * "true"/"42" over real boolean/number settings.
-   */
   function coerceToOriginalType(original: unknown, raw: string): unknown {
     if (typeof original === 'boolean') {
       if (/^(true|false)$/i.test(raw.trim())) return raw.trim().toLowerCase() === 'true';
-      return raw; // let the backend validation reject an invalid boolean
+      return raw;
     }
     if (typeof original === 'number') {
       const n = Number(raw);
@@ -242,109 +283,208 @@ export default function SettingsPage() {
     return raw;
   }
 
-  // Object-valued settings (integrations, roles) need a JSON editor — a plain
-  // input would stringify the object and destroy its shape on save.
   const isObjectValue = (v: unknown) => typeof v === 'object' && v !== null;
-  const displayValue = (v: unknown) => (isObjectValue(v) ? JSON.stringify(v) : String(v));
+  const displayValue = (v: unknown) => (isObjectValue(v) ? JSON.stringify(v, null, 2) : String(v));
 
-  const tabs = [
-    'general',
-    'access',
-    'notifications',
-    'integrations',
-    'compliance',
-    'localization',
-    'security',
-  ];
+  // Filter settings per category and search query
+  const filteredSettings = useMemo(() => {
+    return settings.filter((s) => {
+      if (s.key.startsWith('_version_') || s.category === '_versions') return false;
 
-  const filteredSettings = settings.filter((s) => {
-    if (tab === 'general')
-      return (
-        !s.category ||
-        s.category === 'general' ||
-        s.category === 'branding' ||
-        s.category === 'performance'
-      );
-    return s.category === tab;
-  });
+      // Category matching
+      let categoryMatch = false;
+      if (tab === 'general') {
+        categoryMatch = !s.category || s.category === 'general' || s.category === 'branding' || s.category === 'performance';
+      } else {
+        categoryMatch = s.category === tab;
+      }
+      if (!categoryMatch) return false;
+
+      // Search matching
+      if (search) {
+        const q = search.toLowerCase();
+        const matchesKey = s.key.toLowerCase().includes(q);
+        const matchesDesc = s.description ? s.description.toLowerCase().includes(q) : false;
+        const matchesVal = displayValue(s.value).toLowerCase().includes(q);
+        return matchesKey || matchesDesc || matchesVal;
+      }
+      return true;
+    });
+  }, [settings, tab, search]);
+
+  const currentTabDef = TABS.find((t) => t.id === tab) ?? (TABS[0] as TabDef);
 
   return (
     <div>
-      <div style={{ marginBottom: 24 }}>
-        <h1
-          style={{
-            fontSize: 28,
-            fontWeight: 700,
-            marginBottom: 8,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <Icon name="settings" size={28} color="var(--admin-orange)" />
-          <span>Settings</span>
-        </h1>
-        <p style={{ color: 'var(--admin-text-muted)' }}>
-          Platform configuration and system settings
-        </p>
-      </div>
-
-      <div style={{ display: 'flex', gap: 6, marginBottom: 24, flexWrap: 'wrap' }}>
-        {tabs.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
+      {/* Header with Title and Actions */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 16,
+          marginBottom: 24,
+        }}
+      >
+        <div>
+          <h1
             style={{
-              padding: '8px 16px',
-              borderRadius: 999,
-              border: tab === t ? 'none' : '1px solid var(--admin-border)',
-              background:
-                tab === t ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent',
-              color: tab === t ? 'white' : 'var(--admin-text-muted)',
-              fontWeight: 500,
-              fontSize: 13,
-              cursor: 'pointer',
-              textTransform: 'capitalize',
+              fontSize: 28,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              marginBottom: 6,
             }}
           >
-            {t}
-          </button>
-        ))}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Icon name="settings" size={28} color="var(--admin-orange)" />
+            <span>Settings</span>
+          </h1>
+          <p style={{ color: 'var(--admin-text-muted)', fontSize: 14 }}>
+            Manage platform configuration, access controls, IP firewall, and integration credentials.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {importFeedback && (
-            <span style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>{importFeedback}</span>
+            <span
+              style={{
+                color: 'var(--admin-green)',
+                backgroundColor: 'rgba(13,59,46,0.3)',
+                padding: '5px 12px',
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 500,
+              }}
+            >
+              {importFeedback}
+            </span>
           )}
           <button
             onClick={() => void handleExport()}
+            title="Download full configuration as JSON"
             style={{
-              padding: '7px 14px',
+              padding: '8px 16px',
               borderRadius: 8,
               border: '1px solid var(--admin-card)',
-              background: 'transparent',
+              background: 'var(--admin-surface)',
               color: 'var(--admin-text)',
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 150ms ease',
             }}
           >
             Export
           </button>
           <button
             onClick={handleImportClick}
+            title="Import configuration JSON file"
             style={{
-              padding: '7px 14px',
+              padding: '8px 16px',
               borderRadius: 8,
               border: '1px solid var(--admin-card)',
-              background: 'transparent',
+              background: 'var(--admin-surface)',
               color: 'var(--admin-text)',
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 150ms ease',
             }}
           >
             Import
           </button>
         </div>
+      </div>
+
+      {/* Modern Tabs Bar */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 6,
+          padding: '4px',
+          borderRadius: 12,
+          backgroundColor: 'var(--admin-surface)',
+          border: '1px solid var(--admin-card)',
+          overflowX: 'auto',
+          marginBottom: 20,
+        }}
+      >
+        {TABS.map((t) => {
+          const isActive = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => {
+                setTab(t.id);
+                setSearch('');
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 16px',
+                borderRadius: 8,
+                border: 'none',
+                backgroundColor: isActive ? 'var(--admin-orange)' : 'transparent',
+                color: isActive ? '#ffffff' : 'var(--admin-text-muted)',
+                fontWeight: isActive ? 600 : 500,
+                fontSize: 13,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <Icon name={t.icon} size={16} color={isActive ? '#ffffff' : 'var(--admin-text-muted)'} />
+              <span style={{ textTransform: 'capitalize' }}>{t.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Category Subtitle & Search */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12,
+          marginBottom: 16,
+          padding: '0 2px',
+        }}
+      >
+        <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, margin: 0 }}>
+          {currentTabDef.description}
+        </p>
+
+        {tab !== 'access' && tab !== 'security' && (
+          <div style={{ position: 'relative', minWidth: 260 }}>
+            <input
+              type="text"
+              placeholder={`Search ${currentTabDef.label.toLowerCase()} settings...`}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '7px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
+                color: 'var(--admin-text)',
+                fontSize: 13,
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {isError && (
@@ -356,356 +496,448 @@ export default function SettingsPage() {
           retrying={isFetching}
         />
       )}
+
       {saveError && (
         <div
           role="alert"
           style={{
-            padding: '10px 14px',
+            padding: '12px 16px',
             borderRadius: 8,
-            border: '1px solid rgba(204,28,28,0.4)',
+            border: '1px solid var(--admin-red)',
             backgroundColor: 'rgba(204,28,28,0.12)',
-            color: 'var(--admin-red-light)',
+            color: 'var(--admin-red)',
             fontSize: 13,
             marginBottom: 16,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          {saveError}
+          <span>{saveError}</span>
+          <button
+            onClick={() => setSaveError(null)}
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer' }}
+          >
+            ×
+          </button>
         </div>
       )}
 
       {isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
-          Loading...
-        </p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading settings…</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* Access tab panels — dedicated roles/admins endpoints, not flat rows */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* ACCESS TAB */}
           {tab === 'access' && (
-            <div
-              style={{
-                padding: 20,
-                borderRadius: 12,
-                border: '1px solid var(--admin-card)',
-                backgroundColor: 'var(--admin-surface)',
-                marginBottom: 8,
-              }}
-            >
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Admin Users</h3>
-              {accessError && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Admin Users Card */}
+              <div
+                style={{
+                  padding: 24,
+                  borderRadius: 16,
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'var(--admin-surface)',
+                }}
+              >
                 <div
-                  role="alert"
                   style={{
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    border: '1px solid rgba(204,28,28,0.4)',
-                    backgroundColor: 'rgba(204,28,28,0.12)',
-                    color: 'var(--admin-red-light)',
-                    fontSize: 12,
-                    marginBottom: 12,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 16,
                   }}
                 >
-                  {accessError}
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px 0' }}>Admin Users</h3>
+                    <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, margin: 0 }}>
+                      Personnel with authorized access to the administrative console.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddAdmin(!showAddAdmin)}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: 8,
+                      border: 'none',
+                      backgroundColor: showAddAdmin ? 'var(--admin-dark)' : 'var(--admin-orange)',
+                      color: '#ffffff',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {showAddAdmin ? 'Cancel' : '+ Add Admin User'}
+                  </button>
                 </div>
-              )}
-              {adminsQuery.isLoading ? (
-                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>Loading admins…</p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
-                  {(adminsQuery.data ?? []).map((a) => {
-                    const v = asRecord(a.value);
-                    const email = asStr(v.email) || a.key.replace(/^admins\./, '');
-                    const displayName = asStr(v.displayName);
-                    const role = asStr(v.role) || 'admin';
+
+                {accessError && (
+                  <div
+                    role="alert"
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(204,28,28,0.4)',
+                      backgroundColor: 'rgba(204,28,28,0.12)',
+                      color: 'var(--admin-red)',
+                      fontSize: 12,
+                      marginBottom: 14,
+                    }}
+                  >
+                    {accessError}
+                  </div>
+                )}
+
+                  <div
+                    style={{
+                      padding: 16,
+                      borderRadius: 12,
+                      backgroundColor: 'var(--admin-dark)',
+                      border: '1px solid var(--admin-card)',
+                      marginBottom: 16,
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: 12,
+                      alignItems: 'flex-end',
+                    }}
+                  >
+                    <div>
+                      <label style={{ fontSize: 12, color: 'var(--admin-text-muted)', display: 'block', marginBottom: 4 }}>
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="ops@azeebo.tv"
+                        value={adminForm.email}
+                        onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: 6,
+                          border: '1px solid var(--admin-card)',
+                          backgroundColor: 'var(--admin-surface)',
+                          color: 'var(--admin-text)',
+                          fontSize: 13,
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, color: 'var(--admin-text-muted)', display: 'block', marginBottom: 4 }}>
+                        Display Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ops Lead"
+                        value={adminForm.displayName}
+                        onChange={(e) => setAdminForm({ ...adminForm, displayName: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: 6,
+                          border: '1px solid var(--admin-card)',
+                          backgroundColor: 'var(--admin-surface)',
+                          color: 'var(--admin-text)',
+                          fontSize: 13,
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, color: 'var(--admin-text-muted)', display: 'block', marginBottom: 4 }}>
+                        Role
+                      </label>
+                      <select
+                        value={adminForm.role}
+                        onChange={(e) => setAdminForm({ ...adminForm, role: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: 6,
+                          border: '1px solid var(--admin-card)',
+                          backgroundColor: 'var(--admin-surface)',
+                          color: 'var(--admin-text)',
+                          fontSize: 13,
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="superadmin">Superadmin</option>
+                        <option value="viewer">Viewer</option>
+                        <option value="moderator">Moderator</option>
+                        <option value="analyst">Analyst</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, color: 'var(--admin-text-muted)', display: 'block', marginBottom: 4 }}>
+                        Initial Password (optional)
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={adminForm.password}
+                        onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: 6,
+                          border: '1px solid var(--admin-card)',
+                          backgroundColor: 'var(--admin-surface)',
+                          color: 'var(--admin-text)',
+                          fontSize: 13,
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => {
+                          if (!adminForm.email.trim() || !adminForm.displayName.trim()) {
+                            setAccessError('Email and display name are required.');
+                            return;
+                          }
+                          createAdminMutation.mutate();
+                        }}
+                        disabled={createAdminMutation.isPending || !adminForm.email}
+                        style={{
+                          padding: '9px 18px',
+                          borderRadius: 6,
+                          border: 'none',
+                          backgroundColor: 'var(--admin-green)',
+                          color: '#ffffff',
+                          fontWeight: 600,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {createAdminMutation.isPending ? 'Adding…' : 'Add Admin'}
+                      </button>
+                    </div>
+                  </div>
+
+                {adminsQuery.isLoading ? (
+                  <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>Loading admin users…</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {(adminsQuery.data ?? []).map((a) => {
+                      const v = asRecord(a.value);
+                      const email = asStr(v.email) || a.key.replace(/^admins\./, '');
+                      const displayName = asStr(v.displayName);
+                      const role = asStr(v.role) || 'admin';
+                      return (
+                        <div
+                          key={a.key}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 16px',
+                            borderRadius: 10,
+                            border: '1px solid var(--admin-card)',
+                            backgroundColor: 'var(--admin-dark)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div
+                              style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: '50%',
+                                backgroundColor: 'rgba(232,66,10,0.15)',
+                                color: 'var(--admin-orange)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 700,
+                                fontSize: 14,
+                              }}
+                            >
+                              {(displayName || email).charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{displayName || email}</p>
+                              <p style={{ margin: 0, fontSize: 12, color: 'var(--admin-text-muted)' }}>{email}</p>
+                            </div>
+                            <span
+                              style={{
+                                padding: '3px 8px',
+                                borderRadius: 6,
+                                fontSize: 11,
+                                fontWeight: 600,
+                                backgroundColor: 'rgba(59,130,246,0.15)',
+                                color: 'var(--admin-blue)',
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              {role}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Revoke admin privileges for ${email}?`)) {
+                                removeAdminMutation.mutate(email);
+                              }
+                            }}
+                            style={{
+                              padding: '5px 12px',
+                              borderRadius: 6,
+                              border: '1px solid rgba(204,28,28,0.3)',
+                              background: 'transparent',
+                              color: 'var(--admin-red)',
+                              fontSize: 12,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Roles Directory */}
+              <div
+                style={{
+                  padding: 24,
+                  borderRadius: 16,
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'var(--admin-surface)',
+                }}
+              >
+                <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px 0' }}>Roles & Scopes</h3>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 16 }}>
+                  Role templates defining granular capabilities across services.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {(rolesQuery.data ?? []).map((r) => {
+                    const roleName = r.key.replace(/^roles\./, '');
+                    const v = asRecord(r.value);
+                    const description = asStr(v.description);
+                    const isActive = v.isActive !== false;
                     return (
                       <div
-                        key={a.key}
+                        key={r.key}
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          padding: '8px 12px',
-                          borderRadius: 8,
+                          padding: '12px 16px',
+                          borderRadius: 10,
                           border: '1px solid var(--admin-card)',
+                          backgroundColor: 'var(--admin-dark)',
                         }}
                       >
                         <div>
-                          <span style={{ fontSize: 13, fontWeight: 600 }}>{email}</span>
-                          {displayName && (
-                            <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
-                              {' '}
-                              · {displayName}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                            <span style={{ fontSize: 14, fontWeight: 600 }}>{roleName}</span>
+                            <span
+                              style={{
+                                padding: '2px 8px',
+                                borderRadius: 999,
+                                fontSize: 10,
+                                fontWeight: 600,
+                                backgroundColor: isActive ? 'rgba(13,59,46,0.3)' : 'rgba(154,138,122,0.15)',
+                                color: isActive ? 'var(--admin-green)' : 'var(--admin-text-muted)',
+                              }}
+                            >
+                              {isActive ? 'Active' : 'Disabled'}
                             </span>
+                          </div>
+                          {description && (
+                            <p style={{ margin: 0, fontSize: 12, color: 'var(--admin-text-muted)' }}>{description}</p>
                           )}
-                          <span
-                            style={{
-                              marginLeft: 8,
-                              padding: '2px 8px',
-                              borderRadius: 6,
-                              fontSize: 11,
-                              backgroundColor: 'rgba(59,130,246,0.15)',
-                              color: 'var(--admin-blue)',
-                            }}
-                          >
-                            {role}
-                          </span>
                         </div>
                         <button
-                          onClick={() => {
-                            if (window.confirm(`Remove admin "${email}"?`))
-                              removeAdminMutation.mutate(email);
-                          }}
+                          onClick={() => updateRoleMutation.mutate({ role: roleName, value: { ...v, isActive: !isActive } })}
+                          disabled={updateRoleMutation.isPending}
                           style={{
-                            padding: '4px 10px',
+                            padding: '4px 12px',
                             borderRadius: 6,
-                            border: '1px solid var(--admin-red)',
+                            border: '1px solid var(--admin-card)',
                             background: 'transparent',
-                            color: 'var(--admin-red)',
-                            fontSize: 11,
+                            color: isActive ? 'var(--admin-text-muted)' : 'var(--admin-green)',
+                            fontSize: 12,
                             cursor: 'pointer',
                           }}
                         >
-                          Remove
+                          Toggle Active
                         </button>
                       </div>
                     );
                   })}
-                  {(adminsQuery.data ?? []).length === 0 && (
-                    <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
-                      No admin users configured.
-                    </p>
-                  )}
                 </div>
-              )}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr auto auto',
-                  gap: 8,
-                  alignItems: 'end',
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--admin-text-muted)',
-                      display: 'block',
-                      marginBottom: 4,
-                    }}
-                  >
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={adminForm.email}
-                    onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
-                    placeholder="ops@azeebo.tv"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: 8,
-                      border: '1px solid var(--admin-card)',
-                      backgroundColor: 'var(--admin-dark)',
-                      color: 'var(--admin-text)',
-                      fontSize: 13,
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--admin-text-muted)',
-                      display: 'block',
-                      marginBottom: 4,
-                    }}
-                  >
-                    Display Name
-                  </label>
-                  <input
-                    value={adminForm.displayName}
-                    onChange={(e) => setAdminForm({ ...adminForm, displayName: e.target.value })}
-                    placeholder="Ops Lead"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: 8,
-                      border: '1px solid var(--admin-card)',
-                      backgroundColor: 'var(--admin-dark)',
-                      color: 'var(--admin-text)',
-                      fontSize: 13,
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--admin-text-muted)',
-                      display: 'block',
-                      marginBottom: 4,
-                    }}
-                  >
-                    Role
-                  </label>
-                  <select
-                    value={adminForm.role}
-                    onChange={(e) => setAdminForm({ ...adminForm, role: e.target.value })}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: 8,
-                      border: '1px solid var(--admin-card)',
-                      backgroundColor: 'var(--admin-dark)',
-                      color: 'var(--admin-text)',
-                      fontSize: 13,
-                    }}
-                  >
-                    {['admin', 'superadmin', 'viewer'].map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button
-                  onClick={() => {
-                    if (!adminForm.email.trim() || !adminForm.displayName.trim())
-                      return void setAccessError('Email and display name are required.');
-                    createAdminMutation.mutate();
-                  }}
-                  disabled={createAdminMutation.isPending}
-                  style={{
-                    padding: '9px 18px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: 'var(--admin-green)',
-                    color: 'white',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {createAdminMutation.isPending ? 'Adding…' : 'Add Admin'}
-                </button>
-              </div>
-              <div style={{ marginTop: 8 }}>
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: 12,
-                    color: 'var(--admin-text-muted)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={adminForm.sendInvite}
-                    onChange={(e) => setAdminForm({ ...adminForm, sendInvite: e.target.checked })}
-                  />
-                  Send invite email (password optional when inviting)
-                </label>
-              </div>
-              <h3 style={{ fontSize: 14, fontWeight: 700, margin: '20px 0 12px' }}>Roles</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {(rolesQuery.data ?? []).map((r) => {
-                  const roleName = r.key.replace(/^roles\./, '');
-                  const v = asRecord(r.value);
-                  const description = asStr(v.description);
-                  return (
-                    <div
-                      key={r.key}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px 12px',
-                        borderRadius: 8,
-                        border: '1px solid var(--admin-card)',
-                      }}
-                    >
-                      <div>
-                        <span style={{ fontSize: 13, fontWeight: 600 }}>{roleName}</span>
-                        {description && (
-                          <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
-                            {' '}
-                            · {description}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => updateRoleMutation.mutate({ role: roleName, value: v })}
-                        disabled={updateRoleMutation.isPending}
-                        style={{
-                          padding: '4px 10px',
-                          borderRadius: 6,
-                          border: '1px solid var(--admin-blue)',
-                          background: 'transparent',
-                          color: 'var(--admin-blue)',
-                          fontSize: 11,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Toggle Active
-                      </button>
-                    </div>
-                  );
-                })}
               </div>
             </div>
           )}
 
-          {/* Security tab panel — dedicated IP-rules editor */}
+          {/* SECURITY & IP TAB */}
           {tab === 'security' && (
             <div
               style={{
-                padding: 20,
-                borderRadius: 12,
+                padding: 24,
+                borderRadius: 16,
                 border: '1px solid var(--admin-card)',
                 backgroundColor: 'var(--admin-surface)',
-                marginBottom: 8,
               }}
             >
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>IP Rules</h3>
+              <div style={{ marginBottom: 20 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px 0' }}>IP Rules</h3>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, margin: 0 }}>
+                  Enforce IP address whitelists, blacklists, and per-origin rate limiting.
+                </p>
+              </div>
+
               {ipError && (
                 <div
                   role="alert"
                   style={{
-                    padding: '8px 12px',
+                    padding: '10px 14px',
                     borderRadius: 8,
                     border: '1px solid rgba(204,28,28,0.4)',
                     backgroundColor: 'rgba(204,28,28,0.12)',
-                    color: 'var(--admin-red-light)',
+                    color: 'var(--admin-red)',
                     fontSize: 12,
-                    marginBottom: 12,
+                    marginBottom: 16,
                   }}
                 >
                   {ipError}
                 </div>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+
+              {ipSuccess && (
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    border: '1px solid rgba(13,59,46,0.4)',
+                    backgroundColor: 'rgba(13,59,46,0.2)',
+                    color: 'var(--admin-green)',
+                    fontSize: 12,
+                    marginBottom: 16,
+                  }}
+                >
+                  IP firewall rules updated successfully.
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 20 }}>
                 <div>
-                  <label
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--admin-text-muted)',
-                      display: 'block',
-                      marginBottom: 4,
-                    }}
-                  >
-                    Whitelist (one IP or CIDR per line)
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--admin-text)' }}>
+                      Whitelist
+                    </label>
+                    <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>1 per line (supports CIDR)</span>
+                  </div>
                   <textarea
                     value={ipForm.whitelist}
                     onChange={(e) => setIpForm({ ...ipForm, whitelist: e.target.value })}
-                    rows={4}
+                    rows={6}
                     placeholder={'203.0.113.0/24\n198.51.100.7'}
                     style={{
                       width: '100%',
-                      padding: '8px 12px',
+                      padding: '10px 14px',
                       borderRadius: 8,
                       border: '1px solid var(--admin-card)',
                       backgroundColor: 'var(--admin-dark)',
@@ -713,29 +945,26 @@ export default function SettingsPage() {
                       fontSize: 13,
                       boxSizing: 'border-box',
                       resize: 'vertical',
-                      fontFamily: 'inherit',
+                      fontFamily: 'monospace',
                     }}
                   />
                 </div>
+
                 <div>
-                  <label
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--admin-text-muted)',
-                      display: 'block',
-                      marginBottom: 4,
-                    }}
-                  >
-                    Blacklist (one IP or CIDR per line)
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--admin-text)' }}>
+                      Blacklist
+                    </label>
+                    <span style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>1 per line (supports CIDR)</span>
+                  </div>
                   <textarea
                     value={ipForm.blacklist}
                     onChange={(e) => setIpForm({ ...ipForm, blacklist: e.target.value })}
-                    rows={4}
+                    rows={6}
                     placeholder={'10.0.0.5\n192.168.44.0/24'}
                     style={{
                       width: '100%',
-                      padding: '8px 12px',
+                      padding: '10px 14px',
                       borderRadius: 8,
                       border: '1px solid var(--admin-card)',
                       backgroundColor: 'var(--admin-dark)',
@@ -743,52 +972,49 @@ export default function SettingsPage() {
                       fontSize: 13,
                       boxSizing: 'border-box',
                       resize: 'vertical',
-                      fontFamily: 'inherit',
+                      fontFamily: 'monospace',
                     }}
                   />
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 12, marginTop: 12, alignItems: 'center' }}>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 16,
+                  alignItems: 'center',
+                  paddingTop: 16,
+                  borderTop: '1px solid var(--admin-card)',
+                }}
+              >
                 <div>
-                  <label
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--admin-text-muted)',
-                      display: 'block',
-                      marginBottom: 4,
-                    }}
-                  >
-                    Mode
+                  <label style={{ fontSize: 11, color: 'var(--admin-text-muted)', display: 'block', marginBottom: 4 }}>
+                    Firewall Enforcement Mode
                   </label>
                   <select
                     value={ipForm.mode}
                     onChange={(e) => setIpForm({ ...ipForm, mode: e.target.value })}
                     style={{
-                      padding: '8px 12px',
+                      padding: '8px 14px',
                       borderRadius: 8,
                       border: '1px solid var(--admin-card)',
                       backgroundColor: 'var(--admin-dark)',
                       color: 'var(--admin-text)',
                       fontSize: 13,
+                      minWidth: 160,
                     }}
                   >
-                    {['off', 'whitelist-only', 'blacklist-only', 'enforce'].map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
+                    <option value="off">Off (Monitoring Only)</option>
+                    <option value="whitelist-only">Whitelist Only</option>
+                    <option value="blacklist-only">Blacklist Only</option>
+                    <option value="enforce">Strict Enforce</option>
                   </select>
                 </div>
+
                 <div>
-                  <label
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--admin-text-muted)',
-                      display: 'block',
-                      marginBottom: 4,
-                    }}
-                  >
-                    Rate limit / IP / minute
+                  <label style={{ fontSize: 11, color: 'var(--admin-text-muted)', display: 'block', marginBottom: 4 }}>
+                    Rate Limit / IP / Minute
                   </label>
                   <input
                     type="number"
@@ -797,7 +1023,7 @@ export default function SettingsPage() {
                     onChange={(e) => setIpForm({ ...ipForm, rateLimitPerIp: e.target.value })}
                     placeholder="60"
                     style={{
-                      padding: '8px 12px',
+                      padding: '8px 14px',
                       borderRadius: 8,
                       border: '1px solid var(--admin-card)',
                       backgroundColor: 'var(--admin-dark)',
@@ -807,190 +1033,314 @@ export default function SettingsPage() {
                     }}
                   />
                 </div>
-                <button
-                  onClick={() => saveIpRulesMutation.mutate()}
-                  disabled={saveIpRulesMutation.isPending}
-                  style={{
-                    marginLeft: 'auto',
-                    padding: '9px 20px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: 'var(--admin-green)',
-                    color: 'white',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {saveIpRulesMutation.isPending ? 'Saving…' : 'Save IP Rules'}
-                </button>
+
+                <div style={{ marginLeft: 'auto', alignSelf: 'flex-end' }}>
+                  <button
+                    onClick={() => saveIpRulesMutation.mutate()}
+                    disabled={saveIpRulesMutation.isPending}
+                    style={{
+                      padding: '9px 24px',
+                      borderRadius: 8,
+                      border: 'none',
+                      backgroundColor: 'var(--admin-orange)',
+                      color: '#ffffff',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {saveIpRulesMutation.isPending ? 'Saving…' : 'Save IP Rules'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
-          {filteredSettings.map((s) => (
-            <div
-              key={s.key}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '14px 16px',
-                borderRadius: 12,
-                border: '1px solid var(--admin-card)',
-                backgroundColor: 'var(--admin-surface)',
-              }}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontWeight: 500, fontSize: 14, marginBottom: 2 }}>{s.key}</p>
-                {s.description && (
-                  <p style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>{s.description}</p>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                {editKey === s.key ? (
-                  <>
-                    {isObjectValue(s.value) ? (
-                      <textarea
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        rows={3}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: 6,
-                          border: '1px solid var(--admin-surface)',
-                          backgroundColor: 'var(--admin-dark)',
-                          color: 'var(--admin-text)',
-                          fontSize: 12,
-                          width: 320,
-                          fontFamily: 'monospace',
-                          resize: 'vertical',
-                        }}
-                      />
-                    ) : (
-                      <input
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: 6,
-                          border: '1px solid var(--admin-surface)',
-                          backgroundColor: 'var(--admin-dark)',
-                          color: 'var(--admin-text)',
-                          fontSize: 13,
-                          width: 200,
-                        }}
-                      />
-                    )}
-                    <button
-                      onClick={() => {
-                        if (isObjectValue(s.value)) {
-                          try {
-                            const parsed = JSON.parse(editValue);
-                            updateMutation.mutate({ key: s.key, value: parsed });
-                          } catch {
-                            return; // invalid JSON — keep the editor open
-                          }
-                        } else {
-                          updateMutation.mutate({
-                            key: s.key,
-                            value: coerceToOriginalType(s.value, editValue),
-                          });
-                        }
-                      }}
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: 6,
-                        border: 'none',
-                        background: 'var(--admin-green)',
-                        color: 'white',
-                        fontSize: 12,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditKey(null)}
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: 6,
-                        border: '1px solid var(--admin-surface)',
-                        background: 'transparent',
-                        color: 'var(--admin-text-muted)',
-                        fontSize: 12,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <span
-                      style={{
-                        color: 'var(--admin-text-muted)',
-                        fontSize: 13,
-                        maxWidth: 200,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                      title={displayValue(s.value)}
-                    >
-                      {displayValue(s.value)}
-                    </span>
-                    {tab === 'integrations' && (
-                      <button
-                        onClick={() => handleTest(s.key)}
-                        disabled={testingKey === s.key}
-                        style={{
-                          padding: '4px 12px',
-                          borderRadius: 6,
-                          border: '1px solid var(--admin-border)',
-                          background: 'transparent',
-                          color: testResults[s.key]?.ok
-                            ? 'var(--admin-emerald)'
-                            : testResults[s.key]
-                              ? 'var(--admin-red)'
-                              : 'var(--admin-text)',
-                          fontSize: 12,
-                          cursor: testingKey === s.key ? 'not-allowed' : 'pointer',
-                        }}
-                      >
-                        {testingKey === s.key
-                          ? 'Testing...'
-                          : testResults[s.key]
-                            ? testResults[s.key]?.message
-                            : 'Test'}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        setEditKey(s.key);
-                        setEditValue(displayValue(s.value));
-                      }}
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: 6,
-                        border: '1px solid var(--admin-surface)',
-                        background: 'transparent',
-                        color: 'var(--admin-orange)',
-                        fontSize: 12,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Edit
-                    </button>
-                  </>
-                )}
-              </div>
+          {/* GENERAL, NOTIFICATIONS, COMPLIANCE, LOCALIZATION, INTEGRATIONS */}
+          {tab !== 'access' && tab !== 'security' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {filteredSettings.map((s) => {
+                const isBoolean = typeof s.value === 'boolean';
+                const isEditing = editKey === s.key;
+                const isToggling = togglingKey === s.key;
+
+                return (
+                  <div
+                    key={s.key}
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 16,
+                      padding: '16px 20px',
+                      borderRadius: 14,
+                      border: '1px solid var(--admin-card)',
+                      backgroundColor: 'var(--admin-surface)',
+                      transition: 'border-color 150ms ease',
+                    }}
+                  >
+                    <div style={{ flex: '1 1 320px', minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <code
+                          style={{
+                            fontWeight: 600,
+                            fontSize: 13,
+                            color: 'var(--admin-text)',
+                            backgroundColor: 'var(--admin-dark)',
+                            padding: '2px 8px',
+                            borderRadius: 6,
+                          }}
+                        >
+                          {s.key}
+                        </code>
+                        {s.category && (
+                          <span
+                            style={{
+                              fontSize: 11,
+                              color: 'var(--admin-text-muted)',
+                              textTransform: 'capitalize',
+                            }}
+                          >
+                            · {s.category}
+                          </span>
+                        )}
+                      </div>
+                      {s.description && (
+                        <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, margin: 0 }}>
+                          {s.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                      {/* Direct Boolean Toggle Switch */}
+                      {isBoolean && !isEditing ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: 999,
+                              fontSize: 11,
+                              fontWeight: 600,
+                              backgroundColor: s.value ? 'rgba(13,59,46,0.3)' : 'rgba(154,138,122,0.15)',
+                              color: s.value ? 'var(--admin-green)' : 'var(--admin-text-muted)',
+                            }}
+                          >
+                            {s.value ? 'Enabled' : 'Disabled'}
+                          </span>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={Boolean(s.value)}
+                            disabled={isToggling}
+                            onClick={() => handleToggleBoolean(s.key, Boolean(s.value))}
+                            style={{
+                              position: 'relative',
+                              width: 44,
+                              height: 24,
+                              borderRadius: 999,
+                              border: 'none',
+                              backgroundColor: s.value ? 'var(--admin-orange)' : 'rgba(255,255,255,0.15)',
+                              cursor: isToggling ? 'wait' : 'pointer',
+                              transition: 'background-color 200ms ease',
+                              opacity: isToggling ? 0.6 : 1,
+                              padding: 2,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span
+                              style={{
+                                display: 'block',
+                                width: 20,
+                                height: 20,
+                                borderRadius: '50%',
+                                backgroundColor: '#ffffff',
+                                transform: s.value ? 'translateX(20px)' : 'translateX(0px)',
+                                transition: 'transform 200ms ease',
+                              }}
+                            />
+                          </button>
+                        </div>
+                      ) : isEditing ? (
+                        /* Inline Editor Mode */
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                          {isObjectValue(s.value) ? (
+                            <textarea
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              rows={4}
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: 8,
+                                border: '1px solid var(--admin-card)',
+                                backgroundColor: 'var(--admin-dark)',
+                                color: 'var(--admin-text)',
+                                fontSize: 12,
+                                width: 340,
+                                fontFamily: 'monospace',
+                                resize: 'vertical',
+                              }}
+                            />
+                          ) : (
+                            <input
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: 8,
+                                border: '1px solid var(--admin-card)',
+                                backgroundColor: 'var(--admin-dark)',
+                                color: 'var(--admin-text)',
+                                fontSize: 13,
+                                width: 220,
+                              }}
+                            />
+                          )}
+                          <button
+                            onClick={() => {
+                              if (isObjectValue(s.value)) {
+                                try {
+                                  const parsed = JSON.parse(editValue);
+                                  updateMutation.mutate({ key: s.key, value: parsed });
+                                } catch {
+                                  setSaveError('Invalid JSON format. Please verify syntax.');
+                                }
+                              } else {
+                                updateMutation.mutate({
+                                  key: s.key,
+                                  value: coerceToOriginalType(s.value, editValue),
+                                });
+                              }
+                            }}
+                            disabled={updateMutation.isPending}
+                            style={{
+                              padding: '7px 14px',
+                              borderRadius: 6,
+                              border: 'none',
+                              backgroundColor: 'var(--admin-emerald)',
+                              color: '#ffffff',
+                              fontSize: 12,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditKey(null);
+                              setSaveError(null);
+                            }}
+                            style={{
+                              padding: '7px 12px',
+                              borderRadius: 6,
+                              border: '1px solid var(--admin-card)',
+                              background: 'transparent',
+                              color: 'var(--admin-text-muted)',
+                              fontSize: 12,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        /* Normal Value Display & Actions */
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span
+                            style={{
+                              color: 'var(--admin-text)',
+                              fontSize: 13,
+                              maxWidth: 240,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              backgroundColor: 'var(--admin-dark)',
+                              padding: '4px 10px',
+                              borderRadius: 6,
+                              border: '1px solid var(--admin-card)',
+                            }}
+                            title={displayValue(s.value)}
+                          >
+                            {displayValue(s.value)}
+                          </span>
+
+                          {tab === 'integrations' && (
+                            <button
+                              onClick={() => handleTest(s.key)}
+                              disabled={testingKey === s.key}
+                              style={{
+                                padding: '5px 12px',
+                                borderRadius: 6,
+                                border: '1px solid var(--admin-card)',
+                                background: testResults[s.key]?.ok ? 'rgba(13,59,46,0.3)' : 'transparent',
+                                color: testResults[s.key]?.ok
+                                  ? 'var(--admin-green)'
+                                  : testResults[s.key]
+                                    ? 'var(--admin-red)'
+                                    : 'var(--admin-text)',
+                                fontSize: 12,
+                                fontWeight: 500,
+                                cursor: testingKey === s.key ? 'wait' : 'pointer',
+                                transition: 'all 150ms ease',
+                              }}
+                            >
+                              {testingKey === s.key
+                                ? 'Testing…'
+                                : testResults[s.key]
+                                  ? testResults[s.key]?.message
+                                  : 'Ping Test'}
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => {
+                              setEditKey(s.key);
+                              setEditValue(displayValue(s.value));
+                              setSaveError(null);
+                            }}
+                            style={{
+                              padding: '5px 14px',
+                              borderRadius: 6,
+                              border: '1px solid var(--admin-card)',
+                              background: 'var(--admin-dark)',
+                              color: 'var(--admin-orange)',
+                              fontSize: 12,
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                              transition: 'all 150ms ease',
+                            }}
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredSettings.length === 0 && (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: 48,
+                    borderRadius: 14,
+                    border: '1px dashed var(--admin-card)',
+                    color: 'var(--admin-text-muted)',
+                  }}
+                >
+                  <p style={{ margin: '0 0 6px 0', fontSize: 15, fontWeight: 500 }}>
+                    {search ? `No settings match "${search}"` : 'No settings found in this category'}
+                  </p>
+                  <p style={{ margin: 0, fontSize: 13 }}>
+                    {search ? 'Try a different search term or clear the filter.' : 'Settings will appear here once defined.'}
+                  </p>
+                </div>
+              )}
             </div>
-          ))}
-          {filteredSettings.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
-              No settings in this category
-            </p>
           )}
         </div>
       )}

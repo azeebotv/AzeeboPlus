@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { AdminUniverse } from '@/lib/admin-types';
-import { requireData } from '@/lib/payload';
+import { requireData, assertSuccess } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 export default function UniversesPage() {
@@ -87,9 +87,15 @@ export default function UniversesPage() {
     setSyncIssues((prev) => ({ ...prev, ...byId }));
   };
 
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+
   const toggleMutation = useMutation({
-    mutationFn: ({ id, isEnabled }: { id: string; isEnabled: boolean }) =>
-      adminApi.toggleUniverse(id, isEnabled),
+    mutationFn: async ({ id, isEnabled }: { id: string; isEnabled: boolean }) => {
+      setTogglingId(id);
+      setToggleError(null);
+      return assertSuccess(await adminApi.toggleUniverse(id, isEnabled));
+    },
     onSuccess: (res, vars) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
       recordSyncIssues(
@@ -97,6 +103,12 @@ export default function UniversesPage() {
         (res.data as { flagSync?: unknown } | undefined)?.flagSync,
         vars.id
       );
+    },
+    onError: (err: unknown) => {
+      setToggleError((err as Error)?.message || 'Failed to toggle universe status');
+    },
+    onSettled: () => {
+      setTogglingId(null);
     },
   });
 
@@ -472,6 +484,37 @@ export default function UniversesPage() {
         </div>
       )}
 
+      {toggleError && (
+        <div
+          style={{
+            padding: '12px 16px',
+            borderRadius: 8,
+            border: '1px solid var(--admin-red)',
+            backgroundColor: 'rgba(204,28,28,0.1)',
+            color: 'var(--admin-red)',
+            marginBottom: 16,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: 13,
+          }}
+        >
+          <span>{toggleError}</span>
+          <button
+            onClick={() => setToggleError(null)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--admin-red)',
+              cursor: 'pointer',
+              fontWeight: 700,
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {isLoading ? (
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
           Loading...
@@ -584,21 +627,67 @@ export default function UniversesPage() {
                     <h3 style={{ fontWeight: 600, fontSize: 16 }}>{u.displayName || u.name}</h3>
                     <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>{u.name}</p>
                   </div>
-                  <button
-                    onClick={() => toggleMutation.mutate({ id: u.id, isEnabled: !u.isEnabled })}
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: 999,
-                      border: 'none',
-                      backgroundColor: u.isEnabled ? 'rgba(13,59,46,0.2)' : 'rgba(154,138,122,0.2)',
-                      color: u.isEnabled ? 'var(--admin-green)' : 'var(--admin-text-muted)',
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {u.isEnabled ? 'Enabled' : 'Disabled'}
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span
+                      style={{
+                        padding: '3px 10px',
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        backgroundColor: u.isEnabled ? 'rgba(13,59,46,0.3)' : 'rgba(154,138,122,0.15)',
+                        color: u.isEnabled ? 'var(--admin-green)' : 'var(--admin-text-muted)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          backgroundColor: u.isEnabled ? 'var(--admin-green)' : 'var(--admin-text-muted)',
+                        }}
+                      />
+                      {u.isEnabled ? 'Active' : 'Disabled'}
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={u.isEnabled}
+                      aria-label={`Toggle ${u.displayName || u.name}`}
+                      disabled={togglingId === u.id}
+                      onClick={() => toggleMutation.mutate({ id: u.id, isEnabled: !u.isEnabled })}
+                      title={u.isEnabled ? 'Click to disable universe' : 'Click to enable universe'}
+                      style={{
+                        position: 'relative',
+                        width: 44,
+                        height: 24,
+                        borderRadius: 999,
+                        border: 'none',
+                        backgroundColor: u.isEnabled ? 'var(--admin-orange)' : 'rgba(255,255,255,0.15)',
+                        cursor: togglingId === u.id ? 'wait' : 'pointer',
+                        transition: 'background-color 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+                        opacity: togglingId === u.id ? 0.6 : 1,
+                        padding: 2,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: 'block',
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          backgroundColor: '#ffffff',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                          transform: u.isEnabled ? 'translateX(20px)' : 'translateX(0px)',
+                          transition: 'transform 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                      />
+                    </button>
+                  </div>
                 </div>
                 {syncIssues[u.id] && (
                   <div

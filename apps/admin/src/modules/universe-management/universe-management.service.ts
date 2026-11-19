@@ -275,15 +275,15 @@ export class UniverseManagementService implements OnApplicationBootstrap {
 
   async getAllUniverses(query: QueryUniverseDto) {
     try {
+      const pageNum = Math.max(1, Number(query.page) || 1);
+      const limitNum = Math.max(1, Math.min(100, Number(query.limit) || 20));
       const {
-        page = 1,
-        limit = 20,
         search,
         isEnabled,
         sortBy = 'sortOrder',
         sortOrder = 'asc',
       } = query;
-      const skip = (page - 1) * limit;
+      const skip = (pageNum - 1) * limitNum;
 
       const where: Prisma.UniverseWhereInput = {};
 
@@ -312,7 +312,7 @@ export class UniverseManagementService implements OnApplicationBootstrap {
           },
           orderBy: { [sortBy]: sortOrder },
           skip,
-          take: limit,
+          take: limitNum,
         }),
         this.prisma.universe.count({ where }),
       ]);
@@ -328,9 +328,9 @@ export class UniverseManagementService implements OnApplicationBootstrap {
         data: items,
         meta: {
           total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
         },
       };
     } catch (error) {

@@ -69,6 +69,8 @@ export interface AdminCreator {
   id: string;
   userId: string;
   name: string;
+  email?: string;
+  walletBalance?: number;
   status: 'pending' | 'approved' | 'rejected' | 'suspended';
   contentCount: number;
   subscriberCount: number;

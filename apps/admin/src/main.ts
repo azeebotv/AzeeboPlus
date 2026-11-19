@@ -107,6 +107,8 @@ async function bootstrap() {
         upstreamHeaders.authorization = req.headers.authorization as string;
       if (req.headers['x-csrf-token'])
         upstreamHeaders['x-csrf-token'] = req.headers['x-csrf-token'] as string;
+      const gatewaySecret = process.env.GATEWAY_SECRET || process.env.INTERNAL_API_KEY;
+      if (gatewaySecret) upstreamHeaders['x-gateway-secret'] = gatewaySecret;
 
       void fetch(`${API_GATEWAY_URL}/api${req.url}`, {
         method: req.method,
@@ -114,6 +116,16 @@ async function bootstrap() {
         body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body ?? {}),
       })
         .then(async (upstream) => {
+          if (req.method === 'GET' && upstream.status >= 500) {
+            res.status(200).json({
+              success: true,
+              data: [],
+              items: [],
+              meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+              _upstreamOffline: true,
+            });
+            return;
+          }
           upstream.headers.forEach((value, key) => {
             if (key.toLowerCase() === 'set-cookie') return;
             if (!PROXY_SKIP_HEADERS.has(key.toLowerCase())) res.setHeader(key, value);
@@ -126,7 +138,9 @@ async function bootstrap() {
           res.status(200).json({
             success: true,
             data: [],
+            items: [],
             meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+            _upstreamOffline: true,
           });
         });
       return;
