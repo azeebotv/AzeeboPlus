@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { supportApi } from '@azeebo/react-data/api/support';
 import { apiClient } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
-import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { colors } from '../src/theme';
 
 const categories = ['Account', 'Payment', 'Content', 'Technical', 'Creator'];
@@ -191,35 +191,43 @@ export default function SupportScreen() {
             >
               Frequently Asked Questions
             </Text>
-            {faqData.map((faq) => (
-              <TouchableOpacity
-                key={faq.id}
-                style={[
-                  styles.faqCard,
-                  {
-                    backgroundColor:
-                      colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
-                  },
-                ]}
-                onPress={() => toggleFAQ(faq.id)}
-                accessibilityLabel={`Frequently asked question: ${faq.question}`}
-                accessibilityRole="button"
-                accessibilityState={{ expanded: expandedFAQ === faq.id }}
-              >
-                <View style={styles.faqHeader}>
-                  <Text
-                    style={[
-                      styles.faqQuestion,
-                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
-                    ]}
-                  >
-                    {faq.question}
-                  </Text>
-                  <Text style={styles.faqToggle}>{expandedFAQ === faq.id ? '−' : '+'}</Text>
-                </View>
-                {expandedFAQ === faq.id && <Text style={styles.faqAnswer}>{faq.answer}</Text>}
-              </TouchableOpacity>
-            ))}
+            {faqData.length === 0 ? (
+              <EmptyState
+                icon="❓"
+                title="No FAQs found"
+                description="No help topics found. Fill in the form below to contact our support team."
+              />
+            ) : (
+              faqData.map((faq) => (
+                <TouchableOpacity
+                  key={faq.id}
+                  style={[
+                    styles.faqCard,
+                    {
+                      backgroundColor:
+                        colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                    },
+                  ]}
+                  onPress={() => toggleFAQ(faq.id)}
+                  accessibilityLabel={`Frequently asked question: ${faq.question}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: expandedFAQ === faq.id }}
+                >
+                  <View style={styles.faqHeader}>
+                    <Text
+                      style={[
+                        styles.faqQuestion,
+                        { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
+                      ]}
+                    >
+                      {faq.question}
+                    </Text>
+                    <Text style={styles.faqToggle}>{expandedFAQ === faq.id ? '−' : '+'}</Text>
+                  </View>
+                  {expandedFAQ === faq.id && <Text style={styles.faqAnswer}>{faq.answer}</Text>}
+                </TouchableOpacity>
+              ))
+            )}
           </View>
 
           <View style={styles.section}>

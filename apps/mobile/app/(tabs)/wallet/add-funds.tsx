@@ -320,7 +320,13 @@ export default function AddFundsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            accessibilityHint="Navigates to previous screen"
+          >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Add Funds</Text>
@@ -354,6 +360,9 @@ export default function AddFundsScreen() {
                     amount === preset.toString() && styles.presetButtonSelected,
                   ]}
                   onPress={() => handlePresetAmount(preset)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select ₦${preset.toLocaleString()}`}
+                  accessibilityState={{ selected: amount === preset.toString() }}
                 >
                   <Text
                     style={[
@@ -378,6 +387,9 @@ export default function AddFundsScreen() {
                   selectedMethod === method.id && styles.methodCardSelected,
                 ]}
                 onPress={() => setSelectedMethod(method.id)}
+                accessibilityRole="radio"
+                accessibilityLabel={`${method.name}, ${method.description}`}
+                accessibilityState={{ selected: selectedMethod === method.id }}
               >
                 <View style={styles.methodIcon}>
                   <Text style={styles.methodIconText}>{method.icon}</Text>
@@ -402,6 +414,9 @@ export default function AddFundsScreen() {
             style={[styles.addButton, isLoading && styles.addButtonDisabled]}
             onPress={handleAddFunds}
             disabled={isLoading}
+            accessibilityRole="button"
+            accessibilityLabel={`Add ₦${parseFloat(amount || '0').toLocaleString()} to wallet`}
+            accessibilityState={{ disabled: isLoading }}
           >
             {isLoading ? (
               <ActivityIndicator color="#fff" />
@@ -429,7 +444,7 @@ export default function AddFundsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A0A0A',
+    backgroundColor: '#0B090E',
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -441,6 +456,11 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 16,
   },
   backButtonText: {

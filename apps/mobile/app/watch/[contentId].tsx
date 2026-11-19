@@ -548,7 +548,11 @@ export default function WatchScreen() {
             </Text>
             <Text style={styles.subscriberText}>View Profile</Text>
           </View>
-          <TouchableOpacity style={styles.subscribeButton}>
+          <TouchableOpacity
+            style={styles.subscribeButton}
+            accessibilityRole="button"
+            accessibilityLabel={`Subscribe to ${content.creator?.name || 'creator'}`}
+          >
             <Text style={styles.subscribeButtonText}>Subscribe</Text>
           </TouchableOpacity>
         </View>
@@ -566,6 +570,8 @@ export default function WatchScreen() {
                   key={item.id}
                   style={styles.episodeCard}
                   onPress={() => router.push(`/watch/${item.id}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Watch ${item.title}`}
                 >
                   <View style={[styles.episodeThumbnail, { backgroundColor: '#1a1a1a' }]}>
                     <Text style={styles.episodeEmoji}>📺</Text>
@@ -983,6 +989,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[500],
     paddingHorizontal: 20,
     paddingVertical: 10,
+    minHeight: 44,
+    justifyContent: 'center',
     borderRadius: 20,
   },
   subscribeButtonText: {

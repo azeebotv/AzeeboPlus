@@ -172,7 +172,13 @@ export default function SuperVoteScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          accessibilityHint="Navigates to previous screen"
+        >
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -197,6 +203,9 @@ export default function SuperVoteScreen() {
                   selectedContestant === contestant.id && styles.contestantCardSelected,
                 ]}
                 onPress={() => setSelectedContestant(contestant.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select contestant ${contestant.name}, rank ${contestant.rank}`}
+                accessibilityState={{ selected: selectedContestant === contestant.id }}
               >
                 <Image source={{ uri: contestant.avatar }} style={styles.contestantAvatar} />
                 <Text style={styles.contestantName}>{contestant.name}</Text>
@@ -219,6 +228,9 @@ export default function SuperVoteScreen() {
                 package_.isPopular && styles.packageCardPopular,
               ]}
               onPress={() => setSelectedPackage(package_.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`${package_.name}, ${package_.votes} votes, ₦${package_.price.toLocaleString()}`}
+              accessibilityState={{ selected: selectedPackage === package_.id }}
             >
               {package_.isPopular && (
                 <View style={styles.popularBadge}>
@@ -244,6 +256,9 @@ export default function SuperVoteScreen() {
             ]}
             onPress={handleVote}
             disabled={!selectedContestant || !selectedPackage || isVoting}
+            accessibilityRole="button"
+            accessibilityLabel="Submit Super Vote"
+            accessibilityState={{ disabled: !selectedContestant || !selectedPackage || isVoting }}
           >
             {isVoting ? (
               <ActivityIndicator color="#fff" />
@@ -260,7 +275,7 @@ export default function SuperVoteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A0A0A',
+    backgroundColor: '#0B090E',
   },
   loadingContainer: {
     flex: 1,
@@ -281,6 +296,11 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 16,
   },
   backButtonText: {

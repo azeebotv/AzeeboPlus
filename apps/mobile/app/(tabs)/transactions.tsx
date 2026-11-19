@@ -248,6 +248,9 @@ export default function TransactionsScreen() {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>💳</Text>
             <Text style={styles.emptyText}>No transactions yet</Text>
+            <Text style={styles.emptySubtext}>
+              Your deposits, withdrawals, and purchase records will appear here.
+            </Text>
           </View>
         }
         ListFooterComponent={
@@ -389,6 +392,14 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: colors.light[400],
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: colors.light[500],
+    textAlign: 'center',
+    maxWidth: 280,
   },
   footerLoader: {
     paddingVertical: 16,

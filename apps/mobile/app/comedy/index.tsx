@@ -170,6 +170,13 @@ export default function ComedyUniverseHome() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.trendingList}
             keyExtractor={(item) => item.id}
+            ListEmptyComponent={
+              <EmptyState
+                icon="🎬"
+                title="No clips available"
+                description="New comedy clips will be featured here soon."
+              />
+            }
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[styles.clipCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
@@ -213,6 +220,13 @@ export default function ComedyUniverseHome() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.creatorsList}
             keyExtractor={(item) => item.id}
+            ListEmptyComponent={
+              <EmptyState
+                icon="🎭"
+                title="No comedians yet"
+                description="Stand-up comedians and creators will be listed here."
+              />
+            }
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}

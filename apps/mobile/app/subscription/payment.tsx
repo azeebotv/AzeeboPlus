@@ -106,7 +106,13 @@ export default function PaymentScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            accessibilityHint="Navigates to previous screen"
+          >
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Complete Payment</Text>
@@ -133,6 +139,12 @@ export default function PaymentScreen() {
             ]}
             onPress={handlePayWithWallet}
             disabled={isProcessing}
+            accessibilityRole="radio"
+            accessibilityLabel={`Pay with Wallet, Balance: ${formatPrice(walletBalance, params.currency || 'NGN')}`}
+            accessibilityState={{
+              selected: selectedMethod === 'wallet',
+              disabled: isProcessing || !hasEnoughBalance,
+            }}
           >
             <View style={styles.paymentOptionLeft}>
               <Text style={styles.paymentIcon}>💰</Text>
@@ -163,6 +175,9 @@ export default function PaymentScreen() {
             ]}
             onPress={handlePayExternal}
             disabled={isProcessing}
+            accessibilityRole="radio"
+            accessibilityLabel="Pay Externally with Card, Bank Transfer, or USSD"
+            accessibilityState={{ selected: selectedMethod === 'external', disabled: isProcessing }}
           >
             <View style={styles.paymentOptionLeft}>
               <Text style={styles.paymentIcon}>💳</Text>
@@ -193,6 +208,9 @@ export default function PaymentScreen() {
               style={[styles.toggle, autoRenew && styles.toggleActive]}
               onPress={() => setAutoRenew(!autoRenew)}
               disabled={isProcessing}
+              accessibilityRole="switch"
+              accessibilityLabel="Auto-Renew subscription"
+              accessibilityState={{ checked: autoRenew, disabled: isProcessing }}
             >
               <View style={[styles.toggleDot, autoRenew && styles.toggleDotActive]} />
             </TouchableOpacity>
@@ -233,6 +251,13 @@ export default function PaymentScreen() {
             ]}
             onPress={handleConfirmPayment}
             disabled={!selectedMethod || isProcessing}
+            accessibilityRole="button"
+            accessibilityLabel={
+              selectedMethod === 'wallet'
+                ? `Pay ${formatPrice(planPrice, params.currency || 'NGN')}`
+                : 'Proceed to Payment'
+            }
+            accessibilityState={{ disabled: !selectedMethod || isProcessing }}
           >
             {isProcessing ? (
               <View style={styles.loadingRow}>
@@ -252,6 +277,9 @@ export default function PaymentScreen() {
             style={styles.cancelLink}
             onPress={() => router.back()}
             disabled={isProcessing}
+            accessibilityRole="button"
+            accessibilityLabel="Cancel payment"
+            accessibilityHint="Returns to previous screen"
           >
             <Text style={styles.cancelLinkText}>Cancel</Text>
           </TouchableOpacity>
@@ -286,6 +314,9 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
   },
   backButton: {
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
     marginBottom: spacing.md,
   },
   backText: {
@@ -513,6 +544,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   cancelLink: {
+    minHeight: 44,
+    justifyContent: 'center',
     padding: spacing.md,
   },
   cancelLinkText: {

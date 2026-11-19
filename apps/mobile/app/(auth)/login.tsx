@@ -230,6 +230,8 @@ export default function LoginScreen() {
                 onPress={() => router.push('/(auth)/forgot-password')}
                 style={styles.forgotPasswordContainer}
                 testID="login-forgot-password"
+                accessibilityRole="button"
+                accessibilityLabel="Forgot your password?"
               >
                 <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
               </TouchableOpacity>
@@ -345,6 +347,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   forgotPasswordContainer: {
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,
   },

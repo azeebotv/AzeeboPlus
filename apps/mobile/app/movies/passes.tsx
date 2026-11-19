@@ -51,19 +51,19 @@ export default function PassesScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0B090E' : '#ffffff' }]}>
         <LoadingState text="Loading passes..." />
       </SafeAreaView>
     );
   if (error)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0B090E' : '#ffffff' }]}>
         <ErrorState description={error} onRetry={() => passesQuery.refetch()} />
       </SafeAreaView>
     );
   if (!passes.length)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0B090E' : '#ffffff' }]}>
         <EmptyState
           icon="🎟️"
           title="No passes"
@@ -73,9 +73,15 @@ export default function PassesScreen() {
     );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0B090E' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          accessibilityHint="Navigates to previous screen"
+        >
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -95,11 +101,14 @@ export default function PassesScreen() {
             key={pass.id}
             style={[
               styles.planCard,
-              { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: isDark ? '#140808' : '#f5f5f5' },
               selectedPlan === pass.id && styles.planCardSelected,
               pass.popular && styles.planCardPopular,
             ]}
             onPress={() => setSelectedPlan(pass.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`${pass.name}, ${pass.price} per ${pass.period}`}
+            accessibilityState={{ selected: selectedPlan === pass.id }}
           >
             {pass.popular && (
               <View style={styles.popularBadge}>
@@ -134,7 +143,12 @@ export default function PassesScreen() {
         ))}
 
         {selectedPlan && (
-          <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
+          <TouchableOpacity
+            style={styles.subscribeButton}
+            onPress={handleSubscribe}
+            accessibilityRole="button"
+            accessibilityLabel="Subscribe Now"
+          >
             <Text style={styles.subscribeText}>Subscribe Now</Text>
           </TouchableOpacity>
         )}
@@ -151,9 +165,9 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',

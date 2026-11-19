@@ -79,11 +79,17 @@ export default function VotingScreen() {
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            accessibilityHint="Navigates to previous screen"
+          >
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Vote</Text>
-          <View style={{ width: 40 }} />
+          <View style={{ width: 44 }} />
         </View>
 
         <View style={styles.content}>
@@ -100,6 +106,9 @@ export default function VotingScreen() {
                 selectedContestant?.id === c.id && styles.contestantSelected,
               ]}
               onPress={() => setSelectedContestant(c)}
+              accessibilityRole="button"
+              accessibilityLabel={`Select contestant ${c.name}, ${c.votes.toLocaleString()} votes`}
+              accessibilityState={{ selected: selectedContestant?.id === c.id }}
             >
               <View
                 style={[styles.contestantAvatar, { backgroundColor: colors.primary[500] + '20' }]}
@@ -141,6 +150,9 @@ export default function VotingScreen() {
                   selectedPackage.id === pkg.id && styles.packageSelected,
                 ]}
                 onPress={() => setSelectedPackage(pkg)}
+                accessibilityRole="button"
+                accessibilityLabel={`${pkg.label}, ₦${pkg.price.toLocaleString()}`}
+                accessibilityState={{ selected: selectedPackage.id === pkg.id }}
               >
                 {pkg.popular && (
                   <View style={styles.popularBadge}>
@@ -165,6 +177,15 @@ export default function VotingScreen() {
             ]}
             onPress={() => voteMutation.mutate()}
             disabled={!selectedContestant || voteMutation.isPending}
+            accessibilityRole="button"
+            accessibilityLabel={
+              voteMutation.isPending
+                ? 'Voting in progress'
+                : voteMutation.isSuccess
+                  ? 'Vote cast successfully'
+                  : `Vote ${selectedPackage.label}`
+            }
+            accessibilityState={{ disabled: !selectedContestant || voteMutation.isPending }}
           >
             <Text style={styles.voteButtonText}>
               {voteMutation.isPending
@@ -196,9 +217,9 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
