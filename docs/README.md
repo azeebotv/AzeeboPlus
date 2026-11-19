@@ -59,8 +59,14 @@ Welcome to the central documentation index for the Azeebo+ digital entertainment
 
 - [CODE_STYLE.md](./CODE_STYLE.md) - Code style, TypeScript standards, naming conventions, and linting rules
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - Git workflows, pull request conventions, and commit message guidelines
+- [DOCUMENTATION_RELEASE_PROCESS.md](./DOCUMENTATION_RELEASE_PROCESS.md) - Lifecycle policy and release process for documentation
 - [DEPRECATION_POLICY.md](./DEPRECATION_POLICY.md) - API and service deprecation policies and lifecycles
 - [WORKFLOW_IDENTITIES.md](./WORKFLOW_IDENTITIES.md) - Service and workflow actor identities
+- [DRIFT_BOT_APP.md](./DRIFT_BOT_APP.md) - GitHub App identity and configuration for PR drift comments
+- [GIT-HISTORY-PURGE-PLAN.md](./GIT-HISTORY-PURGE-PLAN.md) - Cryptographic artifact and secret purge execution plan (AUD-05)
+- [USER-GUIDE.md](./USER-GUIDE.md) - Platform user guide for web, mobile, and television applications
+- [product/admin.md](./product/admin.md) - Admin portal standalone architecture specification
+- [product/creators.md](./product/creators.md) - Creator portal standalone architecture specification
 - [engineering/SYSTEM-WALKTHROUGH.md](./engineering/SYSTEM-WALKTHROUGH.md) - System architecture walkthrough and bus-factor mitigation
 - [engineering/MANUAL_IMPLEMENTATION.md](./engineering/MANUAL_IMPLEMENTATION.md) - Security controls implementation guide (mTLS, SBOM, artefact signing)
 - [engineering/MANUAL_STEPS.md](./engineering/MANUAL_STEPS.md) - Cloud infrastructure setup procedures (read replicas, monitoring)

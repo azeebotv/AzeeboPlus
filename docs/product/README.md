@@ -8,21 +8,21 @@
 
 | Document | Location | Purpose |
 |----------|----------|---------|
-| Master Platform Pack | `doc/legacy/AZEEBO MODULAR APP (1).md` | Full platform vision, BRD, PRD, design blueprint |
-| Claude Build Playbook | `doc/legacy/AZEEBO CLAUDE BUILD (1).md` | Engineering playbook and prompt library |
-| Architecture | `ARCHITECTURE.md` | System architecture |
-| Services Catalog | `SERVICES.md` | All services and their contracts |
+| Master Platform Pack | `../legacy/azeebo-modular-app.md` | Full platform vision, BRD, PRD, design blueprint |
+| Claude Build Playbook | `../legacy/azeebo-claude-build.md` | Engineering playbook and prompt library |
+| Architecture | `../../ARCHITECTURE.md` | System architecture |
+| Services Catalog | `../SERVICES.md` | All services and their contracts |
 | Creator Dashboard Plan | `creators.md` | Creator portal implementation plan |
 | Admin Dashboard Plan | `admin.md` | Admin portal implementation plan |
-| Agbala API Reference | `agbala-api.md` | Agbala storyworld API endpoints |
-| Remaining Tasks | `remaining-tasks.md` | Outstanding deployment/monitoring tasks |
-| Feature Flags | `packages/feature-flags/` | Redis-backed feature flag system |
-| Geo Restriction | `services/core/content-service/prisma/schema.prisma` | Content geo restriction schema |
-| Device Limits | `services/engagement/subscription-service/prisma/schema.prisma` | Subscription device limits |
+| Agbala API Reference | `../agbala-api.md` | Agbala storyworld API endpoints |
+| Launch Tasks & Scorecard | `../program/pmr-task.md` | Master task plan, workstreams, and launch scorecard |
+| Feature Flags | `../../packages/feature-flags/` | Redis-backed feature flag system |
+| Geo Restriction | `../../services/core/content-service/prisma/schema.prisma` | Content geo restriction schema |
+| Device Limits | `../../services/engagement/subscription-service/prisma/schema.prisma` | Subscription device limits |
 
 ## Universe Product Specs
 
-Universe product definitions are in the Master Platform Pack (`doc/legacy/AZEEBO MODULAR APP (1).md`), Sections 13 (Universe Annexes A-I).
+Universe product definitions are in the Master Platform Pack (`../legacy/azeebo-modular-app.md`), Sections 13 (Universe Annexes A-I).
 
 | Universe | Annex | Status |
 |----------|-------|--------|
