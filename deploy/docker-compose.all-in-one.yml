@@ -16,7 +16,9 @@
 
 services:
   azeebo:
-    image: ghcr.io/azeebotv/azeebo-all-in-one:dev
+    # Version selector set by the deploy workflow on the Coolify app, so a
+    # redeploy pulls the tag CI just published instead of a fixed :dev.
+    image: ghcr.io/azeebotv/azeebo-all-in-one:${IMAGE_TAG:-dev}
     pull_policy: always
     container_name: azeebo-all-in-one
     labels:
@@ -51,6 +53,7 @@ services:
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       GATEWAY_SECRET: ${GATEWAY_SECRET:-${INTERNAL_API_KEY}}
+      GATEWAY_ENDPOINT_ENFORCEMENT: ${GATEWAY_ENDPOINT_ENFORCEMENT:-true}
 
       # Payment
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}

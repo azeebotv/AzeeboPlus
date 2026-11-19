@@ -45,7 +45,8 @@ For production deployments on a VPS:
 1. Create a Coolify project with Docker Compose type
 2. Use `docker-compose.all-in-one.yml`
 3. Add all env vars in Coolify UI
-4. Deploy
+4. Set `IMAGE_TAG` to a published tag (`staging`, `production-<sha>`, …) — the compose file deploys `ghcr.io/azeebotv/azeebo-all-in-one:${IMAGE_TAG:-dev}`, and CI updates this variable on deploys/rollbacks when `COOLIFY_API_URL`, `COOLIFY_API_TOKEN` and `COOLIFY_APP_UUID` are configured
+5. Deploy
 
 ## Environment Variables
 

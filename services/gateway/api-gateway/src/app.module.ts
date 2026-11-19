@@ -111,6 +111,10 @@ const gatewayCacheStore = process.env.REDIS_URL
         [gatewayFlags.csrfEnforce]: true,
         [gatewayFlags.legacyRedirect]: true,
         [gatewayFlags.apiV2]: false,
+        [gatewayFlags.endpointEnforcement]:
+          process.env.GATEWAY_ENDPOINT_ENFORCEMENT !== undefined
+            ? process.env.GATEWAY_ENDPOINT_ENFORCEMENT === 'true'
+            : true,
         // Client-driven flags served via GET /feature-flags/bootstrap.
         [webFlags.maintenanceMode]: false,
         [webFlags.newHome]: false,
