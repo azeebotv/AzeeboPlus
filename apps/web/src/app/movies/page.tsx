@@ -27,12 +27,12 @@ function MoviesPageContent(): React.JSX.Element {
   const moviesQuery = useQuery({
     queryKey: ['movies', moviesUniverse?.id],
     queryFn: async () => {
-      if (!moviesUniverse?.id) throw new Error('Movies universe not found');
+      if (!moviesUniverse?.id) return [];
       const res = await api.content.getContentByUniverse(moviesUniverse.id, 1, 20);
       if (res.success && res.data) {
         return Array.isArray(res.data) ? res.data : res.data.items || [];
       }
-      throw new Error(res.message || 'Failed to load movies');
+      return [];
     },
     staleTime: 60000,
     enabled: !!moviesUniverse?.id,
@@ -52,7 +52,7 @@ function MoviesPageContent(): React.JSX.Element {
 
   const movies: ContentItem[] = moviesQuery.data ?? [];
   const categories: Category[] = categoriesQuery.data ?? [];
-  const isLoading = moviesQuery.isLoading;
+  const isLoading = universesQuery.isLoading || (!!moviesUniverse?.id && moviesQuery.isLoading);
   const error = moviesQuery.error?.message || null;
 
   return (

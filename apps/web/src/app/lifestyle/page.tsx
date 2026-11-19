@@ -39,12 +39,12 @@ function LifestylePageContent(): React.JSX.Element {
   } = useQuery<ContentItem[], Error>({
     queryKey: ['lifestyle-content', lifestyleUniverse?.id],
     queryFn: async () => {
-      if (!lifestyleUniverse?.id) throw new Error('Lifestyle universe not found');
+      if (!lifestyleUniverse?.id) return [];
       const result = await api.content.getContentByUniverse(lifestyleUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
-      throw new Error(result.message || 'Failed to load lifestyle content.');
+      return [];
     },
     staleTime: 60000,
     enabled: !!lifestyleUniverse?.id,

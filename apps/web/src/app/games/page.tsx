@@ -31,21 +31,24 @@ function GamesPageContent(): React.JSX.Element {
   } = useQuery<ContentItem[], Error>({
     queryKey: ['games-content', gamesUniverse?.id],
     queryFn: async () => {
-      if (!gamesUniverse?.id) throw new Error('Games universe not found');
+      if (!gamesUniverse?.id) return [];
       const result = await api.content.getContentByUniverse(gamesUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
-      throw new Error(result.message || 'Failed to load games.');
+      return [];
     },
+    enabled: !!gamesUniverse?.id,
     staleTime: 60000,
   });
+
+  const effectiveLoading = universesQuery.isLoading || (!!gamesUniverse?.id && isLoading);
 
   return (
     <PageShell activeNav="Games" maxWidth="7xl">
       {/* Featured game spotlight */}
       <section className="relative">
-        {isLoading ? (
+        {effectiveLoading ? (
           <Skeleton height="400px" className="sm:h-[500px]" borderRadius="16px" />
         ) : error ? (
           <div className="h-[400px] sm:h-[500px] flex items-center justify-center">

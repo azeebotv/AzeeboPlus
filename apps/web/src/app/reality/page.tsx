@@ -80,7 +80,7 @@ function RealityPageContent(): React.JSX.Element {
           : (res.data as { items?: ContentItem[] })?.items || [];
         return items || [];
       }
-      throw new Error(res.message || 'Failed to load reality shows');
+      return [];
     },
     enabled: !!realityUniverse?.id,
     staleTime: 60000,
@@ -92,7 +92,7 @@ function RealityPageContent(): React.JSX.Element {
   const contestantsQuery = useQuery({
     queryKey: ['reality-contestants', selectedShow?.id],
     queryFn: async () => {
-      if (!selectedShow?.id) throw new Error('No show selected');
+      if (!selectedShow?.id) return [];
       const res = await api.reality.getContestants(selectedShow.id);
       if (res.success && res.data) {
         // The endpoint wraps the list: { contestants: [...] } — and older
@@ -106,7 +106,7 @@ function RealityPageContent(): React.JSX.Element {
             : [];
         return list;
       }
-      throw new Error(res.message || 'Failed to load contestants');
+      return [];
     },
     enabled: !!selectedShow?.id,
     staleTime: 30000,

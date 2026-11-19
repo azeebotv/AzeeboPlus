@@ -664,3 +664,29 @@ export interface Partner {
   updatedAt: string;
   offers?: PartnerOffer[];
 }
+
+// ─── Navigation Menus (Superadmin Menu Management) ───────────────────────────
+
+export interface MenuItem {
+  id: string;
+  label: string;
+  href: string;
+  icon?: string;
+  isVisible: boolean;
+  order: number;
+  badge?: string;
+  target?: string;
+  roles?: string[];
+}
+
+export interface NavigationMenu {
+  id: string;
+  name: string;
+  location: string;
+  description?: string;
+  isActive: boolean;
+  isDefault?: boolean;
+  items: MenuItem[];
+  createdAt?: string;
+  updatedAt?: string;
+}

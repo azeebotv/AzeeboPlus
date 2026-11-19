@@ -332,6 +332,12 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         icon: 'settings',
         description: 'Global administrative configuration',
       },
+      {
+        href: '/menus',
+        label: 'Navigation Menus',
+        icon: 'menu',
+        description: 'Menu creation & visibility controls (Super Admin)',
+      },
     ],
   },
 ];

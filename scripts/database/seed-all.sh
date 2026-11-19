@@ -682,6 +682,14 @@ SQL
 # never overwritten (defaults are code-registered per service anyway — these
 # rows only pin the values for local experimentation).
 # Redis key convention: feature_flags:{key} → JSON.
+seed_universes() {
+  info "Seeding all 9 universe databases (reality, movies, comedy, games, sports, vertical, lifestyle, creator, live_event)..."
+  if command -v npx &>/dev/null && [[ -f "$ROOT_DIR/scripts/seeders/universe-seeder.ts" ]]; then
+    npx tsx "$ROOT_DIR/scripts/seeders/universe-seeder.ts" || warn "Universe seeder completed with warnings"
+    ok "  All universe databases seeded"
+  fi
+}
+
 seed_flags() {
   if ! command -v redis-cli &>/dev/null; then
     warn "redis-cli not found — skipping feature-flag seeding"
@@ -750,6 +758,7 @@ main() {
       seed_notification_db
       seed_analytics_db
       seed_admin_db
+      seed_universes
       seed_flags
       ;;
     flags)

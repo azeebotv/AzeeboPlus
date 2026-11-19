@@ -172,16 +172,18 @@ describe('AppHeader', () => {
 
   /* ─── Navigation visibility ─── */
 
-  describe('main navigation (Browse, Live, Games, Rewards)', () => {
-    it('is visible for authenticated users', () => {
+  describe('main navigation (Browse, Live)', () => {
+    it('is visible for authenticated users without games, rewards, or borrow', () => {
       renderHeader();
       // Desktop nav exists with aria-label
-      expect(screen.getByRole('navigation', { name: /main navigation/i })).toBeTruthy();
-      // Links appear in both desktop nav and mobile drawer — check at least 2 of each
-      expect(screen.getAllByText('Browse').length).toBeGreaterThanOrEqual(2);
-      expect(screen.getAllByText('Live').length).toBeGreaterThanOrEqual(2);
-      expect(screen.getAllByText('Games').length).toBeGreaterThanOrEqual(2);
-      expect(screen.getAllByText('Rewards').length).toBeGreaterThanOrEqual(2);
+      const nav = screen.getByRole('navigation', { name: /main navigation/i });
+      expect(nav).toBeTruthy();
+      expect(within(nav).getByText('Browse')).toBeTruthy();
+      expect(within(nav).getByText('Live')).toBeTruthy();
+      // Games, Rewards, Borrow removed from menu as required
+      expect(within(nav).queryByText('Games')).toBeNull();
+      expect(within(nav).queryByText('Rewards')).toBeNull();
+      expect(within(nav).queryByText('Borrow')).toBeNull();
     });
 
     it('is hidden for guest users', () => {
@@ -299,7 +301,8 @@ describe('AppHeader', () => {
       });
       const menu = screen.getByRole('menu', { name: /user menu/i });
       expect(within(menu).getByText('Profile')).toBeTruthy();
-      expect(within(menu).getByText('Rewards')).toBeTruthy();
+      expect(within(menu).queryByText('Rewards')).toBeNull();
+      expect(within(menu).queryByText('Borrow')).toBeNull();
       expect(within(menu).getByText('Wallet')).toBeTruthy();
       expect(within(menu).getByText('Settings')).toBeTruthy();
       expect(within(menu).getByText('Sign out')).toBeTruthy();

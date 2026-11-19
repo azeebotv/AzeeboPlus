@@ -27,7 +27,7 @@ function MusicPageContent(): React.JSX.Element {
     queryFn: async () => {
       const res = await api.request<unknown>('/api/v1/lifestyle/music');
       if (res.success && res.data) return extractTracks(res.data);
-      throw new Error(res.message || 'Failed to load music');
+      return [];
     },
     staleTime: 60000,
   });

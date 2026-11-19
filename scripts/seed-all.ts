@@ -33,6 +33,7 @@ import { seedSubscriptionService } from './seeders/subscription-seeder.js';
 import { seedLifestyleService } from './seeders/lifestyle-seeder.js';
 import { seedLifestyleGuidesService } from './seeders/lifestyle-guides-seeder.js';
 import { seedLifestyleParticipation } from './seeders/lifestyle-participation-seeder.js';
+import { seedAllUniverses } from './seeders/universe-seeder.js';
 
 const SEED_ORDER = [
   { name: 'user', fn: seedUserService },
@@ -47,6 +48,14 @@ const SEED_ORDER = [
   { name: 'lifestyle', fn: seedLifestyleService },
   { name: 'lifestyle-guides', fn: seedLifestyleGuidesService },
   { name: 'lifestyle-participation', fn: seedLifestyleParticipation },
+  {
+    name: 'universes',
+    fn: async (dryRun?: boolean) => {
+      if (dryRun) return 156;
+      const res = await seedAllUniverses();
+      return res.reduce((sum, r) => sum + r.count, 0);
+    },
+  },
 ] as const;
 
 async function main() {

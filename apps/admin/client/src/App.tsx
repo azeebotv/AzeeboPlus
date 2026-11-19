@@ -56,6 +56,7 @@ const SupportPage = lazy(() => import('./routes/support'));
 const DualControlPage = lazy(() => import('./routes/dual-control'));
 const TalentClearancePage = lazy(() => import('./routes/talent-clearance'));
 const LifestyleGuidesPage = lazy(() => import('./routes/lifestyle-guides'));
+const MenusPage = lazy(() => import('./routes/menus'));
 const LoginPage = lazy(() => import('./routes/login'));
 const NotFoundPage = lazy(() => import('./routes/not-found'));
 
@@ -171,6 +172,7 @@ export default function App() {
                 <Route path="dual-control" element={<DualControlPage />} />
                 <Route path="talent-clearance" element={<TalentClearancePage />} />
                 <Route path="lifestyle-guides" element={<LifestyleGuidesPage />} />
+                <Route path="menus" element={<MenusPage />} />
               </Route>
               {/* React Router renders nothing for unmatched paths; without this
                   a stale or prefixed URL is a blank page. */}

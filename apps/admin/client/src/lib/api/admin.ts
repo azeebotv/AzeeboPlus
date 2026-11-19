@@ -41,6 +41,8 @@ import type {
   Neighborhood,
   Partner,
   PartnerOffer,
+  MenuItem,
+  NavigationMenu,
 } from '../admin-types';
 
 export interface DashboardStats {
@@ -1166,6 +1168,43 @@ export const adminApi = {
     apiFetch<{ deleted: boolean }>(`/api/v1/lifestyle/admin/offers/${id}`, {
       method: 'DELETE',
     }),
+
+  // Navigation Menus (Superadmin Menu Management)
+  listMenus: () => apiFetch<NavigationMenu[]>('/api/v1/admin/menus'),
+  getMenu: (id: string) =>
+    apiFetch<NavigationMenu>(`/api/v1/admin/menus/${encodeURIComponent(id)}`),
+  createMenu: (data: {
+    name: string;
+    location: string;
+    description?: string;
+    isActive?: boolean;
+    items?: MenuItem[];
+  }) =>
+    apiFetch<NavigationMenu>('/api/v1/admin/menus', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateMenu: (
+    id: string,
+    data: {
+      name?: string;
+      location?: string;
+      description?: string;
+      isActive?: boolean;
+      items: MenuItem[];
+    }
+  ) =>
+    apiFetch<NavigationMenu>(`/api/v1/admin/menus/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteMenu: (id: string) =>
+    apiFetch<{ success: boolean; message: string }>(
+      `/api/v1/admin/menus/${encodeURIComponent(id)}`,
+      { method: 'DELETE' }
+    ),
+  getPublicMenu: (location: string) =>
+    apiFetch<NavigationMenu>(`/api/v1/admin/menus/public/${encodeURIComponent(location)}`),
 };
 
 /** Outcome of a manual "Run now" job execution. */

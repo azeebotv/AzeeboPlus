@@ -11,6 +11,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { UniverseManagementModule } from './modules/universe-management/universe-management.module';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
+import { MenusModule } from './modules/menus/menus.module';
 import { WalletManagementModule } from './modules/wallet-management/wallet-management.module';
 import { ContentReviewModule } from './modules/content-review/content-review.module';
 import { EngagementAdminModule } from './modules/engagement-admin/engagement-admin.module';
@@ -87,6 +88,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     AuditModule,
     UniverseManagementModule,
     SystemSettingsModule,
+    MenusModule,
     WalletManagementModule,
     ContentReviewModule,
     EngagementAdminModule,

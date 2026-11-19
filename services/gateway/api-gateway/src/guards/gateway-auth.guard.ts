@@ -51,6 +51,8 @@ export class GatewayAuthGuard implements CanActivate {
     /^\/docs(\/.*)?$/,
     // Public settings/universes (no user context needed)
     /^\/api\/v\d+\/public\//,
+    // Public navigation menus
+    /^\/api\/v\d+\/admin\/menus\/public\/[a-zA-Z0-9_-]+$/,
     // Public content browsing — read-only listings (no personalization)
     /^\/api\/v\d+\/content\/(home|watch|featured|trending|new-releases|featured-slides|popular-region|categories|tags)$/,
     // Content detail (read-only)
@@ -60,6 +62,46 @@ export class GatewayAuthGuard implements CanActivate {
     // Universe-specific content by slug
     /^\/api\/v\d+\/content\/universe\/[a-zA-Z0-9_-]+$/,
     /^\/api\/v\d+\/content\/category\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/content\/categories\/[a-zA-Z0-9_-]+\/content$/,
+    /^\/api\/v\d+\/content\/tags\/[a-zA-Z0-9_-]+\/content$/,
+    /^\/api\/v\d+\/content\/available$/,
+    // Public creator discovery and public profiles
+    /^\/api\/v\d+\/creators\/discover$/,
+    /^\/api\/v\d+\/creators\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/creators\/[a-zA-Z0-9_-]+\/content$/,
+    /^\/api\/v\d+\/creators\/boards\/[a-zA-Z0-9_-]+$/,
+    // Reality universe public browsing
+    /^\/api\/v\d+\/reality\/(shows|shows\/current|shows\/live|contestants|clips|featured|pricing|premium-extras)$/,
+    /^\/api\/v\d+\/reality\/shows\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/reality\/shows\/[a-zA-Z0-9_-]+\/(episodes|contestants|leaderboard|votes|predictions|likes|comments)$/,
+    /^\/api\/v\d+\/reality\/contestants\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/reality\/episodes\/[a-zA-Z0-9_-]+$/,
+    // Movies universe public browsing
+    /^\/api\/v\d+\/movies\/(premieres|passes|genres|featured|trending|african|hollywood|rental|dbo\/overview)$/,
+    /^\/api\/v\d+\/movies\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/movies\/[a-zA-Z0-9_-]+\/viewing-windows$/,
+    // Comedy universe public browsing
+    /^\/api\/v\d+\/comedy\/(comedians|specials|series|clips|trending|categories|top-rated|challenges)$/,
+    /^\/api\/v\d+\/comedy\/(comedians|specials|series|clips)\/[a-zA-Z0-9_-]+$/,
+    // Games universe public browsing
+    /^\/api\/v\d+\/games\/(tournaments|challenges|trending)$/,
+    /^\/api\/v\d+\/games\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/games\/tournaments\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/games\/tournaments\/[a-zA-Z0-9_-]+\/leaderboard$/,
+    // Sports universe public browsing
+    /^\/api\/v\d+\/sports\/(home|categories|live|fixtures|upcoming|highlights)$/,
+    /^\/api\/v\d+\/sports\/fixtures\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/sports\/highlights\/[a-zA-Z0-9_-]+$/,
+    // Vertical universe public browsing
+    /^\/api\/v\d+\/vertical\/(storyworlds|characters|locations|lore|titles|crossovers|timeline)$/,
+    /^\/api\/v\d+\/vertical\/(storyworlds|characters|lore|titles|crossovers)\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/vertical\/titles\/[a-zA-Z0-9_-]+\/(episodes|characters|related)$/,
+    /^\/api\/v\d+\/vertical\/storyworlds\/[a-zA-Z0-9_-]+\/(titles|characters|theories|realms|orisa)$/,
+    // Lifestyle universe public events & city guide
+    /^\/api\/v\d+\/lifestyle\/(events|city-guide|city-guide\/featured|city-guide\/tags|influencers|celebrities)$/,
+    /^\/api\/v\d+\/lifestyle\/events\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/lifestyle\/events\/[a-zA-Z0-9_-]+\/attendees$/,
+    /^\/api\/v\d+\/lifestyle\/city-guide\/[a-zA-Z0-9_-]+$/,
     // Universe detail
     /^\/api\/v\d+\/universe\/[a-zA-Z0-9_-]+$/,
     // Search suggestions and trending searches

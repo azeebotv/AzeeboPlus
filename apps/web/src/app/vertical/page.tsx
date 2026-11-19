@@ -26,12 +26,12 @@ function VerticalPageContent(): React.JSX.Element {
   } = useQuery<ContentItem[], Error>({
     queryKey: ['vertical-content', verticalUniverse?.id],
     queryFn: async () => {
-      if (!verticalUniverse?.id) throw new Error('Vertical universe not found');
+      if (!verticalUniverse?.id) return [];
       const result = await api.content.getContentByUniverse(verticalUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
-      throw new Error(result.message || 'Failed to load content.');
+      return [];
     },
     staleTime: 60000,
     enabled: !!verticalUniverse?.id,

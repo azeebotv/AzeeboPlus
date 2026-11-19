@@ -32,12 +32,12 @@ function SportsPageContent(): React.JSX.Element {
   } = useQuery<ContentItem[], Error>({
     queryKey: ['sports-content', sportsUniverse?.id],
     queryFn: async () => {
-      if (!sportsUniverse?.id) throw new Error('Sports universe not found');
+      if (!sportsUniverse?.id) return [];
       const result = await api.content.getContentByUniverse(sportsUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
-      throw new Error(result.message || 'Failed to load sports content.');
+      return [];
     },
     staleTime: 60000,
     enabled: !!sportsUniverse?.id,

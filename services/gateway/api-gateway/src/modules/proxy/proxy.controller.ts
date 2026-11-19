@@ -451,6 +451,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/:id/playback-url', description: 'Get playback URL' },
       { method: 'GET', path: '/categories', description: 'Get all categories' },
       { method: 'GET', path: '/tags', description: 'Get all tags' },
+      { method: 'GET', path: '/universe/:universeId', description: 'Get content by universe' },
+      { method: 'GET', path: '/category/:categoryId', description: 'Get content by category' },
+      { method: 'GET', path: '/categories/:id/content', description: 'Get content by category ID' },
+      { method: 'GET', path: '/tags/:id/content', description: 'Get content by tag ID' },
+      { method: 'GET', path: '/available', description: 'Get available content' },
       // ---- Undeclared-surface ratchet pass (content admin/tooling) ----
       {
         method: 'POST',
@@ -1626,6 +1631,17 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'PUT', path: '/settings/security', description: 'Update security settings' },
       { method: 'GET', path: '/settings/security/ip-rules', description: 'Get IP rules' },
       { method: 'PUT', path: '/settings/security/ip-rules', description: 'Update IP rules' },
+      // Menus management (superadmin create/edit, public read)
+      { method: 'GET', path: '/menus', description: 'List all menus' },
+      {
+        method: 'GET',
+        path: '/menus/public/:location',
+        description: 'Get active public navigation menu by location',
+      },
+      { method: 'GET', path: '/menus/:id', description: 'Get menu by ID' },
+      { method: 'POST', path: '/menus', description: 'Create navigation menu' },
+      { method: 'PUT', path: '/menus/:id', description: 'Update navigation menu' },
+      { method: 'DELETE', path: '/menus/:id', description: 'Delete navigation menu' },
       // (Legacy /content-management declarations removed — the backend
       // controller now mounts at /admin/content, already declared above; the
       // SPA calls /api/v1/admin/content/bulk/*, which is declared too.)
@@ -1876,6 +1892,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'POST', path: '/uploads', description: 'Create upload' },
       { method: 'GET', path: '/uploads', description: 'List own uploads' },
       { method: 'GET', path: '/discover', description: 'Creator discovery' },
+      { method: 'GET', path: '/dashboard', description: 'Get creator dashboard' },
       {
         method: 'PATCH',
         path: '/challenges/entries/:entryId/review',
@@ -2451,6 +2468,8 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
         description: 'Submit trivia session answers',
       },
       // Games tournaments (games-service @Controller('games/tournaments'))
+      { method: 'GET', path: '/tournaments', description: 'List tournaments' },
+      { method: 'GET', path: '/challenges', description: 'List challenges' },
       { method: 'GET', path: '/tournaments/:id', description: 'Get tournament details' },
       { method: 'POST', path: '/tournaments/:id/enter', description: 'Enter a tournament' },
       {
@@ -4198,14 +4217,21 @@ export class ProxyController {
 
     // Admin role check BEFORE any upstream communication (SEC: fail-fast authorization)
     if (service === 'admin') {
-      const reqWithUser = req as Request & { user?: { role?: string } };
-      const user = reqWithUser.user;
-      const role = user?.role ? String(user.role).toLowerCase().replace(/[-_]/g, '') : '';
-      const hasAdminAccess = role === 'admin' || role === 'superadmin';
-      if (!user || !hasAdminAccess) {
-        this.logger.warn(`Admin access denied for request [${requestId}]`);
-        res.status(HttpStatus.FORBIDDEN).json({ message: 'Admin access required' });
-        return null;
+      const pathParam = req.params['path'] || req.params[0] || '';
+      const rawCheck = Array.isArray(pathParam) ? pathParam.join('/') : String(pathParam);
+      const isPublicAdminPath =
+        rawCheck.startsWith('menus/public') || rawCheck.startsWith('settings/public');
+
+      if (!isPublicAdminPath) {
+        const reqWithUser = req as Request & { user?: { role?: string } };
+        const user = reqWithUser.user;
+        const role = user?.role ? String(user.role).toLowerCase().replace(/[-_]/g, '') : '';
+        const hasAdminAccess = role === 'admin' || role === 'superadmin';
+        if (!user || !hasAdminAccess) {
+          this.logger.warn(`Admin access denied for request [${requestId}]`);
+          res.status(HttpStatus.FORBIDDEN).json({ message: 'Admin access required' });
+          return null;
+        }
       }
     }
 

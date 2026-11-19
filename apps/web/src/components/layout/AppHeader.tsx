@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -386,16 +386,43 @@ export default function AppHeader({
     }, []),
   });
 
-  // Figma redesign (docs/design/figma-azeebo-screen-spec.md §4):
-  // Universes ▾ · Watch · Live · Games · Rewards. Home lives on the logo,
-  // Library/Predictions/Bundles remain reachable from the avatar menu.
-  const NAV_LINKS = [
+  // Default navigation links (Games, Rewards, Borrow removed as per requirements)
+  const DEFAULT_NAV_LINKS = useMemo(() => [
     { label: t('nav.browse'), href: '/browse' },
     { label: 'Live', href: '/live' },
-    { label: t('universes.games'), href: '/games' },
-    { label: t('nav.rewards'), href: '/rewards' },
-    { label: 'Borrow', href: '/borrow' },
-  ];
+  ], [t]);
+
+  // Dynamic header menu loaded from admin menu management (superadmin controlled)
+  const [dynamicMenu, setDynamicMenu] = useState<Array<{ label: string; href: string }> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchMenu = async () => {
+      try {
+        const res = await fetch('/api/v1/admin/menus/public/header');
+        if (res.ok && !cancelled) {
+          const json = await res.json();
+          const items = json?.data?.items;
+          if (Array.isArray(items)) {
+            const visible = items
+              .filter((item: { isVisible?: boolean }) => item.isVisible)
+              .map((item: { label: string; href: string }) => ({ label: item.label, href: item.href }));
+            if (visible.length > 0 && !cancelled) {
+              setDynamicMenu(visible);
+            }
+          }
+        }
+      } catch {
+        // Fallback to static nav links
+      }
+    };
+    fetchMenu();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const NAV_LINKS = dynamicMenu || DEFAULT_NAV_LINKS;
 
   // Per-slug presentation (label + route) for universes that have a web page.
   // Keys are canonical DB slugs, gated at render time by the `universe.<name>.enabled`
@@ -451,9 +478,7 @@ export default function AppHeader({
     { label: 'Refer a Friend', href: '/referral', icon: 'gift' },
     { label: 'My Tips', href: '/tipping', icon: 'heart' },
     { label: 'Premium', href: '/premium', icon: 'crown' },
-    { label: t('nav.rewards'), href: '/rewards', icon: 'star' },
     { label: t('nav.wallet'), href: '/wallet', icon: 'wallet' },
-    { label: 'Borrow', href: '/borrow/account', icon: 'wallet' },
     { label: t('nav.subscription'), href: '/wallet/subscription-history', icon: 'subscription' },
     { label: 'Bundles & Passes', href: '/bundles', icon: 'layers' },
     { label: 'Moderation', href: '/moderation', icon: 'shield' },

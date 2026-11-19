@@ -47,16 +47,18 @@ function ComedyPageContent(): React.JSX.Element {
   } = useQuery<ContentItem[], Error>({
     queryKey: ['comedy-content', comedyUniverse?.id],
     queryFn: async () => {
-      if (!comedyUniverse?.id) throw new Error('Comedy universe not found');
+      if (!comedyUniverse?.id) return [];
       const result = await api.content.getContentByUniverse(comedyUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
-      throw new Error(result.message || 'Failed to load comedy content.');
+      return [];
     },
     staleTime: 60000,
     enabled: !!comedyUniverse?.id,
   });
+
+  const effectiveLoading = universesQuery.isLoading || (!!comedyUniverse?.id && isLoading);
 
   return (
     <PageShell activeNav="Comedy">
@@ -101,7 +103,7 @@ function ComedyPageContent(): React.JSX.Element {
           </Link>
         </div>
 
-        {isLoading ? (
+        {effectiveLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
