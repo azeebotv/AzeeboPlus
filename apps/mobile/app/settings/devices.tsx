@@ -117,7 +117,7 @@ export default function DeviceManagementScreen() {
           </View>
         </View>
         {!item.isCurrent && (
-          <TouchableOpacity style={styles.revokeButton} onPress={() => revokeDevice(item.id)}>
+          <TouchableOpacity accessibilityRole="button" style={styles.revokeButton} onPress={() => revokeDevice(item.id)}>
             <Text style={styles.revokeButtonText}>Revoke</Text>
           </TouchableOpacity>
         )}
@@ -127,7 +127,7 @@ export default function DeviceManagementScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <SafeAreaView accessibilityLabel="Devices Screen" style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary[500]} />
         <Text style={styles.loadingText}>Loading devices...</Text>
       </SafeAreaView>

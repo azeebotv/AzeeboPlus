@@ -351,6 +351,10 @@ class AnalyticsService {
     });
   }
 
+  screenViewed(screenName: string, properties?: Record<string, unknown>) {
+    this.track('screen_viewed', { screen_name: screenName, ...properties });
+  }
+
   setUser(userId: string) {
     sdk.setUser({ userId });
   }

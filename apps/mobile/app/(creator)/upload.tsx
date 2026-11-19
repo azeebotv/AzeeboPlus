@@ -153,7 +153,7 @@ export default function UploadScreen() {
   if (!isAuthenticated) return null;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Upload Screen" style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardDismissMode="interactive"

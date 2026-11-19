@@ -104,7 +104,7 @@ export default function ReferralHistoryScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="History Screen" style={styles.container}>
         <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading referral history...</Text>
       </SafeAreaView>
@@ -127,7 +127,7 @@ export default function ReferralHistoryScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={brand.flame} />
         }
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
 
@@ -158,10 +158,10 @@ export default function ReferralHistoryScreen() {
         <View style={styles.shareSection}>
           <Text style={styles.shareText}>Share your referral code</Text>
           <View style={styles.shareButtons}>
-            <TouchableOpacity style={styles.shareButton} onPress={copyReferralCode}>
+            <TouchableOpacity accessibilityRole="button" style={styles.shareButton} onPress={copyReferralCode}>
               <Text style={styles.shareButtonText}>Copy Code</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.shareButtonSecondary} onPress={shareReferralLink}>
+            <TouchableOpacity accessibilityRole="button" style={styles.shareButtonSecondary} onPress={shareReferralLink}>
               <Text style={styles.shareButtonSecondaryText}>Share Link</Text>
             </TouchableOpacity>
           </View>

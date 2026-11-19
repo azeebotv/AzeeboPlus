@@ -81,7 +81,7 @@ export default function RecommendationsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView accessibilityLabel="Recommendations Screen" style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <LoadingState text="Loading recommendations..." />
       </SafeAreaView>
     );

@@ -93,7 +93,7 @@ export default function ComedyClipPlayer() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Player Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading clip..." />
       </SafeAreaView>
     );
@@ -133,7 +133,7 @@ export default function ComedyClipPlayer() {
 
             {!isPlaying && !isBuffering && (
               <View style={styles.playOverlay}>
-                <TouchableOpacity style={styles.playButton} onPress={togglePlay}>
+                <TouchableOpacity accessibilityRole="button" style={styles.playButton} onPress={togglePlay}>
                   <Text style={styles.playIcon}>▶️</Text>
                 </TouchableOpacity>
               </View>
@@ -155,7 +155,7 @@ export default function ComedyClipPlayer() {
               </Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
         </View>
@@ -218,23 +218,23 @@ export default function ComedyClipPlayer() {
             )}
 
             <View style={styles.actionsRow}>
-              <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
+              <TouchableOpacity accessibilityRole="button" style={styles.actionButton} onPress={handleLike}>
                 <Text style={styles.actionIcon}>{isLiked ? '❤️' : '🤍'}</Text>
                 <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>
                   {isLiked ? 'Liked' : 'Like'}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={handleComment}>
+              <TouchableOpacity accessibilityRole="button" style={styles.actionButton} onPress={handleComment}>
                 <Text style={styles.actionIcon}>💬</Text>
                 <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>
                   Comment
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+              <TouchableOpacity accessibilityRole="button" style={styles.actionButton} onPress={handleShare}>
                 <Text style={styles.actionIcon}>↗️</Text>
                 <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>Share</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity accessibilityRole="button" style={styles.actionButton}>
                 <Text style={styles.actionIcon}>🔖</Text>
                 <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>Save</Text>
               </TouchableOpacity>
@@ -256,7 +256,7 @@ export default function ComedyClipPlayer() {
                     placeholder="Add a comment..."
                     placeholderTextColor="#888"
                   />
-                  <TouchableOpacity style={styles.postButton}>
+                  <TouchableOpacity accessibilityRole="button" style={styles.postButton}>
                     <Text style={styles.postButtonText}>Post</Text>
                   </TouchableOpacity>
                 </View>

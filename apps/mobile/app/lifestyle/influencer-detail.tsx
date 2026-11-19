@@ -51,7 +51,7 @@ export default function InfluencerDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Influencer Detail Screen" style={styles.container}>
         <LoadingState text="Loading profile..." />
       </SafeAreaView>
     );
@@ -80,10 +80,10 @@ export default function InfluencerDetailScreen() {
             resizeMode="cover"
           />
           <View style={styles.heroOverlay} />
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+          <TouchableOpacity accessibilityRole="button" style={styles.shareButton} onPress={handleShare}>
             <Text style={styles.shareIcon}>↗</Text>
           </TouchableOpacity>
         </View>

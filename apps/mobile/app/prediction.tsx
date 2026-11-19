@@ -158,7 +158,7 @@ export default function PredictionScreen() {
         ]}
       >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text
@@ -361,7 +361,7 @@ export default function PredictionScreen() {
             >
               Leaderboard
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -475,7 +475,7 @@ export default function PredictionScreen() {
                   >
                     <Text style={styles.modalCancelText}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.modalConfirm} onPress={confirmBet}>
+                  <TouchableOpacity accessibilityRole="button" style={styles.modalConfirm} onPress={confirmBet}>
                     <Text style={styles.modalConfirmText}>Confirm</Text>
                   </TouchableOpacity>
                 </View>

@@ -200,7 +200,7 @@ export default function TransactionsScreen() {
 
   if (isLoading && transactions.length === 0) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <SafeAreaView accessibilityLabel="Transactions Screen" style={styles.loadingContainer}>
         <LoadingState text="Loading transactions..." />
       </SafeAreaView>
     );

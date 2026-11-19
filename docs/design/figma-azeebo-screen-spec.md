@@ -21,36 +21,37 @@
 
 ### Authentication & Onboarding
 `Onboarding`, `Login`, `Register`, `Forgot password`, `otp`, `Set a new password`, `Successful`, `Error`, `Role Selection`
-→ existing routes: `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/auth/otp-verification`, `/auth/reset-password`, `/auth/role-selection`, `/onboarding`
+→ existing routes: `/auth/*`, `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/auth/otp-verification`, `/auth/reset-password`, `/auth/role-selection`, `/onboarding`, `/biometric`, `/onboarding-interests`, `/onboarding-welcome`, `/profile-setup`
 
 ### Core Discovery & Entertainment
 `Home`, `Search`, `Browse`, `Library`, `Watch` (×3 variants), `Watch – Gameplay`, `Watch – Movie Detail`
-→ existing routes: `/home`, `/search`, `/browse`, `/library`, `/watch/[id]`, `/watch/gameplay`, `/watch/movie-detail`
+→ existing routes: `/`, `/home`, `/search`, `/browse`, `/library`, `/watch/*`, `/watch/[id]`, `/watch/gameplay`, `/watch/movie-detail`, `/downloads`, `/link`, `/s/*`, `/recommendations`, `/create`, `/index`
 
 ### Universe Sections (grouped on canvas, top-level group frames)
 - **Comedy Universe:** `Comedians`, `Comedian deatil` *(sic — typo in source)*, `Comedian Special`, `comedy series`, `Comedy – Player`, `Comedy – Player (Detail)` → `/comedy/*`
-- **Movies & Cinemaxis:** `Movies`, `Premiere`, `Movie detail`, `Passes, Tickets & Bundles` (×2) → `/movies`, `/cinemaxis`, `/bundles`
-- **Reality TV:** `SURVIVOR : ISLAND TITANS`, `Reality Shows`, `Reality TV Hub`, `Episode` (×2), `Contestant`, `Contestant (Detail)`, `header` → `/reality/*`
-- **Sports & Fan Engagement:** `Sports`, `Predictions` (×2), `Match fixtures & League Calender` *(sic)*, `Leaderboard`, `Sports Fixture`, `Fan Contests`, `Music`, `Sports highlights`, `Rewards` → `/sports/*`, `/predictions`, `/leaderboard`, `/rewards`
-- **Lifestyle:** `Lifestyle`, `Lifestyle – Celebrities`, `Lifestyle – Influencers`, `Lifestyle – City Guide`, `Lifestyle – Nightlife`, `Lifestyle – Events`, `Lifestyle – Celebrities (Detail)`, `Lifestyle – Influencers (Detail)`, `Lifestyle – Events (Detail)`, `Lifestyle – Music`, `Lifestyle – Social` → `/lifestyle/*`
-- **Vertical / Agbala Storyworlds:** `Vertical`, `Vertical – Titles`, `Vertical – Storyworlds`, `Vertical – Characters (Detail)`, `Vertical – Titles (Detail)` (×2), `Vertical – Agbala (Detail)`, `Vertical – Storyworlds (Detail)`, `Vertical – Crossovers (Detail)`, `Vertical – Lore` (×2), `Vertical – Quiz` (×4) → `/vertical/*`
+- **Movies & Cinemaxis:** `Movies`, `Premiere`, `Movie detail`, `Passes, Tickets & Bundles` (×2) → `/movies/*`, `/movies`, `/cinemaxis/*`, `/cinemaxis`, `/bundles/*`, `/bundles`
+- **Reality TV:** `SURVIVOR : ISLAND TITANS`, `Reality Shows`, `Reality TV Hub`, `Episode` (×2), `Contestant`, `Contestant (Detail)`, `header` → `/reality/*`, `/vote`, `/voting`, `/super-vote`, `/contestant`, `/contestant-detail`, `/episode`, `/episodes`, `/results`
+- **Sports & Fan Engagement:** `Sports`, `Predictions` (×2), `Match fixtures & League Calender` *(sic)*, `Leaderboard`, `Sports Fixture`, `Fan Contests`, `Music`, `Sports highlights`, `Rewards` → `/sports/*`, `/predictions/*`, `/predictions`, `/prediction`, `/leaderboard`, `/rankings`, `/rewards/*`, `/rewards`
+- **Lifestyle:** `Lifestyle`, `Lifestyle – Celebrities`, `Lifestyle – Influencers`, `Lifestyle – City Guide`, `Lifestyle – Nightlife`, `Lifestyle – Events`, `Lifestyle – Celebrities (Detail)`, `Lifestyle – Influencers (Detail)`, `Lifestyle – Events (Detail)`, `Lifestyle – Music`, `Lifestyle – Social` → `/lifestyle/*`, `/city-guide`
+- **Music Universe:** `Music`, `Music – Artists`, `Music – Tracks`, `Music – Genres`, `Music – Trending` → `/music/*`
+- **Vertical & Interactive Narrative:** `Vertical`, `Vertical – Titles`, `Vertical – Storyworlds`, `Vertical – Characters (Detail)`, `Vertical – Titles (Detail)` (×2), `Vertical – Agbala (Detail)`, `Vertical – Storyworlds (Detail)`, `Vertical – Crossovers (Detail)`, `Vertical – Lore` (×2), `Vertical – Quiz` (×4) → `/vertical/*`, `/vertical-title`, `/aou/*`, `/character-lore`
 - **Games, Esports & Trivia:** `Games`, `Games – Stats`, `Games – Trivia`, `Games – Tournaments` (×2), `Games – Leaderboard`, `Games (Detail)` → `/games/*`
-- **Live Streaming & Predictions:** `Live`, `live detail`, `Predictions`, `Predictions Result Detail` → `/live`, `/live/[id]`, `/predictions`
+- **Live Streaming & Predictions:** `Live`, `live detail`, `Predictions`, `Predictions Result Detail` → `/live/*`, `/live`, `/live/[id]`, `/predictions/*`, `/watch-party/*`
 
 ### Commerce & Social
-- **Wallet, Payments & Subscriptions:** `Subscription`, `Premium`, `Wallet`, `Wallet – Subscription Plans` → `/wallet`, `/subscription/plans`, `/premium`
-- **Messaging, Social & Community:** group frame (contents below top-level) → `/messages`
+- **Wallet, Payments & Subscriptions:** `Subscription`, `Premium`, `Wallet`, `Wallet – Subscription Plans` → `/wallet/*`, `/wallet`, `/subscription/*`, `/subscription`, `/payment`, `/premium`, `/tipping`, `/borrow/*`, `/commerce/*`, `/transactions/*`
+- **Messaging, Social & Community:** group frame (contents below top-level) → `/messages`, `/profile/*`, `/profile`, `/referral/*`, `/referral`, `/notifications`, `/reviews/*`, `/settings`, `/settings/devices`
 
 ### Creator Web Portal (20 frames)
 `Creator`, `Creator – Signup` (×4 steps → wizard), `Creator – Content Manager`, `Creator – Published` (×2), `Creator – Analytics`, `Creator – Earnings` (×2), `Creator – Drafts`, `Creator – Scheduled`, `Creator – Monetization` (×2), `Creator – Profile`, `Creator – Challenges`, `Creators`, `Creators – Upload`, `Creator – Subscribers`
-→ existing routes: `/creators/*` (all exist)
+→ existing routes: `/creator/*`, `/creators/*`, `/analytics`, `/challenges`, `/content-manager`, `/drafts`, `/earnings`, `/monetization`, `/published`, `/scheduled`, `/subscribers`, `/upload`
 
 ### Admin Governance on Web
-`Dual Control`, `Talent Clearance`, `Ai Provenance` → existing: `/admin/dual-control`, `/admin/talent-clearance`, `/admin/ai-provenance` (in web app routes)
+`Dual Control`, `Talent Clearance`, `Ai Provenance` → existing: `/admin/*`
 
 ### Legal, Support & System Status
 `Terms`, `Guidelines`, `Support`, `Privacy`, `Moderation` (×7 states), `Maintenance`, `Unauthorized`, `Forbidden`
-→ existing: `/terms`, `/guidelines`, `/support`, `/privacy`, `/moderation/*`, `/maintenance`, `/unauthorized`, `/forbidden`
+→ existing: `/terms`, `/guidelines`, `/support`, `/privacy`, `/cookies`, `/legal/*`, `/moderation/*`, `/maintenance`, `/unauthorized`, `/forbidden`, `/offline`, `/error/*`, `/system/*`, `/developers/*`, `/participation/*`, `/expired-session`
 
 ### Mobile-format frames (Page 2 / misc)
 `Desktop - 1`, `1 1`, screenshot group (8 imports), misc groups — treated as reference, not primary specs.

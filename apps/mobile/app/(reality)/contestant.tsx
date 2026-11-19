@@ -126,7 +126,7 @@ export default function ContestantProfileScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Contestant Screen" style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={brand.flame} />
           <Text style={styles.loadingText}>Loading profile...</Text>
@@ -140,7 +140,7 @@ export default function ContestantProfileScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Contestant not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -153,7 +153,7 @@ export default function ContestantProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.coverContainer}>
           <Image source={{ uri: contestant.coverImage }} style={styles.coverImage} />
-          <TouchableOpacity style={styles.backButtonAbsolute} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButtonAbsolute} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
         </View>

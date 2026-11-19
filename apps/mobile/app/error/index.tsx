@@ -25,7 +25,7 @@ export default function ErrorScreen() {
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.primaryButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>Go Back</Text>
         </TouchableOpacity>
         <TouchableOpacity

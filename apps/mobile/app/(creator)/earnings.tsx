@@ -69,7 +69,7 @@ export default function EarningsDashboardScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Earnings Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading earnings..." />
       </SafeAreaView>
     );
@@ -90,7 +90,7 @@ export default function EarningsDashboardScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Earnings Dashboard</Text>

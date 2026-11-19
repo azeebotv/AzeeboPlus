@@ -115,7 +115,7 @@ export default function LibraryScreen() {
               <Text style={styles.itemTitle}>{item.title}</Text>
               <Text style={styles.itemMeta}>{item.type || 'Content'}</Text>
             </View>
-            <TouchableOpacity style={styles.playButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.playButton}>
               <Text style={styles.playButtonText}>▶</Text>
             </TouchableOpacity>
           </TouchableOpacity>

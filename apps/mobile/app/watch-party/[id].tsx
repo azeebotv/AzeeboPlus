@@ -168,7 +168,7 @@ export default function WatchPartyScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View accessibilityLabel="Screen Screen" style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary[500]} />
       </View>
     );
@@ -199,7 +199,7 @@ export default function WatchPartyScreen() {
                     : ' Ended'}
               </Text>
             </View>
-            <TouchableOpacity style={styles.inviteCode} onPress={handleShareInvite}>
+            <TouchableOpacity accessibilityRole="button" style={styles.inviteCode} onPress={handleShareInvite}>
               <Text style={styles.inviteCodeLabel}>Invite Code</Text>
               <Text style={styles.inviteCodeValue}>{party.inviteCode}</Text>
             </TouchableOpacity>

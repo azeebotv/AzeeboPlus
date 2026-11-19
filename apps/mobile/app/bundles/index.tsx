@@ -126,7 +126,7 @@ export default function BundlesScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView accessibilityLabel="Bundles Screen" style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>Bundle Passes</Text>
         <Text style={styles.subtitle}>Save big with multi-universe bundles</Text>

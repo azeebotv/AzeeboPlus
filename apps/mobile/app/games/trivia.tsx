@@ -108,7 +108,7 @@ export default function TriviaScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Trivia Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading trivia..." />
       </SafeAreaView>
     );
@@ -136,10 +136,10 @@ export default function TriviaScreen() {
           <Text style={styles.gameOverScore}>Score: {score}</Text>
           <Text style={styles.gameOverQuestions}>Questions: {questions.length}</Text>
           <View style={styles.gameOverButtons}>
-            <TouchableOpacity style={styles.playAgainButton} onPress={restart}>
+            <TouchableOpacity accessibilityRole="button" style={styles.playAgainButton} onPress={restart}>
               <Text style={styles.playAgainText}>Play Again</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.exitButton} onPress={() => router.back()}>
+            <TouchableOpacity accessibilityRole="button" style={styles.exitButton} onPress={() => router.back()}>
               <Text style={styles.exitText}>Exit</Text>
             </TouchableOpacity>
           </View>
@@ -154,7 +154,7 @@ export default function TriviaScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.gameHeader}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()}>
           <Text style={styles.exitIcon}>✕</Text>
         </TouchableOpacity>
         <View style={styles.gameStats}>

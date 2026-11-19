@@ -85,7 +85,7 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView accessibilityLabel="Edit Screen" style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -100,7 +100,7 @@ export default function EditProfileScreen() {
 
           <View style={styles.form}>
             <View style={styles.avatarSection}>
-              <TouchableOpacity style={styles.avatarContainer} onPress={handleChangeAvatar}>
+              <TouchableOpacity accessibilityRole="button" style={styles.avatarContainer} onPress={handleChangeAvatar}>
                 {avatar ? (
                   <Image source={{ uri: avatar }} style={styles.avatar} />
                 ) : (
@@ -169,7 +169,7 @@ export default function EditProfileScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
+            <TouchableOpacity accessibilityRole="button" style={styles.cancelButton} onPress={() => router.back()}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>

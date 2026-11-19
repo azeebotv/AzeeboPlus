@@ -71,7 +71,7 @@ export default function BundleDetailScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>{'\u2190'} Back</Text>
         </TouchableOpacity>
 

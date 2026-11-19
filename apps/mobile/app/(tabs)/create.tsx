@@ -326,12 +326,12 @@ export default function CreateScreen() {
                   {(selectedFile.size / 1024 / 1024).toFixed(1)} MB
                 </Text>
               )}
-              <TouchableOpacity onPress={removeFile} style={styles.removeFileButton}>
+              <TouchableOpacity accessibilityRole="button" onPress={removeFile} style={styles.removeFileButton}>
                 <Text style={styles.removeFileText}>Remove</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity onPress={pickFile} style={styles.uploadButton}>
+            <TouchableOpacity accessibilityRole="button" onPress={pickFile} style={styles.uploadButton}>
               <Text style={styles.uploadIconLarge}>📤</Text>
               <Text style={[styles.uploadText, { color: textColor }]}>
                 Tap to Select{' '}

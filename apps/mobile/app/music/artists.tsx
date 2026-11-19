@@ -60,9 +60,9 @@ export default function MusicArtistsScreen() {
   }, [tracksQuery.data, search]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+    <SafeAreaView accessibilityLabel="Artists Screen" style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Artists</Text>

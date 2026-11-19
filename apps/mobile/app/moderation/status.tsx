@@ -76,7 +76,7 @@ export default function ModerationStatusScreen() {
   const renderStatusBadge = (status: string) => {
     const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
     return (
-      <View style={[styles.badge, { backgroundColor: config.bg }]}>
+      <View accessibilityLabel="Status Screen" style={[styles.badge, { backgroundColor: config.bg }]}>
         <View style={[styles.badgeDot, { backgroundColor: config.color }]} />
         <Text style={[styles.badgeText, { color: config.color }]}>{config.label}</Text>
       </View>
@@ -209,7 +209,7 @@ export default function ModerationStatusScreen() {
       ]}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text

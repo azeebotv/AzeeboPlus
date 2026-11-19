@@ -110,7 +110,7 @@ export default function CreatorProfileScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Profile Screen" style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={brand.flame} />
           <Text style={styles.loadingText}>Loading profile...</Text>
@@ -124,7 +124,7 @@ export default function CreatorProfileScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Failed to load profile</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadProfile}>
+          <TouchableOpacity accessibilityRole="button" style={styles.retryButton} onPress={loadProfile}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -135,7 +135,7 @@ export default function CreatorProfileScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Creator Profile</Text>
@@ -186,25 +186,25 @@ export default function CreatorProfileScreen() {
             <Text style={styles.sectionTitle}>Social Links</Text>
             <View style={styles.socialCard}>
               {profile.socialLinks.instagram && (
-                <TouchableOpacity style={styles.socialLink}>
+                <TouchableOpacity accessibilityRole="button" style={styles.socialLink}>
                   <Text style={styles.socialIcon}>📷</Text>
                   <Text style={styles.socialText}>Instagram</Text>
                 </TouchableOpacity>
               )}
               {profile.socialLinks.twitter && (
-                <TouchableOpacity style={styles.socialLink}>
+                <TouchableOpacity accessibilityRole="button" style={styles.socialLink}>
                   <Text style={styles.socialIcon}>🐦</Text>
                   <Text style={styles.socialText}>Twitter</Text>
                 </TouchableOpacity>
               )}
               {profile.socialLinks.youtube && (
-                <TouchableOpacity style={styles.socialLink}>
+                <TouchableOpacity accessibilityRole="button" style={styles.socialLink}>
                   <Text style={styles.socialIcon}>📺</Text>
                   <Text style={styles.socialText}>YouTube</Text>
                 </TouchableOpacity>
               )}
               {profile.socialLinks.tiktok && (
-                <TouchableOpacity style={styles.socialLink}>
+                <TouchableOpacity accessibilityRole="button" style={styles.socialLink}>
                   <Text style={styles.socialIcon}>🎵</Text>
                   <Text style={styles.socialText}>TikTok</Text>
                 </TouchableOpacity>

@@ -96,7 +96,7 @@ export default function TipsHistoryScreen() {
   const isLoading = tipsQuery.isLoading || (tipsQuery.isFetching && tipsQuery.isPending);
 
   return (
-    <View style={styles.container}>
+    <View accessibilityLabel="Tipping Screen" style={styles.container}>
       <Text style={styles.title}>My Tips</Text>
       <Text style={styles.subtitle}>{totalTips} tips sent</Text>
 

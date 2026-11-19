@@ -57,7 +57,7 @@ export default function OnboardingInterestsScreen() {
 
   if (isLoadingInterests) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Onboarding Interests Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading interests..." />
       </SafeAreaView>
     );

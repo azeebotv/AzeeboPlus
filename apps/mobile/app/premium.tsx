@@ -126,10 +126,10 @@ export default function PremiumAccessScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Premium Screen" style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
         </View>
@@ -222,7 +222,7 @@ export default function PremiumAccessScreen() {
         <View style={styles.bundleSection}>
           <Text style={styles.bundleTitle}>Bundle Passes</Text>
           <Text style={styles.bundleDesc}>Save up to 40% with multi-universe bundles</Text>
-          <TouchableOpacity style={styles.bundleButton} onPress={() => router.push('/bundles')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.bundleButton} onPress={() => router.push('/bundles')}>
             <Text style={styles.bundleButtonText}>View Bundles</Text>
           </TouchableOpacity>
         </View>

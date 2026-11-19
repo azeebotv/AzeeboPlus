@@ -106,7 +106,7 @@ export default function StreakScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Streak Screen" style={styles.container}>
         <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading streak data...</Text>
       </SafeAreaView>
@@ -121,7 +121,7 @@ export default function StreakScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={brand.flame} />
         }
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
 

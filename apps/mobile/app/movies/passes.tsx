@@ -51,7 +51,7 @@ export default function PassesScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0B090E' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Passes Screen" style={[styles.container, { backgroundColor: isDark ? '#0B090E' : '#ffffff' }]}>
         <LoadingState text="Loading passes..." />
       </SafeAreaView>
     );

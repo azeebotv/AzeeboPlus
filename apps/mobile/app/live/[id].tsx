@@ -107,7 +107,7 @@ export default function LiveEventDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#fff' }]}>
+      <SafeAreaView accessibilityLabel="Screen Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#fff' }]}>
         <LoadingState text="Loading event..." />
       </SafeAreaView>
     );
@@ -129,7 +129,7 @@ export default function LiveEventDetailScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>{'\u2190'}</Text>
           </TouchableOpacity>
         </View>

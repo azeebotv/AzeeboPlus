@@ -122,7 +122,7 @@ export default function RealityShowDetailPage() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
@@ -224,7 +224,7 @@ export default function RealityShowDetailPage() {
               <Text style={[styles.votingTitle, { color: isDark ? '#fff' : '#000' }]}>
                 Vote for {selectedContestant?.name}
               </Text>
-              <TouchableOpacity onPress={() => setShowVoting(false)}>
+              <TouchableOpacity accessibilityRole="button" onPress={() => setShowVoting(false)}>
                 <Text style={styles.closeButton}>✕</Text>
               </TouchableOpacity>
             </View>

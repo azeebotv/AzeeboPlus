@@ -66,7 +66,7 @@ export default function PredictionResultsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <SafeAreaView accessibilityLabel="Results Screen" style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading results...</Text>
       </SafeAreaView>

@@ -99,7 +99,7 @@ export default function ReferralScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <SafeAreaView accessibilityLabel="Referral Screen" style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading referral data...</Text>
       </SafeAreaView>
@@ -126,11 +126,11 @@ export default function ReferralScreen() {
           <Text style={styles.codeLabel}>Your Referral Code</Text>
           <View style={styles.codeContainer}>
             <Text style={styles.codeText}>{stats.referralCode}</Text>
-            <TouchableOpacity style={styles.copyButton} onPress={copyReferralCode}>
+            <TouchableOpacity accessibilityRole="button" style={styles.copyButton} onPress={copyReferralCode}>
               <Text style={styles.copyButtonText}>Copy</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.shareButton} onPress={shareReferralLink}>
+          <TouchableOpacity accessibilityRole="button" style={styles.shareButton} onPress={shareReferralLink}>
             <Text style={styles.shareButtonText}>Share Referral Link</Text>
           </TouchableOpacity>
         </View>

@@ -133,6 +133,7 @@ export default function BiometricAuthScreen() {
   if (isLoading) {
     return (
       <SafeAreaView
+        accessibilityLabel="Biometric Loading Screen"
         style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
       >
         <ActivityIndicator size="large" color={brand.flame} />
@@ -145,6 +146,7 @@ export default function BiometricAuthScreen() {
 
   return (
     <SafeAreaView
+      accessibilityLabel="Biometric Authentication Screen"
       style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
     >
       <View style={styles.content}>

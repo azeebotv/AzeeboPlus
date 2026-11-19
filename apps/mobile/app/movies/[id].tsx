@@ -102,12 +102,12 @@ export default function MovieDetailPage() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+    <SafeAreaView accessibilityLabel="Screen Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.shareButton}>
+        <TouchableOpacity accessibilityRole="button" style={styles.shareButton}>
           <Text style={styles.shareIcon}>📤</Text>
         </TouchableOpacity>
       </View>
@@ -135,14 +135,14 @@ export default function MovieDetailPage() {
 
         <View style={styles.content}>
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.playButton} onPress={handlePlay}>
+            <TouchableOpacity accessibilityRole="button" style={styles.playButton} onPress={handlePlay}>
               <Text style={styles.playIcon}>▶</Text>
               <Text style={styles.playText}>Watch Now</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.downloadButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.downloadButton}>
               <Text style={styles.downloadIcon}>⬇</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.shareButtonAlt}>
+            <TouchableOpacity accessibilityRole="button" style={styles.shareButtonAlt}>
               <Text style={styles.shareIconAlt}>↗</Text>
             </TouchableOpacity>
           </View>
@@ -197,7 +197,7 @@ export default function MovieDetailPage() {
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <TouchableOpacity style={styles.similarCard}>
+                <TouchableOpacity accessibilityRole="button" style={styles.similarCard}>
                   <View style={styles.similarThumbnail}>
                     <Text style={styles.similarEmoji}>{item.emoji}</Text>
                   </View>
@@ -222,7 +222,7 @@ export default function MovieDetailPage() {
               <Text style={[styles.pricingTitle, { color: isDark ? '#fff' : '#000' }]}>
                 Choose how to watch
               </Text>
-              <TouchableOpacity onPress={() => setShowPricing(false)}>
+              <TouchableOpacity accessibilityRole="button" onPress={() => setShowPricing(false)}>
                 <Text style={styles.closeButton}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -259,7 +259,7 @@ export default function MovieDetailPage() {
               ))}
             </View>
 
-            <TouchableOpacity style={styles.purchaseButton} onPress={handlePurchase}>
+            <TouchableOpacity accessibilityRole="button" style={styles.purchaseButton} onPress={handlePurchase}>
               <Text style={styles.purchaseButtonText}>Pay {selectedOption.price}</Text>
             </TouchableOpacity>
 

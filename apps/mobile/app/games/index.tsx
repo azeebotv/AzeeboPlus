@@ -86,7 +86,9 @@ export default function GamesUniverseHome() {
   if (error) return <ErrorState description={error} onRetry={fetchData} />;
   if (!featuredGame && !trendingGames.length) {
     return (
-      <EmptyState icon="🎮" title="No games available" description="Check back later for games" />
+      <View accessibilityLabel="Games Screen" style={styles.container}>
+        <EmptyState icon="🎮" title="No games available" description="Check back later for games" />
+      </View>
     );
   }
 
@@ -104,7 +106,7 @@ export default function GamesUniverseHome() {
       </View>
       <Text style={[styles.gameTitle, { color: isDark ? '#fff' : '#000' }]}>{item.title}</Text>
       <Text style={styles.gameGenre}>{item.genre}</Text>
-      <TouchableOpacity style={styles.playButton}>
+      <TouchableOpacity accessibilityRole="button" style={styles.playButton}>
         <Text style={styles.playButtonText}>Play</Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -131,7 +133,7 @@ export default function GamesUniverseHome() {
       </View>
 
       <View style={styles.featuredSection}>
-        <TouchableOpacity style={styles.featuredGame} onPress={() => router.push('/games/1')}>
+        <TouchableOpacity accessibilityRole="button" style={styles.featuredGame} onPress={() => router.push('/games/1')}>
           <View style={styles.featuredImagePlaceholder}>
             <Text style={styles.featuredEmoji}>{featuredGame?.emoji ?? '🎮'}</Text>
             <View style={styles.featuredBadge}>
@@ -143,7 +145,7 @@ export default function GamesUniverseHome() {
                 {featuredGame?.genre ?? ''}
                 {featuredGame ? ` • ${featuredGame.players} players` : ''}
               </Text>
-              <TouchableOpacity style={styles.featuredPlayButton}>
+              <TouchableOpacity accessibilityRole="button" style={styles.featuredPlayButton}>
                 <Text style={styles.featuredPlayIcon}>▶</Text>
                 <Text style={styles.featuredPlayText}>Play Now</Text>
               </TouchableOpacity>
@@ -159,7 +161,7 @@ export default function GamesUniverseHome() {
           contentContainerStyle={styles.categoriesList}
         >
           {categories.map((cat) => (
-            <TouchableOpacity key={cat.id} style={styles.categoryChip}>
+            <TouchableOpacity accessibilityRole="button" key={cat.id} style={styles.categoryChip}>
               <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
               <Text style={styles.categoryName}>{cat.name}</Text>
               <View style={styles.categoryBadge}>
@@ -175,7 +177,7 @@ export default function GamesUniverseHome() {
           <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Trending Games
           </Text>
-          <TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button">
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -197,7 +199,7 @@ export default function GamesUniverseHome() {
         </View>
         <View style={styles.tournamentsList}>
           {tournaments.map((tournament) => (
-            <TouchableOpacity key={tournament.id} style={styles.tournamentCard}>
+            <TouchableOpacity accessibilityRole="button" key={tournament.id} style={styles.tournamentCard}>
               <View style={styles.tournamentLeft}>
                 <Text style={styles.tournamentEmoji}>{tournament.emoji}</Text>
               </View>

@@ -51,7 +51,7 @@ export default function SpecialDetailScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Special Detail Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading special..." />
       </SafeAreaView>
     );
@@ -83,7 +83,7 @@ export default function SpecialDetailScreen() {
             <Text style={styles.durationText}>{special.duration}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
       </View>
@@ -112,7 +112,7 @@ export default function SpecialDetailScreen() {
         </Text>
 
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => setIsLiked(!isLiked)}>
+          <TouchableOpacity accessibilityRole="button" style={styles.actionButton} onPress={() => setIsLiked(!isLiked)}>
             <Text style={styles.actionIcon}>{isLiked ? '❤️' : '🤍'}</Text>
             <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>
               {isLiked ? 'Liked' : 'Like'}

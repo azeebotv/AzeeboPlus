@@ -58,7 +58,7 @@ export default function RankingsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView accessibilityLabel="Rankings Screen" style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <LoadingState text="Loading rankings..." />
       </SafeAreaView>
     );

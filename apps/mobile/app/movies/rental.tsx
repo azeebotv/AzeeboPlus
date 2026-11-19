@@ -59,9 +59,9 @@ export default function RentalScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+    <SafeAreaView accessibilityLabel="Rental Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -128,7 +128,7 @@ export default function RentalScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.payButton} onPress={handlePurchase}>
+        <TouchableOpacity accessibilityRole="button" style={styles.payButton} onPress={handlePurchase}>
           <Text style={styles.payText}>Pay {selectedOption.price}</Text>
         </TouchableOpacity>
 

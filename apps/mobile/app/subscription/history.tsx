@@ -102,7 +102,7 @@ export default function SubscriptionHistoryScreen() {
   const renderItem = ({ item }: { item: Subscription }) => {
     const statusColor = getStatusColor(item.status);
     return (
-      <View style={styles.historyCard}>
+      <View accessibilityLabel="History Screen" style={styles.historyCard}>
         <View style={styles.historyHeader}>
           <View style={styles.historyInfo}>
             <Text style={styles.historyPlanName}>{item.plan?.name || 'Unknown Plan'}</Text>
@@ -152,7 +152,7 @@ export default function SubscriptionHistoryScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Subscription History</Text>

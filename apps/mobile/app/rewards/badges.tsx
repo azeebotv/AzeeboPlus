@@ -88,7 +88,7 @@ export default function BadgesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Badges Screen" style={styles.container}>
         <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading badges...</Text>
       </SafeAreaView>
@@ -103,7 +103,7 @@ export default function BadgesScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={brand.flame} />
         }
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
 

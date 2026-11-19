@@ -104,7 +104,7 @@ export default function VerticalTitleScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Vertical Title Screen" style={styles.container}>
         <LoadingState text="Loading title..." />
       </SafeAreaView>
     );
@@ -127,7 +127,7 @@ export default function VerticalTitleScreen() {
             style={styles.heroImage}
           />
           <View style={styles.heroOverlay}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backIcon}>←</Text>
             </TouchableOpacity>
             <View style={styles.heroContent}>
@@ -160,10 +160,10 @@ export default function VerticalTitleScreen() {
               {isFollowing ? '✓ Following' : '+ Follow'}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.watchButton}>
+          <TouchableOpacity accessibilityRole="button" style={styles.watchButton}>
             <Text style={styles.watchButtonText}>▶ Watch Now</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shareButton}>
+          <TouchableOpacity accessibilityRole="button" style={styles.shareButton}>
             <Text style={styles.shareIcon}>↗️</Text>
           </TouchableOpacity>
         </View>
@@ -223,7 +223,7 @@ export default function VerticalTitleScreen() {
           {activeTab === 'characters' && (
             <View style={styles.charactersList}>
               {characters.map((character) => (
-                <TouchableOpacity key={character.id} style={styles.characterCard}>
+                <TouchableOpacity accessibilityRole="button" key={character.id} style={styles.characterCard}>
                   <View style={styles.characterAvatar}>
                     <Text style={styles.characterAvatarText}>{character.avatar}</Text>
                   </View>

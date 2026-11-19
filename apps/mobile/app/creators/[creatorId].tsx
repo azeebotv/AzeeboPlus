@@ -87,7 +87,7 @@ export default function CreatorProfilePage() {
 
   if (!id) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+      <SafeAreaView accessibilityLabel="Screen Screen" style={[styles.container, { backgroundColor: colors.bg.primary }]}>
         <EmptyState icon="🎤" title="Creator not found" description="Invalid creator link" />
       </SafeAreaView>
     );
@@ -115,7 +115,7 @@ export default function CreatorProfilePage() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Creator</Text>
@@ -256,7 +256,7 @@ export default function CreatorProfilePage() {
                 <Text style={styles.sendButtonText}>Send ₦{tipAmount.toLocaleString()} tip</Text>
               )}
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setTipModalVisible(false)}>
+            <TouchableOpacity accessibilityRole="button" onPress={() => setTipModalVisible(false)}>
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
           </View>

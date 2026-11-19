@@ -84,7 +84,7 @@ export default function LeaderboardScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView accessibilityLabel="Leaderboard Screen" style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <LoadingState text="Loading leaderboard..." />
       </SafeAreaView>
     );

@@ -127,7 +127,7 @@ export default function EpisodePlayerScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Episode Screen" style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={brand.flame} />
           <Text style={styles.loadingText}>Loading episode...</Text>

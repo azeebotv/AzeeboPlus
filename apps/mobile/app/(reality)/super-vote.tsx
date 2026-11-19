@@ -155,7 +155,7 @@ export default function SuperVoteScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Super Vote Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading..." />
       </SafeAreaView>
     );

@@ -22,9 +22,9 @@ export default function MusicTrendingScreen() {
   const tracks = trendingQuery.data ?? [];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+    <SafeAreaView accessibilityLabel="Trending Screen" style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>🔥 Trending</Text>

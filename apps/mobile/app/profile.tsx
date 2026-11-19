@@ -56,7 +56,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Profile Screen" style={styles.container}>
         <LoadingState text="Loading profile..." />
       </SafeAreaView>
     );

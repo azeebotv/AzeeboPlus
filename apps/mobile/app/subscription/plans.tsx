@@ -72,7 +72,7 @@ export default function SubscriptionPlansScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Plans Screen" style={styles.container}>
         <LoadingState text="Loading subscription plans..." />
       </SafeAreaView>
     );

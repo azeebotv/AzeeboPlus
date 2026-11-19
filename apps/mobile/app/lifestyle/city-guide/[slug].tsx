@@ -51,7 +51,7 @@ export default function CityGuideDetailScreen() {
         style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
       >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <View style={{ width: 40 }} />
@@ -67,7 +67,7 @@ export default function CityGuideDetailScreen() {
         style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
       >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <View style={{ width: 40 }} />
@@ -90,7 +90,7 @@ export default function CityGuideDetailScreen() {
       style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={{ width: 40 }} />
@@ -147,12 +147,12 @@ export default function CityGuideDetailScreen() {
             <Text style={[styles.infoLine, { color: colors.text.primary }]}>🕒 {entry.hours}</Text>
           ) : null}
           {entry.phone ? (
-            <TouchableOpacity onPress={() => Linking.openURL(`tel:${entry.phone}`)}>
+            <TouchableOpacity accessibilityRole="button" onPress={() => Linking.openURL(`tel:${entry.phone}`)}>
               <Text style={[styles.infoLine, styles.infoLink]}>📞 {entry.phone}</Text>
             </TouchableOpacity>
           ) : null}
           {entry.website ? (
-            <TouchableOpacity onPress={() => openLink(entry.website ?? '')}>
+            <TouchableOpacity accessibilityRole="button" onPress={() => openLink(entry.website ?? '')}>
               <Text style={[styles.infoLine, styles.infoLink]}>🌐 {entry.website}</Text>
             </TouchableOpacity>
           ) : null}

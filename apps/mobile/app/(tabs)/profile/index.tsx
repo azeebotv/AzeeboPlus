@@ -234,7 +234,7 @@ export default function ProfileScreen() {
                     <Text style={styles.verifiedText}>✓ Verified</Text>
                   </View>
                 )}
-                <TouchableOpacity style={styles.editButton} onPress={() => setShowEditModal(true)}>
+                <TouchableOpacity accessibilityRole="button" style={styles.editButton} onPress={() => setShowEditModal(true)}>
                   <Text style={styles.editButtonText}>Edit Profile</Text>
                 </TouchableOpacity>
               </View>

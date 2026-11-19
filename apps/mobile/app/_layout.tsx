@@ -1,4 +1,4 @@
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
@@ -22,6 +22,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { initializeCertificatePinning } from '@azeebo/react-data/utils/certificatePinning';
 import { DeepLinkService } from '@azeebo/react-data/utils/deepLinking';
+import { analytics } from '../src/utils/analytics';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,6 +79,22 @@ function DeepLinkHandler() {
   return null;
 }
 
+/**
+ * Automatically captures route transitions across all 176 Mobile screens
+ * and sends canonical screen_viewed analytics events.
+ */
+function ScreenTrackingHandler() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (pathname) {
+      analytics.screenViewed(pathname);
+    }
+  }, [pathname]);
+
+  return null;
+}
+
 function RootNavigator() {
   const colorScheme = useColorScheme();
   const { isEnabled, ready } = useFlags();
@@ -101,6 +118,7 @@ function RootNavigator() {
                   <NotificationProvider>
                     <StatusBar style={resolvedDark ? 'light' : 'dark'} />
                     <DeepLinkHandler />
+                    <ScreenTrackingHandler />
                     <MiniPlayerOverlay />
                     <Stack
                       screenOptions={{

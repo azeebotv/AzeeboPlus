@@ -78,7 +78,7 @@ export default function LiveEventsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#fff' }]}>
+      <SafeAreaView accessibilityLabel="Index Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#fff' }]}>
         <LoadingState text="Loading events..." />
       </SafeAreaView>
     );

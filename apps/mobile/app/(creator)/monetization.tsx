@@ -86,7 +86,7 @@ export default function MonetizationSettingsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Monetization Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading settings..." />
       </SafeAreaView>
     );
@@ -107,7 +107,7 @@ export default function MonetizationSettingsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Monetization Settings</Text>

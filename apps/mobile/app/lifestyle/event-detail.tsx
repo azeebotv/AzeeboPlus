@@ -81,7 +81,7 @@ export default function EventDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Event Detail Screen" style={styles.container}>
         <LoadingState text="Loading event..." />
       </SafeAreaView>
     );
@@ -107,10 +107,10 @@ export default function EventDetailScreen() {
             resizeMode="cover"
           />
           <View style={styles.heroOverlay} />
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+          <TouchableOpacity accessibilityRole="button" style={styles.shareButton} onPress={handleShare}>
             <Text style={styles.shareIcon}>↗</Text>
           </TouchableOpacity>
         </View>
@@ -148,7 +148,7 @@ export default function EventDetailScreen() {
                 </Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.mapButton} onPress={handleOpenMap}>
+            <TouchableOpacity accessibilityRole="button" style={styles.mapButton} onPress={handleOpenMap}>
               <Text style={styles.mapButtonText}>View on Map</Text>
             </TouchableOpacity>
           </View>

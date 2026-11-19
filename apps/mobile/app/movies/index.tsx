@@ -94,7 +94,7 @@ export default function MoviesUniverseHome() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Index Screen" style={styles.container}>
         <LoadingState text="Loading movies..." />
       </SafeAreaView>
     );
@@ -158,7 +158,7 @@ export default function MoviesUniverseHome() {
             <Text style={styles.passBannerSubtitle}>
               Unlimited movies from ₦{moviePassPrice.toLocaleString()}
             </Text>
-            <TouchableOpacity style={styles.passButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.passButton}>
               <Text style={styles.passButtonText}>Get Pass</Text>
             </TouchableOpacity>
           </View>
@@ -190,11 +190,11 @@ export default function MoviesUniverseHome() {
               </Text>
               <Text style={styles.featuredGenre}>{featuredMovie?.genre ?? ''}</Text>
               <View style={styles.featuredActions}>
-                <TouchableOpacity style={styles.playButton}>
+                <TouchableOpacity accessibilityRole="button" style={styles.playButton}>
                   <Text style={styles.playIcon}>▶</Text>
                   <Text style={styles.playText}>Watch</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.rentButton}>
+                <TouchableOpacity accessibilityRole="button" style={styles.rentButton}>
                   <Text style={styles.rentText}>Rent ₦{rentPrice.toLocaleString()}</Text>
                 </TouchableOpacity>
               </View>
@@ -207,7 +207,7 @@ export default function MoviesUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Trending Now
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -226,7 +226,7 @@ export default function MoviesUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               African Cinema
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -245,7 +245,7 @@ export default function MoviesUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Hollywood Hits
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -265,7 +265,7 @@ export default function MoviesUniverseHome() {
           </Text>
           <View style={styles.passesList}>
             {passes.map((pass) => (
-              <TouchableOpacity key={pass.id} style={styles.passCard}>
+              <TouchableOpacity accessibilityRole="button" key={pass.id} style={styles.passCard}>
                 <View style={styles.passHeader}>
                   <Text style={[styles.passName, { color: isDark ? '#fff' : '#000' }]}>
                     {pass.name}
@@ -282,7 +282,7 @@ export default function MoviesUniverseHome() {
                     </Text>
                   ))}
                 </View>
-                <TouchableOpacity style={styles.subscribeButton}>
+                <TouchableOpacity accessibilityRole="button" style={styles.subscribeButton}>
                   <Text style={styles.subscribeButtonText}>Subscribe</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -291,23 +291,23 @@ export default function MoviesUniverseHome() {
         </View>
 
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
             <Text style={styles.navIcon}>🏠</Text>
             <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
             <Text style={styles.navIcon}>📺</Text>
             <Text style={[styles.navLabel, { color: colors.category.highlight }]}>Watch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
             <Text style={styles.navIcon}>✨</Text>
             <Text style={styles.navLabel}>Create</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
             <Text style={styles.navIcon}>⭐</Text>
             <Text style={styles.navLabel}>Rewards</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
             <Text style={styles.navIcon}>👤</Text>
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>

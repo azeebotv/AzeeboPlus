@@ -85,7 +85,7 @@ export default function RealityUniverseHome() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Index Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading reality shows..." />
       </SafeAreaView>
     );
@@ -151,7 +151,7 @@ export default function RealityUniverseHome() {
         >
           <View style={styles.headerTop}>
             <Text style={styles.universeLabel}>🎭 Reality</Text>
-            <TouchableOpacity style={styles.notificationBadge} accessibilityLabel="Notifications">
+            <TouchableOpacity accessibilityRole="button" style={styles.notificationBadge} accessibilityLabel="Notifications">
               <Text style={styles.bellIcon}>🔔</Text>
               <View style={styles.badge} />
             </TouchableOpacity>
@@ -184,7 +184,7 @@ export default function RealityUniverseHome() {
               {showName}
             </Text>
             {showSubtitle ? <Text style={styles.liveShowSubtitle}>{showSubtitle}</Text> : null}
-            <TouchableOpacity style={styles.watchNowButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.watchNowButton}>
               <Text style={styles.watchNowText}>Watch Live</Text>
             </TouchableOpacity>
           </View>
@@ -200,7 +200,7 @@ export default function RealityUniverseHome() {
               <Text style={styles.voteCTASubtitle}>Support your contestant</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.voteButton} onPress={() => router.push('/vote')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.voteButton} onPress={() => router.push('/vote')}>
             <Text style={styles.voteButtonText}>Vote Now</Text>
           </TouchableOpacity>
         </View>
@@ -210,7 +210,7 @@ export default function RealityUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Leaderboard
             </Text>
-            <TouchableOpacity onPress={() => router.push('/vote')}>
+            <TouchableOpacity accessibilityRole="button" onPress={() => router.push('/vote')}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>

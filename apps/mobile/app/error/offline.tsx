@@ -9,6 +9,7 @@ export default function OfflineScreen() {
 
   return (
     <View
+      accessibilityLabel="Offline Screen"
       style={[
         styles.container,
         { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },

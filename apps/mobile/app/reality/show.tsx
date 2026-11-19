@@ -126,9 +126,9 @@ export default function RealityShowPage() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+    <View accessibilityLabel="Show Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
@@ -138,7 +138,7 @@ export default function RealityShowPage() {
             <Text style={styles.liveText}>LIVE</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.shareButton}>
+        <TouchableOpacity accessibilityRole="button" style={styles.shareButton}>
           <Text style={styles.shareIcon}>📤</Text>
         </TouchableOpacity>
       </View>
@@ -251,7 +251,7 @@ export default function RealityShowPage() {
               value={chatMessage}
               onChangeText={setChatMessage}
             />
-            <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
+            <TouchableOpacity accessibilityRole="button" style={styles.sendButton} onPress={handleSendMessage}>
               <Text style={styles.sendIcon}>➤</Text>
             </TouchableOpacity>
           </View>
@@ -265,7 +265,7 @@ export default function RealityShowPage() {
               <Text style={[styles.votingTitle, { color: isDark ? '#fff' : '#000' }]}>
                 Vote for {selectedContestant?.name}
               </Text>
-              <TouchableOpacity onPress={() => setShowVoting(false)}>
+              <TouchableOpacity accessibilityRole="button" onPress={() => setShowVoting(false)}>
                 <Text style={styles.closeButton}>✕</Text>
               </TouchableOpacity>
             </View>

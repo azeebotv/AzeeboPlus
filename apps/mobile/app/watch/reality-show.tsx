@@ -171,7 +171,7 @@ export default function RealityShowScreen() {
         ]}
       >
         <Text style={[styles.errorText, { color: '#ef4444' }]}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={loadData}>
+        <TouchableOpacity accessibilityRole="button" style={styles.retryButton} onPress={loadData}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -186,7 +186,7 @@ export default function RealityShowScreen() {
       ]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text
@@ -219,7 +219,7 @@ export default function RealityShowScreen() {
           <Text style={styles.walletLabel}>Wallet Balance</Text>
           <Text style={styles.walletAmount}>₦{walletBalance.toLocaleString()}</Text>
         </View>
-        <TouchableOpacity style={styles.fundButton}>
+        <TouchableOpacity accessibilityRole="button" style={styles.fundButton}>
           <Text style={styles.fundText}>Fund Wallet</Text>
         </TouchableOpacity>
       </View>
@@ -360,7 +360,7 @@ export default function RealityShowScreen() {
         >
           Predictions
         </Text>
-        <TouchableOpacity style={styles.predictionCard} onPress={() => router.push('/prediction')}>
+        <TouchableOpacity accessibilityRole="button" style={styles.predictionCard} onPress={() => router.push('/prediction')}>
           <Text
             style={[
               styles.predictionTitle,
@@ -374,7 +374,7 @@ export default function RealityShowScreen() {
               .filter((c) => c.status === 'active')
               .slice(0, 4)
               .map((contestant) => (
-                <TouchableOpacity key={contestant.id} style={styles.predictionOption}>
+                <TouchableOpacity accessibilityRole="button" key={contestant.id} style={styles.predictionOption}>
                   <Text style={styles.predictionAvatar}>{contestant.avatar}</Text>
                   <Text
                     style={[
@@ -434,7 +434,7 @@ export default function RealityShowScreen() {
                   >
                     <Text style={styles.modalCancelText}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.modalConfirm} onPress={confirmVote}>
+                  <TouchableOpacity accessibilityRole="button" style={styles.modalConfirm} onPress={confirmVote}>
                     <Text style={styles.modalConfirmText}>Confirm</Text>
                   </TouchableOpacity>
                 </View>

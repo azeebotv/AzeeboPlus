@@ -56,7 +56,7 @@ export default function FanContestsScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Fan Contests Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading contests..." />
       </SafeAreaView>
     );
@@ -76,7 +76,7 @@ export default function FanContestsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -110,7 +110,7 @@ export default function FanContestsScreen() {
               </View>
             </View>
             {contest.status === 'active' && (
-              <TouchableOpacity style={styles.entryButton} onPress={() => handleEntry(contest)}>
+              <TouchableOpacity accessibilityRole="button" style={styles.entryButton} onPress={() => handleEntry(contest)}>
                 <Text style={styles.entryButtonText}>Enter</Text>
               </TouchableOpacity>
             )}
@@ -139,7 +139,7 @@ export default function FanContestsScreen() {
               >
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmButton} onPress={confirmEntry}>
+              <TouchableOpacity accessibilityRole="button" style={styles.confirmButton} onPress={confirmEntry}>
                 <Text style={styles.confirmText}>Confirm</Text>
               </TouchableOpacity>
             </View>

@@ -78,6 +78,7 @@ export default function LegalPage() {
 
   return (
     <SafeAreaView
+      accessibilityLabel="Legal Documents Screen"
       style={[
         styles.container,
         { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },

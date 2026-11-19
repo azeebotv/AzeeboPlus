@@ -193,7 +193,7 @@ export default function RewardsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Rewards Screen" style={[styles.safeArea, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <ScrollView style={styles.container}>
           <LoadingState text="Loading rewards..." />
         </ScrollView>

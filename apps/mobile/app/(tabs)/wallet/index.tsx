@@ -209,7 +209,7 @@ export default function WalletScreen() {
         {error && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={onRefresh} accessibilityLabel="Retry loading wallet">
+            <TouchableOpacity accessibilityRole="button" onPress={onRefresh} accessibilityLabel="Retry loading wallet">
               <Text style={styles.retryText}>Tap to retry</Text>
             </TouchableOpacity>
           </View>

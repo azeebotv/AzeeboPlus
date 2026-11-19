@@ -21,7 +21,7 @@ export default function HomeTab() {
   // Loading state: minimal skeleton to avoid layout shift
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <SafeAreaView accessibilityLabel="Home Screen" style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={brand.flame} />
       </SafeAreaView>
     );

@@ -53,7 +53,7 @@ export default function ArtistDetailScreen() {
 
   if (!artistId) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+      <SafeAreaView accessibilityLabel="Screen Screen" style={[styles.container, { backgroundColor: colors.bg.primary }]}>
         <EmptyState icon="🎤" title="Artist not found" description="Invalid artist link" />
       </SafeAreaView>
     );
@@ -84,7 +84,7 @@ export default function ArtistDetailScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]} numberOfLines={1}>

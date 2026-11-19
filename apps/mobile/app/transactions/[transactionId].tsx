@@ -89,7 +89,7 @@ export default function TransactionDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <SafeAreaView accessibilityLabel="Screen Screen" style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading transaction...</Text>
       </SafeAreaView>
@@ -101,7 +101,7 @@ export default function TransactionDetailScreen() {
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorIcon}>⚠️</Text>
         <Text style={styles.errorText}>Transaction not found</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>Go Back</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -112,7 +112,7 @@ export default function TransactionDetailScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backNav}>
+          <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backNav}>
             <Text style={styles.backNavText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Transaction Details</Text>

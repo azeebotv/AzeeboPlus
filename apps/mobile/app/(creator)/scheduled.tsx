@@ -120,7 +120,7 @@ export default function ScheduledPostsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Scheduled Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading scheduled posts..." />
       </SafeAreaView>
     );
@@ -137,7 +137,7 @@ export default function ScheduledPostsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Scheduled Posts</Text>

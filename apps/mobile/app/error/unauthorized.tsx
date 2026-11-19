@@ -25,7 +25,7 @@ export default function UnauthorizedScreen() {
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity onPress={() => router.push('/(auth)/login')} style={styles.primaryButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.push('/(auth)/login')} style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>Sign In</Text>
         </TouchableOpacity>
         <TouchableOpacity

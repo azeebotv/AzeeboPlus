@@ -81,7 +81,7 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView accessibilityLabel="Reset Password Screen" style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -151,7 +151,7 @@ export default function ResetPasswordScreen() {
             <View style={styles.footer}>
               <Text style={styles.footerText}>Remember your password?</Text>
               <Link href="/(auth)/login" asChild>
-                <TouchableOpacity>
+                <TouchableOpacity accessibilityRole="button">
                   <Text style={styles.loginLink}> Sign In</Text>
                 </TouchableOpacity>
               </Link>

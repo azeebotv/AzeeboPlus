@@ -326,7 +326,7 @@ export default function WatchScreen() {
       edges={isFullscreen ? [] : ['top']}
     >
       {!isFullscreen && (
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={[styles.backText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
             ← Back
           </Text>
@@ -367,7 +367,7 @@ export default function WatchScreen() {
 
           {!isPlaying && !isBuffering && (
             <View style={styles.playOverlay} pointerEvents="box-none">
-              <TouchableOpacity style={styles.playButton} onPress={togglePlay}>
+              <TouchableOpacity accessibilityRole="button" style={styles.playButton} onPress={togglePlay}>
                 <Text style={styles.playIcon}>▶️</Text>
               </TouchableOpacity>
             </View>
@@ -402,7 +402,7 @@ export default function WatchScreen() {
                 >
                   <Text style={styles.controlText}>⚙️</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={toggleFullscreen}>
+                <TouchableOpacity accessibilityRole="button" onPress={toggleFullscreen}>
                   <Text style={styles.controlText}>{isFullscreen ? '⊠' : '⛶'}</Text>
                 </TouchableOpacity>
               </View>
@@ -411,7 +411,7 @@ export default function WatchScreen() {
                 style={[styles.centerControls, isLandscape && styles.centerControlsLandscape]}
                 pointerEvents="box-none"
               >
-                <TouchableOpacity style={styles.seekButton} onPress={() => seekBackward(10)}>
+                <TouchableOpacity accessibilityRole="button" style={styles.seekButton} onPress={() => seekBackward(10)}>
                   <Text style={[styles.seekText, isLandscape && styles.seekTextLandscape]}>
                     -10s
                   </Text>
@@ -424,7 +424,7 @@ export default function WatchScreen() {
                     {isPlaying ? '⏸️' : '▶️'}
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.seekButton} onPress={() => seekForward(10)}>
+                <TouchableOpacity accessibilityRole="button" style={styles.seekButton} onPress={() => seekForward(10)}>
                   <Text style={[styles.seekText, isLandscape && styles.seekTextLandscape]}>
                     +10s
                   </Text>

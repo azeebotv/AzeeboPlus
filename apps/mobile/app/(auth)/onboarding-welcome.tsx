@@ -78,7 +78,7 @@ export default function OnboardingWelcomeScreen() {
           >
             <Text style={styles.primaryButtonText}>Get Started</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
+          <TouchableOpacity accessibilityRole="button" onPress={() => router.replace('/(auth)/login')}>
             <Text style={styles.secondaryButtonText}>Sign In</Text>
           </TouchableOpacity>
         </View>

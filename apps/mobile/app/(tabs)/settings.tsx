@@ -390,7 +390,7 @@ export default function SettingsScreen() {
           visible={languageModalVisible}
           onRequestClose={() => setLanguageModalVisible(false)}
         >
-          <Pressable style={styles.modalOverlay} onPress={() => setLanguageModalVisible(false)}>
+          <Pressable accessibilityRole="button" style={styles.modalOverlay} onPress={() => setLanguageModalVisible(false)}>
             <Pressable
               style={[
                 styles.modalContent,

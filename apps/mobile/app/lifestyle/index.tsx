@@ -106,7 +106,7 @@ export default function LifestyleUniverseHome() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Index Screen" style={styles.container}>
         <LoadingState text="Loading lifestyle content..." />
       </SafeAreaView>
     );

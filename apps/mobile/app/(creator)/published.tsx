@@ -78,7 +78,7 @@ export default function PublishedContentScreen() {
   };
 
   const renderContent = ({ item }: { item: PublishedItem }) => (
-    <TouchableOpacity style={styles.card} onPress={() => router.push(`/(creator)/content-manager`)}>
+    <TouchableOpacity accessibilityRole="button" style={styles.card} onPress={() => router.push(`/(creator)/content-manager`)}>
       <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
       <View style={styles.content}>
         <View style={styles.cardHeader}>
@@ -108,7 +108,7 @@ export default function PublishedContentScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Published Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading published content..." />
       </SafeAreaView>
     );
@@ -125,7 +125,7 @@ export default function PublishedContentScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Published Content</Text>

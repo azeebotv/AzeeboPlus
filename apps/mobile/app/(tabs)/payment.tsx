@@ -207,7 +207,7 @@ export default function PaymentScreen() {
           <Text style={[styles.lockText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
             Please log in to make payments
           </Text>
-          <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/(auth)/login')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.loginButton} onPress={() => router.push('/(auth)/login')}>
             <Text style={styles.loginButtonText}>Log In</Text>
           </TouchableOpacity>
         </View>

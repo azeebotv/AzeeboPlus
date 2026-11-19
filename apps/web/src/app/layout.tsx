@@ -18,6 +18,8 @@ import { OfflineBanner, NetworkProvider } from '../components/ui/OfflineIndicato
 import { OfflineProvider } from '../context/OfflineContext';
 import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration';
 import { WebVitalsInit } from '../components/WebVitalsInit';
+import { PageViewTracker } from '../components/PageViewTracker';
+import { Suspense } from 'react';
 
 import { Inter, Montserrat } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -121,6 +123,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
                             <KeyboardNavigationProvider>
                               <ServiceWorkerRegistration />
                               <WebVitalsInit />
+                              <Suspense fallback={null}>
+                                <PageViewTracker />
+                              </Suspense>
                               <OfflineBanner />
                               <AnnouncementBanner />
                               <CookieConsent />

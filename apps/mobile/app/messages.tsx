@@ -151,7 +151,7 @@ export default function MessagesScreen() {
 
   if (selectedConversation) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Messages Screen" style={styles.container}>
         <View style={styles.container}>
           <View style={styles.chatHeader}>
             <TouchableOpacity

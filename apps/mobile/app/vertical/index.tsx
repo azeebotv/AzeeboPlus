@@ -81,7 +81,7 @@ export default function VerticalUniverseHome() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Index Screen" style={styles.container}>
         <LoadingState text="Loading vertical series..." />
       </SafeAreaView>
     );

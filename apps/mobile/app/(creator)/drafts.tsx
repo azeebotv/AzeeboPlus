@@ -123,7 +123,7 @@ export default function DraftsScreen() {
           </View>
           <View style={styles.draftActions}>
             <Text style={styles.lastSaved}>Saved {formatDate(item.lastSaved)}</Text>
-            <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
+            <TouchableOpacity accessibilityRole="button" style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
               <Text style={styles.deleteButtonText}>🗑</Text>
             </TouchableOpacity>
           </View>
@@ -134,7 +134,7 @@ export default function DraftsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Drafts Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading drafts..." />
       </SafeAreaView>
     );
@@ -151,7 +151,7 @@ export default function DraftsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Drafts</Text>

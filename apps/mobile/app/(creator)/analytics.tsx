@@ -69,7 +69,7 @@ export default function CreatorAnalyticsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Analytics Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading analytics..." />
       </SafeAreaView>
     );
@@ -90,7 +90,7 @@ export default function CreatorAnalyticsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Creator Analytics</Text>

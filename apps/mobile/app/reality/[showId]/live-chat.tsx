@@ -125,7 +125,7 @@ export default function LiveChatScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View accessibilityLabel="Live Chat Screen" style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading live chat...</Text>
       </View>

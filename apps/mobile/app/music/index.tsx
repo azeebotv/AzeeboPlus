@@ -81,7 +81,7 @@ export default function MusicScreen() {
           <Text style={styles.trackDuration}>{item.duration}</Text>
         </View>
       </View>
-      <TouchableOpacity style={styles.playButton} onPress={() => togglePlay(item.id)}>
+      <TouchableOpacity accessibilityRole="button" style={styles.playButton} onPress={() => togglePlay(item.id)}>
         <Text style={styles.playIcon}>{playingId === item.id ? '⏸' : '▶'}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -109,7 +109,7 @@ export default function MusicScreen() {
           {item.artist}
         </Text>
       </View>
-      <TouchableOpacity style={styles.playButtonSmall} onPress={() => togglePlay(item.id)}>
+      <TouchableOpacity accessibilityRole="button" style={styles.playButtonSmall} onPress={() => togglePlay(item.id)}>
         <Text style={styles.playIconSmall}>{playingId === item.id ? '⏸' : '▶'}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -121,10 +121,10 @@ export default function MusicScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Index Screen" style={styles.container}>
       <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Music</Text>
