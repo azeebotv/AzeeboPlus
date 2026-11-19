@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Query, Body, Req, UseGuards } from '@nestjs/common';
+import { Controller, Inject, Get, Patch, Param, Query, Body, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RightsClearancesService } from './rights-clearances.service';
@@ -17,7 +17,10 @@ interface AuthRequest extends Request {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
 export class RightsClearancesController {
-  constructor(private readonly service: RightsClearancesService) {}
+  constructor(
+    @Inject(RightsClearancesService)
+    private readonly service: RightsClearancesService
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List rights clearances with filters and search' })

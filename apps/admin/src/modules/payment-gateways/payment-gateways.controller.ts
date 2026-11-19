@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Param, Body, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Inject, Get, Put, Param, Body, UseGuards, NotFoundException } from '@nestjs/common';
 import { PaymentGatewaysService } from './payment-gateways.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -8,7 +8,10 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
 export class PaymentGatewaysController {
-  constructor(private readonly gatewaysService: PaymentGatewaysService) {}
+  constructor(
+    @Inject(PaymentGatewaysService)
+    private readonly gatewaysService: PaymentGatewaysService
+  ) {}
 
   @Get()
   async getGateways() {

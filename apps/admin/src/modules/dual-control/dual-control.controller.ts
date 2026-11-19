@@ -1,5 +1,6 @@
 import {
   Controller,
+  Inject,
   Get,
   Post,
   Param,
@@ -28,7 +29,10 @@ interface AuthRequest extends Request {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
 export class DualControlController {
-  constructor(private readonly service: DualControlService) {}
+  constructor(
+    @Inject(DualControlService)
+    private readonly service: DualControlService
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List dual-control requests with stats' })

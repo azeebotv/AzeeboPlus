@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Query, Body, Req, UseGuards } from '@nestjs/common';
+import { Controller, Inject, Get, Patch, Param, Query, Body, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AiProvenanceService } from './ai-provenance.service';
@@ -17,7 +17,10 @@ interface AuthRequest extends Request {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
 export class AiProvenanceController {
-  constructor(private readonly service: AiProvenanceService) {}
+  constructor(
+    @Inject(AiProvenanceService)
+    private readonly service: AiProvenanceService
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List AI provenance records with filters' })

@@ -1,5 +1,6 @@
 import {
   Controller,
+  Inject,
   Get,
   Post,
   Patch,
@@ -43,7 +44,9 @@ function resolveId(result: unknown): string | undefined {
 @Roles('admin', 'superadmin')
 export class AgbalaController {
   constructor(
+    @Inject(AgbalaService)
     private readonly agbalaService: AgbalaService,
+    @Inject(AuditLogService)
     private readonly auditLogService: AuditLogService
   ) {}
 

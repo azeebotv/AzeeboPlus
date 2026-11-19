@@ -21,9 +21,24 @@ CREATE TABLE "ai_provenance_records" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "ai_provenance_records_pkey" PRIMARY KEY ("id"),
-    CONSTRAINT "ai_provenance_records_contentId_fkey" FOREIGN KEY ("contentId") REFERENCES "content_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "ai_provenance_records_pkey" PRIMARY KEY ("id")
 );
+
+-- Note: In a federated admin database where content_items is an FDW foreign table,
+-- PostgreSQL does not permit foreign key constraints referencing foreign tables.
+-- We conditionally add the constraint only when content_items is a local base table.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'content_items' AND c.relkind = 'r'
+  ) THEN
+    ALTER TABLE "ai_provenance_records"
+      ADD CONSTRAINT "ai_provenance_records_contentId_fkey"
+      FOREIGN KEY ("contentId") REFERENCES "content_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+  END IF;
+END $$;
 
 CREATE INDEX "ai_provenance_records_contentId_idx" ON "ai_provenance_records"("contentId");
 CREATE INDEX "ai_provenance_records_clearanceStatus_idx" ON "ai_provenance_records"("clearanceStatus");
@@ -73,9 +88,21 @@ CREATE TABLE "rights_clearances" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "rights_clearances_pkey" PRIMARY KEY ("id"),
-    CONSTRAINT "rights_clearances_contentId_fkey" FOREIGN KEY ("contentId") REFERENCES "content_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "rights_clearances_pkey" PRIMARY KEY ("id")
 );
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'content_items' AND c.relkind = 'r'
+  ) THEN
+    ALTER TABLE "rights_clearances"
+      ADD CONSTRAINT "rights_clearances_contentId_fkey"
+      FOREIGN KEY ("contentId") REFERENCES "content_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+  END IF;
+END $$;
 
 CREATE INDEX "rights_clearances_status_idx" ON "rights_clearances"("status");
 CREATE INDEX "rights_clearances_type_idx" ON "rights_clearances"("type");

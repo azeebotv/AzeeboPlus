@@ -58,21 +58,30 @@ export class AgbalaService {
   }
 
   private async fetch<T = unknown>(url: string, options?: RequestInit): Promise<T> {
-    const res = await fetch(`${this.baseUrl}${url}`, {
-      ...options,
-      headers: {
-        ...this.headers,
-        ...(options?.headers || {}),
-      },
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl}${url}`, {
+        ...options,
+        headers: {
+          ...this.headers,
+          ...(options?.headers || {}),
+        },
+      });
+    } catch (networkError: any) {
+      this.logger.error(`Failed to reach vertical-service at ${this.baseUrl}${url}`, networkError);
+      const code = networkError?.code || networkError?.cause?.code;
+      if (code) networkError.code = code;
+      mapAndThrow(networkError, `vertical-service at ${url}`);
+    }
     if (!res.ok) {
       const msg = await res.text().catch(() => 'Request failed');
       // Carry the upstream status on the thrown error so mapAndThrow can map
       // it truthfully (404 → NotFound, 4xx passthrough, 5xx → Bad Gateway)
       // instead of every failure collapsing into one hardcoded status.
-      throw Object.assign(new Error(`HTTP ${res.status}: ${msg}`), {
+      const error = Object.assign(new Error(`HTTP ${res.status}: ${msg}`), {
         response: { status: res.status, data: { message: msg } },
       });
+      mapAndThrow(error, `vertical-service ${url}`);
     }
     return res.json();
   }

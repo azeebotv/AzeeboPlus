@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Param, Query, Body, UseGuards } from '@nestjs/common';
+import { Controller, Inject, Get, Post, Put, Param, Query, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SupportAdminService } from './support-admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -11,7 +11,10 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
 export class SupportAdminController {
-  constructor(private readonly supportService: SupportAdminService) {}
+  constructor(
+    @Inject(SupportAdminService)
+    private readonly supportService: SupportAdminService
+  ) {}
 
   @Get('stats')
   @ApiOperation({ summary: 'Get support ticket stats' })
