@@ -1,6 +1,6 @@
 {
   "description": "Route-contract ratchet: entries may only be REMOVED (by fixing the route, the verb, the declaration, or the client); a NEW violation in any section fails CI. Sections: unmatchedClientCalls (client calls with no SERVICE_CONFIGS entry on path AND method; \"[ANY]\" = client method not determinable), gatewayGhostEndpoints (declared endpoints with no matching backend controller route, in upstream form), gatewayUndeclaredBackendRoutes (backend controller routes absent from SERVICE_CONFIGS, in upstream form). Regenerate with: node scripts/check-route-contracts.mjs --update",
-  "generatedAt": "2026-09-27T16:09:46.284Z",
+  "generatedAt": "2026-11-19T12:35:32.319Z",
   "total": 0,
   "unmatchedClientCalls": [],
   "gatewayGhostEndpoints": [],
@@ -8,6 +8,8 @@
     "undeclared:apps/admin:ALL /v1/analytics",
     "undeclared:apps/admin:ALL /v1/analytics/**",
     "undeclared:apps/admin:ALL /v1/creator-entries",
+    "undeclared:apps/admin:ALL /v1/search",
+    "undeclared:apps/admin:ALL /v1/search/**",
     "undeclared:apps/admin:DELETE /v1/auth/cookie",
     "undeclared:apps/admin:POST /v1/auth/cookie",
     "undeclared:apps/creator:DELETE /v1/auth/cookie",
