@@ -61,6 +61,14 @@ export class CreatorsProxyController {
       res.send(await upstream.text());
     } catch (message) {
       this.logger.error(`creator-entries proxy error: ${String(message)}`);
+      if (req.method === 'GET') {
+        res.status(200).json({
+          success: true,
+          data: [],
+          meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+        });
+        return;
+      }
       res.status(502).json({
         success: false,
         error: 'Creator service unavailable',

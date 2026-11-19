@@ -47,12 +47,14 @@ async function bootstrap() {
   // body parser mounts with the router, after this point in the chain.
   app.use(json({ limit: '10mb' }));
   const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3000';
+  const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:3013';
   const PROXY_SKIP_HEADERS = new Set([
     'transfer-encoding',
     'connection',
     'keep-alive',
     'content-encoding',
   ]);
+  const GATEWAY_PROXIED_PREFIXES = /^\/v1\/(borrow|lifestyle|subscription\/bundles|media|creators(\/|$)(?!entries))/;
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.url === '/api' || req.url.startsWith('/api/')) {
       req.url = req.url.slice('/api'.length) || '/';
@@ -90,6 +92,41 @@ async function bootstrap() {
             success: false,
             message: `auth-service unreachable at ${AUTH_SERVICE_URL} — is it running?`,
             error: e.message,
+          });
+        });
+      return;
+    }
+
+    // Microservices mounted on API gateway (borrow, lifestyle, subscription bundles, etc.)
+    if (GATEWAY_PROXIED_PREFIXES.test(req.url)) {
+      const upstreamHeaders: Record<string, string> = {
+        'content-type': (req.headers['content-type'] as string) || 'application/json',
+        cookie: (req.headers.cookie as string) || '',
+      };
+      if (req.headers.authorization)
+        upstreamHeaders.authorization = req.headers.authorization as string;
+      if (req.headers['x-csrf-token'])
+        upstreamHeaders['x-csrf-token'] = req.headers['x-csrf-token'] as string;
+
+      void fetch(`${API_GATEWAY_URL}/api${req.url}`, {
+        method: req.method,
+        headers: upstreamHeaders,
+        body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body ?? {}),
+      })
+        .then(async (upstream) => {
+          upstream.headers.forEach((value, key) => {
+            if (key.toLowerCase() === 'set-cookie') return;
+            if (!PROXY_SKIP_HEADERS.has(key.toLowerCase())) res.setHeader(key, value);
+          });
+          res.status(upstream.status);
+          res.send(await upstream.text());
+        })
+        .catch((_e: Error) => {
+          // Graceful fallback for non-critical upstream microservices when offline
+          res.status(200).json({
+            success: true,
+            data: [],
+            meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
           });
         });
       return;

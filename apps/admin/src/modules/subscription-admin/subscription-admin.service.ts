@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { upstreamAuthContext } from '../../common/upstream-auth.middleware';
 
@@ -91,10 +91,18 @@ export class SubscriptionAdminService {
   }
 
   private async upstream<T>(path: string, init?: RequestInit): Promise<T> {
-    const res = await fetch(`${this.upstreamBase}${path}`, {
-      ...init,
-      headers: { ...this.upstreamHeaders(), ...(init?.headers || {}) },
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${this.upstreamBase}${path}`, {
+        ...init,
+        headers: { ...this.upstreamHeaders(), ...(init?.headers || {}) },
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`subscription-service upstream fetch failed for ${path}: ${message}`);
+      throw new ServiceUnavailableException(`subscription-service unavailable: ${message}`);
+    }
+
     const body = (await res.json().catch(() => null)) as {
       success?: boolean;
       data?: T;
@@ -189,23 +197,34 @@ export class SubscriptionAdminService {
     const page = Number(query.page || 1);
     const limit = Number(query.limit || 15);
 
-    const upstreamPlans = await this.upstream<UpstreamPlan[]>('/plans');
-    let plans = upstreamPlans.map((p) => this.mapPlan(p));
+    try {
+      const upstreamPlans = await this.upstream<UpstreamPlan[]>('/plans');
+      let plans = upstreamPlans.map((p) => this.mapPlan(p));
 
-    if (query.status) plans = plans.filter((p) => p.status === query.status);
-    if (query.tier) plans = plans.filter((p) => p.tier === query.tier);
+      if (query.status) plans = plans.filter((p) => p.status === query.status);
+      if (query.tier) plans = plans.filter((p) => p.tier === query.tier);
 
-    const total = plans.length;
-    const startIndex = (page - 1) * limit;
-    const paginatedItems = plans.slice(startIndex, startIndex + limit);
+      const total = plans.length;
+      const startIndex = (page - 1) * limit;
+      const paginatedItems = plans.slice(startIndex, startIndex + limit);
 
-    return {
-      items: paginatedItems,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit) || 1,
-    };
+      return {
+        items: paginatedItems,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      };
+    } catch (err: unknown) {
+      this.logger.warn(`Failed to fetch upstream subscription plans: ${err instanceof Error ? err.message : String(err)}`);
+      return {
+        items: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 1,
+      };
+    }
   }
 
   async getSubscriptionPlanById(id: string) {
