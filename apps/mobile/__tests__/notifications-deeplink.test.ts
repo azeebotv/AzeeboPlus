@@ -3,7 +3,6 @@ import {
   generateShareUrl,
   generateContentShareUrl,
   openDeepLink,
-  DEEP_LINK_ROUTES,
 } from '../src/lib/deep-linking';
 
 describe('Mobile Critical Path 9: Push Notifications & Deep-Link Dispatch', () => {

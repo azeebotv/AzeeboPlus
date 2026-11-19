@@ -23,7 +23,7 @@ describe('Mobile Critical Path 7: Sports Prediction & Gamification', () => {
       ],
     });
 
-    const res = await apiClient.get('/api/v1/sports/fixtures?status=upcoming');
+    const res = await apiClient.get<any>('/api/v1/sports/fixtures?status=upcoming');
 
     expect(getSpy).toHaveBeenCalledWith('/api/v1/sports/fixtures?status=upcoming');
     expect(res.data?.[0].homeTeam).toBe('Arsenal');
@@ -42,7 +42,7 @@ describe('Mobile Critical Path 7: Sports Prediction & Gamification', () => {
       },
     });
 
-    const res = await apiClient.post('/api/v1/sports/predictions/place', {
+    const res = await apiClient.post<any>('/api/v1/sports/predictions/place', {
       fixtureId: 'fix-arsenal-chelsea',
       outcome: 'HOME_WIN',
       points: 500,

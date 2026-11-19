@@ -16,7 +16,7 @@ describe('Mobile Critical Path 5: Media Upload & S3 Presigning', () => {
       },
     });
 
-    const res = await apiClient.post('/api/v1/media/upload/video', {
+    const res = await apiClient.post<any>('/api/v1/media/upload/video', {
       filename: 'dance_challenge.mp4',
       mimetype: 'video/mp4',
       sizeBytes: 15480000,

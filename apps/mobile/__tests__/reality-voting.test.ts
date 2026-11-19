@@ -20,7 +20,7 @@ describe('Mobile Critical Path 3: Reality TV Voting & Predictions', () => {
 
     expect(getSpy).toHaveBeenCalledWith('/api/v1/reality/shows/show-naija-house-s3/contestants');
     expect(res.data?.length).toBe(3);
-    expect(res.data?.filter((c: { status?: string }) => c.status === 'active').length).toBe(2);
+    expect((res.data as any)?.filter((c: any) => c.status === 'active').length).toBe(2);
   });
 
   it('submits audience vote and confirms ledger locking', async () => {

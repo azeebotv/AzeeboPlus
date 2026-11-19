@@ -19,7 +19,7 @@ describe('Mobile Critical Path 6: Agbala Storyworld Navigation & Quizzes', () =>
       },
     });
 
-    const res = await apiClient.get('/api/v1/vertical/agbala/nodes/agbala-forest-shrine');
+    const res = await apiClient.get<any>('/api/v1/vertical/agbala/nodes/agbala-forest-shrine');
 
     expect(getSpy).toHaveBeenCalledWith('/api/v1/vertical/agbala/nodes/agbala-forest-shrine');
     expect(res.data?.nodeId).toBe('agbala-forest-shrine');
@@ -41,7 +41,7 @@ describe('Mobile Critical Path 6: Agbala Storyworld Navigation & Quizzes', () =>
       },
     });
 
-    const res = await apiClient.post('/api/v1/vertical/agbala/quizzes/submit', {
+    const res = await apiClient.post<any>('/api/v1/vertical/agbala/quizzes/submit', {
       quizId: 'quiz-yoruba-folklore-1',
       answers: [{ questionId: 'q1', selectedOptionId: 'opt-b' }],
     });

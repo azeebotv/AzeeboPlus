@@ -15,7 +15,7 @@ describe('Mobile Critical Path 10: Creator Onboarding & KYC Flow', () => {
       },
     });
 
-    const res = await apiClient.post('/api/v1/creator/onboarding/step-1', {
+    const res = await apiClient.post<any>('/api/v1/creator/onboarding/step-1', {
       creatorName: 'Kene Studios',
       primaryUniverse: 'cinemaxis',
       bio: 'Award-winning Nollywood indie filmmaker and animator.',
@@ -39,7 +39,7 @@ describe('Mobile Critical Path 10: Creator Onboarding & KYC Flow', () => {
       },
     });
 
-    const res = await apiClient.post('/api/v1/creator/onboarding/step-2-payout', {
+    const res = await apiClient.post<any>('/api/v1/creator/onboarding/step-2-payout', {
       applicationId: 'app-creator-771',
       bankCode: '058',
       accountNumber: '0123456789',
@@ -65,7 +65,7 @@ describe('Mobile Critical Path 10: Creator Onboarding & KYC Flow', () => {
       },
     });
 
-    const res = await apiClient.post('/api/v1/creator/onboarding/submit', {
+    const res = await apiClient.post<any>('/api/v1/creator/onboarding/submit', {
       applicationId: 'app-creator-771',
       agreedToTerms: true,
     });

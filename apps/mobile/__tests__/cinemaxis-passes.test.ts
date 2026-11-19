@@ -26,7 +26,7 @@ describe('Mobile Critical Path 8: Cinemaxis Bundles & PPV Passes', () => {
       ],
     });
 
-    const res = await apiClient.get('/api/v1/commerce/passes');
+    const res = await apiClient.get<any>('/api/v1/commerce/passes');
 
     expect(getSpy).toHaveBeenCalledWith('/api/v1/commerce/passes');
     expect(res.data?.length).toBe(2);
@@ -44,7 +44,7 @@ describe('Mobile Critical Path 8: Cinemaxis Bundles & PPV Passes', () => {
       },
     });
 
-    const res = await apiClient.post('/api/v1/commerce/passes/checkout', {
+    const res = await apiClient.post<any>('/api/v1/commerce/passes/checkout', {
       passId: 'pass-theatrical-ppv-jagun',
       paymentMethod: 'wallet',
     });

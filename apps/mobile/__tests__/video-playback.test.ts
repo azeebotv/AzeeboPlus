@@ -35,7 +35,7 @@ describe('Mobile Critical Path 4: Video Playback, DRM & Signed URLs', () => {
       contentId: 'film-99',
       position: 742,
     });
-    expect(res.data?.progressSeconds).toBe(742);
+    expect((res.data as any)?.progressSeconds).toBe(742);
   });
 
   it('handles playback entitlement paywall rejection gracefully', async () => {
