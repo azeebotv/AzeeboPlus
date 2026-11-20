@@ -1041,7 +1041,7 @@ export default function ContentPage() {
 
       {showCreate && (() => {
         const selectedUniverse = universes.find((u) => u.id === createForm.universeId);
-        const isVerticalSelected = selectedUniverse?.name?.toLowerCase() === 'vertical';
+        const isCreatorUniverseSelected = selectedUniverse?.name?.toLowerCase() === 'creator';
 
         return (
           <div
@@ -1139,14 +1139,14 @@ export default function ContentPage() {
                     <option value="">Select Universe *</option>
                     {universes.map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.displayName || u.name} {u.name.toLowerCase() === 'vertical' ? '(Creator Uploads Only)' : '(Admin Managed)'}
+                        {u.displayName || u.name} {u.name.toLowerCase() === 'creator' ? '(Creator Uploads Only)' : '(Admin Managed)'}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Universe Policy Feedback */}
-                {isVerticalSelected && (
+                {isCreatorUniverseSelected && (
                   <div
                     style={{
                       padding: 12,
@@ -1158,11 +1158,11 @@ export default function ContentPage() {
                       lineHeight: '1.4',
                     }}
                   >
-                    <strong>Upload Restricted:</strong> Verticals are creator-exclusive. Creators upload vertical videos via Creator Studio. Admins cannot upload to Verticals.
+                    <strong>Upload Restricted:</strong> Creator Content is creator-exclusive. Creators upload videos directly via Creator Studio. Admins manage and moderate creator content through the Creator Accounts and Review Queue pages.
                   </div>
                 )}
 
-                {selectedUniverse && !isVerticalSelected && (
+                {selectedUniverse && !isCreatorUniverseSelected && (
                   <div
                     style={{
                       padding: 10,
@@ -1173,7 +1173,7 @@ export default function ContentPage() {
                       fontSize: 12,
                     }}
                   >
-                    <strong>Admin-Managed Universe:</strong> Admin publishes and manages {selectedUniverse.displayName || selectedUniverse.name} content directly. Creator attribution is optional.
+                    <strong>Admin-Managed Universe:</strong> Admin publishes and manages {selectedUniverse.displayName || selectedUniverse.name} content directly (e.g. Vertical Series, Movies, Reality, Comedy, Lifestyle, Sports). Creator attribution is optional.
                   </div>
                 )}
 
@@ -1364,7 +1364,7 @@ export default function ContentPage() {
                     disabled={
                       !createForm.title.trim() ||
                       !createForm.universeId ||
-                      isVerticalSelected ||
+                      isCreatorUniverseSelected ||
                       createContentMutation.isPending
                     }
                     style={{
@@ -1374,8 +1374,8 @@ export default function ContentPage() {
                       background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
                       color: 'white',
                       fontWeight: 600,
-                      cursor: isVerticalSelected || !createForm.title.trim() || !createForm.universeId ? 'not-allowed' : 'pointer',
-                      opacity: isVerticalSelected || !createForm.title.trim() || !createForm.universeId ? 0.6 : 1,
+                      cursor: isCreatorUniverseSelected || !createForm.title.trim() || !createForm.universeId ? 'not-allowed' : 'pointer',
+                      opacity: isCreatorUniverseSelected || !createForm.title.trim() || !createForm.universeId ? 0.6 : 1,
                     }}
                   >
                     {createContentMutation.isPending ? 'Creating...' : 'Create Content'}

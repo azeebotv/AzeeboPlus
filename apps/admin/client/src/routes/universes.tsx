@@ -708,7 +708,7 @@ export default function UniversesPage() {
                     <h3 style={{ fontWeight: 600, fontSize: 16 }}>{u.displayName || u.name}</h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                       <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, margin: 0 }}>{u.name}</p>
-                      {u.name.toLowerCase() === 'vertical' ? (
+                      {u.name.toLowerCase() === 'creator' ? (
                         <span
                           style={{
                             fontSize: 10,

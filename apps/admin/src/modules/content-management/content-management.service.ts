@@ -189,9 +189,9 @@ export class ContentManagementService {
       throw new BadRequestException(`Universe with id "${universeId}" not found`);
     }
 
-    if (universe.name.toLowerCase() === 'vertical') {
+    if (universe.name.toLowerCase() === 'creator') {
       throw new BadRequestException(
-        'Verticals are creator-exclusive. Only creators can upload vertical content via Creator Studio.'
+        'Creator Content is creator-exclusive. Only creators can upload to the Creator Content universe via Creator Studio.'
       );
     }
 
