@@ -39,7 +39,7 @@
 - **Live Streaming & Predictions:** `Live`, `live detail`, `Predictions`, `Predictions Result Detail` → `/live/*`, `/live`, `/live/[id]`, `/predictions/*`, `/watch-party/*`
 
 ### Commerce & Social
-- **Wallet, Payments & Subscriptions:** `Subscription`, `Premium`, `Wallet`, `Wallet – Subscription Plans` → `/wallet/*`, `/wallet`, `/subscription/*`, `/subscription`, `/payment`, `/premium`, `/tipping`, `/borrow/*`, `/commerce/*`, `/transactions/*`
+- **Wallet, Payments & Subscriptions:** `Subscription`, `Premium`, `Wallet`, `Wallet – Subscription Plans`, `Cart` → `/cart`, `/wallet/*`, `/wallet`, `/subscription/*`, `/subscription`, `/payment`, `/premium`, `/tipping`, `/borrow/*`, `/commerce/*`, `/transactions/*`
 - **Messaging, Social & Community:** group frame (contents below top-level) → `/messages`, `/profile/*`, `/profile`, `/referral/*`, `/referral`, `/notifications`, `/reviews/*`, `/settings`, `/settings/devices`
 
 ### Creator Web Portal (20 frames)
