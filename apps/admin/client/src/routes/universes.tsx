@@ -9,7 +9,15 @@ export default function UniversesPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ name: '', displayName: '', description: '' });
+  const [form, setForm] = useState({
+    name: '',
+    displayName: '',
+    description: '',
+    icon: '',
+    color: '#E8420A',
+    sortOrder: 0,
+    isEnabled: true,
+  });
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
 
@@ -45,7 +53,15 @@ export default function UniversesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
       setShowCreate(false);
-      setForm({ name: '', displayName: '', description: '' });
+      setForm({
+        name: '',
+        displayName: '',
+        description: '',
+        icon: '',
+        color: '#E8420A',
+        sortOrder: 0,
+        isEnabled: true,
+      });
     },
   });
 
@@ -127,7 +143,14 @@ export default function UniversesPage() {
 
   // Edit (name/displayName/description) — updateUniverse existed but had no UI.
   const [editTarget, setEditTarget] = useState<AdminUniverse | null>(null);
-  const [editForm, setEditForm] = useState({ displayName: '', description: '' });
+  const [editForm, setEditForm] = useState({
+    displayName: '',
+    description: '',
+    icon: '',
+    color: '#E8420A',
+    sortOrder: 0,
+    isEnabled: true,
+  });
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       adminApi.updateUniverse(id, data),
@@ -409,38 +432,44 @@ export default function UniversesPage() {
             marginBottom: 24,
           }}
         >
-          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Create Universe</h3>
+          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Create Universe</h3>
+          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 16 }}>
+            Note: Verticals are reserved exclusively for creator uploads via Creator Studio. Movies and other universes are managed by admins.
+          </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Name (slug)"
-              style={{
-                padding: '10px 16px',
-                borderRadius: 8,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'var(--admin-dark)',
-                color: 'var(--admin-text)',
-                fontSize: 14,
-              }}
-            />
-            <input
-              value={form.displayName}
-              onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-              placeholder="Display Name"
-              style={{
-                padding: '10px 16px',
-                borderRadius: 8,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'var(--admin-dark)',
-                color: 'var(--admin-text)',
-                fontSize: 14,
-              }}
-            />
-            <input
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value.toLowerCase().trim() })}
+                placeholder="Slug / Name (e.g. nollywood) *"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                }}
+              />
+              <input
+                value={form.displayName}
+                onChange={(e) => setForm({ ...form, displayName: e.target.value })}
+                placeholder="Display Name (e.g. Nollywood Premieres) *"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                }}
+              />
+            </div>
+            <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Description"
+              rows={2}
               style={{
                 padding: '10px 16px',
                 borderRadius: 8,
@@ -448,12 +477,63 @@ export default function UniversesPage() {
                 backgroundColor: 'var(--admin-dark)',
                 color: 'var(--admin-text)',
                 fontSize: 14,
+                resize: 'vertical',
               }}
             />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              <input
+                value={form.icon}
+                onChange={(e) => setForm({ ...form, icon: e.target.value })}
+                placeholder="Icon name (e.g. film, globe)"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 13,
+                }}
+              />
+              <input
+                value={form.color}
+                onChange={(e) => setForm({ ...form, color: e.target.value })}
+                placeholder="Theme color (#E8420A)"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 13,
+                }}
+              />
+              <input
+                type="number"
+                value={form.sortOrder}
+                onChange={(e) => setForm({ ...form, sortOrder: parseInt(e.target.value) || 0 })}
+                placeholder="Sort order (0)"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 13,
+                }}
+              />
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={form.isEnabled}
+                onChange={(e) => setForm({ ...form, isEnabled: e.target.checked })}
+              />
+              <span>Active on public platform</span>
+            </label>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => createMutation.mutate()}
-                disabled={createMutation.isPending}
+                disabled={!form.name.trim() || !form.displayName.trim() || createMutation.isPending}
                 style={{
                   padding: '10px 20px',
                   borderRadius: 8,
@@ -461,10 +541,11 @@ export default function UniversesPage() {
                   background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
                   color: 'white',
                   fontWeight: 600,
-                  cursor: 'pointer',
+                  cursor: !form.name.trim() || !form.displayName.trim() ? 'not-allowed' : 'pointer',
+                  opacity: !form.name.trim() || !form.displayName.trim() ? 0.6 : 1,
                 }}
               >
-                {createMutation.isPending ? 'Creating...' : 'Create'}
+                {createMutation.isPending ? 'Creating...' : 'Create Universe'}
               </button>
               <button
                 onClick={() => setShowCreate(false)}
@@ -625,7 +706,38 @@ export default function UniversesPage() {
                 >
                   <div>
                     <h3 style={{ fontWeight: 600, fontSize: 16 }}>{u.displayName || u.name}</h3>
-                    <p style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>{u.name}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                      <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, margin: 0 }}>{u.name}</p>
+                      {u.name.toLowerCase() === 'vertical' ? (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            backgroundColor: 'rgba(232, 66, 10, 0.2)',
+                            color: 'var(--admin-orange)',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Creator Uploads Only
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            color: '#93c5fd',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Admin Managed
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span
@@ -751,6 +863,10 @@ export default function UniversesPage() {
                         setEditForm({
                           displayName: u.displayName || '',
                           description: u.description || '',
+                          icon: (u as any).icon || '',
+                          color: (u as any).color || '#E8420A',
+                          sortOrder: (u as any).sortOrder ?? 0,
+                          isEnabled: u.isEnabled ?? true,
                         });
                         setEditTarget(u);
                       }}
@@ -898,34 +1014,123 @@ export default function UniversesPage() {
               Edit "{editTarget.displayName || editTarget.name}"
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <input
-                value={editForm.displayName}
-                onChange={(e) => setEditForm({ ...editForm, displayName: e.target.value })}
-                placeholder="Display name"
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
-                  color: 'var(--admin-text)',
-                  fontSize: 14,
-                }}
-              />
-              <textarea
-                value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                placeholder="Description"
-                rows={3}
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
-                  color: 'var(--admin-text)',
-                  fontSize: 14,
-                  resize: 'vertical',
-                }}
-              />
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Display Name *
+                </label>
+                <input
+                  value={editForm.displayName}
+                  onChange={(e) => setEditForm({ ...editForm, displayName: e.target.value })}
+                  placeholder="Display name"
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
+                    fontSize: 14,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  placeholder="Description"
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
+                    fontSize: 14,
+                    resize: 'vertical',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Icon
+                  </label>
+                  <input
+                    value={editForm.icon}
+                    onChange={(e) => setEditForm({ ...editForm, icon: e.target.value })}
+                    placeholder="e.g. film"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Color
+                  </label>
+                  <input
+                    value={editForm.color}
+                    onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                    placeholder="#E8420A"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Sort Order
+                  </label>
+                  <input
+                    type="number"
+                    value={editForm.sortOrder}
+                    onChange={(e) => setEditForm({ ...editForm, sortOrder: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={editForm.isEnabled}
+                  onChange={(e) => setEditForm({ ...editForm, isEnabled: e.target.checked })}
+                />
+                <span>Active on public platform</span>
+              </label>
+
               {updateMutation.isError && (
                 <p style={{ color: 'var(--admin-red)', fontSize: 13, margin: 0 }}>
                   {(updateMutation.error as Error)?.message || 'Update failed'}
@@ -934,7 +1139,7 @@ export default function UniversesPage() {
               {cloneError && (
                 <p style={{ color: 'var(--admin-red)', fontSize: 13, margin: 0 }}>{cloneError}</p>
               )}
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
                 <button
                   onClick={() => setEditTarget(null)}
                   style={{
@@ -949,13 +1154,17 @@ export default function UniversesPage() {
                   Cancel
                 </button>
                 <button
-                  disabled={updateMutation.isPending}
+                  disabled={updateMutation.isPending || !editForm.displayName.trim()}
                   onClick={() =>
                     updateMutation.mutate({
                       id: editTarget.id,
                       data: {
-                        displayName: editForm.displayName,
+                        displayName: editForm.displayName.trim(),
                         description: editForm.description || undefined,
+                        icon: editForm.icon || undefined,
+                        color: editForm.color || undefined,
+                        sortOrder: editForm.sortOrder,
+                        isEnabled: editForm.isEnabled,
                       },
                     })
                   }
@@ -966,10 +1175,10 @@ export default function UniversesPage() {
                     background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
                     color: 'white',
                     fontWeight: 600,
-                    cursor: 'pointer',
+                    cursor: !editForm.displayName.trim() ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {updateMutation.isPending ? 'Saving...' : 'Save'}
+                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>

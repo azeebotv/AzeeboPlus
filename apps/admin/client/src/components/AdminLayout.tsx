@@ -88,6 +88,12 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         description: 'Videos, series, and catalog management',
       },
       {
+        href: '/movies',
+        label: 'Movies',
+        icon: 'film',
+        description: 'Feature films, cinema passes & premiere windows (Admin Only)',
+      },
+      {
         href: '/content-review',
         label: 'Review Queue',
         icon: 'checkCircle',

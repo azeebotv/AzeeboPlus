@@ -13,6 +13,7 @@ const OverviewPage = lazy(() => import('./routes/overview'));
 const UsersPage = lazy(() => import('./routes/users'));
 const UserDetailPage = lazy(() => import('./routes/user-detail'));
 const ContentPage = lazy(() => import('./routes/content'));
+const MoviesPage = lazy(() => import('./routes/movies'));
 const ContentDetailPage = lazy(() => import('./routes/content-detail'));
 const ContentReviewPage = lazy(() => import('./routes/content-review'));
 const ChallengeEntriesPage = lazy(() => import('./routes/challenge-entries'));
@@ -122,6 +123,7 @@ export default function App() {
                 <Route path="users" element={<UsersPage />} />
                 <Route path="users/:id" element={<UserDetailPage />} />
                 <Route path="content" element={<ContentPage />} />
+                <Route path="movies" element={<MoviesPage />} />
                 <Route path="content/:id" element={<ContentDetailPage />} />
                 <Route path="content-review" element={<ContentReviewPage />} />
                 <Route path="challenge-entries" element={<ChallengeEntriesPage />} />

@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import type { UserRole } from '../../generated/prisma';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
@@ -481,5 +482,115 @@ export class UserManagementService {
       success: true,
       message: 'User deleted successfully',
     };
+  }
+
+  async createUser(data: {
+    email: string;
+    displayName: string;
+    password?: string;
+    role?: UserRole;
+    isVerified?: boolean;
+  }) {
+    if (!data.email?.trim() || !data.displayName?.trim()) {
+      throw new BadRequestException('Email and display name are required');
+    }
+
+    const email = data.email.toLowerCase().trim();
+    const existing = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (existing) {
+      throw new BadRequestException(`User with email "${email}" already exists`);
+    }
+
+    const rawPassword = data.password?.trim() || 'AzeeboPass123!';
+    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+    const role = (data.role || 'user') as UserRole;
+    const isVerified = Boolean(data.isVerified);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        displayName: data.displayName.trim(),
+        password: hashedPassword,
+        role,
+        isVerified,
+        wallet: {
+          create: {
+            balance: 0,
+            currency: 'NGN',
+          },
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+      },
+    });
+
+    if (role === 'creator') {
+      await this.prisma.creatorProfile.create({
+        data: {
+          userId: user.id,
+          verified: isVerified,
+        },
+      });
+    }
+
+    return user;
+  }
+
+  async updateUser(
+    id: string,
+    data: {
+      displayName?: string;
+      email?: string;
+      role?: UserRole;
+      isVerified?: boolean;
+    }
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException(`User ${id} not found`);
+
+    const updateData: Prisma.UserUpdateInput = {};
+    if (data.displayName !== undefined) updateData.displayName = data.displayName.trim();
+    if (data.email !== undefined) updateData.email = data.email.toLowerCase().trim();
+    if (data.role !== undefined) updateData.role = data.role as UserRole;
+    if (data.isVerified !== undefined) updateData.isVerified = Boolean(data.isVerified);
+
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        role: true,
+        isVerified: true,
+        updatedAt: true,
+      },
+    });
+
+    if (data.isVerified !== undefined || data.role === 'creator') {
+      const existing = await this.prisma.creatorProfile.findFirst({
+        where: { userId: id },
+      });
+      if (existing) {
+        await this.prisma.creatorProfile.update({
+          where: { id: existing.id },
+          data: { verified: Boolean(data.isVerified) },
+        });
+      } else {
+        await this.prisma.creatorProfile.create({
+          data: { userId: id, verified: Boolean(data.isVerified) },
+        });
+      }
+    }
+
+    return updated;
   }
 }

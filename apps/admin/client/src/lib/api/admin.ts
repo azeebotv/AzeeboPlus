@@ -162,6 +162,26 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify({ reason, durationDays }),
     }),
+  createUser: (data: {
+    email: string;
+    displayName: string;
+    password?: string;
+    role?: string;
+    isVerified?: boolean;
+  }) => apiFetch<unknown>('/api/v1/admin/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateUser: (
+    id: string,
+    data: {
+      displayName?: string;
+      email?: string;
+      role?: string;
+      isVerified?: boolean;
+    }
+  ) =>
+    apiFetch<unknown>(`/api/v1/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
   deleteUser: (id: string) => apiFetch<unknown>(`/api/v1/admin/users/${id}`, { method: 'DELETE' }),
   revokeSuspension: (id: string, reason: string) =>
     apiFetch<unknown>(`/api/v1/admin/users/${id}/suspension/revoke`, {
@@ -295,12 +315,29 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify({ status }),
     }),
-  createRealityShow: (data: { title: string; description?: string; creatorId?: string }) =>
+  createRealityShow: (data: {
+    title: string;
+    description?: string;
+    creatorId?: string;
+    thumbnail?: string;
+    status?: string;
+    isExclusive?: boolean;
+    isPremiere?: boolean;
+  }) =>
     apiFetch<unknown>('/api/v1/admin/reality-shows', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  updateRealityShow: (id: string, data: { title?: string; description?: string }) =>
+  updateRealityShow: (
+    id: string,
+    data: {
+      title?: string;
+      description?: string;
+      status?: string;
+      isExclusive?: boolean;
+      isPremiere?: boolean;
+    }
+  ) =>
     apiFetch<unknown>(`/api/v1/admin/reality-shows/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),

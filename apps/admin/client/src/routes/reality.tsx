@@ -15,7 +15,14 @@ export default function RealityPage() {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [editTarget, setEditTarget] = useState<RealityShow | null>(null);
-  const [form, setForm] = useState({ title: '', description: '' });
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    thumbnail: '/images/placeholders/thumbnails/16x9_01.png',
+    status: 'draft',
+    isExclusive: false,
+    isPremiere: false,
+  });
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -43,10 +50,23 @@ export default function RealityPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { title: string; description?: string }) => adminApi.createRealityShow(data),
+    mutationFn: (data: {
+      title: string;
+      description?: string;
+      thumbnail?: string;
+      isExclusive?: boolean;
+      isPremiere?: boolean;
+    }) => adminApi.createRealityShow(data as any),
     onSuccess: () => {
       setShowCreate(false);
-      setForm({ title: '', description: '' });
+      setForm({
+        title: '',
+        description: '',
+        thumbnail: '/images/placeholders/thumbnails/16x9_01.png',
+        status: 'draft',
+        isExclusive: false,
+        isPremiere: false,
+      });
       setFormError(null);
       invalidate();
     },
@@ -54,11 +74,27 @@ export default function RealityPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: { id: string; title?: string; description?: string }) =>
-      adminApi.updateRealityShow(id, data),
+    mutationFn: ({
+      id,
+      ...data
+    }: {
+      id: string;
+      title?: string;
+      description?: string;
+      status?: string;
+      isExclusive?: boolean;
+      isPremiere?: boolean;
+    }) => adminApi.updateRealityShow(id, data),
     onSuccess: () => {
       setEditTarget(null);
-      setForm({ title: '', description: '' });
+      setForm({
+        title: '',
+        description: '',
+        thumbnail: '/images/placeholders/thumbnails/16x9_01.png',
+        status: 'draft',
+        isExclusive: false,
+        isPremiere: false,
+      });
       setFormError(null);
       invalidate();
     },
@@ -84,11 +120,17 @@ export default function RealityPage() {
         id: editTarget.id,
         title: form.title.trim(),
         description: form.description || undefined,
+        status: form.status,
+        isExclusive: form.isExclusive,
+        isPremiere: form.isPremiere,
       });
     } else {
       createMutation.mutate({
         title: form.title.trim(),
         description: form.description || undefined,
+        thumbnail: form.thumbnail || undefined,
+        isExclusive: form.isExclusive,
+        isPremiere: form.isPremiere,
       });
     }
   };
@@ -160,54 +202,90 @@ export default function RealityPage() {
           }}
         >
           <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>New reality show</h2>
-          <input
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            placeholder="Show title (required)"
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: 8,
-              border: '1px solid var(--admin-surface)',
-              backgroundColor: 'var(--admin-dark)',
-              color: 'var(--admin-text)',
-              fontSize: 14,
-              marginBottom: 10,
-            }}
-          />
-          <textarea
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            placeholder="Description (optional)"
-            rows={2}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: 8,
-              border: '1px solid var(--admin-surface)',
-              backgroundColor: 'var(--admin-dark)',
-              color: 'var(--admin-text)',
-              fontSize: 14,
-              marginBottom: 12,
-              resize: 'vertical',
-            }}
-          />
-          <button
-            onClick={submitForm}
-            disabled={busy}
-            style={{
-              padding: '9px 18px',
-              borderRadius: 8,
-              border: 'none',
-              background: 'var(--admin-orange)',
-              color: 'white',
-              fontWeight: 600,
-              fontSize: 13,
-              cursor: busy ? 'wait' : 'pointer',
-            }}
-          >
-            {createMutation.isPending ? 'Creating…' : 'Create show (starts as draft)'}
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <input
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              placeholder="Show title (required) *"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
+                fontSize: 14,
+                boxSizing: 'border-box',
+              }}
+            />
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Description (optional)"
+              rows={2}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
+                fontSize: 14,
+                resize: 'vertical',
+                boxSizing: 'border-box',
+              }}
+            />
+            <input
+              value={form.thumbnail}
+              onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
+              placeholder="Thumbnail URL"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                backgroundColor: 'var(--admin-dark)',
+                color: 'var(--admin-text)',
+                fontSize: 13,
+                boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 20, margin: '4px 0' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={form.isExclusive}
+                  onChange={(e) => setForm({ ...form, isExclusive: e.target.checked })}
+                />
+                <span>Exclusive show</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={form.isPremiere}
+                  onChange={(e) => setForm({ ...form, isPremiere: e.target.checked })}
+                />
+                <span>Premiere badge</span>
+              </label>
+            </div>
+            <button
+              onClick={submitForm}
+              disabled={busy || !form.title.trim()}
+              style={{
+                alignSelf: 'flex-start',
+                padding: '9px 18px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'var(--admin-orange)',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: busy || !form.title.trim() ? 'wait' : 'pointer',
+              }}
+            >
+              {createMutation.isPending ? 'Creating…' : 'Create show (starts as draft)'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -322,7 +400,14 @@ export default function RealityPage() {
                     onClick={() => {
                       setEditTarget(show);
                       setShowCreate(false);
-                      setForm({ title: show.title, description: show.description || '' });
+                      setForm({
+                        title: show.title,
+                        description: show.description || '',
+                        thumbnail: show.thumbnail || '/images/placeholders/thumbnails/16x9_01.png',
+                        status: show.status || 'draft',
+                        isExclusive: Boolean(show.isExclusive),
+                        isPremiere: Boolean(show.isPremiere),
+                      });
                       setFormError(null);
                     }}
                     style={{
@@ -394,38 +479,97 @@ export default function RealityPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>Edit show</h2>
-            <input
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="Show title"
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: 8,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'var(--admin-dark)',
-                color: 'var(--admin-text)',
-                fontSize: 14,
-                marginBottom: 10,
-              }}
-            />
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Description"
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: 8,
-                border: '1px solid var(--admin-surface)',
-                backgroundColor: 'var(--admin-dark)',
-                color: 'var(--admin-text)',
-                fontSize: 14,
-                marginBottom: 12,
-                resize: 'vertical',
-              }}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="Show title"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                  boxSizing: 'border-box',
+                }}
+              />
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder="Description"
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 14,
+                  resize: 'vertical',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <input
+                value={form.thumbnail}
+                onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
+                placeholder="Thumbnail URL"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  backgroundColor: 'var(--admin-dark)',
+                  color: 'var(--admin-text)',
+                  fontSize: 13,
+                  boxSizing: 'border-box',
+                }}
+              />
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Status
+                </label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
+                    fontSize: 13,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="archived">Archived</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: 20, margin: '4px 0' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.isExclusive}
+                    onChange={(e) => setForm({ ...form, isExclusive: e.target.checked })}
+                  />
+                  <span>Exclusive show</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.isPremiere}
+                    onChange={(e) => setForm({ ...form, isPremiere: e.target.checked })}
+                  />
+                  <span>Premiere badge</span>
+                </label>
+              </div>
+            </div>
             {formError && (
               <p style={{ color: 'var(--admin-red)', fontSize: 12, marginBottom: 10 }}>
                 {formError}

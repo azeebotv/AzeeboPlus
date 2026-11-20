@@ -52,6 +52,56 @@ export class UserManagementController {
     return this.userService.getUserById(id);
   }
 
+  @Post()
+  async createUser(
+    @Req() req: AuthRequest,
+    @Body()
+    body: {
+      email: string;
+      displayName: string;
+      password?: string;
+      role?: string;
+      isVerified?: boolean;
+    }
+  ): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.createUser(body as any);
+    await this.auditLogService.log({
+      actorId,
+      action: 'user.created',
+      targetType: 'user',
+      targetId: (result as any)?.id,
+      details: { email: body.email, role: body.role },
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
+  @Put(':id')
+  async updateUser(
+    @Param('id') id: string,
+    @Req() req: AuthRequest,
+    @Body()
+    body: {
+      displayName?: string;
+      email?: string;
+      role?: string;
+      isVerified?: boolean;
+    }
+  ): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.updateUser(id, body as any);
+    await this.auditLogService.log({
+      actorId,
+      action: 'user.updated',
+      targetType: 'user',
+      targetId: id,
+      details: body,
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
   @Put(':id/role')
   async updateUserRole(
     @Param('id') id: string,
