@@ -27,6 +27,23 @@ interface UniverseSection {
   items: ContentItem[];
 }
 
+interface UniverseMeta {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+const ALL_UNIVERSES: UniverseMeta[] = [
+  { id: 'reality', name: 'Reality TV', icon: '📺' },
+  { id: 'movies', name: 'Movies & Cinema', icon: '🎬' },
+  { id: 'comedy', name: 'Comedy Hub', icon: '😂' },
+  { id: 'sports', name: 'Sports & Odds', icon: '🏆' },
+  { id: 'vertical', name: 'Vertical Series', icon: '📱' },
+  { id: 'games', name: 'Games & Esports', icon: '🎮' },
+  { id: 'creator', name: 'Creator Universe', icon: '✨' },
+  { id: 'lifestyle', name: 'Lifestyle & Nightlife', icon: '🧭' },
+];
+
 const CATEGORIES = [
   { id: 'all', label: 'All Content' },
   { id: 'reality', label: 'Reality TV' },
@@ -34,7 +51,9 @@ const CATEGORIES = [
   { id: 'comedy', label: 'Comedy' },
   { id: 'sports', label: 'Sports' },
   { id: 'vertical', label: 'Verticals' },
-  { id: 'live', label: 'Live Drops' },
+  { id: 'games', label: 'Games' },
+  { id: 'creator', label: 'Creators' },
+  { id: 'lifestyle', label: 'Lifestyle' },
 ];
 
 function extractContentItem(r: ContentItem | { content: ContentItem }): ContentItem {
@@ -81,8 +100,11 @@ export default function AuthenticatedHomepage({
   useEffect(() => {
     const loadAllData = async () => {
       try {
-        // Use the combined home feed endpoint
-        const homeResponse = await api.content.getHomeFeed();
+        // Fetch home feed (trending, latest, recommended) and all 8 universes in parallel
+        const [homeResponse, ...universeResults] = await Promise.all([
+          api.content.getHomeFeed(),
+          ...ALL_UNIVERSES.map((u) => api.content.getContentByUniverse(u.id, 1, 12)),
+        ]);
 
         if (homeResponse.success && homeResponse.data) {
           const { trending, recommended, latest } = homeResponse.data;
@@ -108,40 +130,11 @@ export default function AuthenticatedHomepage({
             ]);
           }
 
-          // Group by universe for universe sections
-          const allContent = [...(trending || []), ...(latest || [])];
-          const universeMap = new Map<string, UniverseSection>();
-
-          allContent.forEach((item) => {
-            const universeId = item.universeId || 'unknown';
-            const universeName = item.universe?.name || 'Unknown';
-            const universeIcon = item.universe?.icon;
-
-            if (!universeMap.has(universeId)) {
-              universeMap.set(universeId, {
-                universeId,
-                universeName,
-                universeIcon,
-                items: [],
-              });
-            }
-
-            const section = universeMap.get(universeId)!;
-            if (section.items.length < 12) {
-              section.items.push(item);
-            }
-          });
-
-          setUniverseSections(Array.from(universeMap.values()).filter((s) => s.items.length > 0));
-          setIsLoadingUniverses(false);
-
           // Set new releases and popular
           setNewReleases((latest || []).slice(0, 12));
           setPopularInRegion((trending || []).slice(0, 12));
-        }
-      } catch {
-        // Graceful degradation - load individual sections
-        try {
+        } else {
+          // Graceful fallback for feed
           const [slidesRes, trendingRes, newRes, popularRes] = await Promise.allSettled([
             api.content.getFeaturedSlides(5),
             api.content.getTrendingContent(12),
@@ -156,14 +149,41 @@ export default function AuthenticatedHomepage({
             setTrendingContent(trendingRes.value.data || []);
           }
           if (newRes.status === 'fulfilled' && newRes.value.success) {
+            setRecentlyWatched(newRes.value.data || []);
             setNewReleases(newRes.value.data || []);
           }
           if (popularRes.status === 'fulfilled' && popularRes.value.success) {
             setPopularInRegion(popularRes.value.data || []);
           }
-        } catch {
-          // Complete fallback
         }
+
+        // Build universe sections from all 8 universes
+        const sections: UniverseSection[] = [];
+        ALL_UNIVERSES.forEach((u, idx) => {
+          const res = universeResults[idx];
+          const items: ContentItem[] =
+            res && res.success && res.data
+              ? Array.isArray(res.data)
+                ? res.data
+                : Array.isArray(res.data.items)
+                  ? res.data.items
+                  : []
+              : [];
+
+          if (items.length > 0) {
+            sections.push({
+              universeId: u.id,
+              universeName: u.name,
+              universeIcon: u.icon,
+              items,
+            });
+          }
+        });
+
+        setUniverseSections(sections);
+        setIsLoadingUniverses(false);
+      } catch {
+        // Complete fallback
       } finally {
         setIsLoadingHistory(false);
         setIsLoadingUniverses(false);
@@ -394,16 +414,28 @@ export default function AuthenticatedHomepage({
         </section>
 
         {/* ===== Section 2: Recently Watched / Viewed ===== */}
+        {recentlyWatched.length > 0 && (
+          <ContentRow
+            title="Recently Watched"
+            subtitle="Continue where you left off"
+            sectionId="recently-watched"
+            items={recentlyWatched}
+            isLoading={isLoadingHistory}
+            progressMap={recentlyWatchedProgressMap}
+            showProgress
+            onLoadMore={loadMoreHistory}
+            hasMore={hasMoreHistory}
+          />
+        )}
+
+        {/* ===== Section: Trending Now (Always Visible) ===== */}
         <ContentRow
-          title="Recently Watched"
-          subtitle="Continue where you left off"
-          sectionId="recently-watched"
-          items={recentlyWatched}
-          isLoading={isLoadingHistory}
-          progressMap={recentlyWatchedProgressMap}
-          showProgress
-          onLoadMore={loadMoreHistory}
-          hasMore={hasMoreHistory}
+          title="🔥 Trending Now"
+          subtitle="Popular across Nigeria & globally"
+          sectionId="trending"
+          items={trendingContent}
+          isLoading={isLoadingSupplementary && trendingContent.length === 0}
+          cardSize="lg"
         />
 
         {/* ===== Section 3: Universe-Specific Content Sections ===== */}
@@ -461,16 +493,6 @@ export default function AuthenticatedHomepage({
                   ])
                 ) as Record<string, number>
               }
-            />
-
-            {/* Trending Now */}
-            <ContentRow
-              title="Trending Now"
-              subtitle="Popular across the platform"
-              sectionId="trending"
-              items={trendingContent}
-              isLoading={isLoadingSupplementary}
-              cardSize="lg"
             />
 
             {/* New Releases */}
