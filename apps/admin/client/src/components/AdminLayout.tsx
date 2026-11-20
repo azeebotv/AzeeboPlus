@@ -130,6 +130,30 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         description: 'Interactive reality voting & games',
       },
       {
+        href: '/vertical-series',
+        label: 'Vertical Series',
+        icon: 'film',
+        description: '9:16 vertical series, episodes & coin costs (Admin Managed)',
+      },
+      {
+        href: '/sports',
+        label: 'Sports Hub',
+        icon: 'activity',
+        description: 'Sports events, matches, teams & prediction markets',
+      },
+      {
+        href: '/comedy',
+        label: 'Comedy Hub',
+        icon: 'star',
+        description: 'Stand-up specials, sketches & roast challenges',
+      },
+      {
+        href: '/games',
+        label: 'Games & Esports',
+        icon: 'gem',
+        description: 'Games catalog, esports tournaments & trivia',
+      },
+      {
         href: '/lifestyle-guides',
         label: 'Lifestyle Guides',
         icon: 'sprout',

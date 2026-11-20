@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AdminGuard } from '@azeebo/security';
+import { AdminGuard, Public } from '@azeebo/security';
 import { TitlesService } from './titles.service';
 import { CreateTitleData, CreateChapterData } from './titles.service';
 import { UpdateTitleDto } from './dto/update-title.dto';
@@ -21,6 +21,7 @@ import { UpdateTitleDto } from './dto/update-title.dto';
 export class TitlesController {
   constructor(@Inject(TitlesService) private readonly titlesService: TitlesService) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'Get titles' })
   @ApiResponse({ status: 200, description: 'Titles list' })
@@ -34,6 +35,7 @@ export class TitlesController {
     return this.titlesService.getTitles(Number(page), Number(limit), universeSlug, type, status);
   }
 
+  @Public()
   @Get('featured')
   @ApiOperation({ summary: 'Get featured titles' })
   @ApiResponse({ status: 200, description: 'Featured titles' })
@@ -41,6 +43,7 @@ export class TitlesController {
     return this.titlesService.getFeaturedTitles(Number(limit));
   }
 
+  @Public()
   @Get(':slug')
   @ApiOperation({ summary: 'Get title by slug' })
   @ApiResponse({ status: 200, description: 'Title details' })
@@ -48,6 +51,7 @@ export class TitlesController {
     return this.titlesService.getTitleBySlug(slug);
   }
 
+  @Public()
   @Get(':slug/episodes')
   @ApiOperation({ summary: 'Get title episodes (chapters in play order)' })
   @ApiResponse({ status: 200, description: 'Episode list' })
@@ -56,6 +60,7 @@ export class TitlesController {
     return this.titlesService.getTitleEpisodes(slug);
   }
 
+  @Public()
   @Get(':slug/characters')
   @ApiOperation({ summary: 'Get characters of the title universe' })
   @ApiResponse({ status: 200, description: 'Character list' })
@@ -64,6 +69,7 @@ export class TitlesController {
     return this.titlesService.getTitleCharacters(slug);
   }
 
+  @Public()
   @Get(':slug/related')
   @ApiOperation({ summary: 'Get related titles from the same universe' })
   @ApiResponse({ status: 200, description: 'Related titles' })
@@ -107,6 +113,7 @@ export class TitlesController {
     return this.titlesService.createChapter({ ...body, titleId });
   }
 
+  @Public()
   @Get(':titleId/chapters/:number')
   @ApiOperation({ summary: 'Get chapter' })
   @ApiResponse({ status: 200, description: 'Chapter details' })

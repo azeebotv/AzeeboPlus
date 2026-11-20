@@ -344,6 +344,8 @@ export const adminApi = {
     }),
   deleteRealityShow: (id: string) =>
     apiFetch<unknown>(`/api/v1/admin/reality-shows/${id}`, { method: 'DELETE' }),
+  getRealityContestants: () =>
+    apiFetch<{ contestants: Array<{ id: string; name: string; bio?: string; avatar?: string; status?: string; votes?: number; show?: { id: string; title: string } }> }>('/api/v1/reality/contestants'),
 
   // ─── Payment Gateways ──────────────────────────────────────────────────
   getPaymentGateways: () =>

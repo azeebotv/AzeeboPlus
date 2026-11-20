@@ -13,6 +13,7 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
 
 export default function RealityPage() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'shows' | 'contestants'>('shows');
   const [showCreate, setShowCreate] = useState(false);
   const [editTarget, setEditTarget] = useState<RealityShow | null>(null);
   const [form, setForm] = useState({
@@ -37,6 +38,16 @@ export default function RealityPage() {
       if (!res.success) throw new Error(res.message || 'Failed to load shows');
       const d = res.data as RealityShow[] | { items: RealityShow[] };
       return Array.isArray(d) ? d : d.items || [];
+    },
+  });
+
+  const { data: contestants = [], isLoading: contestantsLoading } = useQuery({
+    queryKey: ['admin', 'reality-contestants'],
+    queryFn: async () => {
+      const res = await adminApi.getRealityContestants();
+      if (!res.success) return [];
+      const d = res.data as { contestants?: any[] } | any[];
+      return Array.isArray(d) ? d : d.contestants || [];
     },
   });
 
@@ -187,11 +198,47 @@ export default function RealityPage() {
         </button>
       </div>
 
+      {/* Tab Switcher */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+        <button
+          onClick={() => setActiveTab('shows')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: 8,
+            border: activeTab === 'shows' ? '1px solid var(--admin-orange)' : '1px solid var(--admin-card)',
+            background: activeTab === 'shows' ? 'rgba(232, 66, 10, 0.15)' : 'var(--admin-surface)',
+            color: activeTab === 'shows' ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
+            fontWeight: 600,
+            fontSize: 14,
+            cursor: 'pointer',
+          }}
+        >
+          Shows & Production ({shows.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('contestants')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: 8,
+            border: activeTab === 'contestants' ? '1px solid var(--admin-orange)' : '1px solid var(--admin-card)',
+            background: activeTab === 'contestants' ? 'rgba(232, 66, 10, 0.15)' : 'var(--admin-surface)',
+            color: activeTab === 'contestants' ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
+            fontWeight: 600,
+            fontSize: 14,
+            cursor: 'pointer',
+          }}
+        >
+          Contestants & Live Telemetry ({contestants.length})
+        </button>
+      </div>
+
       {formError && (
         <p style={{ color: 'var(--admin-red)', fontSize: 13, marginBottom: 14 }}>{formError}</p>
       )}
 
-      {showCreate && (
+      {activeTab === 'shows' && (
+        <>
+          {showCreate && (
         <div
           style={{
             border: '1px solid var(--admin-card)',
@@ -449,6 +496,86 @@ export default function RealityPage() {
             <p style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>
               No reality shows found
             </p>
+          )}
+        </div>
+      )}
+      </>
+      )}
+
+      {activeTab === 'contestants' && (
+        <div style={{ backgroundColor: 'var(--admin-surface)', borderRadius: 16, border: '1px solid var(--admin-card)', overflow: 'hidden' }}>
+          {contestantsLoading ? (
+            <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+              Loading contestants telemetry...
+            </p>
+          ) : contestants.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 60, color: 'var(--admin-text-muted)' }}>
+              <Icon name="users" size={36} color="var(--admin-text-muted)" />
+              <p style={{ marginTop: 12 }}>No contestants registered yet across reality shows.</p>
+            </div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--admin-card)', fontSize: 13, color: 'var(--admin-text-muted)' }}>
+                  <th style={{ padding: '12px 16px' }}>Contestant</th>
+                  <th style={{ padding: '12px 16px' }}>Show</th>
+                  <th style={{ padding: '12px 16px' }}>Status</th>
+                  <th style={{ padding: '12px 16px' }}>Total Votes</th>
+                  <th style={{ padding: '12px 16px' }}>Supervotes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contestants.map((c: any) => (
+                  <tr key={c.id} style={{ borderBottom: '1px solid var(--admin-card)', fontSize: 14 }}>
+                    <td style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <img
+                        src={c.avatar || c.photo || '/images/placeholders/avatars/user_01.png'}
+                        alt={c.name}
+                        style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{c.name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>{c.bio || 'Housemate'}</div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>
+                      {c.show?.title || 'Reality Live'}
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          padding: '3px 8px',
+                          borderRadius: 999,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          backgroundColor:
+                            c.status === 'evicted'
+                              ? 'rgba(204,28,28,0.15)'
+                              : c.status === 'immune'
+                              ? 'rgba(34,197,94,0.15)'
+                              : 'rgba(234,179,8,0.15)',
+                          color:
+                            c.status === 'evicted'
+                              ? '#f87171'
+                              : c.status === 'immune'
+                              ? '#4ade80'
+                              : '#facc15',
+                        }}
+                      >
+                        {c.status || 'Active'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--admin-text)' }}>
+                      {(c.votes || 0).toLocaleString()} votes
+                    </td>
+                    <td style={{ padding: '12px 16px', color: '#f59e0b', fontWeight: 600 }}>
+                      ⚡ Enabled
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       )}

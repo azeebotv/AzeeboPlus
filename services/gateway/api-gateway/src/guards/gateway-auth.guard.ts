@@ -77,21 +77,25 @@ export class GatewayAuthGuard implements CanActivate {
     /^\/api\/v\d+\/reality\/contestants\/[a-zA-Z0-9_-]+$/,
     /^\/api\/v\d+\/reality\/episodes\/[a-zA-Z0-9_-]+$/,
     // Movies universe public browsing
-    /^\/api\/v\d+\/movies\/(premieres|passes|genres|featured|trending|african|hollywood|rental|dbo\/overview)$/,
+    /^\/api\/v\d+\/movies(\/(premieres|passes|genres|featured|trending|african|hollywood|rental|dbo\/overview|viewing-windows\/active))?$/,
     /^\/api\/v\d+\/movies\/[a-zA-Z0-9_-]+$/,
-    /^\/api\/v\d+\/movies\/[a-zA-Z0-9_-]+\/viewing-windows$/,
+    /^\/api\/v\d+\/movies\/[a-zA-Z0-9_-]+\/(viewing-windows|availability)$/,
+    /^\/api\/v\d+\/movies\/genre\/[a-zA-Z0-9_-]+(\/\d+)?$/,
     // Comedy universe public browsing
     /^\/api\/v\d+\/comedy\/(comedians|specials|series|clips|trending|categories|top-rated|challenges)$/,
-    /^\/api\/v\d+\/comedy\/(comedians|specials|series|clips)\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/comedy\/(comedians|specials|series|clips|challenges)\/[a-zA-Z0-9_-]+$/,
     // Games universe public browsing
-    /^\/api\/v\d+\/games\/(tournaments|challenges|trending)$/,
+    /^\/api\/v\d+\/games(\/(home|tournaments|challenges|trending|trivia|leaderboard))?$/,
     /^\/api\/v\d+\/games\/[a-zA-Z0-9_-]+$/,
     /^\/api\/v\d+\/games\/tournaments\/[a-zA-Z0-9_-]+$/,
     /^\/api\/v\d+\/games\/tournaments\/[a-zA-Z0-9_-]+\/leaderboard$/,
     // Sports universe public browsing
-    /^\/api\/v\d+\/sports\/(home|categories|live|fixtures|upcoming|highlights)$/,
+    /^\/api\/v\d+\/sports\/(home|categories|live|fixtures|upcoming|highlights|predictions|leaderboard|fan-contests|live-scores)$/,
     /^\/api\/v\d+\/sports\/fixtures\/[a-zA-Z0-9_-]+$/,
     /^\/api\/v\d+\/sports\/highlights\/[a-zA-Z0-9_-]+$/,
+    // Live events universe public browsing
+    /^\/api\/v\d+\/live-events$/,
+    /^\/api\/v\d+\/live-events\/[a-zA-Z0-9_-]+$/,
     // Vertical universe public browsing
     /^\/api\/v\d+\/vertical\/(storyworlds|characters|locations|lore|titles|crossovers|timeline)$/,
     /^\/api\/v\d+\/vertical\/(storyworlds|characters|lore|titles|crossovers)\/[a-zA-Z0-9_-]+$/,

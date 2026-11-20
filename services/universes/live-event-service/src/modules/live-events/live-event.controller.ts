@@ -14,7 +14,7 @@ import {
   DefaultValuePipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard, Public } from '@azeebo/security';
 import { LiveEventService } from './live-event.service.js';
 import { CreateEventDto, UpdateEventDto, PurchaseTicketDto } from './dto/live-event.dto.js';
 
@@ -25,6 +25,7 @@ import { CreateEventDto, UpdateEventDto, PurchaseTicketDto } from './dto/live-ev
 export class LiveEventController {
   constructor(@Inject(LiveEventService) private readonly liveEventService: LiveEventService) {}
 
+  @Public()
   @Get()
   @UseGuards(RateLimitGuard)
   @RateLimit(60, 60000)
@@ -50,6 +51,7 @@ export class LiveEventController {
     return this.liveEventService.getUserTickets(req.user.id);
   }
 
+  @Public()
   @Get(':id')
   @UseGuards(RateLimitGuard)
   @RateLimit(120, 60000)

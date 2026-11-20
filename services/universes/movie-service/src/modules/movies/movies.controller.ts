@@ -11,7 +11,7 @@ import {
   Delete,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard, Public } from '@azeebo/security';
 import { FeatureFlag, FeatureFlagGuard, movieFlags } from '@azeebo/feature-flags';
 
 import { MoviesService } from './movies.service.js';
@@ -27,7 +27,17 @@ import { RateMovieDto } from './dto/rate-movie.dto.js';
 export class MoviesController {
   constructor(@Inject(MoviesService) private readonly moviesService: MoviesService) {}
 
+  @Public()
   @Get()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'List movies' })
+  @ApiResponse({ status: 200, description: 'List of movies' })
+  async listMovies(): Promise<MovieResponse> {
+    return this.moviesService.listMovies();
+  }
+
+  @Public()
   @Get('featured')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -37,6 +47,7 @@ export class MoviesController {
     return this.moviesService.listMovies();
   }
 
+  @Public()
   @Get('trending')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -46,6 +57,7 @@ export class MoviesController {
     return this.moviesService.listMovies();
   }
 
+  @Public()
   @Get('african')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -55,6 +67,7 @@ export class MoviesController {
     return this.moviesService.getMoviesByGenreSlug('african');
   }
 
+  @Public()
   @Get('hollywood')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -64,6 +77,7 @@ export class MoviesController {
     return this.moviesService.getMoviesByGenreSlug('hollywood');
   }
 
+  @Public()
   @Get('genre/:slug')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -73,6 +87,7 @@ export class MoviesController {
     return this.moviesService.getMoviesByGenreSlug(slug);
   }
 
+  @Public()
   @Get('genre/:slug/:page')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -85,6 +100,7 @@ export class MoviesController {
     return this.moviesService.getMoviesByGenreSlug(slug, parseInt(page, 10));
   }
 
+  @Public()
   @Get('passes')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -94,6 +110,7 @@ export class MoviesController {
     return this.moviesService.listMovies();
   }
 
+  @Public()
   @Get('premieres')
   @UseGuards(FeatureFlagGuard, RateLimitGuard)
   @FeatureFlag(movieFlags.premieresEnabled)
@@ -147,6 +164,27 @@ export class MoviesController {
     return this.moviesService.removeFromWatchlist(req.user.id, movieId);
   }
 
+  @Get('me/library')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'User purchased library' })
+  @ApiResponse({ status: 200, description: 'Library' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getLibrary(@Request() req: { user: { id: string } }): Promise<MovieResponse> {
+    return this.moviesService.getLibrary(req.user.id);
+  }
+
+  @Public()
+  @Get('viewing-windows/active')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get active viewing windows' })
+  @ApiResponse({ status: 200, description: 'Active viewing windows' })
+  async getActiveViewingWindows(): Promise<MovieResponse> {
+    return this.moviesService.getActiveViewingWindows();
+  }
+
+  @Public()
   @Get(':movieId')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
@@ -169,16 +207,6 @@ export class MoviesController {
     @Param('movieId') movieId: string
   ): Promise<MovieResponse> {
     return this.moviesService.rentMovie(req.user.id, movieId);
-  }
-
-  @Get('me/library')
-  @UseGuards(RateLimitGuard)
-  @RateLimit(30, 60000)
-  @ApiOperation({ summary: 'User purchased library' })
-  @ApiResponse({ status: 200, description: 'Library' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getLibrary(@Request() req: { user: { id: string } }): Promise<MovieResponse> {
-    return this.moviesService.getLibrary(req.user.id);
   }
 
   @Post(':movieId/viewing-windows')
@@ -222,6 +250,7 @@ export class MoviesController {
     return this.moviesService.updateViewingWindow(windowId, body);
   }
 
+  @Public()
   @Get(':movieId/viewing-windows')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -231,15 +260,7 @@ export class MoviesController {
     return this.moviesService.getViewingWindows(movieId);
   }
 
-  @Get('viewing-windows/active')
-  @UseGuards(RateLimitGuard)
-  @RateLimit(30, 60000)
-  @ApiOperation({ summary: 'Get active viewing windows' })
-  @ApiResponse({ status: 200, description: 'Active viewing windows' })
-  async getActiveViewingWindows(): Promise<MovieResponse> {
-    return this.moviesService.getActiveViewingWindows();
-  }
-
+  @Public()
   @Get(':movieId/availability')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)

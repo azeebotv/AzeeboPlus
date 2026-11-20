@@ -20,6 +20,10 @@ const ChallengeEntriesPage = lazy(() => import('./routes/challenge-entries'));
 const ModerationPage = lazy(() => import('./routes/moderation'));
 const CreatorsPage = lazy(() => import('./routes/creators'));
 const RealityPage = lazy(() => import('./routes/reality'));
+const VerticalSeriesPage = lazy(() => import('./routes/vertical-series'));
+const SportsPage = lazy(() => import('./routes/sports'));
+const ComedyPage = lazy(() => import('./routes/comedy'));
+const GamesPage = lazy(() => import('./routes/games'));
 const UniversesPage = lazy(() => import('./routes/universes'));
 const WalletsPage = lazy(() => import('./routes/wallets'));
 const FinancialPage = lazy(() => import('./routes/financial'));
@@ -130,6 +134,10 @@ export default function App() {
                 <Route path="moderation" element={<ModerationPage />} />
                 <Route path="creators" element={<CreatorsPage />} />
                 <Route path="reality" element={<RealityPage />} />
+                <Route path="vertical-series" element={<VerticalSeriesPage />} />
+                <Route path="sports" element={<SportsPage />} />
+                <Route path="comedy" element={<ComedyPage />} />
+                <Route path="games" element={<GamesPage />} />
                 <Route path="universes" element={<UniversesPage />} />
                 <Route path="wallets" element={<WalletsPage />} />
                 <Route path="financial" element={<FinancialPage />} />
