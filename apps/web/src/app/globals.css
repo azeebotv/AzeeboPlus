@@ -1041,6 +1041,41 @@ select:focus-visible {
   width: auto;
 }
 
+/* Secondary frosted glass button — Figma hero secondary action & pill controls */
+.az-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-az-ink);
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.875rem 1.5rem;
+  font-size: var(--text-az-title);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+.az-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+.az-btn-secondary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.az-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Compact CTA for tight spaces (a phone mockup screen, a chip-width toolbar). */
 /* The small variant drops to a 12px overline label, which is below WCAG large
    text — so it takes the same treatment as `.az-cta-small`: solid flame, deep

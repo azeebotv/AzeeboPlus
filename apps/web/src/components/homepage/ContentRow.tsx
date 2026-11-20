@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ContentCard from './ContentCard';
 import { Skeleton } from '@/components/Skeleton';
 import { useTranslation } from 'react-i18next';
@@ -139,49 +140,36 @@ export default function ContentRow({
   const skeletons = Array.from({ length: 6 });
 
   return (
-    <section ref={sectionRef} className="py-4 sm:py-6" aria-labelledby={`row-${sectionId}`}>
+    <section ref={sectionRef} className="py-5 sm:py-7" aria-labelledby={`row-${sectionId}`}>
       {/* Section header */}
-      <div className="flex items-baseline justify-between mb-3 px-4 sm:px-6 lg:px-8">
-        <div>
-          <h2 id={`row-${sectionId}`} className="az-title text-az-ink">
-            {title}
-          </h2>
-          {subtitle && <p className="az-caption mt-0.5 text-az-ink-muted">{subtitle}</p>}
+      <div className="flex items-center justify-between mb-3.5 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2.5">
+          <span className="w-1.5 h-6 rounded-full bg-az-flame flex-shrink-0" aria-hidden="true" />
+          <div>
+            <h2 id={`row-${sectionId}`} className="az-title text-white font-bold tracking-tight">
+              {title}
+            </h2>
+            {subtitle && <p className="az-caption mt-0.5 text-az-ink-muted">{subtitle}</p>}
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={(): void => scroll('left')}
             disabled={!canScrollLeft}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-az-glass-card hover:bg-az-glass-fill-active disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-az-ink focus:outline-none focus:ring-2 focus:ring-az-flame"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border border-white/10 bg-white/5 hover:bg-white/15 disabled:opacity-20 disabled:cursor-not-allowed transition-all text-white focus:outline-none focus:ring-2 focus:ring-az-flame"
             aria-label={t('content.scrollLeft', { title })}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path
-                d="M10 3L5 8L10 13"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ChevronLeft size={18} />
           </button>
           <button
             type="button"
             onClick={(): void => scroll('right')}
             disabled={!canScrollRight}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-az-glass-card hover:bg-az-glass-fill-active disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-az-ink focus:outline-none focus:ring-2 focus:ring-az-flame"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border border-white/10 bg-white/5 hover:bg-white/15 disabled:opacity-20 disabled:cursor-not-allowed transition-all text-white focus:outline-none focus:ring-2 focus:ring-az-flame"
             aria-label={t('content.scrollRight', { title })}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path
-                d="M6 3L11 8L6 13"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ChevronRight size={18} />
           </button>
         </div>
       </div>

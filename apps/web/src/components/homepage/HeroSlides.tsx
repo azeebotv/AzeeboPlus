@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { Play, Plus, Check, Star, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import type { ContentItem } from '@/lib/api';
@@ -18,11 +19,12 @@ const SWIPE_THRESHOLD = 50;
 
 export default function HeroSlides({
   slides,
-  autoRotateIntervalMs = 6000,
+  autoRotateIntervalMs = 6500,
 }: HeroSlidesProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [savedItems, setSavedItems] = useState<Record<string, boolean>>({});
   const touchStartX = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -92,10 +94,23 @@ export default function HeroSlides({
     analytics.homepageHeroSlideClicked(currentIndex, currentSlide.id);
   };
 
+  const toggleSaveItem = (slideId: string): void => {
+    setSavedItems((prev) => {
+      const next = { ...prev, [slideId]: !prev[slideId] };
+      return next;
+    });
+  };
+
+  const isSaved = Boolean(savedItems[currentSlide.id]);
+  const slideRating =
+    (currentSlide as unknown as { rating?: number })?.rating ??
+    (currentSlide as unknown as { score?: number })?.score ??
+    4.9;
+
   return (
     <section
       ref={containerRef}
-      className="relative w-full overflow-hidden bg-az-surface-root min-h-[min(70vh,600px)]"
+      className="relative w-full overflow-hidden bg-az-surface-root min-h-[min(78vh,680px)] sm:min-h-[min(84vh,740px)] flex items-center"
       onMouseEnter={(): void => setIsPaused(true)}
       onMouseLeave={(): void => setIsPaused(false)}
       onFocus={(): void => setIsPaused(true)}
@@ -108,8 +123,8 @@ export default function HeroSlides({
       onTouchEnd={handleTouchEnd}
     >
       <AmbientGlow
-        color="color-mix(in srgb, var(--color-az-scarlet) 22%, transparent)"
-        size={600}
+        color="color-mix(in srgb, var(--color-az-scarlet) 24%, transparent)"
+        size={680}
         className="-top-48 -left-48"
       />
 
@@ -121,7 +136,7 @@ export default function HeroSlides({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           role="group"
           aria-roledescription="slide"
           aria-label={t('home.slideOf', {
@@ -130,7 +145,7 @@ export default function HeroSlides({
             title: currentSlide.title,
           })}
         >
-          {/* Background image */}
+          {/* Background image & Figma Scrim */}
           <div className="absolute inset-0">
             <OptimizedImage
               src={
@@ -140,141 +155,189 @@ export default function HeroSlides({
               }
               alt={currentSlide.title || t('home.heroSlide')}
               fill
-              className="object-cover"
+              className="object-cover object-top sm:object-center transform scale-[1.02] transition-transform duration-1000"
               priority={currentIndex === 0}
               sizes="100vw"
             />
-            {/* Gradient overlays — dark cinematic vignette. The bottom fade is the
-                shared `.az-scrim--hero`; only the horizontal text-side vignette has no
-                shared equivalent, so it stays inline and reads from the surface token. */}
+
+            {/* Left-side reading vignette */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  'linear-gradient(to right, color-mix(in srgb, var(--color-az-surface-root) 95%, transparent) 0%, color-mix(in srgb, var(--color-az-surface-root) 70%, transparent) 50%, color-mix(in srgb, var(--color-az-surface-root) 30%, transparent) 100%)',
+                  'linear-gradient(to right, color-mix(in srgb, var(--color-az-surface-root) 98%, transparent) 0%, color-mix(in srgb, var(--color-az-surface-root) 85%, transparent) 35%, color-mix(in srgb, var(--color-az-surface-root) 45%, transparent) 70%, transparent 100%)',
               }}
             />
+
+            {/* Top gradient for navbar clarity */}
+            <div
+              className="absolute inset-x-0 top-0 h-32"
+              style={{
+                background:
+                  'linear-gradient(to bottom, color-mix(in srgb, var(--color-az-surface-root) 80%, transparent) 0%, transparent 100%)',
+              }}
+            />
+
+            {/* Bottom transition into page root */}
             <div className="az-scrim--hero absolute inset-0" />
           </div>
 
-          {/* Text content */}
+          {/* Hero Content Box */}
           <div className="relative z-10 flex items-center h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-xl py-16 sm:py-20">
-              {/* Universe badge */}
-              {currentSlide.universe?.name && (
-                <motion.span
-                  className="az-micro-label mb-4 inline-block rounded-full bg-az-scarlet/30 px-3 py-1 text-az-flame"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  {currentSlide.universe.icon && `${currentSlide.universe.icon} `}
-                  {currentSlide.universe.name}
-                </motion.span>
-              )}
+            <div className="max-w-2xl py-20 sm:py-28">
+              {/* Badges Row: Universe + Quality + Rating */}
+              <div className="flex flex-wrap items-center gap-2.5 mb-4">
+                {currentSlide.universe?.name ? (
+                  <motion.span
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md border border-white/15 text-az-flame shadow-sm"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    {currentSlide.universe.icon && (
+                      <span className="text-sm">{currentSlide.universe.icon}</span>
+                    )}
+                    <span>{currentSlide.universe.name}</span>
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-az-flame/15 border border-az-flame/30 text-az-flame"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <Sparkles size={13} />
+                    <span>Featured Premiere</span>
+                  </motion.span>
+                )}
 
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-white/10 text-white/90 border border-white/10 backdrop-blur-sm">
+                  4K Ultra HD
+                </span>
+
+                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold text-az-accent-gold bg-black/40 border border-white/10 backdrop-blur-sm">
+                  <Star size={12} className="fill-current text-az-accent-gold" />
+                  <span>{typeof slideRating === 'number' ? slideRating.toFixed(1) : '4.9'}</span>
+                </span>
+
+                {currentSlide.duration ? (
+                  <span className="text-xs text-white/60 font-medium">
+                    {Math.floor(currentSlide.duration / 60)} min
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Title */}
               <motion.h2
-                className="az-headline text-az-ink text-3xl sm:text-4xl lg:text-5xl mb-3"
+                className="az-headline text-white text-3xl sm:text-5xl lg:text-6xl mb-4 drop-shadow-lg"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
               >
                 {currentSlide.title}
               </motion.h2>
 
+              {/* Description */}
               {currentSlide.description && (
                 <motion.p
-                  className="text-az-ink/70 text-sm sm:text-base mb-6 line-clamp-3"
+                  className="text-white/80 text-sm sm:text-base lg:text-lg mb-8 line-clamp-3 leading-relaxed max-w-xl font-normal drop-shadow-sm"
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
                 >
                   {currentSlide.description}
                 </motion.p>
               )}
 
+              {/* Interactive CTAs */}
               <motion.div
-                className="flex items-center gap-3"
+                className="flex flex-wrap items-center gap-3 sm:gap-4"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
               >
                 <Link href={`/watch/${currentSlide.id}`} onClick={handleSlideClick}>
                   <motion.button
                     type="button"
-                    className="az-btn-primary az-btn-primary--inline"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    className="az-btn-primary az-btn-primary--inline flex items-center gap-2.5 shadow-az-glow"
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     aria-label={t('home.watchLabel', { title: currentSlide.title })}
                   >
-                    {t('home.watchNow')}
+                    <Play size={18} className="fill-current" />
+                    <span>{t('home.watchNow')}</span>
                   </motion.button>
                 </Link>
-                {currentSlide.duration && (
-                  <span className="az-caption text-az-ink-muted">
-                    {Math.floor(currentSlide.duration / 60)} min
-                  </span>
-                )}
+
+                <motion.button
+                  type="button"
+                  onClick={(): void => toggleSaveItem(currentSlide.id)}
+                  className="az-btn-secondary"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  aria-label={isSaved ? 'Remove from list' : 'Add to list'}
+                >
+                  {isSaved ? (
+                    <>
+                      <Check size={18} className="text-az-success-400" />
+                      <span>Added to List</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={18} />
+                      <span>My List</span>
+                    </>
+                  )}
+                </motion.button>
               </motion.div>
             </div>
           </div>
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation arrows */}
+      {/* Navigation arrows (Figma Frosted Glass Circle) */}
       <button
         type="button"
         onClick={goPrev}
-        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border border-az-glass-border bg-az-surface-root/40 backdrop-blur-sm text-az-ink hover:bg-az-surface-root/70 hover:border-az-glass-border-hover transition-colors focus:outline-none focus:ring-2 focus:ring-az-flame"
+        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center border border-white/15 bg-black/35 backdrop-blur-md text-white hover:bg-black/65 hover:border-az-flame/50 hover:text-az-flame transition-all focus:outline-none focus:ring-2 focus:ring-az-flame shadow-lg"
         aria-label={t('home.previousSlide')}
       >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path
-            d="M12 4L6 10L12 16"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <ChevronLeft size={22} />
       </button>
 
       <button
         type="button"
         onClick={goNext}
-        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border border-az-glass-border bg-az-surface-root/40 backdrop-blur-sm text-az-ink hover:bg-az-surface-root/70 hover:border-az-glass-border-hover transition-colors focus:outline-none focus:ring-2 focus:ring-az-flame"
+        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center border border-white/15 bg-black/35 backdrop-blur-md text-white hover:bg-black/65 hover:border-az-flame/50 hover:text-az-flame transition-all focus:outline-none focus:ring-2 focus:ring-az-flame shadow-lg"
         aria-label={t('home.nextSlide')}
       >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path
-            d="M8 4L14 10L8 16"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <ChevronRight size={22} />
       </button>
 
-      {/* Indicator dots */}
+      {/* Slide Indicators: Figma Wide Pill for Active Slide */}
       <div
-        className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2"
+        className="absolute bottom-5 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10"
         role="tablist"
         aria-label={t('home.slideNavigation')}
       >
-        {slides.map((slide, index) => (
-          <button
-            key={slide.id}
-            type="button"
-            role="tab"
-            aria-selected={index === currentIndex}
-            aria-label={t('home.goToSlide', { index: index + 1, title: slide.title })}
-            onClick={(): void => goTo(index)}
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-az-flame ${
-              index === currentIndex ? 'scale-[1.3] bg-az-flame' : 'bg-az-ink/40'
-            }`}
-          />
-        ))}
+        {slides.map((slide, index) => {
+          const isActive = index === currentIndex;
+          return (
+            <button
+              key={slide.id}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-label={t('home.goToSlide', { index: index + 1, title: slide.title })}
+              onClick={(): void => goTo(index)}
+              className={`rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-az-flame ${
+                isActive
+                  ? 'w-7 sm:w-8 h-2 bg-az-flame shadow-az-glow'
+                  : 'w-2 h-2 bg-white/30 hover:bg-white/60'
+              }`}
+            />
+          );
+        })}
       </div>
     </section>
   );

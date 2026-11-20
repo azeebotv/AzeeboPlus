@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { Crown, Sparkles, Bookmark, Coins, Share2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFlags } from '@/context/FlagsContext';
 import { api } from '@/lib/api';
@@ -10,6 +12,7 @@ import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import analytics from '@/lib/analytics';
 import AppHeader from '../layout/AppHeader';
 import AppFooter from '../layout/AppFooter';
+import ExploreUniversesDock from '../layout/ExploreUniversesDock';
 import HeroSlides from './HeroSlides';
 import ContentRow from './ContentRow';
 
@@ -24,6 +27,16 @@ interface UniverseSection {
   items: ContentItem[];
 }
 
+const CATEGORIES = [
+  { id: 'all', label: 'All Content' },
+  { id: 'reality', label: 'Reality TV' },
+  { id: 'movies', label: 'Movies & Series' },
+  { id: 'comedy', label: 'Comedy' },
+  { id: 'sports', label: 'Sports' },
+  { id: 'vertical', label: 'Verticals' },
+  { id: 'live', label: 'Live Drops' },
+];
+
 function extractContentItem(r: ContentItem | { content: ContentItem }): ContentItem {
   return 'content' in r ? r.content : r;
 }
@@ -33,6 +46,7 @@ export default function AuthenticatedHomepage({
 }: AuthenticatedHomepageProps): React.JSX.Element {
   const { user } = useAuth();
   const { isEnabled } = useFlags();
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   // web_recommendations_rail (off): gates the personalized recommendation row.
   const showRecommendationsRail = isEnabled('web_recommendations_rail');
   // web_new_home (off): gates the newer home rails (trending / new releases /
@@ -186,6 +200,16 @@ export default function AuthenticatedHomepage({
     recentlyWatchedProgressMap[item.id] = 0;
   });
 
+  const filteredUniverseSections = useMemo(() => {
+    if (selectedCategory === 'all') return universeSections;
+    return universeSections.filter((section) => {
+      const matchId = section.universeId.toLowerCase();
+      const matchName = section.universeName.toLowerCase();
+      const cat = selectedCategory.toLowerCase();
+      return matchId.includes(cat) || matchName.includes(cat);
+    });
+  }, [selectedCategory, universeSections]);
+
   // --- Section 4: Personalized Recommendations ---
   useEffect(() => {
     const loadRecommendations = async () => {
@@ -290,17 +314,84 @@ export default function AuthenticatedHomepage({
         {/* ===== Section 1: Hero Slides Carousel ===== */}
         <HeroSlides slides={featuredSlides} />
 
-        {/* Personalized greeting */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-2">
-          <motion.h1
-            className="az-headline font-extrabold text-az-ink text-2xl sm:text-3xl"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            Welcome back{user?.displayName ? `, ${user.displayName}` : ''}
-          </motion.h1>
-        </div>
+        {/* ===== Section 1.5: Personalized User Welcome & Quick Action Bar ===== */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-2">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+            {/* Left: User Identity + VIP Pill */}
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-az-scarlet to-az-flame flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                {user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'A'}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-white text-lg sm:text-xl font-bold">
+                    Welcome back{user?.displayName ? `, ${user.displayName}` : ''}
+                  </h1>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-az-flame/15 border border-az-flame/30 text-az-flame shadow-sm">
+                    <Crown size={11} className="fill-current" />
+                    <span>VIP PASS</span>
+                  </span>
+                </div>
+                <p className="text-xs text-az-ink-muted mt-0.5">
+                  Stream unlimited movies, reality shows, and live events
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Quick Action Chips */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <Link
+                href="/library"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors"
+              >
+                <Bookmark size={13} className="text-az-flame" />
+                <span>My Watchlist</span>
+              </Link>
+              <Link
+                href="/wallet"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors"
+              >
+                <Coins size={13} className="text-az-accent-gold" />
+                <span>Rewards & Coins</span>
+              </Link>
+              <a
+                href="#recently-watched"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors"
+              >
+                <Sparkles size={13} className="text-az-success-400" />
+                <span>Continue Watching</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* ===== Explore Azeebo+ Universes Dock ===== */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+          <ExploreUniversesDock />
+        </section>
+
+        {/* ===== Category Quick Filter Pills ===== */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {CATEGORIES.map((cat) => {
+              const isSelected = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
+                    isSelected
+                      ? 'bg-az-flame text-az-surface-root font-bold shadow-az-glow'
+                      : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
         {/* ===== Section 2: Recently Watched / Viewed ===== */}
         <ContentRow
@@ -316,9 +407,9 @@ export default function AuthenticatedHomepage({
         />
 
         {/* ===== Section 3: Universe-Specific Content Sections ===== */}
-        {universeSections.length > 0 && (
+        {filteredUniverseSections.length > 0 && (
           <div data-testid="universe-sections">
-            {universeSections.map((section) => (
+            {filteredUniverseSections.map((section) => (
               <ContentRow
                 key={section.universeId}
                 title={
@@ -409,24 +500,30 @@ export default function AuthenticatedHomepage({
         {/* Bottom CTA for referrals */}
         <ScrollReveal>
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-            <div className="relative py-10 sm:py-14 rounded-az-feature overflow-hidden text-center bg-gradient-to-br from-az-scarlet to-az-flame shadow-az-glow">
-              <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6">
-                <h3 className="az-headline text-az-ink text-2xl sm:text-3xl lg:text-4xl mb-3">
-                  Invite Friends, Earn Rewards
+            <div className="relative py-10 sm:py-14 rounded-2xl overflow-hidden text-center bg-gradient-to-r from-az-scarlet via-az-flame to-az-scarlet shadow-az-glow">
+              <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-black/30 backdrop-blur-md text-white border border-white/20 mb-4">
+                  <Coins size={14} className="text-az-accent-gold" />
+                  <span>Referral Rewards Program</span>
+                </span>
+                <h3 className="az-headline text-white text-2xl sm:text-3xl lg:text-4xl mb-3">
+                  Invite Friends, Earn Rewards & Coins
                 </h3>
-                <p className="text-sm sm:text-base text-az-ink/90 mb-6 max-w-xl mx-auto">
-                  Share Azeebo+ with friends and earn rewards for every friend who signs up.
+                <p className="text-sm sm:text-base text-white/90 mb-6 max-w-xl mx-auto leading-relaxed">
+                  Share Azeebo+ with friends and receive 250 bonus coins for every friend who joins.
+                  Unlock VIP screenings and creator events.
                 </p>
-                <a href="/referral">
+                <Link href="/referral">
                   <motion.button
                     type="button"
-                    className="px-6 sm:px-8 py-3 rounded-az-pill bg-az-surface-root text-az-ink text-sm sm:text-base font-bold transition-all"
+                    className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-az-surface-root text-white font-bold text-sm sm:text-base shadow-lg hover:bg-az-surface-panel transition-all"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    Share Your Link
+                    <Share2 size={16} />
+                    <span>Share Your Invite Link</span>
                   </motion.button>
-                </a>
+                </Link>
               </div>
             </div>
           </section>
