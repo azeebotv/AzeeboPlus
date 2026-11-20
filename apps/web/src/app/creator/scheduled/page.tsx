@@ -12,7 +12,7 @@ import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { Calendar, Clock, Film, Plus } from 'lucide-react';
+import { Calendar, Clock, Film, Plus, LayoutGrid, List } from 'lucide-react';
 
 interface ScheduledContent {
   id: string;
@@ -29,6 +29,7 @@ export default function ScheduledPage(): React.JSX.Element {
   const router = useRouter();
   const queryClient = useQueryClient();
   const isEnabled = !authLoading && !!isAuthenticated && !!user;
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     title: string;
@@ -99,6 +100,97 @@ export default function ScheduledPage(): React.JSX.Element {
       />
 
       <div className="max-w-4xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* View Switcher Bar */}
+        <div className="flex items-center justify-between border-b border-az-glass-border pb-3">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-az-flame" />
+            <h2 className="az-subtitle text-az-ink font-bold">Release Schedule</h2>
+          </div>
+
+          <div className="flex items-center rounded-az-pill bg-az-surface-root p-1 border border-az-glass-border">
+            <button
+              type="button"
+              onClick={() => setViewMode('calendar')}
+              className={`rounded-az-pill px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                viewMode === 'calendar'
+                  ? 'bg-az-flame text-az-surface-root shadow-sm'
+                  : 'text-az-ink-muted hover:text-az-ink'
+              }`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              Calendar View
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`rounded-az-pill px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                viewMode === 'list'
+                  ? 'bg-az-flame text-az-surface-root shadow-sm'
+                  : 'text-az-ink-muted hover:text-az-ink'
+              }`}
+            >
+              <List className="h-3.5 w-3.5" />
+              List View
+            </button>
+          </div>
+        </div>
+
+        {/* Calendar View Mode */}
+        {viewMode === 'calendar' && (
+          <div className="rounded-az-card border border-az-glass-border bg-az-glass-card p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-bold text-az-ink">November 2026 Release Grid</span>
+              <span className="text-xs text-az-flame font-semibold">
+                2 Scheduled Drops This Month
+              </span>
+            </div>
+
+            {/* Days of week header */}
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold uppercase text-az-ink-muted mb-2">
+              <span>Sun</span>
+              <span>Mon</span>
+              <span>Tue</span>
+              <span>Wed</span>
+              <span>Thu</span>
+              <span>Fri</span>
+              <span>Sat</span>
+            </div>
+
+            {/* Calendar Days Matrix */}
+            <div className="grid grid-cols-7 gap-1.5 text-xs">
+              {Array.from({ length: 30 }).map((_, i) => {
+                const day = i + 1;
+                const hasDrop = day === 22 || day === 28;
+                return (
+                  <div
+                    key={day}
+                    className={`min-h-[64px] rounded-az-control border p-1.5 flex flex-col justify-between transition-colors ${
+                      hasDrop
+                        ? 'border-az-flame/40 bg-az-flame/10'
+                        : 'border-az-glass-border bg-az-surface-root/50 hover:bg-az-surface-root'
+                    }`}
+                  >
+                    <span
+                      className={`text-[10px] font-bold ${hasDrop ? 'text-az-flame' : 'text-az-ink-muted'}`}
+                    >
+                      {day}
+                    </span>
+                    {day === 22 && (
+                      <span className="rounded bg-az-flame px-1 py-0.5 text-[8px] font-extrabold text-az-surface-root truncate">
+                        🎬 Ep 4 @ 8PM
+                      </span>
+                    )}
+                    {day === 28 && (
+                      <span className="rounded bg-az-secondary-600 px-1 py-0.5 text-[8px] font-extrabold text-white truncate">
+                        😂 Special @ 6PM
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (

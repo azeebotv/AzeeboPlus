@@ -10,7 +10,7 @@ import PageShell from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
-import { Calendar, Users } from 'lucide-react';
+import { Calendar, Users, Trophy, Crown } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface Tournament {
@@ -76,7 +76,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
   const id = params.id as string;
   const queryClient = useQueryClient();
   const [registered, setRegistered] = useState(false);
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'rules'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'bracket' | 'leaderboard' | 'rules'>('bracket');
 
   useEffect(() => {
     analytics.pageView('games-tournament-detail');
@@ -270,7 +270,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
           )}
 
           <div className="flex gap-2 mb-6">
-            {(['leaderboard', 'rules'] as const).map((tab) => {
+            {(['bracket', 'leaderboard', 'rules'] as const).map((tab) => {
               const selected = activeTab === tab;
               return (
                 <button
@@ -278,17 +278,155 @@ function TournamentDetailPageContent(): React.JSX.Element {
                   type="button"
                   onClick={() => setActiveTab(tab)}
                   aria-pressed={selected}
-                  className={`az-body-strong rounded-az-pill border px-4 py-2 capitalize transition-all ${
+                  className={`az-body-strong rounded-az-pill border px-5 py-2 capitalize transition-all ${
                     selected
-                      ? 'border-az-scarlet/30 bg-az-scarlet/20 text-az-flame'
-                      : 'border-transparent bg-az-ink/5 text-az-ink/60'
+                      ? 'border-az-flame bg-az-flame/15 text-white font-bold shadow-sm'
+                      : 'border-az-glass-border bg-az-surface-root text-az-ink-muted hover:text-az-ink'
                   }`}
                 >
-                  {tab}
+                  {tab === 'bracket' ? 'Tournament Bracket' : tab}
                 </button>
               );
             })}
           </div>
+
+          {activeTab === 'bracket' && (
+            <ScrollReveal>
+              <div className="rounded-az-card border border-az-glass-border bg-az-glass-card p-6 overflow-x-auto">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="az-subtitle text-az-ink font-bold flex items-center gap-2">
+                      <Trophy className="h-5 w-5 text-az-warning-400" />
+                      Championship Elimination Tree
+                    </h2>
+                    <p className="az-caption text-az-ink-muted">
+                      Single Elimination • Best of 3 Matches
+                    </p>
+                  </div>
+                  <span className="rounded-az-pill border border-az-success-500/40 bg-az-success-500/10 px-3 py-1 text-xs font-bold text-az-success-300">
+                    Grand Finals Live
+                  </span>
+                </div>
+
+                {/* Multi-round Bracket Grid */}
+                <div className="min-w-[700px] grid grid-cols-3 gap-6 items-center">
+                  {/* Round 1: Quarterfinals */}
+                  <div className="space-y-6">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-az-ink-muted text-center border-b border-az-glass-border pb-2">
+                      Quarterfinals
+                    </h3>
+                    {[
+                      { p1: 'Lagos Tigers', s1: 2, p2: 'Abuja Apex', s2: 0, win: 1 },
+                      { p1: 'Delta Knights', s1: 1, p2: 'Enugu Phantoms', s2: 2, win: 2 },
+                      { p1: 'Kano Kings', s1: 2, p2: 'Ibadan Storm', s2: 1, win: 1 },
+                      { p1: 'PH Vipers', s1: 0, p2: 'Benin Titans', s2: 2, win: 2 },
+                    ].map((m, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-az-control border border-az-glass-border bg-az-surface-root p-3 text-xs space-y-1.5 shadow-sm"
+                      >
+                        <div
+                          className={`flex items-center justify-between p-1.5 rounded ${
+                            m.win === 1
+                              ? 'font-bold text-white bg-az-surface-panel'
+                              : 'text-az-ink-muted'
+                          }`}
+                        >
+                          <span className="truncate">{m.p1}</span>
+                          <span className={m.win === 1 ? 'text-az-success-400 font-extrabold' : ''}>
+                            {m.s1}
+                          </span>
+                        </div>
+                        <div
+                          className={`flex items-center justify-between p-1.5 rounded ${
+                            m.win === 2
+                              ? 'font-bold text-white bg-az-surface-panel'
+                              : 'text-az-ink-muted'
+                          }`}
+                        >
+                          <span className="truncate">{m.p2}</span>
+                          <span className={m.win === 2 ? 'text-az-success-400 font-extrabold' : ''}>
+                            {m.s2}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Round 2: Semifinals */}
+                  <div className="space-y-16">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-az-flame text-center border-b border-az-glass-border pb-2">
+                      Semifinals
+                    </h3>
+                    {[
+                      { p1: 'Lagos Tigers', s1: 2, p2: 'Enugu Phantoms', s2: 1, win: 1 },
+                      { p1: 'Kano Kings', s1: 1, p2: 'Benin Titans', s2: 2, win: 2 },
+                    ].map((m, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-az-control border border-az-flame/30 bg-az-surface-root p-3.5 text-xs space-y-2 shadow-md relative"
+                      >
+                        <div
+                          className={`flex items-center justify-between p-1.5 rounded ${
+                            m.win === 1
+                              ? 'font-bold text-white bg-az-surface-panel'
+                              : 'text-az-ink-muted'
+                          }`}
+                        >
+                          <span className="truncate">{m.p1}</span>
+                          <span className={m.win === 1 ? 'text-az-success-400 font-extrabold' : ''}>
+                            {m.s1}
+                          </span>
+                        </div>
+                        <div
+                          className={`flex items-center justify-between p-1.5 rounded ${
+                            m.win === 2
+                              ? 'font-bold text-white bg-az-surface-panel'
+                              : 'text-az-ink-muted'
+                          }`}
+                        >
+                          <span className="truncate">{m.p2}</span>
+                          <span className={m.win === 2 ? 'text-az-success-400 font-extrabold' : ''}>
+                            {m.s2}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Round 3: Grand Championship Final */}
+                  <div className="space-y-6">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-az-warning-300 text-center border-b border-az-glass-border pb-2 flex items-center justify-center gap-1">
+                      <Crown className="h-3.5 w-3.5" />
+                      Grand Championship
+                    </h3>
+                    <div className="rounded-az-control border-2 border-az-warning-400/50 bg-gradient-to-b from-az-surface-panel to-az-surface-root p-4 text-xs space-y-3 shadow-xl">
+                      <div className="flex items-center justify-between text-[10px] font-bold uppercase text-az-warning-400">
+                        <span>Championship Match</span>
+                        <span className="animate-pulse">● Live Stream</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded font-bold text-white bg-az-surface-panel border border-az-warning-400/30">
+                        <span className="flex items-center gap-1.5">
+                          <Crown className="h-3.5 w-3.5 text-az-warning-400" />
+                          Lagos Tigers
+                        </span>
+                        <span className="text-az-warning-300 font-black text-sm">2</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded text-az-ink-muted">
+                        <span>Benin Titans</span>
+                        <span className="font-bold text-sm">1</span>
+                      </div>
+                      <div className="pt-2 text-center border-t border-az-glass-border">
+                        <span className="text-[11px] font-semibold text-az-success-300">
+                          Match Point: Lagos Tigers on Trophy Point
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+          )}
 
           {activeTab === 'leaderboard' && (
             <ScrollReveal>

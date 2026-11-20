@@ -10,6 +10,7 @@ import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { TacticalPitchBoard } from '@/components/sports/TacticalPitchBoard';
 import analytics from '@/lib/analytics';
 
 interface FixtureDetail {
@@ -144,7 +145,14 @@ function FixtureDetailContent(): React.JSX.Element {
               </div>
             )}
 
-            <div className="mt-6 flex gap-4">
+            <div className="mt-8">
+              <TacticalPitchBoard
+                homeTeam={fixture.homeTeam || 'Home Team'}
+                awayTeam={fixture.awayTeam || 'Away Team'}
+              />
+            </div>
+
+            <div className="mt-8 flex gap-4">
               {fixture.status === 'upcoming' && (
                 <Link href={`/predictions?fixtureId=${fixture.id}`}>
                   <motion.button

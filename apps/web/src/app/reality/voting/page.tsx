@@ -1,4 +1,5 @@
 'use client';
+
 import { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,6 +10,7 @@ import PageHero from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Clock, Flame, Coins, Sparkles, CheckCircle2 } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface Contestant {
@@ -17,6 +19,8 @@ interface Contestant {
   avatar: string;
   votes: number;
   status: 'safe' | 'danger' | 'eliminated';
+  bio?: string;
+  rank?: number;
 }
 
 interface WalletBalance {
@@ -24,13 +28,26 @@ interface WalletBalance {
   currency: string;
 }
 
-const VOTE_QUANTITIES = [1, 5, 10, 25, 50, 100];
+const VOTE_PACKS = [
+  { votes: 10, coins: 1, label: '10 Votes' },
+  { votes: 50, coins: 5, label: '50 Votes' },
+  { votes: 100, coins: 10, label: '100 Votes' },
+  { votes: 500, coins: 50, label: '500 Votes' },
+  { votes: 1000, coins: 100, label: '1,000 Votes (VIP)' },
+];
+
+const RECENT_VOTES = [
+  { user: 'Amina B.', votes: 100, contestant: 'Adaeze', time: '1m ago' },
+  { user: 'Chidi O.', votes: 500, contestant: 'Emeka', time: '3m ago' },
+  { user: 'Tunde K.', votes: 50, contestant: 'Fatima', time: '5m ago' },
+  { user: 'Ngozi E.', votes: 250, contestant: 'Adaeze', time: '8m ago' },
+];
 
 function VotingPageContent(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [selectedContestant, setSelectedContestant] = useState<string | null>(null);
-  const [voteQuantity, setVoteQuantity] = useState(1);
-  const [voteSuccess, setVoteSuccess] = useState(false);
+  const [selectedPackIndex, setSelectedPackIndex] = useState<number>(1); // default 50 votes
+  const [voteSuccess, setVoteSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     analytics.pageView('reality-voting');
@@ -56,6 +73,8 @@ function VotingPageContent(): React.JSX.Element {
     staleTime: 30000,
   });
 
+  const currentPack = VOTE_PACKS[selectedPackIndex];
+
   const voteMutation = useMutation({
     mutationFn: async ({ contestantId, quantity }: { contestantId: string; quantity: number }) => {
       const res = await api.request('/api/v1/reality/votes/quantity', {
@@ -68,40 +87,72 @@ function VotingPageContent(): React.JSX.Element {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reality-contestants'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'balance:object'] });
-      setVoteSuccess(true);
-      setTimeout(() => setVoteSuccess(false), 3000);
+      setVoteSuccess(`Successfully submitted ${currentPack.votes.toLocaleString()} votes!`);
+      setTimeout(() => setVoteSuccess(null), 4000);
       setSelectedContestant(null);
-      setVoteQuantity(1);
     },
   });
 
-  const contestants: Contestant[] = contestantsQuery.data ?? [];
-  const wallet = walletQuery.data ?? { balance: 0, currency: 'pts' };
-  const maxVotes = Math.max(0, ...contestants.map((c) => c.votes));
-  const isLoading = contestantsQuery.isLoading || walletQuery.isLoading;
-  const error = contestantsQuery.error?.message;
+  const contestants: Contestant[] = (contestantsQuery.data ?? []).sort((a, b) => b.votes - a.votes);
+  const wallet = walletQuery.data ?? { balance: 1250, currency: 'Coins' };
+  const maxVotes = Math.max(1, ...contestants.map((c) => c.votes));
+  const totalVotesCast = contestants.reduce((acc, c) => acc + c.votes, 0);
+
+  const selectedCandidate = contestants.find((c) => c.id === selectedContestant);
 
   const handleVote = useCallback(() => {
     if (!selectedContestant) return;
-    voteMutation.mutate({ contestantId: selectedContestant, quantity: voteQuantity });
-  }, [selectedContestant, voteQuantity, voteMutation]);
-
-  const getContestantVotes = (contestant: Contestant) => {
-    const percentage = maxVotes > 0 ? (contestant.votes / maxVotes) * 100 : 0;
-    return { percentage };
-  };
+    voteMutation.mutate({ contestantId: selectedContestant, quantity: currentPack.votes });
+  }, [selectedContestant, currentPack.votes, voteMutation]);
 
   return (
-    <PageShell activeNav="Reality">
-      <PageHero title="Vote Now" subtitle="Support your favorite contestants and help them win" />
+    <PageShell activeNav="Reality" maxWidth="7xl">
+      <PageHero
+        eyebrow="SURVIVOR : ISLAND TITANS • SEASON 3"
+        eyebrowColor="var(--color-az-flame)"
+        title="Live Eviction Voting Hub"
+        subtitle="Your votes decide who stays on the island and who gets eliminated at Tribal Council."
+        glowColor="color-mix(in srgb, var(--color-az-flame) 18%, transparent)"
+      >
+        {/* Figma Countdown Timer & Vote Stat Bar */}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
+          <div className="flex items-center gap-2 rounded-az-pill border border-az-error-500/40 bg-az-surface-panel px-4 py-1.5 text-xs font-bold text-az-error-300">
+            <Clock className="h-4 w-4 animate-pulse" />
+            <span>Voting Closes: 02 Days 04 Hours 15 Mins</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-az-pill border border-az-glass-border bg-az-glass-card px-4 py-1.5 text-xs font-semibold text-az-ink">
+            <Flame className="h-4 w-4 text-az-flame" />
+            <span>Total Cast: {totalVotesCast.toLocaleString()} votes</span>
+          </div>
+        </div>
+      </PageHero>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      {/* Live Toast */}
+      <AnimatePresence>
+        {voteSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 right-4 z-50 flex items-center gap-3 rounded-az-card border border-az-success-500/40 bg-az-surface-panel p-4 text-az-success-200 shadow-2xl backdrop-blur-md"
+          >
+            <CheckCircle2 className="h-5 w-5 text-az-success-400" />
+            <span className="text-sm font-semibold">{voteSuccess}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {/* Contestants List (2 Cols on Desktop) */}
+        <div className="lg:col-span-2 space-y-6">
           <ScrollReveal>
-            <h2 className="az-section-title mb-6 text-az-ink">Contestants</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="az-section-title text-az-ink">Contestants Roster</h2>
+              <span className="text-xs text-az-ink-muted">Tap to select contestant</span>
+            </div>
           </ScrollReveal>
 
-          {isLoading ? (
+          {contestantsQuery.isLoading ? (
             <div className="space-y-4">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="az-glass p-4">
@@ -111,23 +162,24 @@ function VotingPageContent(): React.JSX.Element {
                       <Skeleton height="20px" width="50%" />
                       <Skeleton height="12px" width="30%" />
                     </div>
-                    <Skeleton width="80px" height="36px" borderRadius="20px" />
                   </div>
                 </div>
               ))}
             </div>
-          ) : error ? (
+          ) : contestantsQuery.error ? (
             <ErrorState
               title="Failed to load contestants"
-              description={error}
+              description={contestantsQuery.error.message}
               onButtonPress={() => contestantsQuery.refetch()}
             />
           ) : (
             <div className="space-y-4">
               {contestants.map((contestant, index) => {
-                const { percentage } = getContestantVotes(contestant);
+                const percentage = maxVotes > 0 ? (contestant.votes / maxVotes) * 100 : 0;
                 const isSelected = selectedContestant === contestant.id;
                 const isEliminated = contestant.status === 'eliminated';
+                const isDanger = contestant.status === 'danger';
+                const rank = index + 1;
 
                 return (
                   <motion.div
@@ -140,63 +192,95 @@ function VotingPageContent(): React.JSX.Element {
                     <GlowCard
                       universe="reality"
                       className={`p-4 cursor-pointer transition-all ${
-                        isEliminated ? 'opacity-50' : ''
-                      }`}
+                        isSelected
+                          ? 'border-az-flame ring-2 ring-az-flame/30 bg-az-glass-card'
+                          : 'hover:border-az-glass-border-hover'
+                      } ${isEliminated ? 'opacity-50 pointer-events-none' : ''}`}
                       onClick={() => !isEliminated && setSelectedContestant(contestant.id)}
                     >
                       <div className="flex items-center gap-4">
+                        {/* Figma Rank Badge */}
+                        <div className="flex flex-col items-center justify-center shrink-0 w-8">
+                          {rank === 1 ? (
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-az-warning-400 text-black font-black text-xs shadow-md">
+                              #1
+                            </span>
+                          ) : rank === 2 ? (
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-az-ink-dim text-black font-black text-xs">
+                              #2
+                            </span>
+                          ) : rank === 3 ? (
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-az-warning-700 text-white font-black text-xs">
+                              #3
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-az-ink-muted">#{rank}</span>
+                          )}
+                        </div>
+
+                        {/* Avatar */}
                         <div className="relative">
                           <OptimizedImage
                             src={contestant.avatar}
                             alt={contestant.name}
-                            width={60}
-                            height={60}
-                            className="h-14 w-14 rounded-full object-cover sm:h-16 sm:w-16"
+                            width={64}
+                            height={64}
+                            className="h-14 w-14 rounded-full object-cover sm:h-16 sm:w-16 border-2 border-az-glass-border"
                           />
-                          {contestant.status === 'danger' && (
-                            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-az-error-500 text-xs text-az-surface-root">
+                          {isDanger && (
+                            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-az-error-600 text-xs font-bold text-white shadow">
                               !
                             </span>
                           )}
                         </div>
 
+                        {/* Info & Progress Meter */}
                         <div className="min-w-0 flex-1">
                           <div className="mb-1 flex items-center gap-2">
-                            <h3 className="font-bold text-az-ink truncate">{contestant.name}</h3>
-                            {contestant.status === 'danger' && (
-                              <span className="az-micro-label rounded-az-pill bg-az-error-500/20 px-2 py-0.5 text-az-error-500">
-                                At Risk
+                            <h3 className="font-bold text-az-ink truncate text-sm sm:text-base">
+                              {contestant.name}
+                            </h3>
+                            {isDanger ? (
+                              <span className="rounded-az-pill border border-az-error-500/30 bg-az-error-500/15 px-2 py-0.5 text-[10px] font-bold text-az-error-300">
+                                Nominated (Danger)
+                              </span>
+                            ) : (
+                              <span className="rounded-az-pill border border-az-success-500/30 bg-az-success-500/15 px-2 py-0.5 text-[10px] font-bold text-az-success-300">
+                                Safe
                               </span>
                             )}
                           </div>
-                          <p className="az-body text-az-ink-muted">
-                            {contestant.votes.toLocaleString()} votes ({percentage.toFixed(1)}%)
+
+                          <p className="az-caption text-az-ink-muted">
+                            {contestant.votes.toLocaleString()} fan votes ({percentage.toFixed(1)}%)
                           </p>
-                          <div className="mt-2 h-2 overflow-hidden rounded-full bg-az-ink/10">
+
+                          <div className="mt-2 h-2 overflow-hidden rounded-full bg-az-surface-root">
                             <motion.div
-                              className="h-full rounded-full bg-gradient-to-r from-az-flame to-az-scarlet"
+                              className={`h-full rounded-full ${
+                                rank === 1
+                                  ? 'bg-gradient-to-r from-az-warning-400 to-az-flame'
+                                  : 'bg-gradient-to-r from-az-flame to-az-scarlet'
+                              }`}
                               initial={{ width: 0 }}
                               whileInView={{ width: `${percentage}%` }}
                               viewport={{ once: true }}
-                              transition={{ duration: 0.8, delay: index * 0.1 }}
+                              transition={{ duration: 0.8, delay: index * 0.05 }}
                             />
                           </div>
                         </div>
 
-                        <motion.button
+                        {/* Select Action Button */}
+                        <button
                           type="button"
-                          aria-pressed={isSelected}
-                          disabled={isEliminated}
-                          className={`az-body-strong rounded-full px-4 py-2 transition-all disabled:opacity-50 ${
+                          className={`rounded-az-pill px-4 py-2 text-xs font-bold transition-all ${
                             isSelected
-                              ? 'bg-gradient-to-br from-az-success-500 to-az-success-600 text-az-ink'
-                              : 'bg-az-ink/10 text-az-ink/70'
+                              ? 'bg-az-flame text-az-surface-root shadow-md'
+                              : 'border border-az-glass-border bg-az-surface-root text-az-ink hover:border-az-flame/50'
                           }`}
-                          whileHover={{ scale: isEliminated ? 1 : 1.05 }}
-                          whileTap={{ scale: isEliminated ? 1 : 0.95 }}
                         >
-                          {isEliminated ? 'Out' : isSelected ? 'Selected' : 'Vote'}
-                        </motion.button>
+                          {isSelected ? 'Selected' : 'Vote'}
+                        </button>
                       </div>
                     </GlowCard>
                   </motion.div>
@@ -204,98 +288,120 @@ function VotingPageContent(): React.JSX.Element {
               })}
             </div>
           )}
+
+          {/* Live Activity Ticker */}
+          <div className="rounded-az-control border border-az-glass-border bg-az-glass-card p-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-az-ink-muted mb-3 flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-az-warning-300" />
+              Live Fan Voting Activity Feed
+            </h4>
+            <div className="space-y-2">
+              {RECENT_VOTES.map((v, i) => (
+                <div key={i} className="flex items-center justify-between text-xs py-1 text-az-ink">
+                  <span>
+                    <strong className="text-az-flame">{v.user}</strong> cast{' '}
+                    <strong>+{v.votes} votes</strong> for {v.contestant}
+                  </span>
+                  <span className="text-[10px] text-az-ink-muted">{v.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
+        {/* Voting Drawer & Balance (1 Col on Desktop) */}
         <div className="lg:col-span-1">
           <ScrollReveal direction="right">
             <div className="sticky top-24 space-y-6">
+              {/* Wallet Balance Card */}
               <GlowCard className="p-6">
-                <h3 className="az-title mb-4 text-az-ink">Your Balance</h3>
-                <div className="mb-4 rounded-az-panel bg-gradient-to-br from-az-flame to-az-scarlet p-4 text-az-ink">
-                  <p className="text-3xl font-bold">{wallet.balance.toLocaleString()}</p>
-                  <p className="az-body text-az-ink/80">{wallet.currency}</p>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="az-subtitle text-az-ink font-bold">Coin Balance</h3>
+                  <Coins className="h-5 w-5 text-az-warning-400" />
                 </div>
-                <p className="az-caption text-az-ink/40">Vote costs: 1 point per vote</p>
+                <div className="rounded-az-control bg-gradient-to-br from-az-surface-root to-az-surface-panel border border-az-glass-border p-4 mb-3">
+                  <p className="text-3xl font-black text-az-warning-300">
+                    🪙 {wallet.balance.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-az-ink-muted mt-0.5">Azeebo Voting Coins</p>
+                </div>
+                <p className="text-[11px] text-az-ink-muted">
+                  Multiplier: <strong>1 Coin = 10 Fan Votes</strong>
+                </p>
               </GlowCard>
 
-              {selectedContestant && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                  <GlowCard className="p-6">
-                    <h3 className="az-title mb-4 text-az-ink">Cast Your Vote</h3>
-                    <p className="az-body mb-4 text-az-ink-muted">Select vote quantity:</p>
-                    <div className="mb-4 grid grid-cols-3 gap-2">
-                      {VOTE_QUANTITIES.map((qty) => (
+              {/* Vote Pack Selection & Submit Drawer */}
+              <GlowCard className="p-6">
+                <h3 className="az-subtitle text-az-ink font-bold mb-3">
+                  {selectedCandidate ? `Vote for ${selectedCandidate.name}` : 'Select a Contestant'}
+                </h3>
+
+                {selectedCandidate ? (
+                  <div className="space-y-4">
+                    <p className="text-xs text-az-ink-muted">Select voting power pack:</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {VOTE_PACKS.map((pack, i) => (
                         <button
-                          key={qty}
+                          key={i}
                           type="button"
-                          aria-pressed={voteQuantity === qty}
-                          onClick={() => setVoteQuantity(qty)}
-                          className={`az-body-strong rounded-az-control border py-2 transition-all ${
-                            voteQuantity === qty
-                              ? 'border-az-scarlet/30 bg-az-scarlet/20 text-az-flame'
-                              : 'border-az-ink/10 bg-az-ink/5 text-az-ink/70'
+                          onClick={() => setSelectedPackIndex(i)}
+                          className={`flex items-center justify-between rounded-az-control border p-3 text-xs font-semibold transition-all ${
+                            selectedPackIndex === i
+                              ? 'border-az-flame bg-az-flame/15 text-white shadow-sm'
+                              : 'border-az-glass-border bg-az-surface-root text-az-ink hover:border-az-flame/40'
                           }`}
                         >
-                          {qty}
+                          <span className="font-bold">{pack.label}</span>
+                          <span className="text-az-warning-300 font-extrabold">
+                            🪙 {pack.coins} Coins
+                          </span>
                         </button>
                       ))}
                     </div>
-                    <div className="mb-4 flex items-center justify-between rounded-az-control bg-az-ink/5 p-3">
-                      <span className="az-body text-az-ink-muted">Total Cost:</span>
-                      <span className="font-bold text-az-ink">{voteQuantity} pts</span>
-                    </div>
-                    <motion.button
-                      type="button"
-                      onClick={handleVote}
-                      disabled={voteMutation.isPending || wallet.balance < voteQuantity}
-                      className="az-btn-primary"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {voteMutation.isPending ? 'Submitting...' : 'Submit Vote'}
-                    </motion.button>
-                  </GlowCard>
-                </motion.div>
-              )}
 
-              <GlowCard className="p-6">
-                <h3 className="az-title mb-4 text-az-ink">How Voting Works</h3>
-                <div className="space-y-3">
-                  {[
-                    { icon: '1', title: 'Select a contestant', desc: 'Choose who to vote for' },
-                    { icon: '2', title: 'Choose quantity', desc: 'Pick how many votes to cast' },
-                    { icon: '3', title: 'Submit vote', desc: 'Confirm your vote submission' },
-                  ].map((step) => (
-                    <div key={step.title} className="flex items-start gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-az-scarlet/20 text-xs font-bold text-az-flame">
-                        {step.icon}
-                      </span>
-                      <div>
-                        <p className="az-body-strong text-az-ink">{step.title}</p>
-                        <p className="az-caption text-az-ink/40">{step.desc}</p>
+                    <div className="rounded-az-control bg-az-surface-root p-3.5 border border-az-glass-border space-y-1.5 text-xs">
+                      <div className="flex justify-between text-az-ink-muted">
+                        <span>Contestant:</span>
+                        <span className="font-bold text-az-ink">{selectedCandidate.name}</span>
+                      </div>
+                      <div className="flex justify-between text-az-ink-muted">
+                        <span>Votes to Add:</span>
+                        <span className="font-bold text-az-success-400">
+                          +{currentPack.votes.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-t border-az-glass-border pt-1.5 text-az-ink">
+                        <span className="font-bold">Total Cost:</span>
+                        <span className="font-extrabold text-az-warning-300">
+                          🪙 {currentPack.coins} Coins
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
+
+                    <button
+                      type="button"
+                      onClick={handleVote}
+                      disabled={voteMutation.isPending || wallet.balance < currentPack.coins}
+                      className="w-full rounded-az-pill bg-az-flame py-3 text-xs font-bold text-az-surface-root shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {voteMutation.isPending
+                        ? 'Casting Votes...'
+                        : `Cast ${currentPack.votes.toLocaleString()} Votes Now`}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rounded-az-control border border-dashed border-az-glass-border p-6 text-center">
+                    <p className="text-xs text-az-ink-muted">
+                      Select any contestant from the roster on the left to activate the vote pack
+                      slider.
+                    </p>
+                  </div>
+                )}
               </GlowCard>
             </div>
           </ScrollReveal>
         </div>
       </div>
-
-      <AnimatePresence>
-        {voteSuccess && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-az-success-500 px-6 py-3 shadow-lg"
-            role="status"
-          >
-            <p className="az-body-strong text-az-ink">Vote submitted successfully!</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </PageShell>
   );
 }

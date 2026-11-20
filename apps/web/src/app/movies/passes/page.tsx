@@ -10,7 +10,8 @@ import PageShell from '@/components/layout/PageShell';
 import PageHero from '@/components/layout/PageHero';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
-import { Ticket, Check } from 'lucide-react';
+import { Ticket, Check, Clock, Play } from 'lucide-react';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
 
 interface CinemaPass {
@@ -169,6 +170,98 @@ function PassesPageContent(): React.JSX.Element {
           </div>
         </ScrollReveal>
       )}
+
+      {/* Active Movie Rentals & Tickets Tracker (Figma Passes & Tickets) */}
+      <section className="mb-10">
+        <ScrollReveal>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 className="az-subtitle text-az-ink font-bold">Active Rentals & Access Passes</h2>
+              <p className="az-caption text-az-ink-muted">
+                48-hour rental window countdown with instant resume
+              </p>
+            </div>
+            <Link href="/movies" className="text-xs font-semibold text-az-flame hover:underline">
+              Browse Cinemaxis Catalog →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              {
+                id: 'rent-001',
+                contentId: 'cnt-movies-001',
+                title: 'The Wedding Party 3',
+                genre: 'Comedy / Romance',
+                duration: '1h 55m',
+                quality: '4K UHD • Dolby Atmos',
+                poster: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300',
+                remainingTime: '18h 42m Remaining',
+                progress: 65,
+              },
+              {
+                id: 'rent-002',
+                contentId: 'cnt-movies-002',
+                title: 'Lagos Heist: Operation Ikeja',
+                genre: 'Action / Crime',
+                duration: '2h 10m',
+                quality: 'HD 1080p • 5.1 Surround',
+                poster: 'https://images.unsplash.com/photo-1518173946687-a4c8a383392e?w=300',
+                remainingTime: '34h 10m Remaining',
+                progress: 25,
+              },
+            ].map((rental) => (
+              <div
+                key={rental.id}
+                className="flex gap-4 rounded-az-card border border-az-glass-border bg-az-glass-card p-4 items-center shadow-sm"
+              >
+                <div className="relative h-28 w-20 shrink-0 overflow-hidden rounded-az-control">
+                  <OptimizedImage
+                    src={rental.poster}
+                    alt={rental.title}
+                    width={90}
+                    height={130}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent" />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="rounded-az-pill border border-az-warning-500/40 bg-az-warning-500/10 px-2 py-0.5 text-[10px] font-bold text-az-warning-300 flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {rental.remainingTime}
+                    </span>
+                    <span className="text-[10px] font-bold text-az-ink-muted uppercase">
+                      {rental.quality}
+                    </span>
+                  </div>
+
+                  <h3 className="az-subtitle text-az-ink font-bold truncate">{rental.title}</h3>
+                  <p className="az-caption text-az-ink-muted truncate mb-3">
+                    {rental.genre} • {rental.duration}
+                  </p>
+
+                  <div className="flex items-center gap-3">
+                    <Link href={`/watch/${rental.contentId}`}>
+                      <button
+                        type="button"
+                        className="rounded-az-pill bg-az-flame px-4 py-1.5 text-xs font-bold text-az-surface-root shadow hover:scale-[1.02] transition-transform flex items-center gap-1.5"
+                      >
+                        <Play className="h-3 w-3 fill-current" />
+                        Resume Playback
+                      </button>
+                    </Link>
+                    <span className="text-[10px] text-az-ink-muted">
+                      Progress: {rental.progress}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollReveal>
+      </section>
 
       {/* Pass Plans */}
       <ScrollReveal>

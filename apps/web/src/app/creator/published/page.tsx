@@ -10,7 +10,19 @@ import { PageHero } from '@/components/layout/PageHero';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { CheckCircle2, Eye, Heart, Film, Plus } from 'lucide-react';
+import {
+  CheckCircle2,
+  Eye,
+  Heart,
+  Film,
+  Plus,
+  Radio,
+  Activity,
+  Wifi,
+  Users,
+  StopCircle,
+  Copy,
+} from 'lucide-react';
 
 interface PublishedContent {
   id: string;
@@ -92,6 +104,97 @@ export default function PublishedPage(): React.JSX.Element {
       />
 
       <div className="max-w-6xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* Figma Creator - Published Live Stream Monitor */}
+        <div className="rounded-az-card border border-az-glass-border bg-az-glass-card p-6 shadow-md">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-az-glass-border pb-4 mb-4">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-3.5 w-3.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-az-error-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-az-error-500" />
+              </span>
+              <div>
+                <h3 className="az-subtitle text-az-ink font-bold flex items-center gap-2">
+                  Live Broadcast Studio Monitor
+                  <span className="rounded-az-pill bg-az-error-500/20 px-2.5 py-0.5 text-[10px] font-bold text-az-error-300">
+                    LIVE ON AIR
+                  </span>
+                </h3>
+                <p className="az-caption text-az-ink-muted">
+                  Stream ingest: rtmp://live.azeeboplus.com/live • Uptime: 01:24:35
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigator.clipboard.writeText('rtmp://live.azeeboplus.com/live')}
+                className="rounded-az-pill border border-az-glass-border bg-az-surface-root px-3 py-1.5 text-xs font-semibold text-az-ink hover:bg-az-glass-card transition-colors flex items-center gap-1.5"
+              >
+                <Copy className="h-3.5 w-3.5 text-az-ink-muted" />
+                Copy Ingest URL
+              </button>
+              <button
+                type="button"
+                className="rounded-az-pill border border-az-error-500/40 bg-az-error-500/15 px-3 py-1.5 text-xs font-bold text-az-error-300 hover:bg-az-error-500/30 transition-colors flex items-center gap-1.5"
+              >
+                <StopCircle className="h-3.5 w-3.5" />
+                End Stream
+              </button>
+            </div>
+          </div>
+
+          {/* Real-time Health Telemetry */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="rounded-az-control border border-az-glass-border bg-az-surface-root p-3">
+              <div className="flex items-center justify-between text-xs text-az-ink-muted mb-1">
+                <span>Live Viewers</span>
+                <Users className="h-3.5 w-3.5 text-az-flame" />
+              </div>
+              <p className="text-xl font-black text-white">1,420</p>
+              <span className="text-[10px] text-az-success-400 font-bold">+18% this hour</span>
+            </div>
+
+            <div className="rounded-az-control border border-az-glass-border bg-az-surface-root p-3">
+              <div className="flex items-center justify-between text-xs text-az-ink-muted mb-1">
+                <span>Video Bitrate</span>
+                <Wifi className="h-3.5 w-3.5 text-az-success-400" />
+              </div>
+              <p className="text-xl font-black text-white">
+                5,840 <span className="text-xs font-normal text-az-ink-muted">Kbps</span>
+              </p>
+              <span className="text-[10px] text-az-success-400 font-bold">Optimal (1080p60)</span>
+            </div>
+
+            <div className="rounded-az-control border border-az-glass-border bg-az-surface-root p-3">
+              <div className="flex items-center justify-between text-xs text-az-ink-muted mb-1">
+                <span>Frame Rate</span>
+                <Activity className="h-3.5 w-3.5 text-az-success-400" />
+              </div>
+              <p className="text-xl font-black text-white">
+                60 <span className="text-xs font-normal text-az-ink-muted">FPS</span>
+              </p>
+              <span className="text-[10px] text-az-success-400 font-bold">0 dropped frames</span>
+            </div>
+
+            <div className="rounded-az-control border border-az-glass-border bg-az-surface-root p-3">
+              <div className="flex items-center justify-between text-xs text-az-ink-muted mb-1">
+                <span>Audio Stream</span>
+                <Radio className="h-3.5 w-3.5 text-az-secondary-400" />
+              </div>
+              <p className="text-xl font-black text-white">
+                192 <span className="text-xs font-normal text-az-ink-muted">Kbps</span>
+              </p>
+              <span className="text-[10px] text-az-secondary-300 font-bold">Stereo 48 kHz</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Catalog Section Header */}
+        <div className="flex items-center justify-between pt-2">
+          <h2 className="az-section-title text-az-ink">Published On-Demand Catalog</h2>
+          <span className="az-caption text-az-ink-muted">{content.length} total titles</span>
+        </div>
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
