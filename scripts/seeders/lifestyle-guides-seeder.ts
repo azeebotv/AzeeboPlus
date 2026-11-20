@@ -632,7 +632,13 @@ async function getClient(): Promise<GuideClient> {
     const mod = await import('@prisma/client');
     PrismaClient = mod.PrismaClient;
   }
-  return new (PrismaClient as new () => GuideClient)();
+  const dbUrl =
+    process.env.LIFESTYLE_DATABASE_URL ||
+    'postgresql://azeebo:azeebo@localhost:5432/azeebo_lifestyle?schema=public';
+  process.env.DATABASE_URL = dbUrl;
+  return new (PrismaClient as new (opts?: unknown) => GuideClient)({
+    datasources: { db: { url: dbUrl } },
+  });
 }
 
 // ─── Seeder ──────────────────────────────────────────────────────────────────

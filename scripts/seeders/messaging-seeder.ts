@@ -1,82 +1,121 @@
 /**
- * Messaging Service Seeder
+ * Messaging Service Seeder — Azeebo+
+ *
+ * Populates conversation threads, participants, and messages in azeebo_messaging.
+ * Fully idempotent.
  */
 
-import { randomItem, randomDate, printCount } from './utils.js';
+import pg from 'pg';
 
-let PrismaClient: new (args?: unknown) => unknown;
+const { Pool } = pg;
 
-async function getClient() {
-  try {
-    const mod = await import('../../services/engagement/messaging-service/node_modules/@prisma/client/index.js');
-    PrismaClient = mod.PrismaClient;
-  } catch {
-    const mod = await import('@prisma/client');
-    PrismaClient = mod.PrismaClient;
-  }
-  return new (PrismaClient as new () => {
-    conversation: { create: (args: unknown) => Promise<{ id: string }> };
-    message: { create: (args: unknown) => Promise<{ id: string }> };
-    messageReaction: { create: (args: unknown) => Promise<unknown> };
-    $disconnect: () => Promise<void>;
-  })();
+const DB_HOST = process.env.DB_HOST || 'localhost';
+const DB_PORT = parseInt(process.env.DB_PORT || '5432', 10);
+const DB_USER = process.env.DB_USER || 'azeebo';
+const DB_PASS = process.env.DB_PASS || 'azeebo';
+
+function getPool(dbName: string): pg.Pool {
+  return new Pool({
+    host: DB_HOST,
+    port: DB_PORT,
+    user: DB_USER,
+    password: DB_PASS,
+    database: dbName,
+    max: 5,
+    idleTimeoutMillis: 10000,
+  });
 }
 
-const MSGS = [
-  'Hey! How are you?', 'Just watched the new movie, amazing!', 'Have you heard the new track?',
-  'Let\'s meet up this weekend', 'Check out this comedy special', 'What\'s your favorite show?',
-  'The live event was incredible!', 'I just tipped my favorite creator',
-  'Have you tried the new feature?', 'Love the new UI updates!',
+const CONVERSATIONS = [
+  {
+    id: 'conv-001',
+    type: 'group',
+    name: 'Reality TV Fans Lagos',
+    user1: 'a0000001-0000-0000-0000-000000000006',
+    user2: 'a0000001-0000-0000-0000-000000000007',
+    messages: [
+      { senderId: 'a0000001-0000-0000-0000-000000000006', content: 'Did you see the eviction twist yesterday?!' },
+      { senderId: 'a0000001-0000-0000-0000-000000000007', content: 'Crazy twist! Nobody expected Team Green to pull that off.' },
+      { senderId: 'a0000001-0000-0000-0000-000000000006', content: 'Voting for Saturday opens in 2 hours, get ready!' },
+    ],
+  },
+  {
+    id: 'conv-002',
+    type: 'direct',
+    name: 'Nollywood Direct',
+    user1: 'a0000001-0000-0000-0000-000000000003',
+    user2: 'a0000001-0000-0000-0000-000000000006',
+    messages: [
+      { senderId: 'a0000001-0000-0000-0000-000000000003', content: 'Thanks for tipping on the new episode premiere!' },
+      { senderId: 'a0000001-0000-0000-0000-000000000006', content: 'Bro, the cinematography was 10/10. Keep it up!' },
+    ],
+  },
+  {
+    id: 'conv-003',
+    type: 'group',
+    name: 'AFCON 2026 Banter Room',
+    user1: 'a0000001-0000-0000-0000-000000000008',
+    user2: 'a0000001-0000-0000-0000-000000000011',
+    messages: [
+      { senderId: 'a0000001-0000-0000-0000-000000000011', content: 'Super Eagles lineup drops in 30 minutes.' },
+      { senderId: 'a0000001-0000-0000-0000-000000000008', content: 'Osimhen starting upfront guaranteed goal.' },
+    ],
+  },
 ];
 
 export async function seedMessagingService(dryRun = false): Promise<number> {
+  if (dryRun) {
+    console.log(`  [DRY RUN] Would seed ${CONVERSATIONS.length} conversations and 7 messages in azeebo_messaging`);
+    return CONVERSATIONS.length + 7;
+  }
+
+  const pool = getPool('azeebo_messaging');
   let count = 0;
-  if (dryRun) { console.log(`  [DRY RUN] Would create 20 conversations + 100 messages`); return 120; }
 
-  const prisma = await getClient();
   try {
-    printCount('Conversations', 20);
-    const convIds: string[] = [];
-    for (let i = 0; i < 20; i++) {
-      const isGroup = i % 4 === 0;
-      const conv = await prisma.conversation.create({
-        data: {
-          type: isGroup ? 'group' : 'direct',
-          name: isGroup ? randomItem(['Nollywood Fans', 'Music Lovers', 'Comedy Club', 'Game Night']) : null,
-          participants: {
-            create: [
-              { userId: `usr${String((i % 40) + 1).padStart(4, '0')}`, role: 'admin' },
-              { userId: `usr${String((i + 5) % 40 + 1).padStart(4, '0')}`, role: 'member' },
-              ...(isGroup ? [{ userId: `usr${String((i + 10) % 40 + 1).padStart(4, '0')}`, role: 'member' as const }] : []),
-            ],
-          },
-        },
-      });
-      convIds.push((conv as { id: string }).id);
+    for (const c of CONVERSATIONS) {
+      // 1. Conversation
+      await pool.query(
+        `INSERT INTO conversations (id, type, name, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, "updatedAt" = NOW();`,
+        [c.id, c.type, c.name]
+      );
       count++;
-    }
 
-    printCount('Messages', 100);
-    for (let i = 0; i < 100; i++) {
-      const msg = await prisma.message.create({
-        data: {
-          conversationId: convIds[i % convIds.length],
-          senderId: `usr${String((i % 40) + 1).padStart(4, '0')}`,
-          content: randomItem(MSGS),
-          type: randomItem(['text', 'text', 'text', 'image']),
-          createdAt: randomDate(30),
-        },
-      });
+      // 2. Participants
+      await pool.query(
+        `INSERT INTO conversation_participants (id, "conversationId", "userId", role, "joinedAt", "lastReadAt", "createdAt", "updatedAt")
+         VALUES (gen_random_uuid()::text, $1, $2, 'admin', NOW(), NOW(), NOW(), NOW())
+         ON CONFLICT ("conversationId", "userId") DO NOTHING;`,
+        [c.id, c.user1]
+      );
       count++;
-      if (i % 3 === 0) {
-        await prisma.messageReaction.create({
-          data: { messageId: (msg as { id: string }).id, userId: `usr${String(((i + 1) % 40) + 1).padStart(4, '0')}`, emoji: randomItem(['👍', '❤️', '😂', '🔥']) },
-        });
+
+      await pool.query(
+        `INSERT INTO conversation_participants (id, "conversationId", "userId", role, "joinedAt", "lastReadAt", "createdAt", "updatedAt")
+         VALUES (gen_random_uuid()::text, $1, $2, 'member', NOW(), NOW(), NOW(), NOW())
+         ON CONFLICT ("conversationId", "userId") DO NOTHING;`,
+        [c.id, c.user2]
+      );
+      count++;
+
+      // 3. Messages
+      for (let i = 0; i < c.messages.length; i++) {
+        const m = c.messages[i];
+        const msgId = `msg-${c.id}-${i + 1}`;
+        await pool.query(
+          `INSERT INTO messages (id, "conversationId", "senderId", content, type, "isRead", "createdAt", "updatedAt")
+           VALUES ($1, $2, $3, $4, 'text', true, NOW() - INTERVAL '${(3 - i) * 10} minutes', NOW())
+           ON CONFLICT (id) DO UPDATE SET content = EXCLUDED.content, "updatedAt" = NOW();`,
+          [msgId, c.id, m.senderId, m.content]
+        );
         count++;
       }
     }
+  } finally {
+    await pool.end();
+  }
 
-    console.log(`  Total: ${count} records`);
-  } finally { await prisma.$disconnect(); }
   return count;
 }
