@@ -3,6 +3,7 @@
 import React from 'react';
 import AppHeader from './AppHeader';
 import AppFooter from './AppFooter';
+import { ExploreUniversesDock } from './ExploreUniversesDock';
 import { PageTransition } from '@/components/motion/PageTransition';
 
 export interface PageShellProps {
@@ -10,6 +11,7 @@ export interface PageShellProps {
   activeNav?: string;
   showHeader?: boolean;
   showFooter?: boolean;
+  showUniverseDock?: boolean;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '7xl' | 'full';
   className?: string;
   glowColor?: string;
@@ -20,6 +22,7 @@ export function PageShell({
   activeNav,
   showHeader = true,
   showFooter = true,
+  showUniverseDock = true,
   maxWidth = '7xl',
   className = '',
   glowColor = 'color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)',
@@ -63,6 +66,8 @@ export function PageShell({
           <PageTransition>{children}</PageTransition>
         </main>
       </div>
+
+      {showUniverseDock && <ExploreUniversesDock currentUniverse={activeNav} />}
 
       {showFooter && <AppFooter />}
     </div>

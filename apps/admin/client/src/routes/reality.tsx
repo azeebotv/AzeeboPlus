@@ -413,12 +413,13 @@ export default function RealityPage() {
                         updateStatusMutation.mutate({ id: show.id, status: 'published' })
                       }
                       style={{
-                        padding: '4px 10px',
-                        borderRadius: 6,
-                        border: '1px solid var(--admin-emerald)',
-                        background: 'transparent',
-                        color: 'var(--admin-emerald)',
+                        padding: '5px 14px',
+                        borderRadius: 9999,
+                        border: '1px solid rgba(0, 210, 106, 0.3)',
+                        background: 'rgba(0, 210, 106, 0.1)',
+                        color: 'var(--admin-green)',
                         fontSize: 11,
+                        fontWeight: 600,
                         cursor: 'pointer',
                       }}
                     >
@@ -431,12 +432,13 @@ export default function RealityPage() {
                         updateStatusMutation.mutate({ id: show.id, status: 'suspended' })
                       }
                       style={{
-                        padding: '4px 10px',
-                        borderRadius: 6,
-                        border: '1px solid var(--admin-amber)',
-                        background: 'transparent',
+                        padding: '5px 14px',
+                        borderRadius: 9999,
+                        border: '1px solid rgba(255, 174, 0, 0.3)',
+                        background: 'rgba(255, 174, 0, 0.1)',
                         color: 'var(--admin-amber)',
                         fontSize: 11,
+                        fontWeight: 500,
                         cursor: 'pointer',
                       }}
                     >
@@ -458,12 +460,13 @@ export default function RealityPage() {
                       setFormError(null);
                     }}
                     style={{
-                      padding: '4px 10px',
-                      borderRadius: 6,
-                      border: '1px solid var(--admin-surface)',
-                      background: 'transparent',
-                      color: 'var(--admin-text-muted)',
+                      padding: '5px 14px',
+                      borderRadius: 9999,
+                      border: '1px solid var(--admin-border-hover)',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      color: 'var(--admin-text)',
                       fontSize: 11,
+                      fontWeight: 500,
                       cursor: 'pointer',
                     }}
                   >
@@ -477,12 +480,13 @@ export default function RealityPage() {
                     }}
                     disabled={busy}
                     style={{
-                      padding: '4px 10px',
-                      borderRadius: 6,
-                      border: '1px solid var(--admin-red)',
-                      background: 'transparent',
+                      padding: '5px 14px',
+                      borderRadius: 9999,
+                      border: '1px solid rgba(229, 9, 20, 0.3)',
+                      background: 'rgba(229, 9, 20, 0.1)',
                       color: 'var(--admin-red)',
                       fontSize: 11,
+                      fontWeight: 500,
                       cursor: busy ? 'wait' : 'pointer',
                     }}
                   >

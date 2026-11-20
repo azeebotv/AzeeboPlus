@@ -26,6 +26,20 @@ export class RealityShowsController {
     return this.showsService.getShows();
   }
 
+  @Get('contestants')
+  async getContestants() {
+    try {
+      const res = await fetch('http://localhost:3010/api/v1/reality/contestants');
+      if (res.ok) {
+        const json = await res.json();
+        return json.data || json;
+      }
+    } catch {
+      // fallback
+    }
+    return { contestants: [] };
+  }
+
   @Get(':id')
   async getShow(@Param('id') id: string) {
     return this.showsService.getShow(id);

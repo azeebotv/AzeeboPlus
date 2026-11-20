@@ -1253,14 +1253,14 @@ export default function SettingsPage() {
                             style={{
                               color: 'var(--admin-text)',
                               fontSize: 13,
-                              maxWidth: 240,
+                              maxWidth: 'min(540px, 45vw)',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
                               backgroundColor: 'var(--admin-dark)',
-                              padding: '4px 10px',
-                              borderRadius: 6,
-                              border: '1px solid var(--admin-card)',
+                              padding: '5px 12px',
+                              borderRadius: 8,
+                              border: '1px solid var(--admin-border)',
                             }}
                             title={displayValue(s.value)}
                           >

@@ -12,36 +12,25 @@
    Azeebo+ Brand Design System (v2 — Nigerian Entertainment)
    ============================================================ */
 :root {
-  /* Brand Core — Luxury Cinema Dark Theme
-     Re-pointed at the canonical Figma accent (#E31E24 scarlet / #EC691F flame);
-     the retired #e8420a → #cc1c1c pair is gone from the product. These two are
-     the compatibility aliases for the ~1000 sites that still reference them —
-     new code must use the generated `az-*` utilities instead.
-     Everything below that has a registry twin is now an alias *to* the generated
-     variable rather than a second copy of the hex: this layer used to hold its
-     own values, which is how `--brand-gold` (#FFD700) and `az-accent-gold`
-     (#fbbf24) ended up as two different golds for one concept. */
-  --brand-orange: var(--color-az-flame); /* Flame — lighter end of the brand gradient */
-  --brand-red: var(--color-az-scarlet); /* Scarlet — primary CTA, logo accent, active states */
-  --brand-near-black: #0b090e; /* Near-Black — page root & auth surfaces (matching --hp-bg) */
+  /* Brand Core — Luxury Cinema Dark Theme (Synchronized with Figma) */
+  --brand-orange: #FF5B00; /* Solar Orange — primary brand CTA, active states */
+  --brand-red: #E50914; /* Deep Flame / Crimson — Live streaming, urgent alerts */
+  --brand-near-black: #08090E; /* Near-Black — page root & auth surfaces (matching --hp-bg) */
   --brand-forest: var(--color-az-category-forest); /* Forest Dark Green — legacy compatibility */
-  --brand-green: var(--color-az-success-500); /* Green — success states */
+  --brand-green: #00D26A; /* Green — success states */
   --brand-white: var(--color-az-ink); /* White — primary text */
-  --brand-surface: #18151e; /* Surface Dark — card backgrounds, inputs (--hp-card-bg) */
-  --brand-surface-input: #14121a; /* Input field fill */
-  --brand-mid-brown: #9a8a7a; /* Mid Brown — secondary text */
-  /* Rewards/badges. Was #FFD700, a second gold beside the registry's medal
-     gold; Figma's Rewards frame reads #FAB801, i.e. the amber side, so the
-     registry value wins and the alias stops disagreeing with it. */
-  --brand-gold: var(--color-az-accent-gold);
+  --brand-surface: #131420; /* Surface Dark — card backgrounds, inputs (--hp-card-bg) */
+  --brand-surface-input: #10111D; /* Input field fill */
+  --brand-mid-brown: #A0A3BD; /* Secondary text */
+  --brand-gold: #FFB800; /* Coin / reward gold */
   --brand-purple: var(--color-az-category-violet); /* Purple — premium, highlights */
-  --brand-blue: var(--color-az-secondary-500); /* Blue — links, info */
+  --brand-blue: #2D7FF9; /* Blue — links, info */
   --brand-sky: var(--color-az-category-sky); /* Sky Blue — secondary links */
-  --brand-emerald: var(--color-az-category-emerald); /* Emerald — success, online */
-  --brand-amber: var(--color-az-warning-500); /* Amber — warnings, ratings */
-  --brand-crimson: var(--color-az-category-crimson); /* Crimson — alerts, live */
+  --brand-emerald: #00C9A7; /* Emerald — success, online */
+  --brand-amber: #FFAE00; /* Amber — warnings, ratings */
+  --brand-crimson: #E50914; /* Crimson — alerts, live */
   --brand-silver: var(--color-az-accent-silver); /* Silver — inactive, disabled */
-  --brand-grey: var(--color-az-ink-muted); /* Grey — muted text (still >= 4.5:1 on the dark root) */
+  --brand-grey: #6C7089; /* Grey — muted text */
   --brand-copper: var(--color-az-accent-bronze); /* Copper — metallic accents */
   --brand-light-green: var(--color-az-success-400); /* Light Green — online, active */
 
@@ -187,15 +176,15 @@
   --text-inverse: #1a0a0a;
 
   /* Backgrounds */
-  --bg-primary: #0b090e;
-  --bg-secondary: #100e14;
-  --bg-tertiary: #18151e;
-  --bg-hover: #262130;
+  --bg-primary: #08090E;
+  --bg-secondary: #0E0F1A;
+  --bg-tertiary: #131420;
+  --bg-hover: #1A1B29;
 
   /* Borders & Dividers */
-  --border-default: #4b5563;
-  --border-light: #374151;
-  --border-focus: var(--color-az-flame);
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.04);
+  --border-focus: #FF5B00;
 
   /* Spacing Scale */
   --spacing-xs: 4px;
@@ -270,11 +259,12 @@
   --z-tooltip: 800;
 
   /* Gradients */
-  --gradient-primary: var(--gradient-az-cta);
-  --gradient-brand: var(--gradient-az-cta);
-  --gradient-gold: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
-  --gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  --gradient-dark: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+  --gradient-primary: linear-gradient(90deg, #FF5B00 0%, #FF7A00 100%);
+  --gradient-brand: linear-gradient(90deg, #FF5B00 0%, #FF7A00 100%);
+  --gradient-secondary: linear-gradient(135deg, #FF5B00 0%, #E50914 100%);
+  --gradient-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  --gradient-success: linear-gradient(135deg, #00D26A 0%, #00BFA5 100%);
+  --gradient-dark: linear-gradient(180deg, #131420 0%, #08090E 100%);
 
   /* ============================================================
      Homepage (Guest Landing) — Section Design Tokens
@@ -283,10 +273,10 @@
      ============================================================ */
 
   /* ── Backgrounds ── */
-  --hp-bg: #0b090e; /* Page root: near-black with warm purple tint */
-  --hp-bg-alt: #100e14; /* Alternating section bg (slightly lighter) */
-  --hp-card-bg: #18151e; /* Default card/panel background */
-  --hp-card-border: rgba(255, 255, 255, 0.07); /* Subtle card border */
+  --hp-bg: #08090E; /* Page root: midnight obsidian */
+  --hp-bg-alt: #0E0F1A; /* Alternating section bg */
+  --hp-card-bg: #131420; /* Default card/panel background */
+  --hp-card-border: rgba(255, 255, 255, 0.08); /* Subtle card border */
   --hp-divider: rgba(255, 255, 255, 0.05); /* Section divider lines */
 
   /* ── Hero ── */
@@ -1016,23 +1006,24 @@ select:focus-visible {
    the app; scripts/visual-audit.mjs now measures gradient stops, so a future
    size cut fails the gate instead of shipping. */
 .az-btn-primary {
-  background: var(--gradient-az-cta);
-  color: var(--color-az-ink);
+  background: linear-gradient(90deg, #FF5B00 0%, #FF7A00 100%);
+  color: #ffffff;
   font-weight: 700;
-  border-radius: var(--radius-az-feature);
+  border-radius: 9999px;
   border: none;
   width: 100%;
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1.5rem;
   font-size: var(--text-az-title);
   cursor: pointer;
+  box-shadow: 0 4px 14px rgba(255, 91, 0, 0.25);
   transition:
     box-shadow var(--transition-fast),
     transform var(--transition-fast),
     filter var(--transition-fast);
 }
 .az-btn-primary:hover:not(:disabled) {
-  box-shadow: var(--shadow-az-glow);
-  filter: brightness(1.06);
+  box-shadow: 0 6px 20px rgba(255, 91, 0, 0.45);
+  filter: brightness(1.08);
 }
 .az-btn-primary:active:not(:disabled) {
   transform: translateY(1px);

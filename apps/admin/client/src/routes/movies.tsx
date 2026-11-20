@@ -434,14 +434,29 @@ export default function MoviesPage() {
                         style={{
                           width: 48,
                           height: 64,
-                          borderRadius: 6,
-                          backgroundColor: 'var(--admin-dark)',
-                          backgroundImage: `url(${movie.thumbnail || '/images/placeholders/thumbnails/16x9_01.png'})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
+                          borderRadius: 8,
+                          backgroundColor: 'var(--admin-surface)',
+                          border: '1px solid var(--admin-border)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           flexShrink: 0,
+                          overflow: 'hidden',
+                          position: 'relative',
                         }}
-                      />
+                      >
+                        {movie.thumbnail && !movie.thumbnail.includes('placeholder') ? (
+                          <img
+                            src={movie.thumbnail}
+                            alt={movie.title}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        ) : null}
+                        <Icon name="film" size={20} color="var(--admin-orange)" />
+                      </div>
                       <div>
                         <div style={{ fontWeight: 600, color: 'var(--admin-text)', fontSize: 14 }}>
                           {movie.title}
@@ -539,12 +554,13 @@ export default function MoviesPage() {
                           });
                         }}
                         style={{
-                          padding: '4px 10px',
-                          borderRadius: 6,
-                          border: '1px solid var(--admin-surface)',
-                          backgroundColor: 'transparent',
+                          padding: '5px 14px',
+                          borderRadius: 9999,
+                          border: '1px solid var(--admin-border-hover)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.04)',
                           color: 'var(--admin-text)',
                           fontSize: 12,
+                          fontWeight: 500,
                           cursor: 'pointer',
                         }}
                       >
@@ -555,11 +571,11 @@ export default function MoviesPage() {
                         <button
                           onClick={() => publishMutation.mutate(movie.id)}
                           style={{
-                            padding: '4px 10px',
-                            borderRadius: 6,
-                            border: 'none',
-                            backgroundColor: 'var(--admin-emerald)',
-                            color: 'white',
+                            padding: '5px 14px',
+                            borderRadius: 9999,
+                            border: '1px solid rgba(0, 210, 106, 0.3)',
+                            backgroundColor: 'rgba(0, 210, 106, 0.12)',
+                            color: 'var(--admin-green)',
                             fontSize: 12,
                             fontWeight: 600,
                             cursor: 'pointer',
@@ -571,12 +587,13 @@ export default function MoviesPage() {
                         <button
                           onClick={() => unpublishMutation.mutate(movie.id)}
                           style={{
-                            padding: '4px 10px',
-                            borderRadius: 6,
-                            border: '1px solid var(--admin-surface)',
-                            backgroundColor: 'transparent',
+                            padding: '5px 14px',
+                            borderRadius: 9999,
+                            border: '1px solid rgba(255, 174, 0, 0.3)',
+                            backgroundColor: 'rgba(255, 174, 0, 0.1)',
                             color: 'var(--admin-amber)',
                             fontSize: 12,
+                            fontWeight: 500,
                             cursor: 'pointer',
                           }}
                         >
@@ -591,12 +608,13 @@ export default function MoviesPage() {
                           }
                         }}
                         style={{
-                          padding: '4px 10px',
-                          borderRadius: 6,
-                          border: '1px solid var(--admin-red)',
-                          backgroundColor: 'transparent',
+                          padding: '5px 14px',
+                          borderRadius: 9999,
+                          border: '1px solid rgba(229, 9, 20, 0.3)',
+                          backgroundColor: 'rgba(229, 9, 20, 0.1)',
                           color: 'var(--admin-red)',
                           fontSize: 12,
+                          fontWeight: 500,
                           cursor: 'pointer',
                         }}
                       >

@@ -641,11 +641,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 fontWeight: 700,
                 letterSpacing: 1.2,
                 textTransform: 'uppercase',
-                padding: '3px 8px',
-                borderRadius: 6,
-                background: 'rgba(232, 66, 10, 0.14)',
+                padding: '4px 10px',
+                borderRadius: 9999,
+                background: 'rgba(255, 91, 0, 0.15)',
                 color: 'var(--admin-orange)',
-                border: '1px solid rgba(232, 66, 10, 0.3)',
+                border: '1px solid rgba(255, 91, 0, 0.3)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 5,
@@ -657,7 +657,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   height: 5,
                   borderRadius: '50%',
                   backgroundColor: 'var(--admin-orange)',
-                  boxShadow: '0 0 6px var(--admin-orange)',
+                  boxShadow: '0 0 8px var(--admin-orange)',
                 }}
               />
               Console
@@ -671,13 +671,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               alignItems: 'center',
               gap: 6,
               marginLeft: 10,
-              padding: '4px 10px',
-              borderRadius: 20,
-              backgroundColor: 'rgba(16, 185, 129, 0.08)',
-              border: '1px solid rgba(16, 185, 129, 0.2)',
+              padding: '4px 12px',
+              borderRadius: 9999,
+              backgroundColor: 'rgba(0, 210, 106, 0.1)',
+              border: '1px solid rgba(0, 210, 106, 0.25)',
               fontSize: 11,
               fontWeight: 500,
-              color: 'var(--admin-emerald)',
+              color: 'var(--admin-green)',
             }}
           >
             <span
@@ -685,8 +685,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                backgroundColor: 'var(--admin-emerald)',
-                boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)',
+                backgroundColor: 'var(--admin-green)',
+                boxShadow: '0 0 8px rgba(0, 210, 106, 0.6)',
               }}
             />
             System Online
@@ -710,7 +710,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               alignItems: 'center',
               gap: 10,
               padding: '4px 12px 4px 6px',
-              borderRadius: 24,
+              borderRadius: 9999,
               backgroundColor: 'var(--admin-surface)',
               border: '1px solid var(--admin-border)',
             }}
@@ -720,7 +720,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 width: 28,
                 height: 28,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #E8420A 0%, var(--admin-red) 100%)',
+                background: 'linear-gradient(135deg, #FF5B00 0%, var(--admin-red) 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -767,10 +767,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              padding: '7px 12px',
-              borderRadius: 8,
+              padding: '7px 16px',
+              borderRadius: 9999,
               border: '1px solid var(--admin-border)',
-              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
               color: 'var(--admin-text-muted)',
               fontSize: 12,
               fontWeight: 500,
@@ -1021,7 +1021,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 fontSize: 13,
                                 fontWeight: active ? 600 : 500,
                                 color: active ? '#ffffff' : 'var(--admin-text-muted)',
-                                backgroundColor: active ? 'rgba(232, 66, 10, 0.12)' : 'transparent',
+                                backgroundColor: active ? 'rgba(255, 91, 0, 0.14)' : 'transparent',
                                 borderLeft: active
                                   ? '3px solid var(--admin-orange)'
                                   : '3px solid transparent',

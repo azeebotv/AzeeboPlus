@@ -215,10 +215,11 @@ export default function UsersPage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              padding: '8px 16px',
-              borderRadius: 10,
+              padding: '8px 18px',
+              borderRadius: 9999,
               border: 'none',
-              backgroundColor: 'var(--admin-primary)',
+              background: 'var(--admin-orange-gradient)',
+              boxShadow: '0 4px 14px rgba(255, 91, 0, 0.25)',
               color: 'white',
               fontSize: 13,
               fontWeight: 600,
@@ -422,22 +423,23 @@ export default function UsersPage() {
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'flex-end' }}>
                         <button
                           onClick={() => navigate(`/users/${u.id}`)}
                           style={{
-                            padding: '6px 14px',
-                            borderRadius: 999,
-                            border: '1px solid var(--admin-surface)',
-                            background: 'transparent',
-                            color: 'var(--admin-text-muted)',
+                            padding: '5px 14px',
+                            borderRadius: 9999,
+                            border: '1px solid var(--admin-border-hover)',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            color: 'var(--admin-text)',
                             fontSize: 12,
+                            fontWeight: 500,
                             cursor: 'pointer',
                           }}
                         >
                           View
                         </button>
-                        {u.role === 'creator' && (
+                        {u.role === 'creator' ? (
                           <button
                             onClick={() =>
                               verifyMutation.mutate({ id: u.id, verified: !u.isVerified })
@@ -445,17 +447,21 @@ export default function UsersPage() {
                             disabled={verifyMutation.isPending}
                             title="Toggle creator verification (POST :id/verify | :id/unverify)"
                             style={{
-                              padding: '6px 14px',
-                              borderRadius: 999,
-                              border: '1px solid var(--admin-surface)',
-                              background: 'transparent',
+                              padding: '5px 14px',
+                              borderRadius: 9999,
+                              border: `1px solid ${u.isVerified ? 'rgba(255, 174, 0, 0.3)' : 'rgba(0, 210, 106, 0.3)'}`,
+                              background: u.isVerified ? 'rgba(255, 174, 0, 0.1)' : 'rgba(0, 210, 106, 0.1)',
                               color: u.isVerified ? 'var(--admin-amber)' : 'var(--admin-green)',
                               fontSize: 12,
+                              fontWeight: 500,
                               cursor: 'pointer',
+                              minWidth: 72,
                             }}
                           >
                             {u.isVerified ? 'Unverify' : 'Verify'}
                           </button>
+                        ) : (
+                          <div style={{ width: 72 }} />
                         )}
                         {u.suspensionStatus === 'suspended' || !u.isActive ? (
                           <button
@@ -463,13 +469,15 @@ export default function UsersPage() {
                             disabled={reinstateMutation.isPending}
                             title="Lift suspension (PUT :id/suspension/revoke)"
                             style={{
-                              padding: '6px 14px',
-                              borderRadius: 999,
-                              border: '1px solid var(--admin-surface)',
-                              background: 'transparent',
+                              padding: '5px 14px',
+                              borderRadius: 9999,
+                              border: '1px solid rgba(0, 210, 106, 0.3)',
+                              background: 'rgba(0, 210, 106, 0.1)',
                               color: 'var(--admin-green)',
                               fontSize: 12,
+                              fontWeight: 500,
                               cursor: 'pointer',
+                              minWidth: 80,
                             }}
                           >
                             Reinstate
@@ -483,13 +491,15 @@ export default function UsersPage() {
                             disabled={suspendOneMutation.isPending}
                             title="Suspend for 7 days (PUT :id/suspend)"
                             style={{
-                              padding: '6px 14px',
-                              borderRadius: 999,
-                              border: '1px solid var(--admin-surface)',
-                              background: 'transparent',
+                              padding: '5px 14px',
+                              borderRadius: 9999,
+                              border: '1px solid rgba(229, 9, 20, 0.3)',
+                              background: 'rgba(229, 9, 20, 0.1)',
                               color: 'var(--admin-red)',
                               fontSize: 12,
+                              fontWeight: 500,
                               cursor: 'pointer',
+                              minWidth: 80,
                             }}
                           >
                             Suspend
