@@ -99,6 +99,37 @@ model PaymentIntent {
   @@index([idempotencyKey])
 }
 
+model Cart {
+  id          String     @id @default(cuid())
+  userId      String     @unique
+  voucherCode String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  items       CartItem[]
+
+  @@map("carts")
+  @@index([userId])
+}
+
+model CartItem {
+  id          String   @id @default(cuid())
+  cartId      String
+  itemType    String   // 'pass' | 'coins' | 'subscription'
+  itemId      String
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(18, 2)
+  quantity    Int      @default(1)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cart        Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  @@map("cart_items")
+  @@index([cartId])
+}
+
 model Refund {
   id               String    @id @default(cuid())
   paymentIntentId  String

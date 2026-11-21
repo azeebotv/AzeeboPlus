@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Flame, Clock, Shield, Users, Vote, Play, ChevronRight } from 'lucide-react';
+import { Flame, Clock, Shield, Users, Vote, Play, ChevronRight, TrendingUp } from 'lucide-react';
 import { PageShell } from '@/components/layout/PageShell';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -11,301 +10,311 @@ import { GlowCard } from '@/components/motion/GlowCard';
 interface Contestant {
   id: string;
   name: string;
-  tribe: 'Ikenga' | 'Odugwu';
-  avatar: string;
-  role: string;
-  status: 'Immunity Winner' | 'Eviction Risk' | 'Safe';
-  voteShare: number;
+  tribe: string;
   votes: number;
+  voteShare: number;
+  risk: string;
+  rank: number;
+  image: string;
+  bio: string;
 }
 
-const CONTESTANTS: Contestant[] = [
-  {
-    id: 'c1',
-    name: 'Chukwudi "The Titan" Eze',
-    tribe: 'Ikenga',
-    avatar: '🦁',
-    role: 'Fitness Coach, Enugu',
-    status: 'Immunity Winner',
-    voteShare: 42,
-    votes: 382400,
-  },
-  {
-    id: 'c2',
-    name: 'Amaka Bello',
-    tribe: 'Odugwu',
-    avatar: '🐆',
-    role: 'Marine Biologist, Lagos',
-    status: 'Safe',
-    voteShare: 29,
-    votes: 264100,
-  },
-  {
-    id: 'c3',
-    name: 'Tunde Bakare',
-    tribe: 'Ikenga',
-    avatar: '🦅',
-    role: 'Tactical Strategist, Ibadan',
-    status: 'Eviction Risk',
-    voteShare: 16,
-    votes: 145800,
-  },
-  {
-    id: 'c4',
-    name: 'Zainab Mohammed',
-    tribe: 'Odugwu',
-    avatar: '👑',
-    role: 'Survivalist, Kano',
-    status: 'Eviction Risk',
-    voteShare: 13,
-    votes: 118300,
-  },
-];
+interface SurvivorShowData {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  currentEpisode: number;
+  totalEpisodes: number;
+  tribes: string[];
+  nextEviction: string;
+  contestants: Contestant[];
+}
 
-export default function SurvivorIslandTitansPage(): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<'roster' | 'camp' | 'episodes'>('roster');
+export default function RealitySurvivorHubPage() {
+  const [showData, setShowData] = useState<SurvivorShowData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedTribe, setSelectedTribe] = useState('all');
+  const [votedContestants, setVotedContestants] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadSurvivorData() {
+      try {
+        const res = await fetch('/api/reality/survivor');
+        const json = await res.json();
+        if (json.success && isMounted) {
+          setShowData(json.data);
+        }
+      } catch (err) {
+        console.error('Failed to load survivor show data:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadSurvivorData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleVote = (id: string) => {
+    setVotedContestants((prev) => ({
+      ...prev,
+      [id]: (prev[id] || 0) + 1,
+    }));
+  };
+
+  const contestants = showData?.contestants || [];
+  const filteredContestants = contestants.filter((c) => {
+    if (selectedTribe === 'all') return true;
+    return c.tribe.toLowerCase().includes(selectedTribe.toLowerCase());
+  });
 
   return (
-    <PageShell maxWidth="full" activeNav="Reality">
-      {/* Hero Banner */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-az-flame/15 via-az-surface-root to-az-surface-root pt-10 pb-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal>
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+    <PageShell>
+      <div className="min-h-screen bg-az-surface-root text-az-ink pb-20 pt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {/* Flagship Show Hero Banner */}
+        <ScrollReveal>
+          <div className="relative rounded-2xl overflow-hidden border border-az-glass-border mb-8 bg-gradient-to-r from-az-surface-panel to-black">
+            <div className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80')]" />
+            <div className="relative p-6 sm:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="max-w-2xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="rounded-az-pill bg-az-flame/20 px-3 py-1 text-xs font-black text-az-flame uppercase tracking-wider flex items-center gap-1.5">
-                    <Flame className="h-3.5 w-3.5 fill-current" />
-                    Survivor Series • Season 3
-                  </span>
-                  <span className="rounded-az-pill bg-az-surface-panel px-3 py-1 text-xs font-bold text-az-warning-400">
-                    🏆 ₦100,000,000 Grand Prize
-                  </span>
+                <div className="flex items-center gap-2 text-az-flame text-xs sm:text-sm font-bold tracking-widest uppercase mb-3">
+                  <Flame className="h-4 w-4" />
+                  <span>Flagship Reality Experience • Season 1</span>
                 </div>
-                <h1 className="az-display text-az-ink font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight">
-                  SURVIVOR : <span className="text-az-flame">ISLAND TITANS</span>
+                <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase">
+                  {showData?.title || 'SURVIVOR : ISLAND TITANS'}
                 </h1>
-                <p className="az-lead text-az-ink-muted mt-3 max-w-xl">
-                  18 castaways stranded on the remote shores of Snake Island, Badagry. Outwit,
-                  Outplay, Outlast. You hold their eviction fate in your hands.
+                <p className="text-az-ink-muted mt-3 text-sm sm:text-base leading-relaxed">
+                  {showData?.description ||
+                    '16 castaways marooned on Snake Island fighting the elements, tribal alliances, and dramatic evictions for 100 Million Naira.'}
                 </p>
 
-                {/* Eviction Timer & CTAs */}
-                <div className="mt-6 flex flex-wrap items-center gap-4">
-                  <div className="rounded-az-control border border-az-flame/40 bg-az-surface-root p-3 flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-az-flame" />
+                <div className="flex flex-wrap items-center gap-4 mt-6">
+                  <Link
+                    href="/reality/voting"
+                    className="px-6 py-3 rounded-xl bg-az-flame text-az-surface-root font-bold text-sm hover:opacity-90 transition-opacity flex items-center gap-2 shadow-lg"
+                  >
+                    <Vote className="h-4 w-4" />
+                    Enter Eviction Voting Arena
+                  </Link>
+                  <Link
+                    href="/watch/survivor-ep3"
+                    className="px-5 py-3 rounded-xl bg-az-surface-panel/80 border border-az-glass-border text-white font-medium text-sm hover:bg-az-surface-panel transition-colors flex items-center gap-2"
+                  >
+                    <Play className="h-4 w-4 fill-current" />
+                    Watch Latest Episode ({showData?.currentEpisode || 3})
+                  </Link>
+                </div>
+              </div>
+
+              {/* Live Tribal Council Countdown Box */}
+              <div className="bg-black/60 backdrop-blur-md rounded-2xl p-5 border border-az-glass-border text-center md:min-w-[240px]">
+                <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-az-warning-400 uppercase tracking-wider mb-2">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Tribal Council Countdown</span>
+                </div>
+                <div className="text-2xl sm:text-3xl font-mono font-black text-white my-1">
+                  01d 14h 22m
+                </div>
+                <p className="text-[11px] text-az-ink-muted mt-1">Next Eviction Ceremony</p>
+                <div className="mt-3 pt-3 border-t border-az-glass-border/60 flex items-center justify-center gap-1 text-xs text-az-flame font-semibold">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  <span>Voting Gate Open</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Tribal Alliances Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="p-5 rounded-xl bg-az-surface-panel/40 border border-az-glass-border flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-az-flame text-xs font-bold uppercase tracking-wider">
+                <Shield className="h-4 w-4" />
+                <span>Ikenga Tribe</span>
+              </div>
+              <h3 className="text-lg font-bold text-white mt-1">Warrior Camp • Coastline</h3>
+              <p className="text-xs text-az-ink-muted mt-0.5">
+                8 Castaways Active • Won Immunity Challenge
+              </p>
+            </div>
+            <button
+              onClick={() => setSelectedTribe('ikenga')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                selectedTribe === 'ikenga'
+                  ? 'bg-az-flame text-az-surface-root border-az-flame'
+                  : 'border-az-glass-border text-az-ink-muted hover:text-white'
+              }`}
+            >
+              Filter Camp
+            </button>
+          </div>
+
+          <div className="p-5 rounded-xl bg-az-surface-panel/40 border border-az-glass-border flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-az-warning-400 text-xs font-bold uppercase tracking-wider">
+                <Shield className="h-4 w-4" />
+                <span>Odugwu Tribe</span>
+              </div>
+              <h3 className="text-lg font-bold text-white mt-1">Ridge Camp • Highlands</h3>
+              <p className="text-xs text-az-ink-muted mt-0.5">
+                8 Castaways Active • Facing Eviction Radar
+              </p>
+            </div>
+            <button
+              onClick={() => setSelectedTribe('odugwu')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                selectedTribe === 'odugwu'
+                  ? 'bg-az-flame text-az-surface-root border-az-flame'
+                  : 'border-az-glass-border text-az-ink-muted hover:text-white'
+              }`}
+            >
+              Filter Camp
+            </button>
+          </div>
+        </div>
+
+        {/* Contestants Section */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+              <Users className="h-5 w-5 text-az-flame" />
+              Live Eviction Radar & Vote Share
+            </h2>
+            <p className="text-xs sm:text-sm text-az-ink-muted mt-1">
+              Data fetched live from Azeebo Reality DB. Cast votes to save your favourites.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedTribe('all')}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                selectedTribe === 'all'
+                  ? 'bg-az-flame text-az-surface-root font-semibold'
+                  : 'bg-az-surface-panel text-az-ink-muted border border-az-glass-border'
+              }`}
+            >
+              All Castaways
+            </button>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="h-64 rounded-xl bg-az-surface-panel/40 animate-pulse border border-az-glass-border"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {filteredContestants.map((c) => {
+              const personalVotes = (votedContestants[c.id] || 0) * 10;
+              const totalVotes = c.votes + personalVotes;
+              return (
+                <GlowCard key={c.id}>
+                  <div className="p-4 flex flex-col justify-between h-full">
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-az-ink-muted block">
-                        Tribal Council Closes In
-                      </span>
-                      <span className="text-sm font-extrabold text-az-ink">
-                        01d : 14h : 22m : 45s
-                      </span>
-                    </div>
-                  </div>
-
-                  <Link href="/reality/voting">
-                    <motion.button
-                      type="button"
-                      className="rounded-az-pill bg-az-flame px-7 py-3 text-xs font-bold text-az-surface-root shadow-lg flex items-center gap-2"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Vote className="h-4 w-4" />
-                      Vote to Save Now
-                    </motion.button>
-                  </Link>
-
-                  <Link href="/reality/episodes">
-                    <button
-                      type="button"
-                      className="rounded-az-pill border border-az-glass-border px-5 py-3 text-xs font-bold text-az-ink hover:bg-az-surface-panel transition-colors flex items-center gap-1.5"
-                    >
-                      <Play className="h-3.5 w-3.5 fill-current" />
-                      Watch Episodes
-                    </button>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Island Stats Card */}
-              <div className="w-full lg:w-80 rounded-az-card border border-az-glass-border bg-az-surface-root p-6 shadow-xl">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-az-flame mb-4">
-                  Island Camp Intel
-                </h3>
-                <div className="space-y-3.5 text-xs">
-                  <div className="flex justify-between py-1 border-b border-az-glass-border">
-                    <span className="text-az-ink-muted">Location</span>
-                    <span className="font-bold text-az-ink">Snake Island, Lagos</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-az-glass-border">
-                    <span className="text-az-ink-muted">Remaining Castaways</span>
-                    <span className="font-bold text-az-ink">8 of 18 Remaining</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-az-glass-border">
-                    <span className="text-az-ink-muted">Active Tribes</span>
-                    <span className="font-bold text-az-ink">Ikenga vs Odugwu</span>
-                  </div>
-                  <div className="flex justify-between py-1">
-                    <span className="text-az-ink-muted">Next Eviction</span>
-                    <span className="font-bold text-az-error-400">Double Elimination</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* Tabs Switcher */}
-      <div className="border-b border-az-glass-border bg-az-surface-root">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex gap-6">
-          <button
-            type="button"
-            onClick={() => setActiveTab('roster')}
-            className={`py-4 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
-              activeTab === 'roster'
-                ? 'border-az-flame text-az-flame'
-                : 'border-transparent text-az-ink-muted hover:text-az-ink'
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            Contestants & Power Rankings
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('camp')}
-            className={`py-4 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
-              activeTab === 'camp'
-                ? 'border-az-flame text-az-flame'
-                : 'border-transparent text-az-ink-muted hover:text-az-ink'
-            }`}
-          >
-            <Shield className="h-4 w-4" />
-            Tribal Alliances & Camp Map
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('episodes')}
-            className={`py-4 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
-              activeTab === 'episodes'
-                ? 'border-az-flame text-az-flame'
-                : 'border-transparent text-az-ink-muted hover:text-az-ink'
-            }`}
-          >
-            <Play className="h-4 w-4" />
-            Camp Diariez & Highlights
-          </button>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {activeTab === 'roster' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="az-title text-az-ink font-bold">Live Eviction Radar</h2>
-                <p className="az-caption text-az-ink-muted">
-                  Audience votes determine who survives the upcoming Tribal Council.
-                </p>
-              </div>
-              <Link
-                href="/reality/voting"
-                className="text-xs font-bold text-az-flame hover:underline flex items-center gap-1"
-              >
-                Full Voting Terminal <ChevronRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {CONTESTANTS.map((c, idx) => (
-                <GlowCard key={c.id} universe="reality" className="p-5">
-                  <div className="flex items-center gap-4">
-                    <span className="text-4xl">{c.avatar}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-az-ink-muted">
-                          Rank #{idx + 1} • {c.tribe} Tribe
-                        </span>
-                        <span
-                          className={`rounded-az-pill px-2.5 py-0.5 text-[10px] font-bold ${
-                            c.status === 'Immunity Winner'
-                              ? 'bg-az-success-500/20 text-az-success-400'
-                              : c.status === 'Eviction Risk'
-                                ? 'bg-az-error-500/20 text-az-error-400'
-                                : 'bg-az-surface-panel text-az-ink-dim'
-                          }`}
-                        >
-                          {c.status}
-                        </span>
-                      </div>
-                      <h3 className="az-title text-az-ink font-bold truncate mt-0.5">{c.name}</h3>
-                      <p className="az-caption text-az-ink-muted">{c.role}</p>
-
-                      {/* Vote Progress Bar */}
-                      <div className="mt-3">
-                        <div className="flex justify-between text-[11px] mb-1">
-                          <span className="text-az-ink-dim font-bold">
-                            {c.votes.toLocaleString()} Votes
-                          </span>
-                          <span className="font-extrabold text-az-flame">{c.voteShare}%</span>
+                      {/* Avatar & Tribe Badge */}
+                      <div className="relative rounded-xl overflow-hidden aspect-square mb-3 border border-az-glass-border">
+                        <img src={c.image} alt={c.name} className="w-full h-full object-cover" />
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-black/70 text-white backdrop-blur-sm border border-az-glass-border">
+                          {c.tribe}
                         </div>
-                        <div className="h-2 w-full rounded-full bg-az-surface-root overflow-hidden">
+                        {c.risk === 'danger' && (
+                          <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-az-error-500/80 text-white backdrop-blur-sm animate-pulse">
+                            Eviction Risk
+                          </div>
+                        )}
+                      </div>
+
+                      <h3 className="font-bold text-white text-base">{c.name}</h3>
+                      <p className="text-xs text-az-ink-muted mt-0.5 line-clamp-2">{c.bio}</p>
+
+                      {/* Vote Share Meter */}
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between text-xs text-az-ink-muted mb-1">
+                          <span>Vote Share</span>
+                          <span className="font-semibold text-white">{c.voteShare}%</span>
+                        </div>
+                        <div className="w-full bg-az-surface-panel rounded-full h-1.5 overflow-hidden border border-az-glass-border/40">
                           <div
+                            className="bg-az-flame h-full rounded-full transition-all duration-500"
                             style={{ width: `${c.voteShare}%` }}
-                            className="h-full rounded-full bg-az-flame transition-all duration-500"
                           />
                         </div>
+                        <div className="text-[11px] text-az-ink-muted mt-1.5 text-right font-mono">
+                          {totalVotes.toLocaleString()} Votes
+                        </div>
                       </div>
+                    </div>
+
+                    {/* Action: Vote Button */}
+                    <div className="mt-4 pt-3 border-t border-az-glass-border">
+                      <button
+                        onClick={() => handleVote(c.id)}
+                        className="w-full py-2 rounded-lg bg-az-flame text-az-surface-root font-bold text-xs hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5"
+                      >
+                        <Vote className="h-3.5 w-3.5" />
+                        Cast 10 Quick Votes
+                      </button>
                     </div>
                   </div>
                 </GlowCard>
-              ))}
-            </div>
+              );
+            })}
           </div>
         )}
 
-        {activeTab === 'camp' && (
-          <div className="rounded-az-card border border-az-glass-border bg-az-surface-root p-8 text-center space-y-4">
-            <Shield className="h-12 w-12 text-az-flame mx-auto" />
-            <h3 className="az-title text-az-ink font-bold">Interactive Island Territory Map</h3>
-            <p className="az-caption text-az-ink-muted max-w-lg mx-auto">
-              Inspect Ikenga Camp on North Shore vs Odugwu Camp on the Mangrove Bay, food supply
-              caches, and hidden immunity idol locations.
-            </p>
+        {/* Camp Video Diaries */}
+        <div className="mt-12">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Play className="h-5 w-5 text-az-flame fill-current" />
+              Confessional Video Diaries
+            </h2>
+            <Link
+              href="/reality/episodes"
+              className="text-xs font-semibold text-az-flame hover:underline flex items-center gap-1"
+            >
+              Browse All Episodes <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
-        )}
 
-        {activeTab === 'episodes' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[1, 2, 3].map((ep) => (
-              <GlowCard key={ep} universe="reality" className="p-4 space-y-3">
-                <div className="aspect-video w-full rounded-az-control bg-az-surface-panel flex items-center justify-center relative group">
-                  <Play className="h-10 w-10 text-az-flame group-hover:scale-110 transition-transform" />
-                  <span className="absolute bottom-2 right-2 rounded bg-black/80 px-2 py-0.5 text-[10px] font-bold text-white">
-                    44:12
+              <div
+                key={ep}
+                className="rounded-xl border border-az-glass-border bg-az-surface-panel/40 p-4 hover:border-az-flame/50 transition-colors"
+              >
+                <div className="aspect-video rounded-lg bg-black/60 mb-3 flex items-center justify-center relative overflow-hidden group cursor-pointer">
+                  <Play className="h-8 w-8 text-az-flame group-hover:scale-110 transition-transform fill-current" />
+                  <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] bg-black/80 text-white font-mono">
+                    08:45
                   </span>
                 </div>
-                <div>
-                  <span className="text-[10px] font-bold text-az-flame uppercase">
-                    Episode {ep}
-                  </span>
-                  <h4 className="az-subtitle text-az-ink font-bold mt-0.5">
-                    {ep === 1
-                      ? 'Arrival on Snake Island'
-                      : ep === 2
-                        ? 'The Fire Challenge'
-                        : 'Betrayal at Tribal Council'}
-                  </h4>
-                  <p className="az-caption text-az-ink-muted mt-1">
-                    Tensions boil over as food rations run low between the tribes.
-                  </p>
-                </div>
-              </GlowCard>
+                <div className="text-xs font-bold text-az-flame uppercase">Episode {ep}</div>
+                <h4 className="font-semibold text-white text-sm mt-0.5">
+                  {ep === 1
+                    ? 'Arrival on Snake Island'
+                    : ep === 2
+                      ? 'The Fire Challenge'
+                      : 'Midnight Betrayal'}
+                </h4>
+                <p className="text-xs text-az-ink-muted mt-1">
+                  Raw confessions recorded in the secret diary booth.
+                </p>
+              </div>
             ))}
           </div>
-        )}
+        </div>
       </div>
     </PageShell>
   );

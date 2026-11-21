@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Music, Play, Pause, Plus, Share2, Shuffle, Volume2 } from 'lucide-react';
 import { PageShell } from '@/components/layout/PageShell';
@@ -11,220 +11,269 @@ interface Track {
   rank: number;
   title: string;
   artist: string;
-  artistId: string;
-  duration: string;
-  plays: string;
-  quality: string;
   album: string;
+  streams: string;
+  duration: string;
+  genre: string;
+  cover: string;
+  audioQuality: string;
 }
 
-const TRACKS: Track[] = [
-  {
-    id: 't1',
-    rank: 1,
-    title: 'City Boys',
-    artist: 'Burna Boy',
-    artistId: 'burna-boy',
-    duration: '2:33',
-    plays: '142.8M',
-    quality: 'Hi-Res Lossless',
-    album: 'I Told Them...',
-  },
-  {
-    id: 't2',
-    rank: 2,
-    title: 'Lonely At The Top',
-    artist: 'Asake',
-    artistId: 'asake',
-    duration: '2:37',
-    plays: '118.4M',
-    quality: 'Spatial Audio',
-    album: 'Work of Art',
-  },
-  {
-    id: 't3',
-    rank: 3,
-    title: 'Calm Down',
-    artist: 'Rema',
-    artistId: 'rema',
-    duration: '3:39',
-    plays: '890.2M',
-    quality: 'Dolby Atmos',
-    album: 'Rave & Climax',
-  },
-  {
-    id: 't4',
-    rank: 4,
-    title: 'Me & U',
-    artist: 'Tems',
-    artistId: 'tems',
-    duration: '3:12',
-    plays: '94.6M',
-    quality: 'Hi-Res Lossless',
-    album: 'Born in the Wild',
-  },
-  {
-    id: 't5',
-    rank: 5,
-    title: 'Essence (feat. Tems)',
-    artist: 'Wizkid',
-    artistId: 'wizkid',
-    duration: '4:08',
-    plays: '450.1M',
-    quality: 'Spatial Audio',
-    album: 'Made In Lagos',
-  },
-];
+export default function MusicTracksPage() {
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [selectedGenre, setSelectedGenre] = useState('all');
 
-export default function MusicTracksPage(): React.JSX.Element {
-  const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
+  useEffect(() => {
+    let isMounted = true;
+    async function loadTracks() {
+      try {
+        const res = await fetch('/api/music/tracks');
+        const json = await res.json();
+        if (json.success && isMounted) {
+          setTracks(json.data);
+          if (json.data[0]) {
+            setPlayingId(json.data[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load music tracks:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadTracks();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  const togglePlay = (id: string) => {
-    setPlayingTrackId((prev) => (prev === id ? null : id));
-  };
+  const genres = ['all', ...Array.from(new Set(tracks.map((t) => t.genre)))];
+
+  const filteredTracks = tracks.filter((t) => {
+    if (selectedGenre === 'all') return true;
+    return t.genre.toLowerCase() === selectedGenre.toLowerCase();
+  });
+
+  const currentTrack = tracks.find((t) => t.id === playingId) || tracks[0];
 
   return (
-    <PageShell maxWidth="full" activeNav="Music">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header Title & Controls */}
+    <PageShell>
+      <div className="min-h-screen bg-az-surface-root text-az-ink pb-32 pt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {/* Header */}
         <ScrollReveal>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="border-b border-az-glass-border pb-6 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="rounded-az-pill bg-az-flame/15 px-3 py-1 text-xs font-bold text-az-flame uppercase tracking-wider flex items-center gap-1.5">
-                  <Music className="h-3.5 w-3.5" />
-                  Official Charts • Top 50 Nigeria
-                </span>
+              <div className="flex items-center gap-2 text-az-flame text-sm font-semibold tracking-wider uppercase mb-2">
+                <Music className="h-4 w-4" />
+                <span>Pan-African Soundboard</span>
               </div>
-              <h1 className="az-heading text-az-ink font-extrabold text-3xl sm:text-4xl">
-                Trending Tracks & Viral Sounds
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+                Viral Sounds & Top 50 Chart
               </h1>
-              <p className="az-caption text-az-ink-muted mt-1">
-                Updated hourly from verified streams across Nigeria, Ghana, UK, and USA.
+              <p className="text-az-ink-muted mt-2 text-sm sm:text-base max-w-2xl">
+                The most streamed records, viral street anthems, and high-fidelity Afrobeats audio,
+                queried directly from Azeebo Music DB.
               </p>
             </div>
 
-            {/* Play All & Shuffle Buttons */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setPlayingTrackId(TRACKS[0]?.id || null)}
-                className="rounded-az-pill bg-az-flame px-5 py-2.5 text-xs font-bold text-az-surface-root shadow flex items-center gap-2"
+                onClick={() => {
+                  const random = tracks[Math.floor(Math.random() * tracks.length)];
+                  if (random) setPlayingId(random.id);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-az-surface-panel border border-az-glass-border text-white text-xs font-semibold hover:bg-az-surface-panel/80 transition-colors flex items-center gap-2"
               >
-                <Play className="h-4 w-4 fill-current" />
-                Play All
+                <Shuffle className="h-4 w-4" />
+                Shuffle Play
               </button>
-              <button
-                type="button"
-                className="rounded-az-pill border border-az-glass-border bg-az-surface-root px-4 py-2.5 text-xs font-bold text-az-ink hover:bg-az-surface-panel transition-colors flex items-center gap-2"
+              <Link
+                href="/music/artists"
+                className="px-4 py-2.5 rounded-xl bg-az-flame text-az-surface-root text-xs font-bold hover:opacity-90 transition-opacity"
               >
-                <Shuffle className="h-4 w-4 text-az-flame" />
-                Shuffle
-              </button>
+                Explore Artists
+              </Link>
             </div>
           </div>
         </ScrollReveal>
 
-        {/* Tracks List */}
-        <div className="rounded-az-card border border-az-glass-border bg-az-surface-root overflow-hidden">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 px-6 py-3 border-b border-az-glass-border text-[11px] font-bold text-az-ink-muted uppercase tracking-wider">
-            <span className="col-span-1">#</span>
-            <span className="col-span-5">Title & Artist</span>
-            <span className="col-span-3 hidden sm:block">Album & Quality</span>
-            <span className="col-span-2 hidden md:block text-right">Streams</span>
-            <span className="col-span-1 text-right">Time</span>
-          </div>
-
-          {/* Rows */}
-          <div className="divide-y divide-az-glass-border">
-            {TRACKS.map((track) => {
-              const isPlaying = playingTrackId === track.id;
-              return (
-                <div
-                  key={track.id}
-                  className={`grid grid-cols-12 items-center px-6 py-3.5 transition-colors hover:bg-az-surface-panel/60 ${
-                    isPlaying ? 'bg-az-surface-panel/80' : ''
-                  }`}
-                >
-                  {/* Rank / Play Button */}
-                  <div className="col-span-1 flex items-center">
-                    <button
-                      type="button"
-                      onClick={() => togglePlay(track.id)}
-                      className="group flex h-8 w-8 items-center justify-center rounded-full hover:bg-az-flame/20 transition-colors"
-                      aria-label={isPlaying ? 'Pause track' : 'Play track'}
-                    >
-                      {isPlaying ? (
-                        <Pause className="h-4 w-4 text-az-flame fill-current" />
-                      ) : (
-                        <>
-                          <span className="group-hover:hidden text-xs font-bold text-az-ink-muted">
-                            {track.rank}
-                          </span>
-                          <Play className="hidden group-hover:block h-3.5 w-3.5 text-az-flame fill-current" />
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Title & Artist */}
-                  <div className="col-span-5 flex flex-col min-w-0 pr-4">
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/music/tracks/${track.id}`}
-                        className={`text-xs font-bold truncate hover:underline ${
-                          isPlaying ? 'text-az-flame' : 'text-az-ink'
-                        }`}
-                      >
-                        {track.title}
-                      </Link>
-                      {isPlaying && <Volume2 className="h-3 w-3 text-az-flame animate-pulse" />}
-                    </div>
-                    <Link
-                      href={`/music/artists/${track.artistId}`}
-                      className="text-[11px] text-az-ink-muted truncate hover:text-az-ink hover:underline"
-                    >
-                      {track.artist}
-                    </Link>
-                  </div>
-
-                  {/* Album & Quality Tag */}
-                  <div className="col-span-3 hidden sm:flex flex-col text-xs min-w-0 pr-4">
-                    <span className="text-az-ink-dim truncate">{track.album}</span>
-                    <span className="text-[10px] text-az-success-400 font-semibold">
-                      {track.quality}
-                    </span>
-                  </div>
-
-                  {/* Streams */}
-                  <div className="col-span-2 hidden md:block text-right text-xs font-medium text-az-ink-muted">
-                    {track.plays}
-                  </div>
-
-                  {/* Duration & Quick Actions */}
-                  <div className="col-span-1 flex items-center justify-end gap-2 text-xs text-az-ink-muted">
-                    <span>{track.duration}</span>
-                    <button
-                      type="button"
-                      className="rounded p-1 hover:text-az-flame transition-colors"
-                      title="Add to Playlist"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded p-1 hover:text-az-flame transition-colors hidden lg:block"
-                      title="Share Track"
-                    >
-                      <Share2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        {/* Genre Filter Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
+          {genres.map((g) => (
+            <button
+              key={g}
+              onClick={() => setSelectedGenre(g)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors capitalize ${
+                selectedGenre === g
+                  ? 'bg-az-flame text-az-surface-root'
+                  : 'bg-az-surface-panel text-az-ink-muted hover:text-white border border-az-glass-border'
+              }`}
+            >
+              {g}
+            </button>
+          ))}
         </div>
+
+        {/* Tracks Table */}
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="h-16 rounded-xl bg-az-surface-panel/40 animate-pulse border border-az-glass-border"
+              />
+            ))}
+          </div>
+        ) : filteredTracks.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-az-glass-border p-12 text-center">
+            <Music className="h-10 w-10 text-az-ink-muted mx-auto mb-3 opacity-40" />
+            <h3 className="text-lg font-semibold text-white">No tracks available</h3>
+            <p className="text-sm text-az-ink-muted mt-1">
+              Check back shortly as new tracks are ingested.
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-az-glass-border bg-az-surface-panel/20 overflow-hidden">
+            <div className="grid grid-cols-12 gap-4 px-5 py-3 text-xs font-bold uppercase tracking-wider text-az-ink-muted border-b border-az-glass-border bg-az-surface-panel/40">
+              <div className="col-span-1 text-center">#</div>
+              <div className="col-span-6 sm:col-span-5">Title</div>
+              <div className="hidden sm:block col-span-3">Album / Vibe</div>
+              <div className="hidden md:block col-span-2 text-right">Streams</div>
+              <div className="col-span-5 sm:col-span-1 text-right">Time</div>
+            </div>
+
+            <div className="divide-y divide-az-glass-border/60">
+              {filteredTracks.map((track) => {
+                const isPlaying = playingId === track.id;
+                return (
+                  <div
+                    key={track.id}
+                    onClick={() => setPlayingId(track.id)}
+                    className={`grid grid-cols-12 gap-4 px-5 py-3.5 items-center cursor-pointer transition-colors group ${
+                      isPlaying
+                        ? 'bg-az-flame/10 text-white'
+                        : 'hover:bg-az-surface-panel/60 text-az-ink'
+                    }`}
+                  >
+                    {/* Rank / Play Toggle */}
+                    <div className="col-span-1 flex items-center justify-center">
+                      {isPlaying ? (
+                        <Volume2 className="h-4 w-4 text-az-flame animate-pulse" />
+                      ) : (
+                        <span className="text-xs font-mono font-bold text-az-ink-muted group-hover:hidden">
+                          {track.rank}
+                        </span>
+                      )}
+                      <Play
+                        className={`h-4 w-4 text-white fill-current hidden ${
+                          !isPlaying ? 'group-hover:block' : ''
+                        }`}
+                      />
+                    </div>
+
+                    {/* Title + Artist + Cover */}
+                    <div className="col-span-6 sm:col-span-5 flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0 border border-az-glass-border">
+                        <img
+                          src={track.cover}
+                          alt={track.title}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-sm text-white truncate">{track.title}</h4>
+                        <div className="flex items-center gap-2 text-xs text-az-ink-muted truncate">
+                          <span>{track.artist}</span>
+                          <span className="hidden lg:inline px-1.5 py-0.2 rounded text-[10px] bg-az-surface-panel border border-az-glass-border text-az-flame">
+                            {track.audioQuality}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Album */}
+                    <div className="hidden sm:block col-span-3 text-xs text-az-ink-muted truncate">
+                      {track.album}
+                    </div>
+
+                    {/* Streams */}
+                    <div className="hidden md:block col-span-2 text-right text-xs font-mono text-az-ink-muted">
+                      {track.streams}
+                    </div>
+
+                    {/* Duration & Actions */}
+                    <div className="col-span-5 sm:col-span-1 flex items-center justify-end gap-2 text-xs font-mono text-az-ink-muted">
+                      <span>{track.duration}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className="p-1 rounded hover:bg-az-surface-panel text-az-ink-muted hover:text-white"
+                        title="Add to Playlist"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Sticky Player Bottom Bar */}
+        {currentTrack && (
+          <div className="fixed bottom-0 inset-x-0 bg-az-surface-panel/95 backdrop-blur-xl border-t border-az-glass-border p-4 z-40">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-12 w-12 rounded-lg overflow-hidden flex-shrink-0 border border-az-glass-border">
+                  <img
+                    src={currentTrack.cover}
+                    alt={currentTrack.title}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="font-bold text-sm text-white truncate">{currentTrack.title}</h4>
+                  <p className="text-xs text-az-ink-muted truncate">{currentTrack.artist}</p>
+                </div>
+              </div>
+
+              {/* Player Controls */}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPlayingId(playingId ? null : currentTrack.id)}
+                  className="p-3 rounded-full bg-az-flame text-az-surface-root hover:opacity-90 transition-opacity"
+                  title={playingId ? 'Pause' : 'Play'}
+                >
+                  {playingId ? (
+                    <Pause className="h-5 w-5 fill-current" />
+                  ) : (
+                    <Play className="h-5 w-5 fill-current" />
+                  )}
+                </button>
+              </div>
+
+              <div className="hidden sm:flex items-center gap-4 text-xs text-az-ink-muted">
+                <span className="px-2 py-1 rounded bg-az-surface-root border border-az-glass-border font-mono text-az-flame">
+                  {currentTrack.audioQuality}
+                </span>
+                <button
+                  type="button"
+                  className="p-2 rounded-lg hover:bg-az-surface-root"
+                  title="Share Track"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PageShell>
   );

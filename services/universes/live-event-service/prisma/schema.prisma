@@ -56,3 +56,38 @@ model LiveEventTicket {
   @@index([userId])
   @@index([status])
 }
+
+model WatchPartyRoom {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  title        String
+  contentId    String?
+  hostUserId   String
+  isActive     Boolean  @default(true)
+  playbackTime Float    @default(0.0)
+  isPlaying    Boolean  @default(false)
+  participants Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  messages     WatchPartyMessage[]
+
+  @@map("watch_party_rooms")
+  @@index([code])
+  @@index([isActive])
+}
+
+model WatchPartyMessage {
+  id        String   @id @default(uuid())
+  roomId    String
+  userId    String
+  userName  String
+  message   String
+  createdAt DateTime @default(now())
+
+  room      WatchPartyRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("watch_party_messages")
+  @@index([roomId])
+  @@index([createdAt])
+}

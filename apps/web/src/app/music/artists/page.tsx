@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Music2, Search, CheckCircle2, Headphones, Play } from 'lucide-react';
+import { Users, CheckCircle2, Headphones, Music, UserPlus, UserCheck, Search } from 'lucide-react';
 import { PageShell } from '@/components/layout/PageShell';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -10,206 +10,224 @@ import { GlowCard } from '@/components/motion/GlowCard';
 interface Artist {
   id: string;
   name: string;
+  slug: string;
   genre: string;
-  monthlyListeners: string;
-  topTrack: string;
-  avatar: string;
-  followers: string;
-  verified: boolean;
+  bio: string;
+  monthlyListeners: number;
+  followersCount: number;
+  image: string;
+  isVerified: boolean;
+  topTracks: string[];
 }
 
-const ARTISTS: Artist[] = [
-  {
-    id: 'burna-boy',
-    name: 'Burna Boy',
-    genre: 'Afro-fusion',
-    monthlyListeners: '18.4M',
-    topTrack: 'City Boys',
-    avatar: '🦍',
-    followers: '9.2M',
-    verified: true,
-  },
-  {
-    id: 'wizkid',
-    name: 'Wizkid',
-    genre: 'Afrobeats',
-    monthlyListeners: '14.8M',
-    topTrack: 'Essence',
-    avatar: '🦅',
-    followers: '11.5M',
-    verified: true,
-  },
-  {
-    id: 'asake',
-    name: 'Asake',
-    genre: 'Amapiano / Fuji',
-    monthlyListeners: '9.6M',
-    topTrack: 'Lonely At The Top',
-    avatar: '⚡',
-    followers: '4.8M',
-    verified: true,
-  },
-  {
-    id: 'tems',
-    name: 'Tems',
-    genre: 'Afro R&B',
-    monthlyListeners: '12.1M',
-    topTrack: 'Me & U',
-    avatar: '✨',
-    followers: '6.4M',
-    verified: true,
-  },
-  {
-    id: 'rema',
-    name: 'Rema',
-    genre: 'Afrorave',
-    monthlyListeners: '22.3M',
-    topTrack: 'Calm Down',
-    avatar: '🦇',
-    followers: '8.7M',
-    verified: true,
-  },
-  {
-    id: 'ayra-starr',
-    name: 'Ayra Starr',
-    genre: 'Afropop',
-    monthlyListeners: '11.2M',
-    topTrack: 'Rush',
-    avatar: '🌟',
-    followers: '5.1M',
-    verified: true,
-  },
-];
-
-const GENRES = ['All', 'Afrobeats', 'Afro-fusion', 'Amapiano / Fuji', 'Afro R&B', 'Afrorave'];
-
-export default function MusicArtistsPage(): React.JSX.Element {
+export default function MusicArtistsPage() {
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedGenre, setSelectedGenre] = useState('All');
+  const [selectedGenre, setSelectedGenre] = useState('all');
   const [following, setFollowing] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadArtists() {
+      try {
+        const res = await fetch('/api/music/artists');
+        const json = await res.json();
+        if (json.success && isMounted) {
+          setArtists(json.data);
+        }
+      } catch (err) {
+        console.error('Failed to load music artists:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadArtists();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const toggleFollow = (id: string) => {
     setFollowing((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const filteredArtists = ARTISTS.filter((artist) => {
+  const genres = ['all', ...Array.from(new Set(artists.map((a) => a.genre)))];
+
+  const filteredArtists = artists.filter((artist) => {
     const matchesSearch =
       artist.name.toLowerCase().includes(search.toLowerCase()) ||
-      artist.topTrack.toLowerCase().includes(search.toLowerCase());
-    const matchesGenre = selectedGenre === 'All' || artist.genre === selectedGenre;
+      artist.genre.toLowerCase().includes(search.toLowerCase());
+    const matchesGenre = selectedGenre === 'all' || artist.genre === selectedGenre;
     return matchesSearch && matchesGenre;
   });
 
   return (
-    <PageShell maxWidth="full" activeNav="Music">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <PageShell>
+      <div className="min-h-screen bg-az-surface-root text-az-ink pb-20 pt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {/* Header */}
         <ScrollReveal>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="rounded-az-pill bg-az-flame/15 px-3 py-1 text-xs font-bold text-az-flame uppercase tracking-wider flex items-center gap-1.5">
-                  <Music2 className="h-3.5 w-3.5" />
-                  Music Universe • Artists Directory
-                </span>
-              </div>
-              <h1 className="az-heading text-az-ink font-extrabold text-3xl sm:text-4xl">
-                African & Global Hitmakers
-              </h1>
-              <p className="az-caption text-az-ink-muted mt-1">
-                Explore discographies, tour dates, and exclusive Azeebo+ sound releases.
-              </p>
+          <div className="border-b border-az-glass-border pb-6 mb-8">
+            <div className="flex items-center gap-2 text-az-flame text-sm font-semibold tracking-wider uppercase mb-2">
+              <Users className="h-4 w-4" />
+              <span>Music Universe Directory</span>
             </div>
-
-            {/* Search Input */}
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3.5 top-3 h-4 w-4 text-az-ink-muted" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search artists or tracks..."
-                className="w-full rounded-az-pill border border-az-glass-border bg-az-surface-root pl-10 pr-4 py-2 text-xs text-az-ink focus:border-az-flame focus:outline-none"
-              />
-            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+              Pan-African Hitmakers & Artists
+            </h1>
+            <p className="text-az-ink-muted mt-2 text-sm sm:text-base max-w-2xl">
+              Verified Afrobeats giants, Amapiano pioneers, and breakout stars shaping the sound of
+              the continent.
+            </p>
           </div>
         </ScrollReveal>
 
-        {/* Genre Filters */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide">
-          {GENRES.map((genre) => (
-            <button
-              key={genre}
-              type="button"
-              onClick={() => setSelectedGenre(genre)}
-              className={`rounded-az-pill px-4 py-1.5 text-xs font-bold transition-all whitespace-nowrap ${
-                selectedGenre === genre
-                  ? 'bg-az-flame text-az-surface-root shadow-sm'
-                  : 'border border-az-glass-border bg-az-surface-root text-az-ink-muted hover:text-az-ink'
-              }`}
-            >
-              {genre}
-            </button>
-          ))}
+        {/* Filter & Search Bar */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-az-ink-muted" />
+            <input
+              type="text"
+              placeholder="Search by artist or genre..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-az-surface-panel border border-az-glass-border text-sm text-white placeholder-az-ink-dim focus:outline-none focus:border-az-flame transition-colors"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+            {genres.map((g) => (
+              <button
+                key={g}
+                onClick={() => setSelectedGenre(g)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors capitalize ${
+                  selectedGenre === g
+                    ? 'bg-az-flame text-az-surface-root'
+                    : 'bg-az-surface-panel text-az-ink-muted hover:text-white border border-az-glass-border'
+                }`}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Artists Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredArtists.map((artist) => {
-            const isFollowed = following[artist.id];
-            return (
-              <GlowCard key={artist.id} universe="music" className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-full bg-az-surface-panel flex items-center justify-center text-3xl shadow-inner border border-az-glass-border">
-                      {artist.avatar}
-                    </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className="h-72 rounded-2xl bg-az-surface-panel/40 animate-pulse border border-az-glass-border"
+              />
+            ))}
+          </div>
+        ) : filteredArtists.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-az-glass-border p-12 text-center">
+            <Users className="h-10 w-10 text-az-ink-muted mx-auto mb-3 opacity-40" />
+            <h3 className="text-lg font-semibold text-white">No artists found</h3>
+            <p className="text-sm text-az-ink-muted mt-1">
+              Try a different search term or genre filter.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredArtists.map((artist) => {
+              const isFollowing = !!following[artist.id];
+              return (
+                <GlowCard key={artist.id}>
+                  <div className="p-5 flex flex-col justify-between h-full">
                     <div>
-                      <div className="flex items-center gap-1.5">
-                        <h3 className="az-title text-az-ink font-bold">{artist.name}</h3>
-                        {artist.verified && (
-                          <CheckCircle2 className="h-4 w-4 text-az-secondary-400 fill-current" />
+                      {/* Artist Banner / Image */}
+                      <div className="relative rounded-xl overflow-hidden aspect-[4/3] mb-4 border border-az-glass-border">
+                        <img
+                          src={artist.image}
+                          alt={artist.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-2 left-2 px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-black/70 text-white backdrop-blur-sm border border-az-glass-border">
+                          {artist.genre}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="text-xl font-bold text-white">{artist.name}</h3>
+                          {artist.isVerified && (
+                            <CheckCircle2 className="h-4 w-4 text-az-flame fill-current" />
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-az-ink-muted mt-1.5 line-clamp-2">{artist.bio}</p>
+
+                      {/* Listener Stats */}
+                      <div className="flex items-center gap-4 text-xs text-az-ink-muted mt-4 pt-3 border-t border-az-glass-border/60">
+                        <span className="flex items-center gap-1">
+                          <Headphones className="h-3.5 w-3.5 text-az-flame" />
+                          <strong className="text-white font-mono">
+                            {artist.monthlyListeners.toLocaleString()}
+                          </strong>{' '}
+                          listeners
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Music className="h-3.5 w-3.5 text-az-ink-muted" />
+                          <strong className="text-white font-mono">
+                            {artist.followersCount.toLocaleString()}
+                          </strong>{' '}
+                          followers
+                        </span>
+                      </div>
+
+                      {/* Top Tracks Tags */}
+                      {artist.topTracks && artist.topTracks.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {artist.topTracks.map((track) => (
+                            <span
+                              key={track}
+                              className="text-[10px] px-2 py-0.5 rounded bg-az-surface-panel text-az-ink-muted border border-az-glass-border"
+                            >
+                              🎵 {track}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom CTA */}
+                    <div className="mt-5 pt-3 border-t border-az-glass-border flex items-center gap-2">
+                      <button
+                        onClick={() => toggleFollow(artist.id)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${
+                          isFollowing
+                            ? 'bg-az-surface-panel border border-az-glass-border text-white'
+                            : 'bg-az-flame text-az-surface-root hover:opacity-90'
+                        }`}
+                      >
+                        {isFollowing ? (
+                          <>
+                            <UserCheck className="h-3.5 w-3.5" /> Following
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="h-3.5 w-3.5" /> Follow Artist
+                          </>
                         )}
-                      </div>
-                      <span className="text-xs text-az-flame font-medium">{artist.genre}</span>
-                      <div className="flex items-center gap-1.5 text-[11px] text-az-ink-muted mt-1">
-                        <Headphones className="h-3 w-3" />
-                        <span>{artist.monthlyListeners} monthly listeners</span>
-                      </div>
+                      </button>
+
+                      <Link
+                        href={`/music/tracks?artist=${encodeURIComponent(artist.name)}`}
+                        className="px-3 py-2 rounded-xl border border-az-glass-border bg-az-surface-panel hover:bg-az-surface-panel/80 text-xs font-semibold text-white transition-colors"
+                      >
+                        Discography
+                      </Link>
                     </div>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => toggleFollow(artist.id)}
-                    className={`rounded-az-pill px-3.5 py-1 text-xs font-bold transition-colors ${
-                      isFollowed
-                        ? 'border border-az-flame text-az-flame hover:bg-az-flame/10'
-                        : 'bg-az-surface-panel text-az-ink hover:bg-az-glass-card border border-az-glass-border'
-                    }`}
-                  >
-                    {isFollowed ? 'Following' : 'Follow'}
-                  </button>
-                </div>
-
-                <div className="mt-5 pt-4 border-t border-az-glass-border flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-az-ink-dim">
-                    <Play className="h-3 w-3 text-az-flame fill-current" />
-                    <span className="font-medium">Top Hit:</span>
-                    <span className="font-bold text-az-ink">{artist.topTrack}</span>
-                  </div>
-
-                  <Link
-                    href={`/music/artists/${artist.id}`}
-                    className="text-xs font-bold text-az-flame hover:underline"
-                  >
-                    View Catalog →
-                  </Link>
-                </div>
-              </GlowCard>
-            );
-          })}
-        </div>
+                </GlowCard>
+              );
+            })}
+          </div>
+        )}
       </div>
     </PageShell>
   );

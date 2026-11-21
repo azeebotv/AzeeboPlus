@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Calendar as CalendarIcon,
@@ -20,169 +19,122 @@ import { GlowCard } from '@/components/motion/GlowCard';
 interface FixtureMatch {
   id: string;
   homeTeam: string;
-  homeBadge: string;
+  homeLogo?: string;
+  homeBadge?: string;
   awayTeam: string;
-  awayBadge: string;
+  awayLogo?: string;
+  awayBadge?: string;
   league: string;
+  leagueName?: string;
   time: string;
   date: string;
   venue: string;
-  broadcaster: string;
-  status: 'upcoming' | 'live' | 'completed';
-  score?: [number, number];
+  broadcast?: string;
+  broadcaster?: string;
+  status: string;
+  score?: string;
   odds?: { home: number; draw: number; away: number };
 }
 
 const LEAGUES = [
   { id: 'all', name: 'All Leagues' },
-  { id: 'npfl', name: 'NPFL (Nigeria)' },
-  { id: 'epl', name: 'Premier League' },
-  { id: 'caf', name: 'CAF Champions' },
-  { id: 'laliga', name: 'La Liga' },
+  { id: 'NPFL', name: 'NPFL (Nigeria)' },
+  { id: 'EPL', name: 'Premier League' },
+  { id: 'CAF', name: 'CAF Champions' },
+  { id: 'LA LIGA', name: 'La Liga' },
 ];
 
-const FIXTURES: FixtureMatch[] = [
-  {
-    id: 'fix-1',
-    homeTeam: 'Enyimba FC',
-    homeBadge: '🐘',
-    awayTeam: 'Rivers United',
-    awayBadge: '🌊',
-    league: 'NPFL (Nigeria)',
-    date: 'Saturday, 21 Nov 2026',
-    time: '16:00 WAT',
-    venue: 'Enyimba Stadium, Aba',
-    broadcaster: 'Azeebo+ Live',
-    status: 'upcoming',
-    odds: { home: 1.95, draw: 3.2, away: 3.8 },
-  },
-  {
-    id: 'fix-2',
-    homeTeam: 'Arsenal',
-    homeBadge: '🔴',
-    awayTeam: 'Chelsea',
-    awayBadge: '🔵',
-    league: 'Premier League',
-    date: 'Saturday, 21 Nov 2026',
-    time: '18:30 WAT',
-    venue: 'Emirates Stadium, London',
-    broadcaster: 'SuperSport & Azeebo+',
-    status: 'upcoming',
-    odds: { home: 2.1, draw: 3.4, away: 3.25 },
-  },
-  {
-    id: 'fix-3',
-    homeTeam: 'Al Ahly',
-    homeBadge: '🦅',
-    awayTeam: 'Mamelodi Sundowns',
-    awayBadge: '☀️',
-    league: 'CAF Champions',
-    date: 'Sunday, 22 Nov 2026',
-    time: '19:00 WAT',
-    venue: 'Cairo International Stadium',
-    broadcaster: 'Azeebo+ Sports 1',
-    status: 'upcoming',
-    odds: { home: 1.85, draw: 3.3, away: 4.0 },
-  },
-  {
-    id: 'fix-4',
-    homeTeam: 'Remo Stars',
-    homeBadge: '⭐',
-    awayTeam: 'Kano Pillars',
-    awayBadge: '🟡',
-    league: 'NPFL (Nigeria)',
-    date: 'Sunday, 22 Nov 2026',
-    time: '16:00 WAT',
-    venue: 'Remo Stadium, Ikenne',
-    broadcaster: 'Azeebo+ Live',
-    status: 'upcoming',
-    odds: { home: 1.75, draw: 3.4, away: 4.5 },
-  },
-  {
-    id: 'fix-5',
-    homeTeam: 'Real Madrid',
-    homeBadge: '👑',
-    awayTeam: 'Barcelona',
-    awayBadge: '🔵🔴',
-    league: 'La Liga',
-    date: 'Sunday, 22 Nov 2026',
-    time: '21:00 WAT',
-    venue: 'Santiago Bernabéu, Madrid',
-    broadcaster: 'Azeebo+ 4K Live',
-    status: 'upcoming',
-    odds: { home: 2.2, draw: 3.5, away: 2.9 },
-  },
-];
-
-export default function SportsCalendarPage(): React.JSX.Element {
-  const [selectedLeague, setSelectedLeague] = useState<string>('all');
+export default function SportsCalendarPage() {
+  const [fixtures, setFixtures] = useState<FixtureMatch[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedLeague, setSelectedLeague] = useState('all');
+  const [selectedDate, setSelectedDate] = useState('2026-11-21');
   const [reminders, setReminders] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadFixtures() {
+      try {
+        const res = await fetch('/api/sports/fixtures');
+        const json = await res.json();
+        if (json.success && isMounted) {
+          setFixtures(json.data);
+          if (json.data[0]?.date) {
+            setSelectedDate(json.data[0].date);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load sports fixtures:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadFixtures();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const toggleReminder = (id: string) => {
     setReminders((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const filteredFixtures = FIXTURES.filter((fix) => {
-    if (selectedLeague === 'all') return true;
-    const leagueLower = fix.league.toLowerCase();
-    return leagueLower.includes(selectedLeague.toLowerCase());
+  const filteredFixtures = fixtures.filter((f) => {
+    const matchesLeague =
+      selectedLeague === 'all' ||
+      f.league.toUpperCase() === selectedLeague.toUpperCase() ||
+      f.leagueName?.toUpperCase().includes(selectedLeague.toUpperCase());
+    return matchesLeague;
   });
 
   return (
-    <PageShell maxWidth="full" activeNav="Sports">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header Title & Date Range */}
+    <PageShell>
+      <div className="min-h-screen bg-az-surface-root text-az-ink pb-20 pt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {/* Header Section */}
         <ScrollReveal>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-az-glass-border pb-6 mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="rounded-az-pill bg-az-flame/15 px-3 py-1 text-xs font-bold text-az-flame uppercase tracking-wider">
-                  🏆 Match Fixtures & League Calendar
-                </span>
+              <div className="flex items-center gap-2 text-az-flame text-sm font-semibold tracking-wider uppercase mb-2">
+                <CalendarIcon className="h-4 w-4" />
+                <span>Sports Universe & Fan Zone</span>
               </div>
-              <h1 className="az-heading text-az-ink font-extrabold text-3xl sm:text-4xl">
-                Global & African Football Schedule
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+                Match Fixtures & League Calendar
               </h1>
-              <p className="az-caption text-az-ink-muted mt-1">
-                Official fixtures, kick-off countdowns, and live broadcast channels in WAT.
+              <p className="text-az-ink-muted mt-2 text-sm sm:text-base max-w-2xl">
+                Real-time schedules, NPFL derbies, Continental showdowns, and live odds powered by
+                Azeebo Sports.
               </p>
             </div>
 
-            {/* Week Switcher */}
-            <div className="flex items-center gap-3 rounded-az-control border border-az-glass-border bg-az-surface-root p-2">
-              <button
-                type="button"
-                className="rounded p-1.5 text-az-ink-muted hover:bg-az-surface-panel hover:text-az-ink transition-colors"
-                aria-label="Previous week"
+            <div className="flex items-center gap-2">
+              <Link
+                href="/sports"
+                className="rounded-lg px-4 py-2 text-sm font-medium border border-az-glass-border hover:bg-az-surface-panel transition-colors"
               >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <div className="flex items-center gap-2 px-2 text-xs font-bold text-az-ink">
-                <CalendarIcon className="h-3.5 w-3.5 text-az-flame" />
-                <span>Matchweek 14 • Nov 2026</span>
-              </div>
-              <button
-                type="button"
-                className="rounded p-1.5 text-az-ink-muted hover:bg-az-surface-panel hover:text-az-ink transition-colors"
-                aria-label="Next week"
+                Back to Sports Hub
+              </Link>
+              <Link
+                href="/predictions"
+                className="rounded-lg px-4 py-2 text-sm font-semibold bg-az-flame text-az-surface-root hover:opacity-90 transition-opacity flex items-center gap-1.5"
               >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+                <TrendingUp className="h-4 w-4" />
+                Predict & Win
+              </Link>
             </div>
           </div>
         </ScrollReveal>
 
-        {/* League Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide">
+        {/* League Selector Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
           {LEAGUES.map((league) => (
             <button
               key={league.id}
-              type="button"
               onClick={() => setSelectedLeague(league.id)}
-              className={`rounded-az-pill px-4 py-2 text-xs font-bold transition-all whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
                 selectedLeague === league.id
-                  ? 'bg-az-flame text-az-surface-root shadow-sm'
-                  : 'border border-az-glass-border bg-az-surface-root text-az-ink-muted hover:text-az-ink'
+                  ? 'bg-az-flame text-az-surface-root font-semibold'
+                  : 'bg-az-surface-panel/60 text-az-ink-muted hover:text-white border border-az-glass-border'
               }`}
             >
               {league.name}
@@ -190,117 +142,173 @@ export default function SportsCalendarPage(): React.JSX.Element {
           ))}
         </div>
 
-        {/* Fixtures Matrix */}
-        <div className="space-y-4">
-          {filteredFixtures.map((fix) => {
-            const hasReminder = reminders[fix.id];
-            return (
-              <GlowCard key={fix.id} universe="sports" className="overflow-hidden">
-                <div className="p-5 sm:p-6">
-                  {/* Top Meta */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-az-flame">{fix.league}</span>
-                      <span className="text-az-ink-muted">•</span>
-                      <span className="text-az-ink-muted flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {fix.date} @ {fix.time}
-                      </span>
-                    </div>
+        {/* Date Selector Navigation Strip */}
+        <div className="bg-az-surface-panel/40 rounded-xl p-3 border border-az-glass-border flex items-center justify-between mb-8">
+          <button
+            type="button"
+            className="p-2 rounded-lg hover:bg-az-surface-panel text-az-ink-muted hover:text-white transition-colors"
+            title="Previous Day"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
 
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-az-pill bg-az-surface-panel px-2.5 py-0.5 text-[10px] font-semibold text-az-ink-dim flex items-center gap-1">
-                        <Tv className="h-3 w-3 text-az-flame" /> {fix.broadcaster}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => toggleReminder(fix.id)}
-                        className={`rounded-full p-1.5 transition-colors ${
-                          hasReminder
-                            ? 'bg-az-flame/20 text-az-flame'
-                            : 'text-az-ink-muted hover:bg-az-surface-panel hover:text-az-ink'
-                        }`}
-                        title={hasReminder ? 'Reminder Set' : 'Set Match Reminder'}
-                      >
-                        <Bell className="h-4 w-4 fill-current" />
-                      </button>
-                    </div>
-                  </div>
+          <div className="flex items-center gap-4 text-sm font-medium text-white">
+            <CalendarIcon className="h-4 w-4 text-az-flame" />
+            <span>Active Match Day: {selectedDate}</span>
+          </div>
 
-                  {/* Match Teams Header */}
-                  <div className="grid grid-cols-1 md:grid-cols-5 items-center gap-4 py-3">
-                    {/* Home Team */}
-                    <div className="md:col-span-2 flex items-center gap-3">
-                      <span className="text-3xl">{fix.homeBadge}</span>
-                      <div>
-                        <h3 className="az-title text-az-ink font-bold">{fix.homeTeam}</h3>
-                        <span className="text-[10px] text-az-ink-muted uppercase">Home</span>
-                      </div>
-                    </div>
-
-                    {/* VS / Time Badge */}
-                    <div className="text-center flex flex-col items-center justify-center">
-                      <span className="rounded-az-pill bg-az-surface-root px-3 py-1 text-xs font-black text-az-ink-dim border border-az-glass-border">
-                        VS
-                      </span>
-                      <span className="text-[10px] text-az-ink-muted mt-1 flex items-center gap-1">
-                        <MapPin className="h-3 w-3" /> {fix.venue}
-                      </span>
-                    </div>
-
-                    {/* Away Team */}
-                    <div className="md:col-span-2 flex items-center md:justify-end gap-3">
-                      <div className="md:text-right">
-                        <h3 className="az-title text-az-ink font-bold">{fix.awayTeam}</h3>
-                        <span className="text-[10px] text-az-ink-muted uppercase">Away</span>
-                      </div>
-                      <span className="text-3xl">{fix.awayBadge}</span>
-                    </div>
-                  </div>
-
-                  {/* Odds & Predict Action Bar */}
-                  {fix.odds && (
-                    <div className="mt-4 pt-4 border-t border-az-glass-border flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-az-ink-muted font-medium">Odds Preview:</span>
-                        <span className="rounded bg-az-surface-panel px-2 py-0.5 text-xs font-bold text-az-success-400">
-                          1: {fix.odds.home.toFixed(2)}
-                        </span>
-                        <span className="rounded bg-az-surface-panel px-2 py-0.5 text-xs font-bold text-az-secondary-400">
-                          X: {fix.odds.draw.toFixed(2)}
-                        </span>
-                        <span className="rounded bg-az-surface-panel px-2 py-0.5 text-xs font-bold text-az-error-400">
-                          2: {fix.odds.away.toFixed(2)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <Link href={`/sports/fixtures/${fix.id}`}>
-                          <button
-                            type="button"
-                            className="rounded-az-pill border border-az-glass-border px-3.5 py-1.5 text-xs font-semibold text-az-ink hover:bg-az-surface-panel transition-colors"
-                          >
-                            Lineups & Pitch
-                          </button>
-                        </Link>
-                        <Link href={`/sports/predictions?fixture=${fix.id}`}>
-                          <motion.button
-                            type="button"
-                            className="rounded-az-pill bg-az-flame px-4 py-1.5 text-xs font-bold text-az-surface-root shadow flex items-center gap-1.5"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <TrendingUp className="h-3.5 w-3.5" />
-                            Predict & Win
-                          </motion.button>
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </GlowCard>
-            );
-          })}
+          <button
+            type="button"
+            className="p-2 rounded-lg hover:bg-az-surface-panel text-az-ink-muted hover:text-white transition-colors"
+            title="Next Day"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
         </div>
+
+        {/* Fixtures List */}
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-36 rounded-xl bg-az-surface-panel/40 animate-pulse border border-az-glass-border"
+              />
+            ))}
+          </div>
+        ) : filteredFixtures.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-az-glass-border p-12 text-center">
+            <CalendarIcon className="h-10 w-10 text-az-ink-muted mx-auto mb-3 opacity-40" />
+            <h3 className="text-lg font-semibold text-white">
+              No fixtures found for this selection
+            </h3>
+            <p className="text-sm text-az-ink-muted mt-1">
+              Check back later or select All Leagues.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredFixtures.map((fixture) => {
+              const isReminded = !!reminders[fixture.id];
+              return (
+                <GlowCard key={fixture.id}>
+                  <div className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    {/* Left: League & Match Info */}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[11px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-az-surface-panel text-az-flame border border-az-glass-border">
+                          {fixture.leagueName || fixture.league}
+                        </span>
+                        <span className="text-xs text-az-ink-muted flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {fixture.time}
+                        </span>
+                        {fixture.status === 'LIVE' && (
+                          <span className="text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-az-error-500/20 text-az-error-400 border border-az-error-500/30 animate-pulse">
+                            LIVE
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Teams Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 my-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">
+                            {fixture.homeLogo ? (
+                              <img
+                                src={fixture.homeLogo}
+                                alt={fixture.homeTeam}
+                                className="w-6 h-6 rounded-full inline"
+                              />
+                            ) : (
+                              '⚽'
+                            )}
+                          </span>
+                          <span className="font-bold text-white text-base sm:text-lg">
+                            {fixture.homeTeam}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">
+                            {fixture.awayLogo ? (
+                              <img
+                                src={fixture.awayLogo}
+                                alt={fixture.awayTeam}
+                                className="w-6 h-6 rounded-full inline"
+                              />
+                            ) : (
+                              '⚽'
+                            )}
+                          </span>
+                          <span className="font-bold text-white text-base sm:text-lg">
+                            {fixture.awayTeam}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Metadata: Venue & Broadcaster */}
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-az-ink-muted mt-2">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-az-ink-muted" />
+                          {fixture.venue}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Tv className="h-3 w-3 text-az-flame" />
+                          {fixture.broadcast || fixture.broadcaster}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Right: Odds & Action Controls */}
+                    <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-3 border-t md:border-t-0 border-az-glass-border pt-3 md:pt-0">
+                      {fixture.odds && (
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <div className="px-2.5 py-1 rounded bg-az-surface-panel border border-az-glass-border text-center">
+                            <span className="text-[10px] text-az-ink-muted block">1</span>
+                            <span className="font-semibold text-white">{fixture.odds.home}</span>
+                          </div>
+                          <div className="px-2.5 py-1 rounded bg-az-surface-panel border border-az-glass-border text-center">
+                            <span className="text-[10px] text-az-ink-muted block">X</span>
+                            <span className="font-semibold text-white">{fixture.odds.draw}</span>
+                          </div>
+                          <div className="px-2.5 py-1 rounded bg-az-surface-panel border border-az-glass-border text-center">
+                            <span className="text-[10px] text-az-ink-muted block">2</span>
+                            <span className="font-semibold text-white">{fixture.odds.away}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toggleReminder(fixture.id)}
+                          className={`p-2 rounded-lg border text-xs flex items-center gap-1.5 transition-colors ${
+                            isReminded
+                              ? 'bg-az-flame/20 border-az-flame text-az-flame'
+                              : 'bg-az-surface-panel border-az-glass-border text-az-ink-muted hover:text-white'
+                          }`}
+                          title="Set Match Reminder"
+                        >
+                          <Bell className={`h-4 w-4 ${isReminded ? 'fill-current' : ''}`} />
+                          <span className="hidden sm:inline">
+                            {isReminded ? 'Reminder Set' : 'Remind'}
+                          </span>
+                        </button>
+
+                        <Link
+                          href={`/predictions?fixture=${fixture.id}`}
+                          className="px-3 py-2 rounded-lg bg-az-flame text-az-surface-root text-xs font-bold hover:opacity-90 transition-opacity"
+                        >
+                          Predict Outcome
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </GlowCard>
+              );
+            })}
+          </div>
+        )}
       </div>
     </PageShell>
   );
