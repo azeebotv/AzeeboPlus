@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
+import { ConfirmProvider } from './components/ui/ConfirmContext';
 import AdminLayout from './components/AdminLayout';
 import { FlagGate } from './components/FlagGate';
 import { useAdminFlags, ADMIN_FLAG_KEYS } from './hooks/useAdminFlags';
@@ -110,8 +111,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
-          <Suspense fallback={<RouteFallback />}>
+        <ConfirmProvider>
+          <BrowserRouter>
+            <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route element={<AdminLayoutWrapper />}>
@@ -190,6 +192,7 @@ export default function App() {
             </Routes>
           </Suspense>
         </BrowserRouter>
+        </ConfirmProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
@@ -456,8 +457,8 @@ export default function MenusPage(): React.JSX.Element {
               {isSuperAdmin && !selectedMenu.isDefault && (
                 <button
                   style={btnDanger}
-                  onClick={() => {
-                    if (window.confirm(`Are you sure you want to delete menu "${selectedMenu.name}"?`)) {
+                  onClick={async () => {
+                    if (await confirm({ title: "Delete Menu", message: `Are you sure you want to delete menu "${selectedMenu.name}"?`, variant: "danger" })) {
                       deleteMenuMutation.mutate(selectedMenu.id);
                     }
                   }}

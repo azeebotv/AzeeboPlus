@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
@@ -35,6 +36,7 @@ const COMEDY_TYPES = [
 ];
 
 export default function ComedyPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -444,10 +446,9 @@ export default function ComedyPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm(`Delete comedy special "${item.title}"?`)) {
-                            deleteMutation.mutate(item.id);
-                          }
+                        onClick={async () => {
+                          const ok = await confirm({ title: "Delete Comedy Special", message: `Delete comedy special "${item.title}"?`, variant: "danger" });
+                          if (ok) deleteMutation.mutate(item.id);
                         }}
                         style={{
                           background: 'none',

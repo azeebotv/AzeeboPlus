@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -101,6 +102,7 @@ const readStoredStale = (): boolean => {
 };
 
 export default function GlobalFeatureFlagsPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -253,8 +255,9 @@ export default function GlobalFeatureFlagsPage() {
     },
   });
 
-  const confirmPurge = () => {
-    if (!window.confirm('Invalidate all cached uploads at the CDN edge (/uploads/*)?')) return;
+  const confirmPurge = async () => {
+    const ok = await confirm({ title: "Purge CDN Cache", message: "Invalidate all cached uploads at the CDN edge (/uploads/*)?", variant: "warning" });
+    if (!ok) return;
     setPurgeFeedback(null);
     purgeMutation.mutate();
   };
@@ -447,29 +450,19 @@ export default function GlobalFeatureFlagsPage() {
     },
   });
 
-  const undoPrune = () => {
+  const undoPrune = async () => {
     if (!pruneFeedback?.removedKeys?.length) return;
-    if (
-      !window.confirm(
-        `Restore ${pruneFeedback.removedKeys.length} flag(s) from the audit archive?\n\n` +
-          pruneFeedback.removedKeys.map((k) => `• ${k}`).join('\n')
-      )
-    )
-      return;
+    const ok = await confirm({ title: "Restore Global Flags", message: `Restore ${pruneFeedback.removedKeys.length} flag(s) from the audit archive?\n\n${pruneFeedback.removedKeys.map((k) => "• " + k).join("\n")}`, variant: "info" });
+    if (!ok) return;
     restoreMutation.mutate(pruneFeedback.removedKeys);
   };
 
-  const confirmPrune = () => {
+  const confirmPrune = async () => {
     if (staleFlags.length === 0) return;
     const keys = staleFlags.map((f) => f.key);
     const list = keys.map((k) => `• ${k}`).join('\n');
-    if (
-      !window.confirm(
-        `Remove ${keys.length} stale flag(s)?\n\nEach is archived to the audit log before deletion; ` +
-          `services fall back to the registered default.\n\n${list}`
-      )
-    )
-      return;
+    const ok = await confirm({ title: "Prune Global Flags", message: `Remove ${keys.length} stale flag(s)? Each is archived to the audit log before deletion; services fall back to the registered default.\n\n${list}`, variant: "danger" });
+    if (!ok) return;
     setPruneFeedback(null);
     pruneMutation.mutate(keys);
   };
@@ -922,8 +915,9 @@ export default function GlobalFeatureFlagsPage() {
                   </div>
                   {f.archived && (
                     <button
-                      onClick={() => {
-                        if (!window.confirm(`Restore "${f.key}" from the audit archive?`)) return;
+                      onClick={async () => {
+                        const ok = await confirm({ title: "Restore Flag", message: `Restore "${f.key}" from the audit archive?`, variant: "info" });
+    if (!ok) return;
                         restoreMutation.mutate([f.key]);
                       }}
                       disabled={restoreMutation.isPending}

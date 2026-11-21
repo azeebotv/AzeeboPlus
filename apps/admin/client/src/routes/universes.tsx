@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
@@ -6,6 +7,7 @@ import { requireData, assertSuccess } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 export default function UniversesPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
@@ -918,8 +920,8 @@ export default function UniversesPage() {
                       Export
                     </button>
                     <button
-                      onClick={() => {
-                        if (confirm('Delete this universe?')) deleteMutation.mutate(u.id);
+                      onClick={async () => {
+                        const ok = await confirm({ title: "Delete Universe", message: "Are you sure you want to delete this universe? All associated data will be removed.", variant: "danger" }); if (ok) deleteMutation.mutate(u.id);
                       }}
                       style={{
                         padding: '4px 12px',

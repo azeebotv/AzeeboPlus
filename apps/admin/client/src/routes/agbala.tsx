@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -95,6 +96,7 @@ const btnDanger: React.CSSProperties = {
 };
 
 export default function AgbalaPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('storyworlds');
   const [selectedSw, setSelectedSw] = useState<string | undefined>();
@@ -560,9 +562,8 @@ export default function AgbalaPage() {
                       {s.isPublished ? 'Unpublish' : 'Publish'}
                     </button>
                     <button
-                      onClick={() => {
-                        if (
-                          window.confirm(`Delete storyworld "${s.title}"? This cannot be undone.`)
+                      onClick={async () => {
+                    if (await confirm({ title: "Delete Storyworld", message: `Delete storyworld "${s.title}"? This cannot be undone.`, variant: "danger" })
                         )
                           deleteSwMutation.mutate(s.id);
                       }}
@@ -628,8 +629,8 @@ export default function AgbalaPage() {
                       Edit
                     </button>
                     <button
-                      onClick={() => {
-                        if (window.confirm(`Delete character "${c.name}"?`))
+                      onClick={async () => {
+                    if (await confirm({ title: "Delete Character", message: `Delete character "${c.name}"?`, variant: "danger" }))
                           deleteCharMutation.mutate(c.id);
                       }}
                       style={btnDanger}
@@ -692,8 +693,8 @@ export default function AgbalaPage() {
                       </p>
                     </div>
                     <button
-                      onClick={() => {
-                        if (window.confirm(`Delete quiz "${q.title}"?`))
+                      onClick={async () => {
+                    if (await confirm({ title: "Delete Quiz", message: `Delete quiz "${q.title}"?`, variant: "danger" }))
                           deleteQuizMutation.mutate(q.id);
                       }}
                       style={btnDanger}

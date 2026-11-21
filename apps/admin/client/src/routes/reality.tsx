@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
@@ -12,6 +13,7 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
 };
 
 export default function RealityPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'shows' | 'contestants'>('shows');
   const [showCreate, setShowCreate] = useState(false);
@@ -473,11 +475,10 @@ export default function RealityPage() {
                     Edit
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm(`Delete "${show.title}"? This cannot be undone.`)) {
-                        deleteMutation.mutate(show.id);
-                      }
-                    }}
+                    onClick={async () => {
+                          const ok = await confirm({ title: "Delete Reality Show", message: `Delete "${show.title}"? This cannot be undone.`, variant: "danger" });
+                          if (ok) deleteMutation.mutate(show.id);
+                        }}
                     disabled={busy}
                     style={{
                       padding: '5px 14px',

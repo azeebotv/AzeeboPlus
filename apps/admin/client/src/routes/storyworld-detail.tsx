@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -111,6 +112,7 @@ const EMPTY_PATH: PathDraft = {
 };
 
 export default function StoryworldDetailPage() {
+  const confirm = useConfirm();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -814,8 +816,8 @@ export default function StoryworldDetailPage() {
                       Edit
                     </button>
                     <button
-                      onClick={() => {
-                        if (window.confirm(`Delete path "${str(p.name)}"?`)) {
+                      onClick={async () => {
+                    if (await confirm({ title: "Delete Path", message: `Delete path "${str(p.name)}"?`, variant: "danger" })) {
                           deletePathMutation.mutate(str(p.id));
                         }
                       }}
@@ -957,8 +959,8 @@ export default function StoryworldDetailPage() {
                     </div>
                     <span style={chip}>{num(q.questionCount, 0)} questions</span>
                     <button
-                      onClick={() => {
-                        if (window.confirm(`Delete quiz "${str(q.title)}"?`)) {
+                      onClick={async () => {
+                    if (await confirm({ title: "Delete Quiz", message: `Delete quiz "${str(q.title)}"?`, variant: "danger" })) {
                           deleteQuizMutation.mutate(str(q.id));
                         }
                       }}

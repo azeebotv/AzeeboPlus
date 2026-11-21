@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
@@ -40,6 +41,7 @@ const LEAGUES = [
 ];
 
 export default function SportsPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -461,10 +463,9 @@ export default function SportsPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm(`Delete sports fixture "${item.title}"?`)) {
-                            deleteMutation.mutate(item.id);
-                          }
+                        onClick={async () => {
+                          const ok = await confirm({ title: "Delete Sports Fixture", message: `Delete sports fixture "${item.title}"?`, variant: "danger" });
+                          if (ok) deleteMutation.mutate(item.id);
                         }}
                         style={{
                           background: 'none',

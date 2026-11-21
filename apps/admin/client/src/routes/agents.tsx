@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
@@ -639,8 +640,8 @@ function AgentDetailModal({ agent, onClose }: { agent: AgentRegistry; onClose: (
           <button
             style={{ ...btnStyle('danger'), opacity: retireMutation.isPending ? 0.6 : 1 }}
             disabled={retireMutation.isPending}
-            onClick={() => {
-              if (window.confirm(`Retire agent ${agent.agentId}? This is recorded for audit.`)) {
+            onClick={async () => {
+              if (await confirm({ title: "Retire Agent", message: `Retire agent ${agent.agentId}? This is recorded for audit.`, variant: "warning" })) {
                 retireMutation.mutate();
               }
             }}
@@ -699,6 +700,7 @@ function AgentDetailModal({ agent, onClose }: { agent: AgentRegistry; onClose: (
 /* ── Main page ─────────────────────────────────────────────────────────────── */
 
 export default function AgentsPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [search, setSearch] = useState('');

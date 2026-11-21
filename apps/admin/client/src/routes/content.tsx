@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -26,6 +27,7 @@ interface ContentItem {
 }
 
 export default function ContentPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const { isEnabled: isFlagEnabled } = useAdminFlags();
   const bulkEnabled = isFlagEnabled(ADMIN_FLAG_KEYS.bulkActions);
@@ -654,8 +656,9 @@ export default function ContentPage() {
                               </button>
                             )}
                             <button
-                              onClick={() => {
-                                if (confirm('Delete this content?')) deleteMutation.mutate(item.id);
+                              onClick={async () => {
+                                const ok = await confirm({ title: "Delete Content", message: "Are you sure you want to delete this content item? This action cannot be undone.", variant: "danger" });
+                                if (ok) deleteMutation.mutate(item.id);
                               }}
                               style={{
                                 padding: '4px 10px',
@@ -740,9 +743,9 @@ export default function ContentPage() {
                       Archive
                     </button>
                     <button
-                      onClick={() => {
-                        if (confirm(`Delete ${selected.size} items?`))
-                          bulkDeleteMutation.mutate(Array.from(selected));
+                      onClick={async () => {
+                        const ok = await confirm({ title: "Bulk Delete Content", message: `Are you sure you want to permanently delete ${selected.size} selected items?`, variant: "danger", isDualControl: selected.size > 10, dualControlNote: "Bulk deleting more than 10 items requires dual approval." });
+                        if (ok) bulkDeleteMutation.mutate(Array.from(selected));
                       }}
                       disabled={bulkDeleteMutation.isPending}
                       style={{
@@ -923,9 +926,9 @@ export default function ContentPage() {
                     Edit
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm(`Delete category "${c.name}"?`))
-                        deleteCategoryMutation.mutate(c.id);
+                    onClick={async () => {
+                      const ok = await confirm({ title: "Delete Category", message: `Delete category "${c.name}"?`, variant: "danger" });
+                      if (ok) deleteCategoryMutation.mutate(c.id);
                     }}
                     style={{
                       padding: '4px 10px',
@@ -1006,8 +1009,9 @@ export default function ContentPage() {
               >
                 {t.name}
                 <button
-                  onClick={() => {
-                    if (confirm(`Delete tag "${t.name}"?`)) deleteTagMutation.mutate(t.id);
+                  onClick={async () => {
+                    const ok = await confirm({ title: "Delete Tag", message: `Delete tag "${t.name}"?`, variant: "danger" });
+                    if (ok) deleteTagMutation.mutate(t.id);
                   }}
                   aria-label={`Delete tag ${t.name}`}
                   style={{

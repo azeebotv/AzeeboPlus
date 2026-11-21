@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
@@ -26,6 +27,7 @@ function formatDate(date: string) {
 }
 
 export default function LiveEventsPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -330,9 +332,8 @@ export default function LiveEventsPage() {
                           </button>
                           {event.status !== 'cancelled' && event.status !== 'ended' && (
                             <button
-                              onClick={() => {
-                                if (
-                                  window.confirm(`Cancel "${event.title}" and refund all tickets?`)
+                              onClick={async () => {
+                                if (await confirm({ title: "Cancel Live Event", message: `Cancel "${event.title}" and refund all tickets?`, variant: "danger", isDualControl: true, dualControlNote: "Cancelling an event will trigger automatic ticket refunds." })
                                 ) {
                                   cancelMutation.mutate(event.id);
                                 }

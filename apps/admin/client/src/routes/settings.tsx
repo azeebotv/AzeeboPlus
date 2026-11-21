@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
@@ -33,6 +34,7 @@ const TABS: TabDef[] = [
 ];
 
 export default function SettingsPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<SettingTab>('general');
   const [search, setSearch] = useState('');
@@ -772,8 +774,8 @@ export default function SettingsPage() {
                             </span>
                           </div>
                           <button
-                            onClick={() => {
-                              if (window.confirm(`Revoke admin privileges for ${email}?`)) {
+                            onClick={async () => {
+                            if (await confirm({ title: "Revoke Admin Privileges", message: `Revoke admin privileges for ${email}?`, variant: "danger", isDualControl: true, dualControlNote: "Modifying administrator permissions is an audited governance action." })) {
                                 removeAdminMutation.mutate(email);
                               }
                             }}

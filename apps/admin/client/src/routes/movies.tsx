@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { requireData, unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
+import { useConfirm, useAlert } from '@/components/ui';
 
 interface MovieItem {
   id: string;
@@ -41,6 +42,8 @@ const GENRE_OPTIONS = [
 
 export default function MoviesPage() {
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
+  const alert = useAlert();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -169,7 +172,7 @@ export default function MoviesPage() {
     if (!createForm.title.trim()) return;
     const universeId = movieUniverse?.id;
     if (!universeId) {
-      alert('Movies universe not found. Please ensure universes are initialized.');
+      void alert('Universe Missing', 'Movies universe not found. Please ensure universes are initialized.');
       return;
     }
 
@@ -602,8 +605,14 @@ export default function MoviesPage() {
                       )}
 
                       <button
-                        onClick={() => {
-                          if (confirm(`Delete "${movie.title}"? This cannot be undone.`)) {
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: 'Delete Movie',
+                            message: `Delete "${movie.title}"? This cannot be undone.`,
+                            confirmText: 'Delete',
+                            variant: 'danger',
+                          });
+                          if (ok) {
                             deleteMutation.mutate(movie.id);
                           }
                         }}

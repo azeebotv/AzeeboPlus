@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
@@ -39,6 +40,7 @@ const VERTICAL_GENRES = [
 ];
 
 export default function VerticalSeriesPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -470,10 +472,9 @@ export default function VerticalSeriesPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm(`Delete vertical series "${item.title}"?`)) {
-                            deleteMutation.mutate(item.id);
-                          }
+                        onClick={async () => {
+                          const ok = await confirm({ title: "Delete Vertical Series", message: `Delete vertical series "${item.title}"?`, variant: "danger" });
+                          if (ok) deleteMutation.mutate(item.id);
                         }}
                         style={{
                           background: 'none',

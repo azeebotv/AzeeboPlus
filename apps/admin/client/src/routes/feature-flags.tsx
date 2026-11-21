@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -50,6 +51,7 @@ const readStoredStale = (): boolean => {
 };
 
 export default function FeatureFlagsPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -231,25 +233,23 @@ export default function FeatureFlagsPage() {
     },
   });
 
-  const undoPruneUniverse = () => {
+  const undoPruneUniverse = async () => {
     const removed = pruneFeedback?.removed;
     if (!removed?.length) return;
-    if (window.confirm(`Restore ${removed.length} universe flag(s) from the audit archive?`)) {
+    const ok = await confirm({ title: "Restore Flags", message: `Restore ${removed.length} universe flag(s) from the audit archive?`, variant: "info" });
+    if (ok) {
       restoreUniverseMutation.mutate(removed);
     }
   };
 
-  const confirmPruneUniverse = () => {
+  const confirmPruneUniverse = async () => {
     if (staleFlags.length === 0) return;
     const keys = staleFlags.map((f) => ({ universeId: f.universeId, featureKey: f.featureKey }));
     const list = staleFlags
       .map((f) => `${f.universe?.name ?? f.universeId}.${f.featureKey}`)
       .join('\n');
-    if (
-      window.confirm(
-        `Remove ${staleFlags.length} stale universe flag(s)?\n\nEach is archived to the audit log before deletion.\n\n${list}`
-      )
-    ) {
+    const ok = await confirm({ title: "Prune Stale Flags", message: `Remove ${staleFlags.length} stale universe flag(s)? Each is archived to the audit log before deletion.\n\n${list}`, variant: "danger" });
+    if (ok) {
       pruneMutation.mutate(keys);
     }
   };
@@ -570,8 +570,9 @@ export default function FeatureFlagsPage() {
                     </div>
                     {restorable && (
                       <button
-                        onClick={() => {
-                          if (!window.confirm(`Restore "${label}" from the audit archive?`)) return;
+                        onClick={async () => {
+                          const ok = await confirm({ title: "Restore Flag", message: `Restore "${label}" from the audit archive?`, variant: "info" });
+    if (!ok) return;
                           restoreUniverseMutation.mutate([
                             { universeId: f.universeId!, featureKey: f.featureKey! },
                           ]);
@@ -980,10 +981,13 @@ export default function FeatureFlagsPage() {
                     {flag.isEnabled ? 'Disable' : 'Enable'}
                   </button>
                   <button
-                    onClick={() => {
-                      if (
-                        confirm(`Delete flag "${flag.featureKey}" from ${flag.universe?.name}?`)
-                      ) {
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Delete Flag",
+                        message: `Delete flag "${flag.featureKey}" from ${flag.universe?.name}?`,
+                        variant: "danger",
+                      });
+                      if (ok) {
                         deleteMutation.mutate({
                           universeId: flag.universeId,
                           featureKey: flag.featureKey,
