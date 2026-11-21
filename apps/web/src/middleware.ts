@@ -205,13 +205,18 @@ export function middleware(request: NextRequest) {
   if (
     pathname === '/creator' ||
     pathname.startsWith('/creator/') ||
-    pathname.startsWith('/creators/dashboard')
+    pathname.startsWith('/creators/dashboard') ||
+    pathname.startsWith('/creators/earnings') ||
+    pathname.startsWith('/creators/monetization') ||
+    pathname.startsWith('/creators/upload')
   ) {
     // Preserve the path below /creator (or /creators/dashboard) — the portal
     // routes from its own root, where the dashboard is the index route.
     const creatorUrl = pathname.startsWith('/creators/dashboard')
       ? new URL('/', CREATOR_HOST)
-      : new URL(portalPath(pathname, '/creator'), CREATOR_HOST);
+      : pathname.startsWith('/creators/')
+        ? new URL(portalPath(pathname, '/creators'), CREATOR_HOST)
+        : new URL(portalPath(pathname, '/creator'), CREATOR_HOST);
     return addSecurityHeaders(NextResponse.redirect(creatorUrl));
   }
 

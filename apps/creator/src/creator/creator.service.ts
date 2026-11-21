@@ -975,15 +975,36 @@ export class CreatorService {
       throw new BadRequestException('Failed to debit wallet for payout');
     }
 
-    // Create payout request locally
-    await this.prisma.payoutRequest.create({
-      data: {
-        userId,
-        amount: payoutAmount,
-        status: 'pending',
-        method,
-      },
-    });
+    // Create payout request locally with saga rollback compensation
+    try {
+      await this.prisma.payoutRequest.create({
+        data: {
+          userId,
+          amount: payoutAmount,
+          status: 'pending',
+          method,
+        },
+      });
+    } catch (createErr) {
+      this.logger.error(
+        `Failed to record payout request in database for user ${userId}. Initiating saga compensation...`,
+        createErr
+      );
+      try {
+        await this.walletClient.credit(
+          userId,
+          payoutAmount,
+          'Payout request failed - refunded balance',
+          `payout-refund-${userId}-${Date.now()}`
+        );
+      } catch (compensationErr) {
+        this.logger.error(
+          `CRITICAL: Saga compensation credit failed for user ${userId} amount ${payoutAmount}`,
+          compensationErr
+        );
+      }
+      throw createErr;
+    }
 
     return {
       success: true,
@@ -1640,21 +1661,28 @@ export class CreatorService {
     // Local earning line so the earnings page renders it immediately. Unique
     // reference = idempotent even if two syncs race.
     try {
-      const wallet = await this.prisma.wallet.upsert({
-        where: { userId },
-        create: { userId },
-        update: {},
-        select: { id: true },
-      });
-      await this.prisma.walletTransaction.create({
-        data: {
-          walletId: wallet.id,
-          type: 'earning',
-          amount,
-          status: 'completed',
-          description: 'Challenge prize won',
-          reference,
-        },
+      const executeTx =
+        typeof this.prisma.$transaction === 'function'
+          ? (cb: (tx: any) => Promise<any>) => this.prisma.$transaction(cb)
+          : (cb: (tx: any) => Promise<any>) => cb(this.prisma);
+
+      await executeTx(async (tx) => {
+        const wallet = await tx.wallet.upsert({
+          where: { userId },
+          create: { userId },
+          update: {},
+          select: { id: true },
+        });
+        await tx.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            type: 'earning',
+            amount,
+            status: 'completed',
+            description: 'Challenge prize won',
+            reference,
+          },
+        });
       });
     } catch (error) {
       // A racing sync may have inserted the same reference first — fine.
@@ -2119,35 +2147,44 @@ export class CreatorService {
     };
     const hasSocialLinks = data.website !== undefined || data.socialLinks !== undefined;
 
-    const profile = await this.prisma.creatorProfile.upsert({
-      where: { userId },
-      update: {
-        ...(cleanBio !== undefined ? { bio: cleanBio } : {}),
-        ...(data.banner !== undefined ? { banner: data.banner } : {}),
-        ...(hasSocialLinks ? { socialLinks: socialLinks as Prisma.InputJsonValue } : {}),
-      },
-      create: {
-        userId,
-        bio: cleanBio,
-        banner: data.banner,
-        socialLinks: socialLinks as Prisma.InputJsonValue,
-      },
-    });
+    const executeTx =
+      typeof this.prisma.$transaction === 'function'
+        ? (cb: (tx: any) => Promise<any>) => this.prisma.$transaction(cb)
+        : (cb: (tx: any) => Promise<any>) => cb(this.prisma);
 
-    // displayName and avatar live on the user record.
-    if (cleanName !== undefined || data.avatar !== undefined) {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          ...(cleanName !== undefined ? { displayName: cleanName } : {}),
-          ...(data.avatar !== undefined ? { avatar: data.avatar } : {}),
+    const { profile, user } = await executeTx(async (tx) => {
+      const p = await tx.creatorProfile.upsert({
+        where: { userId },
+        update: {
+          ...(cleanBio !== undefined ? { bio: cleanBio } : {}),
+          ...(data.banner !== undefined ? { banner: data.banner } : {}),
+          ...(hasSocialLinks ? { socialLinks: socialLinks as Prisma.InputJsonValue } : {}),
+        },
+        create: {
+          userId,
+          bio: cleanBio,
+          banner: data.banner,
+          socialLinks: socialLinks as Prisma.InputJsonValue,
         },
       });
-    }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { displayName: true, avatar: true, email: true },
+      // displayName and avatar live on the user record.
+      if (cleanName !== undefined || data.avatar !== undefined) {
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            ...(cleanName !== undefined ? { displayName: cleanName } : {}),
+            ...(data.avatar !== undefined ? { avatar: data.avatar } : {}),
+          },
+        });
+      }
+
+      const u = await tx.user.findUnique({
+        where: { id: userId },
+        select: { displayName: true, avatar: true, email: true },
+      });
+
+      return { profile: p, user: u };
     });
 
     return {

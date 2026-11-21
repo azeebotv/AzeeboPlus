@@ -57,6 +57,12 @@ describe('creator portal redirects', () => {
     expect(redirectTarget('/creators/dashboard')).toBe('http://localhost:5174/');
   });
 
+  it('maps legacy /creators sub-paths to matching portal routes', () => {
+    expect(redirectTarget('/creators/earnings')).toBe('http://localhost:5174/earnings');
+    expect(redirectTarget('/creators/monetization')).toBe('http://localhost:5174/monetization');
+    expect(redirectTarget('/creators/upload')).toBe('http://localhost:5174/upload');
+  });
+
   it('never forwards a /creator path the portal cannot route', () => {
     expect(redirectTarget('/creator/settings')).not.toContain('/creator/');
   });

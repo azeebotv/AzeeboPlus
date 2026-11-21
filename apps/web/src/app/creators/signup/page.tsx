@@ -168,14 +168,14 @@ export default function CreatorSignupPage(): React.JSX.Element {
 
       if (res.success) {
         toast.showToast('Creator application submitted successfully! Welcome aboard.', 'success');
-        router.push('/creators/dashboard');
+        router.push('/creator');
       } else {
         toast.showToast(res.message || 'Application submitted! Awaiting review.', 'success');
-        router.push('/creators/dashboard');
+        router.push('/creator');
       }
     } catch {
       toast.showToast('Application submitted successfully!', 'success');
-      router.push('/creators/dashboard');
+      router.push('/creator');
     } finally {
       setIsSubmitting(false);
     }

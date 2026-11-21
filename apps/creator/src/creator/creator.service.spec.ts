@@ -13,7 +13,7 @@ function buildPrismaMock(): MockPrisma {
   // creatorProfile is stateful: upsert stores the profile, findUnique reads it
   // back (updateMonetization re-reads after persisting).
   let storedProfile: Record<string, unknown> | null = null;
-  return {
+  const mock: MockPrisma = {
     contentItem: {
       count: jest.fn().mockResolvedValue(0),
       aggregate: jest.fn().mockResolvedValue({ _sum: { amount: null, viewCount: null } }),
@@ -116,6 +116,15 @@ function buildPrismaMock(): MockPrisma {
     $queryRaw: jest.fn().mockRejectedValue(new Error('relation "following" does not exist')),
     $queryRawUnsafe: jest.fn().mockRejectedValue(new Error('relation "following" does not exist')),
   } as MockPrisma;
+
+  mock.$transaction = jest.fn().mockImplementation(async (cb: any) => {
+    if (typeof cb === 'function') {
+      return cb(mock);
+    }
+    return Promise.all(cb);
+  });
+
+  return mock;
 }
 
 function buildService(

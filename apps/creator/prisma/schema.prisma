@@ -258,9 +258,12 @@ model MediaAsset {
 model CreatorProfile {
   id              String   @id @default(uuid())
   userId          String   @unique
+  displayName     String?
+  avatar          String?
   bio             String?
   banner          String?
   socialLinks     Json?
+  settings        Json?
   payoutMethod    String?
   minimumPayout   Decimal? @db.Decimal(18, 2)
   tipEnabled      Boolean  @default(true)
@@ -293,12 +296,15 @@ model ContentRelationship {
 model PayoutRequest {
   id              String   @id @default(uuid())
   userId          String
-  amount Decimal  @db.Decimal(18, 2)
+  creatorId       String?
+  amount          Decimal  @db.Decimal(18, 2)
   currency        String   @default("NGN")
   status          String   // pending, processing, completed, failed, rejected
   method          String   // bank, mobile, card
   metadata        Json?
+  accountDetails  Json?
   completedAt     DateTime?
+  processedAt     DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

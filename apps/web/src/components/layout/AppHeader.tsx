@@ -487,7 +487,7 @@ export default function AppHeader({
     { label: 'Moderation', href: '/moderation', icon: 'shield' },
     {
       label: t('nav.creatorDashboard'),
-      href: '/creators/dashboard',
+      href: '/creator',
       icon: 'creator',
       creatorOnly: true,
     },

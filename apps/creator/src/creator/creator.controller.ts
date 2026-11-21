@@ -22,7 +22,19 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { ArchivedContentSweeperService } from './archived-content-sweeper.service';
 import { FeatureFlagService, creatorFlags } from '@azeebo/feature-flags';
 import { UNIVERSE_SLUGS, universeEnabledKey } from '@azeebo/shared-types';
-import { ListContentQueryDto } from './dto/list-content-query.dto';
+import {
+  ListContentQueryDto,
+  CreateContentDto,
+  UpdateContentDto,
+  RequestPayoutDto,
+  UpdatePayoutSettingsDto,
+  UpdateSettingsDto,
+  CreateSubscriptionTierDto,
+  UpdateSubscriptionTierDto,
+  SubmitChallengeDto,
+  UpdateProfileDto,
+  UpdateMonetizationSettingsDto,
+} from './dto';
 
 interface AuthRequest extends Request {
   user: { id: string; email: string; role: string };
@@ -95,9 +107,12 @@ export class CreatorController {
   @Post('content')
   async createContent(
     @Request() req: AuthRequest,
-    @Body() body: { title: string; description?: string; type: string }
+    @Body() body: CreateContentDto
   ): Promise<{ success: boolean; data: unknown }> {
-    const content = await this.creatorService.createContent(req.user.id, body);
+    const content = await this.creatorService.createContent(req.user.id, {
+      ...body,
+      type: body.type || 'video',
+    });
     return {
       success: true,
       data: content,
@@ -108,7 +123,7 @@ export class CreatorController {
   async updateContent(
     @Request() req: AuthRequest,
     @Param('id') id: string,
-    @Body() body: Partial<ContentItem>
+    @Body() body: UpdateContentDto
   ): Promise<{ success: boolean; data: unknown }> {
     const content = await this.creatorService.updateContent(id, req.user.id, body);
     return {
@@ -183,7 +198,7 @@ export class CreatorController {
   @Post('payouts/request')
   async requestPayout(
     @Request() req: AuthRequest,
-    @Body() body: { amount?: number; method?: string }
+    @Body() body: RequestPayoutDto
   ): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
@@ -194,7 +209,7 @@ export class CreatorController {
   @Put('payouts/settings')
   async updatePayoutSettings(
     @Request() req: AuthRequest,
-    @Body() body: { method: string; minimum: number }
+    @Body() body: UpdatePayoutSettingsDto
   ): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
@@ -213,13 +228,7 @@ export class CreatorController {
   @Put('settings')
   async updateSettings(
     @Request() req: AuthRequest,
-    @Body()
-    body: {
-      payoutMethod?: string;
-      minimumPayout?: number;
-      notifications?: { email: boolean; push: boolean; sms: boolean; marketing: boolean };
-      privacy?: { profileVisibility: string; showEarnings: boolean; allowMessages: boolean };
-    }
+    @Body() body: UpdateSettingsDto
   ): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
@@ -327,21 +336,14 @@ export class CreatorController {
   @Patch('monetization/settings')
   async patchWebMonetizationSettings(
     @Request() req: AuthRequest,
-    @Body()
-    body: {
-      tipsEnabled?: boolean;
-      minimumTipAmount?: number;
-      customTipAmounts?: number[];
-      payoutMethod?: string;
-    }
+    @Body() body: UpdateMonetizationSettingsDto
   ): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
       data: await this.creatorService.updateMonetization(req.user.id, {
-        tipEnabled: body.tipsEnabled,
-        tipMin: body.minimumTipAmount,
+        tipEnabled: body.tippingEnabled,
+        tipMin: body.minimumTip,
         tipMax: body.customTipAmounts?.length ? Math.max(...body.customTipAmounts) : undefined,
-        payoutMethod: body.payoutMethod,
       }),
     };
   }
@@ -360,14 +362,7 @@ export class CreatorController {
   @Post('monetization/tiers')
   async createSubscriptionTier(
     @Request() req: AuthRequest,
-    @Body()
-    body: {
-      name?: string;
-      price?: number;
-      perks?: string[];
-      isActive?: boolean;
-      displayOrder?: number;
-    }
+    @Body() body: CreateSubscriptionTierDto
   ): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
@@ -379,14 +374,7 @@ export class CreatorController {
   async updateSubscriptionTier(
     @Request() req: AuthRequest,
     @Param('id') tierId: string,
-    @Body()
-    body: {
-      name?: string;
-      price?: number;
-      perks?: string[];
-      isActive?: boolean;
-      displayOrder?: number;
-    }
+    @Body() body: UpdateSubscriptionTierDto
   ): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
@@ -415,15 +403,7 @@ export class CreatorController {
   @Put('profile')
   async updateOwnProfile(
     @Request() req: AuthRequest,
-    @Body()
-    body: {
-      bio?: string;
-      banner?: string;
-      displayName?: string;
-      avatar?: string;
-      website?: string;
-      socialLinks?: Record<string, string>;
-    }
+    @Body() body: UpdateProfileDto
   ): Promise<{ success: boolean; data: unknown }> {
     const profile = await this.creatorService.updateCreatorProfile(req.user.id, body);
     return { success: true, data: profile };
@@ -530,7 +510,7 @@ export class CreatorController {
   async submitChallenge(
     @Request() req: AuthRequest,
     @Param('challengeId') challengeId: string,
-    @Body() body: { title: string; contentId?: string }
+    @Body() body: SubmitChallengeDto
   ): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,

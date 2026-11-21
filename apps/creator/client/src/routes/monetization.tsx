@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
+import { useConfirm } from '@/components/ui';
 import type { MonetizationData, MonetizationTier } from '@/lib/creator-types';
 import { formatNgn, errorTextStyle } from '@/lib/ui';
 
@@ -25,6 +26,7 @@ const inputStyle = {
 };
 
 export default function MonetizationPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [tipEnabled, setTipEnabled] = useState(false);
   const [tipMin, setTipMin] = useState('1');
@@ -425,10 +427,14 @@ export default function MonetizationPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => {
-                          if (
-                            window.confirm(`Delete tier "${tier.name}"? This cannot be undone.`)
-                          ) {
+                        onClick={async () => {
+                          const confirmed = await confirm({
+                            title: 'Delete Tier',
+                            message: `Delete tier "${tier.name}"? This cannot be undone.`,
+                            variant: 'danger',
+                            confirmText: 'Delete',
+                          });
+                          if (confirmed) {
                             deleteTier.mutate(tier.id);
                           }
                         }}

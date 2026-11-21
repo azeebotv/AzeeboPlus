@@ -28,22 +28,22 @@ interface DashboardData {
 
 const dashLinks = [
   {
-    href: '/creators/dashboard',
-    label: 'Dashboard',
-    desc: 'View your creator overview',
+    href: '/creator',
+    label: 'Studio Dashboard',
+    desc: 'Access your full creator studio overview',
     icon: BarChart3,
   },
-  { href: '/creators/upload', label: 'Upload', desc: 'Upload new content', icon: UploadCloud },
+  { href: '/creator/upload', label: 'Upload', desc: 'Upload and publish new content', icon: UploadCloud },
   {
-    href: '/creators/earnings',
+    href: '/creator/earnings',
     label: 'Earnings',
-    desc: 'Track revenue and payouts',
+    desc: 'Track revenue, royalties, and payouts',
     icon: DollarSign,
   },
   {
-    href: '/creators/monetization',
+    href: '/creator/monetization',
     label: 'Monetization',
-    desc: 'Manage tipping and subscriptions',
+    desc: 'Manage tipping, tiers, and passes',
     icon: Zap,
   },
 ];
