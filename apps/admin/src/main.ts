@@ -114,6 +114,7 @@ async function bootstrap() {
         method: req.method,
         headers: upstreamHeaders,
         body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body ?? {}),
+        signal: AbortSignal.timeout(10000),
       })
         .then(async (upstream) => {
           if (req.method === 'GET' && upstream.status >= 500) {
@@ -133,13 +134,22 @@ async function bootstrap() {
           res.status(upstream.status);
           res.send(await upstream.text());
         })
-        .catch((_e: Error) => {
-          // Graceful fallback for non-critical upstream microservices when offline
-          res.status(200).json({
-            success: true,
-            data: [],
-            items: [],
-            meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+        .catch((e: Error) => {
+          // Graceful fallback ONLY for non-critical read queries when offline
+          if (req.method === 'GET') {
+            res.status(200).json({
+              success: true,
+              data: [],
+              items: [],
+              meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+              _upstreamOffline: true,
+            });
+            return;
+          }
+          // Mutations must explicitly fail so admins know the operation did not execute
+          res.status(502).json({
+            success: false,
+            message: `Upstream microservice offline at ${API_GATEWAY_URL}: ${e.message}`,
             _upstreamOffline: true,
           });
         });
