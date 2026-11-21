@@ -62,7 +62,11 @@ export default function MusicScreen() {
       activeOpacity={0.7}
     >
       <Image
-        source={{ uri: item.thumbnail || 'https://placehold.co/80x80/1a1a1a/ffffff?text=♪' }}
+        source={{
+          uri:
+            item.thumbnail ||
+            'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=80&h=80&q=80',
+        }}
         style={styles.trackCover}
         resizeMode="cover"
       />
@@ -97,7 +101,11 @@ export default function MusicScreen() {
         <Text style={styles.rankText}>{index + 1}</Text>
       </View>
       <Image
-        source={{ uri: item.thumbnail || 'https://placehold.co/60x60/1a1a1a/ffffff?text=♪' }}
+        source={{
+          uri:
+            item.thumbnail ||
+            'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=60&h=60&q=80',
+        }}
         style={styles.trendingCover}
         resizeMode="cover"
       />

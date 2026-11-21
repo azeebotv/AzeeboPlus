@@ -74,7 +74,9 @@ export default function InfluencerDetailScreen() {
         <View style={styles.heroContainer}>
           <Image
             source={{
-              uri: influencer.photo || 'https://placehold.co/800x400/1a1a1a/ffffff?text=★',
+              uri:
+                influencer.photo ||
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&h=400&q=80',
             }}
             style={styles.heroImage}
             resizeMode="cover"
@@ -92,7 +94,9 @@ export default function InfluencerDetailScreen() {
           <View style={styles.avatarContainer}>
             <Image
               source={{
-                uri: influencer.photo || 'https://placehold.co/120x120/1a1a1a/ffffff?text=★',
+                uri:
+                  influencer.photo ||
+                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80',
               }}
               style={styles.avatar}
               resizeMode="cover"

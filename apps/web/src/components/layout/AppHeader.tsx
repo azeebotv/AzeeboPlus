@@ -386,10 +386,13 @@ export default function AppHeader({
     }, []),
   });
 
-  // Default navigation links (Games, Rewards, Borrow removed as per requirements)
+  // Default navigation links matching Figma canonical navigation:
+  // Universes ▾ (dropdown) · Watch · Live · Games · Rewards
   const DEFAULT_NAV_LINKS = useMemo(() => [
-    { label: t('nav.browse'), href: '/browse' },
+    { label: 'Watch', href: '/browse' },
     { label: 'Live', href: '/live' },
+    { label: 'Games', href: '/games' },
+    { label: t('nav.rewards'), href: '/rewards' },
   ], [t]);
 
   // Dynamic header menu loaded from admin menu management (superadmin controlled)

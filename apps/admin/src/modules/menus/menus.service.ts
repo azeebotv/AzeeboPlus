@@ -57,7 +57,7 @@ export class MenusService {
 
   async ensureDefaults(): Promise<void> {
     try {
-      const existing = await this.prisma.systemSettings.findFirst({
+      const existing = await this.prisma.systemSettings.findUnique({
         where: { key: `${MENU_KEY_PREFIX}main-header` },
       });
 

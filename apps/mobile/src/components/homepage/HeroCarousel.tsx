@@ -90,7 +90,7 @@ export default function HeroCarousel({ slides, autoRotateIntervalMs = 6000 }: He
             uri:
               currentSlide.mediaAsset?.thumbnailUrl ||
               currentSlide.thumbnail ||
-              'https://placehold.co/800x600/0D3B2E/FFF?text=Azeebo%2B',
+              'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=800&h=600&q=80',
           }}
           style={styles.backgroundImage}
           resizeMode="cover"

@@ -57,7 +57,9 @@ export default function NightlifeScreen() {
     >
       <Image
         source={{
-          uri: item.image || 'https://placehold.co/400x200/1a1a1a/ffffff?text=Venue',
+          uri:
+            item.image ||
+            'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=400&h=200&q=80',
         }}
         style={styles.venueImage}
         resizeMode="cover"
@@ -110,7 +112,9 @@ export default function NightlifeScreen() {
     >
       <Image
         source={{
-          uri: item.image || 'https://placehold.co/300x200/1a1a1a/ffffff?text=Venue',
+          uri:
+            item.image ||
+            'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=300&h=200&q=80',
         }}
         style={styles.featuredImage}
         resizeMode="cover"

@@ -43,7 +43,7 @@ export default function ContentCard({
   const thumbnailSrc =
     item.mediaAsset?.thumbnailUrl ||
     item.thumbnail ||
-    'https://placehold.co/800x600/1a1a1a/ffffff?text=Azeebo%2B';
+    'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=800&h=600&q=80';
 
   const rating =
     (item as unknown as { rating?: number })?.rating ??

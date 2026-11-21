@@ -576,7 +576,7 @@ export class UserManagementService {
     });
 
     if (data.isVerified !== undefined || data.role === 'creator') {
-      const existing = await this.prisma.creatorProfile.findFirst({
+      const existing = await this.prisma.creatorProfile.findUnique({
         where: { userId: id },
       });
       if (existing) {

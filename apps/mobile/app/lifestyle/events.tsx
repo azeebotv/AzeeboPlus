@@ -71,7 +71,11 @@ export default function EventsScreen() {
       activeOpacity={0.7}
     >
       <Image
-        source={{ uri: item.image || 'https://placehold.co/400x200/1a1a1a/ffffff?text=Event' }}
+        source={{
+          uri:
+            item.image ||
+            'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=400&h=200&q=80',
+        }}
         style={styles.eventImage}
         resizeMode="cover"
       />

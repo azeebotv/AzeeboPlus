@@ -16,10 +16,11 @@ interface OptimizedImageProps {
   blurDataURL?: string;
 }
 
-const FALLBACK_SRC = 'https://placehold.co/800x600/1a1a1a/ffffff?text=Azeebo%2B';
+const FALLBACK_SRC =
+  'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=800&h=600&q=80';
 
 // URLs that should bypass Next.js image optimization (SVG or already optimized)
-const UNOPTIMIZED_HOSTS = ['placehold.co'];
+const UNOPTIMIZED_HOSTS: string[] = [];
 
 function isUnoptimizedUrl(url: string): boolean {
   try {

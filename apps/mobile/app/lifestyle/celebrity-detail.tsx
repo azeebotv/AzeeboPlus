@@ -84,7 +84,9 @@ export default function CelebrityDetailScreen() {
         <View style={styles.heroContainer}>
           <Image
             source={{
-              uri: celebrity.photo || 'https://placehold.co/800x500/1a1a1a/ffffff?text=★',
+              uri:
+                celebrity.photo ||
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&h=500&q=80',
             }}
             style={styles.heroImage}
             resizeMode="cover"

@@ -12,16 +12,18 @@ import { realityApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 
 interface TabIconProps {
-  name: 'home' | 'watch' | 'rewards' | 'tips' | 'profile';
+  name: 'home' | 'search' | 'library' | 'profile' | 'watch' | 'rewards' | 'tips';
   focused: boolean;
 }
 
 const TAB_FEATHER_ICONS: Record<string, keyof typeof Feather.glyphMap> = {
   home: 'home',
+  search: 'search',
+  library: 'folder',
+  profile: 'user',
   watch: 'play-circle',
   rewards: 'award',
   tips: 'heart',
-  profile: 'user',
 };
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
@@ -228,11 +230,11 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="watch"
+          name="search"
           options={{
-            title: 'Watch',
+            title: 'Search',
             tabBarIcon: ({ focused }: { focused: boolean }) => (
-              <TabIcon name="watch" focused={focused} />
+              <TabIcon name="search" focused={focused} />
             ),
           }}
         />
@@ -244,20 +246,11 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="rewards"
+          name="library"
           options={{
-            title: 'Rewards',
+            title: 'Library',
             tabBarIcon: ({ focused }: { focused: boolean }) => (
-              <TabIcon name="rewards" focused={focused} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="tipping"
-          options={{
-            title: 'Tips',
-            tabBarIcon: ({ focused }: { focused: boolean }) => (
-              <TabIcon name="tips" focused={focused} />
+              <TabIcon name="library" focused={focused} />
             ),
           }}
         />
@@ -268,6 +261,54 @@ export default function TabsLayout() {
             tabBarIcon: ({ focused }: { focused: boolean }) => (
               <TabIcon name="profile" focused={focused} />
             ),
+          }}
+        />
+        <Tabs.Screen
+          name="watch"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="rewards"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="tipping"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="referral"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="payment"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="transactions"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="wallet"
+          options={{
+            href: null,
           }}
         />
       </Tabs>

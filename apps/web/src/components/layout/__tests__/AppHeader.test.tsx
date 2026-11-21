@@ -172,17 +172,16 @@ describe('AppHeader', () => {
 
   /* ─── Navigation visibility ─── */
 
-  describe('main navigation (Browse, Live)', () => {
-    it('is visible for authenticated users without games, rewards, or borrow', () => {
+  describe('main navigation (Watch, Live, Games, Rewards)', () => {
+    it('is visible for authenticated users matching Figma design', () => {
       renderHeader();
       // Desktop nav exists with aria-label
       const nav = screen.getByRole('navigation', { name: /main navigation/i });
       expect(nav).toBeTruthy();
-      expect(within(nav).getByText('Browse')).toBeTruthy();
+      expect(within(nav).getByText('Watch')).toBeTruthy();
       expect(within(nav).getByText('Live')).toBeTruthy();
-      // Games, Rewards, Borrow removed from menu as required
-      expect(within(nav).queryByText('Games')).toBeNull();
-      expect(within(nav).queryByText('Rewards')).toBeNull();
+      expect(within(nav).getByText('Games')).toBeTruthy();
+      expect(within(nav).getByText('Rewards')).toBeTruthy();
       expect(within(nav).queryByText('Borrow')).toBeNull();
     });
 

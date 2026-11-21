@@ -101,7 +101,9 @@ export default function EventDetailScreen() {
         <View style={styles.heroContainer}>
           <Image
             source={{
-              uri: event.image || 'https://placehold.co/800x400/1a1a1a/ffffff?text=Event',
+              uri:
+                event.image ||
+                'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&h=400&q=80',
             }}
             style={styles.heroImage}
             resizeMode="cover"
