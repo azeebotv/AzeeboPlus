@@ -74,6 +74,34 @@ export async function seedPaymentService(dryRun = false): Promise<number> {
       );
       count++;
     }
+
+    // 3. Coin Packages
+    const coinPackages = [
+      { id: 'coins-100', name: '100 Voting Coins', description: 'Reality TV evictions & Super-Votes', coins: 100, price: 1000, currency: 'NGN', bonus: 0, isPopular: false, isActive: true, order: 1 },
+      { id: 'coins-500', name: '500 Voting Coins (10% Bonus)', description: 'High-stake eviction voting pack', coins: 500, price: 4500, currency: 'NGN', bonus: 50, isPopular: true, isActive: true, order: 2 },
+      { id: 'coins-1200', name: '1,200 Voting Coins (20% Bonus)', description: 'Tribal Council Super-Vote Power Pack', coins: 1200, price: 10000, currency: 'NGN', bonus: 200, isPopular: false, isActive: true, order: 3 },
+      { id: 'coins-2500', name: '2,500 Voting Coins (VIP)', description: 'Ultimate Season Pass & Super-Vote Multiplier', coins: 2500, price: 20000, currency: 'NGN', bonus: 500, isPopular: false, isActive: true, order: 4 },
+    ];
+
+    for (const pkg of coinPackages) {
+      await pool.query(
+        `INSERT INTO coin_packages (id, name, description, coins, price, currency, bonus, "isPopular", "isActive", "order", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET
+           name = EXCLUDED.name,
+           description = EXCLUDED.description,
+           coins = EXCLUDED.coins,
+           price = EXCLUDED.price,
+           currency = EXCLUDED.currency,
+           bonus = EXCLUDED.bonus,
+           "isPopular" = EXCLUDED."isPopular",
+           "isActive" = EXCLUDED."isActive",
+           "order" = EXCLUDED."order",
+           "updatedAt" = NOW();`,
+        [pkg.id, pkg.name, pkg.description, pkg.coins, pkg.price, pkg.currency, pkg.bonus, pkg.isPopular, pkg.isActive, pkg.order]
+      );
+      count++;
+    }
   } finally {
     await pool.end();
   }

@@ -7,6 +7,7 @@
  */
 
 import pg from 'pg';
+import { seedImages } from './seed-image-hosts.js';
 
 const { Pool } = pg;
 
@@ -31,18 +32,18 @@ function getPool(dbName: string): pg.Pool {
 const DEMO_PASSWORD_HASH = '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.';
 
 const CANONICAL_USERS = [
-  { id: 'a0000001-0000-0000-0000-000000000001', email: 'admin@azeeboplus.com', displayName: 'Admin Chidi', role: 'admin', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', bio: 'Azeebo+ Platform Administrator', city: 'Lagos' },
-  { id: 'a0000001-0000-0000-0000-000000000002', email: 'moderator@azeeboplus.com', displayName: 'Mod Amina', role: 'moderator', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', bio: 'Community Trust & Safety Lead', city: 'Abuja' },
-  { id: 'a0000001-0000-0000-0000-000000000003', email: 'creator1@azeeboplus.com', displayName: 'Tunde Creates', role: 'creator', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', bio: 'Nollywood filmmaker & vertical shorts storyteller', city: 'Lagos' },
-  { id: 'a0000001-0000-0000-0000-000000000004', email: 'creator2@azeeboplus.com', displayName: 'Ngozi Vibes', role: 'creator', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150', bio: 'Lifestyle, Lagos food & nightlife curator', city: 'Lagos' },
-  { id: 'a0000001-0000-0000-0000-000000000005', email: 'creator3@azeeboplus.com', displayName: 'Emeka Studios', role: 'creator', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', bio: 'Comedy sketches, stand-up & parody creator', city: 'Port Harcourt' },
-  { id: 'a0000001-0000-0000-0000-000000000006', email: 'user1@azeeboplus.com', displayName: 'Kemi Watch', role: 'user', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', bio: 'Binge-watching Nollywood & Reality shows 24/7', city: 'Ibadan' },
-  { id: 'a0000001-0000-0000-0000-000000000007', email: 'user2@azeeboplus.com', displayName: 'Olumide F', role: 'user', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', bio: 'Afrobeats and live festival fanatic', city: 'Lagos' },
-  { id: 'a0000001-0000-0000-0000-000000000008', email: 'user3@azeeboplus.com', displayName: 'Fatima A', role: 'user', avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150', bio: 'Sports predictions & esports champion', city: 'Kano' },
-  { id: 'a0000001-0000-0000-0000-000000000009', email: 'banned@azeeboplus.com', displayName: 'Chukwu M', role: 'user', avatar: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150', bio: 'Test suspended account', city: 'Enugu' },
-  { id: 'a0000001-0000-0000-0000-000000000010', email: 'unverified@azeeboplus.com', displayName: 'Yemi O', role: 'user', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', bio: 'Fresh sign up test user', city: 'Benin City' },
-  { id: 'a0000001-0000-0000-0000-000000000011', email: 'sportscreator@azeeboplus.com', displayName: 'Chinedu Sports', role: 'creator', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', bio: 'NPFL & African football analyst', city: 'Owerri' },
-  { id: 'a0000001-0000-0000-0000-000000000012', email: 'gamer@azeeboplus.com', displayName: 'Tunde Gaming', role: 'creator', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', bio: 'FIFA & Street Fighter esports streamer', city: 'Lagos' },
+  { id: 'a0000001-0000-0000-0000-000000000001', email: 'admin@azeeboplus.com', displayName: 'Admin Chidi', role: 'admin', avatar: seedImages.unsplash('photo-1507003211169-0a1dd7228f2d', 300, 300), bio: 'Azeebo+ Platform Administrator', city: 'Lagos' },
+  { id: 'a0000001-0000-0000-0000-000000000002', email: 'moderator@azeeboplus.com', displayName: 'Mod Amina', role: 'moderator', avatar: seedImages.unsplash('photo-1534528741775-53994a69daeb', 300, 300), bio: 'Community Trust & Safety Lead', city: 'Abuja' },
+  { id: 'a0000001-0000-0000-0000-000000000003', email: 'creator1@azeeboplus.com', displayName: 'Tunde Creates', role: 'creator', avatar: seedImages.unsplash('photo-1500648767791-00dcc994a43e', 300, 300), bio: 'Nollywood filmmaker & vertical shorts storyteller', city: 'Lagos' },
+  { id: 'a0000001-0000-0000-0000-000000000004', email: 'creator2@azeeboplus.com', displayName: 'Ngozi Vibes', role: 'creator', avatar: seedImages.unsplash('photo-1517841905240-472988babdf9', 300, 300), bio: 'Lifestyle, Lagos food & nightlife curator', city: 'Lagos' },
+  { id: 'a0000001-0000-0000-0000-000000000005', email: 'creator3@azeeboplus.com', displayName: 'Emeka Studios', role: 'creator', avatar: seedImages.unsplash('photo-1506794778202-cad84cf45f1d', 300, 300), bio: 'Comedy sketches, stand-up & parody creator', city: 'Port Harcourt' },
+  { id: 'a0000001-0000-0000-0000-000000000006', email: 'user1@azeeboplus.com', displayName: 'Kemi Watch', role: 'user', avatar: seedImages.unsplash('photo-1494790108377-be9c29b29330', 300, 300), bio: 'Binge-watching Nollywood & Reality shows 24/7', city: 'Ibadan' },
+  { id: 'a0000001-0000-0000-0000-000000000007', email: 'user2@azeeboplus.com', displayName: 'Olumide F', role: 'user', avatar: seedImages.unsplash('photo-1519085360753-af0119f7cbe7', 300, 300), bio: 'Afrobeats and live festival fanatic', city: 'Lagos' },
+  { id: 'a0000001-0000-0000-0000-000000000008', email: 'user3@azeeboplus.com', displayName: 'Fatima A', role: 'user', avatar: seedImages.unsplash('photo-1524504388940-b1c1722653e1', 300, 300), bio: 'Sports predictions & esports champion', city: 'Kano' },
+  { id: 'a0000001-0000-0000-0000-000000000009', email: 'banned@azeeboplus.com', displayName: 'Chukwu M', role: 'user', avatar: seedImages.unsplash('photo-1501196354995-cbb51c65aaea', 300, 300), bio: 'Test suspended account', city: 'Enugu' },
+  { id: 'a0000001-0000-0000-0000-000000000010', email: 'unverified@azeeboplus.com', displayName: 'Yemi O', role: 'user', avatar: seedImages.unsplash('photo-1544005313-94ddf0286df2', 300, 300), bio: 'Fresh sign up test user', city: 'Benin City' },
+  { id: 'a0000001-0000-0000-0000-000000000011', email: 'sportscreator@azeeboplus.com', displayName: 'Chinedu Sports', role: 'creator', avatar: seedImages.unsplash('photo-1507003211169-0a1dd7228f2d', 300, 300), bio: 'NPFL & African football analyst', city: 'Owerri' },
+  { id: 'a0000001-0000-0000-0000-000000000012', email: 'gamer@azeeboplus.com', displayName: 'Tunde Gaming', role: 'creator', avatar: seedImages.unsplash('photo-1500648767791-00dcc994a43e', 300, 300), bio: 'FIFA & Street Fighter esports streamer', city: 'Lagos' },
 ];
 
 export async function seedUserService(dryRun = false): Promise<number> {

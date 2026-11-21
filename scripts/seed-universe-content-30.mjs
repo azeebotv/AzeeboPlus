@@ -65,7 +65,24 @@ const DESCRIPTIONS = [
   'The story everyone asked for, finally here on Azeebo+.',
 ];
 
-const THUMB = (i) => `/images/placeholders/content/800x450_${String((i % 9) + 1).padStart(2, '0')}.png`;
+const UNIVERSE_PHOTOS = {
+  movie: ['photo-1536440136628-849c177e76a1', 'photo-1485846234645-a62644f84728', 'photo-1478720568477-152d9b164e26', 'photo-1518676599649-7c77c68b753a'],
+  movies: ['photo-1536440136628-849c177e76a1', 'photo-1485846234645-a62644f84728', 'photo-1478720568477-152d9b164e26', 'photo-1518676599649-7c77c68b753a'],
+  reality: ['photo-1516450360452-9312f5e86fc7', 'photo-1492684223066-81342ee5ff30', 'photo-1514525253161-7a46d19cd819'],
+  music: ['photo-1511671782779-c97d3d27a1d4', 'photo-1470225620780-dba8ba36b745', 'photo-1508700115892-45ecd05ae2ad'],
+  comedy: ['photo-1585699324551-f6c309eedeca', 'photo-1527224857830-43a7acc85260', 'photo-1516450360452-9312f5e86fc7'],
+  sports: ['photo-1508098682722-e99c43a406b2', 'photo-1574629810360-7efbbe195018', 'photo-1517649763962-0c623266ddc0'],
+  lifestyle: ['photo-1507525428034-b723cf961d3e', 'photo-1512917774080-9991f1c4c750', 'photo-1517248135467-4c7edcad34c4'],
+  games: ['photo-1542751371-adc38448a05e', 'photo-1511512578047-dfb367046420', 'photo-1538481199705-c710c4e965fc'],
+  creator: ['photo-1518173946687-a4c8a383392e', 'photo-1598488035139-bdbb2231ce04'],
+  vertical: ['photo-1534528741775-53994a69daeb', 'photo-1507003211169-0a1dd7228f2d'],
+};
+
+const THUMB = (universe, i) => {
+  const pool = UNIVERSE_PHOTOS[universe] ?? UNIVERSE_PHOTOS.movie;
+  const photo = pool[i % pool.length];
+  return `https://images.unsplash.com/${photo}?auto=format&fit=crop&w=800&h=450&q=80`;
+};
 
 const TARGET = 30;
 
@@ -91,7 +108,7 @@ for (const u of UNIVERSES) {
     const id = `cnt-seed30-${u.name}-${String(i + 1).padStart(3, '0')}`;
     const title = titles[i % titles.length] + (i >= titles.length ? ` Vol.${Math.floor(i / titles.length) + 1}` : '');
     const desc = DESCRIPTIONS[i % DESCRIPTIONS.length];
-    const thumb = THUMB(i);
+    const thumb = THUMB(u.name, i);
     const creator = CREATORS[i % CREATORS.length];
     const views = 1200 + ((i * 7919 + u.name.length * 131) % 48000);
     rows.push(

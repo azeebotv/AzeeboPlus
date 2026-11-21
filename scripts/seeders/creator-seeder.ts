@@ -6,6 +6,7 @@
  */
 
 import pg from 'pg';
+import { seedImages } from './seed-image-hosts.js';
 
 const { Pool } = pg;
 
@@ -39,16 +40,16 @@ const UNIVERSES = [
 ];
 
 const CREATORS = [
-  { id: 'cp000000-0000-0000-0000-000000000001', userId: 'a0000001-0000-0000-0000-000000000003', name: 'Tunde Creates', bio: 'Nollywood filmmaker, scriptwriter & vertical series director.', banner: 'https://images.unsplash.com/photo-1518173946687-a4c8a383392e?w=800', verified: true, channel: 'Tunde Creates Studios', category: 'movies' },
-  { id: 'cp000000-0000-0000-0000-000000000002', userId: 'a0000001-0000-0000-0000-000000000004', name: 'Ngozi Vibes', bio: 'Lagos street food, luxury travel, and cultural exploration.', banner: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800', verified: true, channel: 'Ngozi Vibes Official', category: 'lifestyle' },
-  { id: 'cp000000-0000-0000-0000-000000000003', userId: 'a0000001-0000-0000-0000-000000000005', name: 'Emeka Studios', bio: 'Viral comedy sketches, stand-up snippets, and campus pranks.', banner: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800', verified: true, channel: 'Emeka Comedy TV', category: 'comedy' },
-  { id: 'cp000000-0000-0000-0000-000000000004', userId: 'a0000001-0000-0000-0000-000000000011', name: 'Chinedu Sports', bio: 'In-depth African football tactics, NPFL highlights & AFCON podcasts.', banner: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800', verified: true, channel: 'Naija Sports Central', category: 'sports' },
-  { id: 'cp000000-0000-0000-0000-000000000005', userId: 'a0000001-0000-0000-0000-000000000012', name: 'Tunde Gaming', bio: 'Top ranked FIFA & Street Fighter esports streamer in West Africa.', banner: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800', verified: true, channel: 'Lagos Gaming Lounge', category: 'games' },
-  { id: 'cr-001', userId: '00000000-0000-4000-8000-000000000002', name: 'Basketmouth Productions', bio: 'Veteran standup comedian, producer of Flatmates and Lord of the Ribs.', banner: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800', verified: true, channel: 'Basketmouth Comedy Vault', category: 'comedy' },
-  { id: 'cr-002', userId: '00000000-0000-4000-8000-000000000003', name: 'Bovi Studios', bio: 'Standup comedian, actor, and host of Bovi Man on Fire.', banner: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800', verified: true, channel: 'Bovi Live & Uncut', category: 'comedy' },
-  { id: 'cr-003', userId: '00000000-0000-4000-8000-000000000004', name: 'Taaooma Originals', bio: 'Multi-character family comedy sketches and African mom parodies.', banner: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800', verified: true, channel: 'Taaooma TV', category: 'comedy' },
-  { id: 'cr-004', userId: '00000000-0000-4000-8000-000000000005', name: 'Sabinus Entertainment', bio: 'AMVCA Award-winning content creator and Investor Sabinus skits.', banner: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800', verified: true, channel: 'Mr Funny Official', category: 'comedy' },
-  { id: 'cr-005', userId: '00000000-0000-4000-8000-000000000006', name: 'Broda Shaggi TV', bio: 'High energy comedic actor, stunts, and street interview skits.', banner: 'https://images.unsplash.com/photo-1520523839898-507127027d86?w=800', verified: true, channel: 'Fine Boy Agbero Channel', category: 'comedy' },
+  { id: 'cp000000-0000-0000-0000-000000000001', userId: 'a0000001-0000-0000-0000-000000000003', name: 'Tunde Creates', bio: 'Nollywood filmmaker, scriptwriter & vertical series director.', banner: seedImages.unsplash('photo-1518173946687-a4c8a383392e', 1200, 400), verified: true, channel: 'Tunde Creates Studios', category: 'movies' },
+  { id: 'cp000000-0000-0000-0000-000000000002', userId: 'a0000001-0000-0000-0000-000000000004', name: 'Ngozi Vibes', bio: 'Lagos street food, luxury travel, and cultural exploration.', banner: seedImages.unsplash('photo-1507525428034-b723cf961d3e', 1200, 400), verified: true, channel: 'Ngozi Vibes Official', category: 'lifestyle' },
+  { id: 'cp000000-0000-0000-0000-000000000003', userId: 'a0000001-0000-0000-0000-000000000005', name: 'Emeka Studios', bio: 'Viral comedy sketches, stand-up snippets, and campus pranks.', banner: seedImages.unsplash('photo-1514525253161-7a46d19cd819', 1200, 400), verified: true, channel: 'Emeka Comedy TV', category: 'comedy' },
+  { id: 'cp000000-0000-0000-0000-000000000004', userId: 'a0000001-0000-0000-0000-000000000011', name: 'Chinedu Sports', bio: 'In-depth African football tactics, NPFL highlights & AFCON podcasts.', banner: seedImages.unsplash('photo-1508098682722-e99c43a406b2', 1200, 400), verified: true, channel: 'Naija Sports Central', category: 'sports' },
+  { id: 'cp000000-0000-0000-0000-000000000005', userId: 'a0000001-0000-0000-0000-000000000012', name: 'Tunde Gaming', bio: 'Top ranked FIFA & Street Fighter esports streamer in West Africa.', banner: seedImages.unsplash('photo-1542751371-adc38448a05e', 1200, 400), verified: true, channel: 'Lagos Gaming Lounge', category: 'games' },
+  { id: 'cr-001', userId: '00000000-0000-4000-8000-000000000002', name: 'Basketmouth Productions', bio: 'Veteran standup comedian, producer of Flatmates and Lord of the Ribs.', banner: seedImages.unsplash('photo-1516450360452-9312f5e86fc7', 1200, 400), verified: true, channel: 'Basketmouth Comedy Vault', category: 'comedy' },
+  { id: 'cr-002', userId: '00000000-0000-4000-8000-000000000003', name: 'Bovi Studios', bio: 'Standup comedian, actor, and host of Bovi Man on Fire.', banner: seedImages.unsplash('photo-1470225620780-dba8ba36b745', 1200, 400), verified: true, channel: 'Bovi Live & Uncut', category: 'comedy' },
+  { id: 'cr-003', userId: '00000000-0000-4000-8000-000000000004', name: 'Taaooma Originals', bio: 'Multi-character family comedy sketches and African mom parodies.', banner: seedImages.unsplash('photo-1518709268805-4e9042af9f23', 1200, 400), verified: true, channel: 'Taaooma TV', category: 'comedy' },
+  { id: 'cr-004', userId: '00000000-0000-4000-8000-000000000005', name: 'Sabinus Entertainment', bio: 'AMVCA Award-winning content creator and Investor Sabinus skits.', banner: seedImages.unsplash('photo-1511671782779-c97d3d27a1d4', 1200, 400), verified: true, channel: 'Mr Funny Official', category: 'comedy' },
+  { id: 'cr-005', userId: '00000000-0000-4000-8000-000000000006', name: 'Broda Shaggi TV', bio: 'High energy comedic actor, stunts, and street interview skits.', banner: seedImages.unsplash('photo-1520523839898-507127027d86', 1200, 400), verified: true, channel: 'Fine Boy Agbero Channel', category: 'comedy' },
 ];
 
 export async function seedCreatorService(dryRun = false): Promise<number> {

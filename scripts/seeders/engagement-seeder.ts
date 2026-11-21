@@ -6,6 +6,7 @@
  */
 
 import pg from 'pg';
+import { seedImages } from './seed-image-hosts.js';
 
 const { Pool } = pg;
 
@@ -27,16 +28,16 @@ function getPool(dbName: string): pg.Pool {
 }
 
 const LEADERBOARD_USERS = [
-  { id: 'usr-0001', name: 'Chioma Adebayo', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', score: 18450, rank: 1 },
-  { id: 'usr-0002', name: 'Emeka Okafor', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', score: 16200, rank: 2 },
-  { id: 'usr-0003', name: 'Amina Bello', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150', score: 14100, rank: 3 },
-  { id: 'usr-0004', name: 'Tunde Bakare', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', score: 12800, rank: 4 },
-  { id: 'usr-0005', name: 'Ngozi Eze', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', score: 11450, rank: 5 },
-  { id: 'usr-0006', name: 'Femi Otedola', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', score: 9900, rank: 6 },
-  { id: 'usr-0007', name: 'Zainab Danjuma', avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150', score: 8750, rank: 7 },
-  { id: 'usr-0008', name: 'Kayode Alabi', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', score: 7600, rank: 8 },
-  { id: 'usr-0009', name: 'Halima Sadiq', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', score: 6400, rank: 9 },
-  { id: 'usr-0010', name: 'Chinedu Ibe', avatar: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150', score: 5200, rank: 10 },
+  { id: 'usr-0001', name: 'Chioma Adebayo', avatar: seedImages.unsplash('photo-1534528741775-53994a69daeb', 200, 200), score: 18450, rank: 1 },
+  { id: 'usr-0002', name: 'Emeka Okafor', avatar: seedImages.unsplash('photo-1507003211169-0a1dd7228f2d', 200, 200), score: 16200, rank: 2 },
+  { id: 'usr-0003', name: 'Amina Bello', avatar: seedImages.unsplash('photo-1517841905240-472988babdf9', 200, 200), score: 14100, rank: 3 },
+  { id: 'usr-0004', name: 'Tunde Bakare', avatar: seedImages.unsplash('photo-1500648767791-00dcc994a43e', 200, 200), score: 12800, rank: 4 },
+  { id: 'usr-0005', name: 'Ngozi Eze', avatar: seedImages.unsplash('photo-1494790108377-be9c29b29330', 200, 200), score: 11450, rank: 5 },
+  { id: 'usr-0006', name: 'Femi Otedola', avatar: seedImages.unsplash('photo-1506794778202-cad84cf45f1d', 200, 200), score: 9900, rank: 6 },
+  { id: 'usr-0007', name: 'Zainab Danjuma', avatar: seedImages.unsplash('photo-1524504388940-b1c1722653e1', 200, 200), score: 8750, rank: 7 },
+  { id: 'usr-0008', name: 'Kayode Alabi', avatar: seedImages.unsplash('photo-1519085360753-af0119f7cbe7', 200, 200), score: 7600, rank: 8 },
+  { id: 'usr-0009', name: 'Halima Sadiq', avatar: seedImages.unsplash('photo-1544005313-94ddf0286df2', 200, 200), score: 6400, rank: 9 },
+  { id: 'usr-0010', name: 'Chinedu Ibe', avatar: seedImages.unsplash('photo-1501196354995-cbb51c65aaea', 200, 200), score: 5200, rank: 10 },
 ];
 
 export async function seedEngagementService(dryRun = false): Promise<number> {

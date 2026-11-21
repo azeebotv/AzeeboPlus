@@ -46,6 +46,11 @@ const nextConfig = {
             },
           ]),
       {
+        // Seed data & editorial images (Unsplash high-resolution photography)
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
         // Seed data (scripts/seeders/lifestyle-seeder.ts) emits cover URLs on
         // this host; ContentCard/OptimizedImage render them via next/image.
         protocol: 'https',

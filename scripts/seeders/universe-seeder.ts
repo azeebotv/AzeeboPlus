@@ -17,7 +17,7 @@
  */
 
 import pg from 'pg';
-import { themedArt } from './seed-image-hosts.js';
+import { seedImageUrl, themedArt } from './seed-image-hosts.js';
 
 const { Pool } = pg;
 
@@ -177,6 +177,51 @@ export async function seedRealityUniverse(): Promise<number> {
       records++;
     }
 
+    // Clips
+    const clips = [
+      { id: 'rcl-001', showId: 'cnt00001-0000-0000-0000-000000000001', title: 'Adaora vs Chidi Kitchen Drama', desc: 'A fierce argument erupts over kitchen chores and food rations.' },
+      { id: 'rcl-002', showId: 'cnt00001-0000-0000-0000-000000000001', title: 'Amara Afrobeats Dance Breakdown', desc: 'Amara takes over the Saturday night party with an electrifying routine.' },
+      { id: 'rcl-003', showId: 'cnt00001-0000-0000-0000-000000000001', title: 'Diary Room Confessions: Secret Alliance', desc: 'Housemates bare it all in a heated Diary Room session with Biggie.' },
+      { id: 'rcl-004', showId: 'cnt00001-0000-0000-0000-000000000001', title: 'Sunday Eviction Shock Reaction', desc: 'The moment the first eviction card was drawn on the live stage.' },
+    ];
+
+    for (const cl of clips) {
+      const clipMedia = seedImageUrl('cdn.azeebo.test', `reality/${cl.id}.mp4`);
+      await pool.query(
+        `INSERT INTO reality_clips (id, "showId", "creatorId", title, description, thumbnail, "mediaUrl", "viewCount", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 48200, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title;`,
+        [cl.id, cl.showId, USER_IDS.admin, cl.title, cl.desc, themedArt.wide('reality', cl.title), clipMedia]
+      );
+      records++;
+    }
+
+    // Predictions
+    await pool.query(
+      `INSERT INTO reality_predictions (id, "userId", "showId", prediction, "createdAt", "updatedAt")
+       VALUES ('rpred-001', $1, 'cnt00001-0000-0000-0000-000000000001', '{"question": "Who will win Head of House in Week 2?", "options": ["Adaora Eze", "Chidi Obi", "Amara Kanu", "Tobi Bakre Jr."], "totalPool": 350000}'::jsonb, NOW(), NOW())
+       ON CONFLICT (id) DO UPDATE SET prediction = EXCLUDED.prediction;`,
+      [USER_IDS.creator1]
+    );
+    records++;
+
+    // Votes
+    const votes = [
+      { id: 'rvote-001', userId: USER_IDS.creator1, contestantId: 'rc-dev-001', qty: 50 },
+      { id: 'rvote-002', userId: USER_IDS.creator2, contestantId: 'rc-dev-002', qty: 100 },
+      { id: 'rvote-003', userId: USER_IDS.creator3, contestantId: 'rc-dev-003', qty: 75 },
+    ];
+
+    for (const v of votes) {
+      await pool.query(
+        `INSERT INTO reality_votes (id, "userId", "contestantId", "showId", quantity, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, 'cnt00001-0000-0000-0000-000000000001', $4, NOW(), NOW())
+         ON CONFLICT ("userId", "contestantId") DO UPDATE SET quantity = EXCLUDED.quantity;`,
+        [v.id, v.userId, v.contestantId, v.qty]
+      );
+      records++;
+    }
+
   } finally {
     await pool.end();
   }
@@ -320,6 +365,40 @@ export async function seedMoviesUniverse(): Promise<number> {
       );
       records++;
     }
+
+    // Watchlist items
+    const watchlist = [
+      { id: 'wl-001', userId: USER_IDS.admin, movieId: 'mov-dev-001' },
+      { id: 'wl-002', userId: USER_IDS.admin, movieId: 'mov-dev-002' },
+      { id: 'wl-003', userId: USER_IDS.creator1, movieId: 'mov-dev-003' },
+      { id: 'wl-004', userId: USER_IDS.creator2, movieId: 'mov-dev-004' },
+    ];
+
+    for (const w of watchlist) {
+      await pool.query(
+        `INSERT INTO watchlist_items (id, "userId", "movieId", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, NOW(), NOW())
+         ON CONFLICT ("userId", "movieId") DO NOTHING;`,
+        [w.id, w.userId, w.movieId]
+      );
+      records++;
+    }
+
+    // Filmmaker projects
+    const filmmakerProjects = [
+      { id: 'fmp-001', filmmakerId: USER_IDS.creator1, title: 'Echoes of the Niger Delta', desc: 'An environmental thriller following a courageous youth activist exposing illegal bunkering.', goal: 15000000, raised: 8200000 },
+      { id: 'fmp-002', filmmakerId: USER_IDS.creator2, title: 'The Last Kano Dye Pit', desc: 'A poetic documentary on the 500-year-old indigo dyeing tradition of northern Nigeria.', goal: 8000000, raised: 5400000 },
+    ];
+
+    for (const fp of filmmakerProjects) {
+      await pool.query(
+        `INSERT INTO filmmaker_projects (id, "filmmakerId", title, description, thumbnail, status, "fundingGoal", "fundingRaised", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, 'development', $6, $7, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, "fundingRaised" = EXCLUDED."fundingRaised";`,
+        [fp.id, fp.filmmakerId, fp.title, fp.desc, themedArt.poster('movie', fp.title), fp.goal, fp.raised]
+      );
+      records++;
+    }
   } finally {
     await pool.end();
   }
@@ -369,11 +448,12 @@ export async function seedComedyUniverse(): Promise<number> {
     ];
 
     for (const sp of specials) {
+      const specialMedia = seedImageUrl('cdn.azeebo.test', 'comedy/special.mp4');
       await pool.query(
         `INSERT INTO comedy_specials (id, title, description, thumbnail, "mediaUrl", "comedianId", genre, "isPremium", price, currency, "viewCount", "createdAt", "updatedAt")
-         VALUES ($1, $2, $2, $3, 'https://cdn.azeebo.test/comedy/special.mp4', $4, $5, true, $6, 'NGN', 24800, NOW(), NOW())
+         VALUES ($1, $2, $2, $3, $4, $5, $6, true, $7, 'NGN', 24800, NOW(), NOW())
          ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title;`,
-        [sp.id, sp.title, themedArt.poster('comedy', sp.title), sp.comedianId, sp.genre, sp.price]
+        [sp.id, sp.title, themedArt.poster('comedy', sp.title), specialMedia, sp.comedianId, sp.genre, sp.price]
       );
       records++;
     }
@@ -388,11 +468,12 @@ export async function seedComedyUniverse(): Promise<number> {
     ];
 
     for (const cl of clips) {
+      const clipMedia = seedImageUrl('cdn.azeebo.test', 'comedy/clip.mp4');
       await pool.query(
         `INSERT INTO comedy_clips (id, "comedianId", "creatorId", title, description, thumbnail, "mediaUrl", "viewCount", "likeCount", "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $4, $5, 'https://cdn.azeebo.test/comedy/clip.mp4', 18200, 3420, NOW(), NOW())
+         VALUES ($1, $2, $3, $4, $4, $5, $6, 18200, 3420, NOW(), NOW())
          ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title;`,
-        [cl.id, cl.comedianId, cl.creatorId, cl.title, themedArt.wide('comedy', cl.title)]
+        [cl.id, cl.comedianId, cl.creatorId, cl.title, themedArt.wide('comedy', cl.title), clipMedia]
       );
       records++;
     }
@@ -404,6 +485,35 @@ export async function seedComedyUniverse(): Promise<number> {
        ON CONFLICT (id) DO NOTHING;`
     );
     records++;
+
+    // Comedy Series & Episodes
+    const series = [
+      { id: 'cser-001', title: 'Flatmates Reborn: New Roommates', creatorId: USER_IDS.creator1, desc: 'The iconic gang is back with new tenants, landlord trouble, and Lagos survival strategies.' },
+      { id: 'cser-002', title: 'Investor Sabinus: Corporate Ventures', creatorId: USER_IDS.creator4, desc: 'Sabinus enters corporate Lagos and pitches preposterous business ideas to top CEOs.' },
+    ];
+
+    for (const ser of series) {
+      await pool.query(
+        `INSERT INTO comedy_series (id, title, description, thumbnail, banner, "creatorId", status, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, 'active', NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title;`,
+        [ser.id, ser.title, ser.desc, themedArt.poster('comedy', ser.title), themedArt.banner('comedy', ser.title), ser.creatorId]
+      );
+      records++;
+
+      // Seed 2 episodes per series
+      for (let epNum = 1; epNum <= 2; epNum++) {
+        const epTitle = `${ser.title} - Episode ${epNum}`;
+        const epMedia = seedImageUrl('cdn.azeebo.test', `comedy/${ser.id}-ep${epNum}.mp4`);
+        await pool.query(
+          `INSERT INTO comedy_episodes (id, "seriesId", title, description, thumbnail, "mediaUrl", duration, "viewCount", "order", "createdAt", "updatedAt")
+           VALUES ($1, $2, $3, $3, $4, $5, 480, 18400, $6, NOW(), NOW())
+           ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title;`,
+          [`${ser.id}-ep${epNum}`, ser.id, epTitle, themedArt.wide('comedy', epTitle), epMedia, epNum]
+        );
+        records++;
+      }
+    }
   } finally {
     await pool.end();
   }
@@ -624,11 +734,57 @@ export async function seedSportsUniverse(): Promise<number> {
         [USER_IDS.creator1, themedArt.avatar('Super Eagles')]
       );
 
+      const sportsHighlightMedia = seedImageUrl('cdn.azeebo.test', 'sports/highlight.mp4');
       await pool.query(
         `INSERT INTO highlights (id, "eventId", "creatorId", title, description, thumbnail, "mediaUrl", "viewCount", "createdAt", "updatedAt")
-         VALUES ($1, $2, 'sp-cr-001', $3, $3, $4, 'https://cdn.azeebo.test/sports/highlight.mp4', 15200, NOW(), NOW())
+         VALUES ($1, $2, 'sp-cr-001', $3, $3, $4, $5, 15200, NOW(), NOW())
          ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title;`,
-        [`hl-${ev.id}`, ev.id, `Match Highlights: ${ev.title}`, themedArt.wide('sports', ev.title)]
+        [`hl-${ev.id}`, ev.id, `Match Highlights: ${ev.title}`, themedArt.wide('sports', ev.title), sportsHighlightMedia]
+      );
+      records++;
+    }
+
+    // Sports Players for Enyimba vs Remo Stars Lineup
+    const sportsPlayers = [
+      { id: 'eny-01', teamId: 'tm1-sport-001', name: 'Olorunleke Ojo', number: 1, position: 'GK', gridX: 50, gridY: 90, rating: 7.8, isCaptain: true },
+      { id: 'eny-02', teamId: 'tm1-sport-001', name: 'Bilal Yakubu', number: 2, position: 'RB', gridX: 85, gridY: 72, rating: 7.2, isCaptain: false },
+      { id: 'eny-03', teamId: 'tm1-sport-001', name: 'Somtochukwu Uche', number: 5, position: 'CB', gridX: 63, gridY: 75, rating: 7.4, isCaptain: false },
+      { id: 'eny-04', teamId: 'tm1-sport-001', name: 'Pascal Eze', number: 6, position: 'CB', gridX: 37, gridY: 75, rating: 7.5, isCaptain: false },
+      { id: 'eny-05', teamId: 'tm1-sport-001', name: 'Imo Obot', number: 3, position: 'LB', gridX: 15, gridY: 72, rating: 7.1, isCaptain: false },
+      { id: 'eny-06', teamId: 'tm1-sport-001', name: 'Chibuike Nwaiwu', number: 4, position: 'CDM', gridX: 38, gridY: 55, rating: 7.6, isCaptain: false },
+      { id: 'eny-07', teamId: 'tm1-sport-001', name: 'Daniel Daga', number: 8, position: 'CDM', gridX: 62, gridY: 55, rating: 8.1, isCaptain: false },
+      { id: 'eny-08', teamId: 'tm1-sport-001', name: 'Eze Ekwutoziam', number: 7, position: 'RW', gridX: 82, gridY: 34, rating: 7.7, isCaptain: false },
+      { id: 'eny-09', teamId: 'tm1-sport-001', name: 'Mbaoma Chijioke', number: 10, position: 'CAM', gridX: 50, gridY: 38, rating: 8.3, isCaptain: false },
+      { id: 'eny-10', teamId: 'tm1-sport-001', name: 'Joseph Atule', number: 11, position: 'LW', gridX: 18, gridY: 34, rating: 7.9, isCaptain: false },
+      { id: 'eny-11', teamId: 'tm1-sport-001', name: 'Alade Balogun', number: 9, position: 'ST', gridX: 50, gridY: 15, rating: 8.0, isCaptain: false },
+      { id: 'rem-01', teamId: 'tm2-sport-001', name: 'Kayode Bankole', number: 1, position: 'GK', gridX: 50, gridY: 90, rating: 7.5, isCaptain: false },
+      { id: 'rem-02', teamId: 'tm2-sport-001', name: 'Ismaila Sodiq', number: 2, position: 'RB', gridX: 85, gridY: 72, rating: 8.2, isCaptain: false },
+      { id: 'rem-03', teamId: 'tm2-sport-001', name: 'Nduka Junior', number: 4, position: 'CB', gridX: 63, gridY: 75, rating: 8.0, isCaptain: true },
+      { id: 'rem-04', teamId: 'tm2-sport-001', name: 'Ahmed Akinyele', number: 6, position: 'CB', gridX: 37, gridY: 75, rating: 7.6, isCaptain: false },
+      { id: 'rem-05', teamId: 'tm2-sport-001', name: 'Seun Ogunribide', number: 3, position: 'LB', gridX: 15, gridY: 72, rating: 7.3, isCaptain: false },
+      { id: 'rem-06', teamId: 'tm2-sport-001', name: 'Dayo Ojo', number: 8, position: 'CM', gridX: 35, gridY: 52, rating: 7.7, isCaptain: false },
+      { id: 'rem-07', teamId: 'tm2-sport-001', name: 'Qudus Akanni', number: 14, position: 'CM', gridX: 65, gridY: 52, rating: 7.4, isCaptain: false },
+      { id: 'rem-08', teamId: 'tm2-sport-001', name: 'Franck Mawuena', number: 7, position: 'RW', gridX: 80, gridY: 32, rating: 7.9, isCaptain: false },
+      { id: 'rem-09', teamId: 'tm2-sport-001', name: 'Sikiru Alimi', number: 9, position: 'ST', gridX: 50, gridY: 18, rating: 8.4, isCaptain: false },
+      { id: 'rem-10', teamId: 'tm2-sport-001', name: 'Adams Olamilekan', number: 11, position: 'LW', gridX: 20, gridY: 32, rating: 7.8, isCaptain: false },
+      { id: 'rem-11', teamId: 'tm2-sport-001', name: 'Isaac James', number: 19, position: 'CAM', gridX: 50, gridY: 36, rating: 7.5, isCaptain: false },
+    ];
+
+    for (const p of sportsPlayers) {
+      await pool.query(
+        `INSERT INTO sports_players (id, "teamId", name, number, position, "gridX", "gridY", rating, "isCaptain", photo, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET
+           name = EXCLUDED.name,
+           number = EXCLUDED.number,
+           position = EXCLUDED.position,
+           "gridX" = EXCLUDED."gridX",
+           "gridY" = EXCLUDED."gridY",
+           rating = EXCLUDED.rating,
+           "isCaptain" = EXCLUDED."isCaptain",
+           photo = EXCLUDED.photo,
+           "updatedAt" = NOW();`,
+        [p.id, p.teamId, p.name, p.number, p.position, p.gridX, p.gridY, p.rating, p.isCaptain, themedArt.avatar(p.name)]
       );
       records++;
     }
@@ -792,6 +948,75 @@ export async function seedLifestyleUniverse(): Promise<number> {
          VALUES ($1, $2, $3, $2, $4, $5, $6, $7, NOW() + INTERVAL '5 days', NOW() + INTERVAL '5 days' + INTERVAL '6 hours', 'published', NOW(), NOW())
          ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title;`,
         [e.id, e.title, e.slug, themedArt.wide('lifestyle', e.title), e.location, e.venue, USER_IDS.admin]
+      );
+      records++;
+    }
+
+    // Celebrity Entries
+    const celebrities = [
+      { id: 'cel-001', name: 'Davido', slug: 'davido', profession: 'Musician & Philanthropist', bio: 'Afrobeats megastar, DMW founder, and multi-platinum recording artist.' },
+      { id: 'cel-002', name: 'Burna Boy', slug: 'burna-boy', profession: 'Grammy-Winning Afro-Fusion Artist', bio: 'Global icon from Port Harcourt selling out Madison Square Garden and Wembley.' },
+      { id: 'cel-003', name: 'Tiwa Savage', slug: 'tiwa-savage', profession: 'Singer, Songwriter & Actress', bio: 'The Queen of Afrobeats with global chart-topping collaborations.' },
+      { id: 'cel-004', name: 'Funke Akindele', slug: 'funke-akindele', profession: 'Box Office Record Filmmaker', bio: 'AMVCA winner and creator of the highest grossing Nollywood films in history.' },
+    ];
+
+    for (const c of celebrities) {
+      await pool.query(
+        `INSERT INTO "CelebrityEntry" (id, name, slug, bio, "coverImage", profession, nationality, "isFeatured", "viewCount", status, "createdById", "publishedAt", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, 'Nigerian', true, 185000, 'published', $7, NOW(), NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, bio = EXCLUDED.bio;`,
+        [c.id, c.name, c.slug, c.bio, themedArt.avatar(c.name), c.profession, USER_IDS.admin]
+      );
+      records++;
+    }
+
+    // City Guide Entries
+    const cityGuides = [
+      { id: 'cg-001', name: 'Terra Kulture Arts Center', slug: 'terra-kulture-lagos', type: 'arts_culture', address: '14 Tiamiyu Savage St, VI', description: 'Premier cultural hub featuring modern Nigerian theatre, fine art gallery, and indigenous restaurant.' },
+      { id: 'cg-002', name: 'Nike Art Gallery', slug: 'nike-art-gallery-lekki', type: 'gallery', address: '2 Eti-Osa, Lekki Phase 1', description: 'Four-story gallery housing over 8,000 authentic African artworks, textiles, and sculptures.' },
+      { id: 'cg-003', name: 'Lekki Conservation Centre', slug: 'lekki-conservation-centre', type: 'nature', address: 'KM 19 Lekki-Epe Expressway', description: 'Canopy walk, coastal mangrove reserve, and natural wildlife sanctuary in suburban Lagos.' },
+      { id: 'cg-004', name: 'Buka Hut Traditional Cuisine', slug: 'buka-hut-surulere', type: 'dining', address: '15 Bode Thomas, Surulere', description: 'Iconic Lagos dining experience celebrated for authentic amala, abula, and freshly pounded yam.' },
+    ];
+
+    for (const cg of cityGuides) {
+      await pool.query(
+        `INSERT INTO "CityGuideEntry" (id, name, slug, type, description, "coverImage", address, city, country, rating, status, "viewCount", "createdById", "publishedAt", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'Lagos', 'Nigeria', 4.7, 'published', 42000, $8, NOW(), NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description;`,
+        [cg.id, cg.name, cg.slug, cg.type, cg.description, themedArt.wide('lifestyle', cg.name), cg.address, USER_IDS.admin]
+      );
+      records++;
+    }
+
+    // Influencer Entries
+    const influencers = [
+      { id: 'inf-001', userId: USER_IDS.creator1, slug: 'tunde-creates-influencer', name: 'Tunde Creates', category: 'Travel & Lifestyle', followers: 450000 },
+      { id: 'inf-002', userId: USER_IDS.creator2, slug: 'ngozi-vibes-influencer', name: 'Ngozi Vibes', category: 'Fashion & Nightlife', followers: 380000 },
+      { id: 'inf-003', userId: USER_IDS.creator3, slug: 'taaooma-influencer', name: 'Taaooma', category: 'Comedy & Culture', followers: 920000 },
+    ];
+
+    for (const inf of influencers) {
+      await pool.query(
+        `INSERT INTO "InfluencerEntry" (id, "userId", slug, "displayName", bio, "avatarUrl", "coverImage", category, "followerCount", "isVerified", status, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, 'Official Azeebo+ verified influencer.', $5, $6, $7, $8, true, 'published', NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET "displayName" = EXCLUDED."displayName";`,
+        [inf.id, inf.userId, inf.slug, inf.name, themedArt.avatar(inf.name), themedArt.banner('lifestyle', inf.name), inf.category, inf.followers]
+      );
+      records++;
+    }
+
+    // Culture Stories
+    const cultureStories = [
+      { id: 'cs-001', title: 'The Sonic Architecture of Afrobeats: From Fela to Asake', slug: 'sonic-architecture-of-afrobeats', excerpt: 'How syncopated rhythms, Fuji horns, and log drums became a worldwide sonic conquest.' },
+      { id: 'cs-002', title: 'Aso Ebi & Owambe: The Billion Naira Nigerian Party Economy', slug: 'aso-ebi-owambe-party-economy', excerpt: 'An exploration of the fashion extravagance, live bands, and luxury gifting of Lagos weekends.' },
+    ];
+
+    for (const cs of cultureStories) {
+      await pool.query(
+        `INSERT INTO "CultureStory" (id, title, slug, content, excerpt, "coverImage", "authorId", status, "viewCount", "readTime", "publishedAt", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $4, $5, $6, 'published', 29400, 6, NOW(), NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, excerpt = EXCLUDED.excerpt;`,
+        [cs.id, cs.title, cs.slug, cs.excerpt, themedArt.wide('lifestyle', cs.title), USER_IDS.admin]
       );
       records++;
     }

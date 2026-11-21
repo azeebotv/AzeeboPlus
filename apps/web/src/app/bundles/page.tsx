@@ -28,6 +28,17 @@ const UNIVERSE_NAMES: Record<string, string> = {
   vertical: 'Vertical',
 };
 
+interface BundleItem {
+  id: string;
+  name: string;
+  description: string;
+  tier: string;
+  price: number;
+  originalPrice: number;
+  discountPercent: number;
+  universeIds: string[];
+}
+
 function BundlesPageContent(): React.JSX.Element {
   const [selectedTier, setSelectedTier] = useState<string>('all');
 
@@ -60,10 +71,10 @@ function BundlesPageContent(): React.JSX.Element {
   const isLoading = bundlesQuery.isLoading || comparisonQuery.isLoading;
   const error = bundlesQuery.error?.message || comparisonQuery.error?.message;
 
-  const apiBundles = comparison?.bundles ?? [];
-  const displayBundles = bundlesQuery.data?.length ? bundlesQuery.data : apiBundles;
+  const apiBundles: BundleItem[] = (comparison?.bundles as unknown as BundleItem[]) ?? [];
+  const displayBundles: BundleItem[] = bundlesQuery.data?.length ? (bundlesQuery.data as BundleItem[]) : apiBundles;
   const filteredBundles =
-    selectedTier === 'all' ? displayBundles : displayBundles.filter((b) => b.tier === selectedTier);
+    selectedTier === 'all' ? displayBundles : displayBundles.filter((b: BundleItem) => b.tier === selectedTier);
 
   const tierTabs = ['all', 'standard', 'premium', 'ultimate'].map((tier) => {
     const selected = selectedTier === tier;
@@ -125,7 +136,7 @@ function BundlesPageContent(): React.JSX.Element {
           )}
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {filteredBundles.map((bundle, index) => (
+            {filteredBundles.map((bundle: BundleItem, index: number) => (
               <motion.div
                 key={bundle.id || index}
                 initial={{ opacity: 0, y: 20 }}
@@ -169,7 +180,7 @@ function BundlesPageContent(): React.JSX.Element {
                   <div className="mb-6">
                     <p className="az-caption mb-2 text-az-ink-muted">Includes:</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {bundle.universeIds.map((uid) => (
+                      {bundle.universeIds?.map((uid: string) => (
                         <span
                           key={uid}
                           className="az-micro-label rounded-az-pill border border-az-glass-border bg-az-glass-fill px-2.5 py-0.5 text-az-ink-muted"

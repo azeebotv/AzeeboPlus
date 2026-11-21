@@ -12,7 +12,7 @@
  */
 
 import pg from 'pg';
-import { themedArt } from './seed-image-hosts.js';
+import { seedImageUrl, themedArt } from './seed-image-hosts.js';
 
 const { Pool } = pg;
 
@@ -250,6 +250,41 @@ export async function seedContentService(dryRun = false): Promise<number> {
           [catA, contentId]
         );
       }
+    }
+
+    // 4. Universe Passes
+    const passes = [
+      { id: 'pass-cinema-001', userId: CREATOR_IDS[0], passType: 'cinema_pass', universeId: 'u0000001-0000-0000-0000-000000000004', price: 5000 },
+      { id: 'pass-vip-001', userId: CREATOR_IDS[1], passType: 'all_universe_vip', universeId: null, price: 15000 },
+      { id: 'pass-reality-001', userId: CREATOR_IDS[2], passType: 'reality_supervote', universeId: 'u0000001-0000-0000-0000-000000000001', price: 3500 },
+      { id: 'pass-sports-001', userId: CREATOR_IDS[3], passType: 'sports_matchday', universeId: 'u0000001-0000-0000-0000-000000000006', price: 4000 },
+    ];
+
+    for (const p of passes) {
+      await pool.query(
+        `INSERT INTO passes (id, "userId", "passType", "universeId", status, "startTime", "endTime", price, currency, "autoRenew", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, 'active', NOW(), NOW() + INTERVAL '30 days', $5, 'NGN', true, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET "updatedAt" = NOW();`,
+        [p.id, p.userId, p.passType, p.universeId, p.price]
+      );
+      count++;
+    }
+
+    // 5. Virtual Screenings
+    const screenings = [
+      { id: 'scr-001', contentId: 'cnt-movies-01', location: 'Virtual Cinema Hall A', price: 2500, streamUrl: seedImageUrl('cdn.azeebo.test', 'live/screening-001.m3u8') },
+      { id: 'scr-002', contentId: 'cnt-movies-02', location: 'Red Carpet Live Stream', price: 3000, streamUrl: seedImageUrl('cdn.azeebo.test', 'live/screening-002.m3u8') },
+      { id: 'scr-003', contentId: 'cnt-reality-01', location: 'BBNaija Finale Watch Party', price: 1500, streamUrl: seedImageUrl('cdn.azeebo.test', 'live/screening-003.m3u8') },
+    ];
+
+    for (const sc of screenings) {
+      await pool.query(
+        `INSERT INTO screenings (id, "contentId", "screeningTime", "endTime", location, "streamUrl", status, "maxViewers", "currentViewers", price, currency, "createdAt", "updatedAt")
+         VALUES ($1, $2, NOW() + INTERVAL '2 days', NOW() + INTERVAL '2 days' + INTERVAL '3 hours', $3, $4, 'scheduled', 5000, 1420, $5, 'NGN', NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET "updatedAt" = NOW();`,
+        [sc.id, sc.contentId, sc.location, sc.streamUrl, sc.price]
+      );
+      count++;
     }
   } finally {
     await pool.end();
