@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { Flame, Clock, Shield, Users, Vote, Play, ChevronRight, TrendingUp } from 'lucide-react';
 import { PageShell } from '@/components/layout/PageShell';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
@@ -19,8 +20,9 @@ interface Contestant {
   bio: string;
 }
 
-interface SurvivorShowData {
+interface RealityShowData {
   id: string;
+  showSlug: string;
   title: string;
   description: string;
   thumbnail: string;
@@ -31,32 +33,36 @@ interface SurvivorShowData {
   contestants: Contestant[];
 }
 
-export default function RealitySurvivorHubPage() {
-  const [showData, setShowData] = useState<SurvivorShowData | null>(null);
+export default function DynamicRealityShowPage() {
+  const params = useParams();
+  const showNameParam = (params?.showName as string) || 'survivor';
+
+  const [showData, setShowData] = useState<RealityShowData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTribe, setSelectedTribe] = useState('all');
   const [votedContestants, setVotedContestants] = useState<Record<string, number>>({});
 
   useEffect(() => {
     let isMounted = true;
-    async function loadSurvivorData() {
+    async function loadShow() {
       try {
-        const res = await fetch('/api/reality/survivor');
+        setLoading(true);
+        const res = await fetch(`/api/reality-show?name=${encodeURIComponent(showNameParam)}`);
         const json = await res.json();
         if (json.success && isMounted) {
           setShowData(json.data);
         }
       } catch (err) {
-        console.error('Failed to load survivor show data:', err);
+        console.error('Failed to load reality show data:', err);
       } finally {
         if (isMounted) setLoading(false);
       }
     }
-    loadSurvivorData();
+    loadShow();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [showNameParam]);
 
   const handleVote = (id: string) => {
     setVotedContestants((prev) => ({
@@ -66,6 +72,7 @@ export default function RealitySurvivorHubPage() {
   };
 
   const contestants = showData?.contestants || [];
+  const tribes = showData?.tribes || [];
   const filteredContestants = contestants.filter((c) => {
     if (selectedTribe === 'all') return true;
     return c.tribe.toLowerCase().includes(selectedTribe.toLowerCase());
@@ -74,34 +81,42 @@ export default function RealitySurvivorHubPage() {
   return (
     <PageShell>
       <div className="min-h-screen bg-az-surface-root text-az-ink pb-20 pt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        {/* Flagship Show Hero Banner */}
+        {/* Dynamic Reality Show Hero Banner */}
         <ScrollReveal>
           <div className="relative rounded-2xl overflow-hidden border border-az-glass-border mb-8 bg-gradient-to-r from-az-surface-panel to-black">
-            <div className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80')]" />
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay"
+              style={{
+                backgroundImage: `url('${
+                  showData?.thumbnail ||
+                  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80'
+                }')`,
+              }}
+            />
             <div className="relative p-6 sm:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="max-w-2xl">
                 <div className="flex items-center gap-2 text-az-flame text-xs sm:text-sm font-bold tracking-widest uppercase mb-3">
                   <Flame className="h-4 w-4" />
-                  <span>Flagship Reality Experience • Season 1</span>
+                  <span>Reality Universe Hub • Live Season</span>
                 </div>
                 <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase">
-                  {showData?.title || 'SURVIVOR : ISLAND TITANS'}
+                  {showData?.title || decodeURIComponent(showNameParam).replace(/-/g, ' ')}
                 </h1>
                 <p className="text-az-ink-muted mt-3 text-sm sm:text-base leading-relaxed">
                   {showData?.description ||
-                    '16 castaways marooned on Snake Island fighting the elements, tribal alliances, and dramatic evictions for 100 Million Naira.'}
+                    'High stakes competition, public voting, and dramatic evictions in the Azeebo Reality Universe.'}
                 </p>
 
                 <div className="flex flex-wrap items-center gap-4 mt-6">
                   <Link
-                    href="/reality/voting"
+                    href={`/reality/voting?show=${encodeURIComponent(showData?.id || showNameParam)}`}
                     className="px-6 py-3 rounded-xl bg-az-flame text-az-surface-root font-bold text-sm hover:opacity-90 transition-opacity flex items-center gap-2 shadow-lg"
                   >
                     <Vote className="h-4 w-4" />
                     Enter Eviction Voting Arena
                   </Link>
                   <Link
-                    href="/watch/survivor-ep3"
+                    href={`/reality/episodes?show=${encodeURIComponent(showData?.id || showNameParam)}`}
                     className="px-5 py-3 rounded-xl bg-az-surface-panel/80 border border-az-glass-border text-white font-medium text-sm hover:bg-az-surface-panel transition-colors flex items-center gap-2"
                   >
                     <Play className="h-4 w-4 fill-current" />
@@ -110,16 +125,18 @@ export default function RealitySurvivorHubPage() {
                 </div>
               </div>
 
-              {/* Live Tribal Council Countdown Box */}
+              {/* Live Council / Eviction Countdown Box */}
               <div className="bg-black/60 backdrop-blur-md rounded-2xl p-5 border border-az-glass-border text-center md:min-w-[240px]">
                 <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-az-warning-400 uppercase tracking-wider mb-2">
                   <Clock className="h-3.5 w-3.5" />
-                  <span>Tribal Council Countdown</span>
+                  <span>Next Eviction Ceremony</span>
                 </div>
                 <div className="text-2xl sm:text-3xl font-mono font-black text-white my-1">
                   01d 14h 22m
                 </div>
-                <p className="text-[11px] text-az-ink-muted mt-1">Next Eviction Ceremony</p>
+                <p className="text-[11px] text-az-ink-muted mt-1">
+                  Live Broadcast & Super-Vote Lock
+                </p>
                 <div className="mt-3 pt-3 border-t border-az-glass-border/60 flex items-center justify-center gap-1 text-xs text-az-flame font-semibold">
                   <TrendingUp className="h-3.5 w-3.5" />
                   <span>Voting Gate Open</span>
@@ -129,54 +146,42 @@ export default function RealitySurvivorHubPage() {
           </div>
         </ScrollReveal>
 
-        {/* Tribal Alliances Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <div className="p-5 rounded-xl bg-az-surface-panel/40 border border-az-glass-border flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-az-flame text-xs font-bold uppercase tracking-wider">
-                <Shield className="h-4 w-4" />
-                <span>Ikenga Tribe</span>
+        {/* Tribal / Group Alliances Overview */}
+        {tribes.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            {tribes.map((tribe, idx) => (
+              <div
+                key={tribe}
+                className="p-5 rounded-xl bg-az-surface-panel/40 border border-az-glass-border flex items-center justify-between"
+              >
+                <div>
+                  <div
+                    className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                      idx === 0 ? 'text-az-flame' : 'text-az-warning-400'
+                    }`}
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span>{tribe}</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-white mt-1">Alliance Camp • Active</h3>
+                  <p className="text-xs text-az-ink-muted mt-0.5">
+                    Live telemetry tracked directly from PostgreSQL reality DB.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedTribe(tribe.toLowerCase())}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                    selectedTribe === tribe.toLowerCase()
+                      ? 'bg-az-flame text-az-surface-root border-az-flame'
+                      : 'border-az-glass-border text-az-ink-muted hover:text-white'
+                  }`}
+                >
+                  Filter Camp
+                </button>
               </div>
-              <h3 className="text-lg font-bold text-white mt-1">Warrior Camp • Coastline</h3>
-              <p className="text-xs text-az-ink-muted mt-0.5">
-                8 Castaways Active • Won Immunity Challenge
-              </p>
-            </div>
-            <button
-              onClick={() => setSelectedTribe('ikenga')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                selectedTribe === 'ikenga'
-                  ? 'bg-az-flame text-az-surface-root border-az-flame'
-                  : 'border-az-glass-border text-az-ink-muted hover:text-white'
-              }`}
-            >
-              Filter Camp
-            </button>
+            ))}
           </div>
-
-          <div className="p-5 rounded-xl bg-az-surface-panel/40 border border-az-glass-border flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-az-warning-400 text-xs font-bold uppercase tracking-wider">
-                <Shield className="h-4 w-4" />
-                <span>Odugwu Tribe</span>
-              </div>
-              <h3 className="text-lg font-bold text-white mt-1">Ridge Camp • Highlands</h3>
-              <p className="text-xs text-az-ink-muted mt-0.5">
-                8 Castaways Active • Facing Eviction Radar
-              </p>
-            </div>
-            <button
-              onClick={() => setSelectedTribe('odugwu')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                selectedTribe === 'odugwu'
-                  ? 'bg-az-flame text-az-surface-root border-az-flame'
-                  : 'border-az-glass-border text-az-ink-muted hover:text-white'
-              }`}
-            >
-              Filter Camp
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* Contestants Section */}
         <div className="flex items-center justify-between mb-6">
@@ -186,7 +191,8 @@ export default function RealitySurvivorHubPage() {
               Live Eviction Radar & Vote Share
             </h2>
             <p className="text-xs sm:text-sm text-az-ink-muted mt-1">
-              Data fetched live from Azeebo Reality DB. Cast votes to save your favourites.
+              Data fetched live for <strong className="text-white">{showData?.title}</strong>. Cast
+              votes to save your favourites.
             </p>
           </div>
 
@@ -199,7 +205,7 @@ export default function RealitySurvivorHubPage() {
                   : 'bg-az-surface-panel text-az-ink-muted border border-az-glass-border'
               }`}
             >
-              All Castaways
+              All Contestants
             </button>
           </div>
         </div>
@@ -212,6 +218,14 @@ export default function RealitySurvivorHubPage() {
                 className="h-64 rounded-xl bg-az-surface-panel/40 animate-pulse border border-az-glass-border"
               />
             ))}
+          </div>
+        ) : filteredContestants.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-az-glass-border p-12 text-center">
+            <Users className="h-10 w-10 text-az-ink-muted mx-auto mb-3 opacity-40" />
+            <h3 className="text-lg font-semibold text-white">No contestants listed yet</h3>
+            <p className="text-sm text-az-ink-muted mt-1">
+              Contestant profiles for this show are currently being audited in the reality database.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -273,7 +287,7 @@ export default function RealitySurvivorHubPage() {
           </div>
         )}
 
-        {/* Camp Video Diaries */}
+        {/* Video Confessional Diaries */}
         <div className="mt-12">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -303,13 +317,13 @@ export default function RealitySurvivorHubPage() {
                 <div className="text-xs font-bold text-az-flame uppercase">Episode {ep}</div>
                 <h4 className="font-semibold text-white text-sm mt-0.5">
                   {ep === 1
-                    ? 'Arrival on Snake Island'
+                    ? 'Arrival & Camp Settlement'
                     : ep === 2
-                      ? 'The Fire Challenge'
-                      : 'Midnight Betrayal'}
+                      ? 'The Immunity Showdown'
+                      : 'The Midnight Eviction Strategy'}
                 </h4>
                 <p className="text-xs text-az-ink-muted mt-1">
-                  Raw confessions recorded in the secret diary booth.
+                  Raw confessions recorded in the diary booth.
                 </p>
               </div>
             ))}
