@@ -67,6 +67,7 @@ function RootNavigator() {
                   <Stack.Screen name="games" options={{ headerShown: false }} />
                   <Stack.Screen name="watch-party" options={{ headerShown: false }} />
                   <Stack.Screen name="bundles" options={{ headerShown: false }} />
+                  <Stack.Screen name="creator" options={{ headerShown: false }} />
                 </Stack>
               </WalletProvider>
             </FlagsProvider>

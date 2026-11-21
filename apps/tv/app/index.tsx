@@ -11,6 +11,7 @@ import {
   FocusableRow,
   type RailItem,
 } from '../src/components/Focusable';
+import { TVNavRail } from '../src/components/TVNavRail';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors, tvTypography, tvSpacing, tvDims, tvRadius } from '../src/theme';
@@ -141,67 +142,86 @@ export default function TVHomeScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* ── Hero spotlight ─────────────────────────────────── */}
-      {hero ? (
-        <FocusableCard
-          onPress={() => router.push(`/watch/${hero.id}`)}
-          hasTVPreferredFocus
-          style={styles.hero}
-          accessibilityLabel={`${t('content.watch')} ${hero.title}`}
-        >
-          <Image
-            source={{
-              uri: hero.mediaAsset?.thumbnailUrl || hero.thumbnail,
-            }}
-            style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-          />
-          <LinearGradient
-            colors={['rgba(11,9,14,0.95)', 'rgba(11,9,14,0.5)', 'transparent']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <LinearGradient
-            colors={['rgba(11,9,14,0)', 'rgba(11,9,14,0.9)']}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 0, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.heroContent}>
-            {hero.universe?.name ? (
-              <View style={styles.universeBadge}>
-                <Text style={styles.universeBadgeText}>{hero.universe.name}</Text>
+    <View style={styles.rootContainer}>
+      <TVNavRail />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Hero spotlight ─────────────────────────────────── */}
+        {hero ? (
+          <FocusableCard
+            onPress={() => router.push(`/watch/${hero.id}`)}
+            hasTVPreferredFocus
+            style={styles.hero}
+            accessibilityLabel={`${t('content.watch')} ${hero.title}`}
+          >
+            <Image
+              source={{
+                uri: hero.mediaAsset?.thumbnailUrl || hero.thumbnail,
+              }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+            />
+            <LinearGradient
+              colors={['rgba(11,9,14,0.95)', 'rgba(11,9,14,0.5)', 'transparent']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <LinearGradient
+              colors={['rgba(11,9,14,0)', 'rgba(11,9,14,0.9)']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 0, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.heroContent}>
+              <View style={styles.metaBadgeRow}>
+                {hero.universe?.name ? (
+                  <View style={styles.universeBadge}>
+                    <Text style={styles.universeBadgeText}>{hero.universe.name}</Text>
+                  </View>
+                ) : null}
+                <View style={styles.techBadge}>
+                  <Text style={styles.techBadgeText}>4K ULTRA HD</Text>
+                </View>
+                <View style={styles.techBadge}>
+                  <Text style={styles.techBadgeText}>DOLBY ATMOS</Text>
+                </View>
+                <View style={styles.ratingBadge}>
+                  <Text style={styles.ratingBadgeText}>★ 4.8</Text>
+                </View>
               </View>
-            ) : null}
-            <Text style={styles.heroTitle} numberOfLines={2}>
-              {hero.title}
-            </Text>
-            {hero.description ? (
-              <Text style={styles.heroDescription} numberOfLines={2}>
-                {hero.description}
+
+              <Text style={styles.heroTitle} numberOfLines={2}>
+                {hero.title}
               </Text>
-            ) : null}
-            <View style={styles.heroActions}>
-              <FocusableButton
-                title={t('content.watch')}
-                variant="primary"
-                onPress={() => router.push(`/watch/${hero.id}`)}
-              />
+              {hero.description ? (
+                <Text style={styles.heroDescription} numberOfLines={2}>
+                  {hero.description}
+                </Text>
+              ) : null}
+              <View style={styles.heroActions}>
+                <FocusableButton
+                  title={`▶ ${t('content.watch')}`}
+                  variant="primary"
+                  onPress={() => router.push(`/watch/${hero.id}`)}
+                />
+                <FocusableButton
+                  title="+ My List"
+                  variant="secondary"
+                  onPress={() => router.push('/library' as Href)}
+                />
+              </View>
             </View>
+          </FocusableCard>
+        ) : (
+          <View style={[styles.hero, styles.heroEmpty]}>
+            <Text style={styles.heroEmptyTitle}>{t('home.greeting')}</Text>
+            <Text style={styles.heroEmptySubtitle}>{t('home.greetingSecondary')}</Text>
           </View>
-        </FocusableCard>
-      ) : (
-        <View style={[styles.hero, styles.heroEmpty]}>
-          <Text style={styles.heroEmptyTitle}>{t('home.greeting')}</Text>
-          <Text style={styles.heroEmptySubtitle}>{t('home.greetingSecondary')}</Text>
-        </View>
-      )}
+        )}
 
       {/* ── Personalized greeting + account shortcuts ──────── */}
       {isAuthenticated && user?.name ? (
@@ -314,14 +334,53 @@ export default function TVHomeScreen() {
           <Text style={styles.emptyStateText}>{t('home.emptyState')}</Text>
         </View>
       ) : null}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: colors.bg.primary,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.bg.primary,
+  },
+  metaBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tvSpacing.sm,
+    marginBottom: tvSpacing.sm,
+  },
+  techBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  techBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  ratingBadge: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  ratingBadgeText: {
+    color: '#F59E0B',
+    fontSize: 11,
+    fontWeight: '800',
   },
   content: {
     paddingBottom: tvSpacing.section,

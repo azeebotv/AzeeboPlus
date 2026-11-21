@@ -22,6 +22,7 @@ import type { DeviceLinkStatus } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { analytics } from '../src/utils/analytics';
 import { FocusableButton } from '../src/components/Focusable';
+import { QRCodeView } from '../src/components/QRCodeView';
 import { colors, tvTypography, tvSpacing, tvRadius } from '../src/theme';
 
 // Activation page shown on the TV for the user to visit on a phone/browser.
@@ -231,17 +232,38 @@ export default function SignInScreen() {
         {phase === 'initiating' && <Text style={styles.body}>Generating your sign-in code…</Text>}
 
         {phase === 'waiting' && (
-          <>
-            <Text style={styles.instruction}>On your phone or computer, visit</Text>
-            <Text style={styles.url}>{ACTIVATION_URL}</Text>
-            <Text style={styles.instruction}>and enter this code</Text>
-            <Text style={styles.code}>{userCode}</Text>
-            <Text style={styles.hint}>
-              {minutesLeft > 0
-                ? `Expires in about ${minutesLeft} ${minutesLeft === 1 ? 'minute' : 'minutes'} — keep this screen open`
-                : 'Keep this screen open'}
-            </Text>
-          </>
+          <View style={styles.activationCard}>
+            {/* ── Left Column: QR Code ── */}
+            <View style={styles.qrColumn}>
+              <View style={styles.qrPlate}>
+                <QRCodeView
+                  value={`${ACTIVATION_URL}?code=${userCode}`}
+                  size={200}
+                />
+              </View>
+              <Text style={styles.qrInstruction}>📱 Scan with your phone camera</Text>
+            </View>
+
+            {/* ── Divider ── */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* ── Right Column: Manual Code ── */}
+            <View style={styles.codeColumn}>
+              <Text style={styles.instruction}>On any phone or computer, visit</Text>
+              <Text style={styles.url}>{ACTIVATION_URL}</Text>
+              <Text style={styles.instruction}>and enter this code</Text>
+              <Text style={styles.code}>{userCode}</Text>
+              <Text style={styles.hint}>
+                {minutesLeft > 0
+                  ? `Expires in about ${minutesLeft} ${minutesLeft === 1 ? 'minute' : 'minutes'} — keep this screen open`
+                  : 'Keep this screen open'}
+              </Text>
+            </View>
+          </View>
         )}
 
         {phase === 'authenticated' && (
@@ -283,6 +305,50 @@ const styles = StyleSheet.create({
     gap: tvSpacing.lg,
     paddingHorizontal: tvSpacing.section,
   },
+  activationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg.secondary,
+    borderRadius: tvRadius.xl,
+    padding: tvSpacing.xl,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    gap: tvSpacing.xxl,
+  },
+  qrColumn: {
+    alignItems: 'center',
+  },
+  qrPlate: {
+    padding: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: tvRadius.lg,
+    marginBottom: tvSpacing.md,
+  },
+  qrInstruction: {
+    color: colors.text.secondary,
+    fontSize: tvTypography.fontSize.sm,
+    fontWeight: '700',
+  },
+  divider: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 200,
+  },
+  dividerLine: {
+    width: 1,
+    flex: 1,
+    backgroundColor: colors.border.default,
+  },
+  dividerText: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    fontWeight: '800',
+    marginVertical: 8,
+  },
+  codeColumn: {
+    alignItems: 'flex-start',
+    maxWidth: 420,
+  },
   eyebrow: {
     fontSize: tvTypography.fontSize.sm,
     fontWeight: tvTypography.fontWeight.semibold,
@@ -301,16 +367,16 @@ const styles = StyleSheet.create({
     color: colors.primary[500],
   },
   code: {
-    fontSize: 88,
+    fontSize: 56,
     fontWeight: tvTypography.fontWeight.bold,
-    letterSpacing: 12,
+    letterSpacing: 8,
     color: colors.text.primary,
     backgroundColor: colors.bg.tertiary,
-    borderRadius: tvRadius.xl,
+    borderRadius: tvRadius.lg,
     borderWidth: 2,
     borderColor: colors.border.default,
-    paddingHorizontal: tvSpacing.xl,
-    paddingVertical: tvSpacing.lg,
+    paddingHorizontal: tvSpacing.lg,
+    paddingVertical: tvSpacing.sm,
     overflow: 'hidden',
     marginVertical: tvSpacing.md,
   },

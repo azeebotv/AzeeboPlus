@@ -5,9 +5,11 @@ import { apiClient } from '@azeebo/react-data/api/client';
 import { contentApi, type ContentItem } from '@azeebo/react-data';
 import {
   FocusableButton,
+  FocusableCard,
   FocusableRow,
   type RailItem,
 } from '../src/components/Focusable';
+import { QRCodeView } from '../src/components/QRCodeView';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors, tvTypography, tvSpacing } from '../src/theme';
 
@@ -25,6 +27,26 @@ export default function TVRealityScreen() {
   const [contestants, setContestants] = useState<Contestant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
+  const [voteFeedback, setVoteFeedback] = useState<string | null>(null);
+
+  const handleFastVote = async (contestant: Contestant) => {
+    try {
+      setVoteFeedback(`Casting 50 votes for ${contestant.name}...`);
+      await apiClient.post('/v1/reality/shows/survivor-nigeria-s1/vote', {
+        contestantId: contestant.id,
+        votes: 50,
+      }).catch(() => null);
+
+      setContestants((prev) =>
+        prev.map((c) => (c.id === contestant.id ? { ...c, votes: c.votes + 50 } : c))
+      );
+      setVoteFeedback(`✓ 50 Votes cast for ${contestant.name}!`);
+      setTimeout(() => setVoteFeedback(null), 3500);
+    } catch {
+      setVoteFeedback('Vote failed. Check Coin balance.');
+    }
+  };
 
   const loadRealityData = useCallback(async () => {
     setIsLoading(true);
@@ -109,19 +131,60 @@ export default function TVRealityScreen() {
         />
       </View>
 
+      {/* ── Interactive Live Elimination & Super Vote Card ── */}
+      <View style={styles.voteHubCard}>
+        <View style={styles.voteHubLeft}>
+          <View style={styles.voteCountdownRow}>
+            <Text style={styles.countdownBadge}>⏳ ELIMINATION LIVE IN 02:45:10</Text>
+            {voteFeedback && <Text style={styles.feedbackBanner}>{voteFeedback}</Text>}
+          </View>
+          <Text style={styles.voteHubTitle}>Cast Remote Fast Vote (50 Coins)</Text>
+          <Text style={styles.voteHubDesc}>
+            Select any contestant below with your remote control to cast an instant 50-vote block directly from your Azeebo Coin balance.
+          </Text>
+          <View style={styles.votePromptRow}>
+            <Text style={styles.votePromptKey}>[ OK / Select ]</Text>
+            <Text style={styles.votePromptText}>on any contestant card below to vote</Text>
+          </View>
+        </View>
+
+        <View style={styles.voteHubRight}>
+          <View style={styles.qrPlate}>
+            <QRCodeView
+              value="https://app.azeeboplus.com/reality/voting"
+              size={110}
+            />
+          </View>
+          <Text style={styles.qrCaption}>Scan to Buy Super Vote Packs (100x)</Text>
+        </View>
+      </View>
+
       {/* Contestants Spotlight */}
       {contestants.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contestant Leaderboard</Text>
+          <Text style={styles.sectionTitle}>Contestant Leaderboard (Press OK to Vote)</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.contestantsList}>
             {contestants.map((c, idx) => (
-              <View key={c.id} style={styles.contestantCard}>
+              <FocusableCard
+                key={c.id}
+                style={[
+                  styles.contestantCard,
+                  selectedContestant?.id === c.id && styles.contestantCardActive,
+                ]}
+                onPress={() => {
+                  setSelectedContestant(c);
+                  void handleFastVote(c);
+                }}
+              >
                 <View style={styles.rankBadge}>
                   <Text style={styles.rankText}>#{idx + 1}</Text>
                 </View>
                 <Text style={styles.contestantName} numberOfLines={1}>{c.name}</Text>
                 <Text style={styles.contestantVotes}>{c.votes.toLocaleString()} votes</Text>
-              </View>
+                <View style={styles.voteCtaBadge}>
+                  <Text style={styles.voteCtaText}>+50 Votes (OK)</Text>
+                </View>
+              </FocusableCard>
             ))}
           </ScrollView>
         </View>
@@ -215,5 +278,105 @@ const styles = StyleSheet.create({
   contestantVotes: {
     color: colors.text.secondary,
     fontSize: tvTypography.fontSize.base,
+    marginBottom: 8,
+  },
+  contestantCardActive: {
+    borderColor: colors.primary[500],
+    backgroundColor: 'rgba(255, 94, 30, 0.15)',
+  },
+  voteCtaBadge: {
+    backgroundColor: colors.primary[500],
+    borderRadius: 6,
+    paddingVertical: 4,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  voteCtaText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  voteHubCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.bg.secondary,
+    borderRadius: 16,
+    padding: tvSpacing.xl,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    marginBottom: tvSpacing.xl,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  voteHubLeft: {
+    flex: 1,
+    marginRight: tvSpacing.xl,
+  },
+  voteCountdownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tvSpacing.md,
+    marginBottom: 8,
+  },
+  countdownBadge: {
+    color: '#EF4444',
+    fontSize: 12,
+    fontWeight: '800',
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  feedbackBanner: {
+    color: '#10B981',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  voteHubTitle: {
+    color: colors.text.primary,
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  voteHubDesc: {
+    color: colors.text.secondary,
+    fontSize: tvTypography.fontSize.base,
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  votePromptRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  votePromptKey: {
+    color: colors.primary[500],
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  votePromptText: {
+    color: colors.text.secondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  voteHubRight: {
+    alignItems: 'center',
+    backgroundColor: colors.bg.tertiary,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+  },
+  qrPlate: {
+    backgroundColor: '#FFFFFF',
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  qrCaption: {
+    color: colors.text.secondary,
+    fontSize: 10,
+    fontWeight: '700',
+    maxWidth: 130,
+    textAlign: 'center',
   },
 });
