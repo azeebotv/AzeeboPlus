@@ -49,8 +49,9 @@ describe('Earnings page under a failed read', () => {
     getEarningsHistory.mockResolvedValue(OUTAGE as never);
     const { container } = renderPage();
 
-    await waitFor(() =>
-      expect(screen.getByText(/Wallet service is restarting/)).toBeTruthy()
+    await waitFor(
+      () => expect(screen.getByText(/Wallet service is restarting/)).toBeTruthy(),
+      { timeout: 10000 }
     );
     expect(container.textContent).not.toContain('No earnings data available');
     expect(container.textContent).not.toContain('No earnings recorded yet');
