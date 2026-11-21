@@ -30,7 +30,15 @@ interface RealityShow {
   contestants?: RealityContestant[];
 }
 
-const VOTE_PACKAGES = [
+interface VotePackage {
+  id: string;
+  label: string;
+  votes: number;
+  price: number;
+  popular?: boolean;
+}
+
+const DEFAULT_PACKAGES: VotePackage[] = [
   { id: 'single', label: '1 Vote', votes: 1, price: 100, popular: false },
   { id: 'bronze', label: '5 Votes', votes: 5, price: 450, popular: false },
   { id: 'silver', label: '20 Votes', votes: 20, price: 1600, popular: true },
@@ -49,9 +57,20 @@ export default function VotePage(): React.JSX.Element {
   const showId = searchParams.get('showId') || '';
   const preselectedContestantId = searchParams.get('contestantId') || '';
 
+  const { data: votePackages = DEFAULT_PACKAGES } = useQuery({
+    queryKey: ['reality', 'vote-packages'],
+    queryFn: async () => {
+      const res = await fetch('/api/reality/vote-packages');
+      const json = await res.json();
+      if (json.success && json.data?.length > 0) return json.data as VotePackage[];
+      return DEFAULT_PACKAGES;
+    },
+    staleTime: 60000,
+  });
+
   const [selectedShowId, setSelectedShowId] = useState<string>(showId);
   const [selectedContestant, setSelectedContestant] = useState<RealityContestant | null>(null);
-  const [selectedPackage, setSelectedPackage] = useState(VOTE_PACKAGES[2]);
+  const [selectedPackage, setSelectedPackage] = useState<VotePackage>(DEFAULT_PACKAGES[2]);
   const [quantity, setQuantity] = useState(1);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -274,7 +293,7 @@ export default function VotePage(): React.JSX.Element {
               <h3 className="az-title mb-4 text-az-ink">Select Vote Package</h3>
 
               <div role="radiogroup" aria-label="Select vote package" className="space-y-3 mb-6">
-                {VOTE_PACKAGES.map((pkg) => {
+                {votePackages.map((pkg) => {
                   const isSelected = selectedPackage.id === pkg.id;
                   return (
                     <div

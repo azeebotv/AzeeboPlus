@@ -9,6 +9,8 @@ import { PrismaClient as LivePrisma } from '../../../../../services/universes/li
 import { PrismaClient as MoviePrisma } from '../../../../../services/universes/movie-service/src/prisma/client';
 import { PrismaClient as SubPrisma } from '../../../../../services/engagement/subscription-service/src/prisma/client';
 import { PrismaClient as PaymentPrisma } from '../../../../../services/core/payment-service/src/prisma/client';
+import { PrismaClient as GamesPrisma } from '../../../../../services/universes/games-service/src/prisma/client';
+import { PrismaClient as ContentPrisma } from '../../../../../services/core/content-service/src/prisma/client';
 
 const globalForDb = globalThis as unknown as {
   sportsDb?: SportsPrisma;
@@ -19,6 +21,8 @@ const globalForDb = globalThis as unknown as {
   movieDb?: MoviePrisma;
   subDb?: SubPrisma;
   paymentDb?: PaymentPrisma;
+  gamesDb?: GamesPrisma;
+  contentDb?: ContentPrisma;
 };
 
 export const getSportsDb = () => {
@@ -139,4 +143,34 @@ export const getPaymentDb = () => {
     });
   }
   return globalForDb.paymentDb;
+};
+
+export const getGamesDb = () => {
+  if (!globalForDb.gamesDb) {
+    globalForDb.gamesDb = new GamesPrisma({
+      datasources: {
+        db: {
+          url:
+            process.env.GAMES_DATABASE_URL ||
+            'postgresql://azeebo:change-me-in-production@localhost:5432/azeebo_games?schema=public',
+        },
+      },
+    });
+  }
+  return globalForDb.gamesDb;
+};
+
+export const getContentDb = () => {
+  if (!globalForDb.contentDb) {
+    globalForDb.contentDb = new ContentPrisma({
+      datasources: {
+        db: {
+          url:
+            process.env.CONTENT_DATABASE_URL ||
+            'postgresql://azeebo:change-me-in-production@localhost:5432/azeebo_content?schema=public',
+        },
+      },
+    });
+  }
+  return globalForDb.contentDb;
 };

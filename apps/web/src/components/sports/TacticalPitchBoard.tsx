@@ -28,6 +28,10 @@ export interface MatchStats {
 interface TacticalPitchBoardProps {
   homeTeam: string;
   awayTeam: string;
+  homeTeamId?: string;
+  awayTeamId?: string;
+  homePlayers?: PlayerLineup[];
+  awayPlayers?: PlayerLineup[];
   formation?: string;
   stats?: MatchStats;
 }
@@ -103,6 +107,10 @@ const DEFAULT_STATS: MatchStats = {
 export function TacticalPitchBoard({
   homeTeam,
   awayTeam,
+  homeTeamId = 'tm1-sport-001',
+  awayTeamId = 'tm2-sport-001',
+  homePlayers,
+  awayPlayers,
   formation = '4-2-3-1',
   stats = DEFAULT_STATS,
 }: TacticalPitchBoardProps): React.JSX.Element {
@@ -110,7 +118,41 @@ export function TacticalPitchBoard({
   const [selectedTeam, setSelectedTeam] = useState<'home' | 'away'>('home');
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerLineup | null>(null);
 
-  const players = selectedTeam === 'home' ? DEFAULT_HOME_PLAYERS : DEFAULT_AWAY_PLAYERS;
+  const [dbHomePlayers, setDbHomePlayers] = useState<PlayerLineup[] | null>(null);
+  const [dbAwayPlayers, setDbAwayPlayers] = useState<PlayerLineup[] | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchPlayers() {
+      try {
+        const [homeRes, awayRes] = await Promise.all([
+          fetch(`/api/sports/players?teamId=${encodeURIComponent(homeTeamId)}`),
+          fetch(`/api/sports/players?teamId=${encodeURIComponent(awayTeamId)}`),
+        ]);
+        const [homeJson, awayJson] = await Promise.all([homeRes.json(), awayRes.json()]);
+
+        if (isMounted) {
+          if (homeJson.success && homeJson.data?.length > 0) {
+            setDbHomePlayers(homeJson.data);
+          }
+          if (awayJson.success && awayJson.data?.length > 0) {
+            setDbAwayPlayers(awayJson.data);
+          }
+        }
+      } catch {
+        // Fall back gracefully to preset players
+      }
+    }
+    fetchPlayers();
+    return () => {
+      isMounted = false;
+    };
+  }, [homeTeamId, awayTeamId]);
+
+  const resolvedHome = homePlayers || dbHomePlayers || DEFAULT_HOME_PLAYERS;
+  const resolvedAway = awayPlayers || dbAwayPlayers || DEFAULT_AWAY_PLAYERS;
+
+  const players = selectedTeam === 'home' ? resolvedHome : resolvedAway;
   const currentTeamName = selectedTeam === 'home' ? homeTeam : awayTeam;
   const currentBench = selectedTeam === 'home' ? BENCH_PLAYERS.home : BENCH_PLAYERS.away;
 

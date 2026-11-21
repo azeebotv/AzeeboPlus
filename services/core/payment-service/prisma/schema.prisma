@@ -174,3 +174,21 @@ model PaymentMethod {
   @@index([isDefault])
   @@unique([userId, provider, providerToken])
 }
+
+model CoinPackage {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  coins       Int
+  price       Decimal  @db.Decimal(10, 2)
+  currency    String   @default("NGN")
+  bonus       Int      @default(0)
+  isPopular   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("coin_packages")
+}
+

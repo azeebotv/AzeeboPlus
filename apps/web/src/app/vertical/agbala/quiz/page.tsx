@@ -65,6 +65,15 @@ export default function AgbalaQuizPage(): React.JSX.Element {
   const { data: quizzes, isLoading } = useQuery({
     queryKey: ['agbala', 'quizzes'],
     queryFn: async () => {
+      try {
+        const res = await fetch('/api/vertical/quiz');
+        const json = await res.json();
+        if (json.success && json.data) {
+          return [json.data] as Quiz[];
+        }
+      } catch {
+        // Fall back to gateway route
+      }
       const res = await apiFetch<{ success: boolean; data?: Quiz[] }>(
         '/v1/vertical/agbala/quizzes'
       );

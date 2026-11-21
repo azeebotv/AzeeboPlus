@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { PageHero } from '@/components/layout/PageHero';
 import { PageShell } from '@/components/layout/PageShell';
-import { apiFetch } from '@/lib/api';
 import { Skeleton } from '@azeebo/ui/web';
 import Link from 'next/link';
 
@@ -13,27 +12,6 @@ interface GameQuestion {
   options: string[];
   correct: string;
 }
-
-const DEFAULT_QUESTIONS: GameQuestion[] = [
-  {
-    id: 1,
-    question: 'What is the highest-rated Nollywood film of all time?',
-    options: ['The Wedding Party', 'Lionheart', 'Omo Ghetto: The Saga', 'King of Boys'],
-    correct: 'King of Boys',
-  },
-  {
-    id: 2,
-    question: 'Who created the hit series "Skinny Girl in Transit"?',
-    options: ['Ndani TV', 'RedTV', 'Accelerate TV', 'ROK Studios'],
-    correct: 'Ndani TV',
-  },
-  {
-    id: 3,
-    question: 'Which Nigerian universe is dedicated to reality entertainment on Azeebo+?',
-    options: ['Reality TV', 'Nollywood Plus', 'Creator Hub', 'Lifestyle Live'],
-    correct: 'Reality TV',
-  },
-];
 
 export default function GameplayPage(): React.JSX.Element {
   const [score, setScore] = useState(0);
@@ -49,14 +27,13 @@ export default function GameplayPage(): React.JSX.Element {
     const fetchQuestions = async () => {
       setIsLoading(true);
       try {
-        const res = await apiFetch<{ questions: GameQuestion[] }>('/v1/games/trivia');
-        if (res.success && res.data?.questions?.length) {
-          setQuestions(res.data.questions);
-        } else {
-          setQuestions(DEFAULT_QUESTIONS);
+        const res = await fetch('/api/games/trivia');
+        const json = await res.json();
+        if (json.success && json.data?.questions?.length) {
+          setQuestions(json.data.questions);
         }
       } catch {
-        setQuestions(DEFAULT_QUESTIONS);
+        setQuestions([]);
       } finally {
         setIsLoading(false);
       }

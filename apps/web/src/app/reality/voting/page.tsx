@@ -28,19 +28,31 @@ interface WalletBalance {
   currency: string;
 }
 
-const VOTE_PACKS = [
-  { votes: 10, coins: 1, label: '10 Votes' },
-  { votes: 50, coins: 5, label: '50 Votes' },
-  { votes: 100, coins: 10, label: '100 Votes' },
-  { votes: 500, coins: 50, label: '500 Votes' },
-  { votes: 1000, coins: 100, label: '1,000 Votes (VIP)' },
-];
+interface VotePack {
+  id: string;
+  label: string;
+  votes: number;
+  coins: number;
+  price: number;
+  currency?: string;
+  popular?: boolean;
+}
 
-const RECENT_VOTES = [
-  { user: 'Amina B.', votes: 100, contestant: 'Adaeze', time: '1m ago' },
-  { user: 'Chidi O.', votes: 500, contestant: 'Emeka', time: '3m ago' },
-  { user: 'Tunde K.', votes: 50, contestant: 'Fatima', time: '5m ago' },
-  { user: 'Ngozi E.', votes: 250, contestant: 'Adaeze', time: '8m ago' },
+interface RecentVote {
+  id: string;
+  user: string;
+  votes: number;
+  contestant: string;
+  show: string;
+  time: string;
+}
+
+const DEFAULT_VOTE_PACKS: VotePack[] = [
+  { id: 'vp-10', votes: 10, coins: 1, label: '10 Votes', price: 100 },
+  { id: 'vp-50', votes: 50, coins: 5, label: '50 Votes', price: 450 },
+  { id: 'vp-100', votes: 100, coins: 10, label: '100 Votes', price: 900 },
+  { id: 'vp-500', votes: 500, coins: 50, label: '500 Votes', price: 4000 },
+  { id: 'vp-1000', votes: 1000, coins: 100, label: '1,000 Votes (VIP)', price: 8000 },
 ];
 
 function VotingPageContent(): React.JSX.Element {
@@ -52,6 +64,31 @@ function VotingPageContent(): React.JSX.Element {
   useEffect(() => {
     analytics.pageView('reality-voting');
   }, []);
+
+  const votePacksQuery = useQuery({
+    queryKey: ['reality-vote-packs'],
+    queryFn: async () => {
+      const res = await fetch('/api/reality/vote-packages');
+      const json = await res.json();
+      if (json.success && json.data?.length > 0) return json.data as VotePack[];
+      return DEFAULT_VOTE_PACKS;
+    },
+    staleTime: 60000,
+  });
+
+  const recentVotesQuery = useQuery({
+    queryKey: ['reality-recent-votes'],
+    queryFn: async () => {
+      const res = await fetch('/api/reality/recent-votes');
+      const json = await res.json();
+      if (json.success && json.data) return json.data as RecentVote[];
+      return [];
+    },
+    refetchInterval: 15000,
+  });
+
+  const votePacks = votePacksQuery.data || DEFAULT_VOTE_PACKS;
+  const recentVotes = recentVotesQuery.data || [];
 
   const contestantsQuery = useQuery({
     queryKey: ['reality-contestants'],
@@ -73,7 +110,7 @@ function VotingPageContent(): React.JSX.Element {
     staleTime: 30000,
   });
 
-  const currentPack = VOTE_PACKS[selectedPackIndex];
+  const currentPack = votePacks[selectedPackIndex] || votePacks[0];
 
   const voteMutation = useMutation({
     mutationFn: async ({ contestantId, quantity }: { contestantId: string; quantity: number }) => {
@@ -296,15 +333,24 @@ function VotingPageContent(): React.JSX.Element {
               Live Fan Voting Activity Feed
             </h4>
             <div className="space-y-2">
-              {RECENT_VOTES.map((v, i) => (
-                <div key={i} className="flex items-center justify-between text-xs py-1 text-az-ink">
-                  <span>
-                    <strong className="text-az-flame">{v.user}</strong> cast{' '}
-                    <strong>+{v.votes} votes</strong> for {v.contestant}
-                  </span>
-                  <span className="text-[10px] text-az-ink-muted">{v.time}</span>
-                </div>
-              ))}
+              {recentVotes.length > 0 ? (
+                recentVotes.map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex items-center justify-between text-xs py-1 text-az-ink"
+                  >
+                    <span>
+                      <strong className="text-az-flame">{v.user}</strong> cast{' '}
+                      <strong>+{v.votes} votes</strong> for {v.contestant}
+                    </span>
+                    <span className="text-[10px] text-az-ink-muted">{v.time}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-az-ink-muted italic">
+                  No recent votes recorded yet. Be the first to vote!
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -340,9 +386,9 @@ function VotingPageContent(): React.JSX.Element {
                   <div className="space-y-4">
                     <p className="text-xs text-az-ink-muted">Select voting power pack:</p>
                     <div className="grid grid-cols-1 gap-2">
-                      {VOTE_PACKS.map((pack, i) => (
+                      {votePacks.map((pack, i) => (
                         <button
-                          key={i}
+                          key={pack.id || i}
                           type="button"
                           onClick={() => setSelectedPackIndex(i)}
                           className={`flex items-center justify-between rounded-az-control border p-3 text-xs font-semibold transition-all ${

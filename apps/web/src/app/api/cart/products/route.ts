@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMovieDb, getSubDb } from '@/lib/server/db';
+import { getMovieDb, getSubDb, getPaymentDb } from '@/lib/server/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,10 +7,12 @@ export async function GET() {
   try {
     const movieDb = getMovieDb();
     const subDb = getSubDb();
+    const paymentDb = getPaymentDb();
 
-    const [cinemaPasses, bundlePasses] = await Promise.all([
+    const [cinemaPasses, bundlePasses, dbCoinPackages] = await Promise.all([
       movieDb.cinemaPass.findMany({ where: { isActive: true } }),
       subDb.bundlePass.findMany({ where: { isActive: true } }),
+      paymentDb.coinPackage.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } }),
     ]);
 
     const passes = [
@@ -34,32 +36,16 @@ export async function GET() {
       })),
     ];
 
-    const coinPacks = [
-      {
-        id: 'coins-100',
-        name: '100 Voting Coins',
-        type: 'coins' as const,
-        description: 'Reality TV evictions & Super-Votes',
-        price: 1000,
-        coins: 100,
-      },
-      {
-        id: 'coins-500',
-        name: '500 Voting Coins (10% Bonus)',
-        type: 'coins' as const,
-        description: 'High-stake eviction voting pack',
-        price: 4500,
-        coins: 500,
-      },
-      {
-        id: 'coins-1200',
-        name: '1,200 Voting Coins (20% Bonus)',
-        type: 'coins' as const,
-        description: 'Tribal Council Super-Vote Power Pack',
-        price: 10000,
-        coins: 1200,
-      },
-    ];
+    const coinPacks = dbCoinPackages.map((pkg) => ({
+      id: pkg.id,
+      name: pkg.name,
+      type: 'coins' as const,
+      description: pkg.description || 'Voting coins pack',
+      price: Number(pkg.price),
+      coins: pkg.coins,
+      bonus: pkg.bonus,
+      isPopular: pkg.isPopular,
+    }));
 
     return NextResponse.json({
       success: true,

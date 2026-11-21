@@ -28,62 +28,6 @@ const UNIVERSE_NAMES: Record<string, string> = {
   vertical: 'Vertical',
 };
 
-const BUNDLE_PRESETS = [
-  {
-    id: 'entertainment',
-    name: 'Entertainment Bundle',
-    description: 'Reality + Comedy + Movies',
-    universeIds: ['reality', 'comedy', 'movies'],
-    originalPrice: 3000,
-    price: 2100,
-    discountPercent: 30,
-    duration: 30,
-    tier: 'standard',
-  },
-  {
-    id: 'creator-pack',
-    name: 'Creator Pack',
-    description: 'Creator + Lifestyle',
-    universeIds: ['creator', 'lifestyle'],
-    originalPrice: 2000,
-    price: 1500,
-    discountPercent: 25,
-    duration: 30,
-    tier: 'premium',
-  },
-  {
-    id: 'all-access',
-    name: 'All Access',
-    description: 'All 8 universes',
-    universeIds: [
-      'reality',
-      'comedy',
-      'movies',
-      'creator',
-      'lifestyle',
-      'sports',
-      'games',
-      'vertical',
-    ],
-    originalPrice: 8000,
-    price: 4800,
-    discountPercent: 40,
-    duration: 30,
-    tier: 'ultimate',
-  },
-  {
-    id: 'sports-games',
-    name: 'Sports & Games',
-    description: 'Sports + Games',
-    universeIds: ['sports', 'games'],
-    originalPrice: 2000,
-    price: 1400,
-    discountPercent: 30,
-    duration: 30,
-    tier: 'standard',
-  },
-];
-
 function BundlesPageContent(): React.JSX.Element {
   const [selectedTier, setSelectedTier] = useState<string>('all');
 
@@ -91,22 +35,33 @@ function BundlesPageContent(): React.JSX.Element {
     analytics.pageView('bundles');
   }, []);
 
+  const bundlesQuery = useQuery({
+    queryKey: ['subscription-bundles'],
+    queryFn: async () => {
+      const res = await fetch('/api/subscription/bundles');
+      const json = await res.json();
+      if (json.success && json.data) return json.data;
+      return [];
+    },
+    staleTime: 60000,
+  });
+
   const comparisonQuery = useQuery({
     queryKey: ['bundle-comparison'],
     queryFn: async () => {
       const res = await api.bundle.getBundleComparison();
       if (res.success && res.data) return res.data;
-      throw new Error(res.message || 'Failed to load bundles');
+      return null;
     },
     staleTime: 300000,
   });
 
   const comparison = comparisonQuery.data;
-  const isLoading = comparisonQuery.isLoading;
-  const error = comparisonQuery.error?.message;
+  const isLoading = bundlesQuery.isLoading || comparisonQuery.isLoading;
+  const error = bundlesQuery.error?.message || comparisonQuery.error?.message;
 
   const apiBundles = comparison?.bundles ?? [];
-  const displayBundles = apiBundles.length > 0 ? apiBundles : BUNDLE_PRESETS;
+  const displayBundles = bundlesQuery.data?.length ? bundlesQuery.data : apiBundles;
   const filteredBundles =
     selectedTier === 'all' ? displayBundles : displayBundles.filter((b) => b.tier === selectedTier);
 

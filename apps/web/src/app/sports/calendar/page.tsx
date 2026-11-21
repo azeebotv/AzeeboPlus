@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Calendar as CalendarIcon,
@@ -36,20 +36,21 @@ interface FixtureMatch {
   odds?: { home: number; draw: number; away: number };
 }
 
-const LEAGUES = [
-  { id: 'all', name: 'All Leagues' },
-  { id: 'NPFL', name: 'NPFL (Nigeria)' },
-  { id: 'EPL', name: 'Premier League' },
-  { id: 'CAF', name: 'CAF Champions' },
-  { id: 'LA LIGA', name: 'La Liga' },
-];
-
 export default function SportsCalendarPage() {
   const [fixtures, setFixtures] = useState<FixtureMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLeague, setSelectedLeague] = useState('all');
   const [selectedDate, setSelectedDate] = useState('2026-11-21');
   const [reminders, setReminders] = useState<Record<string, boolean>>({});
+
+  const leagues = useMemo(() => {
+    const fromFixtures = Array.from(
+      new Set(fixtures.map((f) => f.league).filter((l): l is string => Boolean(l)))
+    );
+    const standard = ['NPFL', 'EPL', 'CAF', 'LA LIGA'];
+    const merged = Array.from(new Set([...fromFixtures, ...standard]));
+    return [{ id: 'all', name: 'All Leagues' }, ...merged.map((l) => ({ id: l, name: l }))];
+  }, [fixtures]);
 
   useEffect(() => {
     let isMounted = true;
@@ -127,7 +128,7 @@ export default function SportsCalendarPage() {
 
         {/* League Selector Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
-          {LEAGUES.map((league) => (
+          {leagues.map((league) => (
             <button
               key={league.id}
               onClick={() => setSelectedLeague(league.id)}

@@ -555,6 +555,26 @@ export default function GuestHomepage(): React.JSX.Element {
   const [emailValue, setEmailValue] = useState('');
   const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const [posters, setPosters] = useState<PosterItem[]>(HERO_POSTERS_24);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadPosters() {
+      try {
+        const res = await fetch('/api/homepage/posters');
+        const json = await res.json();
+        if (json.success && json.data?.length > 0 && isMounted) {
+          setPosters(json.data);
+        }
+      } catch {
+        // Keep fallback posters
+      }
+    }
+    loadPosters();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
@@ -697,7 +717,7 @@ export default function GuestHomepage(): React.JSX.Element {
               role="img"
               aria-label="Grid of 24 trending movies, shows and universes"
             >
-              {HERO_POSTERS_24.map((poster) => (
+              {posters.map((poster) => (
                 <div
                   key={poster.id}
                   className="relative aspect-[2/3] rounded-az-card overflow-hidden group transition-transform duration-300 hover:scale-105 hover:z-20 cursor-pointer bg-az-surface-panel shadow-az-lifted"

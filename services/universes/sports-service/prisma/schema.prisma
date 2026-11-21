@@ -47,7 +47,8 @@ model EventTeam {
   score   Int     @default(0)
   order   Int     @default(0)
 
-  event SportsEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event   SportsEvent    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  players SportsPlayer[]
 
   @@map("event_teams")
   @@index([eventId])
@@ -335,3 +336,24 @@ model CreatorEarning {
   @@index([status])
   @@map("creator_earnings")
 }
+
+model SportsPlayer {
+  id        String   @id @default(uuid())
+  teamId    String
+  name      String
+  number    Int
+  position  String   // GK, CB, LB, RB, CDM, CM, CAM, RW, LW, ST
+  gridX     Int      @default(50)
+  gridY     Int      @default(50)
+  rating    Decimal? @db.Decimal(3, 1)
+  isCaptain Boolean  @default(false)
+  photo     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team EventTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("sports_players")
+  @@index([teamId])
+}
+
