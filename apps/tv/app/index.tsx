@@ -230,6 +230,66 @@ export default function TVHomeScreen() {
         </View>
       ) : null}
 
+      {/* ── Universe Navigation Shortcuts ──────────────────── */}
+      <View style={styles.universeNavRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.universeNavScroll}
+        >
+          <FocusableButton
+            title="Cinemaxis"
+            variant="secondary"
+            onPress={() => router.push('/movies' as Href)}
+          />
+          <FocusableButton
+            title="Reality"
+            variant="secondary"
+            onPress={() => router.push('/reality' as Href)}
+          />
+          <FocusableButton
+            title="Comedy"
+            variant="secondary"
+            onPress={() => router.push('/comedy' as Href)}
+          />
+          <FocusableButton
+            title="Sports"
+            variant="secondary"
+            onPress={() => router.push('/sports' as Href)}
+          />
+          <FocusableButton
+            title="Lifestyle"
+            variant="secondary"
+            onPress={() => router.push('/lifestyle' as Href)}
+          />
+          <FocusableButton
+            title="Music"
+            variant="secondary"
+            onPress={() => router.push('/music' as Href)}
+          />
+          <FocusableButton
+            title="Agbala"
+            variant="secondary"
+            onPress={() => router.push('/vertical' as Href)}
+          />
+          <FocusableButton
+            title="Games"
+            variant="secondary"
+            onPress={() => router.push('/games' as Href)}
+          />
+          <FocusableButton
+            title="Watch Party"
+            variant="secondary"
+            onPress={() => router.push('/watch-party' as Href)}
+          />
+          <FocusableButton
+            title="Bundles"
+            variant="secondary"
+            onPress={() => router.push('/bundles' as Href)}
+          />
+        </ScrollView>
+      </View>
+
       {/* ── Content rails ──────────────────────────────────── */}
       {recentlyWatched.length > 0 ? (
         <FocusableRow
@@ -337,6 +397,14 @@ const styles = StyleSheet.create({
     gap: tvSpacing.md,
     marginHorizontal: tvSpacing.xxl,
     marginBottom: tvSpacing.md,
+  },
+  universeNavRow: {
+    marginHorizontal: tvSpacing.xxl,
+    marginBottom: tvSpacing.lg,
+  },
+  universeNavScroll: {
+    flexDirection: 'row',
+    gap: tvSpacing.md,
   },
   emptyState: {
     padding: tvSpacing.xxl,

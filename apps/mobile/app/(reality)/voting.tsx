@@ -16,11 +16,20 @@ interface Contestant {
   status: string;
 }
 
-const VOTE_PACKAGES = [
-  { id: 'single', label: '1 Vote', votes: 1, price: 100 },
-  { id: 'bronze', label: '5 Votes', votes: 5, price: 450 },
-  { id: 'silver', label: '20 Votes', votes: 20, price: 1600, popular: true },
-  { id: 'gold', label: '50 Votes', votes: 50, price: 3500 },
+interface VotePackage {
+  id: string;
+  label: string;
+  votes: number;
+  price: number;
+  coins?: number;
+  popular?: boolean;
+}
+
+const DEFAULT_VOTE_PACKAGES: VotePackage[] = [
+  { id: 'coins-100', label: '100 Votes', votes: 100, price: 1000 },
+  { id: 'coins-500', label: '500 Votes', votes: 500, price: 4500, popular: true },
+  { id: 'coins-1200', label: '1,200 Votes', votes: 1200, price: 10000 },
+  { id: 'coins-2500', label: '2,500 Votes', votes: 2500, price: 20000 },
 ];
 
 export default function VotingScreen() {
@@ -29,8 +38,24 @@ export default function VotingScreen() {
   const queryClient = useQueryClient();
   const { showId } = useLocalSearchParams<{ showId: string }>();
   const isDark = colorScheme === 'dark';
+
+  const packagesQuery = useQuery({
+    queryKey: ['reality', 'vote-packages'],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<VotePackage[]>('/reality/vote-packages');
+        if (Array.isArray(res) && res.length > 0) return res;
+      } catch {
+        // Fall back gracefully
+      }
+      return DEFAULT_VOTE_PACKAGES;
+    },
+    staleTime: 60000,
+  });
+
+  const votePackages = packagesQuery.data ?? DEFAULT_VOTE_PACKAGES;
   const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
-  const [selectedPackage, setSelectedPackage] = useState(VOTE_PACKAGES[2]);
+  const [selectedPackage, setSelectedPackage] = useState<VotePackage>(votePackages[1]);
 
   const contestantsQuery = useQuery({
     queryKey: ['reality', 'contestants', showId],
@@ -141,18 +166,18 @@ export default function VotingScreen() {
             Vote Package
           </Text>
           <View style={styles.packagesGrid}>
-            {VOTE_PACKAGES.map((pkg) => (
+            {votePackages.map((pkg) => (
               <TouchableOpacity
                 key={pkg.id}
                 style={[
                   styles.packageCard,
                   { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
-                  selectedPackage.id === pkg.id && styles.packageSelected,
+                  selectedPackage?.id === pkg.id && styles.packageSelected,
                 ]}
                 onPress={() => setSelectedPackage(pkg)}
                 accessibilityRole="button"
                 accessibilityLabel={`${pkg.label}, ₦${pkg.price.toLocaleString()}`}
-                accessibilityState={{ selected: selectedPackage.id === pkg.id }}
+                accessibilityState={{ selected: selectedPackage?.id === pkg.id }}
               >
                 {pkg.popular && (
                   <View style={styles.popularBadge}>

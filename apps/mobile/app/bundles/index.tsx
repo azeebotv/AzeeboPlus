@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { bundleApi } from '@azeebo/react-data/api/bundle';
-import type { BundlePass } from '@azeebo/react-data/api/bundle';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -25,66 +24,6 @@ const UNIVERSE_NAMES: Record<string, string> = {
   vertical: 'Vertical',
 };
 
-const BUNDLE_PRESETS: BundlePass[] = [
-  {
-    id: 'entertainment',
-    name: 'Entertainment Bundle',
-    description: 'Reality + Comedy + Movies',
-    universeIds: ['reality', 'comedy', 'movies'],
-    originalPrice: 3000,
-    price: 2100,
-    discountPercent: 30,
-    duration: 30,
-    tier: 'standard',
-    isActive: true,
-  },
-  {
-    id: 'creator-pack',
-    name: 'Creator Pack',
-    description: 'Creator + Lifestyle',
-    universeIds: ['creator', 'lifestyle'],
-    originalPrice: 2000,
-    price: 1500,
-    discountPercent: 25,
-    duration: 30,
-    tier: 'premium',
-    isActive: true,
-  },
-  {
-    id: 'all-access',
-    name: 'All Access',
-    description: 'All 8 universes',
-    universeIds: [
-      'reality',
-      'comedy',
-      'movies',
-      'creator',
-      'lifestyle',
-      'sports',
-      'games',
-      'vertical',
-    ],
-    originalPrice: 8000,
-    price: 4800,
-    discountPercent: 40,
-    duration: 30,
-    tier: 'ultimate',
-    isActive: true,
-  },
-  {
-    id: 'sports-games',
-    name: 'Sports & Games',
-    description: 'Sports + Games',
-    universeIds: ['sports', 'games'],
-    originalPrice: 2000,
-    price: 1400,
-    discountPercent: 30,
-    duration: 30,
-    tier: 'standard',
-    isActive: true,
-  },
-];
-
 export default function BundlesScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
@@ -94,16 +33,32 @@ export default function BundlesScreen() {
   const comparisonQuery = useQuery({
     queryKey: ['bundle-comparison'],
     queryFn: async () => {
-      const res = await bundleApi.getBundleComparison();
-      if (res.success && res.data) return res.data;
-      throw new Error(res.message || 'Failed to load bundles');
+      try {
+        const res = await bundleApi.getBundleComparison();
+        if (res.success && res.data && res.data.bundles?.length > 0) return res.data;
+      } catch {
+        // fallback to standard bundles endpoint
+      }
+      try {
+        const direct = await bundleApi.getBundles();
+        const list = Array.isArray(direct.data) ? direct.data : [];
+        return {
+          bundles: list,
+          individualTotal: list.reduce((acc, b) => acc + (b.originalPrice || b.price), 0),
+          bundleSavings: list.reduce(
+            (acc, b) => acc + Math.max(0, (b.originalPrice || b.price) - b.price),
+            0
+          ),
+        };
+      } catch {
+        return { bundles: [], individualTotal: 0, bundleSavings: 0 };
+      }
     },
     staleTime: 300000,
   });
 
   const comparison = comparisonQuery.data;
-  const apiBundles = comparison?.bundles ?? [];
-  const displayBundles = apiBundles.length > 0 ? apiBundles : BUNDLE_PRESETS;
+  const displayBundles = comparison?.bundles ?? [];
   const filteredBundles =
     selectedTier === 'all' ? displayBundles : displayBundles.filter((b) => b.tier === selectedTier);
 

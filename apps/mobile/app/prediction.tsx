@@ -12,7 +12,11 @@ import {
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '../src/theme';
-import { engagementApi, PredictionResult } from '@azeebo/react-data/api/engagement';
+import {
+  engagementApi,
+  PredictionResult,
+  type LeaderboardEntry,
+} from '@azeebo/react-data/api/engagement';
 import type { RealityShow } from '@azeebo/react-data/types/api';
 import { walletApi } from '@azeebo/react-data/api/wallet';
 import { apiClient } from '@azeebo/react-data/api/client';
@@ -20,14 +24,6 @@ import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { analytics } from '../src/utils/analytics';
 import { brand } from '@azeebo/design-tokens';
-
-const leaderboardData = [
-  { rank: 1, avatar: '👑', name: 'PredatorKing', points: 15000 },
-  { rank: 2, avatar: '🦅', name: 'EagleEye', points: 12000 },
-  { rank: 3, avatar: '🎯', name: 'SharpShooter', points: 10000 },
-  { rank: 4, avatar: '🧠', name: 'BrainBox', points: 8500 },
-  { rank: 5, avatar: '⭐', name: 'StarPlayer', points: 7200 },
-];
 
 export default function PredictionScreen() {
   const colorScheme = useColorScheme();
@@ -39,6 +35,7 @@ export default function PredictionScreen() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [betSuccess, setBetSuccess] = useState(false);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [showData, setShowData] = useState<RealityShow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,18 +51,23 @@ export default function PredictionScreen() {
       setLoading(true);
       setError(null);
 
-      const [predictionRes, walletRes, showRes] = await Promise.all([
-        engagementApi.getPredictionResults(predictionId || 'default'),
-        walletApi.getBalance(),
+      const [predictionRes, walletRes, showRes, leaderboardRes] = await Promise.all([
+        engagementApi.getPredictionResults(predictionId || 'default').catch(() => null),
+        walletApi.getBalance().catch(() => null),
         apiClient.get<RealityShow>('/v1/reality/shows/current').catch(() => null),
+        engagementApi.getLeaderboard('weekly', 'predictions').catch(() => null),
       ]);
 
-      if (predictionRes.success && predictionRes.data) {
+      if (predictionRes?.success && predictionRes.data) {
         setPrediction(predictionRes.data);
       }
 
-      if (walletRes.success && walletRes.data) {
+      if (walletRes?.success && walletRes.data) {
         setUserPoints(walletRes.data.balance);
+      }
+
+      if (leaderboardRes?.success && Array.isArray(leaderboardRes.data)) {
+        setLeaderboard(leaderboardRes.data);
       }
 
       if (showRes) {
@@ -366,38 +368,52 @@ export default function PredictionScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.leaderboard}>
-            {leaderboardData.map((entry) => (
-              <View key={entry.rank} style={styles.leaderboardItem}>
-                <View
-                  style={[
-                    styles.rank,
-                    entry.rank === 1 && styles.rankGold,
-                    entry.rank === 2 && styles.rankSilver,
-                    entry.rank === 3 && styles.rankBronze,
-                  ]}
-                >
-                  {entry.rank === 1
-                    ? '🥇'
-                    : entry.rank === 2
-                      ? '🥈'
-                      : entry.rank === 3
-                        ? '🥉'
-                        : entry.rank}
-                </View>
-                <Text style={styles.leaderboardAvatar}>{entry.avatar}</Text>
-                <View style={styles.leaderboardInfo}>
-                  <Text
+            {leaderboard.length === 0 ? (
+              <Text
+                style={{
+                  color: colorScheme === 'dark' ? colors.text.secondary : '#666',
+                  textAlign: 'center',
+                  paddingVertical: 16,
+                }}
+              >
+                No active leaderboard entries yet.
+              </Text>
+            ) : (
+              leaderboard.map((entry) => (
+                <View key={entry.userId || `${entry.rank}-${entry.displayName}`} style={styles.leaderboardItem}>
+                  <View
                     style={[
-                      styles.leaderboardName,
-                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
+                      styles.rank,
+                      entry.rank === 1 && styles.rankGold,
+                      entry.rank === 2 && styles.rankSilver,
+                      entry.rank === 3 && styles.rankBronze,
                     ]}
                   >
-                    {entry.name}
+                    {entry.rank === 1
+                      ? '🥇'
+                      : entry.rank === 2
+                        ? '🥈'
+                        : entry.rank === 3
+                          ? '🥉'
+                          : entry.rank}
+                  </View>
+                  <Text style={styles.leaderboardAvatar}>{entry.avatar || '👤'}</Text>
+                  <View style={styles.leaderboardInfo}>
+                    <Text
+                      style={[
+                        styles.leaderboardName,
+                        { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
+                      ]}
+                    >
+                      {entry.displayName || entry.name || 'Anonymous'}
+                    </Text>
+                  </View>
+                  <Text style={styles.leaderboardPoints}>
+                    {(entry.score ?? 0).toLocaleString()}
                   </Text>
                 </View>
-                <Text style={styles.leaderboardPoints}>{entry.points.toLocaleString()}</Text>
-              </View>
-            ))}
+              ))
+            )}
           </View>
         </View>
       </ScrollView>
