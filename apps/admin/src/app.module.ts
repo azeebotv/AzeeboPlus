@@ -38,6 +38,8 @@ import { ServiceAuthGuard, RateLimiterModule, SecurityModule } from '@azeebo/sec
 import { FeatureFlagModule, queueFlags, adminFlags, authFlags } from '@azeebo/feature-flags';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CsrfMiddleware } from './common/csrf.middleware';
+import { AdminAuditInterceptor } from './common/interceptors/admin-audit.interceptor';
+import { DualControlInterceptor } from './modules/dual-control/dual-control.interceptor';
 
 @Module({
   imports: [
@@ -107,6 +109,14 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AdminAuditInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: DualControlInterceptor,
     },
     {
       provide: APP_GUARD,

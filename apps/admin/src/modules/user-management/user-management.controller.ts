@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { resolveActorId } from '../../common/resolve-actor-id';
+import { RequireDualControl } from '../dual-control/require-dual-control.decorator';
 
 interface AuthRequest extends Request {
   user: { id?: string; sub?: string; email: string; role: string };
@@ -121,6 +122,7 @@ export class UserManagementController {
   }
 
   @Post('bulk/suspend')
+  @RequireDualControl({ actionType: 'bulk_operation', description: 'Bulk suspension of user accounts' })
   async bulkSuspendUsers(
     @Req() req: AuthRequest,
     @Body() body: { ids: string[]; reason: string; durationDays?: number }
@@ -216,6 +218,7 @@ export class UserManagementController {
 
   @Delete(':id')
   @Roles('superadmin')
+  @RequireDualControl({ actionType: 'account_modification', description: 'Permanent deletion of user account' })
   async deleteUser(@Param('id') id: string, @Req() req: AuthRequest): Promise<unknown> {
     const actorId = resolveActorId(req);
     const result = await this.userService.deleteUser(id, actorId);

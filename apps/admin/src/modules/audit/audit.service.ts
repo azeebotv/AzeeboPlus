@@ -49,8 +49,9 @@ interface AuditRow {
 export class AuditLogService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async log(entry: AuditLogEntry): Promise<void> {
-    await this.prisma.auditLog.create({
+  async log(entry: AuditLogEntry, tx?: any): Promise<void> {
+    const client = tx || this.prisma;
+    await client.auditLog.create({
       data: {
         actorId: entry.actorId,
         actorType: entry.actorType || 'user',

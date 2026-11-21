@@ -24,6 +24,12 @@ export interface UserWithStats {
 
 @Injectable()
 export class UserManagementService {
+  private async runInTx<T>(fn: (tx: any) => Promise<T>): Promise<T> {
+    if (typeof (this.prisma as any).$transaction === "function") {
+      return (this.prisma as any).$transaction(fn);
+    }
+    return fn(this.prisma);
+  }
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AuditLogService) private readonly auditService: AuditLogService
@@ -213,8 +219,8 @@ export class UserManagementService {
       ? new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000)
       : undefined;
 
-    const [updatedUser, suspension] = await Promise.all([
-      this.prisma.user.update({
+    const [updatedUser, suspension] = await this.runInTx(async (tx) => {
+      const u = await tx.user.update({
         where: { id: userId },
         data: {
           isSuspended: true,
@@ -224,16 +230,17 @@ export class UserManagementService {
           suspendedBy,
           updatedAt: new Date(),
         },
-      }),
-      this.prisma.userSuspension.create({
+      });
+      const s = await tx.userSuspension.create({
         data: {
           userId,
           reason,
           suspendedBy,
           expiresAt,
         },
-      }),
-    ]);
+      });
+      return [u, s];
+    });
 
     await this.auditService.log({
       actorId: suspendedBy,
