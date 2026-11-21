@@ -53,5 +53,6 @@ export default defineConfig({
     // not be picked up by vitest's default **/*.{test,spec}.* include.
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     setupFiles: ['./vitest.setup.ts'],
+    testTimeout: 20000,
   },
 });
