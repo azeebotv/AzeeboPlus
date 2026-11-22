@@ -33,12 +33,40 @@ export class CacheInterceptor implements NestInterceptor {
     const resolvedKey = this.resolveCacheKey(cacheKey, request);
     const cached = await this.cacheService.get(resolvedKey);
 
+    const httpResponse = context.switchToHttp().getResponse();
+    const isPrivate =
+      cacheKey.includes('{userId}') ||
+      Boolean(request.headers?.authorization) ||
+      Boolean(request.headers?.cookie && request.headers.cookie.includes('access_token'));
+
+    const applyEdgeHeaders = () => {
+      if (!httpResponse || typeof httpResponse.setHeader !== 'function') return;
+      if (isPrivate) {
+        httpResponse.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+      } else {
+        const effectiveTtl = ttl || 300;
+        const maxAge = Math.min(effectiveTtl, 60);
+        const sMaxAge = effectiveTtl;
+        const swr = effectiveTtl * 2;
+        httpResponse.setHeader(
+          'Cache-Control',
+          `public, max-age=${maxAge}, s-maxage=${sMaxAge}, stale-while-revalidate=${swr}`
+        );
+        httpResponse.setHeader(
+          'CDN-Cache-Control',
+          `public, s-maxage=${sMaxAge}, stale-while-revalidate=${swr}`
+        );
+      }
+    };
+
     if (cached !== null) {
+      applyEdgeHeaders();
       return of(cached);
     }
 
     return next.handle().pipe(
       tap((response) => {
+        applyEdgeHeaders();
         this.cacheService.set(resolvedKey, response, ttl);
       })
     );

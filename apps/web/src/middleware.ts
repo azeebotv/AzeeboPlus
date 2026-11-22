@@ -143,7 +143,7 @@ export function middleware(request: NextRequest) {
   // addSecurityHeaders because every return path flows through it.
   const sweepLegacyAuthCookie = request.cookies.has(LEGACY_AUTH_COOKIE) && !isAuthenticated;
 
-  // Helper to add security headers to response
+  // Helper to add security & edge caching headers to response
   const addSecurityHeaders = (response: NextResponse): NextResponse => {
     for (const [key, value] of Object.entries(securityHeaders)) {
       response.headers.set(key, value);
@@ -154,6 +154,33 @@ export function middleware(request: NextRequest) {
         path: '/',
       });
     }
+
+    // Edge CDN & Browser Caching Policy
+    const isPublicCatalog =
+      !isAuthenticated &&
+      (pathname === '/' ||
+        pathname.startsWith('/movies') ||
+        pathname.startsWith('/comedy') ||
+        pathname.startsWith('/reality') ||
+        pathname.startsWith('/sports') ||
+        pathname.startsWith('/lifestyle') ||
+        pathname.startsWith('/games') ||
+        pathname.startsWith('/creators') ||
+        pathname.startsWith('/live-events'));
+
+    if (isPublicCatalog) {
+      response.headers.set(
+        'Cache-Control',
+        'public, max-age=60, s-maxage=300, stale-while-revalidate=600'
+      );
+      response.headers.set(
+        'CDN-Cache-Control',
+        'public, s-maxage=300, stale-while-revalidate=600'
+      );
+    } else if (isAuthenticated) {
+      response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    }
+
     return response;
   };
 
