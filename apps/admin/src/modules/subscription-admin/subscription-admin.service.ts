@@ -1,4 +1,10 @@
-import { Injectable, Inject, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { upstreamAuthContext } from '../../common/upstream-auth.middleware';
 
@@ -216,7 +222,9 @@ export class SubscriptionAdminService {
         totalPages: Math.ceil(total / limit) || 1,
       };
     } catch (err: unknown) {
-      this.logger.warn(`Failed to fetch upstream subscription plans: ${err instanceof Error ? err.message : String(err)}`);
+      this.logger.warn(
+        `Failed to fetch upstream subscription plans: ${err instanceof Error ? err.message : String(err)}`
+      );
       return {
         items: [],
         total: 0,

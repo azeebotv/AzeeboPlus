@@ -390,15 +390,35 @@ export function TipTierBadge({
   if (!normalizedTier || normalizedTier === 'none') return null;
 
   const tierConfig: Record<string, { label: string; bg: string; text: string; icon: string }> = {
-    bronze: { label: 'Bronze Supporter', bg: 'bg-amber-900/30 border-amber-700/50', text: 'text-amber-400', icon: '🥉' },
-    silver: { label: 'Silver Supporter', bg: 'bg-slate-700/40 border-slate-400/50', text: 'text-slate-300', icon: '🥈' },
-    gold: { label: 'Gold Supporter', bg: 'bg-yellow-900/30 border-yellow-500/50', text: 'text-yellow-400', icon: '🥇' },
-    platinum: { label: 'Platinum VIP', bg: 'bg-cyan-900/40 border-cyan-400/60 shadow-cyan-500/20 shadow-sm', text: 'text-cyan-300 font-bold', icon: '💎' },
+    bronze: {
+      label: 'Bronze Supporter',
+      bg: 'bg-az-warning-900/30 border-az-warning-700/50',
+      text: 'text-az-warning-400',
+      icon: '🥉',
+    },
+    silver: {
+      label: 'Silver Supporter',
+      bg: 'bg-az-surface-raised border-az-glass-border',
+      text: 'text-az-ink-dim',
+      icon: '🥈',
+    },
+    gold: {
+      label: 'Gold Supporter',
+      bg: 'bg-az-warning-900/40 border-az-warning-500/50',
+      text: 'text-az-warning-300',
+      icon: '🥇',
+    },
+    platinum: {
+      label: 'Platinum VIP',
+      bg: 'bg-az-primary-900/40 border-az-primary-400/60 shadow-sm',
+      text: 'text-az-primary-300 font-bold',
+      icon: '💎',
+    },
   };
 
   const config = tierConfig[normalizedTier] || {
     label: normalizedTier,
-    bg: 'bg-az-surface-panel border-az-surface-border',
+    bg: 'bg-az-surface-panel border-az-glass-border',
     text: 'text-az-ink-dim',
     icon: '⭐',
   };

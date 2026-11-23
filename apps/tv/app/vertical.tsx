@@ -2,11 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { contentApi, type ContentItem } from '@azeebo/react-data';
-import {
-  FocusableButton,
-  FocusableRow,
-  type RailItem,
-} from '../src/components/Focusable';
+import { FocusableButton, FocusableRow, type RailItem } from '../src/components/Focusable';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors, tvTypography, tvSpacing } from '../src/theme';
 
@@ -87,7 +83,8 @@ export default function TVVerticalScreen() {
       <View style={styles.heroSection}>
         <Text style={styles.title}>Agbala & Vertical Universe</Text>
         <Text style={styles.subtitle}>
-          African fantasy lore, episodic micro-dramas, ancient mythologies, and serialized canon sagas.
+          African fantasy lore, episodic micro-dramas, ancient mythologies, and serialized canon
+          sagas.
         </Text>
       </View>
 
@@ -133,10 +130,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#9333EA',
+    borderColor: colors.category.purple,
   },
   badgeText: {
-    color: '#9333EA',
+    color: colors.category.purple,
     fontSize: tvTypography.fontSize.base,
     fontWeight: '800',
   },

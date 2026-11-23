@@ -67,10 +67,11 @@ export class AgbalaService {
           ...(options?.headers || {}),
         },
       });
-    } catch (networkError: any) {
+    } catch (networkError: unknown) {
       this.logger.error(`Failed to reach vertical-service at ${this.baseUrl}${url}`, networkError);
-      const code = networkError?.code || networkError?.cause?.code;
-      if (code) networkError.code = code;
+      const errObj = networkError as { code?: string; cause?: { code?: string } };
+      const code = errObj?.code || errObj?.cause?.code;
+      if (code) errObj.code = code;
       mapAndThrow(networkError, `vertical-service at ${url}`);
     }
     if (!res.ok) {

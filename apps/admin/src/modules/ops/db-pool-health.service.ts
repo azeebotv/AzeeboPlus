@@ -34,8 +34,8 @@ export class DbPoolHealthService {
         directPgBypasses: 0,
         lastChecked: new Date().toISOString(),
       };
-    } catch (err: any) {
-      this.logger.error(`Database pool health check failed: ${err.message}`);
+    } catch (err: unknown) {
+      this.logger.error(`Database pool health check failed: ${(err as Error).message}`);
       return {
         status: 'unhealthy',
         connectedClients: 0,

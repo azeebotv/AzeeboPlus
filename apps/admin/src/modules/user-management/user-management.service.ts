@@ -24,11 +24,14 @@ export interface UserWithStats {
 
 @Injectable()
 export class UserManagementService {
-  private async runInTx<T>(fn: (tx: any) => Promise<T>): Promise<T> {
-    if (typeof (this.prisma as any).$transaction === "function") {
-      return (this.prisma as any).$transaction(fn);
+  private async runInTx<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    const prismaClient = this.prisma as unknown as {
+      $transaction?: (cb: (tx: Prisma.TransactionClient) => Promise<T>) => Promise<T>;
+    };
+    if (typeof prismaClient.$transaction === 'function') {
+      return prismaClient.$transaction(fn);
     }
-    return fn(this.prisma);
+    return fn(this.prisma as unknown as Prisma.TransactionClient);
   }
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -43,10 +46,7 @@ export class UserManagementService {
     if (role && role !== 'all') {
       if (role === 'creator') {
         const creatorFilter: Prisma.UserWhereInput = {
-          OR: [
-            { role: 'creator' },
-            { creatorProfile: { isNot: null } },
-          ],
+          OR: [{ role: 'creator' }, { creatorProfile: { isNot: null } }],
         };
         if (search) {
           where.AND = [
@@ -441,10 +441,7 @@ export class UserManagementService {
       }),
       this.prisma.user.count({
         where: {
-          OR: [
-            { role: 'creator' },
-            { creatorProfile: { isNot: null } },
-          ],
+          OR: [{ role: 'creator' }, { creatorProfile: { isNot: null } }],
         },
       }),
     ]);

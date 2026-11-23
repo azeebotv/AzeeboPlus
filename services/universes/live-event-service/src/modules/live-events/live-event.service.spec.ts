@@ -177,12 +177,17 @@ describe('LiveEventService', () => {
         _count: { tickets: 0 },
       });
       prisma.liveEventTicket.findMany.mockResolvedValue([]);
-      prisma.liveEventTicket.create.mockImplementation((args: any) =>
+      prisma.liveEventTicket.create.mockImplementation((args: { data: Record<string, unknown> }) =>
         Promise.resolve({ id: 't-1', ...args.data })
       );
-      prisma.$transaction.mockImplementation((promises: any[]) => Promise.all(promises));
+      prisma.$transaction.mockImplementation((promises: Promise<unknown>[]) =>
+        Promise.all(promises)
+      );
 
-      const result = await service.purchaseGroupTickets('ev-group', 'buyer-1', ['friend-1', 'friend-2']);
+      const result = await service.purchaseGroupTickets('ev-group', 'buyer-1', [
+        'friend-1',
+        'friend-2',
+      ]);
       expect(result.success).toBe(true);
       expect(result.ticketsIssued).toBe(2);
       expect(result.totalAmount).toBe(2000);

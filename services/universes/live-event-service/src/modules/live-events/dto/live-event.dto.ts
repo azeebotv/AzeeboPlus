@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsNumber, IsBoolean, IsArray, Min, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+  IsArray,
+  Min,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateEventDto {
@@ -133,4 +141,3 @@ export class PurchaseGroupTicketsDto {
   @IsString()
   message?: string;
 }
-

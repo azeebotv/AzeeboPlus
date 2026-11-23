@@ -45,10 +45,7 @@ export class ContentRepository {
     }
 
     if (filters?.universe) {
-      where.OR = [
-        { universeId: filters.universe },
-        { universe: { name: filters.universe } },
-      ];
+      where.OR = [{ universeId: filters.universe }, { universe: { name: filters.universe } }];
     }
 
     if (filters?.creatorId) {

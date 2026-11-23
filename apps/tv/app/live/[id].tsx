@@ -63,10 +63,7 @@ export default function TVLiveScreen() {
             {/* ── Second-Screen Phone QR Overlay ── */}
             <View style={styles.qrHudBox}>
               <View style={styles.qrWhitePlate}>
-                <QRCodeView
-                  value={`https://app.azeeboplus.com/live/${id}`}
-                  size={100}
-                />
+                <QRCodeView value={`https://app.azeeboplus.com/live/${id}`} size={100} />
               </View>
               <Text style={styles.qrHudCaption}>Scan to Vote & Chat on Phone</Text>
             </View>

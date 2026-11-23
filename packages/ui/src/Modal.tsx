@@ -314,9 +314,7 @@ export function BranchingDecisionModal({
         <h2 id="branching-title" className="text-2xl font-black text-az-ink tracking-tight mb-2">
           {title}
         </h2>
-        <p className="text-sm text-az-ink-dim leading-relaxed mb-6">
-          {prompt}
-        </p>
+        <p className="text-sm text-az-ink-dim leading-relaxed mb-6">{prompt}</p>
 
         {/* Options grid */}
         <div className="grid grid-cols-1 gap-3">
@@ -347,4 +345,3 @@ export function BranchingDecisionModal({
     </div>
   );
 }
-

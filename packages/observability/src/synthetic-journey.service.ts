@@ -118,7 +118,12 @@ export class SyntheticJourneyService {
         if (!res.compensationReady) throw new Error('Saga compensation guard missing');
         return res;
       }
-      return { payoutId: `payout-${Date.now()}`, status: 'pending', compensationReady: true, synthetic: true };
+      return {
+        payoutId: `payout-${Date.now()}`,
+        status: 'pending',
+        compensationReady: true,
+        synthetic: true,
+      };
     });
 
     const totalDurationMs = Date.now() - startTime;
@@ -148,7 +153,9 @@ export class SyntheticJourneyService {
     if (overallStatus === 'FAILED') {
       this.logger.error(`Synthetic Journey FAILED in ${totalDurationMs}ms`);
     } else if (overallStatus === 'DEGRADED') {
-      this.logger.warn(`Synthetic Journey DEGRADED (${totalDurationMs}ms > SLA ${slaThresholdMs}ms)`);
+      this.logger.warn(
+        `Synthetic Journey DEGRADED (${totalDurationMs}ms > SLA ${slaThresholdMs}ms)`
+      );
     } else {
       this.logger.log(`Synthetic Journey PASSED in ${totalDurationMs}ms`);
     }

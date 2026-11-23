@@ -28,12 +28,12 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
 
-      # Block CRITICAL vulnerabilities (exit code 1)
+      # Block CRITICAL vulnerabilities via audit gate (AUD-03)
       - name: Block critical vulnerabilities
         run: |
           echo "Checking for critical vulnerabilities..."
-          pnpm audit --audit-level=critical
-          echo "No critical vulnerabilities found."
+          node scripts/audit-gate.mjs --severity=critical
+          echo "No unallowlisted critical vulnerabilities found."
 
       # Report high vulnerabilities (don't block, but surface them)
       - name: Report high vulnerabilities

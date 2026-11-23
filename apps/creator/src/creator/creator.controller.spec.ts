@@ -62,7 +62,7 @@ describe('CreatorController', () => {
 
   const mockAuthReq = {
     user: { id: 'usr-1', email: 'creator@azeebo.com', role: 'creator' },
-  } as any;
+  } as never;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -141,11 +141,18 @@ describe('CreatorController', () => {
   describe('payouts and settings endpoints', () => {
     it('delegates requestPayout with DTO', async () => {
       const dto: RequestPayoutDto = { amount: 50000, method: 'bank_transfer' };
-      mockCreatorService.requestPayout.mockResolvedValue({ success: true, message: 'Payout requested' });
+      mockCreatorService.requestPayout.mockResolvedValue({
+        success: true,
+        message: 'Payout requested',
+      });
 
       const res = await controller.requestPayout(mockAuthReq, dto);
       expect(res.success).toBe(true);
-      expect(mockCreatorService.requestPayout).toHaveBeenCalledWith('usr-1', 50000, 'bank_transfer');
+      expect(mockCreatorService.requestPayout).toHaveBeenCalledWith(
+        'usr-1',
+        50000,
+        'bank_transfer'
+      );
     });
 
     it('delegates updatePayoutSettings with DTO', async () => {
@@ -205,7 +212,11 @@ describe('CreatorController', () => {
 
       const res = await controller.updateSubscriptionTier(mockAuthReq, 'tier-1', dto);
       expect(res.success).toBe(true);
-      expect(mockCreatorService.updateSubscriptionTier).toHaveBeenCalledWith('usr-1', 'tier-1', dto);
+      expect(mockCreatorService.updateSubscriptionTier).toHaveBeenCalledWith(
+        'usr-1',
+        'tier-1',
+        dto
+      );
     });
 
     it('delegates deleteSubscriptionTier', async () => {
@@ -229,11 +240,19 @@ describe('CreatorController', () => {
 
     it('delegates submitChallenge with DTO', async () => {
       const dto: SubmitChallengeDto = { title: 'Viral Punchline Challenge', contentId: 'c-1' };
-      mockCreatorService.submitChallenge.mockResolvedValue({ success: true, submissionId: 'sub-1' });
+      mockCreatorService.submitChallenge.mockResolvedValue({
+        success: true,
+        submissionId: 'sub-1',
+      });
 
       const res = await controller.submitChallenge(mockAuthReq, 'ch-1', dto);
       expect(res.success).toBe(true);
-      expect(mockCreatorService.submitChallenge).toHaveBeenCalledWith('usr-1', 'ch-1', 'Viral Punchline Challenge', 'c-1');
+      expect(mockCreatorService.submitChallenge).toHaveBeenCalledWith(
+        'usr-1',
+        'ch-1',
+        'Viral Punchline Challenge',
+        'c-1'
+      );
     });
   });
 });

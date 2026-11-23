@@ -2,11 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { contentApi, type ContentItem } from '@azeebo/react-data';
-import {
-  FocusableButton,
-  FocusableRow,
-  type RailItem,
-} from '../src/components/Focusable';
+import { FocusableButton, FocusableRow, type RailItem } from '../src/components/Focusable';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors, tvTypography, tvSpacing } from '../src/theme';
 
@@ -26,7 +22,11 @@ export default function TVComedyScreen() {
         contentApi.getContentByCategory('comedy-clips', 1, 15),
       ]);
 
-      if (specialsRes.status === 'fulfilled' && specialsRes.value.success && specialsRes.value.data) {
+      if (
+        specialsRes.status === 'fulfilled' &&
+        specialsRes.value.success &&
+        specialsRes.value.data
+      ) {
         setSpecials(specialsRes.value.data.items ?? []);
       }
       if (clipsRes.status === 'fulfilled' && clipsRes.value.success && clipsRes.value.data) {
@@ -87,7 +87,8 @@ export default function TVComedyScreen() {
       <View style={styles.heroSection}>
         <Text style={styles.title}>Comedy Universe</Text>
         <Text style={styles.subtitle}>
-          Full-length stand-up comedy specials, unfiltered club sets, hilarious skits, and laugh-out-loud comedy battles.
+          Full-length stand-up comedy specials, unfiltered club sets, hilarious skits, and
+          laugh-out-loud comedy battles.
         </Text>
       </View>
 
@@ -133,10 +134,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#F97316',
+    borderColor: colors.warning[500],
   },
   badgeText: {
-    color: '#F97316',
+    color: colors.warning[500],
     fontSize: tvTypography.fontSize.base,
     fontWeight: '800',
   },

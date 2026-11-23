@@ -89,7 +89,9 @@ export default function TVCreatorDashboard() {
       id: item.id,
       title: item.title,
       thumbnail: item.mediaAsset?.thumbnailUrl || item.thumbnail,
-      subtitle: item.universe?.name ? `${item.universe.name} • 4K Published` : 'Creator Original • 4K Published',
+      subtitle: item.universe?.name
+        ? `${item.universe.name} • 4K Published`
+        : 'Creator Original • 4K Published',
     }));
 
   if (isLoading && publishedContent.length === 0) {
@@ -119,7 +121,8 @@ export default function TVCreatorDashboard() {
       <View style={styles.heroSection}>
         <Text style={styles.title}>Creator Analytics & Performance</Text>
         <Text style={styles.subtitle}>
-          Track your reach across African audiences, audience engagement metrics, and monetization payouts on the big screen.
+          Track your reach across African audiences, audience engagement metrics, and monetization
+          payouts on the big screen.
         </Text>
       </View>
 
@@ -163,11 +166,7 @@ export default function TVCreatorDashboard() {
         <Text style={styles.sectionTitle}>Active Audience Challenges</Text>
         <View style={styles.challengesGrid}>
           {challenges.map((c) => (
-            <FocusableCard
-              key={c.id}
-              style={styles.challengeCard}
-              onPress={() => {}}
-            >
+            <FocusableCard key={c.id} style={styles.challengeCard} onPress={() => {}}>
               <View style={styles.challengeBadge}>
                 <Text style={styles.challengeBadgeText}>🏆 {c.rewardPool}</Text>
               </View>

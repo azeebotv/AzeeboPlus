@@ -117,11 +117,11 @@ function buildPrismaMock(): MockPrisma {
     $queryRawUnsafe: jest.fn().mockRejectedValue(new Error('relation "following" does not exist')),
   } as MockPrisma;
 
-  mock.$transaction = jest.fn().mockImplementation(async (cb: any) => {
+  mock.$transaction = jest.fn().mockImplementation(async (cb: unknown) => {
     if (typeof cb === 'function') {
       return cb(mock);
     }
-    return Promise.all(cb);
+    return Promise.all(cb as Promise<unknown>[]);
   });
 
   return mock;

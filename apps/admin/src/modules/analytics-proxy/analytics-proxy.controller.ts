@@ -35,7 +35,10 @@ export class AnalyticsProxyController {
     const queryString = new URLSearchParams(req.query as Record<string, string>).toString();
     // analytics-service controllers: search/corrections is nested under @Controller('analytics'),
     // while task/event proxies mount at the root /v1 level.
-    const upstreamSubPath = targetPath.startsWith('/search/') || targetPath === '/search' ? `/analytics${targetPath}` : targetPath;
+    const upstreamSubPath =
+      targetPath.startsWith('/search/') || targetPath === '/search'
+        ? `/analytics${targetPath}`
+        : targetPath;
     const targetUrl = `${ANALYTICS_URL}/v1${upstreamSubPath}${queryString ? `?${queryString}` : ''}`;
 
     try {

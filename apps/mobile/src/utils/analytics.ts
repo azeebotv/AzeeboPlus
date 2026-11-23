@@ -281,7 +281,11 @@ class AnalyticsService {
     });
   }
 
-  merchandisePurchased(orderId: string, totalAmount: number, items: Array<{ id: string; price: number }>) {
+  merchandisePurchased(
+    orderId: string,
+    totalAmount: number,
+    items: Array<{ id: string; price: number }>
+  ) {
     this.track('merchandise_purchased', {
       order_id: orderId,
       total_amount: totalAmount,
@@ -311,12 +315,7 @@ class AnalyticsService {
     this.track('prediction_lost', { prediction_id: predictionId, lost_amount: lostAmount });
   }
 
-  videoPlaybackStarted(
-    contentId: string,
-    title?: string,
-    universe?: string,
-    isPremium?: boolean
-  ) {
+  videoPlaybackStarted(contentId: string, title?: string, universe?: string, isPremium?: boolean) {
     this.track('video_playback_started', {
       content_id: contentId,
       title,

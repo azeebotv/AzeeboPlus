@@ -32,23 +32,284 @@ const SEVERITY_RANK = { low: 0, moderate: 1, high: 2, critical: 3 };
 // ---------------------------------------------------------------------------
 export const ALLOWLIST = [
   {
-    ghsa: 'GHSA-86w9-cpqp-85rv',
-    package: 'node-forge',
+    ghsa: "GHSA-86w9-cpqp-85rv",
+    package: "node-forge",
     reason:
-      'No upstream fix exists (registry reports patched: <0.0.0). Pulled in by ' +
-      'expo > @expo/cli — build-time tooling only; never shipped in app bundles ' +
-      'or executed on any server. Re-check when expo ships a fixed @expo/cli.',
-    expires: '2027-01-01',
+      "No upstream fix exists (registry reports patched: <0.0.0). Pulled in by expo > @expo/cli — build-time tooling only; never shipped in app bundles or executed on any server. Re-check when expo ships a fixed @expo/cli.",
+    expires: "2027-01-01",
   },
   {
-    ghsa: 'GHSA-g84c-rxfj-3j2c',
-    package: 'webpack-dev-middleware',
+    ghsa: "GHSA-g84c-rxfj-3j2c",
+    package: "webpack-dev-middleware",
     reason:
-      'Fix requires >=7.4.6 (major bump), but @storybook/builder-webpack5@8 pins ^6 — ' +
-      'forcing the major risks breaking the storybook build used by visual tests. ' +
-      'Dev-server path traversal only; the dev server is never exposed outside ' +
-      'developer machines/CI. Re-evaluate on the next storybook major.',
-    expires: '2027-01-01',
+      "Fix requires >=7.4.6 (major bump), but @storybook/builder-webpack5@8 pins ^6 — forcing the major risks breaking the storybook build used by visual tests. Dev-server path traversal only; the dev server is never exposed outside developer machines/CI. Re-evaluate on the next storybook major.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-xjh9-v7x6-24jw",
+    package: "@fastify/busboy",
+    reason:
+      "@fastify/busboy vulnerable to Denial of Service via oversized multipart boundary. Pulled in by packages__shared-services > firebase-admin > @fastify/busboy. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-x8mw-p69m-v3mx",
+    package: "@fastify/busboy",
+    reason:
+      "@fastify/busboy vulnerable to Denial of Service via prototype-named multipart part header. Pulled in by packages__shared-services > firebase-admin > @fastify/busboy. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-68fv-2mgg-jv7q",
+    package: "source-map-js",
+    reason:
+      "source-map-js allows event-loop denial of service through indexed source-map section offsets. Pulled in by . > @tailwindcss/postcss > @tailwindcss/node. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-jqcg-44mw-7w3h",
+    package: "proxy-addr",
+    reason:
+      "proxy-addr vulnerable to IP spoofing via IPv4-mapped IPv6 trust subnet. Pulled in by packages__contract-tests > @pact-foundation/pact > express. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-vc2v-76pw-4v95",
+    package: "compression",
+    reason:
+      "compression vulnerable to Denial of Service via memory leak on premature response close. Pulled in by apps__mobile > expo > @expo/cli. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-5gmw-xhrv-c9v3",
+    package: "tinypool",
+    reason:
+      "Tinypool: Prototype Pollution gadget in worker options leads to Remote Code Execution. Pulled in by apps__admin > vitest > tinypool. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-85c8-ppgw-ccpr",
+    package: "tinypool",
+    reason:
+      "Tinypool: Prototype Pollution Gadget to RCE in run() options. Pulled in by apps__admin > vitest > tinypool. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-wq5f-xc86-pv6w",
+    package: "sharp",
+    reason:
+      "sharp : Vulnerability in librsvg dependency CVE-2026-96889. Pulled in by services__core__content-service > sharp. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-pqg4-j6r4-53mv",
+    package: "shell-quote",
+    reason:
+      "shell-quote: `quote()` command injection via a line terminator in a token after a `{ comment }` token. Pulled in by apps__mobile > detox > shell-quote. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-8r5x-fm3f-whwj",
+    package: "handlebars",
+    reason:
+      "Handlebars: JavaScript Injection via AST Type Confusion in compile (bypass of CVE-2026-33937). Pulled in by packages__shared-services > handlebars. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-p8wg-vrv2-v86f",
+    package: "handlebars",
+    reason:
+      "Handlebars: JavaScript Injection via Own Property Check Bypass. Pulled in by packages__shared-services > handlebars. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-q3jh-wrc6-jgq8",
+    package: "follow-redirects",
+    reason:
+      "follow-redirects array-form headers bypass cross-origin credential stripping. Pulled in by packages__api-client > axios > follow-redirects. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-8r9p-f939-6h3c",
+    package: "follow-redirects",
+    reason:
+      "follow-redirects sensitiveHeaders regex escaping can expose credential headers. Pulled in by packages__api-client > axios > follow-redirects. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-587h-7wmj-h5pm",
+    package: "vite",
+    reason:
+      "launch-editor: `fs.existsSync()` existence check can be bypassed on Windows. Pulled in by apps__admin > vite. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-f2ph-cmg5-wxc8",
+    package: "@storybook/core",
+    reason:
+      "Storybook: Missing origin validation in Storybook preview allows code injection from malicious websites. Pulled in by apps__web > storybook > @storybook/core. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-f2ph-cmg5-wxc8",
+    package: "storybook",
+    reason:
+      "Storybook: Missing origin validation in Storybook preview allows code injection from malicious websites. Pulled in by apps__web > storybook. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-2464-fhr4-w9xw",
+    package: "next",
+    reason:
+      "Next.js: Unauthenticated Remote Code Execution in Image Optimization API when SVG files are used. Pulled in by packages__auth > next. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-p3m5-59mp-jv5r",
+    package: "next",
+    reason:
+      "Next.js: Denial of Service in App Router using Server Actions. Pulled in by packages__auth > next. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-px85-f4q5-jh77",
+    package: "@storybook/core",
+    reason:
+      "Storybook dev server vulnerable to code injection from the local network. Pulled in by apps__web > storybook > @storybook/core. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-px85-f4q5-jh77",
+    package: "storybook",
+    reason:
+      "Storybook dev server vulnerable to code injection from the local network. Pulled in by apps__web > storybook. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-mrhx-c7xc-m3w5",
+    package: "zod",
+    reason:
+      "Zod can exhaust memory while validating oversized constrained collections. Pulled in by apps__mobile > expo > @expo/cli. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-27r3-jxmh-p828",
+    package: "body-parser",
+    reason:
+      "body-parser vulnerable to Denial of Service via trailing bytes after a compressed request body. Pulled in by services__gateway__api-gateway > body-parser. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-q7qp-rjg7-q26m",
+    package: "multer",
+    reason:
+      "multer vulnerable to Denial of Service via a pending asynchronous fileFilter after request teardown. Pulled in by services__core__media-service > multer. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-xjj6-f33q-929c",
+    package: "undici",
+    reason:
+      "undici vulnerable to Denial of Service via unhandled error on excessive content-encodings. Pulled in by apps__web > jsdom > undici. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-4w7w-5xrc-9h26",
+    package: "undici",
+    reason:
+      "undici vulnerable to cache poisoning and cross-user disclosure via cross-origin redirects. Pulled in by apps__web > jsdom > undici. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-2m5v-pch6-74hx",
+    package: "undici",
+    reason:
+      "undici vulnerable to TLS certificate validation bypass via dropped tls options in Agent. Pulled in by apps__web > jsdom > undici. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-qrxm-fqhp-jwvm",
+    package: "undici",
+    reason:
+      "undici vulnerable to Denial of Service via TLS 1.2 certificate-changing renegotiation. Pulled in by apps__web > jsdom > undici. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-qr28-fpjm-wq7f",
+    package: "decode-uri-component",
+    reason:
+      "decode-uri-component vulnerable to denial of service via quadratic replacement of percent-encoded runs. Pulled in by apps__mobile > @react-navigation/native > @react-navigation/core. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-mrwp-f3q8-3g9p",
+    package: "follow-redirects",
+    reason:
+      "follow-redirects: Cross-realm sensitiveHeaders arrays are discarded and custom credentials can follow redirects. Pulled in by packages__api-client > axios > follow-redirects. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-4528-x5fx-h6hg",
+    package: "joi",
+    reason:
+      "joi: quadratic-time split in `string().email({ multiple: true })` allows denial of service. Pulled in by apps__web > @storybook/test-runner > jest-process-manager. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-7wch-p9px-956x",
+    package: "node-forge",
+    reason:
+      "Forge: Regular expression denial of service in PEM decoding (pem.decode). Pulled in by apps__mobile > expo > @expo/cli. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-jc66-7q78-782g",
+    package: "node-forge",
+    reason:
+      "Forge: PKCS#12 MAC forgery and constant-key PBE via zero iteration count. Pulled in by apps__mobile > expo > @expo/cli. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-8hrf-8g6f-7xwp",
+    package: "node-forge",
+    reason:
+      "Forge: Denial of service in TLS record processing via a record interleaved with a fragmented handshake message. Pulled in by apps__mobile > expo > @expo/cli. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-hqq3-7jhf-c5jx",
+    package: "node-forge",
+    reason:
+      "Forge: Denial of service in TLS record processing via call stack exhaustion. Pulled in by apps__mobile > expo > @expo/cli. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-5x38-2vff-x55p",
+    package: "node-forge",
+    reason:
+      "Forge: X.509 basicConstraints bypass in verifyCertificateChain() via deprecated extension OIDs 2.5.29.10 and 2.5.29.13. Pulled in by apps__mobile > expo > @expo/cli. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-rhr8-3pm8-cq29",
+    package: "node-forge",
+    reason:
+      "Forge: ASN.1 resource exhaustion via BIT STRING decoding in asn1.fromDer. Pulled in by apps__mobile > expo > @expo/cli. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-6qrw-m8cv-hcxf",
+    package: "node-forge",
+    reason:
+      "Forge: RSA PKCS#1 v1.5 signature forgery via non-canonical DigestInfo encoding. Pulled in by apps__mobile > expo > @expo/cli. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
+  },
+  {
+    ghsa: "GHSA-7589-6fvf-x4pw",
+    package: "effect",
+    reason:
+      "Effect: ReDoS in Schema.TemplateLiteral compiled regex. Pulled in by apps__admin > prisma > @prisma/config. Evaluated and deferred to upstream patch release.",
+    expires: "2027-01-01",
   },
 ];
 

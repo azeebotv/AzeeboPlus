@@ -89,11 +89,7 @@ export default function TVContentDetailScreen() {
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.heroOverlay}>
-          <FocusableButton
-            title="← Back"
-            variant="secondary"
-            onPress={() => router.back()}
-          />
+          <FocusableButton title="← Back" variant="secondary" onPress={() => router.back()} />
           {content.universe?.name ? (
             <View style={styles.universeBadge}>
               <Text style={styles.universeBadgeText}>{content.universe.name}</Text>
@@ -112,7 +108,8 @@ export default function TVContentDetailScreen() {
             <Text style={styles.metaText}>• {content.isPremium ? 'Premium' : 'Included'}</Text>
           </View>
           <Text style={styles.description} numberOfLines={3}>
-            {content.description || 'Experience this feature on Azeebo+ in Ultra HD with high dynamic range audio.'}
+            {content.description ||
+              'Experience this feature on Azeebo+ in Ultra HD with high dynamic range audio.'}
           </Text>
           <View style={styles.actions}>
             <FocusableButton

@@ -27,11 +27,7 @@ export default function TVAccountScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <FocusableButton
-            title="← Back"
-            variant="secondary"
-            onPress={() => router.back()}
-          />
+          <FocusableButton title="← Back" variant="secondary" onPress={() => router.back()} />
           <Text style={styles.headerTitle}>Account & Subscription</Text>
           <View style={{ width: 120 }} />
         </View>
@@ -49,13 +45,10 @@ export default function TVAccountScreen() {
             </FocusableCard>
 
             {/* Wallet Balance Card */}
-            <FocusableCard
-              onPress={() => router.push('/wallet/fund' as Href)}
-              style={styles.card}
-            >
+            <FocusableCard onPress={() => router.push('/wallet/fund' as Href)} style={styles.card}>
               <Text style={styles.cardLabel}>Wallet Balance</Text>
               <Text style={styles.cardTitle}>
-                ₦{((rawBalance) / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                ₦{(rawBalance / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
               </Text>
               <Text style={styles.cardSubtitle}>Press Select to top up</Text>
             </FocusableCard>
@@ -153,7 +146,7 @@ const styles = StyleSheet.create({
     marginTop: tvSpacing.md,
   },
   badgeText: {
-    color: '#34C759',
+    color: colors.success[500],
     fontSize: tvTypography.fontSize.xs,
     fontWeight: tvTypography.fontWeight.bold,
   },

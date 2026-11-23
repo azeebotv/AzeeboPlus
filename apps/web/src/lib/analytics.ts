@@ -522,11 +522,20 @@ class Analytics {
     this.track('merchandise_checkout_started', { cartId, itemCount, totalAmount });
   }
 
-  merchandisePurchased(orderId: string, totalAmount: number, items: Array<{ id: string; price: number }>): void {
+  merchandisePurchased(
+    orderId: string,
+    totalAmount: number,
+    items: Array<{ id: string; price: number }>
+  ): void {
     this.track('merchandise_purchased', { orderId, totalAmount, items });
   }
 
-  predictionStaked(predictionId: string, universe: string, stakeAmount: number, potentialWin: number): void {
+  predictionStaked(
+    predictionId: string,
+    universe: string,
+    stakeAmount: number,
+    potentialWin: number
+  ): void {
     this.track('prediction_staked', { predictionId, universe, stakeAmount, potentialWin });
   }
 
@@ -538,7 +547,12 @@ class Analytics {
     this.track('prediction_lost', { predictionId, lostAmount });
   }
 
-  videoPlaybackStarted(contentId: string, title?: string, universe?: string, isPremium?: boolean): void {
+  videoPlaybackStarted(
+    contentId: string,
+    title?: string,
+    universe?: string,
+    isPremium?: boolean
+  ): void {
     this.track('video_playback_started', { contentId, title, universe, isPremium });
   }
 

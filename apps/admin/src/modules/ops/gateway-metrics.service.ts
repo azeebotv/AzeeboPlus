@@ -33,8 +33,10 @@ export class GatewayMetricsService {
         throw new Error(`Gateway returned HTTP ${res.status}`);
       }
       return await res.text();
-    } catch (err: any) {
-      this.logger.warn(`Failed to scrape metrics from ${this.gatewayUrl}: ${err.message}`);
+    } catch (err: unknown) {
+      this.logger.warn(
+        `Failed to scrape metrics from ${this.gatewayUrl}: ${(err as Error).message}`
+      );
       return '# API Gateway metrics unreachable';
     }
   }

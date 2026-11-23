@@ -834,7 +834,10 @@ export class RewardsService {
         },
       };
     } catch (error) {
-      this.logger.error(`completeMission failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `completeMission failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }

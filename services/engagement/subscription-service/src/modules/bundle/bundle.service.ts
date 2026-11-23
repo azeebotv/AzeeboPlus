@@ -361,7 +361,10 @@ export class BundleService {
     }
   }
 
-  private async verifyExternalPayment(paymentReference: string, expectedAmount: number): Promise<void> {
+  private async verifyExternalPayment(
+    paymentReference: string,
+    expectedAmount: number
+  ): Promise<void> {
     try {
       const paymentVerification = await axios.get(
         `${this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL')}/v1/payments/${paymentReference}`,
@@ -398,4 +401,3 @@ export class BundleService {
     }
   }
 }
-

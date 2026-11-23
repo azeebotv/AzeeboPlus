@@ -158,4 +158,3 @@ export class CreateExclusiveContentDto {
   @IsString()
   minTier?: string;
 }
-

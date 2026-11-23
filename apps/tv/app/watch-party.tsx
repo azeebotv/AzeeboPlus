@@ -2,10 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { apiClient } from '@azeebo/react-data/api/client';
-import {
-  FocusableButton,
-  FocusableCard,
-} from '../src/components/Focusable';
+import { FocusableButton, FocusableCard } from '../src/components/Focusable';
 import { LoadingState } from '../src/components/StateContainers';
 import { colors, tvTypography, tvSpacing } from '../src/theme';
 
@@ -69,7 +66,8 @@ export default function TVWatchPartyScreen() {
       <View style={styles.heroSection}>
         <Text style={styles.title}>Live Watch Parties</Text>
         <Text style={styles.subtitle}>
-          Watch live with friends and family across Nigeria. Synchronized playback, shared audio reactions, and community rooms.
+          Watch live with friends and family across Nigeria. Synchronized playback, shared audio
+          reactions, and community rooms.
         </Text>
       </View>
 
@@ -78,7 +76,8 @@ export default function TVWatchPartyScreen() {
           <Text style={styles.emptyIcon}>🍿</Text>
           <Text style={styles.emptyTitle}>No Public Parties Right Now</Text>
           <Text style={styles.emptyDesc}>
-            Start a synchronized watch party from your mobile app or web browser to cast it to your TV screen!
+            Start a synchronized watch party from your mobile app or web browser to cast it to your
+            TV screen!
           </Text>
         </View>
       ) : (
@@ -92,8 +91,12 @@ export default function TVWatchPartyScreen() {
               <View style={styles.partyBadge}>
                 <Text style={styles.partyBadgeText}>LIVE PARTY</Text>
               </View>
-              <Text style={styles.partyTitle} numberOfLines={1}>{p.title}</Text>
-              <Text style={styles.contentTitle} numberOfLines={1}>Streaming: {p.contentTitle}</Text>
+              <Text style={styles.partyTitle} numberOfLines={1}>
+                {p.title}
+              </Text>
+              <Text style={styles.contentTitle} numberOfLines={1}>
+                Streaming: {p.contentTitle}
+              </Text>
               <View style={styles.partyFooter}>
                 <Text style={styles.hostText}>Host: {p.hostName}</Text>
                 <Text style={styles.membersText}>👥 {p.memberCount} watching</Text>
@@ -127,10 +130,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#6366F1',
+    borderColor: colors.category.indigo,
   },
   badgeText: {
-    color: '#6366F1',
+    color: colors.category.indigo,
     fontSize: tvTypography.fontSize.base,
     fontWeight: '800',
   },
@@ -163,7 +166,7 @@ const styles = StyleSheet.create({
   },
   partyBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#6366F1',
+    backgroundColor: colors.category.indigo,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,

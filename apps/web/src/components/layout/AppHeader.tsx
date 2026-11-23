@@ -388,15 +388,20 @@ export default function AppHeader({
 
   // Default navigation links matching Figma canonical navigation:
   // Universes ▾ (dropdown) · Watch · Live · Games · Rewards
-  const DEFAULT_NAV_LINKS = useMemo(() => [
-    { label: 'Watch', href: '/browse' },
-    { label: 'Live', href: '/live' },
-    { label: 'Games', href: '/games' },
-    { label: t('nav.rewards'), href: '/rewards' },
-  ], [t]);
+  const DEFAULT_NAV_LINKS = useMemo(
+    () => [
+      { label: 'Watch', href: '/browse' },
+      { label: 'Live', href: '/live' },
+      { label: 'Games', href: '/games' },
+      { label: t('nav.rewards'), href: '/rewards' },
+    ],
+    [t]
+  );
 
   // Dynamic header menu loaded from admin menu management (superadmin controlled)
-  const [dynamicMenu, setDynamicMenu] = useState<Array<{ label: string; href: string }> | null>(null);
+  const [dynamicMenu, setDynamicMenu] = useState<Array<{ label: string; href: string }> | null>(
+    null
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -409,7 +414,10 @@ export default function AppHeader({
           if (Array.isArray(items)) {
             const visible = items
               .filter((item: { isVisible?: boolean }) => item.isVisible)
-              .map((item: { label: string; href: string }) => ({ label: item.label, href: item.href }));
+              .map((item: { label: string; href: string }) => ({
+                label: item.label,
+                href: item.href,
+              }));
             if (visible.length > 0 && !cancelled) {
               setDynamicMenu(visible);
             }

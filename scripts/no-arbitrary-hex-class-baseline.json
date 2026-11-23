@@ -1,6 +1,6 @@
 {
   "rule": "azeebo-custom/no-arbitrary-hex-class",
-  "generatedAt": "2026-10-09T22:59:59.060Z",
+  "generatedAt": "2026-11-23T14:52:40.738Z",
   "total": 0,
   "workspaces": {
     "@azeebo/admin": 0,
@@ -53,6 +53,7 @@
     "@azeebo/support-service": 0,
     "@azeebo/test-utils": 0,
     "@azeebo/tv": 0,
+    "@azeebo/ui": 0,
     "@azeebo/user-service": 0,
     "@azeebo/utils": 0,
     "@azeebo/validation": 0,

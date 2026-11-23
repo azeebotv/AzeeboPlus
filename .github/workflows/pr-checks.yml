@@ -667,7 +667,7 @@ jobs:
       - name: Detect leaked clients (auth-service open handles)
         timeout-minutes: 3
         run: pnpm --filter @azeebo/auth-service test:openhandles
-      - run: pnpm run contracts --if-present
+      - run: pnpm run contracts
       - name: Upload sweep artifacts on failure
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

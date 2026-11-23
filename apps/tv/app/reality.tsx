@@ -33,10 +33,12 @@ export default function TVRealityScreen() {
   const handleFastVote = async (contestant: Contestant) => {
     try {
       setVoteFeedback(`Casting 50 votes for ${contestant.name}...`);
-      await apiClient.post('/v1/reality/shows/survivor-nigeria-s1/vote', {
-        contestantId: contestant.id,
-        votes: 50,
-      }).catch(() => null);
+      await apiClient
+        .post('/v1/reality/shows/survivor-nigeria-s1/vote', {
+          contestantId: contestant.id,
+          votes: 50,
+        })
+        .catch(() => null);
 
       setContestants((prev) =>
         prev.map((c) => (c.id === contestant.id ? { ...c, votes: c.votes + 50 } : c))
@@ -118,7 +120,8 @@ export default function TVRealityScreen() {
       <View style={styles.heroSection}>
         <Text style={styles.title}>Reality Universe</Text>
         <Text style={styles.subtitle}>
-          Vote for your favorite contestants, watch 24/7 unedited house cams, and stream live elimination nights.
+          Vote for your favorite contestants, watch 24/7 unedited house cams, and stream live
+          elimination nights.
         </Text>
       </View>
 
@@ -140,7 +143,8 @@ export default function TVRealityScreen() {
           </View>
           <Text style={styles.voteHubTitle}>Cast Remote Fast Vote (50 Coins)</Text>
           <Text style={styles.voteHubDesc}>
-            Select any contestant below with your remote control to cast an instant 50-vote block directly from your Azeebo Coin balance.
+            Select any contestant below with your remote control to cast an instant 50-vote block
+            directly from your Azeebo Coin balance.
           </Text>
           <View style={styles.votePromptRow}>
             <Text style={styles.votePromptKey}>[ OK / Select ]</Text>
@@ -163,7 +167,11 @@ export default function TVRealityScreen() {
       {contestants.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Contestant Leaderboard (Press OK to Vote)</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.contestantsList}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.contestantsList}
+          >
             {contestants.map((c, idx) => (
               <FocusableCard
                 key={c.id}
@@ -179,7 +187,9 @@ export default function TVRealityScreen() {
                 <View style={styles.rankBadge}>
                   <Text style={styles.rankText}>#{idx + 1}</Text>
                 </View>
-                <Text style={styles.contestantName} numberOfLines={1}>{c.name}</Text>
+                <Text style={styles.contestantName} numberOfLines={1}>
+                  {c.name}
+                </Text>
                 <Text style={styles.contestantVotes}>{c.votes.toLocaleString()} votes</Text>
                 <View style={styles.voteCtaBadge}>
                   <Text style={styles.voteCtaText}>+50 Votes (OK)</Text>

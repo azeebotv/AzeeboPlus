@@ -2,11 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { contentApi, type ContentItem } from '@azeebo/react-data';
-import {
-  FocusableButton,
-  FocusableRow,
-  type RailItem,
-} from '../src/components/Focusable';
+import { FocusableButton, FocusableRow, type RailItem } from '../src/components/Focusable';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors, tvTypography, tvSpacing } from '../src/theme';
 
@@ -26,7 +22,11 @@ export default function TVMusicScreen() {
         contentApi.getContentByCategory('concerts', 1, 15),
       ]);
 
-      if (concertsRes.status === 'fulfilled' && concertsRes.value.success && concertsRes.value.data) {
+      if (
+        concertsRes.status === 'fulfilled' &&
+        concertsRes.value.success &&
+        concertsRes.value.data
+      ) {
         setConcerts(concertsRes.value.data.items ?? []);
       }
       if (mvsRes.status === 'fulfilled' && mvsRes.value.success && mvsRes.value.data) {
@@ -87,7 +87,8 @@ export default function TVMusicScreen() {
       <View style={styles.heroSection}>
         <Text style={styles.title}>Music & Live Stages</Text>
         <Text style={styles.subtitle}>
-          4K Afrobeats stadium tours, intimate acoustic sessions, festival livestreams, and official music videos.
+          4K Afrobeats stadium tours, intimate acoustic sessions, festival livestreams, and official
+          music videos.
         </Text>
       </View>
 

@@ -2,11 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { contentApi, type ContentItem } from '@azeebo/react-data';
-import {
-  FocusableButton,
-  FocusableRow,
-  type RailItem,
-} from '../src/components/Focusable';
+import { FocusableButton, FocusableRow, type RailItem } from '../src/components/Focusable';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors, tvTypography, tvSpacing } from '../src/theme';
 
@@ -87,7 +83,8 @@ export default function TVLifestyleScreen() {
       <View style={styles.heroSection}>
         <Text style={styles.title}>Lifestyle & Culture</Text>
         <Text style={styles.subtitle}>
-          Nightlife docuseries, high fashion runways, fine culinary spotlights, and luxury African living.
+          Nightlife docuseries, high fashion runways, fine culinary spotlights, and luxury African
+          living.
         </Text>
       </View>
 

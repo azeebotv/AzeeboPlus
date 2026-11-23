@@ -54,7 +54,8 @@ async function bootstrap() {
     'keep-alive',
     'content-encoding',
   ]);
-  const GATEWAY_PROXIED_PREFIXES = /^\/v1\/(borrow|lifestyle|subscription\/bundles|media|creators(\/|$)(?!entries))/;
+  const GATEWAY_PROXIED_PREFIXES =
+    /^\/v1\/(borrow|lifestyle|subscription\/bundles|media|creators(\/|$)(?!entries))/;
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.url === '/api' || req.url.startsWith('/api/')) {
       req.url = req.url.slice('/api'.length) || '/';

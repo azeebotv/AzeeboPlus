@@ -16,7 +16,12 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard, Public } from '@azeebo/security';
 import { LiveEventService } from './live-event.service.js';
-import { CreateEventDto, UpdateEventDto, PurchaseTicketDto, PurchaseGroupTicketsDto } from './dto/live-event.dto.js';
+import {
+  CreateEventDto,
+  UpdateEventDto,
+  PurchaseTicketDto,
+  PurchaseGroupTicketsDto,
+} from './dto/live-event.dto.js';
 
 @ApiTags('Live Events')
 @ApiBearerAuth()

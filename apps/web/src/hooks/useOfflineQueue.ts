@@ -59,7 +59,8 @@ export function useOfflineQueue() {
           }
           // Differentiate network/transport failure from client validation failure
           const status = (result as { statusCode?: number }).statusCode ?? 0;
-          const isNetworkOrTransient = status === 0 || status === 408 || status === 429 || status >= 500;
+          const isNetworkOrTransient =
+            status === 0 || status === 408 || status === 429 || status >= 500;
           if (!isNetworkOrTransient) {
             // Client error (4xx) - reject immediately rather than queueing an invalid request
             return {

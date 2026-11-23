@@ -3,11 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { apiClient } from '@azeebo/react-data/api/client';
 import { contentApi, type ContentItem } from '@azeebo/react-data';
-import {
-  FocusableButton,
-  FocusableRow,
-  type RailItem,
-} from '../src/components/Focusable';
+import { FocusableButton, FocusableRow, type RailItem } from '../src/components/Focusable';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors, tvTypography, tvSpacing } from '../src/theme';
 
@@ -101,7 +97,8 @@ export default function TVSportsScreen() {
       <View style={styles.heroSection}>
         <Text style={styles.title}>Sports Universe</Text>
         <Text style={styles.subtitle}>
-          Live football matches, NPFL showdowns, highlights, tactical analyses, and locker room access.
+          Live football matches, NPFL showdowns, highlights, tactical analyses, and locker room
+          access.
         </Text>
       </View>
 
@@ -117,11 +114,17 @@ export default function TVSportsScreen() {
                   <Text style={styles.fixtureTime}>{match.time}</Text>
                 </View>
                 <View style={styles.teamsRow}>
-                  <Text style={styles.teamText} numberOfLines={1}>{match.homeTeam}</Text>
+                  <Text style={styles.teamText} numberOfLines={1}>
+                    {match.homeTeam}
+                  </Text>
                   <Text style={styles.vsText}>vs</Text>
-                  <Text style={styles.teamText} numberOfLines={1}>{match.awayTeam}</Text>
+                  <Text style={styles.teamText} numberOfLines={1}>
+                    {match.awayTeam}
+                  </Text>
                 </View>
-                <Text style={styles.fixtureVenue} numberOfLines={1}>📍 {match.venue}</Text>
+                <Text style={styles.fixtureVenue} numberOfLines={1}>
+                  📍 {match.venue}
+                </Text>
               </View>
             ))}
           </ScrollView>

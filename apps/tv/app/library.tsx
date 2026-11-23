@@ -25,7 +25,11 @@ export default function TVLibraryScreen() {
       if (historyRes.status === 'fulfilled' && historyRes.value.success && historyRes.value.data) {
         setHistory(historyRes.value.data.items ?? []);
       }
-      if (watchlistRes.status === 'fulfilled' && watchlistRes.value.success && watchlistRes.value.data) {
+      if (
+        watchlistRes.status === 'fulfilled' &&
+        watchlistRes.value.success &&
+        watchlistRes.value.data
+      ) {
         setWatchlist(watchlistRes.value.data.items ?? []);
       }
     } catch {

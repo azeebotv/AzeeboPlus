@@ -20,7 +20,7 @@ export class DualControlInterceptor implements NestInterceptor {
     @Inject(DualControlService) private readonly dualControlService: DualControlService
   ) {}
 
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const metadata = this.reflector.get<DualControlMetadata>(
       REQUIRE_DUAL_CONTROL_KEY,
       context.getHandler()
@@ -58,10 +58,10 @@ export class DualControlInterceptor implements NestInterceptor {
     const targetUserIds = req.params?.id
       ? [req.params.id]
       : Array.isArray(req.body?.userIds)
-      ? req.body.userIds
-      : req.body?.userId
-      ? [req.body.userId]
-      : [];
+        ? req.body.userIds
+        : req.body?.userId
+          ? [req.body.userId]
+          : [];
 
     // Intercept and register dual-control request
     const pendingRequest = await this.dualControlService.create(

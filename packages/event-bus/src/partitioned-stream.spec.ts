@@ -1,7 +1,4 @@
-import {
-  PartitionedStreamManager,
-  HighVelocityVoteBuffer,
-} from './partitioned-stream';
+import { PartitionedStreamManager, HighVelocityVoteBuffer } from './partitioned-stream';
 
 describe('PartitionedStreamManager', () => {
   it('deterministically hashes keys into expected partition bounds', () => {
@@ -43,7 +40,7 @@ describe('PartitionedStreamManager', () => {
     };
 
     const result = await PartitionedStreamManager.publishPartitioned(
-      mockRedis as any,
+      mockRedis as never,
       'azeebo:events',
       'reality.vote',
       'show-1:c1',

@@ -95,7 +95,9 @@ export function TVNavRail({ style, hasInitialFocus = false }: TVNavRailProps) {
         </View>
         {isExpanded && (
           <View style={styles.brandTitleContainer}>
-            <Text style={styles.brandTitle} numberOfLines={1}>AZEEBO+</Text>
+            <Text style={styles.brandTitle} numberOfLines={1}>
+              AZEEBO+
+            </Text>
             <Text style={styles.brandSubtitle}>TV EDITION</Text>
           </View>
         )}
@@ -120,18 +122,11 @@ export function TVNavRail({ style, hasInitialFocus = false }: TVNavRailProps) {
               hasTVPreferredFocus={hasInitialFocus && index === 1}
               onPress={() => router.push(item.route)}
             >
-              <View
-                style={styles.navRow}
-                onFocus={handleRailFocus}
-                onBlur={handleRailBlur}
-              >
+              <View style={styles.navRow} onFocus={handleRailFocus} onBlur={handleRailBlur}>
                 <Text style={styles.navIcon}>{item.icon}</Text>
                 {isExpanded && (
                   <Text
-                    style={[
-                      styles.navLabel,
-                      active && styles.navLabelActive,
-                    ]}
+                    style={[styles.navLabel, active && styles.navLabelActive]}
                     numberOfLines={1}
                   >
                     {item.label}
@@ -148,13 +143,11 @@ export function TVNavRail({ style, hasInitialFocus = false }: TVNavRailProps) {
       <View style={styles.footer}>
         <FocusableCard
           style={[styles.userCard, isExpanded && styles.userCardExpanded]}
-          onPress={() => router.push(isAuthenticated ? ('/profile/account' as Href) : ('/signin' as Href))}
+          onPress={() =>
+            router.push(isAuthenticated ? ('/profile/account' as Href) : ('/signin' as Href))
+          }
         >
-          <View
-            style={styles.userRow}
-            onFocus={handleRailFocus}
-            onBlur={handleRailBlur}
-          >
+          <View style={styles.userRow} onFocus={handleRailFocus} onBlur={handleRailBlur}>
             <View style={styles.userAvatar}>
               <Text style={styles.userInitial}>
                 {user?.name ? user.name[0].toUpperCase() : '👤'}
@@ -166,9 +159,7 @@ export function TVNavRail({ style, hasInitialFocus = false }: TVNavRailProps) {
                   {user?.name || 'Sign In'}
                 </Text>
                 <View style={styles.coinsPill}>
-                  <Text style={styles.coinsText}>
-                    🪙 {coinBalance.toLocaleString()}
-                  </Text>
+                  <Text style={styles.coinsText}>🪙 {coinBalance.toLocaleString()}</Text>
                 </View>
               </View>
             )}

@@ -34,7 +34,11 @@ export class WalletManagementController {
   ) {}
 
   @Post(':walletId/adjust')
-  @RequireDualControl({ actionType: 'manual_entitlement', thresholdAmount: 1000, description: 'Manual wallet balance adjustment' })
+  @RequireDualControl({
+    actionType: 'manual_entitlement',
+    thresholdAmount: 1000,
+    description: 'Manual wallet balance adjustment',
+  })
   async adjustWalletBalance(
     @Param('walletId') walletId: string,
     @Req() req: AuthRequest,
@@ -79,7 +83,11 @@ export class WalletManagementController {
   }
 
   @Put('payouts/:id/approve')
-  @RequireDualControl({ actionType: 'large_refund', thresholdAmount: 500, description: 'Approval and release of creator payout' })
+  @RequireDualControl({
+    actionType: 'large_refund',
+    thresholdAmount: 500,
+    description: 'Approval and release of creator payout',
+  })
   async approvePayoutRequest(@Param('id') id: string, @Req() req: AuthRequest) {
     const actorId = resolveActorId(req);
     const result = await this.walletService.approvePayoutRequest(id, actorId);

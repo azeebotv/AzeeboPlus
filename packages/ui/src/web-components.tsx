@@ -725,6 +725,30 @@ export function Spinner({ size = 'md', color, className = '' }: SpinnerProps): R
   );
 }
 
+// Loading State Component
+export interface LoadingStateProps {
+  title?: string;
+  accessibilityLabel?: string;
+  className?: string;
+}
+
+export function LoadingState({
+  title = 'Loading...',
+  accessibilityLabel,
+  className = '',
+}: LoadingStateProps): React.ReactElement {
+  return (
+    <div
+      className={`flex flex-col items-center justify-center p-8 gap-3 text-center ${className}`}
+      role="status"
+      aria-label={accessibilityLabel || 'Loading'}
+    >
+      <Spinner size="lg" />
+      {title && <p className="text-sm font-medium text-az-ink-dim">{title}</p>}
+    </div>
+  );
+}
+
 // Table HTML wrapper components
 export function Tbody({
   children,

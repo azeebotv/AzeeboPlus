@@ -1,6 +1,6 @@
 {
   "rule": "azeebo-custom/require-shared-route-boundary",
-  "generatedAt": "2026-10-09T23:20:14.275Z",
+  "generatedAt": "2026-11-23T14:52:40.740Z",
   "total": 0,
   "workspaces": {
     "@azeebo/admin": 0,
@@ -53,6 +53,7 @@
     "@azeebo/support-service": 0,
     "@azeebo/test-utils": 0,
     "@azeebo/tv": 0,
+    "@azeebo/ui": 0,
     "@azeebo/user-service": 0,
     "@azeebo/utils": 0,
     "@azeebo/validation": 0,

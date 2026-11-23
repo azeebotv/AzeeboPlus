@@ -223,117 +223,117 @@ export default function TVHomeScreen() {
           </View>
         )}
 
-      {/* ── Personalized greeting + account shortcuts ──────── */}
-      {isAuthenticated && user?.name ? (
-        <Text style={styles.greeting}>
-          {t('home.welcomeBack')}, {user.name}
-        </Text>
-      ) : null}
-      {isAuthenticated ? (
-        <View style={styles.walletRow}>
-          <FocusableButton
-            title="Add money to wallet"
-            variant="secondary"
-            onPress={() => router.push('/wallet/fund' as Href)}
-          />
-          {/* M2: search entry point — the lean-back verticals start here. */}
-          <FocusableButton
-            title="Search"
-            variant="secondary"
-            onPress={() => router.push('/search' as Href)}
-          />
-          <FocusableButton
-            title="Settings"
-            variant="secondary"
-            onPress={() => router.push('/settings' as Href)}
-          />
+        {/* ── Personalized greeting + account shortcuts ──────── */}
+        {isAuthenticated && user?.name ? (
+          <Text style={styles.greeting}>
+            {t('home.welcomeBack')}, {user.name}
+          </Text>
+        ) : null}
+        {isAuthenticated ? (
+          <View style={styles.walletRow}>
+            <FocusableButton
+              title="Add money to wallet"
+              variant="secondary"
+              onPress={() => router.push('/wallet/fund' as Href)}
+            />
+            {/* M2: search entry point — the lean-back verticals start here. */}
+            <FocusableButton
+              title="Search"
+              variant="secondary"
+              onPress={() => router.push('/search' as Href)}
+            />
+            <FocusableButton
+              title="Settings"
+              variant="secondary"
+              onPress={() => router.push('/settings' as Href)}
+            />
+          </View>
+        ) : null}
+
+        {/* ── Universe Navigation Shortcuts ──────────────────── */}
+        <View style={styles.universeNavRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.universeNavScroll}
+          >
+            <FocusableButton
+              title="Cinemaxis"
+              variant="secondary"
+              onPress={() => router.push('/movies' as Href)}
+            />
+            <FocusableButton
+              title="Reality"
+              variant="secondary"
+              onPress={() => router.push('/reality' as Href)}
+            />
+            <FocusableButton
+              title="Comedy"
+              variant="secondary"
+              onPress={() => router.push('/comedy' as Href)}
+            />
+            <FocusableButton
+              title="Sports"
+              variant="secondary"
+              onPress={() => router.push('/sports' as Href)}
+            />
+            <FocusableButton
+              title="Lifestyle"
+              variant="secondary"
+              onPress={() => router.push('/lifestyle' as Href)}
+            />
+            <FocusableButton
+              title="Music"
+              variant="secondary"
+              onPress={() => router.push('/music' as Href)}
+            />
+            <FocusableButton
+              title="Agbala"
+              variant="secondary"
+              onPress={() => router.push('/vertical' as Href)}
+            />
+            <FocusableButton
+              title="Games"
+              variant="secondary"
+              onPress={() => router.push('/games' as Href)}
+            />
+            <FocusableButton
+              title="Watch Party"
+              variant="secondary"
+              onPress={() => router.push('/watch-party' as Href)}
+            />
+            <FocusableButton
+              title="Bundles"
+              variant="secondary"
+              onPress={() => router.push('/bundles' as Href)}
+            />
+          </ScrollView>
         </View>
-      ) : null}
 
-      {/* ── Universe Navigation Shortcuts ──────────────────── */}
-      <View style={styles.universeNavRow}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.universeNavScroll}
-        >
-          <FocusableButton
-            title="Cinemaxis"
-            variant="secondary"
-            onPress={() => router.push('/movies' as Href)}
+        {/* ── Content rails ──────────────────────────────────── */}
+        {recentlyWatched.length > 0 ? (
+          <FocusableRow
+            title={t('home.recentlyWatched')}
+            items={toRailItems(recentlyWatched)}
+            onSelect={handleSelect}
           />
-          <FocusableButton
-            title="Reality"
-            variant="secondary"
-            onPress={() => router.push('/reality' as Href)}
-          />
-          <FocusableButton
-            title="Comedy"
-            variant="secondary"
-            onPress={() => router.push('/comedy' as Href)}
-          />
-          <FocusableButton
-            title="Sports"
-            variant="secondary"
-            onPress={() => router.push('/sports' as Href)}
-          />
-          <FocusableButton
-            title="Lifestyle"
-            variant="secondary"
-            onPress={() => router.push('/lifestyle' as Href)}
-          />
-          <FocusableButton
-            title="Music"
-            variant="secondary"
-            onPress={() => router.push('/music' as Href)}
-          />
-          <FocusableButton
-            title="Agbala"
-            variant="secondary"
-            onPress={() => router.push('/vertical' as Href)}
-          />
-          <FocusableButton
-            title="Games"
-            variant="secondary"
-            onPress={() => router.push('/games' as Href)}
-          />
-          <FocusableButton
-            title="Watch Party"
-            variant="secondary"
-            onPress={() => router.push('/watch-party' as Href)}
-          />
-          <FocusableButton
-            title="Bundles"
-            variant="secondary"
-            onPress={() => router.push('/bundles' as Href)}
-          />
-        </ScrollView>
-      </View>
-
-      {/* ── Content rails ──────────────────────────────────── */}
-      {recentlyWatched.length > 0 ? (
+        ) : null}
         <FocusableRow
-          title={t('home.recentlyWatched')}
-          items={toRailItems(recentlyWatched)}
+          title={t('home.trending')}
+          items={toRailItems(trending)}
           onSelect={handleSelect}
         />
-      ) : null}
-      <FocusableRow
-        title={t('home.trending')}
-        items={toRailItems(trending)}
-        onSelect={handleSelect}
-      />
-      <FocusableRow
-        title={t('home.newReleases')}
-        items={toRailItems(newReleases)}
-        onSelect={handleSelect}
-      />
+        <FocusableRow
+          title={t('home.newReleases')}
+          items={toRailItems(newReleases)}
+          onSelect={handleSelect}
+        />
 
-      {!hero && trending.length === 0 && newReleases.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>{t('home.emptyState')}</Text>
-        </View>
-      ) : null}
+        {!hero && trending.length === 0 && newReleases.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>{t('home.emptyState')}</Text>
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );

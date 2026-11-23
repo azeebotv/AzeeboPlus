@@ -72,9 +72,13 @@ function BundlesPageContent(): React.JSX.Element {
   const error = bundlesQuery.error?.message || comparisonQuery.error?.message;
 
   const apiBundles: BundleItem[] = (comparison?.bundles as unknown as BundleItem[]) ?? [];
-  const displayBundles: BundleItem[] = bundlesQuery.data?.length ? (bundlesQuery.data as BundleItem[]) : apiBundles;
+  const displayBundles: BundleItem[] = bundlesQuery.data?.length
+    ? (bundlesQuery.data as BundleItem[])
+    : apiBundles;
   const filteredBundles =
-    selectedTier === 'all' ? displayBundles : displayBundles.filter((b: BundleItem) => b.tier === selectedTier);
+    selectedTier === 'all'
+      ? displayBundles
+      : displayBundles.filter((b: BundleItem) => b.tier === selectedTier);
 
   const tierTabs = ['all', 'standard', 'premium', 'ultimate'].map((tier) => {
     const selected = selectedTier === tier;

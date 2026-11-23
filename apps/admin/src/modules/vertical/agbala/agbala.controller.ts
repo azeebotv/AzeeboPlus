@@ -67,8 +67,19 @@ export class AgbalaController {
         search,
       });
     } catch (e) {
-      this.logger.warn(`Agbala vertical-service offline for getStoryworlds: ${(e as Error).message}`);
-      return { success: true, data: [], items: [], total: 0, page: 1, limit: 20, totalPages: 0, _offline: true };
+      this.logger.warn(
+        `Agbala vertical-service offline for getStoryworlds: ${(e as Error).message}`
+      );
+      return {
+        success: true,
+        data: [],
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        _offline: true,
+      };
     }
   }
 
@@ -77,7 +88,9 @@ export class AgbalaController {
     try {
       return await this.agbalaService.getStoryworld(id);
     } catch (e) {
-      this.logger.warn(`Agbala vertical-service offline for getStoryworld: ${(e as Error).message}`);
+      this.logger.warn(
+        `Agbala vertical-service offline for getStoryworld: ${(e as Error).message}`
+      );
       return { success: false, data: null, message: 'Storyworld unavailable or service offline' };
     }
   }
@@ -144,8 +157,19 @@ export class AgbalaController {
         search: search || undefined,
       });
     } catch (e) {
-      this.logger.warn(`Agbala vertical-service offline for getCharacters: ${(e as Error).message}`);
-      return { success: true, data: [], items: [], total: 0, page: 1, limit: 20, totalPages: 0, _offline: true };
+      this.logger.warn(
+        `Agbala vertical-service offline for getCharacters: ${(e as Error).message}`
+      );
+      return {
+        success: true,
+        data: [],
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        _offline: true,
+      };
     }
   }
 
@@ -217,7 +241,16 @@ export class AgbalaController {
       });
     } catch (e) {
       this.logger.warn(`Agbala vertical-service offline for getPaths: ${(e as Error).message}`);
-      return { success: true, data: [], items: [], total: 0, page: 1, limit: 20, totalPages: 0, _offline: true };
+      return {
+        success: true,
+        data: [],
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        _offline: true,
+      };
     }
   }
 
@@ -287,7 +320,16 @@ export class AgbalaController {
       });
     } catch (e) {
       this.logger.warn(`Agbala vertical-service offline for getQuizzes: ${(e as Error).message}`);
-      return { success: true, data: [], items: [], total: 0, page: 1, limit: 20, totalPages: 0, _offline: true };
+      return {
+        success: true,
+        data: [],
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        _offline: true,
+      };
     }
   }
 
@@ -329,8 +371,19 @@ export class AgbalaController {
         limit: limit ? parseInt(limit) : undefined,
       });
     } catch (e) {
-      this.logger.warn(`Agbala vertical-service offline for getReviewQueue: ${(e as Error).message}`);
-      return { success: true, data: [], items: [], total: 0, page: 1, limit: 20, totalPages: 0, _offline: true };
+      this.logger.warn(
+        `Agbala vertical-service offline for getReviewQueue: ${(e as Error).message}`
+      );
+      return {
+        success: true,
+        data: [],
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        _offline: true,
+      };
     }
   }
 

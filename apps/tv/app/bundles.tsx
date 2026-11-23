@@ -2,10 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { bundleApi, type BundlePass } from '@azeebo/react-data/api/bundle';
-import {
-  FocusableButton,
-  FocusableCard,
-} from '../src/components/Focusable';
+import { FocusableButton, FocusableCard } from '../src/components/Focusable';
 import { LoadingState } from '../src/components/StateContainers';
 import { colors, tvTypography, tvSpacing } from '../src/theme';
 
@@ -57,7 +54,8 @@ export default function TVBundlesScreen() {
       <View style={styles.heroSection}>
         <Text style={styles.title}>Universe Bundle Passes</Text>
         <Text style={styles.subtitle}>
-          Save up to 40% when bundling multiple entertainment universes. Activate directly with your linked Azeebo account.
+          Save up to 40% when bundling multiple entertainment universes. Activate directly with your
+          linked Azeebo account.
         </Text>
       </View>
 
@@ -72,13 +70,17 @@ export default function TVBundlesScreen() {
               <Text style={styles.tierText}>{b.tier.toUpperCase()}</Text>
             </View>
             <Text style={styles.bundleName}>{b.name}</Text>
-            <Text style={styles.bundleDesc} numberOfLines={2}>{b.description}</Text>
+            <Text style={styles.bundleDesc} numberOfLines={2}>
+              {b.description}
+            </Text>
             <View style={styles.priceRow}>
               <Text style={styles.price}>₦{Number(b.price).toLocaleString()}</Text>
               <Text style={styles.period}>/month</Text>
             </View>
             {b.originalPrice > b.price && (
-              <Text style={styles.discountText}>Save {b.discountPercent}% off individual universes</Text>
+              <Text style={styles.discountText}>
+                Save {b.discountPercent}% off individual universes
+              </Text>
             )}
             <View style={styles.actionPrompt}>
               <Text style={styles.actionPromptText}>Press Select to Scan QR & Activate</Text>

@@ -1663,8 +1663,14 @@ export class CreatorService {
     try {
       const executeTx =
         typeof this.prisma.$transaction === 'function'
-          ? (cb: (tx: any) => Promise<any>) => this.prisma.$transaction(cb)
-          : (cb: (tx: any) => Promise<any>) => cb(this.prisma);
+          ? <T>(cb: (tx: Prisma.TransactionClient) => Promise<T>) =>
+              (
+                this.prisma as unknown as {
+                  $transaction: (fn: (tx: Prisma.TransactionClient) => Promise<T>) => Promise<T>;
+                }
+              ).$transaction(cb)
+          : <T>(cb: (tx: Prisma.TransactionClient) => Promise<T>) =>
+              cb(this.prisma as unknown as Prisma.TransactionClient);
 
       await executeTx(async (tx) => {
         const wallet = await tx.wallet.upsert({
@@ -2149,8 +2155,14 @@ export class CreatorService {
 
     const executeTx =
       typeof this.prisma.$transaction === 'function'
-        ? (cb: (tx: any) => Promise<any>) => this.prisma.$transaction(cb)
-        : (cb: (tx: any) => Promise<any>) => cb(this.prisma);
+        ? <T>(cb: (tx: Prisma.TransactionClient) => Promise<T>) =>
+            (
+              this.prisma as unknown as {
+                $transaction: (fn: (tx: Prisma.TransactionClient) => Promise<T>) => Promise<T>;
+              }
+            ).$transaction(cb)
+        : <T>(cb: (tx: Prisma.TransactionClient) => Promise<T>) =>
+            cb(this.prisma as unknown as Prisma.TransactionClient);
 
     const { profile, user } = await executeTx(async (tx) => {
       const p = await tx.creatorProfile.upsert({

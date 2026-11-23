@@ -27,7 +27,13 @@ export class WalletManagementService {
         bonusBalance: Number(w.bonusBalance),
         promoBalance: Number(w.promoBalance),
         currency: w.currency,
-        user: w.user || { id: w.userId, email: '', displayName: 'Unknown User', avatar: null, role: 'user' },
+        user: w.user || {
+          id: w.userId,
+          email: '',
+          displayName: 'Unknown User',
+          avatar: null,
+          role: 'user',
+        },
         // wallet-service has no status column yet; active is the only real state.
         status: 'active',
         createdAt: w.createdAt,

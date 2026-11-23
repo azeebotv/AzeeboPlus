@@ -173,10 +173,7 @@ export function middleware(request: NextRequest) {
         'Cache-Control',
         'public, max-age=60, s-maxage=300, stale-while-revalidate=600'
       );
-      response.headers.set(
-        'CDN-Cache-Control',
-        'public, s-maxage=300, stale-while-revalidate=600'
-      );
+      response.headers.set('CDN-Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
     } else if (isAuthenticated) {
       response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     }

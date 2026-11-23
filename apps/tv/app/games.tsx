@@ -2,10 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { apiClient } from '@azeebo/react-data/api/client';
-import {
-  FocusableButton,
-  FocusableCard,
-} from '../src/components/Focusable';
+import { FocusableButton, FocusableCard } from '../src/components/Focusable';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors, tvTypography, tvSpacing } from '../src/theme';
 
@@ -31,7 +28,9 @@ export default function TVGamesScreen() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await apiClient.get<{ success: boolean; data: GameQuestion[] }>('/api/games/trivia');
+      const res = await apiClient.get<{ success: boolean; data: GameQuestion[] }>(
+        '/api/games/trivia'
+      );
       if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
         setQuestions(res.data);
       } else {
@@ -100,15 +99,20 @@ export default function TVGamesScreen() {
       <View style={styles.heroSection}>
         <Text style={styles.title}>Games & Live Trivia</Text>
         <Text style={styles.subtitle}>
-          Play live along with your TV remote, answer quiz questions in real time, and climb the national leaderboard.
+          Play live along with your TV remote, answer quiz questions in real time, and climb the
+          national leaderboard.
         </Text>
       </View>
 
       {q && (
         <View style={styles.triviaContainer}>
           <View style={styles.questionHeader}>
-            <Text style={styles.questionCategory}>{q.category || 'POP CULTURE'} • {q.points || 100} PTS</Text>
-            <Text style={styles.questionCounter}>Question {currentIdx + 1} of {questions.length}</Text>
+            <Text style={styles.questionCategory}>
+              {q.category || 'POP CULTURE'} • {q.points || 100} PTS
+            </Text>
+            <Text style={styles.questionCounter}>
+              Question {currentIdx + 1} of {questions.length}
+            </Text>
           </View>
 
           <Text style={styles.questionText}>{q.question}</Text>
@@ -119,10 +123,7 @@ export default function TVGamesScreen() {
               return (
                 <FocusableCard
                   key={`${q.id}-${idx}`}
-                  style={[
-                    styles.optionCard,
-                    isSelected && styles.optionCardSelected,
-                  ]}
+                  style={[styles.optionCard, isSelected && styles.optionCardSelected]}
                   onPress={() => handleSelectOption(idx)}
                 >
                   <Text style={styles.optionIndex}>{String.fromCharCode(65 + idx)}</Text>
@@ -135,7 +136,7 @@ export default function TVGamesScreen() {
           {answered && (
             <View style={styles.nextContainer}>
               <FocusableButton
-                title={currentIdx < questions.length - 1 ? "Next Question →" : "Play Again ↻"}
+                title={currentIdx < questions.length - 1 ? 'Next Question →' : 'Play Again ↻'}
                 variant="primary"
                 onPress={handleNextQuestion}
               />

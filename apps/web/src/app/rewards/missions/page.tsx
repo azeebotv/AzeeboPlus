@@ -208,13 +208,14 @@ export default function MissionsPage(): React.JSX.Element {
                             type="button"
                             disabled={claimingId === mission.id}
                             onClick={() => claimMissionMutation.mutate(mission.id)}
-                            className="az-btn-primary w-full py-2.5 text-xs flex items-center justify-center gap-1.5 shadow-lg"
+                            className="az-btn-primary w-full flex items-center justify-center gap-1.5 shadow-lg"
                           >
                             {claimingId === mission.id ? (
                               'Claiming Bounty...'
                             ) : (
                               <>
-                                <Sparkles className="w-4 h-4" /> Claim +{mission.points.toLocaleString()} Points
+                                <Sparkles className="w-4 h-4" /> Claim +
+                                {mission.points.toLocaleString()} Points
                               </>
                             )}
                           </button>

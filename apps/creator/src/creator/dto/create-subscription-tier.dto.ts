@@ -1,4 +1,13 @@
-import { IsString, IsNotEmpty, IsNumber, Min, IsOptional, IsArray, IsBoolean, IsInt } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  Min,
+  IsOptional,
+  IsArray,
+  IsBoolean,
+  IsInt,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateSubscriptionTierDto {

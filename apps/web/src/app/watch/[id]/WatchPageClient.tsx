@@ -9,7 +9,7 @@ import { useVideoPlayer } from '../../../hooks/useVideoPlayer';
 import { detectMediaType } from '../../../lib/media-url';
 import { announceToScreenReader } from '../../../lib/keyboard';
 import { PageShell } from '@/components/layout/PageShell';
-import { BranchingDecisionModal, type StoryBranchOption } from '@azeebo/ui';
+import { BranchingDecisionModal, type StoryBranchOption } from '@azeebo/ui/web';
 import {
   Play,
   Pause,
@@ -176,7 +176,13 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       playerPause();
       setBranchingModalOpen(true);
     }
-  }, [isVerticalStory, decisionTriggered, playerState.currentTime, playerState.duration, playerPause]);
+  }, [
+    isVerticalStory,
+    decisionTriggered,
+    playerState.currentTime,
+    playerState.duration,
+    playerPause,
+  ]);
 
   const handleSelectStoryOption = useCallback(
     (option: StoryBranchOption) => {

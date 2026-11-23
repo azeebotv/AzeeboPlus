@@ -206,8 +206,7 @@ export class ContentManagementService {
       throw new BadRequestException('Creator ID is required (no admin user found as default)');
     }
 
-    const finalThumbnail =
-      thumbnail?.trim() || '/images/placeholders/thumbnails/16x9_01.png';
+    const finalThumbnail = thumbnail?.trim() || '/images/placeholders/thumbnails/16x9_01.png';
 
     const content = await this.prisma.contentItem.create({
       data: {

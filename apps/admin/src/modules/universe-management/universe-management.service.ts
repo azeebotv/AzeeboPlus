@@ -277,12 +277,7 @@ export class UniverseManagementService implements OnApplicationBootstrap {
     try {
       const pageNum = Math.max(1, Number(query.page) || 1);
       const limitNum = Math.max(1, Math.min(100, Number(query.limit) || 20));
-      const {
-        search,
-        isEnabled,
-        sortBy = 'sortOrder',
-        sortOrder = 'asc',
-      } = query;
+      const { search, isEnabled, sortBy = 'sortOrder', sortOrder = 'asc' } = query;
       const skip = (pageNum - 1) * limitNum;
 
       const where: Prisma.UniverseWhereInput = {};

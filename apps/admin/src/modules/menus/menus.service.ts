@@ -7,38 +7,192 @@ const MENU_KEY_PREFIX = 'menu:';
 const NAVIGATION_CATEGORY = 'navigation';
 
 const DEFAULT_HEADER_ITEMS: MenuItemDto[] = [
-  { id: 'item-browse', label: 'Browse', href: '/browse', icon: 'compass', isVisible: true, order: 1 },
+  {
+    id: 'item-browse',
+    label: 'Browse',
+    href: '/browse',
+    icon: 'compass',
+    isVisible: true,
+    order: 1,
+  },
   { id: 'item-live', label: 'Live', href: '/live', icon: 'tv', isVisible: true, order: 2 },
-  { id: 'item-reality', label: 'Reality', href: '/reality', icon: 'theater', isVisible: true, order: 3 },
+  {
+    id: 'item-reality',
+    label: 'Reality',
+    href: '/reality',
+    icon: 'theater',
+    isVisible: true,
+    order: 3,
+  },
   { id: 'item-movies', label: 'Movies', href: '/movies', icon: 'film', isVisible: true, order: 4 },
   { id: 'item-comedy', label: 'Comedy', href: '/comedy', icon: 'smile', isVisible: true, order: 5 },
-  { id: 'item-creators', label: 'Creators', href: '/creators', icon: 'sparkles', isVisible: true, order: 6 },
-  { id: 'item-sports', label: 'Sports', href: '/sports', icon: 'trophy', isVisible: true, order: 7 },
+  {
+    id: 'item-creators',
+    label: 'Creators',
+    href: '/creators',
+    icon: 'sparkles',
+    isVisible: true,
+    order: 6,
+  },
+  {
+    id: 'item-sports',
+    label: 'Sports',
+    href: '/sports',
+    icon: 'trophy',
+    isVisible: true,
+    order: 7,
+  },
   { id: 'item-music', label: 'Music', href: '/music', icon: 'music', isVisible: true, order: 8 },
   // Explicitly marked isVisible: false (removed from menu as required)
   { id: 'item-games', label: 'Games', href: '/games', icon: 'gamepad', isVisible: false, order: 9 },
-  { id: 'item-rewards', label: 'Rewards', href: '/rewards', icon: 'gift', isVisible: false, order: 10 },
-  { id: 'item-borrow', label: 'Borrow', href: '/borrow', icon: 'wallet', isVisible: false, order: 11 },
+  {
+    id: 'item-rewards',
+    label: 'Rewards',
+    href: '/rewards',
+    icon: 'gift',
+    isVisible: false,
+    order: 10,
+  },
+  {
+    id: 'item-borrow',
+    label: 'Borrow',
+    href: '/borrow',
+    icon: 'wallet',
+    isVisible: false,
+    order: 11,
+  },
 ];
 
 const DEFAULT_PROFILE_ITEMS: MenuItemDto[] = [
-  { id: 'prof-profile', label: 'Profile', href: '/profile', icon: 'user', isVisible: true, order: 1 },
-  { id: 'prof-notifications', label: 'Notifications', href: '/notifications', icon: 'bell', isVisible: true, order: 2 },
-  { id: 'prof-messages', label: 'Messages', href: '/messages', icon: 'messageSquare', isVisible: true, order: 3 },
-  { id: 'prof-downloads', label: 'Downloads', href: '/downloads', icon: 'download', isVisible: true, order: 4 },
-  { id: 'prof-recommendations', label: 'For You', href: '/recommendations', icon: 'sparkles', isVisible: true, order: 5 },
-  { id: 'prof-leaderboard', label: 'Leaderboard', href: '/leaderboard', icon: 'trophy', isVisible: true, order: 6 },
-  { id: 'prof-referral', label: 'Refer a Friend', href: '/referral', icon: 'gift', isVisible: true, order: 7 },
-  { id: 'prof-tipping', label: 'My Tips', href: '/tipping', icon: 'heart', isVisible: true, order: 8 },
-  { id: 'prof-premium', label: 'Premium', href: '/premium', icon: 'crown', isVisible: true, order: 9 },
-  { id: 'prof-wallet', label: 'Wallet', href: '/wallet', icon: 'wallet', isVisible: true, order: 10 },
-  { id: 'prof-subscription', label: 'Subscriptions', href: '/wallet/subscription-history', icon: 'refresh', isVisible: true, order: 11 },
-  { id: 'prof-bundles', label: 'Bundles & Passes', href: '/bundles', icon: 'gift', isVisible: true, order: 12 },
-  { id: 'prof-moderation', label: 'Moderation', href: '/moderation', icon: 'shield', isVisible: true, order: 13 },
-  { id: 'prof-settings', label: 'Settings', href: '/settings', icon: 'settings', isVisible: true, order: 14 },
+  {
+    id: 'prof-profile',
+    label: 'Profile',
+    href: '/profile',
+    icon: 'user',
+    isVisible: true,
+    order: 1,
+  },
+  {
+    id: 'prof-notifications',
+    label: 'Notifications',
+    href: '/notifications',
+    icon: 'bell',
+    isVisible: true,
+    order: 2,
+  },
+  {
+    id: 'prof-messages',
+    label: 'Messages',
+    href: '/messages',
+    icon: 'messageSquare',
+    isVisible: true,
+    order: 3,
+  },
+  {
+    id: 'prof-downloads',
+    label: 'Downloads',
+    href: '/downloads',
+    icon: 'download',
+    isVisible: true,
+    order: 4,
+  },
+  {
+    id: 'prof-recommendations',
+    label: 'For You',
+    href: '/recommendations',
+    icon: 'sparkles',
+    isVisible: true,
+    order: 5,
+  },
+  {
+    id: 'prof-leaderboard',
+    label: 'Leaderboard',
+    href: '/leaderboard',
+    icon: 'trophy',
+    isVisible: true,
+    order: 6,
+  },
+  {
+    id: 'prof-referral',
+    label: 'Refer a Friend',
+    href: '/referral',
+    icon: 'gift',
+    isVisible: true,
+    order: 7,
+  },
+  {
+    id: 'prof-tipping',
+    label: 'My Tips',
+    href: '/tipping',
+    icon: 'heart',
+    isVisible: true,
+    order: 8,
+  },
+  {
+    id: 'prof-premium',
+    label: 'Premium',
+    href: '/premium',
+    icon: 'crown',
+    isVisible: true,
+    order: 9,
+  },
+  {
+    id: 'prof-wallet',
+    label: 'Wallet',
+    href: '/wallet',
+    icon: 'wallet',
+    isVisible: true,
+    order: 10,
+  },
+  {
+    id: 'prof-subscription',
+    label: 'Subscriptions',
+    href: '/wallet/subscription-history',
+    icon: 'refresh',
+    isVisible: true,
+    order: 11,
+  },
+  {
+    id: 'prof-bundles',
+    label: 'Bundles & Passes',
+    href: '/bundles',
+    icon: 'gift',
+    isVisible: true,
+    order: 12,
+  },
+  {
+    id: 'prof-moderation',
+    label: 'Moderation',
+    href: '/moderation',
+    icon: 'shield',
+    isVisible: true,
+    order: 13,
+  },
+  {
+    id: 'prof-settings',
+    label: 'Settings',
+    href: '/settings',
+    icon: 'settings',
+    isVisible: true,
+    order: 14,
+  },
   // Explicitly marked isVisible: false
-  { id: 'prof-rewards', label: 'Rewards', href: '/rewards', icon: 'star', isVisible: false, order: 15 },
-  { id: 'prof-borrow', label: 'Borrow', href: '/borrow/account', icon: 'wallet', isVisible: false, order: 16 },
+  {
+    id: 'prof-rewards',
+    label: 'Rewards',
+    href: '/rewards',
+    icon: 'star',
+    isVisible: false,
+    order: 15,
+  },
+  {
+    id: 'prof-borrow',
+    label: 'Borrow',
+    href: '/borrow/account',
+    icon: 'wallet',
+    isVisible: false,
+    order: 16,
+  },
 ];
 
 @Injectable()
@@ -154,7 +308,9 @@ export class MenusService {
 
     // Look for active menu matching location
     const menus = await this.listMenus();
-    const match = menus.find((m) => m.location.toLowerCase() === location.toLowerCase() && m.isActive);
+    const match = menus.find(
+      (m) => m.location.toLowerCase() === location.toLowerCase() && m.isActive
+    );
 
     if (!match) {
       return null;
@@ -252,7 +408,9 @@ export class MenusService {
     const existing = await this.getMenuById(id);
 
     if (existing.isDefault) {
-      throw new BadRequestException(`Cannot delete default platform menu "${existing.name}". You can hide or edit its items instead.`);
+      throw new BadRequestException(
+        `Cannot delete default platform menu "${existing.name}". You can hide or edit its items instead.`
+      );
     }
 
     await this.prisma.systemSettings.delete({

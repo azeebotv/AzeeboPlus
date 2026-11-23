@@ -2,11 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { contentApi, type ContentItem } from '@azeebo/react-data';
-import {
-  FocusableButton,
-  FocusableRow,
-  type RailItem,
-} from '../src/components/Focusable';
+import { FocusableButton, FocusableRow, type RailItem } from '../src/components/Focusable';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors, tvTypography, tvSpacing } from '../src/theme';
 
@@ -29,7 +25,11 @@ export default function TVMoviesScreen() {
       if (moviesRes.status === 'fulfilled' && moviesRes.value.success && moviesRes.value.data) {
         setMovies(moviesRes.value.data.items ?? []);
       }
-      if (trendingRes.status === 'fulfilled' && trendingRes.value.success && trendingRes.value.data) {
+      if (
+        trendingRes.status === 'fulfilled' &&
+        trendingRes.value.success &&
+        trendingRes.value.data
+      ) {
         setTopRated(trendingRes.value.data ?? []);
       }
     } catch {
@@ -87,7 +87,8 @@ export default function TVMoviesScreen() {
       <View style={styles.heroSection}>
         <Text style={styles.title}>Cinemaxis Universe</Text>
         <Text style={styles.subtitle}>
-          Direct-from-theatre Nollywood blockbusters, award-winning indie cinema, and exclusive 4K digital premieres.
+          Direct-from-theatre Nollywood blockbusters, award-winning indie cinema, and exclusive 4K
+          digital premieres.
         </Text>
       </View>
 
@@ -131,10 +132,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#EAB308',
+    borderColor: colors.warning[500],
   },
   badgeText: {
-    color: '#EAB308',
+    color: colors.warning[500],
     fontSize: tvTypography.fontSize.base,
     fontWeight: '800',
   },

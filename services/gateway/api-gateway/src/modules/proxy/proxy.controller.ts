@@ -3615,14 +3615,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy(
-      'GET',
-      version,
-      service,
-      this.extractPathParam(req),
-      req,
-      res
-    );
+    return this.handleProxy('GET', version, service, this.extractPathParam(req), req, res);
   }
 
   @Post(':version/:service/*path')
@@ -3633,14 +3626,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy(
-      'POST',
-      version,
-      service,
-      this.extractPathParam(req),
-      req,
-      res
-    );
+    return this.handleProxy('POST', version, service, this.extractPathParam(req), req, res);
   }
 
   @Put(':version/:service/*path')
@@ -3651,14 +3637,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy(
-      'PUT',
-      version,
-      service,
-      this.extractPathParam(req),
-      req,
-      res
-    );
+    return this.handleProxy('PUT', version, service, this.extractPathParam(req), req, res);
   }
 
   @Patch(':version/:service/*path')
@@ -3669,14 +3648,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy(
-      'PATCH',
-      version,
-      service,
-      this.extractPathParam(req),
-      req,
-      res
-    );
+    return this.handleProxy('PATCH', version, service, this.extractPathParam(req), req, res);
   }
 
   @Delete(':version/:service/*path')
@@ -3687,14 +3659,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.handleProxy(
-      'DELETE',
-      version,
-      service,
-      this.extractPathParam(req),
-      req,
-      res
-    );
+    return this.handleProxy('DELETE', version, service, this.extractPathParam(req), req, res);
   }
 
   // ─── Versioned routes without path: /api/:version/:service ─────────
@@ -3788,14 +3753,7 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = await this.resolveVersionFromHeader(req);
-    return this.handleProxy(
-      'GET',
-      version,
-      service,
-      this.extractPathParam(req),
-      req,
-      res
-    );
+    return this.handleProxy('GET', version, service, this.extractPathParam(req), req, res);
   }
 
   @Post(':service/*path')
@@ -3806,14 +3764,7 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = await this.resolveVersionFromHeader(req);
-    return this.handleProxy(
-      'POST',
-      version,
-      service,
-      this.extractPathParam(req),
-      req,
-      res
-    );
+    return this.handleProxy('POST', version, service, this.extractPathParam(req), req, res);
   }
 
   @Put(':service/*path')
@@ -3824,14 +3775,7 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = await this.resolveVersionFromHeader(req);
-    return this.handleProxy(
-      'PUT',
-      version,
-      service,
-      this.extractPathParam(req),
-      req,
-      res
-    );
+    return this.handleProxy('PUT', version, service, this.extractPathParam(req), req, res);
   }
 
   @Patch(':service/*path')
@@ -3842,14 +3786,7 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = await this.resolveVersionFromHeader(req);
-    return this.handleProxy(
-      'PATCH',
-      version,
-      service,
-      this.extractPathParam(req),
-      req,
-      res
-    );
+    return this.handleProxy('PATCH', version, service, this.extractPathParam(req), req, res);
   }
 
   @Delete(':service/*path')
@@ -3860,14 +3797,7 @@ export class ProxyController {
     @Res() res: Response
   ): Promise<void> {
     const version = await this.resolveVersionFromHeader(req);
-    return this.handleProxy(
-      'DELETE',
-      version,
-      service,
-      this.extractPathParam(req),
-      req,
-      res
-    );
+    return this.handleProxy('DELETE', version, service, this.extractPathParam(req), req, res);
   }
 
   // ─── Unified proxy handler ─────────────────────────────────────────

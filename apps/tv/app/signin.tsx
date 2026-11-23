@@ -236,10 +236,7 @@ export default function SignInScreen() {
             {/* ── Left Column: QR Code ── */}
             <View style={styles.qrColumn}>
               <View style={styles.qrPlate}>
-                <QRCodeView
-                  value={`${ACTIVATION_URL}?code=${userCode}`}
-                  size={200}
-                />
+                <QRCodeView value={`${ACTIVATION_URL}?code=${userCode}`} size={200} />
               </View>
               <Text style={styles.qrInstruction}>📱 Scan with your phone camera</Text>
             </View>

@@ -3,11 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { contentApi, type ContentItem } from '@azeebo/react-data';
-import {
-  FocusableButton,
-  FocusableRow,
-  type RailItem,
-} from '../src/components/Focusable';
+import { FocusableButton, FocusableRow, type RailItem } from '../src/components/Focusable';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors, tvTypography, tvSpacing } from '../src/theme';
@@ -40,10 +36,18 @@ export default function TVBrowseScreen() {
         contentApi.getTrendingContent(12),
       ]);
 
-      if (universeRes.status === 'fulfilled' && universeRes.value.success && universeRes.value.data) {
+      if (
+        universeRes.status === 'fulfilled' &&
+        universeRes.value.success &&
+        universeRes.value.data
+      ) {
         setUniverseItems(universeRes.value.data.items ?? []);
       }
-      if (trendingRes.status === 'fulfilled' && trendingRes.value.success && trendingRes.value.data) {
+      if (
+        trendingRes.status === 'fulfilled' &&
+        trendingRes.value.success &&
+        trendingRes.value.data
+      ) {
         setTrending(trendingRes.value.data);
       }
     } catch (err) {

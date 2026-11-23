@@ -1,4 +1,11 @@
-import { Inject, Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
@@ -2308,10 +2315,7 @@ export class CreatorsService {
     };
   }
 
-  async deleteExclusiveContent(
-    userId: string,
-    contentId: string
-  ): Promise<CreatorResponse> {
+  async deleteExclusiveContent(userId: string, contentId: string): Promise<CreatorResponse> {
     const creator = await this.prisma.creatorProfile.findUnique({
       where: { userId },
     });

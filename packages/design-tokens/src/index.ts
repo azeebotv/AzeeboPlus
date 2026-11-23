@@ -629,4 +629,3 @@ export type { PollingIntervalName } from './polling';
  */
 export { aspectRatios, aspectRatioValues } from './aspect-ratios';
 export type { AspectRatioName } from './aspect-ratios';
-

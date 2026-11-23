@@ -57,7 +57,9 @@ export class PartitionedStreamManager {
     });
 
     await publisher.publish(channel, message);
-    this.logger.debug(`Published partitioned event ${eventType} to ${channel} (key: ${partitionKey})`);
+    this.logger.debug(
+      `Published partitioned event ${eventType} to ${channel} (key: ${partitionKey})`
+    );
     return { partition, channel };
   }
 }
@@ -98,7 +100,7 @@ export class HighVelocityVoteBuffer {
   private count = 0;
   private readonly maxBufferSize: number;
   private readonly flushIntervalMs: number;
-  private flushTimer: NodeJS.Timeout | null = null;
+  private flushTimer: ReturnType<typeof setInterval> | null = null;
   private readonly onFlushCallback?: (result: VoteBatchFlushResult) => Promise<void>;
 
   constructor(options?: {
@@ -202,7 +204,9 @@ export class HighVelocityVoteBuffer {
       await this.onFlushCallback(result);
     }
 
-    this.logger.log(`Flushed ${currentCount} buffered votes across ${aggregations.length} contestants`);
+    this.logger.log(
+      `Flushed ${currentCount} buffered votes across ${aggregations.length} contestants`
+    );
     return result;
   }
 

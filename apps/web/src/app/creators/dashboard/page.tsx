@@ -33,7 +33,12 @@ const dashLinks = [
     desc: 'Access your full creator studio overview',
     icon: BarChart3,
   },
-  { href: '/creator/upload', label: 'Upload', desc: 'Upload and publish new content', icon: UploadCloud },
+  {
+    href: '/creator/upload',
+    label: 'Upload',
+    desc: 'Upload and publish new content',
+    icon: UploadCloud,
+  },
   {
     href: '/creator/earnings',
     label: 'Earnings',

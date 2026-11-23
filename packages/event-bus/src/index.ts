@@ -19,12 +19,7 @@ import {
   VoteBatchFlushResult,
 } from './partitioned-stream.js';
 
-export {
-  PartitionedStreamManager,
-  HighVelocityVoteBuffer,
-  RedisClient,
-  VoteBatchFlushResult,
-};
+export { PartitionedStreamManager, HighVelocityVoteBuffer, RedisClient, VoteBatchFlushResult };
 
 // ============================================================================
 // Event Types

@@ -66,8 +66,12 @@ export default function AgbalaQuizScreen({ navigation }: { navigation: QuizNavig
 
   if (questions.length === 0) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
-        <Text style={{ color: colors.text.primary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>
+      <View
+        style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 24 }]}
+      >
+        <Text
+          style={{ color: colors.text.primary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}
+        >
           No Active Trials
         </Text>
         <Text style={{ color: colors.text.secondary, textAlign: 'center' }}>
