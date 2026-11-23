@@ -1,5 +1,5 @@
-import { useConfirm } from "@/components/ui";
-import React, { useState, useMemo } from 'react';
+import { useConfirm, Pagination } from "@/components/ui";
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { requireData, unwrapList } from '@/lib/payload';
@@ -63,7 +63,7 @@ export default function SportsPage() {
     drawOdds: 3.20,
     awayOdds: 4.10,
     score: '',
-    marketStatus: 'open' as const,
+    marketStatus: 'open' as 'open' | 'locked' | 'settled',
   };
 
   const [createForm, setCreateForm] = useState(initialForm);
@@ -201,7 +201,7 @@ export default function SportsPage() {
       description: item.description || '',
       homeTeam: item.metadata?.homeTeam || 'Home Team',
       awayTeam: item.metadata?.awayTeam || 'Away Team',
-      league: item.metadata?.league || LEAGUES[0],
+      league: item.metadata?.league || LEAGUES[0] || 'NPFL',
       matchDate: item.metadata?.matchDate || new Date().toISOString().slice(0, 16),
       thumbnail: item.thumbnail || '/images/placeholders/thumbnails/16x9_02.png',
       mediaUrl: item.mediaUrl || '',
@@ -486,6 +486,13 @@ export default function SportsPage() {
             </tbody>
           </table>
         )}
+        <Pagination
+          currentPage={page}
+          totalPages={contentData?.total ? Math.ceil(contentData.total / 50) : 1}
+          totalItems={contentData?.total || matches.length}
+          pageSize={50}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Create Modal */}

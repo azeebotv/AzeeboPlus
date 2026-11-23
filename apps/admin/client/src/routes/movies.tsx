@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { requireData, unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
-import { useConfirm, useAlert } from '@/components/ui';
+import { useConfirm, useAlert, Pagination } from '@/components/ui';
 
 interface MovieItem {
   id: string;
@@ -635,6 +635,13 @@ export default function MoviesPage() {
               ))}
             </tbody>
           </table>
+          <Pagination
+            currentPage={page}
+            totalPages={contentData?.total ? Math.ceil(contentData.total / 50) : 1}
+            totalItems={contentData?.total || movies.length}
+            pageSize={50}
+            onPageChange={setPage}
+          />
         </div>
       )}
 

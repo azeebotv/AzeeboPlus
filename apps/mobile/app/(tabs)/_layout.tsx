@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
@@ -138,6 +138,22 @@ function HeaderUtilities({
       </View>
 
       <View style={styles.headerRight}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => {
+            Alert.alert(
+              'Cast to Screen',
+              'Searching for Azeebo TV, AirPlay, and Chromecast receivers on your local Wi-Fi...',
+              [{ text: 'Dismiss', style: 'cancel' }]
+            );
+          }}
+          accessibilityLabel="Cast to TV or Screen"
+          accessibilityRole="button"
+          testID="header-cast-button"
+        >
+          <Feather name="cast" size={18} color={colors.text.primary} />
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.headerButton}
           onPress={() => router.push('/(tabs)/search')}

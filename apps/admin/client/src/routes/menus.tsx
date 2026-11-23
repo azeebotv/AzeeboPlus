@@ -69,6 +69,7 @@ const btnDanger: React.CSSProperties = {
 };
 
 export default function MenusPage(): React.JSX.Element {
+  const confirm = useConfirm();
   const { user } = useAuth();
   const isSuperAdmin = user?.role?.toLowerCase() === 'superadmin';
   const queryClient = useQueryClient();
@@ -181,10 +182,12 @@ export default function MenusPage(): React.JSX.Element {
       showToast('Only Super Admins can alter menu item visibility.', 'error');
       return;
     }
+    const current = activeItems[index];
+    if (!current) return;
     const updated = [...activeItems];
     updated[index] = {
-      ...updated[index],
-      isVisible: !updated[index].isVisible,
+      ...current,
+      isVisible: !current.isVisible,
     };
     setEditingItems(updated);
   };
@@ -197,7 +200,9 @@ export default function MenusPage(): React.JSX.Element {
 
     const updated = [...activeItems];
     const temp = updated[index];
-    updated[index] = updated[target];
+    const targetItem = updated[target];
+    if (!temp || !targetItem) return;
+    updated[index] = targetItem;
     updated[target] = temp;
 
     // re-index order
@@ -220,6 +225,7 @@ export default function MenusPage(): React.JSX.Element {
     }
     if (typeof index === 'number') {
       const item = activeItems[index];
+      if (!item) return;
       setEditingItemIndex(index);
       setItemLabel(item.label);
       setItemHref(item.href);
@@ -245,8 +251,10 @@ export default function MenusPage(): React.JSX.Element {
 
     const updated = [...activeItems];
     if (editingItemIndex !== null) {
+      const existing = updated[editingItemIndex];
+      if (!existing) return;
       updated[editingItemIndex] = {
-        ...updated[editingItemIndex],
+        ...existing,
         label: itemLabel.trim(),
         href: itemHref.trim(),
         icon: itemIcon.trim() || undefined,
@@ -316,6 +324,17 @@ export default function MenusPage(): React.JSX.Element {
           </button>
         )}
       </div>
+
+      {isLoading && (
+        <div style={{ padding: 24, textAlign: 'center', color: 'var(--admin-text-muted)' }}>
+          Loading navigation menus...
+        </div>
+      )}
+      {error && (
+        <div style={{ padding: 16, backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, marginBottom: 24 }}>
+          Failed to load menus: {(error as Error).message}
+        </div>
+      )}
 
       {/* Role Banner */}
       <div

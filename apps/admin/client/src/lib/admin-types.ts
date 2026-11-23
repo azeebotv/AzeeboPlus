@@ -93,6 +93,7 @@ export interface RealityShow {
   id: string;
   title: string;
   description?: string;
+  thumbnail?: string;
   /** ContentItem status of the underlying row (reality universe). */
   status: string;
   creator?: { id: string; displayName: string; email: string };

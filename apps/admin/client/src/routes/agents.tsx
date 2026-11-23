@@ -541,6 +541,7 @@ function AgentFormModal({
 /* ── Detail modal with kill-switch history ─────────────────────────────────── */
 
 function AgentDetailModal({ agent, onClose }: { agent: AgentRegistry; onClose: () => void }) {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const historyQuery = useQuery({
@@ -700,7 +701,6 @@ function AgentDetailModal({ agent, onClose }: { agent: AgentRegistry; onClose: (
 /* ── Main page ─────────────────────────────────────────────────────────────── */
 
 export default function AgentsPage() {
-  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [search, setSearch] = useState('');

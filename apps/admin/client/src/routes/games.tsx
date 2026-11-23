@@ -1,5 +1,5 @@
-import { useConfirm } from "@/components/ui";
-import React, { useState, useMemo } from 'react';
+import { useConfirm, Pagination } from "@/components/ui";
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { requireData, unwrapList } from '@/lib/payload';
@@ -465,6 +465,13 @@ export default function GamesPage() {
             </tbody>
           </table>
         )}
+        <Pagination
+          currentPage={page}
+          totalPages={contentData?.total ? Math.ceil(contentData.total / 50) : 1}
+          totalItems={contentData?.total || games.length}
+          pageSize={50}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Create Modal */}

@@ -179,7 +179,14 @@ export default function RealityPage() {
             setShowCreate(!showCreate);
             setEditTarget(null);
             setFormError(null);
-            setForm({ title: '', description: '' });
+            setForm({
+              title: '',
+              description: '',
+              thumbnail: '/images/placeholders/thumbnails/16x9_01.png',
+              status: 'draft',
+              isExclusive: false,
+              isPremiere: false,
+            });
           }}
           style={{
             display: 'inline-flex',
