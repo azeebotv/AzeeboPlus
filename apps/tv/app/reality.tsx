@@ -151,11 +151,11 @@ export default function TVRealityScreen() {
         <View style={styles.voteHubRight}>
           <View style={styles.qrPlate}>
             <QRCodeView
-              value="https://app.azeeboplus.com/reality/voting"
+              value={`https://app.azeeboplus.com/reality/voting?room=${encodeURIComponent(realityShows[0]?.id || 'survivor-nigeria-s1')}&source=tv-second-screen`}
               size={110}
             />
           </View>
-          <Text style={styles.qrCaption}>Scan to Buy Super Vote Packs (100x)</Text>
+          <Text style={styles.qrCaption}>Scan to Pair Phone as 100x Super Vote Remote</Text>
         </View>
       </View>
 

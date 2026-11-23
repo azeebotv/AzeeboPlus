@@ -372,6 +372,52 @@ export function DisplayBadge({
   );
 }
 
+// TipTierBadge for Creator Tipping Perks
+export interface TipTierBadgeProps {
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | string;
+  size?: 'sm' | 'md';
+  className?: string;
+  showIcon?: boolean;
+}
+
+export function TipTierBadge({
+  tier,
+  size = 'sm',
+  className = '',
+  showIcon = true,
+}: TipTierBadgeProps) {
+  const normalizedTier = tier?.toLowerCase();
+  if (!normalizedTier || normalizedTier === 'none') return null;
+
+  const tierConfig: Record<string, { label: string; bg: string; text: string; icon: string }> = {
+    bronze: { label: 'Bronze Supporter', bg: 'bg-amber-900/30 border-amber-700/50', text: 'text-amber-400', icon: '🥉' },
+    silver: { label: 'Silver Supporter', bg: 'bg-slate-700/40 border-slate-400/50', text: 'text-slate-300', icon: '🥈' },
+    gold: { label: 'Gold Supporter', bg: 'bg-yellow-900/30 border-yellow-500/50', text: 'text-yellow-400', icon: '🥇' },
+    platinum: { label: 'Platinum VIP', bg: 'bg-cyan-900/40 border-cyan-400/60 shadow-cyan-500/20 shadow-sm', text: 'text-cyan-300 font-bold', icon: '💎' },
+  };
+
+  const config = tierConfig[normalizedTier] || {
+    label: normalizedTier,
+    bg: 'bg-az-surface-panel border-az-surface-border',
+    text: 'text-az-ink-dim',
+    icon: '⭐',
+  };
+
+  const sizeStyles = {
+    sm: 'px-2 py-0.5 text-xs border',
+    md: 'px-3 py-1 text-sm border',
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full ${config.bg} ${config.text} ${sizeStyles[size]} ${className}`}
+    >
+      {showIcon && <span aria-hidden="true">{config.icon}</span>}
+      <span>{config.label}</span>
+    </span>
+  );
+}
+
 // Tag
 export interface TagProps extends DisplayBadgeProps {
   closable?: boolean;

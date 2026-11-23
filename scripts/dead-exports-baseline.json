@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T09:29:27.790Z",
+  "generatedAt": "2026-11-23T10:37:53.809Z",
   "categories": [
     "files",
     "exports",
@@ -190,7 +190,7 @@
     "apps/admin": {
       "files": 0,
       "exports": 13,
-      "types": 34,
+      "types": 35,
       "duplicates": 1
     },
     "apps/creator": {

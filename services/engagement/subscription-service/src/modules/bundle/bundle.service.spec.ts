@@ -79,6 +79,10 @@ describe('BundleService', () => {
               update: jest.fn(),
               count: jest.fn(),
             },
+            subscription: {
+              findMany: jest.fn().mockResolvedValue([]),
+              updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+            },
             $transaction: jest.fn(),
           },
         },
@@ -163,6 +167,36 @@ describe('BundleService', () => {
       expect(result).toHaveProperty('bundleSavings');
       expect(result.individualTotal).toBe(3000);
       expect(result.bundleSavings).toBe(900);
+    });
+  });
+
+  describe('getUpgradeQuote', () => {
+    it('should calculate prorated credit from active single subscriptions', async () => {
+      (prismaService.bundlePass.findUnique as jest.Mock).mockResolvedValue(mockBundle);
+      const now = Date.now();
+      (prismaService.subscription.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 'sub-single-1',
+          userId: 'user-1',
+          planId: 'plan-reality',
+          status: 'active',
+          startDate: new Date(now - 15 * 24 * 60 * 60 * 1000),
+          endDate: new Date(now + 15 * 24 * 60 * 60 * 1000),
+          plan: {
+            id: 'plan-reality',
+            name: 'Reality Monthly',
+            price: 1000,
+          },
+        },
+      ]);
+
+      const quote = await service.getUpgradeQuote('user-1', 'bundle-1');
+
+      expect(quote.bundleId).toBe('bundle-1');
+      expect(quote.bundlePrice).toBe(2100);
+      expect(quote.proratedCredit).toBeGreaterThan(0);
+      expect(quote.effectivePrice).toBeLessThan(2100);
+      expect(quote.activeSubscriptions).toHaveLength(1);
     });
   });
 

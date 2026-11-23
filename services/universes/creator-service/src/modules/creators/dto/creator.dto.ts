@@ -138,3 +138,24 @@ export class UpdateCreatorSettingsDto {
   @Type(() => PrivacySettingsDto)
   privacy?: PrivacySettingsDto;
 }
+
+export class CreateExclusiveContentDto {
+  @ApiProperty({ description: 'Title of exclusive post' })
+  @IsString()
+  title!: string;
+
+  @ApiPropertyOptional({ description: 'Description or caption' })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiProperty({ description: 'Media URL of exclusive video or asset' })
+  @IsString()
+  mediaUrl!: string;
+
+  @ApiPropertyOptional({ default: 'gold', enum: ['bronze', 'silver', 'gold', 'platinum'] })
+  @IsOptional()
+  @IsString()
+  minTier?: string;
+}
+

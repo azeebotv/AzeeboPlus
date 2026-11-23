@@ -43,6 +43,8 @@ import type {
   PartnerOffer,
   MenuItem,
   NavigationMenu,
+  AcdpPackageItem,
+  AcdpValidationResult,
 } from '../admin-types';
 
 export interface DashboardStats {
@@ -261,6 +263,25 @@ export const adminApi = {
     apiFetch<unknown>(`/api/v1/admin/content-review/${id}/approve`, { method: 'POST' }),
   rejectContent: (id: string, reason: string) =>
     apiFetch<unknown>(`/api/v1/admin/content-review/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+
+  // ─── ACDP Package Validation ─────────────────────────────────────────────
+  getAcdpPackages: (page = 1, limit = 20) =>
+    apiFetch<{ items: AcdpPackageItem[]; total: number }>(
+      `/api/v1/admin/acdp/packages?page=${page}&limit=${limit}`
+    ),
+  validateAcdpPackage: (packageId: string) =>
+    apiFetch<AcdpValidationResult>(`/api/v1/admin/acdp/packages/${packageId}/validate`, {
+      method: 'POST',
+    }),
+  approveAcdpPackage: (packageId: string) =>
+    apiFetch<unknown>(`/api/v1/admin/acdp/packages/${packageId}/approve`, {
+      method: 'POST',
+    }),
+  rejectAcdpPackage: (packageId: string, reason: string) =>
+    apiFetch<unknown>(`/api/v1/admin/acdp/packages/${packageId}/reject`, {
       method: 'POST',
       body: JSON.stringify({ reason }),
     }),

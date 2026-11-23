@@ -100,6 +100,12 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         description: 'Moderation and compliance approval',
       },
       {
+        href: '/acdp-validation',
+        label: 'ACDP Validation',
+        icon: 'checkCircle',
+        description: 'Azeebo+ Content Delivery Package inspection & clearance',
+      },
+      {
         href: '/challenge-entries',
         label: 'Challenge Entries',
         icon: 'checkCircle',

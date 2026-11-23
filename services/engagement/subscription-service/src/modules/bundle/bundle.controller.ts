@@ -58,6 +58,17 @@ export class BundleController {
     return this.bundleService.getCurrentBundle(req.user.id);
   }
 
+  @Get(':id/quote')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get prorated upgrade quote for a bundle' })
+  @ApiResponse({ status: 200, description: 'Prorated upgrade quote with credits' })
+  async getUpgradeQuote(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string
+  ) {
+    return this.bundleService.getUpgradeQuote(req.user.id, id);
+  }
+
   @Get(':id')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)

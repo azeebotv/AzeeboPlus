@@ -100,6 +100,7 @@ describe('CreatorsService', () => {
           useValue: {
             creatorProfile: {
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
               findMany: jest.fn(),
@@ -173,7 +174,9 @@ describe('CreatorsService', () => {
             },
             exclusiveContent: {
               findMany: jest.fn(),
+              findUnique: jest.fn(),
               create: jest.fn(),
+              delete: jest.fn(),
             },
             $transaction: jest.fn(async (callback) => callback(module.get(PrismaService))),
           },
@@ -1310,6 +1313,72 @@ describe('CreatorsService', () => {
       (prismaService.creatorProfile.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.sendTip(userId, creatorId, amount)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('exclusiveContent', () => {
+    const mockContent = {
+      id: 'ex-1',
+      creatorId: 'creator-uuid',
+      title: 'Behind the Scenes VIP',
+      description: 'Exclusive rehearsal clip',
+      mediaUrl: 'https://cdn.azeeboplus.com/exclusive/bts.mp4',
+      minTier: 'gold',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it('should create exclusive content for creator', async () => {
+      (prismaService.creatorProfile.findUnique as jest.Mock).mockResolvedValue({
+        id: 'creator-uuid',
+        userId: 'creator-user-1',
+      });
+      (prismaService.exclusiveContent.create as jest.Mock).mockResolvedValue(mockContent);
+
+      const result = await service.createExclusiveContent('creator-user-1', {
+        title: 'Behind the Scenes VIP',
+        mediaUrl: 'https://cdn.azeeboplus.com/exclusive/bts.mp4',
+        minTier: 'gold',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockContent);
+    });
+
+    it('should gate mediaUrl for non-Gold supporters', async () => {
+      (prismaService.creatorProfile.findFirst as jest.Mock).mockResolvedValue({
+        id: 'creator-uuid',
+        userId: 'creator-user-1',
+      });
+      (prismaService.exclusiveContent.findMany as jest.Mock).mockResolvedValue([mockContent]);
+      (prismaService.tipLeaderboard.findUnique as jest.Mock).mockResolvedValue({
+        tier: 'silver',
+      });
+
+      const result = await service.getExclusiveContent('creator-uuid', 'fan-user-silver');
+
+      expect(result.success).toBe(true);
+      const data = result.data as { items: Array<{ locked: boolean; mediaUrl: string | null }> };
+      expect(data.items[0].locked).toBe(true);
+      expect(data.items[0].mediaUrl).toBeNull();
+    });
+
+    it('should ungate mediaUrl for Gold+ supporters', async () => {
+      (prismaService.creatorProfile.findFirst as jest.Mock).mockResolvedValue({
+        id: 'creator-uuid',
+        userId: 'creator-user-1',
+      });
+      (prismaService.exclusiveContent.findMany as jest.Mock).mockResolvedValue([mockContent]);
+      (prismaService.tipLeaderboard.findUnique as jest.Mock).mockResolvedValue({
+        tier: 'gold',
+      });
+
+      const result = await service.getExclusiveContent('creator-uuid', 'fan-user-gold');
+
+      expect(result.success).toBe(true);
+      const data = result.data as { items: Array<{ locked: boolean; mediaUrl: string | null }> };
+      expect(data.items[0].locked).toBe(false);
+      expect(data.items[0].mediaUrl).toBe(mockContent.mediaUrl);
     });
   });
 });

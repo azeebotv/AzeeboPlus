@@ -16,7 +16,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard, Public } from '@azeebo/security';
 import { LiveEventService } from './live-event.service.js';
-import { CreateEventDto, UpdateEventDto, PurchaseTicketDto } from './dto/live-event.dto.js';
+import { CreateEventDto, UpdateEventDto, PurchaseTicketDto, PurchaseGroupTicketsDto } from './dto/live-event.dto.js';
 
 @ApiTags('Live Events')
 @ApiBearerAuth()
@@ -93,6 +93,19 @@ export class LiveEventController {
     @Request() req: { user: { id: string } }
   ) {
     return this.liveEventService.purchaseTicket(id, req.user.id);
+  }
+
+  @Post(':id/purchase-group')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 60000)
+  @ApiOperation({ summary: 'Purchase tickets for a group of users' })
+  @ApiResponse({ status: 201, description: 'Group tickets purchased' })
+  async purchaseGroupTickets(
+    @Param('id') id: string,
+    @Body() dto: PurchaseGroupTicketsDto,
+    @Request() req: { user: { id: string } }
+  ) {
+    return this.liveEventService.purchaseGroupTickets(id, req.user.id, dto.recipientUserIds);
   }
 
   @Put(':id')

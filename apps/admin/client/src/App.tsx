@@ -17,6 +17,7 @@ const ContentPage = lazy(() => import('./routes/content'));
 const MoviesPage = lazy(() => import('./routes/movies'));
 const ContentDetailPage = lazy(() => import('./routes/content-detail'));
 const ContentReviewPage = lazy(() => import('./routes/content-review'));
+const AcdpValidationPage = lazy(() => import('./routes/acdp-validation'));
 const ChallengeEntriesPage = lazy(() => import('./routes/challenge-entries'));
 const ModerationPage = lazy(() => import('./routes/moderation'));
 const CreatorsPage = lazy(() => import('./routes/creators'));
@@ -132,6 +133,7 @@ export default function App() {
                 <Route path="movies" element={<MoviesPage />} />
                 <Route path="content/:id" element={<ContentDetailPage />} />
                 <Route path="content-review" element={<ContentReviewPage />} />
+                <Route path="acdp-validation" element={<AcdpValidationPage />} />
                 <Route path="challenge-entries" element={<ChallengeEntriesPage />} />
                 <Route path="moderation" element={<ModerationPage />} />
                 <Route path="creators" element={<CreatorsPage />} />

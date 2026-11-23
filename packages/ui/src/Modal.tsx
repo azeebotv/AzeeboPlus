@@ -246,3 +246,105 @@ export function ConfirmDialog({
     </Modal>
   );
 }
+
+export interface StoryBranchOption {
+  id: string;
+  label: string;
+  description?: string;
+  icon?: string;
+  targetEpisodeId?: string;
+  targetPathId?: string;
+}
+
+export interface BranchingDecisionModalProps {
+  isOpen: boolean;
+  title: string;
+  prompt: string;
+  options: StoryBranchOption[];
+  onSelectOption: (option: StoryBranchOption) => void;
+  countdownSeconds?: number;
+  onTimeout?: () => void;
+}
+
+export function BranchingDecisionModal({
+  isOpen,
+  title,
+  prompt,
+  options,
+  onSelectOption,
+  countdownSeconds = 15,
+  onTimeout,
+}: BranchingDecisionModalProps) {
+  const [secondsRemaining, setSecondsRemaining] = React.useState(countdownSeconds);
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      setSecondsRemaining(countdownSeconds);
+      return;
+    }
+    const timer = setInterval(() => {
+      setSecondsRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          onTimeout?.();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isOpen, countdownSeconds, onTimeout]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-300"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="branching-title"
+    >
+      <div className="relative w-full max-w-lg bg-az-surface-raised border border-az-warning-500/40 rounded-2xl shadow-2xl p-6 text-center">
+        {/* Countdown pill */}
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-az-warning-500/20 text-az-warning-400 text-xs font-bold mb-4 border border-az-warning-500/30">
+          <span>⏳ DECISION REQUIRED</span>
+          <span className="font-mono text-sm">({secondsRemaining}s)</span>
+        </div>
+
+        <h2 id="branching-title" className="text-2xl font-black text-az-ink tracking-tight mb-2">
+          {title}
+        </h2>
+        <p className="text-sm text-az-ink-dim leading-relaxed mb-6">
+          {prompt}
+        </p>
+
+        {/* Options grid */}
+        <div className="grid grid-cols-1 gap-3">
+          {options.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => onSelectOption(option)}
+              className="group relative flex items-center justify-between p-4 rounded-xl border border-az-glass-border bg-az-glass-fill hover:bg-az-warning-500/10 hover:border-az-warning-500/50 transition-all text-left outline-none focus-visible:ring-2 focus-visible:ring-az-warning-400"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{option.icon || '⚔️'}</span>
+                <div>
+                  <h3 className="font-bold text-az-ink group-hover:text-az-warning-400 transition-colors text-sm sm:text-base">
+                    {option.label}
+                  </h3>
+                  {option.description && (
+                    <p className="text-xs text-az-ink-dim mt-0.5">{option.description}</p>
+                  )}
+                </div>
+              </div>
+              <span className="text-az-ink-muted group-hover:text-az-warning-400 transition-colors text-lg font-bold">
+                →
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+

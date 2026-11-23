@@ -36,8 +36,13 @@ export default function VotingScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { showId } = useLocalSearchParams<{ showId: string }>();
+  const { showId, room, source } = useLocalSearchParams<{
+    showId?: string;
+    room?: string;
+    source?: string;
+  }>();
   const isDark = colorScheme === 'dark';
+  const isTvPaired = Boolean(room || source === 'tv-second-screen');
 
   const packagesQuery = useQuery({
     queryKey: ['reality', 'vote-packages'],
@@ -118,6 +123,32 @@ export default function VotingScreen() {
         </View>
 
         <View style={styles.content}>
+          {isTvPaired && (
+            <View
+              style={{
+                backgroundColor: 'rgba(255,107,0,0.12)',
+                borderColor: colors.primary[500],
+                borderWidth: 1,
+                borderRadius: 12,
+                padding: 14,
+                marginBottom: 18,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <Text style={{ fontSize: 24 }}>📺</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.primary[500], fontSize: 13, fontWeight: '800' }}>
+                  PAIRED WITH BIG-SCREEN TV
+                </Text>
+                <Text style={{ color: colors.text.secondary, fontSize: 12, marginTop: 2 }}>
+                  Your phone is acting as a synchronized 100x voting remote. Votes update live on TV.
+                </Text>
+              </View>
+            </View>
+          )}
+
           {/* Contestant Selection */}
           <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
             Choose Contestant

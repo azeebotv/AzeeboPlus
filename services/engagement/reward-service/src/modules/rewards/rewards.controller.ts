@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  Param,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
@@ -46,6 +47,21 @@ export class RewardsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMissions(@Request() req: { user: { id: string } }): Promise<RewardResponse> {
     return this.rewardsService.getMissions(req.user.id);
+  }
+
+  @Post('missions/:id/claim')
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(rewardFlags.missions)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Complete and claim reward for a mission' })
+  @ApiResponse({ status: 200, description: 'Mission claimed and points awarded' })
+  @ApiResponse({ status: 400, description: 'Mission already completed or inactive' })
+  @ApiResponse({ status: 404, description: 'Mission not found' })
+  async claimMission(
+    @Request() req: { user: { id: string } },
+    @Param('id') missionId: string
+  ): Promise<RewardResponse> {
+    return this.rewardsService.completeMission(req.user.id, missionId);
   }
 
   @Get('badges')

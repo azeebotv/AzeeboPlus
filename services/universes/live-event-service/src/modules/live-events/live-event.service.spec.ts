@@ -12,6 +12,7 @@ describe('LiveEventService', () => {
   let prisma: {
     liveEvent: { findUnique: jest.Mock; findMany: jest.Mock; count: jest.Mock; create: jest.Mock };
     liveEventTicket: { findFirst: jest.Mock; findMany: jest.Mock; create: jest.Mock };
+    $transaction: jest.Mock;
   };
   let flagService: { isEnabled: jest.Mock };
 
@@ -41,6 +42,7 @@ describe('LiveEventService', () => {
         findMany: jest.fn().mockResolvedValue([]),
         create: jest.fn().mockResolvedValue({ id: 'ticket-1' }),
       },
+      $transaction: jest.fn(),
     };
     flagService = { isEnabled: jest.fn().mockResolvedValue(true) };
     (axios.post as jest.Mock).mockResolvedValue({ data: {} });
@@ -147,6 +149,43 @@ describe('LiveEventService', () => {
 
       const createCall = prisma.liveEvent.create.mock.calls[0][0];
       expect(createCall.data.chatEnabled).toBe(true);
+    });
+  });
+
+  describe('group tickets & replay stream', () => {
+    it('returns replayUrl and isReplay: true when event status is ended', async () => {
+      prisma.liveEvent.findUnique.mockResolvedValue({
+        id: 'ev-ended',
+        status: 'ended',
+        ticketPrice: 0,
+        streamUrl: 'https://cdn.azeeboplus.com/live/dead.m3u8',
+        replayUrl: 'https://cdn.azeeboplus.com/vod/recording.m3u8',
+      });
+
+      const result = await service.getStreamUrl('ev-ended', 'user-1');
+      expect(result.isReplay).toBe(true);
+      expect(result.streamUrl).toBe('https://cdn.azeeboplus.com/vod/recording.m3u8');
+    });
+
+    it('issues group tickets in a single transaction', async () => {
+      prisma.liveEvent.findUnique.mockResolvedValue({
+        id: 'ev-group',
+        status: 'scheduled',
+        ticketPrice: 1000,
+        currency: 'NGN',
+        title: 'Festival',
+        _count: { tickets: 0 },
+      });
+      prisma.liveEventTicket.findMany.mockResolvedValue([]);
+      prisma.liveEventTicket.create.mockImplementation((args: any) =>
+        Promise.resolve({ id: 't-1', ...args.data })
+      );
+      prisma.$transaction.mockImplementation((promises: any[]) => Promise.all(promises));
+
+      const result = await service.purchaseGroupTickets('ev-group', 'buyer-1', ['friend-1', 'friend-2']);
+      expect(result.success).toBe(true);
+      expect(result.ticketsIssued).toBe(2);
+      expect(result.totalAmount).toBe(2000);
     });
   });
 });

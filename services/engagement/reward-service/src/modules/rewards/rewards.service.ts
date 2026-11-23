@@ -756,4 +756,92 @@ export class RewardsService {
       };
     }
   }
+
+  async completeMission(userId: string, missionId: string): Promise<RewardResponse> {
+    try {
+      const mission = await this.prisma.mission.findUnique({
+        where: { id: missionId },
+      });
+      if (!mission) {
+        throw new NotFoundException(`Mission with ID ${missionId} not found`);
+      }
+      if (!mission.isActive) {
+        throw new BadRequestException('Mission is no longer active');
+      }
+
+      const existing = await this.prisma.missionCompletion.findUnique({
+        where: {
+          userId_missionId: {
+            userId,
+            missionId,
+          },
+        },
+      });
+      if (existing) {
+        throw new BadRequestException('Mission has already been completed');
+      }
+
+      let rewardAccount = await this.prisma.rewardAccount.findUnique({ where: { userId } });
+      if (!rewardAccount) {
+        const defaultLevel = await this.prisma.level.findFirst({ orderBy: { rank: 'asc' } });
+        if (defaultLevel) {
+          rewardAccount = await this.prisma.rewardAccount.create({
+            data: { userId, levelId: defaultLevel.id, points: 0, streak: 0 },
+          });
+        }
+      }
+
+      const pointsToAward = mission.points;
+
+      const [, updatedAccount] = await this.prisma.$transaction([
+        this.prisma.missionCompletion.create({
+          data: {
+            userId,
+            missionId,
+          },
+        }),
+        this.prisma.rewardAccount.update({
+          where: { userId },
+          data: {
+            points: { increment: pointsToAward },
+          },
+        }),
+        this.prisma.pointsLedger.create({
+          data: {
+            userId,
+            points: pointsToAward,
+            reason: `Mission completed: ${mission.title}`,
+            type: 'credit',
+            metadata: { missionId, missionType: mission.type },
+          },
+        }),
+      ]);
+
+      await this.invalidateRewardCache(userId);
+      this.trackAnalyticsEvent('mission_completed', userId, {
+        missionId,
+        pointsAwarded: pointsToAward,
+        missionType: mission.type,
+      });
+
+      return {
+        success: true,
+        data: {
+          message: 'Mission completed successfully',
+          missionId,
+          pointsEarned: pointsToAward,
+          newBalance: updatedAccount.points,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`completeMission failed: ${(error as Error).message}`, (error as Error).stack);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: (error as Error).message },
+      };
+    }
+  }
 }

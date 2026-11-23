@@ -691,3 +691,39 @@ export interface NavigationMenu {
   createdAt?: string;
   updatedAt?: string;
 }
+
+// ─── ACDP Package Validation ─────────────────────────────────────────────────
+
+export interface AcdpComponentStatus {
+  component: string;
+  status: 'valid' | 'invalid' | 'missing' | 'warning';
+  details?: string;
+}
+
+export interface AcdpPackageItem {
+  id: string;
+  contentId: string;
+  title: string;
+  universe: string;
+  version: string;
+  status: 'draft' | 'under_review' | 'compliant' | 'rejected' | 'published';
+  universeFitScore: number;
+  masterVideoValid: boolean;
+  verticalDerivativeValid: boolean;
+  audioTracksValid: boolean;
+  subtitlesValid: boolean;
+  talentClearanceStatus: 'cleared' | 'pending' | 'flagged';
+  aiDisclosureStatus: 'disclosed' | 'not_applicable' | 'undisclosed';
+  components: AcdpComponentStatus[];
+  submittedAt: string;
+  submittedBy: string;
+}
+
+export interface AcdpValidationResult {
+  packageId: string;
+  isCompliant: boolean;
+  universeFitScore: number;
+  errors: string[];
+  warnings: string[];
+}
+

@@ -29,6 +29,7 @@ import {
   UpdateTierDto,
   PublishContentDto,
   UpdateCreatorSettingsDto,
+  CreateExclusiveContentDto,
 } from './dto/creator.dto.js';
 
 interface UpdateProfileBody {
@@ -509,6 +510,43 @@ export class CreatorsController {
     @Query('limit') limit = 20
   ): Promise<CreatorResponse> {
     return this.creatorsService.getCreatorContent(creatorId, Number(page), Number(limit));
+  }
+
+  @Post('exclusive-content')
+  @ApiBearerAuth()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Create exclusive content for tier supporters' })
+  @ApiResponse({ status: 201, description: 'Exclusive content created' })
+  async createExclusiveContent(
+    @Request() req: { user: { id: string } },
+    @Body() body: CreateExclusiveContentDto
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.createExclusiveContent(req.user.id, body);
+  }
+
+  @Public()
+  @Get(':creatorId/exclusive-content')
+  @ApiOperation({ summary: 'Get creator exclusive content (gated by tip tier)' })
+  @ApiResponse({ status: 200, description: 'Exclusive content list' })
+  async getExclusiveContent(
+    @Param('creatorId') creatorId: string,
+    @Request() req?: { user?: { id?: string } }
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.getExclusiveContent(creatorId, req?.user?.id);
+  }
+
+  @Delete('exclusive-content/:id')
+  @ApiBearerAuth()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Delete exclusive content' })
+  @ApiResponse({ status: 200, description: 'Exclusive content deleted' })
+  async deleteExclusiveContent(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.deleteExclusiveContent(req.user.id, id);
   }
 
   // ========================
