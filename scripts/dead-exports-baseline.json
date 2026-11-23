@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T07:18:10.374Z",
+  "generatedAt": "2026-11-23T09:29:27.790Z",
   "categories": [
     "files",
     "exports",
@@ -8,14 +8,14 @@
   ],
   "workspaces": {
     ".": {
-      "files": 42,
-      "exports": 53,
+      "files": 28,
+      "exports": 88,
       "types": 0,
       "duplicates": 0
     },
     "services/core/auth-service": {
-      "files": 12,
-      "exports": 3,
+      "files": 11,
+      "exports": 1,
       "types": 5,
       "duplicates": 0
     },
@@ -190,18 +190,18 @@
     "apps/admin": {
       "files": 0,
       "exports": 13,
-      "types": 32,
+      "types": 34,
       "duplicates": 1
     },
     "apps/creator": {
       "files": 1,
       "exports": 6,
-      "types": 12,
+      "types": 14,
       "duplicates": 1
     },
     "apps/mobile": {
-      "files": 42,
-      "exports": 21,
+      "files": 41,
+      "exports": 25,
       "types": 4,
       "duplicates": 1
     },
@@ -212,10 +212,10 @@
       "duplicates": 1
     },
     "apps/web": {
-      "files": 59,
+      "files": 53,
       "exports": 34,
-      "types": 31,
-      "duplicates": 6
+      "types": 33,
+      "duplicates": 7
     },
     "packages/analytics-sdk": {
       "files": 0,
@@ -256,7 +256,7 @@
     "packages/event-bus": {
       "files": 0,
       "exports": 0,
-      "types": 0,
+      "types": 1,
       "duplicates": 0
     },
     "packages/feature-flags": {
