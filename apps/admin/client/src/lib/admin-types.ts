@@ -727,3 +727,165 @@ export interface AcdpValidationResult {
   warnings: string[];
 }
 
+// ─── Music Universe ─────────────────────────────────────────────────────────
+
+export interface MusicTrackAdmin {
+  id: string;
+  title: string;
+  type?: string;
+  artistName?: string;
+  artistId?: string;
+  albumName?: string;
+  duration?: number;
+  genre?: string;
+  coverImage?: string;
+  trackUrl?: string;
+  status: string;
+  isPremium?: boolean;
+  views?: number;
+  createdAt: string;
+}
+
+export interface MusicArtistAdmin {
+  id: string;
+  name: string;
+  bio?: string;
+  image?: string;
+  genre?: string;
+  isVerified?: boolean;
+  monthlyListeners?: number;
+  createdAt: string;
+}
+
+// ─── Rewards & Gamification ──────────────────────────────────────────────────
+
+export interface RewardBadgeAdmin {
+  id: string;
+  name: string;
+  description?: string;
+  icon: string;
+  criteria?: string;
+  points: number;
+  createdAt?: string;
+}
+
+export interface RewardMissionAdmin {
+  id: string;
+  title: string;
+  description?: string;
+  points: number;
+  type: string;
+  isActive: boolean;
+  metadata?: Record<string, unknown>;
+  createdAt?: string;
+}
+
+export interface RewardLevelAdmin {
+  id: string;
+  name: string;
+  rank: number;
+  minPoints: number;
+  maxPoints?: number;
+  icon?: string;
+  color?: string;
+  perks?: string;
+}
+
+export interface RewardAccountAdmin {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  points: number;
+  lifetimePoints?: number;
+  currentStreak?: number;
+  longestStreak?: number;
+  levelId?: string;
+  levelName?: string;
+  updatedAt?: string;
+}
+
+export interface RewardStats {
+  totalPointsIssued: number;
+  totalPointsRedeemed: number;
+  activeMissionsCount: number;
+  totalBadgesAwarded: number;
+  totalUsersWithRewards: number;
+}
+
+// ─── Referral Program ────────────────────────────────────────────────────────
+
+export interface ReferralItemAdmin {
+  id: string;
+  referrerId: string;
+  referrerEmail?: string;
+  referrerName?: string;
+  referredId?: string;
+  referredEmail?: string;
+  code: string;
+  status: 'pending' | 'completed' | 'expired' | 'blocked' | string;
+  rewardPoints: number;
+  rewardCoins?: number;
+  createdAt: string;
+  completedAt?: string | null;
+}
+
+export interface ReferralConfigAdmin {
+  id?: string;
+  key: string;
+  value: number;
+  description?: string;
+  isActive: boolean;
+}
+
+export interface ReferralStats {
+  totalReferrals: number;
+  completedReferrals: number;
+  pendingReferrals: number;
+  totalRewardPointsIssued: number;
+  conversionRate: number;
+}
+
+// ─── Merchandise & Orders ────────────────────────────────────────────────────
+
+export interface MerchProductAdmin {
+  id: string;
+  name: string;
+  description?: string;
+  priceNgn: number;
+  priceCoins?: number;
+  images: string[];
+  category: string;
+  universe?: string;
+  stockQuantity: number;
+  isActive: boolean;
+  isFeatured?: boolean;
+  createdAt: string;
+}
+
+export interface MerchOrderAdmin {
+  id: string;
+  orderNumber: string;
+  userId: string;
+  userName?: string;
+  userEmail?: string;
+  items: Array<{
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPriceNgn: number;
+  }>;
+  totalAmountNgn: number;
+  totalAmountCoins?: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+  shippingAddress?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+  };
+  trackingNumber?: string;
+  createdAt: string;
+}
+
+

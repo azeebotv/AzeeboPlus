@@ -48,6 +48,11 @@ export default function SportsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [editItem, setEditItem] = useState<SportsItem | null>(null);
+  const [settleItem, setSettleItem] = useState<SportsItem | null>(null);
+  const [settleForm, setSettleForm] = useState<{ score: string; outcome: 'home' | 'draw' | 'away' }>({
+    score: '',
+    outcome: 'home',
+  });
 
   const initialForm = {
     title: '',
@@ -214,6 +219,49 @@ export default function SportsPage() {
     });
   };
 
+  const handleLockMarket = async (item: SportsItem) => {
+    const ok = await confirm({
+      title: 'Lock Prediction Market',
+      message: `Lock betting and prediction odds for "${item.title}"? No further predictions will be accepted.`,
+      confirmText: 'Lock Odds',
+      variant: 'warning',
+    });
+    if (!ok) return;
+
+    updateMutation.mutate({
+      id: item.id,
+      data: {
+        metadata: {
+          ...(item.metadata || {}),
+          marketStatus: 'locked',
+        },
+      },
+    });
+  };
+
+  const openSettle = (item: SportsItem) => {
+    setSettleItem(item);
+    setSettleForm({
+      score: item.metadata?.score || '',
+      outcome: 'home',
+    });
+  };
+
+  const handleSettleSubmit = () => {
+    if (!settleItem) return;
+    updateMutation.mutate({
+      id: settleItem.id,
+      data: {
+        metadata: {
+          ...(settleItem.metadata || {}),
+          score: settleForm.score || 'Final',
+          marketStatus: 'settled',
+        },
+      },
+    });
+    setSettleItem(null);
+  };
+
   return (
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
       <div
@@ -368,12 +416,15 @@ export default function SportsPage() {
                 <th style={{ padding: '12px 16px' }}>League</th>
                 <th style={{ padding: '12px 16px' }}>Odds (1 / X / 2)</th>
                 <th style={{ padding: '12px 16px' }}>Score</th>
+                <th style={{ padding: '12px 16px' }}>Market</th>
                 <th style={{ padding: '12px 16px' }}>Status</th>
                 <th style={{ padding: '12px 16px', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {matches.map((item) => (
+              {matches.map((item) => {
+                const marketStatus = item.metadata?.marketStatus || 'open';
+                return (
                 <tr
                   key={item.id}
                   style={{
@@ -403,6 +454,32 @@ export default function SportsPage() {
                         display: 'inline-block',
                         padding: '3px 8px',
                         borderRadius: '999px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        backgroundColor:
+                          marketStatus === 'settled'
+                            ? 'rgba(59, 130, 246, 0.15)'
+                            : marketStatus === 'locked'
+                            ? 'rgba(234, 179, 8, 0.15)'
+                            : 'rgba(16, 185, 129, 0.15)',
+                        color:
+                          marketStatus === 'settled'
+                            ? '#93c5fd'
+                            : marketStatus === 'locked'
+                            ? '#facc15'
+                            : '#34d399',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {marketStatus}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        padding: '3px 8px',
+                        borderRadius: '999px',
                         fontSize: '12px',
                         fontWeight: 600,
                         backgroundColor:
@@ -416,7 +493,41 @@ export default function SportsPage() {
                     </span>
                   </td>
                   <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      {marketStatus === 'open' && (
+                        <button
+                          onClick={() => handleLockMarket(item)}
+                          style={{
+                            background: 'rgba(234, 179, 8, 0.1)',
+                            border: '1px solid rgba(234, 179, 8, 0.4)',
+                            color: '#facc15',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Lock Odds
+                        </button>
+                      )}
+                      {marketStatus !== 'settled' && (
+                        <button
+                          onClick={() => openSettle(item)}
+                          style={{
+                            background: 'rgba(59, 130, 246, 0.1)',
+                            border: '1px solid rgba(59, 130, 246, 0.4)',
+                            color: '#93c5fd',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Settle
+                        </button>
+                      )}
                       {item.status === 'published' ? (
                         <button
                           onClick={() => unpublishMutation.mutate(item.id)}
@@ -482,7 +593,8 @@ export default function SportsPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -923,6 +1035,137 @@ export default function SportsPage() {
                   }}
                 >
                   {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settle Market Modal */}
+      {settleItem && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'var(--admin-card-bg, #1e293b)',
+              border: '1px solid var(--admin-border, #334155)',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '520px',
+              width: '100%',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#fff', margin: 0 }}>
+                Settle Prediction Market
+              </h2>
+              <button
+                onClick={() => setSettleItem(null)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                <Icon name="x" size={20} />
+              </button>
+            </div>
+
+            <p style={{ color: '#94a3b8', fontSize: '13px', margin: '0 0 16px 0' }}>
+              Declare the official final score and winning outcome for <strong>{settleItem.title}</strong>. Winning predictions will be credited immediately.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', color: '#cbd5e1', marginBottom: '6px' }}>
+                  Final Score (e.g. 2 - 1) *
+                </label>
+                <input
+                  type="text"
+                  value={settleForm.score}
+                  onChange={(e) => setSettleForm({ ...settleForm, score: e.target.value })}
+                  placeholder="e.g. 2 - 1"
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'var(--admin-bg, #0f172a)',
+                    border: '1px solid var(--admin-border, #334155)',
+                    color: '#fff',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', color: '#cbd5e1', marginBottom: '8px' }}>
+                  Official Outcome *
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  {[
+                    { key: 'home', label: `${settleItem.metadata?.homeTeam || 'Home'} Win (1)` },
+                    { key: 'draw', label: 'Draw (X)' },
+                    { key: 'away', label: `${settleItem.metadata?.awayTeam || 'Away'} Win (2)` },
+                  ].map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setSettleForm({ ...settleForm, outcome: opt.key as 'home' | 'draw' | 'away' })}
+                      style={{
+                        padding: '10px 8px',
+                        borderRadius: '6px',
+                        border: settleForm.outcome === opt.key ? '2px solid #10b981' : '1px solid #334155',
+                        backgroundColor: settleForm.outcome === opt.key ? 'rgba(16, 185, 129, 0.15)' : 'var(--admin-bg, #0f172a)',
+                        color: settleForm.outcome === opt.key ? '#34d399' : '#cbd5e1',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setSettleItem(null)}
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: '1px solid #475569',
+                    color: '#94a3b8',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSettleSubmit}
+                  disabled={updateMutation.isPending || !settleForm.score.trim()}
+                  style={{
+                    backgroundColor: '#3b82f6',
+                    border: 'none',
+                    color: '#fff',
+                    padding: '8px 20px',
+                    borderRadius: '6px',
+                    fontWeight: 600,
+                    cursor: updateMutation.isPending || !settleForm.score.trim() ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {updateMutation.isPending ? 'Settling...' : 'Confirm Settlement'}
                 </button>
               </div>
             </div>

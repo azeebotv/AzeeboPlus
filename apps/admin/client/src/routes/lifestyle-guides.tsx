@@ -21,9 +21,9 @@ const CATALOG_STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   expired: { bg: 'rgba(204,28,28,0.15)', color: 'var(--admin-red)' },
 };
 
-type Catalog = 'itineraries' | 'neighborhoods' | 'partners' | 'offers';
+type Catalog = 'itineraries' | 'neighborhoods' | 'partners' | 'offers' | 'events' | 'places';
 
-const TABS: Catalog[] = ['itineraries', 'neighborhoods', 'partners', 'offers'];
+const TABS: Catalog[] = ['itineraries', 'neighborhoods', 'partners', 'offers', 'events', 'places'];
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -1555,6 +1555,596 @@ function OffersTab({
   );
 }
 
+// ─── Events tab ──────────────────────────────────────────────────────────────
+
+interface LifestyleEvent {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  date: string;
+  venue: string;
+  city: string;
+  category: string;
+  price: number;
+  capacity: number;
+  rsvpCount: number;
+  status: 'published' | 'draft' | 'archived';
+}
+
+function EventsTab() {
+  const [events, setEvents] = useState<LifestyleEvent[]>([
+    {
+      id: 'evt-1',
+      title: 'Detty December All-Star Opening Gala',
+      description: 'The official cultural launch of festive season in Lagos featuring Afrobeats headliners, art popups, and live DJ sets.',
+      thumbnail: '/images/placeholders/thumbnails/16x9_01.png',
+      date: '2026-12-18T19:00:00Z',
+      venue: 'Landmark Beach Grand Hall',
+      city: 'Lagos',
+      category: 'Festival',
+      price: 15000,
+      capacity: 2500,
+      rsvpCount: 1840,
+      status: 'published',
+    },
+    {
+      id: 'evt-2',
+      title: 'Gidi Culture & Tech Mixer',
+      description: 'Connecting pan-African creative founders, tech operators, and digital creators over cocktails and acoustic performances.',
+      thumbnail: '/images/placeholders/thumbnails/16x9_02.png',
+      date: '2026-12-22T17:00:00Z',
+      venue: 'The Wings Rooftop',
+      city: 'Victoria Island, Lagos',
+      category: 'Mixer',
+      price: 0,
+      capacity: 350,
+      rsvpCount: 312,
+      status: 'published',
+    },
+    {
+      id: 'evt-3',
+      title: 'Calabar Carnival VIP Experience',
+      description: 'Exclusive hospitality lounge and parade viewing suites at the Africa\'s biggest street party.',
+      thumbnail: '/images/placeholders/thumbnails/16x9_03.png',
+      date: '2026-12-27T12:00:00Z',
+      venue: 'Carnival Boulevard',
+      city: 'Calabar',
+      category: 'Cultural Carnival',
+      price: 45000,
+      capacity: 500,
+      rsvpCount: 290,
+      status: 'draft',
+    },
+  ]);
+
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    venue: '',
+    city: 'Lagos',
+    category: 'Festival',
+    date: new Date().toISOString().slice(0, 16),
+    price: 0,
+    capacity: 500,
+    status: 'published' as 'published' | 'draft',
+  });
+
+  const handleSave = () => {
+    if (!form.title.trim()) return;
+    if (editId) {
+      setEvents(events.map((e) => (e.id === editId ? { ...e, ...form } : e)));
+    } else {
+      setEvents([
+        ...events,
+        {
+          id: `evt-${Date.now()}`,
+          ...form,
+          thumbnail: '/images/placeholders/thumbnails/16x9_01.png',
+          rsvpCount: 0,
+        },
+      ]);
+    }
+    setShowForm(false);
+    setEditId(null);
+    setForm({
+      title: '',
+      description: '',
+      venue: '',
+      city: 'Lagos',
+      category: 'Festival',
+      date: new Date().toISOString().slice(0, 16),
+      price: 0,
+      capacity: 500,
+      status: 'published',
+    });
+  };
+
+  const openEdit = (e: LifestyleEvent) => {
+    setEditId(e.id);
+    setForm({
+      title: e.title,
+      description: e.description,
+      venue: e.venue,
+      city: e.city,
+      category: e.category,
+      date: e.date.slice(0, 16),
+      price: e.price,
+      capacity: e.capacity,
+      status: e.status === 'archived' ? 'draft' : e.status,
+    });
+    setShowForm(true);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Lifestyle Events & Festivals</h2>
+          <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, margin: '4px 0 0' }}>
+            Featured concerts, food festivals, creative mixers, and cultural events across African metropolises.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setEditId(null);
+            setShowForm(!showForm);
+          }}
+          style={primaryBtn}
+        >
+          <span style={{ marginRight: 6, display: 'inline-flex', alignItems: 'center' }}>
+            <Icon name={showForm ? 'x' : 'plus'} size={14} />
+          </span>
+          <span>{showForm ? 'Cancel' : 'New Event'}</span>
+        </button>
+      </div>
+
+      {showForm && (
+        <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>
+            {editId ? 'Edit Event' : 'Create Lifestyle Event'}
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+            <Field label="Event Title *">
+              <input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="e.g. Afrochella VIP Village"
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Venue *">
+              <input
+                value={form.venue}
+                onChange={(e) => setForm({ ...form, venue: e.target.value })}
+                placeholder="e.g. Eko Atlantic Grounds"
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="City">
+              <input
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                placeholder="e.g. Lagos, Accra, Kigali"
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Category">
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                style={inputStyle}
+              >
+                <option value="Festival">Festival</option>
+                <option value="Concert">Concert</option>
+                <option value="Mixer">Mixer</option>
+                <option value="Cultural Carnival">Cultural Carnival</option>
+                <option value="Food & Wine">Food & Wine</option>
+                <option value="Fashion Week">Fashion Week</option>
+              </select>
+            </Field>
+            <Field label="Date & Time">
+              <input
+                type="datetime-local"
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Ticket Price (₦ - 0 for Free)">
+              <input
+                type="number"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: Number(e.target.value) || 0 })}
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Capacity (Max Guests)">
+              <input
+                type="number"
+                value={form.capacity}
+                onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) || 0 })}
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Publication Status">
+              <select
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value as 'published' | 'draft' })}
+                style={inputStyle}
+              >
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </Field>
+          </div>
+          <Field label="Description">
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={2}
+              style={{ ...inputStyle, resize: 'vertical' }}
+            />
+          </Field>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={handleSave} style={primaryBtn}>
+              {editId ? 'Update Event' : 'Create Event'}
+            </button>
+            <button onClick={() => setShowForm(false)} style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-card)', color: 'var(--admin-text)' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {events.map((evt) => (
+          <div
+            key={evt.id}
+            style={{
+              ...cardStyle,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 16,
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 260 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <strong style={{ fontSize: 16 }}>{evt.title}</strong>
+                <StatusBadge status={evt.status} />
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    backgroundColor: 'rgba(59,130,246,0.15)',
+                    color: '#93c5fd',
+                  }}
+                >
+                  {evt.category}
+                </span>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '0 0 6px 0' }}>
+                {evt.description}
+              </p>
+              <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                <span>📍 {evt.venue}, {evt.city}</span>
+                <span>📅 {new Date(evt.date).toLocaleDateString()}</span>
+                <span>🎟️ {evt.price === 0 ? 'Free Entry' : `₦${evt.price.toLocaleString()}`}</span>
+                <span>👥 {evt.rsvpCount} / {evt.capacity} RSVPs</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => openEdit(evt)}
+                style={{
+                  ...primaryBtn,
+                  background: 'transparent',
+                  border: '1px solid var(--admin-card)',
+                  color: 'var(--admin-text)',
+                  padding: '6px 10px',
+                }}
+                title="Edit"
+              >
+                <Icon name="edit" size={14} />
+              </button>
+              <ConfirmDeleteButton
+                onConfirm={() => setEvents(events.filter((e) => e.id !== evt.id))}
+                label={`"${evt.title}"`}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Places & Nightlife tab ──────────────────────────────────────────────────
+
+interface LifestylePlace {
+  id: string;
+  name: string;
+  neighborhood: string;
+  category: string;
+  priceTier: '$$' | '$$$' | '$$$$';
+  dressCode: string;
+  address: string;
+  rating: number;
+  status: 'published' | 'draft' | 'archived';
+}
+
+function PlacesTab() {
+  const [places, setPlaces] = useState<LifestylePlace[]>([
+    {
+      id: 'pl-1',
+      name: 'Zaza Lounge & Supper Club',
+      neighborhood: 'Victoria Island',
+      category: 'Rooftop Lounge',
+      priceTier: '$$$$',
+      dressCode: 'Glamorous / Smart Chic',
+      address: 'Plot 1412 Adetokunbo Ademola, VI, Lagos',
+      rating: 4.8,
+      status: 'published',
+    },
+    {
+      id: 'pl-2',
+      name: 'Moist Beach Club',
+      neighborhood: 'Oniru / Lekki',
+      category: 'Beach Club',
+      priceTier: '$$$',
+      dressCode: 'Beach Chic',
+      address: 'Iru Beach, Oniru, Lagos',
+      rating: 4.6,
+      status: 'published',
+    },
+    {
+      id: 'pl-3',
+      name: 'The House Victoria Island',
+      neighborhood: 'Victoria Island',
+      category: 'Speakeasy & Social House',
+      priceTier: '$$$',
+      dressCode: 'Smart Casual',
+      address: '4 A.J. Marinho Drive, VI, Lagos',
+      rating: 4.7,
+      status: 'published',
+    },
+  ]);
+
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    name: '',
+    neighborhood: 'Victoria Island',
+    category: 'Rooftop Lounge',
+    priceTier: '$$$' as '$$' | '$$$' | '$$$$',
+    dressCode: 'Smart Casual',
+    address: '',
+    status: 'published' as 'published' | 'draft',
+  });
+
+  const handleSave = () => {
+    if (!form.name.trim()) return;
+    if (editId) {
+      setPlaces(places.map((p) => (p.id === editId ? { ...p, ...form } : p)));
+    } else {
+      setPlaces([
+        ...places,
+        {
+          id: `pl-${Date.now()}`,
+          ...form,
+          rating: 4.5,
+        },
+      ]);
+    }
+    setShowForm(false);
+    setEditId(null);
+    setForm({
+      name: '',
+      neighborhood: 'Victoria Island',
+      category: 'Rooftop Lounge',
+      priceTier: '$$$',
+      dressCode: 'Smart Casual',
+      address: '',
+      status: 'published',
+    });
+  };
+
+  const openEdit = (p: LifestylePlace) => {
+    setEditId(p.id);
+    setForm({
+      name: p.name,
+      neighborhood: p.neighborhood,
+      category: p.category,
+      priceTier: p.priceTier,
+      dressCode: p.dressCode,
+      address: p.address,
+      status: p.status === 'archived' ? 'draft' : p.status,
+    });
+    setShowForm(true);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Venues, Lounges & Nightlife</h2>
+          <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, margin: '4px 0 0' }}>
+            Curated beach clubs, speakeasies, rooftop lounges, and dining experiences for 9TLIFE members.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setEditId(null);
+            setShowForm(!showForm);
+          }}
+          style={primaryBtn}
+        >
+          <span style={{ marginRight: 6, display: 'inline-flex', alignItems: 'center' }}>
+            <Icon name={showForm ? 'x' : 'plus'} size={14} />
+          </span>
+          <span>{showForm ? 'Cancel' : 'New Venue'}</span>
+        </button>
+      </div>
+
+      {showForm && (
+        <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>
+            {editId ? 'Edit Venue' : 'Register New Venue'}
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+            <Field label="Venue Name *">
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="e.g. RSVP Lounge"
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Neighborhood / District *">
+              <input
+                value={form.neighborhood}
+                onChange={(e) => setForm({ ...form, neighborhood: e.target.value })}
+                placeholder="e.g. Victoria Island, Lekki Phase 1"
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Venue Category">
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                style={inputStyle}
+              >
+                <option value="Rooftop Lounge">Rooftop Lounge</option>
+                <option value="Beach Club">Beach Club</option>
+                <option value="Speakeasy & Social House">Speakeasy & Social House</option>
+                <option value="Nightclub">Nightclub</option>
+                <option value="Fine Dining">Fine Dining</option>
+                <option value="Cocktail Bar">Cocktail Bar</option>
+              </select>
+            </Field>
+            <Field label="Price Tier">
+              <select
+                value={form.priceTier}
+                onChange={(e) => setForm({ ...form, priceTier: e.target.value as '$$' | '$$$' | '$$$$' })}
+                style={inputStyle}
+              >
+                <option value="$$">$$ (Moderate)</option>
+                <option value="$$$">$$$ (Upscale)</option>
+                <option value="$$$$">$$$$ (Ultra Luxury)</option>
+              </select>
+            </Field>
+            <Field label="Dress Code">
+              <input
+                value={form.dressCode}
+                onChange={(e) => setForm({ ...form, dressCode: e.target.value })}
+                placeholder="e.g. Glamorous / Smart Chic"
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Physical Address">
+              <input
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                placeholder="e.g. 14B Adeola Odeku St, VI"
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Publication Status">
+              <select
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value as 'published' | 'draft' })}
+                style={inputStyle}
+              >
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </Field>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={handleSave} style={primaryBtn}>
+              {editId ? 'Update Venue' : 'Save Venue'}
+            </button>
+            <button onClick={() => setShowForm(false)} style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--admin-card)', color: 'var(--admin-text)' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {places.map((place) => (
+          <div
+            key={place.id}
+            style={{
+              ...cardStyle,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 16,
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 260 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <strong style={{ fontSize: 16 }}>{place.name}</strong>
+                <StatusBadge status={place.status} />
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    backgroundColor: 'rgba(234,179,8,0.15)',
+                    color: '#facc15',
+                  }}
+                >
+                  {place.priceTier}
+                </span>
+                <span style={{ fontSize: 12, color: 'var(--admin-green)', fontWeight: 600 }}>
+                  ★ {place.rating}
+                </span>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '0 0 6px 0' }}>
+                {place.category} · {place.neighborhood} · Dress Code: {place.dressCode}
+              </p>
+              <div style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
+                📍 {place.address}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => openEdit(place)}
+                style={{
+                  ...primaryBtn,
+                  background: 'transparent',
+                  border: '1px solid var(--admin-card)',
+                  color: 'var(--admin-text)',
+                  padding: '6px 10px',
+                }}
+                title="Edit"
+              >
+                <Icon name="edit" size={14} />
+              </button>
+              <ConfirmDeleteButton
+                onConfirm={() => setPlaces(places.filter((p) => p.id !== place.id))}
+                label={`"${place.name}"`}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Page shell ──────────────────────────────────────────────────────────────
 
 export default function LifestyleGuidesPage() {
@@ -1638,6 +2228,8 @@ export default function LifestyleGuidesPage() {
           key={offersPartner?.id ?? 'none'}
         />
       )}
+      {tab === 'events' && <EventsTab />}
+      {tab === 'places' && <PlacesTab />}
       {offersPartner && tab === 'offers' && (
         <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 8 }}>
           Jumped here from partner "{offersPartner.name}" — use the partner selector above to add an

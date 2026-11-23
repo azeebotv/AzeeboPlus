@@ -26,6 +26,10 @@ const VerticalSeriesPage = lazy(() => import('./routes/vertical-series'));
 const SportsPage = lazy(() => import('./routes/sports'));
 const ComedyPage = lazy(() => import('./routes/comedy'));
 const GamesPage = lazy(() => import('./routes/games'));
+const MusicPage = lazy(() => import('./routes/music'));
+const RewardsPage = lazy(() => import('./routes/rewards'));
+const ReferralsPage = lazy(() => import('./routes/referrals'));
+const MerchandisePage = lazy(() => import('./routes/merchandise'));
 const UniversesPage = lazy(() => import('./routes/universes'));
 const WalletsPage = lazy(() => import('./routes/wallets'));
 const FinancialPage = lazy(() => import('./routes/financial'));
@@ -142,6 +146,10 @@ export default function App() {
                 <Route path="sports" element={<SportsPage />} />
                 <Route path="comedy" element={<ComedyPage />} />
                 <Route path="games" element={<GamesPage />} />
+                <Route path="music" element={<MusicPage />} />
+                <Route path="rewards" element={<RewardsPage />} />
+                <Route path="referrals" element={<ReferralsPage />} />
+                <Route path="merchandise" element={<MerchandisePage />} />
                 <Route path="universes" element={<UniversesPage />} />
                 <Route path="wallets" element={<WalletsPage />} />
                 <Route path="financial" element={<FinancialPage />} />

@@ -45,6 +45,18 @@ import type {
   NavigationMenu,
   AcdpPackageItem,
   AcdpValidationResult,
+  MusicTrackAdmin,
+  MusicArtistAdmin,
+  RewardBadgeAdmin,
+  RewardMissionAdmin,
+  RewardLevelAdmin,
+  RewardAccountAdmin,
+  RewardStats,
+  ReferralItemAdmin,
+  ReferralConfigAdmin,
+  ReferralStats,
+  MerchProductAdmin,
+  MerchOrderAdmin,
 } from '../admin-types';
 
 export interface DashboardStats {
@@ -1265,6 +1277,153 @@ export const adminApi = {
     ),
   getPublicMenu: (location: string) =>
     apiFetch<NavigationMenu>(`/api/v1/admin/menus/public/${encodeURIComponent(location)}`),
+
+  // ── Music Universe (lifestyle-service) ──
+
+  getMusicTracks: (params: { page?: number; limit?: number; type?: string; genre?: string; artistId?: string; status?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.type) q.set('type', params.type);
+    if (params.genre) q.set('genre', params.genre);
+    if (params.artistId) q.set('artistId', params.artistId);
+    if (params.status) q.set('status', params.status);
+    return apiFetch<{ items: MusicTrackAdmin[]; total: number }>(`/api/v1/lifestyle/music?${q}`);
+  },
+  createMusicTrack: (data: Partial<MusicTrackAdmin>) =>
+    apiFetch<MusicTrackAdmin>('/api/v1/lifestyle/music', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateMusicTrack: (id: string, data: Partial<MusicTrackAdmin>) =>
+    apiFetch<MusicTrackAdmin>(`/api/v1/lifestyle/music/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteMusicTrack: (id: string) =>
+    apiFetch<{ success: boolean }>(`/api/v1/lifestyle/music/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+  getMusicArtists: (params: { page?: number; limit?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    return apiFetch<{ items: MusicArtistAdmin[]; total: number }>(`/api/v1/lifestyle/music/artists?${q}`);
+  },
+  getMusicGenres: () =>
+    apiFetch<string[]>('/api/v1/lifestyle/music/genres'),
+
+  // ── Rewards & Gamification (reward-service) ──
+
+  getRewardStats: () =>
+    apiFetch<RewardStats>('/api/v1/rewards/stats'),
+  getRewardBadges: (params: { page?: number; limit?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    return apiFetch<{ items: RewardBadgeAdmin[]; total: number }>(`/api/v1/rewards/badges?${q}`);
+  },
+  createRewardBadge: (data: { name: string; description?: string; icon: string; criteria?: string; points: number }) =>
+    apiFetch<RewardBadgeAdmin>('/api/v1/rewards/badges', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  assignRewardBadge: (badgeId: string, userId: string, reason?: string) =>
+    apiFetch<{ success: boolean }>(`/api/v1/rewards/badges/${encodeURIComponent(badgeId)}/assign`, {
+      method: 'POST',
+      body: JSON.stringify({ userId, reason }),
+    }),
+  getRewardMissions: (params: { type?: string; isActive?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.type) q.set('type', params.type);
+    if (params.isActive) q.set('isActive', params.isActive);
+    return apiFetch<RewardMissionAdmin[]>(`/api/v1/rewards/missions?${q}`);
+  },
+  createRewardMission: (data: { title: string; description?: string; points: number; type: string; metadata?: Record<string, unknown> }) =>
+    apiFetch<RewardMissionAdmin>('/api/v1/rewards/missions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateRewardMission: (id: string, data: Partial<RewardMissionAdmin>) =>
+    apiFetch<RewardMissionAdmin>(`/api/v1/rewards/missions/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  getRewardLevels: () =>
+    apiFetch<RewardLevelAdmin[]>('/api/v1/rewards/levels'),
+  createRewardLevel: (data: { name: string; rank: number; minPoints: number; maxPoints?: number; icon?: string; color?: string; perks?: string }) =>
+    apiFetch<RewardLevelAdmin>('/api/v1/rewards/levels', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateRewardLevel: (id: string, data: Partial<RewardLevelAdmin>) =>
+    apiFetch<RewardLevelAdmin>(`/api/v1/rewards/levels/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  getRewardAccounts: (params: { page?: number; limit?: number; minPoints?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.minPoints) q.set('minPoints', String(params.minPoints));
+    return apiFetch<{ items: RewardAccountAdmin[]; total: number }>(`/api/v1/rewards/admin/accounts?${q}`);
+  },
+  adjustRewardBalance: (userId: string, pointsDelta: number, reason: string) =>
+    apiFetch<{ success: boolean; newBalance: number }>('/api/v1/rewards/admin/adjust', {
+      method: 'POST',
+      body: JSON.stringify({ userId, pointsDelta, reason }),
+    }),
+
+  // ── Referral Program (referral-service) ──
+
+  getReferralStats: () =>
+    apiFetch<ReferralStats>('/api/v1/referrals/stats'),
+  getReferrals: (page = 1, limit = 20) =>
+    apiFetch<{ items: ReferralItemAdmin[]; total: number }>(`/api/v1/referrals?page=${page}&limit=${limit}`),
+  getReferralConfig: () =>
+    apiFetch<ReferralConfigAdmin[]>('/api/v1/referrals/config'),
+  updateReferralConfig: (data: { key: string; value?: number; description?: string; isActive?: boolean }) =>
+    apiFetch<ReferralConfigAdmin>('/api/v1/referrals/config', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  // ── Merchandise & Store (cart & orders) ──
+
+  getMerchProducts: (params: { page?: number; limit?: number; category?: string; universe?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.category) q.set('category', params.category);
+    if (params.universe) q.set('universe', params.universe);
+    return apiFetch<{ items: MerchProductAdmin[]; total: number }>(`/api/v1/cart/products?${q}`);
+  },
+  createMerchProduct: (data: Partial<MerchProductAdmin>) =>
+    apiFetch<MerchProductAdmin>('/api/v1/cart/products', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateMerchProduct: (id: string, data: Partial<MerchProductAdmin>) =>
+    apiFetch<MerchProductAdmin>(`/api/v1/cart/products/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteMerchProduct: (id: string) =>
+    apiFetch<{ success: boolean }>(`/api/v1/cart/products/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+  getMerchOrders: (params: { page?: number; limit?: number; status?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.status) q.set('status', params.status);
+    return apiFetch<{ items: MerchOrderAdmin[]; total: number }>(`/api/v1/cart/orders?${q}`);
+  },
+  updateMerchOrderStatus: (id: string, status: string, trackingNumber?: string) =>
+    apiFetch<MerchOrderAdmin>(`/api/v1/cart/orders/${encodeURIComponent(id)}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, trackingNumber }),
+    }),
 };
 
 /** Outcome of a manual "Run now" job execution. */

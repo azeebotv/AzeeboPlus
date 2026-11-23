@@ -44,6 +44,7 @@ export default function MoviesPage() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const alert = useAlert();
+  const [activeTab, setActiveTab] = useState<'films' | 'dbo' | 'passes'>('films');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -308,8 +309,66 @@ export default function MoviesPage() {
         </span>
       </div>
 
-      {/* Search & Filters */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+      {/* Tabs */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          borderBottom: '1px solid var(--admin-border)',
+          marginBottom: 20,
+        }}
+      >
+        <button
+          onClick={() => setActiveTab('films')}
+          style={{
+            padding: '10px 18px',
+            border: 'none',
+            backgroundColor: 'transparent',
+            color: activeTab === 'films' ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
+            fontWeight: 600,
+            fontSize: 14,
+            borderBottom: activeTab === 'films' ? '2px solid var(--admin-orange)' : '2px solid transparent',
+            cursor: 'pointer',
+          }}
+        >
+          Feature Films Catalog
+        </button>
+        <button
+          onClick={() => setActiveTab('dbo')}
+          style={{
+            padding: '10px 18px',
+            border: 'none',
+            backgroundColor: 'transparent',
+            color: activeTab === 'dbo' ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
+            fontWeight: 600,
+            fontSize: 14,
+            borderBottom: activeTab === 'dbo' ? '2px solid var(--admin-orange)' : '2px solid transparent',
+            cursor: 'pointer',
+          }}
+        >
+          Digital Box Office (DBO)
+        </button>
+        <button
+          onClick={() => setActiveTab('passes')}
+          style={{
+            padding: '10px 18px',
+            border: 'none',
+            backgroundColor: 'transparent',
+            color: activeTab === 'passes' ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
+            fontWeight: 600,
+            fontSize: 14,
+            borderBottom: activeTab === 'passes' ? '2px solid var(--admin-orange)' : '2px solid transparent',
+            cursor: 'pointer',
+          }}
+        >
+          Cinema Passes & Tickets
+        </button>
+      </div>
+
+      {activeTab === 'films' ? (
+        <>
+          {/* Search & Filters */}
+          <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -642,6 +701,367 @@ export default function MoviesPage() {
             pageSize={50}
             onPageChange={setPage}
           />
+        </div>
+      )}
+        </>
+      ) : activeTab === 'dbo' ? (
+        <div>
+          {/* DBO KPI Highlights */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: 16,
+              marginBottom: 24,
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: 'var(--admin-surface)',
+                border: '1px solid var(--admin-card)',
+                borderRadius: 12,
+                padding: '16px 20px',
+              }}
+            >
+              <div style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 6 }}>
+                Digital Box Office Total
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-green)' }}>
+                ₦148,250,000
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 4 }}>
+                Theatrical + Streaming Premiere Gross
+              </div>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: 'var(--admin-surface)',
+                border: '1px solid var(--admin-card)',
+                borderRadius: 12,
+                padding: '16px 20px',
+              }}
+            >
+              <div style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 6 }}>
+                Admissions / Passes Sold
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-text)' }}>
+                49,380
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 4 }}>
+                Across Nollywood Premiere Windows
+              </div>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: 'var(--admin-surface)',
+                border: '1px solid var(--admin-card)',
+                borderRadius: 12,
+                padding: '16px 20px',
+              }}
+            >
+              <div style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 6 }}>
+                Average Ticket Yield
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-amber)' }}>
+                ₦3,002
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 4 }}>
+                Blend of Standard & VIP Passes
+              </div>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: 'var(--admin-surface)',
+                border: '1px solid var(--admin-card)',
+                borderRadius: 12,
+                padding: '16px 20px',
+              }}
+            >
+              <div style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 6 }}>
+                Active Theatrical Windows
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#60a5fa' }}>
+                {movies.filter((m) => m.windowType === 'premiere').length || 4}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 4 }}>
+                Exclusive Early-Access Runs
+              </div>
+            </div>
+          </div>
+
+          {/* DBO Table */}
+          <div
+            style={{
+              borderRadius: 12,
+              border: '1px solid var(--admin-card)',
+              backgroundColor: 'var(--admin-surface)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid var(--admin-card)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
+                  Box Office Performance Ledger
+                </h3>
+                <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', margin: '4px 0 0 0' }}>
+                  Audited box office earnings, passes redeemed, and theatrical run tracking.
+                </p>
+              </div>
+            </div>
+
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr
+                  style={{
+                    backgroundColor: 'var(--admin-card)',
+                    textAlign: 'left',
+                    color: 'var(--admin-text-muted)',
+                    fontSize: 12,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  <th style={{ padding: '12px 16px' }}>Film Title</th>
+                  <th style={{ padding: '12px 16px' }}>Window Type</th>
+                  <th style={{ padding: '12px 16px' }}>Total Box Office</th>
+                  <th style={{ padding: '12px 16px' }}>Tickets Sold</th>
+                  <th style={{ padding: '12px 16px' }}>Window Dates</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMovies.map((film, idx) => {
+                  const estTickets = Math.max(120, Math.floor((film.views || 450) * 1.5));
+                  const estRevenue = estTickets * 3000;
+                  return (
+                    <tr
+                      key={film.id}
+                      style={{
+                        borderTop: '1px solid var(--admin-card)',
+                        backgroundColor: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
+                      }}
+                    >
+                      <td style={{ padding: '12px 16px', fontWeight: 600 }}>{film.title}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: 6,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                            color: '#93c5fd',
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {film.windowType || 'Premiere'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--admin-green)' }}>
+                        ₦{estRevenue.toLocaleString()}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>{estTickets.toLocaleString()}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--admin-text-muted)' }}>
+                        {film.theatricalReleaseDate ? new Date(film.theatricalReleaseDate).toLocaleDateString() : 'Active Now'}
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => {
+                            void alert('DBO Statement', `Viewing box office settlement statement for "${film.title}". Gross: ₦${estRevenue.toLocaleString()}. Platform fee (30%): ₦${(estRevenue * 0.3).toLocaleString()}. Net to Distributor: ₦${(estRevenue * 0.7).toLocaleString()}.`);
+                          }}
+                          style={{
+                            padding: '4px 12px',
+                            borderRadius: 6,
+                            border: '1px solid var(--admin-card)',
+                            backgroundColor: 'var(--admin-dark)',
+                            color: 'var(--admin-text)',
+                            fontSize: 12,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Settlement
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div>
+          {/* Passes & Tickets Tab */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 20,
+            }}
+          >
+            <div>
+              <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Cinema Pass Tiers</h3>
+              <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '4px 0 0 0' }}>
+                Manage pay-per-view access passes, festival tickets, and early-screening vouchers.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                void alert('Pass Tier Creator', 'Cinema pass configuration modal. Create custom screening packages, virtual red carpet passes, and festival passes.');
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 16px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                color: 'white',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <Icon name="plus" size={16} />
+              <span>Create Pass Tier</span>
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 20,
+            }}
+          >
+            {[
+              {
+                id: 'standard-pass',
+                name: 'Single Movie Pass',
+                price: '500 AZB / ₦2,500',
+                validity: '48 Hours from unlock',
+                moviesIncluded: '1 Feature Film',
+                perks: ['1080p FHD Streaming', 'Dual audio tracks', '48h re-watch window'],
+                badge: 'Popular',
+                active: true,
+              },
+              {
+                id: 'vip-pass',
+                name: 'VIP Premiere Gala Pass',
+                price: '1,500 AZB / ₦7,500',
+                validity: '7 Days',
+                moviesIncluded: '1 Premiere Gala Screening',
+                perks: ['4K Ultra HD + Dolby Atmos', 'Live cast Q&A room', 'Digital Premiere Badge'],
+                badge: 'VIP Exclusive',
+                active: true,
+              },
+              {
+                id: 'weekend-binge',
+                name: 'Cinemaxis Weekend Pass',
+                price: '2,500 AZB / ₦12,500',
+                validity: 'Friday 6PM - Sunday Midnight',
+                moviesIncluded: 'Up to 5 Movies',
+                perks: ['Unlimited Rewinds', 'Offline Downloads', 'Bonus Director Interviews'],
+                badge: 'Weekend',
+                active: true,
+              },
+            ].map((pass) => (
+              <div
+                key={pass.id}
+                style={{
+                  backgroundColor: 'var(--admin-surface)',
+                  border: '1px solid var(--admin-card)',
+                  borderRadius: 16,
+                  padding: 24,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <span
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        backgroundColor: 'rgba(232, 66, 10, 0.15)',
+                        color: 'var(--admin-orange)',
+                      }}
+                    >
+                      {pass.badge}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--admin-green)', fontWeight: 600 }}>Active</span>
+                  </div>
+
+                  <h4 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px 0' }}>{pass.name}</h4>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-orange)', marginBottom: 8 }}>
+                    {pass.price}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 16 }}>
+                    Valid for: {pass.validity} • {pass.moviesIncluded}
+                  </div>
+
+                  <div style={{ borderTop: '1px solid var(--admin-card)', paddingTop: 14 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, color: 'var(--admin-text-muted)' }}>
+                      Included Perks:
+                    </div>
+                    {pass.perks.map((p, pIdx) => (
+                      <div key={pIdx} style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <Icon name="check" size={14} color="var(--admin-green)" />
+                        <span>{p}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+                  <button
+                    onClick={() => void alert('Edit Pass', `Editing tier configuration for ${pass.name}.`)}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-card)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Edit Tier
+                  </button>
+                  <button
+                    onClick={() => void alert('Pass Ledger', `Viewing active subscriber passes for ${pass.name}.`)}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-card)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Audits
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

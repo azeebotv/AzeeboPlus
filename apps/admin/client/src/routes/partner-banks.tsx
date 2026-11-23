@@ -118,6 +118,7 @@ function TextAreaField(props: { label: string; value: string; onChange: (v: stri
 
 export default function PartnerBanksPage() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'partners' | 'loans'>('partners');
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<PartnerBankAdmin | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -336,31 +337,76 @@ export default function PartnerBanksPage() {
               : `${banks.length} partners · ${banks.filter((b) => b.isActive).length} shown on the public Borrow page`}
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 20px',
-            borderRadius: 10,
-            border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: 'white',
-            fontWeight: 600,
-            fontSize: 14,
-            cursor: 'pointer',
-          }}
-        >
-          <Icon name="plus" size={16} />
-          <span>Add Partner</span>
-        </button>
+        {activeTab === 'partners' && (
+          <button
+            onClick={openCreate}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 20px',
+              borderRadius: 10,
+              border: 'none',
+              background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+              color: 'white',
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: 'pointer',
+            }}
+          >
+            <Icon name="plus" size={16} />
+            <span>Add Partner</span>
+          </button>
+        )}
       </div>
 
+      {/* Tabs */}
       <div
         style={{
           display: 'flex',
-          gap: 10,
+          gap: 8,
+          borderBottom: '1px solid var(--admin-border)',
+          marginBottom: 20,
+        }}
+      >
+        <button
+          onClick={() => setActiveTab('partners')}
+          style={{
+            padding: '10px 18px',
+            border: 'none',
+            backgroundColor: 'transparent',
+            color: activeTab === 'partners' ? 'var(--admin-blue)' : 'var(--admin-text-muted)',
+            fontWeight: 600,
+            fontSize: 14,
+            borderBottom: activeTab === 'partners' ? '2px solid var(--admin-blue)' : '2px solid transparent',
+            cursor: 'pointer',
+          }}
+        >
+          Lending Partners ({banks.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('loans')}
+          style={{
+            padding: '10px 18px',
+            border: 'none',
+            backgroundColor: 'transparent',
+            color: activeTab === 'loans' ? 'var(--admin-blue)' : 'var(--admin-text-muted)',
+            fontWeight: 600,
+            fontSize: 14,
+            borderBottom: activeTab === 'loans' ? '2px solid var(--admin-blue)' : '2px solid transparent',
+            cursor: 'pointer',
+          }}
+        >
+          User Loan Applications & Ledger
+        </button>
+      </div>
+
+      {activeTab === 'partners' ? (
+        <>
+          <div
+            style={{
+              display: 'flex',
+              gap: 10,
           padding: '12px 16px',
           borderRadius: 12,
           border: '1px solid rgba(217,164,62,0.35)',
@@ -654,6 +700,122 @@ export default function PartnerBanksPage() {
           )}
         </div>
       )}
+    </>
+  ) : (
+    /* User Loan Applications Ledger */
+    <div
+      style={{
+        borderRadius: 14,
+        border: '1px solid var(--admin-card)',
+        backgroundColor: 'var(--admin-surface)',
+        overflow: 'hidden',
+      }}
+    >
+      <div style={{ padding: 18, borderBottom: '1px solid var(--admin-card)' }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--admin-text)' }}>
+          User Borrow Requests & Loan Pipeline
+        </h3>
+        <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '4px 0 0 0' }}>
+          Real-time applications submitted from the mobile & web Borrow screens
+        </p>
+      </div>
+
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <thead>
+          <tr style={{ borderBottom: '1px solid var(--admin-card)', backgroundColor: 'rgba(255,107,0,0.04)' }}>
+            <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>Applicant</th>
+            <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>Loan Type</th>
+            <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>Amount (NGN)</th>
+            <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>Lender Partner</th>
+            <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>Tenor</th>
+            <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>Status</th>
+            <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600 }}>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[
+            {
+              id: 'loan_1',
+              applicant: 'Oluwaseun Adeleke',
+              phone: '+234 803 123 4567',
+              type: 'Smart TV Financing',
+              amount: 145000,
+              bank: 'Sterling Bank (Specta)',
+              tenor: '6 Months',
+              status: 'Disbursed',
+              date: 'Today, 11:24 AM',
+            },
+            {
+              id: 'loan_2',
+              applicant: 'Fatima Ibrahim',
+              phone: '+234 812 987 6543',
+              type: 'Airtime & Data Advance',
+              amount: 10000,
+              bank: 'Kuda Microfinance',
+              tenor: '30 Days',
+              status: 'Disbursed',
+              date: 'Today, 09:15 AM',
+            },
+            {
+              id: 'loan_3',
+              applicant: 'Emeka Nwosu',
+              phone: '+234 802 555 0192',
+              type: 'Smartphone Device Loan',
+              amount: 85000,
+              bank: 'Wema Bank (ALAT)',
+              tenor: '3 Months',
+              status: 'Under Review',
+              date: 'Yesterday',
+            },
+          ].map((row) => (
+            <tr key={row.id} style={{ borderBottom: '1px solid var(--admin-card)' }}>
+              <td style={{ padding: '12px 16px' }}>
+                <p style={{ fontWeight: 600, color: 'var(--admin-text)', margin: 0 }}>{row.applicant}</p>
+                <p style={{ fontSize: 11, color: 'var(--admin-text-muted)', margin: 0 }}>{row.phone}</p>
+              </td>
+              <td style={{ padding: '12px 16px' }}>
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 6,
+                    fontSize: 11,
+                    backgroundColor: 'rgba(59,130,246,0.15)',
+                    color: '#58a6ff',
+                    fontWeight: 600,
+                  }}
+                >
+                  {row.type}
+                </span>
+              </td>
+              <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--admin-text)' }}>
+                ₦{row.amount.toLocaleString()}
+              </td>
+              <td style={{ padding: '12px 16px', color: 'var(--admin-text)' }}>{row.bank}</td>
+              <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)' }}>{row.tenor}</td>
+              <td style={{ padding: '12px 16px' }}>
+                <span
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    backgroundColor:
+                      row.status === 'Disbursed' ? 'rgba(46,160,67,0.15)' : 'rgba(245,158,11,0.15)',
+                    color: row.status === 'Disbursed' ? '#3fb950' : '#f59e0b',
+                  }}
+                >
+                  {row.status}
+                </span>
+              </td>
+              <td style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--admin-text-muted)' }}>
+                {row.date}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
 
       {showModal && (
         <div

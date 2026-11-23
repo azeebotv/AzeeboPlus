@@ -160,6 +160,12 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         description: 'Games catalog, esports tournaments & trivia',
       },
       {
+        href: '/music',
+        label: 'Music Universe',
+        icon: 'music',
+        description: 'Afrobeats tracks, artist catalog & audio playlists',
+      },
+      {
         href: '/lifestyle-guides',
         label: 'Lifestyle Guides',
         icon: 'sprout',
@@ -215,6 +221,12 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         description: 'Special bundle access tickets',
       },
       {
+        href: '/merchandise',
+        label: 'Merchandise & Store',
+        icon: 'gift',
+        description: 'Physical merchandise catalog & customer orders',
+      },
+      {
         href: '/tipping',
         label: 'Tipping',
         icon: 'gem',
@@ -244,6 +256,18 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: 'Engagement',
         icon: 'flame',
         description: 'Audience activity & interaction rates',
+      },
+      {
+        href: '/rewards',
+        label: 'Rewards & Badges',
+        icon: 'gem',
+        description: 'Fan points, streak multipliers, missions & achievement badges',
+      },
+      {
+        href: '/referrals',
+        label: 'Referral Program',
+        icon: 'users',
+        description: 'Viral invite rules, referral bonuses & conversion tracking',
       },
       {
         href: '/notifications',

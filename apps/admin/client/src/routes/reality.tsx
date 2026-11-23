@@ -1,4 +1,4 @@
-import { useConfirm } from "@/components/ui";
+import { useConfirm, useAlert } from "@/components/ui";
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
@@ -14,8 +14,10 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
 
 export default function RealityPage() {
   const confirm = useConfirm();
+  const alert = useAlert();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'shows' | 'contestants'>('shows');
+  const [activeTab, setActiveTab] = useState<'shows' | 'contestants' | 'voting' | 'packages'>('shows');
+  const [votingPaused, setVotingPaused] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [editTarget, setEditTarget] = useState<RealityShow | null>(null);
   const [form, setForm] = useState({
@@ -208,7 +210,7 @@ export default function RealityPage() {
       </div>
 
       {/* Tab Switcher */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <button
           onClick={() => setActiveTab('shows')}
           style={{
@@ -238,6 +240,36 @@ export default function RealityPage() {
           }}
         >
           Contestants & Live Telemetry ({contestants.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('voting')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: 8,
+            border: activeTab === 'voting' ? '1px solid var(--admin-orange)' : '1px solid var(--admin-card)',
+            background: activeTab === 'voting' ? 'rgba(232, 66, 10, 0.15)' : 'var(--admin-surface)',
+            color: activeTab === 'voting' ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
+            fontWeight: 600,
+            fontSize: 14,
+            cursor: 'pointer',
+          }}
+        >
+          Eviction Voting Windows
+        </button>
+        <button
+          onClick={() => setActiveTab('packages')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: 8,
+            border: activeTab === 'packages' ? '1px solid var(--admin-orange)' : '1px solid var(--admin-card)',
+            background: activeTab === 'packages' ? 'rgba(232, 66, 10, 0.15)' : 'var(--admin-surface)',
+            color: activeTab === 'packages' ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
+            fontWeight: 600,
+            fontSize: 14,
+            cursor: 'pointer',
+          }}
+        >
+          Super-Vote Bundles
         </button>
       </div>
 
@@ -589,6 +621,316 @@ export default function RealityPage() {
               </tbody>
             </table>
           )}
+        </div>
+      )}
+
+      {activeTab === 'voting' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Active Round Card */}
+          <div
+            style={{
+              borderRadius: 16,
+              border: '1px solid var(--admin-card)',
+              backgroundColor: 'var(--admin-surface)',
+              padding: 24,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <span
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      backgroundColor: votingPaused ? 'rgba(234,179,8,0.2)' : 'rgba(34,197,94,0.2)',
+                      color: votingPaused ? '#facc15' : '#4ade80',
+                    }}
+                  >
+                    {votingPaused ? '⏸ Voting Paused' : '● Live Voting Active'}
+                  </span>
+                  <span style={{ fontSize: 13, color: 'var(--admin-text-muted)' }}>
+                    Round 7: Double Eviction Night
+                  </span>
+                </div>
+                <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 6px 0' }}>
+                  Housemates on the Chopping Block
+                </h3>
+                <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: 0 }}>
+                  Voting window closes in <strong>18 hours, 42 minutes</strong> (Sunday 21:00 WAT).
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => setVotingPaused(!votingPaused)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-card)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {votingPaused ? 'Resume Window' : 'Pause Window'}
+                </button>
+                <button
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: 'Conclude & Declare Eviction',
+                      message: 'Are you sure you want to lock votes and initiate official eviction broadcast calculation?',
+                      confirmText: 'Lock & Calculate',
+                      variant: 'warning',
+                    });
+                    if (ok) {
+                      setVotingPaused(true);
+                      void alert('Eviction Declared', 'Voting has been locked and verified by platform audit logs.');
+                    }
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: 'var(--admin-red)',
+                    color: 'white',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Conclude Round
+                </button>
+              </div>
+            </div>
+
+            {/* Voting Metrics Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 16,
+                marginTop: 24,
+              }}
+            >
+              <div
+                style={{
+                  padding: 16,
+                  borderRadius: 12,
+                  backgroundColor: 'var(--admin-dark)',
+                  border: '1px solid var(--admin-card)',
+                }}
+              >
+                <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Total Votes Cast
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--admin-text)' }}>
+                  1,482,920
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--admin-emerald)', marginTop: 4 }}>
+                  +18.4% vs last week
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: 16,
+                  borderRadius: 12,
+                  backgroundColor: 'var(--admin-dark)',
+                  border: '1px solid var(--admin-card)',
+                }}
+              >
+                <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Super-Votes Purchased
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--admin-orange)' }}>
+                  842,500
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginTop: 4 }}>
+                  56.8% of total volume
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: 16,
+                  borderRadius: 12,
+                  backgroundColor: 'var(--admin-dark)',
+                  border: '1px solid var(--admin-card)',
+                }}
+              >
+                <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Coin Revenue Generated
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--admin-green)' }}>
+                  674,000 AZB
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--admin-text-muted)', marginTop: 4 }}>
+                  ≈ ₦33,700,000
+                </div>
+              </div>
+            </div>
+
+            {/* Live Standings Bar */}
+            <div style={{ marginTop: 24 }}>
+              <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>
+                Live Eviction Vote Share
+              </h4>
+              {[
+                { name: 'Korede "Kay" Bello', pct: 38.2, votes: '566,475', safe: true },
+                { name: 'Chidinma Okafor', pct: 31.4, votes: '465,637', safe: true },
+                { name: 'Femi Daniels', pct: 18.5, votes: '274,340', safe: false },
+                { name: 'Zainab Mohammed', pct: 11.9, votes: '176,468', safe: false },
+              ].map((item, idx) => (
+                <div key={idx} style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
+                    <span style={{ fontWeight: 600 }}>{item.name}</span>
+                    <span style={{ color: item.safe ? 'var(--admin-green)' : 'var(--admin-red)' }}>
+                      {item.pct}% ({item.votes} votes) {item.safe ? '• Safe' : '• Danger Zone'}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: 'var(--admin-dark)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${item.pct}%`,
+                        height: '100%',
+                        borderRadius: 4,
+                        backgroundColor: item.safe ? 'var(--admin-green)' : 'var(--admin-red)',
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'packages' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Super-Vote Bundles</h3>
+              <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', margin: '4px 0 0 0' }}>
+                Configure coin pricing, bonus vote multipliers, and fan voting packages.
+              </p>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: 16,
+            }}
+          >
+            {[
+              {
+                id: 'pkg-10',
+                name: 'Fan Boost',
+                votes: 10,
+                priceCoins: 50,
+                discount: 'Standard',
+                badge: 'Starter',
+              },
+              {
+                id: 'pkg-50',
+                name: 'Power Voter',
+                votes: 50,
+                priceCoins: 200,
+                discount: '20% OFF',
+                badge: 'Popular',
+              },
+              {
+                id: 'pkg-250',
+                name: 'Megavoter Stash',
+                votes: 250,
+                priceCoins: 850,
+                discount: '32% OFF',
+                badge: 'Best Value',
+              },
+              {
+                id: 'pkg-1000',
+                name: 'Syndicate Whale Pack',
+                votes: 1000,
+                priceCoins: 3000,
+                discount: '40% OFF',
+                badge: 'Whale Tier',
+              },
+            ].map((pkg) => (
+              <div
+                key={pkg.id}
+                style={{
+                  borderRadius: 14,
+                  backgroundColor: 'var(--admin-surface)',
+                  border: '1px solid var(--admin-card)',
+                  padding: 20,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <span
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        backgroundColor: 'rgba(232,66,10,0.15)',
+                        color: 'var(--admin-orange)',
+                      }}
+                    >
+                      {pkg.badge}
+                    </span>
+                    <span style={{ fontSize: 11, color: 'var(--admin-emerald)', fontWeight: 600 }}>
+                      {pkg.discount}
+                    </span>
+                  </div>
+
+                  <h4 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 6px 0' }}>{pkg.name}</h4>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--admin-orange)', marginBottom: 4 }}>
+                    {pkg.votes} Votes
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 16 }}>
+                    Cost: <strong>{pkg.priceCoins} AZB Coins</strong>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <button
+                    onClick={() => {
+                      void alert('Configure Bundle', `Adjust price or vote multiplier for ${pkg.name}.`);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: 6,
+                      border: '1px solid var(--admin-card)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Configure
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
