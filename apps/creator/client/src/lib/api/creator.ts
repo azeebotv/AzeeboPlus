@@ -241,4 +241,34 @@ export const creatorApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+
+  // Exclusive content (gated behind Gold/Platinum supporter tiers)
+  getExclusiveContent: () =>
+    apiFetch<
+      Array<{
+        id: string;
+        title: string;
+        description?: string;
+        mediaUrl?: string;
+        minTier: string;
+        locked: boolean;
+        createdAt: string;
+      }>
+    >(`${API}/creators/me/exclusive-content`),
+
+  createExclusiveContent: (data: {
+    title: string;
+    description?: string;
+    mediaUrl: string;
+    minTier?: string;
+  }) =>
+    apiFetch<{ id: string; title: string; minTier: string }>(`${API}/creators/me/exclusive-content`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  deleteExclusiveContent: (id: string) =>
+    apiFetch<{ success: boolean; message: string }>(`${API}/creators/me/exclusive-content/${id}`, {
+      method: 'DELETE',
+    }),
 };

@@ -29,6 +29,7 @@ function BundleDetailContent(): React.JSX.Element {
   const bundleId = params.id as string;
 
   const [paymentMethod, setPaymentMethod] = useState<'external' | 'wallet'>('wallet');
+  const [applyProration, setApplyProration] = useState<boolean>(true);
 
   useEffect(() => {
     analytics.pageView('bundle-detail');
@@ -44,9 +45,26 @@ function BundleDetailContent(): React.JSX.Element {
     enabled: !!bundleId,
   });
 
+  const quoteQuery = useQuery({
+    queryKey: ['bundle-quote', bundleId],
+    queryFn: async () => {
+      try {
+        const res = await api.bundle.getUpgradeQuote(bundleId);
+        if (res.success && res.data) return res.data;
+      } catch {
+        // Not signed in or no single pass active
+      }
+      return null;
+    },
+    enabled: !!bundleId,
+  });
+
   const subscribeMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.bundle.subscribe(bundleId, { paymentMethod });
+      const res = await api.bundle.subscribe(bundleId, {
+        paymentMethod,
+        applyProration,
+      });
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Subscription failed');
     },
@@ -58,6 +76,7 @@ function BundleDetailContent(): React.JSX.Element {
   });
 
   const bundle = bundleQuery.data;
+  const quote = quoteQuery.data;
   const isLoading = bundleQuery.isLoading;
   const error = bundleQuery.error?.message;
 
@@ -124,9 +143,18 @@ function BundleDetailContent(): React.JSX.Element {
               </p>
               <div className="flex items-baseline gap-3">
                 <span className="az-headline text-4xl sm:text-5xl font-extrabold text-az-ink">
-                  ₦{Number(bundle.price).toLocaleString()}
+                  ₦
+                  {Number(
+                    quote && applyProration && quote.totalProratedCredit > 0
+                      ? quote.finalAmountDue
+                      : bundle.price
+                  ).toLocaleString()}
                 </span>
-                <span className="text-az-ink-muted text-base font-medium">/ month</span>
+                <span className="text-az-ink-muted text-base font-medium">
+                  {quote && applyProration && quote.totalProratedCredit > 0
+                    ? '/ first month (prorated)'
+                    : '/ month'}
+                </span>
               </div>
             </div>
 
@@ -135,10 +163,48 @@ function BundleDetailContent(): React.JSX.Element {
                 ₦{Number(bundle.originalPrice).toLocaleString()}/mo
               </span>
               <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-az-success-500/15 text-az-success-400 border border-az-success-500/25">
-                Save ₦{(Number(bundle.originalPrice) - Number(bundle.price)).toLocaleString()}/month
+                Save ₦
+                {(
+                  Number(bundle.originalPrice) -
+                  Number(
+                    quote && applyProration && quote.totalProratedCredit > 0
+                      ? quote.finalAmountDue
+                      : bundle.price
+                  )
+                ).toLocaleString()}
               </span>
             </div>
           </div>
+
+          {/* Prorated Trade-in Credit Banner */}
+          {quote && quote.totalProratedCredit > 0 && (
+            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-az-flame/15 to-az-scarlet/10 border border-az-flame/30">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span className="inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-az-flame/20 text-az-flame mb-1 border border-az-flame/30">
+                    Active Pass Trade-In Credit
+                  </span>
+                  <h4 className="text-sm font-bold text-az-ink">
+                    Upgrade Credit Available: ₦{quote.totalProratedCredit.toLocaleString()}
+                  </h4>
+                  <p className="text-xs text-az-ink-muted mt-0.5">
+                    You have {quote.activeSingleSubscriptions.length} active single pass
+                    {quote.activeSingleSubscriptions.length > 1 ? 'es' : ''} with unexpired days.
+                    Unused time is automatically credited towards this bundle.
+                  </p>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer shrink-0 mt-1">
+                  <input
+                    type="checkbox"
+                    checked={applyProration}
+                    onChange={(e) => setApplyProration(e.target.checked)}
+                    className="w-4 h-4 accent-az-flame"
+                  />
+                  <span className="text-xs font-semibold text-az-ink">Apply Credit</span>
+                </label>
+              </div>
+            </div>
+          )}
 
           {/* Included Universes */}
           <div className="mb-8">

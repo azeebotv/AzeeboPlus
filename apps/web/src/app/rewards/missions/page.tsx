@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { ErrorState, Skeleton } from '@azeebo/ui/web';
@@ -60,6 +61,29 @@ export default function MissionsPage(): React.JSX.Element {
   const isLoading = authLoading || missionsQuery.isLoading;
   const error = missionsQuery.error?.message || null;
 
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [claimSuccessMessage, setClaimSuccessMessage] = useState<string | null>(null);
+
+  const claimMissionMutation = useMutation({
+    mutationFn: async (missionId: string) => {
+      setClaimingId(missionId);
+      const res = await apiFetch<{ message: string; pointsEarned: number; newBalance: number }>(
+        `/rewards/missions/${missionId}/claim`,
+        { method: 'POST' }
+      );
+      if (!res.success) throw new Error(res.message || 'Failed to claim mission reward');
+      return res.data;
+    },
+    onSuccess: (data) => {
+      setClaimSuccessMessage(`Claimed! +${data?.pointsEarned ?? 0} points added to your balance.`);
+      missionsQuery.refetch();
+      setTimeout(() => setClaimSuccessMessage(null), 4000);
+    },
+    onSettled: () => {
+      setClaimingId(null);
+    },
+  });
+
   if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
@@ -82,6 +106,13 @@ export default function MissionsPage(): React.JSX.Element {
         subtitle="Complete viewing goals, rate shows, vote on reality stars, and level up your loyalty points."
         glowColor="color-mix(in srgb, var(--color-az-scarlet) 25%, transparent)"
       />
+
+      {claimSuccessMessage && (
+        <div className="mb-6 p-4 rounded-2xl bg-az-success-500/15 border border-az-success-500/30 text-az-success-400 text-sm font-bold flex items-center gap-2">
+          <CheckCircle2 className="w-5 h-5" />
+          <span>{claimSuccessMessage}</span>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -153,8 +184,8 @@ export default function MissionsPage(): React.JSX.Element {
                         {mission.description}
                       </p>
 
-                      {/* Progress Bar */}
-                      <div className="space-y-1.5 pt-3 border-t border-az-ink/5">
+                      {/* Progress Bar & Claim */}
+                      <div className="space-y-3 pt-3 border-t border-az-ink/5">
                         <div className="flex justify-between text-xs text-az-ink/50 font-medium">
                           <span>Mission Progress</span>
                           <span className="text-az-ink font-bold">
@@ -171,6 +202,23 @@ export default function MissionsPage(): React.JSX.Element {
                             className="h-full rounded-full bg-gradient-to-r from-az-scarlet to-az-flame"
                           />
                         </div>
+
+                        {(mission.progress ?? 0) >= (mission.total ?? 100) && (
+                          <button
+                            type="button"
+                            disabled={claimingId === mission.id}
+                            onClick={() => claimMissionMutation.mutate(mission.id)}
+                            className="az-btn-primary w-full py-2.5 text-xs flex items-center justify-center gap-1.5 shadow-lg"
+                          >
+                            {claimingId === mission.id ? (
+                              'Claiming Bounty...'
+                            ) : (
+                              <>
+                                <Sparkles className="w-4 h-4" /> Claim +{mission.points.toLocaleString()} Points
+                              </>
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </motion.div>

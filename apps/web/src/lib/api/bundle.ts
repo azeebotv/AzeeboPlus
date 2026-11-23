@@ -30,6 +30,20 @@ export interface BundleComparison {
   bundleSavings: number;
 }
 
+export interface UpgradeQuote {
+  bundleId: string;
+  bundlePrice: number;
+  activeSingleSubscriptions: Array<{
+    universe: string;
+    paidAmount: number;
+    remainingDays: number;
+    proratedCredit: number;
+  }>;
+  totalProratedCredit: number;
+  finalAmountDue: number;
+  currency: string;
+}
+
 export function createBundleMethods(client: RequestClient) {
   return {
     getBundles: async (): Promise<ApiResponse<BundlePass[]>> => {
@@ -44,12 +58,17 @@ export function createBundleMethods(client: RequestClient) {
       return client.request<BundleComparison>('/api/v1/subscription/bundles/compare');
     },
 
+    getUpgradeQuote: async (bundleId: string): Promise<ApiResponse<UpgradeQuote>> => {
+      return client.request<UpgradeQuote>(`/api/v1/subscription/bundles/${bundleId}/quote`);
+    },
+
     subscribe: async (
       bundleId: string,
       data: {
         autoRenew?: boolean;
         paymentMethod?: 'external' | 'wallet';
         paymentReference?: string;
+        applyProration?: boolean;
       }
     ): Promise<ApiResponse<BundleSubscription>> => {
       return client.request<BundleSubscription>(

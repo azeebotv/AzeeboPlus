@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -35,6 +36,20 @@ export default function MissionsScreen() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+
+  const claimMission = async (missionId: string) => {
+    setClaimingId(missionId);
+    try {
+      await apiClient.post(`/rewards/missions/${missionId}/claim`);
+      Alert.alert('Bounty Claimed! 🎉', 'Your mission points have been added to your balance.');
+      await loadData();
+    } catch (err) {
+      Alert.alert('Error', (err as Error).message || 'Failed to claim reward');
+    } finally {
+      setClaimingId(null);
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -147,6 +162,19 @@ export default function MissionsScreen() {
                     />
                   </View>
                 </View>
+
+                {(mission.progress ?? 0) >= (mission.total ?? 100) && (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    disabled={claimingId === mission.id}
+                    onPress={() => claimMission(mission.id)}
+                    style={styles.claimButton}
+                  >
+                    <Text style={styles.claimButtonText}>
+                      {claimingId === mission.id ? 'Claiming...' : `Claim +${mission.points} pts`}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             ))
           )}
@@ -251,4 +279,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   completedBadgeText: { fontSize: 12, fontWeight: '600', color: '#10B981' },
+  claimButton: {
+    marginTop: 12,
+    backgroundColor: brand.flame,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  claimButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
 });

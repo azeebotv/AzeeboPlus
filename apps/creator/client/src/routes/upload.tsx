@@ -50,6 +50,7 @@ export default function UploadPage() {
   const [description, setDescription] = useState('');
   const [type, setType] = useState('video');
   const [universe, setUniverse] = useState('');
+  const [minTier, setMinTier] = useState('none');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   // Real upload progress, driven by XHR upload.onprogress events.
@@ -77,6 +78,9 @@ export default function UploadPage() {
       formData.append('description', description);
       formData.append('type', type);
       formData.append('universe', universe);
+      if (minTier !== 'none') {
+        formData.append('minTier', minTier);
+      }
       setActiveUpload({ name: file.name, size: file.size });
       setUploadPct(0);
       const res = await creatorApi.uploadContentWithProgress(formData, setUploadPct);
@@ -204,6 +208,28 @@ export default function UploadPage() {
                     {slug.charAt(0).toUpperCase() + slug.slice(1)}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--creator-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
+                Audience & Supporter Gating
+              </label>
+              <select
+                value={minTier}
+                onChange={(e) => setMinTier(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="none">Public (All Viewers)</option>
+                <option value="gold">Gold Supporter Exclusive (₦50,000+ total tips)</option>
+                <option value="platinum">Platinum VIP Exclusive (₦100,000+ total tips)</option>
               </select>
             </div>
 

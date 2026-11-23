@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { useFlags } from '../../../context/FlagsContext';
 import { apiFetch } from '../../../lib/api';
@@ -8,6 +9,7 @@ import { useVideoPlayer } from '../../../hooks/useVideoPlayer';
 import { detectMediaType } from '../../../lib/media-url';
 import { announceToScreenReader } from '../../../lib/keyboard';
 import { PageShell } from '@/components/layout/PageShell';
+import { BranchingDecisionModal, type StoryBranchOption } from '@azeebo/ui';
 import {
   Play,
   Pause,
@@ -27,6 +29,7 @@ import {
   TriangleAlert,
   Bird,
   Users,
+  GitFork,
 } from 'lucide-react';
 
 interface Content {
@@ -64,6 +67,7 @@ interface RawComment {
 }
 
 export default function WatchPageClient({ id }: { id: string }): React.JSX.Element {
+  const router = useRouter();
   const { user } = useAuth();
   const { isEnabled } = useFlags();
   const [content, setContent] = useState<Content | null>(null);
@@ -85,6 +89,26 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const [showReportModal, setShowReportModal] = useState<boolean>(false);
   const [isReporting, setIsReporting] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
+
+  // Interactive narrative decision branching state
+  const [branchingModalOpen, setBranchingModalOpen] = useState<boolean>(false);
+  const [decisionTriggered, setDecisionTriggered] = useState<boolean>(false);
+  const [storyOptions] = useState<StoryBranchOption[]>([
+    {
+      id: 'opt-confront',
+      label: 'Confront the Elder',
+      description: 'Demand the truth about the forbidden divination at the shrine.',
+      icon: '⚔️',
+      targetEpisodeId: 'omi-ep2-branch-a',
+    },
+    {
+      id: 'opt-river',
+      label: 'Flee to the Sacred River',
+      description: 'Seek sanctuary and hidden knowledge from the river deity.',
+      icon: '🌊',
+      targetEpisodeId: 'omi-ep2-branch-b',
+    },
+  ]);
 
   const handleRetry = useCallback(() => {
     setError(null);
@@ -133,6 +157,36 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }, []);
+
+  const isVerticalStory = Boolean(
+    content?.universe?.name?.toLowerCase() === 'vertical' ||
+    content?.category?.toLowerCase() === 'vertical' ||
+    id.startsWith('omi-') ||
+    id.includes('storyworld')
+  );
+
+  useEffect(() => {
+    if (
+      isVerticalStory &&
+      !decisionTriggered &&
+      playerState.duration > 20 &&
+      playerState.currentTime >= playerState.duration - 15
+    ) {
+      setDecisionTriggered(true);
+      playerPause();
+      setBranchingModalOpen(true);
+    }
+  }, [isVerticalStory, decisionTriggered, playerState.currentTime, playerState.duration, playerPause]);
+
+  const handleSelectStoryOption = useCallback(
+    (option: StoryBranchOption) => {
+      setBranchingModalOpen(false);
+      if (option.targetEpisodeId) {
+        router.push(`/watch/${option.targetEpisodeId}`);
+      }
+    },
+    [router]
+  );
 
   useEffect(() => {
     const fetchContent = async (): Promise<void> => {
@@ -905,6 +959,20 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                   <Flag className="w-4 h-4" aria-hidden="true" />
                   Report
                 </button>
+                {isVerticalStory && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playerPause();
+                      setBranchingModalOpen(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-az-pill text-sm font-bold text-az-warning-400 bg-az-warning-500/15 border border-az-warning-500/30 hover:bg-az-warning-500/25 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-warning-500"
+                    aria-label="Story Branches"
+                  >
+                    <GitFork className="w-4 h-4" aria-hidden="true" />
+                    Story Branches
+                  </button>
+                )}
                 {content.creator?.id && (
                   <button
                     type="button"
@@ -1194,6 +1262,21 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
           </div>
         </div>
       )}
+
+      {/* Storyworld Interactive Branching Decision Modal */}
+      <BranchingDecisionModal
+        isOpen={branchingModalOpen}
+        title="Choose Your Story Path"
+        prompt="A crucial narrative divergence has been unlocked! Select your character's action before time expires:"
+        options={storyOptions}
+        countdownSeconds={15}
+        onSelectOption={handleSelectStoryOption}
+        onTimeout={() => {
+          if (storyOptions.length > 0) {
+            handleSelectStoryOption(storyOptions[0]);
+          }
+        }}
+      />
     </PageShell>
   );
 }
