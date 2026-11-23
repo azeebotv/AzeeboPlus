@@ -33,8 +33,7 @@ export default function RateLimitsPage() {
             color: 'var(--admin-red)',
           }}
         >
-          <strong>Rate-limit data unavailable.</strong> {(error as Error)?.message} — the gateway
-          scrape failed. No numbers are shown rather than fake ones.
+          <strong>Rate-limit data temporarily unavailable.</strong> {(error as Error)?.message} — could not retrieve current gateway metrics. Please check your network connection or try again.
         </div>
       </div>
     );
@@ -214,7 +213,7 @@ export default function RateLimitsPage() {
               </h2>
               {data?.scrapedAt && (
                 <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>
-                  scraped {new Date(data.scrapedAt).toLocaleTimeString()}
+                  last refreshed {new Date(data.scrapedAt).toLocaleTimeString()}
                   {dataUpdatedAt
                     ? ` · fetched ${new Date(dataUpdatedAt).toLocaleTimeString()}`
                     : ''}

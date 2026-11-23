@@ -64,10 +64,10 @@ function isNumericFlag(flag: GlobalFeatureFlag): boolean {
 
 /** Human labels for the last nightly pass's webhook status. */
 const WEBHOOK_LABEL: Record<LastNightlyRun['webhook'], string> = {
-  posted: 'webhook posted',
-  'skipped-empty': 'skipped · empty',
-  'no-webhook': 'no webhook',
-  failed: 'webhook failed',
+  posted: 'Alert Sent (Slack / Teams)',
+  'skipped-empty': 'Queue Empty · No Alerts',
+  'no-webhook': 'Alert Channel Not Set',
+  failed: 'Alert Delivery Failed',
 };
 const WEBHOOK_BG: Record<LastNightlyRun['webhook'], string> = {
   posted: 'rgba(31,138,76,0.2)',
@@ -834,10 +834,10 @@ export default function GlobalFeatureFlagsPage() {
                 background: 'rgba(232,66,10,0.25)',
                 color: 'var(--admin-orange)',
               }}
-              title="Auto-prune is enabled but no STALE_FLAG_OPS_WEBHOOK_URL is set — the pass blocked removals to prevent silent pruning. Configure the webhook or set STALE_FLAG_ALLOW_PRUNE_WITHOUT_WEBHOOK=true."
+              title="Automatic cleanup is paused because no operations alert channel is configured. Connect an alert webhook or allow unnotified cleanup in server settings to proceed."
             >
               <Icon name="alertTriangle" size={12} color="var(--admin-orange)" />
-              <span>prune blocked · no webhook</span>
+              <span>cleanup paused · alerts unconfigured</span>
             </span>
           )}
           <span

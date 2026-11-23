@@ -31,9 +31,9 @@ const statusText: Record<string, string> = {
 // virus scan pass? 'pending' means the file is only registered (media-service
 // was unavailable or rejected it) — the creator must re-upload.
 const storageLabel: Record<string, string> = {
-  stored: 'Stored in blob storage',
-  pending: 'Registered only — not stored, re-upload needed',
-  unknown: 'Storage status unknown (legacy upload)',
+  stored: 'Uploaded & Ready to Publish',
+  pending: 'Upload Incomplete — Please Re-upload File',
+  unknown: 'Archived File',
 };
 const storageColor: Record<string, string> = {
   stored: 'var(--creator-green)',
@@ -192,7 +192,7 @@ export default function UploadPage() {
                   marginBottom: 6,
                 }}
               >
-                Universe
+                Content Category / Universe
               </label>
               {/* Universe picker is sentinel-gated: disabled universes are not
                   offered, and a stale value can't be uploaded (blocked below,
@@ -202,7 +202,7 @@ export default function UploadPage() {
                 onChange={(e) => setUniverse(e.target.value)}
                 style={inputStyle}
               >
-                <option value="">Select a universe</option>
+                <option value="">Select category (e.g. Movies, Comedy, Reality)</option>
                 {universeOptions.map((slug) => (
                   <option key={slug} value={slug}>
                     {slug.charAt(0).toUpperCase() + slug.slice(1)}
@@ -264,11 +264,13 @@ export default function UploadPage() {
                 {selectedFile
                   ? selectedFile.name
                   : uploadV2
-                    ? 'Drag & drop or click to select'
-                    : 'Select a file'}
+                    ? 'Drag & drop your file here or click to browse'
+                    : 'Select a video or audio file'}
               </p>
               {uploadV2 && (
-                <p style={{ fontSize: 12, color: 'var(--creator-text-muted)' }}>Max 500MB</p>
+                <p style={{ fontSize: 12, color: 'var(--creator-text-muted)' }}>
+                  Supported formats: MP4, MOV, MKV, MP3 (Max 500MB)
+                </p>
               )}
               <input
                 ref={fileInputRef}

@@ -47,7 +47,6 @@ export default function PayoutsPage() {
   const {
     data: settings,
     isError: settingsFailed,
-    error: settingsError,
   } = useQuery({
     queryKey: ['creator', 'settings'],
     queryFn: async () => {
@@ -177,12 +176,11 @@ export default function PayoutsPage() {
                   marginBottom: 6,
                 }}
               >
-                Method
+                Payout Method
               </label>
               <select value={method} onChange={(e) => setMethod(e.target.value)} style={inputStyle}>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="paypal">PayPal</option>
-                <option value="crypto">Crypto</option>
+                <option value="bank_transfer">Nigerian Bank Transfer (NUBAN Direct via Paystack)</option>
+                <option value="mobile_money">Mobile Money (OPay / PalmPay / Momo)</option>
               </select>
             </div>
             <button
@@ -213,11 +211,8 @@ export default function PayoutsPage() {
               </p>
             )}
             {settingsFailed && !belowMinimum && (
-              // Without the threshold the client cannot pre-validate, so say so
-              // rather than implying there is no minimum.
               <p style={errorTextStyle()}>
-                Minimum payout threshold unavailable ({creatorApi.errorMessage(settingsError)}). The
-                server still enforces it.
+                Unable to check your minimum withdrawal balance right now. You can still submit your request for verification.
               </p>
             )}
             {requestMutation.isSuccess && (

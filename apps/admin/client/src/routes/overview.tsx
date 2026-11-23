@@ -26,7 +26,7 @@ export default function OverviewPage() {
           Platform Overview
         </h1>
         <p className="text-sm text-zinc-400 mt-1">
-          Comprehensive cross-service operational metrics and platform telemetry.
+          Comprehensive platform operational health, activity, and key performance indicators.
         </p>
       </div>
 
@@ -43,7 +43,7 @@ export default function OverviewPage() {
             <div>
               <p className="font-semibold text-rose-300">Failed to load platform overview</p>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Network or permission error loading telemetry stats.
+                Network or permission error loading platform overview data.
               </p>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function OverviewPage() {
                   key={`${key}-${subKey}`}
                   title={formattedTitle}
                   value={formattedValue}
-                  description="Cross-service telemetry"
+                  description="Platform metric"
                 />
               );
             });

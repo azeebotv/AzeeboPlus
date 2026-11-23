@@ -81,10 +81,10 @@ export default function AcdpValidationPage() {
           }}
         >
           <Icon name="checkCircle" size={28} color="var(--admin-orange)" />
-          <span>ACDP Package Validation (Screen #11)</span>
+          <span>Content Clearance & Technical Validation (ACDP)</span>
         </h1>
         <p style={{ color: 'var(--admin-text-muted)' }}>
-          Azeebo+ Content Delivery Package compliance, technical manifest checks, and universe-fit verification.
+          Verify technical delivery standards, audio loudness compliance, and category suitability before publishing.
         </p>
       </div>
 
@@ -240,15 +240,15 @@ export default function AcdpValidationPage() {
                   </div>
                   <div style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span>{pkg.verticalDerivativeValid ? '✅' : '❌'}</span>
-                    <span style={{ color: 'var(--admin-text-muted)' }}>Vertical (9:16)</span>
+                    <span style={{ color: 'var(--admin-text-muted)' }}>Vertical Video (9:16 Shorts/Reels)</span>
                   </div>
                   <div style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span>{pkg.audioTracksValid ? '✅' : '❌'}</span>
-                    <span style={{ color: 'var(--admin-text-muted)' }}>Audio EBU R128</span>
+                    <span style={{ color: 'var(--admin-text-muted)' }}>Audio Loudness (-24 LUFS / EBU R128)</span>
                   </div>
                   <div style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span>{pkg.subtitlesValid ? '✅' : '❌'}</span>
-                    <span style={{ color: 'var(--admin-text-muted)' }}>VTT Subtitles</span>
+                    <span style={{ color: 'var(--admin-text-muted)' }}>Subtitles & Captions (VTT)</span>
                   </div>
                 </div>
               </div>
@@ -323,7 +323,7 @@ export default function AcdpValidationPage() {
                         cursor: 'pointer',
                       }}
                     >
-                      Verify Checksums
+                      Verify Integrity Check
                     </button>
                     <button
                       onClick={() => approveMutation.mutate(pkg.id)}

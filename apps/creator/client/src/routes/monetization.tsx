@@ -29,8 +29,8 @@ export default function MonetizationPage() {
   const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [tipEnabled, setTipEnabled] = useState(false);
-  const [tipMin, setTipMin] = useState('1');
-  const [tipMax, setTipMax] = useState('100');
+  const [tipMin, setTipMin] = useState('500');
+  const [tipMax, setTipMax] = useState('50000');
   const [payoutMethod, setPayoutMethod] = useState('bank_transfer');
   const [tipValidationError, setTipValidationError] = useState<string | null>(null);
   const [tierForm, setTierForm] = useState(EMPTY_TIER_FORM);
@@ -239,12 +239,12 @@ export default function MonetizationPage() {
                       marginBottom: 4,
                     }}
                   >
-                    Perks (comma separated, up to 10)
+                    Supporter Perks & Exclusive Benefits (comma separated, up to 10)
                   </label>
                   <input
                     value={tierForm.perks}
                     onChange={(e) => setTierForm((f) => ({ ...f, perks: e.target.value }))}
-                    placeholder="Early access, Behind the scenes, Discord role"
+                    placeholder="e.g. VIP chat badge, early episode access, exclusive livestreams, monthly shoutout"
                     style={inputStyle}
                   />
                 </div>
@@ -536,13 +536,14 @@ export default function MonetizationPage() {
                       marginBottom: 6,
                     }}
                   >
-                    Min Tip (₦)
+                    Minimum Tip Amount (₦)
                   </label>
                   <input
                     type="number"
                     value={tipMin}
                     onChange={(e) => setTipMin(e.target.value)}
-                    min="1"
+                    min="100"
+                    placeholder="500"
                     style={inputStyle}
                   />
                 </div>
@@ -555,13 +556,14 @@ export default function MonetizationPage() {
                       marginBottom: 6,
                     }}
                   >
-                    Max Tip (₦)
+                    Maximum Tip Amount (₦)
                   </label>
                   <input
                     type="number"
                     value={tipMax}
                     onChange={(e) => setTipMax(e.target.value)}
-                    min="1"
+                    min="500"
+                    placeholder="50000"
                     style={inputStyle}
                   />
                 </div>

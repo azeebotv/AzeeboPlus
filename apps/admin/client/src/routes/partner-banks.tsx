@@ -411,7 +411,7 @@ export default function PartnerBanksPage() {
       ) : isError ? (
         <QueryErrorBanner
           title="Partner list unavailable."
-          body="No rows are listed, so per-partner actions are unreachable until the list loads again — adding a partner here now would go against a view you cannot verify."
+          body="Unable to retrieve partner financial institutions. Please refresh or verify network connection before modifying lending partners."
           detail={error?.message}
           onRetry={() => void refetch()}
           retrying={isFetching}

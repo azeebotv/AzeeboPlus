@@ -144,7 +144,7 @@ export default function CostDashboardPage() {
       color: 'var(--admin-emerald)',
     },
     {
-      label: 'Total Tokens',
+      label: 'Total AI Tokens',
       value: summary.totalTokens.toLocaleString(),
       color: 'var(--admin-orange)',
     },
@@ -312,7 +312,7 @@ export default function CostDashboardPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--admin-card)' }}>
-                {['Time', 'Model', 'Agent', 'Domain', 'In', 'Out', 'Cost', 'Latency'].map((h) => (
+                {['Time', 'Model', 'Agent', 'Domain', 'Prompt In', 'Response Out', 'Cost', 'Latency'].map((h) => (
                   <th key={h} style={thStyle}>
                     {h}
                   </th>
@@ -345,8 +345,12 @@ export default function CostDashboardPage() {
                     </td>
                     <td style={tdStyle}>{evt.agentId || '—'}</td>
                     <td style={tdStyle}>{evt.domain || '—'}</td>
-                    <td style={tdStyle}>{(evt.inputTokens / 1000).toFixed(1)}K</td>
-                    <td style={tdStyle}>{(evt.outputTokens / 1000).toFixed(1)}K</td>
+                    <td style={tdStyle} title={`${evt.inputTokens.toLocaleString()} prompt input tokens`}>
+                      {(evt.inputTokens / 1000).toFixed(1)}K
+                    </td>
+                    <td style={tdStyle} title={`${evt.outputTokens.toLocaleString()} generated response tokens`}>
+                      {(evt.outputTokens / 1000).toFixed(1)}K
+                    </td>
                     <td style={{ ...tdStyle, color: 'var(--admin-emerald)', fontWeight: 600 }}>
                       ${Number(evt.costUsd).toFixed(6)}
                     </td>
