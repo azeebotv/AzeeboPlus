@@ -274,8 +274,7 @@ export class FeatureFlagService {
   private readonly autoDisableInFlight = new Map<string, Promise<void>>();
 
   constructor(config: FeatureFlagConfig = {}) {
-    const redisUrl =
-      config.redisUrl || process.env.FEATURE_FLAG_REDIS_URL || process.env.REDIS_URL;
+    const redisUrl = config.redisUrl || process.env.FEATURE_FLAG_REDIS_URL || process.env.REDIS_URL;
     if (!redisUrl && !config.redis && process.env.NODE_ENV === 'production') {
       throw new Error('FeatureFlagService: FEATURE_FLAG_REDIS_URL is required in production');
     }
