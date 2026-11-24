@@ -20,7 +20,11 @@
     "test:cov": "jest --coverage",
     "clean": "rm -rf dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@nestjs/common": "^11.1.27",
+    "@nestjs/core": "^11.1.27",
+    "express": "^5.2.1"
+  },
   "peerDependencies": {
     "@nestjs/common": "^11.1.27",
     "@nestjs/core": "^11.1.27"

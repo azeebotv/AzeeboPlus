@@ -35,6 +35,8 @@
   },
   "dependencies": {
     "@azeebo/shared-types": "workspace:*",
+    "@nestjs/common": "^11.1.27",
+    "@nestjs/core": "^11.1.27",
     "ioredis": "^5.11.1"
   },
   "devDependencies": {
