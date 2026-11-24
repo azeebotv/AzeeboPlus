@@ -4,13 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Play } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 function SpecialsPageContent(): React.JSX.Element {
@@ -18,15 +19,7 @@ function SpecialsPageContent(): React.JSX.Element {
     analytics.pageView('comedy-specials');
   }, []);
 
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
-      return res.data;
-    },
-    staleTime: 300000,
-  });
+  const universesQuery = useUniversesQuery();
 
   const comedyUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'comedy');
 
@@ -52,17 +45,15 @@ function SpecialsPageContent(): React.JSX.Element {
   const featured = specials[0] ?? null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Comedy" />
-
+    <PageShell activeNav="Comedy">
       {/* Featured Special */}
       {isLoading ? (
-        <section className="relative">
-          <Skeleton height="400px" borderRadius="0" />
+        <section className="py-4">
+          <Skeleton height="400px" borderRadius="16px" />
         </section>
       ) : featured ? (
-        <section className="relative">
-          <div className="relative h-[400px] sm:h-[500px]">
+        <section className="py-4">
+          <div className="relative h-[400px] overflow-hidden rounded-az-feature sm:h-[500px]">
             <OptimizedImage
               src={featured.thumbnail}
               alt={featured.title}
@@ -70,26 +61,24 @@ function SpecialsPageContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/60 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
+            <div className="az-scrim--hero absolute inset-0" />
+            <div className="absolute bottom-0 left-0 right-0 p-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <span
-                  className="px-3 py-1 rounded-full text-xs font-semibold mb-4 inline-block"
-                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
-                >
+                <span className="az-micro-label mb-4 inline-block rounded-az-pill bg-az-flame px-3 py-1 text-az-surface-root">
                   Featured Special
                 </span>
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{featured.title}</h1>
-                <p className="text-white/60 text-lg mb-6 max-w-2xl">{featured.description}</p>
+                <h1 className="az-headline mb-3 text-az-ink text-4xl sm:text-5xl">
+                  {featured.title}
+                </h1>
+                <p className="az-lead mb-6 max-w-2xl text-az-ink-muted">{featured.description}</p>
                 <Link href={`/watch/${featured.id}`}>
                   <motion.button
                     type="button"
                     className="az-btn-primary"
-                    style={{ width: 'auto', paddingInline: '2rem' }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -103,12 +92,12 @@ function SpecialsPageContent(): React.JSX.Element {
       ) : null}
 
       {/* Specials Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section className="py-10 sm:py-12">
         <ScrollReveal>
-          <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <div className="mb-6 flex items-center justify-between sm:mb-8">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">Comedy Specials</h2>
-              <p className="text-sm sm:text-base mt-1 text-white/50">
+              <h2 className="az-section-title text-az-ink">Comedy Specials</h2>
+              <p className="az-body mt-1 text-az-ink-muted">
                 Full-length stand-up specials from top comedians
               </p>
             </div>
@@ -116,11 +105,11 @@ function SpecialsPageContent(): React.JSX.Element {
         </ScrollReveal>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
                 <Skeleton height="240px" borderRadius="0" />
-                <div className="p-4 space-y-3">
+                <div className="space-y-3 p-4">
                   <Skeleton height="20px" width="75%" />
                   <Skeleton height="16px" width="50%" />
                 </div>
@@ -134,7 +123,7 @@ function SpecialsPageContent(): React.JSX.Element {
             onButtonPress={() => refetch()}
           />
         ) : specials.length > 0 ? (
-          <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StaggerGrid className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {specials.slice(1).map((special) => (
               <Link key={special.id} href={`/watch/${special.id}`}>
                 <GlowCard universe="comedy" className="overflow-hidden">
@@ -144,35 +133,29 @@ function SpecialsPageContent(): React.JSX.Element {
                       alt={special.title}
                       width={400}
                       height={192}
-                      className="w-full h-48 object-cover"
+                      className="h-48 w-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                      <div
-                        className="w-14 h-14 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
-                      >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#1A0A0A">
-                          <polygon points="5,3 19,12 5,21" />
-                        </svg>
+                    <div className="az-scrim absolute inset-0" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity hover:opacity-100">
+                      <div className="flex size-14 items-center justify-center rounded-full bg-az-ink/90">
+                        <Play
+                          className="size-5 fill-az-surface-root text-az-surface-root"
+                          aria-hidden="true"
+                        />
                       </div>
                     </div>
                     <div className="absolute bottom-4 left-4 right-4">
-                      <span
-                        className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{
-                          backgroundColor: 'rgba(232,66,10,0.2)',
-                          color: 'var(--brand-orange)',
-                        }}
-                      >
+                      <span className="az-micro-label mb-2 inline-block rounded-az-pill bg-az-scarlet/20 px-2.5 py-0.5 text-az-flame">
                         {special.contentType || 'Special'}
                       </span>
-                      <h3 className="text-lg font-bold text-white">{special.title}</h3>
+                      <h3 className="az-body-strong text-az-ink">{special.title}</h3>
                     </div>
                   </div>
                   <div className="p-4">
-                    <p className="text-sm text-white/50 mb-3 line-clamp-2">{special.description}</p>
-                    <div className="flex items-center justify-between text-xs text-white/40">
+                    <p className="az-caption mb-3 line-clamp-2 text-az-ink-muted">
+                      {special.description}
+                    </p>
+                    <div className="az-micro-label flex items-center justify-between text-az-ink-muted">
                       <span>
                         {special.duration ? `${Math.floor(special.duration / 60)} min` : ''}
                       </span>
@@ -184,14 +167,12 @@ function SpecialsPageContent(): React.JSX.Element {
             ))}
           </StaggerGrid>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">No comedy specials available yet</p>
+          <div className="py-12 text-center">
+            <p className="az-lead text-az-ink-muted">No comedy specials available yet</p>
           </div>
         )}
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -201,8 +182,8 @@ export default function SpecialsPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

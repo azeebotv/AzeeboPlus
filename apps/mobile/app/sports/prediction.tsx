@@ -11,10 +11,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { apiClient } from '../../src/api';
-import { engagementApi } from '../../src/api/engagement';
-import { logger } from '../../src/utils/logger';
+import { apiClient } from '@azeebo/react-data';
+import { engagementApi } from '@azeebo/react-data/api/engagement';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 interface MatchInfo {
   home: string;
@@ -79,7 +80,7 @@ export default function SportsPredictionPage() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Prediction Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading predictions..." />
       </SafeAreaView>
     );
@@ -191,7 +192,7 @@ export default function SportsPredictionPage() {
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <ScrollView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -411,7 +412,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -434,12 +435,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   leagueText: {
-    color: '#E74C3C',
+    color: colors.error[500],
     fontSize: 12,
     fontWeight: '600',
   },
   matchTime: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   matchTeamsRow: {
@@ -465,7 +466,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   vsText: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -491,7 +492,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   predictionCardSelected: {
-    borderColor: '#E74C3C',
+    borderColor: colors.error[500],
     backgroundColor: 'rgba(231, 76, 60, 0.1)',
   },
   predictionLabel: {
@@ -500,7 +501,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   predictionOdds: {
-    color: '#E74C3C',
+    color: colors.error[500],
     fontSize: 16,
     fontWeight: '700',
   },
@@ -511,7 +512,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#E74C3C',
+    backgroundColor: colors.error[500],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -534,7 +535,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   scoreCardSelected: {
-    borderColor: '#E74C3C',
+    borderColor: colors.error[500],
     backgroundColor: 'rgba(231, 76, 60, 0.1)',
   },
   scoreLabel: {
@@ -543,7 +544,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   scoreOdds: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 10,
   },
   extraCard: {
@@ -567,11 +568,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 10,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     gap: 8,
   },
   extraOptionSelected: {
-    backgroundColor: '#E74C3C',
+    backgroundColor: colors.error[500],
   },
   extraOptionText: {
     color: '#fff',
@@ -579,7 +580,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   extraOdds: {
-    color: '#ccc',
+    color: colors.neutral[300],
     fontSize: 11,
   },
   stakeSection: {
@@ -597,7 +598,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   currencySymbol: {
-    color: '#E74C3C',
+    color: colors.error[500],
     fontSize: 20,
     fontWeight: '700',
   },
@@ -628,7 +629,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   potentialWinLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
     marginBottom: 4,
   },
@@ -642,7 +643,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   submitButton: {
-    backgroundColor: '#E74C3C',
+    backgroundColor: colors.error[500],
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -657,7 +658,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   termsText: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 11,
     textAlign: 'center',
   },

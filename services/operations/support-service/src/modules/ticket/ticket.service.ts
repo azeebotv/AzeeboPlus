@@ -22,7 +22,7 @@ export class TicketService {
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 
@@ -177,6 +177,7 @@ export class TicketService {
 
   async getTickets(options?: {
     status?: SupportTicketStatus;
+    priority?: SupportTicketPriority;
     category?: SupportTicketCategory;
     assignedTo?: string;
     page?: number;
@@ -202,6 +203,7 @@ export class TicketService {
 
       const where = {
         ...(options?.status && { status: options.status }),
+        ...(options?.priority && { priority: options.priority }),
         ...(options?.category && { category: options.category }),
         ...(options?.assignedTo && { assignedTo: options.assignedTo }),
       };

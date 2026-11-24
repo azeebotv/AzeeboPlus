@@ -51,13 +51,10 @@ export default function AuthenticatedHomePage(): React.JSX.Element {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen az-nollywood-bg">
-        <div
-          className="w-full"
-          style={{ minHeight: 'min(70vh, 600px)', background: 'var(--brand-forest)' }}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
-            <Spinner size="lg" color="var(--brand-orange)" className="opacity-60" />
+      <div className="min-h-screen bg-az-surface-root">
+        <div className="flex min-h-[min(70vh,600px)] w-full items-center justify-center bg-gradient-to-b from-az-surface-raised to-az-surface-root">
+          <div className="mx-auto flex h-full max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
+            <Spinner size="lg" color="var(--color-az-flame)" className="opacity-60" />
           </div>
         </div>
       </div>

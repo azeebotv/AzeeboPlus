@@ -13,15 +13,16 @@
     }
   },
   "scripts": {
+    "build": "bash ../../scripts/build-package.sh",
+    "clean": "rm -rf dist",
+    "lint": "eslint src",
     "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
     "prebuild": "prisma generate --schema=prisma/schema.prisma",
-    "build": "tsc -p tsconfig.json",
-    "clean": "rm -rf dist",
-    "lint": "eslint src --fix",
     "test": "jest",
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@azeebo/feature-flags": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
     "@nestjs/common": "^11.1.27",
     "@nestjs/config": "^4.0.4",

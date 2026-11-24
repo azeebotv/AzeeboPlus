@@ -1,12 +1,36 @@
 'use client';
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
+import { useFlags } from '../../../context/FlagsContext';
 import { apiFetch } from '../../../lib/api';
+import { shouldAutoPlay } from '../../../lib/low-data';
 import { useVideoPlayer } from '../../../hooks/useVideoPlayer';
 import { detectMediaType } from '../../../lib/media-url';
 import { announceToScreenReader } from '../../../lib/keyboard';
-import AppHeader from '../../../components/layout/AppHeader';
-import AppFooter from '../../../components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { BranchingDecisionModal, type StoryBranchOption } from '@azeebo/ui/web';
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  PictureInPicture,
+  Settings,
+  Maximize2,
+  Minimize2,
+  ChevronDown,
+  ThumbsUp,
+  ThumbsDown,
+  Share2,
+  Flag,
+  X,
+  Link2,
+  TriangleAlert,
+  Bird,
+  Users,
+  GitFork,
+} from 'lucide-react';
 
 interface Content {
   id: string;
@@ -43,7 +67,9 @@ interface RawComment {
 }
 
 export default function WatchPageClient({ id }: { id: string }): React.JSX.Element {
+  const router = useRouter();
   const { user } = useAuth();
+  const { isEnabled } = useFlags();
   const [content, setContent] = useState<Content | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState<string>('');
@@ -63,6 +89,26 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const [showReportModal, setShowReportModal] = useState<boolean>(false);
   const [isReporting, setIsReporting] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
+
+  // Interactive narrative decision branching state
+  const [branchingModalOpen, setBranchingModalOpen] = useState<boolean>(false);
+  const [decisionTriggered, setDecisionTriggered] = useState<boolean>(false);
+  const [storyOptions] = useState<StoryBranchOption[]>([
+    {
+      id: 'opt-confront',
+      label: 'Confront the Elder',
+      description: 'Demand the truth about the forbidden divination at the shrine.',
+      icon: '⚔️',
+      targetEpisodeId: 'omi-ep2-branch-a',
+    },
+    {
+      id: 'opt-river',
+      label: 'Flee to the Sacred River',
+      description: 'Seek sanctuary and hidden knowledge from the river deity.',
+      icon: '🌊',
+      targetEpisodeId: 'omi-ep2-branch-b',
+    },
+  ]);
 
   const handleRetry = useCallback(() => {
     setError(null);
@@ -100,7 +146,8 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   } = useVideoPlayer({
     contentId: id,
     mediaUrl: content?.mediaUrl,
-    autoPlay: false,
+    // Autoplay is gated by the web_autoplay server flag (and low-data mode).
+    autoPlay: shouldAutoPlay(isEnabled),
     onEnded: handleVideoEnded,
     onError: handleVideoError,
   });
@@ -110,6 +157,42 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }, []);
+
+  const isVerticalStory = Boolean(
+    content?.universe?.name?.toLowerCase() === 'vertical' ||
+    content?.category?.toLowerCase() === 'vertical' ||
+    id.startsWith('omi-') ||
+    id.includes('storyworld')
+  );
+
+  useEffect(() => {
+    if (
+      isVerticalStory &&
+      !decisionTriggered &&
+      playerState.duration > 20 &&
+      playerState.currentTime >= playerState.duration - 15
+    ) {
+      setDecisionTriggered(true);
+      playerPause();
+      setBranchingModalOpen(true);
+    }
+  }, [
+    isVerticalStory,
+    decisionTriggered,
+    playerState.currentTime,
+    playerState.duration,
+    playerPause,
+  ]);
+
+  const handleSelectStoryOption = useCallback(
+    (option: StoryBranchOption) => {
+      setBranchingModalOpen(false);
+      if (option.targetEpisodeId) {
+        router.push(`/watch/${option.targetEpisodeId}`);
+      }
+    },
+    [router]
+  );
 
   useEffect(() => {
     const fetchContent = async (): Promise<void> => {
@@ -493,50 +576,48 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
+      <PageShell maxWidth="full">
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-white/10 border-t-[#E8420A] rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white/60">Loading content...</p>
+          <div className="az-glass p-8 text-center max-w-sm mx-auto">
+            <div className="w-12 h-12 border-4 border-az-glass-border border-t-az-flame rounded-full animate-spin mx-auto mb-4" />
+            <p className="az-body-strong mb-1 tracking-tight text-az-ink">
+              Preparing Theater Stream
+            </p>
+            <p className="az-caption text-az-ink-muted">Buffering high-bitrate media feed...</p>
           </div>
         </div>
-        <AppFooter />
-      </div>
+      </PageShell>
     );
   }
 
   if (error || !content) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
+      <PageShell maxWidth="full">
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="az-glass p-8 text-center max-w-md">
-            <span className="text-4xl mb-4 block">&#x26A0;&#xFE0F;</span>
-            <h2 className="text-xl font-bold text-white mb-2">Error Loading Content</h2>
-            <p className="text-white/50">{error || 'Content not found'}</p>
-            <button
-              onClick={handleRetry}
-              className="az-btn-primary mt-6"
-              style={{ width: 'auto', paddingInline: '2rem' }}
-            >
-              Try Again
+          <div className="az-glass p-8 sm:p-10 text-center max-w-md w-full relative overflow-hidden">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-az-error-500/10 border border-az-error-500/20 flex items-center justify-center text-az-error-400">
+              <TriangleAlert className="w-7 h-7" aria-hidden="true" />
+            </div>
+            <h2 className="az-title text-az-ink mb-2">Stream Error</h2>
+            <p className="az-caption text-az-ink-muted mb-6 leading-relaxed">
+              {error || 'Content not found'}
+            </p>
+            <button type="button" onClick={handleRetry} className="az-btn-primary tracking-wide">
+              Retry Connection
             </button>
           </div>
         </div>
-        <AppFooter />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
+    <PageShell maxWidth="7xl">
       <div
         ref={focusTrapRef}
-        role="main"
+        role="region"
         aria-label={`Watch ${content.title}`}
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+        className="py-6 sm:py-8 relative z-10"
       >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Video Player Section */}
@@ -544,8 +625,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             {/* Video Container */}
             <div
               ref={videoContainerRef}
-              className="relative w-full bg-black rounded-xl overflow-hidden"
-              style={{ aspectRatio: '16/9' }}
+              className="relative w-full aspect-video bg-black rounded-az-panel overflow-hidden border border-az-glass-border shadow-az-lifted"
               onMouseMove={handleMouseMove}
               onMouseLeave={() => playerState.isPlaying && null}
               onClick={(() => {
@@ -562,43 +642,39 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                 if (mediaInfo.type === 'youtube' && mediaInfo.videoId) {
                   return (
                     <iframe
-                      width="100%"
-                      height="100%"
                       src={`https://www.youtube.com/embed/${mediaInfo.videoId}`}
                       title={content.title}
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
-                      className="w-full h-full"
-                      style={{ aspectRatio: '16/9', borderRadius: '12px' }}
+                      className="w-full h-full rounded-az-card"
                     />
                   );
                 }
                 if (mediaInfo.type === 'iframe') {
                   return (
                     <iframe
-                      width="100%"
-                      height="100%"
                       src={mediaInfo.url}
                       title={content.title}
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
-                      className="w-full h-full"
-                      style={{ aspectRatio: '16/9', borderRadius: '12px' }}
+                      className="w-full h-full rounded-az-card"
                     />
                   );
                 }
                 if (mediaInfo.type === 'ftp') {
                   return (
-                    <div className="flex items-center justify-center h-full bg-gray-800 rounded-lg">
+                    <div className="flex items-center justify-center h-full bg-az-surface-panel rounded-az-card">
                       <div className="text-center p-8">
-                        <p className="text-white text-lg mb-4">This content is available via FTP</p>
+                        <p className="text-az-ink text-lg mb-4">
+                          This content is available via FTP
+                        </p>
                         <a
                           href={mediaInfo.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#E8420A] hover:text-[#FF6B35] underline text-lg"
+                          className="text-az-scarlet hover:text-az-flame underline text-lg"
                         >
                           Download via FTP
                         </a>
@@ -612,7 +688,6 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                       ref={videoRef}
                       src={signedUrl}
                       className="w-full h-full object-contain"
-                      style={{ aspectRatio: '16/9' }}
                       playsInline
                       preload="metadata"
                     />
@@ -638,24 +713,19 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                   !playerState.isPlaying &&
                   !playerState.isLoading && (
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         togglePlay();
                       }}
-                      className="absolute inset-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#E8420A] focus:ring-offset-2 focus:ring-offset-black"
+                      className="absolute inset-0 flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame"
                       aria-label="Play video"
                     >
-                      <div
-                        className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-                        style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                      >
-                        <svg
-                          className="w-10 h-10 text-white ml-1"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
+                      <div className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110 bg-[image:var(--gradient-az-cta)]">
+                        <Play
+                          className="w-10 h-10 text-az-ink ml-1 fill-current"
+                          aria-hidden="true"
+                        />
                       </div>
                     </button>
                   )
@@ -665,13 +735,13 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               {/* Buffering Indicator */}
               {playerState.isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <div className="w-16 h-16 border-4 border-white/20 border-t-[#E8420A] rounded-full animate-spin"></div>
+                  <div className="w-16 h-16 border-4 border-az-ink/20 border-t-az-flame rounded-full animate-spin"></div>
                 </div>
               )}
 
               {/* Video Controls - hidden for embedded media (YouTube/iframe has own controls) */}
               {!detectMediaType(content?.mediaUrl || '').type.match(/^(youtube|iframe)$/) && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent transition-opacity duration-300">
+                <div className="absolute bottom-0 left-0 right-0 az-scrim--hero transition-opacity duration-300">
                   <div className="p-4">
                     {/* Progress Bar */}
                     <div className="mb-3">
@@ -681,10 +751,10 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                         max={playerState.duration || 100}
                         value={playerState.currentTime}
                         onChange={handleProgressChange}
-                        className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
+                        className="w-full h-1 bg-az-ink/20 rounded-lg appearance-none cursor-pointer accent-az-flame focus-visible:outline-2 focus-visible:outline-az-flame"
                         aria-label="Video progress"
                       />
-                      <div className="flex justify-between text-xs text-white/60 mt-1">
+                      <div className="flex justify-between text-xs text-az-ink/60 mt-1">
                         <span>{formatTime(playerState.currentTime)}</span>
                         <span>{formatTime(playerState.duration || 100)}</span>
                       </div>
@@ -694,40 +764,35 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             togglePlay();
                           }}
-                          className="text-white hover:text-[#E8420A] transition-colors"
+                          className="text-az-ink hover:text-az-flame transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame"
                           aria-label={playerState.isPlaying ? 'Pause' : 'Play'}
                         >
                           {playerState.isPlaying ? (
-                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                            </svg>
+                            <Pause className="w-8 h-8" aria-hidden="true" />
                           ) : (
-                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M8 5v14l11-7z" />
-                            </svg>
+                            <Play className="w-8 h-8 fill-current" aria-hidden="true" />
                           )}
                         </button>
                         <div className="flex items-center gap-2">
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleMute();
                             }}
-                            className="text-white hover:text-[#E8420A] transition-colors"
+                            aria-pressed={playerState.isMuted}
+                            className="text-az-ink hover:text-az-flame transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame"
                             aria-label={playerState.isMuted ? 'Unmute' : 'Mute'}
                           >
                             {playerState.isMuted || playerState.volume === 0 ? (
-                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
-                              </svg>
+                              <VolumeX className="w-5 h-5" aria-hidden="true" />
                             ) : (
-                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-                              </svg>
+                              <Volume2 className="w-5 h-5" aria-hidden="true" />
                             )}
                           </button>
                           <input
@@ -737,81 +802,82 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                             step="0.01"
                             value={playerState.isMuted ? 0 : playerState.volume}
                             onChange={handleVolumeChange}
-                            className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#E8420A]"
+                            className="w-20 h-1 bg-az-ink/20 rounded-lg appearance-none cursor-pointer accent-az-flame focus-visible:outline-2 focus-visible:outline-az-flame"
                             aria-label="Volume"
                           />
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             changePlaybackRate(
                               playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1
                             );
                           }}
-                          className="text-white text-sm font-medium hover:text-[#E8420A] transition-colors px-2 py-1 rounded"
+                          className="text-az-ink text-sm font-medium hover:text-az-flame transition-colors px-2 py-1 rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame"
                           aria-label={`Playback speed: ${playbackRate}x`}
                         >
                           {playbackRate}x
                         </button>
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             togglePiP();
                           }}
-                          className="text-white hover:text-[#E8420A] transition-colors"
+                          className="text-az-ink hover:text-az-flame transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame"
                           aria-label="Picture in Picture"
                         >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z" />
-                          </svg>
+                          <PictureInPicture className="w-5 h-5" aria-hidden="true" />
                         </button>
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleFullscreen();
                           }}
-                          className="text-white hover:text-[#E8420A] transition-colors"
+                          aria-pressed={isFullscreen}
+                          className="text-az-ink hover:text-az-flame transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame"
                           aria-label="Toggle fullscreen"
                         >
                           {isFullscreen ? (
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z" />
-                            </svg>
+                            <Minimize2 className="w-5 h-5" aria-hidden="true" />
                           ) : (
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
-                            </svg>
+                            <Maximize2 className="w-5 h-5" aria-hidden="true" />
                           )}
                         </button>
                         <div className="relative">
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               setShowSettings(!showSettings);
                             }}
-                            className="text-white hover:text-[#E8420A] transition-colors"
+                            aria-expanded={showSettings}
+                            className="text-az-ink hover:text-az-flame transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame"
                             aria-label="Settings"
                           >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
-                            </svg>
+                            <Settings className="w-5 h-5" aria-hidden="true" />
                           </button>
                           {showSettings && (
                             <div
                               className="absolute bottom-10 right-0 az-glass p-3 min-w-[160px]"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <p className="text-xs font-bold text-white/50 mb-2">Playback Speed</p>
+                              <p className="text-xs font-bold text-az-ink/50 mb-2">
+                                Playback Speed
+                              </p>
                               {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
                                 <button
                                   key={rate}
+                                  type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     changePlaybackRate(rate);
                                   }}
-                                  className={`block w-full text-left px-3 py-1.5 text-sm rounded transition-colors ${playbackRate === rate ? 'text-[#E8420A]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
+                                  className={`block w-full text-left px-3 py-1.5 text-sm rounded transition-colors ${playbackRate === rate ? 'text-az-flame' : 'text-az-ink/70 hover:text-az-ink hover:bg-az-glass-fill'}`}
                                 >
                                   {rate}x
                                 </button>
@@ -828,96 +894,99 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               {/* Title Overlay */}
               {!playerState.isPlaying && (
                 <div className="absolute top-4 left-4 right-4">
-                  <h1 className="text-xl font-bold text-white">{content.title}</h1>
+                  <h1 className="az-headline text-xl text-az-ink">{content.title}</h1>
                 </div>
               )}
             </div>
 
             {/* Video Info */}
             <div className="mt-4">
-              <h1 className="text-xl font-bold text-white">{content.title}</h1>
-              <div className="flex items-center gap-4 mt-2 text-sm text-white/60">
+              <h1 className="az-headline text-xl text-az-ink">{content.title}</h1>
+              <div className="flex items-center gap-4 mt-2 text-sm text-az-ink/60">
                 <span>{likeCount.toLocaleString()} likes</span>
                 <span>{content.duration ? `${Math.floor(content.duration / 60)} min` : 'N/A'}</span>
               </div>
             </div>
 
             {/* Creator Info & Actions */}
-            <div
-              className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4 py-4 border-t border-b"
-              style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-            >
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4 py-4 border-t border-b border-az-glass-border">
               <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
-                  style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                >
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-az-ink bg-[image:var(--gradient-az-cta)]">
                   {content.creator?.name?.charAt(0) || 'C'}
                 </div>
                 <div>
-                  <h3 className="font-medium text-white text-sm">{content.creator?.name}</h3>
-                  <p className="text-xs text-white/50">
+                  <h3 className="font-medium text-az-ink text-sm">{content.creator?.name}</h3>
+                  <p className="text-xs text-az-ink/50">
                     {subscriberCount.toLocaleString()} subscribers
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={toggleLike}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${isLiked ? 'text-white' : 'text-white/60 hover:text-white'}`}
-                  style={
+                  aria-pressed={isLiked}
+                  aria-label="Like"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-az-pill text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame ${
                     isLiked
-                      ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
-                      : { border: '1px solid rgba(255,255,255,0.15)' }
-                  }
+                      ? 'az-cta-small'
+                      : 'border border-az-glass-border-hover text-az-ink/60 hover:text-az-ink'
+                  }`}
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
-                  </svg>
+                  <ThumbsUp className="w-4 h-4" aria-hidden="true" />
                   {likeCount.toLocaleString()}
                 </button>
                 <button
+                  type="button"
                   onClick={toggleDislike}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${isDisliked ? 'text-white' : 'text-white/60 hover:text-white'}`}
-                  style={
+                  aria-pressed={isDisliked}
+                  aria-label="Dislike"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-az-pill text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame ${
                     isDisliked
-                      ? { background: 'rgba(255,255,255,0.1)' }
-                      : { border: '1px solid rgba(255,255,255,0.15)' }
-                  }
+                      ? 'bg-az-ink/10 text-az-ink'
+                      : 'border border-az-glass-border-hover text-az-ink/60 hover:text-az-ink'
+                  }`}
                 >
-                  <svg className="w-4 h-4 rotate-180" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
-                  </svg>
+                  <ThumbsDown className="w-4 h-4" aria-hidden="true" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShowShareModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white/60 hover:text-white transition-colors"
-                  style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-az-pill text-sm font-medium text-az-ink/60 hover:text-az-ink border border-az-glass-border-hover transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame"
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" />
-                  </svg>
+                  <Share2 className="w-4 h-4" aria-hidden="true" />
                   Share
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShowReportModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white/60 hover:text-white transition-colors"
-                  style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-az-pill text-sm font-medium text-az-ink/60 hover:text-az-ink border border-az-glass-border-hover transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame"
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z" />
-                  </svg>
+                  <Flag className="w-4 h-4" aria-hidden="true" />
                   Report
                 </button>
+                {isVerticalStory && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playerPause();
+                      setBranchingModalOpen(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-az-pill text-sm font-bold text-az-warning-400 bg-az-warning-500/15 border border-az-warning-500/30 hover:bg-az-warning-500/25 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-warning-500"
+                    aria-label="Story Branches"
+                  >
+                    <GitFork className="w-4 h-4" aria-hidden="true" />
+                    Story Branches
+                  </button>
+                )}
                 {content.creator?.id && (
                   <button
+                    type="button"
                     onClick={toggleSubscribe}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${isSubscribed ? 'text-white' : 'text-white'}`}
-                    style={
-                      isSubscribed
-                        ? { border: '1px solid rgba(255,255,255,0.2)' }
-                        : { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
-                    }
+                    aria-pressed={isSubscribed}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-az-pill text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-az-flame ${
+                      isSubscribed ? 'border border-az-glass-border text-az-ink' : 'az-cta-small'
+                    }`}
                   >
                     {isSubscribed ? 'Subscribed' : 'Subscribe'}
                   </button>
@@ -928,49 +997,31 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             {/* Description */}
             <div className="mt-4">
               <button
+                type="button"
                 onClick={() => setShowDescription(!showDescription)}
-                className="flex items-center justify-between w-full p-3 rounded-lg text-left transition-colors hover:bg-white/5"
-                style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                aria-expanded={showDescription}
+                className="flex items-center justify-between w-full p-3 rounded-az-card border border-az-glass-border text-left transition-colors hover:bg-az-glass-fill"
               >
                 <div>
-                  <span className="text-sm text-white/50 ml-2">
+                  <span className="text-sm text-az-ink/50 ml-2">
                     {content.category || 'Uncategorized'}
                   </span>
                 </div>
-                <svg
-                  className={`w-5 h-5 text-white/60 transition-transform ${showDescription ? 'rotate-180' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
+                <ChevronDown
+                  className={`w-5 h-5 text-az-ink/60 transition-transform ${showDescription ? 'rotate-180' : ''}`}
+                  aria-hidden="true"
+                />
               </button>
               {showDescription && (
-                <div
-                  className="mt-3 p-3 rounded-lg"
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.05)',
-                  }}
-                >
-                  <p className="text-sm text-white/70 whitespace-pre-wrap">{content.description}</p>
+                <div className="mt-3 p-3 rounded-az-card bg-az-ink/5 border border-az-ink/10">
+                  <p className="text-sm text-az-ink/70 whitespace-pre-wrap">
+                    {content.description}
+                  </p>
                   <div className="mt-3 flex items-center gap-2">
-                    <span
-                      className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
-                      style={{ background: 'rgba(232,66,10,0.15)', color: 'var(--brand-orange)' }}
-                    >
+                    <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-az-chip bg-az-scarlet/15 text-az-flame">
                       {content.universe?.name}
                     </span>
-                    <span
-                      className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
-                      style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--brand-white)' }}
-                    >
+                    <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-az-chip bg-az-ink/10 text-az-ink">
                       {content.category}
                     </span>
                   </div>
@@ -985,21 +1036,15 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               ref={commentsRef}
               role="region"
               aria-label="Comments section"
-              className="az-glass p-4"
+              className="az-glass p-5 sm:p-6"
             >
-              <h2 className="text-lg font-bold text-white mb-4">Comments ({comments.length})</h2>
+              <h2 className="az-title text-az-ink mb-4">Community Reactions ({comments.length})</h2>
 
               {/* Add Comment */}
               {user && (
-                <div
-                  className="mb-6 pb-4 border-b"
-                  style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-                >
+                <div className="mb-6 pb-4 border-b border-az-ink/10">
                   <div className="flex items-start gap-3">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0"
-                      style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                    >
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-az-ink flex-shrink-0 bg-[image:var(--gradient-az-cta)]">
                       {user.name?.charAt(0) || 'U'}
                     </div>
                     <div className="flex-1">
@@ -1007,21 +1052,16 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder="Add a comment..."
-                        className="w-full bg-transparent text-white placeholder-white/30 resize-none border-none outline-none text-sm"
+                        className="w-full bg-transparent text-az-ink placeholder-az-ink/30 resize-none border-none outline-none text-sm"
                         rows={3}
                         aria-label="Add a comment"
                       />
                       <div className="flex justify-end mt-2">
                         <button
+                          type="button"
                           onClick={handleAddComment}
                           disabled={!newComment.trim()}
-                          className="az-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                          style={{
-                            width: 'auto',
-                            paddingInline: '1.5rem',
-                            fontSize: '0.8rem',
-                            padding: '0.5rem 1.5rem',
-                          }}
+                          className="az-btn-primary az-btn-primary--inline az-btn-primary--sm"
                         >
                           Comment
                         </button>
@@ -1035,39 +1075,46 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               <div className="space-y-4" role="list" aria-label="Comments list">
                 {comments.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-white/50 text-sm">
+                    <p className="az-caption text-az-ink-muted">
                       No comments yet. Be the first to comment!
                     </p>
                   </div>
                 ) : (
                   comments.map((comment) => (
                     <div key={comment.id} role="listitem" className="flex items-start gap-3">
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0"
-                        style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                      >
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-az-ink flex-shrink-0 bg-[image:var(--gradient-az-cta)]">
                         {comment.userName?.charAt(0) || 'U'}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-white">{comment.userName}</span>
-                          <span className="text-xs text-white/40">
+                          <span className="text-sm font-medium text-az-ink">
+                            {comment.userName}
+                          </span>
+                          <span className="text-xs text-az-ink/40">
                             {new Date(comment.timestamp).toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="text-sm text-white/70 mt-1">{comment.content}</p>
+                        <p className="text-sm text-az-ink/70 mt-1">{comment.content}</p>
                         <div className="flex items-center gap-4 mt-2">
                           <button
-                            className="flex items-center gap-1 text-xs text-white/40 hover:text-white transition-colors"
+                            type="button"
+                            onClick={() => {
+                              setComments((prev) =>
+                                prev.map((c) =>
+                                  c.id === comment.id ? { ...c, likes: (c.likes || 0) + 1 } : c
+                                )
+                              );
+                            }}
+                            className="flex items-center gap-1 text-xs text-az-ink/40 hover:text-az-ink transition-colors"
                             aria-label={`Like comment, ${comment.likes} likes`}
                           >
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
-                            </svg>
+                            <ThumbsUp className="w-3 h-3" aria-hidden="true" />
                             {comment.likes}
                           </button>
                           <button
-                            className="text-xs text-white/40 hover:text-white transition-colors"
+                            type="button"
+                            onClick={() => setNewComment(`@${comment.userName} `)}
+                            className="text-xs text-az-ink/40 hover:text-az-ink transition-colors"
                             aria-label={`Reply to ${comment.userName}`}
                           >
                             Reply
@@ -1086,62 +1133,78 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       {/* Share Modal */}
       {showShareModal && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in"
           role="dialog"
           aria-modal="true"
           aria-label="Share content"
+          tabIndex={-1}
+          ref={(node) => {
+            if (node) {
+              const focusable = node.querySelectorAll<HTMLElement>(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+              );
+              if (focusable.length > 0 && !node.contains(document.activeElement)) {
+                focusable[0].focus();
+              }
+            }
+          }}
+          onClick={() => setShowShareModal(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setShowShareModal(false);
+            if (e.key === 'Tab') {
+              const focusable = e.currentTarget.querySelectorAll<HTMLElement>(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+              );
+              if (focusable.length === 0) return;
+              const first = focusable[0];
+              const last = focusable[focusable.length - 1];
+              if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+              } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+              }
+            }
+          }}
         >
-          <div className="az-glass p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="az-glass p-8 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">Share</h3>
+              <h3 className="az-title text-az-ink">Share</h3>
               <button
+                type="button"
                 onClick={() => setShowShareModal(false)}
-                className="text-white/40 hover:text-white transition-colors"
+                className="text-az-ink/40 hover:text-az-ink transition-colors"
                 aria-label="Close share dialog"
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-6 h-6" aria-hidden="true" />
               </button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <button
+                type="button"
                 onClick={() => handleShare('twitter')}
-                className="az-glass flex items-center justify-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors text-white font-medium text-sm"
+                className="az-btn-social"
                 aria-label="Share on Twitter"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
+                <Bird className="w-5 h-5" aria-hidden="true" />
                 Twitter
               </button>
               <button
+                type="button"
                 onClick={() => handleShare('facebook')}
-                className="az-glass flex items-center justify-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors text-white font-medium text-sm"
+                className="az-btn-social"
                 aria-label="Share on Facebook"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
+                <Users className="w-5 h-5" aria-hidden="true" />
                 Facebook
               </button>
               <button
+                type="button"
                 onClick={() => handleShare('copy')}
-                className="az-glass flex items-center justify-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors text-white font-medium text-sm col-span-2"
+                className="az-btn-social col-span-2"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-                  />
-                </svg>
+                <Link2 className="w-5 h-5" aria-hidden="true" />
                 Copy Link
               </button>
             </div>
@@ -1152,27 +1215,21 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       {/* Report Modal */}
       {showReportModal && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in"
           role="dialog"
           aria-modal="true"
           aria-label="Report content"
         >
-          <div className="az-glass p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="az-glass p-8 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">Report Content</h3>
+              <h3 className="az-title text-az-ink">Report Content</h3>
               <button
+                type="button"
                 onClick={() => setShowReportModal(false)}
-                className="text-white/40 hover:text-white transition-colors"
+                className="text-az-ink/40 hover:text-az-ink transition-colors"
                 aria-label="Close report dialog"
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-6 h-6" aria-hidden="true" />
               </button>
             </div>
             <form
@@ -1191,25 +1248,20 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                 ].map((reason) => (
                   <label
                     key={reason}
-                    className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-white/5 transition-colors"
-                    style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                    className="flex items-center gap-3 p-3 rounded-az-card border border-az-glass-border cursor-pointer hover:bg-az-glass-fill transition-colors"
                   >
                     <input
                       type="radio"
                       name="report-reason"
                       value={reason}
-                      className="w-4 h-4 accent-[#E8420A]"
+                      className="w-4 h-4 accent-az-flame"
                       required
                     />
-                    <span className="text-sm text-white">{reason}</span>
+                    <span className="text-sm text-az-ink">{reason}</span>
                   </label>
                 ))}
               </div>
-              <button
-                type="submit"
-                disabled={isReporting}
-                className="az-btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              <button type="submit" disabled={isReporting} className="az-btn-primary">
                 {isReporting ? 'Submitting...' : 'Submit Report'}
               </button>
             </form>
@@ -1217,7 +1269,20 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
         </div>
       )}
 
-      <AppFooter />
-    </div>
+      {/* Storyworld Interactive Branching Decision Modal */}
+      <BranchingDecisionModal
+        isOpen={branchingModalOpen}
+        title="Choose Your Story Path"
+        prompt="A crucial narrative divergence has been unlocked! Select your character's action before time expires:"
+        options={storyOptions}
+        countdownSeconds={15}
+        onSelectOption={handleSelectStoryOption}
+        onTimeout={() => {
+          if (storyOptions.length > 0) {
+            handleSelectStoryOption(storyOptions[0]);
+          }
+        }}
+      />
+    </PageShell>
   );
 }

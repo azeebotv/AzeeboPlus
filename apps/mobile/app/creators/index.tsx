@@ -4,8 +4,9 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -76,7 +77,7 @@ export default function CreatorUniverseHome() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Index Screen" style={styles.container}>
         <LoadingState text="Loading creators..." />
       </SafeAreaView>
     );
@@ -132,7 +133,7 @@ export default function CreatorUniverseHome() {
             contentContainerStyle={styles.categoriesList}
           >
             {categories.map((category) => (
-              <TouchableOpacity key={category.id} style={styles.categoryButton}>
+              <TouchableOpacity accessibilityRole="button" key={category.id} style={styles.categoryButton}>
                 <Text style={styles.categoryEmoji}>{category.emoji}</Text>
                 <Text style={styles.categoryName}>{category.name}</Text>
               </TouchableOpacity>
@@ -145,7 +146,7 @@ export default function CreatorUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Featured Creators
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -171,7 +172,7 @@ export default function CreatorUniverseHome() {
                   <Text style={styles.creatorStatSeparator}>•</Text>
                   <Text style={styles.creatorStat}>{item.content}</Text>
                 </View>
-                <TouchableOpacity style={styles.followButton}>
+                <TouchableOpacity accessibilityRole="button" style={styles.followButton}>
                   <Text style={styles.followText}>Follow</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -225,7 +226,7 @@ export default function CreatorUniverseHome() {
                   {card.title}
                 </Text>
                 <Text style={styles.cardDesc}>{card.description}</Text>
-                <TouchableOpacity style={styles.cardButton}>
+                <TouchableOpacity accessibilityRole="button" style={styles.cardButton}>
                   <Text style={styles.cardButtonText}>{card.action}</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -234,23 +235,23 @@ export default function CreatorUniverseHome() {
         </View>
 
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
             <Text style={styles.navIcon}>🏠</Text>
             <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
             <Text style={styles.navIcon}>📺</Text>
             <Text style={styles.navLabel}>Watch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
             <Text style={styles.navIcon}>✨</Text>
-            <Text style={[styles.navLabel, { color: '#4ECDC4' }]}>Create</Text>
+            <Text style={[styles.navLabel, { color: colors.category.teal }]}>Create</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
             <Text style={styles.navIcon}>⭐</Text>
             <Text style={styles.navLabel}>Rewards</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
             <Text style={styles.navIcon}>👤</Text>
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>
@@ -270,7 +271,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: '#4ECDC4',
+    color: colors.category.teal,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.category.teal,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 10,
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   seeAllText: {
-    color: '#4ECDC4',
+    color: colors.category.teal,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -377,7 +378,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.category.teal,
     borderWidth: 2,
     borderColor: '#1a1a1a',
   },
@@ -409,14 +410,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   creatorStat: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   creatorStatSeparator: {
-    color: '#444',
+    color: colors.text.tertiary,
   },
   followButton: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.category.teal,
     paddingHorizontal: 20,
     paddingVertical: 6,
     borderRadius: 6,
@@ -439,7 +440,7 @@ const styles = StyleSheet.create({
   },
   contentThumbnail: {
     height: 120,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -481,12 +482,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   creatorTag: {
-    color: '#4ECDC4',
+    color: colors.category.teal,
     fontSize: 11,
     fontWeight: '500',
   },
   likeCount: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 11,
   },
   cardsSection: {
@@ -514,13 +515,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cardDesc: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
     textAlign: 'center',
     marginBottom: 12,
   },
   cardButton: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.category.teal,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -537,7 +538,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     backgroundColor: '#1a1a1a',
     borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
+    borderTopColor: colors.bg.tertiary,
   },
   navItem: {
     alignItems: 'center',
@@ -548,6 +549,6 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 11,
-    color: '#888',
+    color: colors.text.secondary,
   },
 });

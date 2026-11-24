@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,23 +8,36 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
+import * as WebBrowser from 'expo-web-browser';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { authApi } from '@azeebo/react-data';
 import { useBiometric } from '../../src/hooks/useBiometric';
+import { analytics } from '../../src/utils/analytics';
+import { useFeatureFlags } from '@azeebo/react-data/hooks/useFeatureFlags';
+import { authFlags } from '@azeebo/feature-flags/registries';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors, typography, spacing, radius } from '../../src/theme';
 import { GlassCard, BrandButton, BrandInput } from '../../src/components/ui';
 import { PageTransition, ScrollReveal, AmbientGlow } from '../../src/components/motion';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, isLoading } = useAuth();
+  const { login, socialLogin, isLoading } = useAuth();
   const { isAvailable, isEnabled, authenticateWithStoredCredentials } = useBiometric();
+  const { flags } = useFeatureFlags();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showBiometricOption, setShowBiometricOption] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Feature flags for social login
+  const googleEnabled = flags[authFlags.socialGoogle]?.enabled === true;
+  const appleEnabled = flags[authFlags.socialApple]?.enabled === true;
+  const showSocialLogin = googleEnabled || appleEnabled;
 
   useEffect(() => {
     if (isAvailable && isEnabled) {
@@ -33,9 +46,15 @@ export default function LoginScreen() {
   }, [isAvailable, isEnabled]);
 
   const handleBiometricLogin = async () => {
+    // Track the in-flight state like the password path does, so the submit
+    // button's loading indicator and double-tap guard cover biometrics too
+    // (previously only the password/social paths set isSubmitting).
+    setIsSubmitting(true);
+    setError(null);
     try {
       const result = await authenticateWithStoredCredentials();
       if (result.success) {
+        analytics.userLoggedIn('biometric', 'mobile');
         router.replace('/(tabs)/home');
       } else {
         Alert.alert(
@@ -46,6 +65,8 @@ export default function LoginScreen() {
       }
     } catch {
       Alert.alert('Error', 'Biometric authentication failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -64,6 +85,7 @@ export default function LoginScreen() {
     try {
       const result = await login(email, password);
       if (result.success) {
+        analytics.userLoggedIn('password', 'mobile');
         router.replace('/(tabs)/home');
       } else {
         setError(result.message || 'Invalid email or password');
@@ -75,9 +97,82 @@ export default function LoginScreen() {
     }
   };
 
-  const handleSocialLogin = (_provider: 'google' | 'apple') => {
-    // Social login not yet implemented - buttons should be disabled
-  };
+  const handleSocialLogin = useCallback(
+    async (provider: 'google' | 'apple') => {
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        const redirectUri = 'azeebo://oauth-callback';
+        const authorizeResponse =
+          provider === 'google'
+            ? await authApi.getGoogleAuthorizeUrl(redirectUri)
+            : await authApi.getAppleAuthorizeUrl(redirectUri);
+
+        if (!authorizeResponse.success || !authorizeResponse.data) {
+          setError(`${provider} sign-in is temporarily unavailable. Please try again.`);
+          setIsSubmitting(false);
+          return;
+        }
+
+        const { state, authorizeUrl } = authorizeResponse.data;
+        const result = await WebBrowser.openAuthSessionAsync(authorizeUrl, redirectUri);
+
+        if (result.type !== 'success') {
+          if (result.type === 'cancel') {
+            setIsSubmitting(false);
+            return;
+          }
+          setError(`${provider} sign-in was cancelled or failed. Please try again.`);
+          setIsSubmitting(false);
+          return;
+        }
+
+        const url = new URL(result.url);
+        const code = url.searchParams.get('code');
+        const returnedState = url.searchParams.get('state');
+        const oauthError = url.searchParams.get('error');
+
+        if (oauthError) {
+          setError(`${provider} sign-in failed: ${oauthError}`);
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (!code || !returnedState) {
+          setError('Invalid OAuth response. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (returnedState !== state) {
+          setError('Security validation failed. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        const socialResult = await socialLogin({ code, state: returnedState });
+
+        if (socialResult.success) {
+          analytics.userLoggedIn(provider, 'mobile');
+          router.replace('/(tabs)/home');
+        } else {
+          setError(
+            socialResult.message ||
+              `${provider} sign-in failed. Please try again or use email sign-in.`
+          );
+        }
+      } catch (error: unknown) {
+        logger.error(`${provider} OAuth login error`, error);
+        const message =
+          error instanceof Error ? error.message : `${provider} sign-in failed. Please try again.`;
+        setError(message);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [socialLogin, router]
+  );
 
   return (
     <KeyboardAvoidingView
@@ -94,9 +189,12 @@ export default function LoginScreen() {
         <PageTransition>
           <ScrollReveal direction="up" delay={0}>
             <View style={styles.header}>
-              <Text style={styles.logo}>
-                AZEEBO<Text style={styles.logoPlus}>+</Text>
-              </Text>
+              <Image
+                source={require('../../assets/logo-white.png')}
+                style={{ width: 140, height: 34, marginBottom: 8 }}
+                resizeMode="contain"
+                accessibilityLabel="Azeebo+ Logo"
+              />
               <Text style={styles.subtitle}>Welcome back</Text>
             </View>
           </ScrollReveal>
@@ -132,6 +230,8 @@ export default function LoginScreen() {
                 onPress={() => router.push('/(auth)/forgot-password')}
                 style={styles.forgotPasswordContainer}
                 testID="login-forgot-password"
+                accessibilityRole="button"
+                accessibilityLabel="Forgot your password?"
               >
                 <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
               </TouchableOpacity>
@@ -154,26 +254,34 @@ export default function LoginScreen() {
                 />
               )}
 
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
-                <View style={styles.dividerLine} />
-              </View>
+              {showSocialLogin && (
+                <>
+                  <View style={styles.divider}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
+                    <View style={styles.dividerLine} />
+                  </View>
 
-              <View style={styles.socialButtons}>
-                <BrandButton
-                  title="Google"
-                  onPress={() => handleSocialLogin('google')}
-                  variant="social"
-                  testID="login-google-button"
-                />
-                <BrandButton
-                  title="Apple"
-                  onPress={() => handleSocialLogin('apple')}
-                  variant="social"
-                  testID="login-apple-button"
-                />
-              </View>
+                  <View style={styles.socialButtons}>
+                    {googleEnabled && (
+                      <BrandButton
+                        title="Google"
+                        onPress={() => handleSocialLogin('google')}
+                        variant="social"
+                        testID="login-google-button"
+                      />
+                    )}
+                    {appleEnabled && (
+                      <BrandButton
+                        title="Apple"
+                        onPress={() => handleSocialLogin('apple')}
+                        variant="social"
+                        testID="login-apple-button"
+                      />
+                    )}
+                  </View>
+                </>
+              )}
             </GlassCard>
           </ScrollReveal>
 
@@ -239,6 +347,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   forgotPasswordContainer: {
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,
   },

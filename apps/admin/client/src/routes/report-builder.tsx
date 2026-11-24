@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
+import { Icon } from '@/components/Icons';
 
 export default function ReportBuilderPage() {
   const navigate = useNavigate();
@@ -13,7 +14,15 @@ export default function ReportBuilderPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => adminApi.createCustomReport(form),
+    // Backend contract (reports-admin.service.ts): { name, type,
+    // config: { dateRange, format } } — the builder form's flat
+    // { name, category, dateRange, format } was a guaranteed 400.
+    mutationFn: () =>
+      adminApi.createCustomReport({
+        name: form.name,
+        type: form.category,
+        config: { dateRange: form.dateRange, format: form.format },
+      }),
     onSuccess: () => navigate('/reports'),
   });
 
@@ -25,20 +34,36 @@ export default function ReportBuilderPage() {
           marginBottom: 24,
           padding: '8px 16px',
           borderRadius: 8,
-          border: '1px solid #2A1A1A',
+          border: '1px solid var(--admin-surface)',
           background: 'transparent',
-          color: '#E8420A',
+          color: 'var(--admin-orange)',
           cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          fontSize: 13,
+          fontWeight: 600,
+          transition: 'all 0.15s ease',
         }}
       >
-        &larr; Back to Reports
+        <Icon name="arrowLeft" size={16} />
+        <span>Back to Reports</span>
       </button>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Report Builder</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Configure and generate a custom report</p>
+      <p style={{ color: 'var(--admin-text-muted)', marginBottom: 32 }}>
+        Configure and generate a custom report
+      </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 13,
+              color: 'var(--admin-text-muted)',
+              marginBottom: 6,
+            }}
+          >
             Report Name
           </label>
           <input
@@ -49,16 +74,23 @@ export default function ReportBuilderPage() {
               width: '100%',
               padding: '12px 16px',
               borderRadius: 12,
-              border: '1px solid #2A1A1A',
-              backgroundColor: '#0D0505',
-              color: '#F5F0EB',
+              border: '1px solid var(--admin-surface)',
+              backgroundColor: 'var(--admin-dark)',
+              color: 'var(--admin-text)',
               fontSize: 14,
               boxSizing: 'border-box',
             }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 13,
+              color: 'var(--admin-text-muted)',
+              marginBottom: 6,
+            }}
+          >
             Type
           </label>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -69,12 +101,12 @@ export default function ReportBuilderPage() {
                 style={{
                   padding: '8px 16px',
                   borderRadius: 999,
-                  border: form.category === t ? 'none' : '1px solid #2A1A1A',
+                  border: form.category === t ? 'none' : '1px solid var(--admin-surface)',
                   background:
                     form.category === t
                       ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
                       : 'transparent',
-                  color: form.category === t ? '#fff' : '#9A8A7A',
+                  color: form.category === t ? 'white' : 'var(--admin-text-muted)',
                   fontWeight: 500,
                   fontSize: 13,
                   cursor: 'pointer',
@@ -87,7 +119,14 @@ export default function ReportBuilderPage() {
           </div>
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 13,
+              color: 'var(--admin-text-muted)',
+              marginBottom: 6,
+            }}
+          >
             Date Range
           </label>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -98,12 +137,12 @@ export default function ReportBuilderPage() {
                 style={{
                   padding: '8px 16px',
                   borderRadius: 999,
-                  border: form.dateRange === r ? 'none' : '1px solid #2A1A1A',
+                  border: form.dateRange === r ? 'none' : '1px solid var(--admin-surface)',
                   background:
                     form.dateRange === r
                       ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
                       : 'transparent',
-                  color: form.dateRange === r ? '#fff' : '#9A8A7A',
+                  color: form.dateRange === r ? 'white' : 'var(--admin-text-muted)',
                   fontWeight: 500,
                   fontSize: 13,
                   cursor: 'pointer',
@@ -115,7 +154,14 @@ export default function ReportBuilderPage() {
           </div>
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 13,
+              color: 'var(--admin-text-muted)',
+              marginBottom: 6,
+            }}
+          >
             Format
           </label>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -126,12 +172,12 @@ export default function ReportBuilderPage() {
                 style={{
                   padding: '8px 16px',
                   borderRadius: 999,
-                  border: form.format === f ? 'none' : '1px solid #2A1A1A',
+                  border: form.format === f ? 'none' : '1px solid var(--admin-surface)',
                   background:
                     form.format === f
                       ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
                       : 'transparent',
-                  color: form.format === f ? '#fff' : '#9A8A7A',
+                  color: form.format === f ? 'white' : 'var(--admin-text-muted)',
                   fontWeight: 500,
                   fontSize: 13,
                   cursor: 'pointer',
@@ -151,7 +197,7 @@ export default function ReportBuilderPage() {
             borderRadius: 12,
             border: 'none',
             background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            color: 'white',
             fontWeight: 600,
             fontSize: 15,
             cursor: form.name ? 'pointer' : 'not-allowed',

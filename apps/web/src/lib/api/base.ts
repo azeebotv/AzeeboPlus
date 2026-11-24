@@ -345,6 +345,60 @@ export function gatewayPath(endpoint: string): string {
   return `/api/v1${endpoint}`;
 }
 
+// ---------------------------------------------------------------------------
+// Request correlation & idempotency (TAA §9)
+// ---------------------------------------------------------------------------
+
+let correlationCounter = 0;
+
+/** Generate a unique correlation ID for request tracing */
+export function generateCorrelationId(): string {
+  const timestamp = Date.now().toString(36);
+  const counter = (++correlationCounter).toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  return `req_${timestamp}-${counter}-${random}`;
+}
+
+/** Generate a UUID v4 idempotency key for mutations */
+export function generateIdempotencyKey(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+/** HTTP methods that should receive idempotency keys */
+const IDEMPOTENT_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/** Build standard headers for a request */
+export function buildRequestHeaders(
+  options: RequestInit,
+  token: string | null
+): Record<string, string> {
+  const isFormData = options.body instanceof FormData;
+  const headers: Record<string, string> = {
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...(options.headers as Record<string, string>),
+  };
+
+  // Correlation ID for request tracing
+  headers['x-correlation-id'] = generateCorrelationId();
+
+  // Auth token
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Idempotency key for state-changing methods
+  const method = (options.method || 'GET').toUpperCase();
+  if (IDEMPOTENT_METHODS.has(method) && !headers['Idempotency-Key']) {
+    headers['Idempotency-Key'] = generateIdempotencyKey();
+  }
+
+  return headers;
+}
+
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
 const USER_KEY = 'azeebo_user';
@@ -359,6 +413,97 @@ const CSRF_HEADER = 'X-CSRF-Token';
 const CSRF_COOKIE = '_csrf';
 const STATE_CHANGING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
+/**
+ * Cookie-first auth for the web client. The access token rotates on every
+ * /auth/refresh, so any localStorage copy goes stale the first time the
+ * cookie flow recovers a session — attaching that stale Bearer header then
+ * makes the backend 401 the request even though the fresh cookie is also
+ * being sent. Only a token readable from the cookie jar is fresh by
+ * construction, so only that may be mirrored into the header.
+ */
+function getCookieToken(): string | null {
+  return getCookie('access_token');
+}
+
+/**
+ * Single-flight refresh: N parallel 401s must trigger ONE refresh, not N.
+ * Concurrent refreshes race the server-side token rotation — the losers
+ * 401/429 and force a bogus logout (seen as logout-on-reload when the page
+ * fires several queries at boot).
+ */
+let refreshInFlight: Promise<boolean> | null = null;
+let cachedCsrfToken: string | null = null;
+
+function refreshSession(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = fetch(`${resolvedApiUrl}/api/v1/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    })
+      .then((r) => r.ok)
+      .catch(() => false)
+      .finally(() => {
+        setTimeout(() => {
+          refreshInFlight = null;
+        }, 50);
+      });
+  }
+  return refreshInFlight;
+}
+
+function resolveCsrfToken(): string | null {
+  return cachedCsrfToken || getCookie(CSRF_COOKIE);
+}
+
+async function fetchCsrfToken(): Promise<string | null> {
+  try {
+    const res = await fetch(`${resolvedApiUrl}/api/v1/auth/csrf`, {
+      credentials: 'include',
+    });
+    const headerToken = res.headers.get(CSRF_HEADER) || res.headers.get('x-csrf-token');
+    const cookieToken = getCookie(CSRF_COOKIE);
+    const token = headerToken || cookieToken;
+    if (token) {
+      cachedCsrfToken = token;
+      if (typeof document !== 'undefined') {
+        document.cookie = `${CSRF_COOKIE}_client=${encodeURIComponent(token)}; path=/; SameSite=Lax`;
+      }
+    }
+    return token;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * CSRF recovery: the gateway mints tokens with an in-memory secret, so its
+ * secret rotates on restart and every cached token instantly goes stale. A
+ * mutation then 403s ("CSRF token missing/mismatch") forever because the
+ * cached token short-circuits re-bootstrap. On a CSRF-flavored 403, drop the
+ * cache, expire the cookies, re-bootstrap once, and retry the mutation with
+ * the fresh token. Single-flight so parallel mutations share one recovery.
+ */
+let csrfRecoveryInFlight: Promise<string | null> | null = null;
+
+function recoverCsrfToken(): Promise<string | null> {
+  if (!csrfRecoveryInFlight) {
+    csrfRecoveryInFlight = (async () => {
+      cachedCsrfToken = null;
+      if (typeof document !== 'undefined') {
+        document.cookie = `${CSRF_COOKIE}=; Max-Age=0; path=/`;
+        document.cookie = `${CSRF_COOKIE}_client=; Max-Age=0; path=/`;
+      }
+      return fetchCsrfToken();
+    })().finally(() => {
+      setTimeout(() => {
+        csrfRecoveryInFlight = null;
+      }, 50);
+    });
+  }
+  return csrfRecoveryInFlight;
+}
+
 export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit & { skipAuthRetry?: boolean } = {},
@@ -366,26 +511,47 @@ export async function apiFetch<T>(
 ): Promise<ApiResponse<T>> {
   const maxRetries = retryOptions?.maxRetries ?? 0;
   const timeoutMs = retryOptions?.timeoutMs ?? 15000;
-  const storedToken = typeof window !== 'undefined' ? localStorage.getItem(ACCESS_TOKEN_KEY) : null;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
 
-  if (storedToken) {
-    headers['Authorization'] = `Bearer ${storedToken}`;
+  // Correlation ID for request tracing
+  if (!headers['x-correlation-id']) {
+    headers['x-correlation-id'] = generateCorrelationId();
+  }
+
+  // Cookie-first: mirror the header only from the cookie token (always
+  // fresh); never from the localStorage copy, which goes stale on rotation.
+  const cookieToken = getCookieToken();
+  if (cookieToken) {
+    headers['Authorization'] = `Bearer ${cookieToken}`;
   }
 
   const method = (options.method || 'GET').toUpperCase();
   if (STATE_CHANGING_METHODS.includes(method)) {
-    const csrfToken = getCookie(CSRF_COOKIE);
+    // Bootstrap when no token is cached: the gateway only mints the _csrf
+    // cookie on bootstrap, so a cold page would otherwise send cookieless
+    // mutations that the backend must reject.
+    let csrfToken = resolveCsrfToken();
+    if (!csrfToken) {
+      csrfToken = await fetchCsrfToken();
+    }
     if (csrfToken) {
       headers[CSRF_HEADER] = csrfToken;
+    }
+    // Idempotency key for state-changing methods
+    if (!headers['Idempotency-Key']) {
+      headers['Idempotency-Key'] = generateIdempotencyKey();
     }
   }
 
   let lastError: Error | null = null;
+  // The 401-recovery retry must not consume the transport-retry budget: with
+  // the default maxRetries=0 the recovery would otherwise exit the loop and
+  // surface as "Network error" instead of the silently-refreshed request.
+  let authRecoveryUsed = false;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
@@ -404,37 +570,41 @@ export async function apiFetch<T>(
       const data = await response.json();
 
       if (!response.ok) {
-        // Handle 401 — try to refresh token before returning error
+        // Handle 401 — refresh via the httpOnly refresh_token cookie. The
+        // browser sends it automatically and the backend rotates + resets the
+        // cookies itself, so no body token is needed (a localStorage copy of
+        // the refresh token would be stale after the first rotation anyway).
+        // Single-flight so parallel 401s share one rotation; retry only on
+        // the first attempt so a persistent 401 still returns the error.
         if (response.status === 401 && !options.skipAuthRetry) {
-          const refreshToken =
-            typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null;
-          if (refreshToken && attempt === 0) {
-            try {
-              const refreshResponse = await fetch(`${resolvedApiUrl}/api/v1/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refreshToken }),
-                credentials: 'include',
-              });
-
-              if (refreshResponse.ok) {
-                const refreshData = await refreshResponse.json();
-                if (refreshData.data?.access_token) {
-                  localStorage.setItem(ACCESS_TOKEN_KEY, refreshData.data.access_token);
-                  localStorage.setItem(REFRESH_TOKEN_KEY, refreshData.data.refresh_token);
-                  headers['Authorization'] = `Bearer ${refreshData.data.access_token}`;
-                  continue; // Retry with new token
-                }
+          if (!authRecoveryUsed) {
+            authRecoveryUsed = true;
+            const refreshed = await refreshSession();
+            if (refreshed) {
+              // Mirror the retry header from the (now fresh) cookie token
+              // only; the pre-refresh header, if any, is stale and must not
+              // be reused or the backend would 401 the retry forever.
+              const retryCookieToken = getCookieToken();
+              if (retryCookieToken) {
+                headers['Authorization'] = `Bearer ${retryCookieToken}`;
+              } else {
+                delete headers['Authorization'];
+                delete headers['authorization'];
               }
-            } catch {
-              // Refresh failed — fall through to return error
+              attempt -= 1; // recovery retry is free; keep the retry budget
+              continue; // Retry with the fresh cookie/header
             }
           }
           // Refresh failed or no refresh token — clear session
           if (typeof window !== 'undefined') {
+            const hadSession = !!localStorage.getItem(ACCESS_TOKEN_KEY);
             localStorage.removeItem(ACCESS_TOKEN_KEY);
             localStorage.removeItem(REFRESH_TOKEN_KEY);
             localStorage.removeItem(USER_KEY);
+
+            if (hadSession && !window.location.pathname.startsWith('/auth/')) {
+              window.location.href = '/auth/expired-session';
+            }
           }
           return {
             success: false,
@@ -444,13 +614,63 @@ export async function apiFetch<T>(
           } as ApiError;
         }
 
-        // Don't retry on client errors (4xx except 408, 429)
+        // CSRF-flavored 403: the gateway's in-memory secret rotated (restart)
+        // and our cached token is dead. Re-bootstrap once and retry the
+        // mutation with the fresh token instead of failing the user's action.
         if (
-          response.status >= 400 &&
-          response.status < 500 &&
-          response.status !== 408 &&
-          response.status !== 429
+          response.status === 403 &&
+          !options.skipAuthRetry &&
+          /csrf/i.test(String(data?.error || data?.message || data?.title || ''))
         ) {
+          const freshToken = await recoverCsrfToken();
+          if (freshToken) {
+            const retryResponse = await fetch(`${resolvedApiUrl}${gatewayPath(endpoint)}`, {
+              ...options,
+              headers: { ...headers, [CSRF_HEADER]: freshToken },
+              credentials: 'include',
+              signal: controller.signal,
+            });
+            const retryData = await retryResponse.json().catch(() => null);
+            if (retryResponse.ok) {
+              return {
+                success: true,
+                data: retryData && retryData.data !== undefined ? retryData.data : retryData,
+                message: retryData?.message,
+              };
+            }
+            return {
+              success: false,
+              message:
+                (retryData && (retryData.message || retryData.detail)) ||
+                data?.message ||
+                'Request failed',
+              statusCode: retryResponse.status,
+            } as ApiError;
+          }
+        }
+
+        // Rate limit handling (429) — respect Retry-After header
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          if (retryAfter && attempt < maxRetries) {
+            const delay = Math.min(parseInt(retryAfter, 10) * 1000, 10000);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+          return {
+            success: false,
+            type: data.type,
+            title: data.title || 'Rate Limited',
+            status: 429,
+            detail: data.detail || 'Too many requests. Please try again later.',
+            code: 'RATE_LIMITED',
+            message: data.message || `Rate limited. Retry after ${retryAfter || '60'}s`,
+            statusCode: 429,
+          } as ApiError;
+        }
+
+        // Don't retry on other client errors (4xx except 408)
+        if (response.status >= 400 && response.status < 500 && response.status !== 408) {
           return {
             success: false,
             type: data.type,
@@ -478,6 +698,28 @@ export async function apiFetch<T>(
           continue;
         }
 
+        return {
+          success: false,
+          type: data.type,
+          title: data.title,
+          status: response.status,
+          detail: data.detail,
+          instance: data.instance,
+          code: data.code,
+          message: data.message || data.detail || 'An error occurred',
+          error: data.error,
+          statusCode: response.status,
+          details: data.details,
+          timestamp: data.timestamp,
+          path: data.path,
+        } as ApiError;
+      }
+
+      // T-FIX: Some upstream controllers return HTTP 200 with an error
+      // envelope ({ success: false, ... }). Honor it instead of treating
+      // the whole envelope as payload data (which broke pages calling
+      // .find()/.map() on the result).
+      if (data && typeof data === 'object' && data.success === false) {
         return {
           success: false,
           type: data.type,
@@ -528,4 +770,168 @@ export async function apiFetch<T>(
     error: lastError?.message || 'Unknown error',
     statusCode: 0,
   } as ApiError;
+}
+
+// ---------------------------------------------------------------------------
+// RFC 9457 Problem Details — strict type definitions
+// @see https://datatracker.ietf.org/doc/html/rfc9457
+// ---------------------------------------------------------------------------
+
+/**
+ * RFC 9457 Problem Details object.
+ * This is a strict superset of RFC 7807 with the addition of:
+ * - `errors` array for structured validation errors (§3)
+ * - `extensions` support for arbitrary additional members
+ */
+export interface ProblemDetails {
+  /** URI reference identifying the problem type (§3.1) */
+  type: string;
+  /** Short human-readable summary of the problem type (§3.2) */
+  title: string;
+  /** HTTP status code generated by the origin server (§3.3) */
+  status: number;
+  /** Human-readable explanation specific to this occurrence (§3.4) */
+  detail?: string;
+  /** URI reference identifying the specific occurrence (§3.5) */
+  instance?: string;
+  /** Structured validation errors (RFC 9457 §3 / extension) */
+  errors?: ValidationError[];
+  /** Application-specific error code */
+  code?: string;
+  /** Additional extension members */
+  [key: string]: unknown;
+}
+
+/**
+ * Validation error entry for structured field-level errors.
+ */
+export interface ValidationError {
+  /** Dot-notation path to the field that failed validation */
+  path: string;
+  /** The validation rule that failed (e.g. "required", "minLength") */
+  rule: string;
+  /** Human-readable message for this field error */
+  message: string;
+  /** The rejected value (optional, for debugging) */
+  rejected?: unknown;
+}
+
+/**
+ * Parse an HTTP response into a ProblemDetails object.
+ * Falls back to a generic problem if the response body is not valid JSON.
+ */
+export async function parseProblemDetails(response: Response): Promise<ProblemDetails> {
+  const contentType = response.headers.get('content-type') || '';
+  let body: Record<string, unknown>;
+
+  if (
+    !contentType.includes('application/json') &&
+    !contentType.includes('application/problem+json')
+  ) {
+    return {
+      type: 'about:blank',
+      title: 'Bad Response',
+      status: response.status,
+      detail: `Server returned ${response.status} with non-JSON content-type: ${contentType || 'unknown'}`,
+    };
+  }
+
+  try {
+    body = await response.json();
+  } catch {
+    // Response body is not JSON — synthesise a problem
+    return {
+      type: 'about:blank',
+      title: 'Bad Response',
+      status: response.status,
+      detail: `Server returned ${response.status} with non-JSON body`,
+    };
+  }
+
+  // If the server already sends RFC 9457 fields, pass them through
+  if (body.type && body.title) {
+    const problem: ProblemDetails = {
+      type: body.type as string,
+      title: body.title as string,
+      status: (body.status as number) ?? response.status,
+    };
+    if (body.detail) problem.detail = body.detail as string;
+    if (body.instance) problem.instance = body.instance as string;
+    if (body.errors) problem.errors = body.errors as ValidationError[];
+    if (body.code) problem.code = body.code as string;
+
+    // Carry through any extension members
+    for (const [key, value] of Object.entries(body)) {
+      if (!['type', 'title', 'status', 'detail', 'instance', 'errors', 'code'].includes(key)) {
+        problem[key] = value;
+      }
+    }
+    return problem;
+  }
+
+  // Server did not send RFC 9457 — synthesise from whatever we got
+  const status = response.status;
+  const code = (body.code as string) || deriveProblemCode(status);
+
+  return {
+    type: `https://api.azeebo.com/problems/${code}`,
+    title: deriveProblemTitle(status),
+    status,
+    detail: (body.detail as string) || (body.message as string) || (body.error as string),
+    code,
+  };
+}
+
+/** Derive an application error code from HTTP status */
+function deriveProblemCode(status: number): string {
+  const map: Record<number, string> = {
+    400: 'VALIDATION_ERROR',
+    401: 'UNAUTHENTICATED',
+    403: 'FORBIDDEN',
+    404: 'NOT_FOUND',
+    409: 'CONFLICT',
+    422: 'UNPROCESSABLE_ENTITY',
+    429: 'RATE_LIMITED',
+    500: 'INTERNAL_ERROR',
+    502: 'BAD_GATEWAY',
+    503: 'SERVICE_UNAVAILABLE',
+    504: 'GATEWAY_TIMEOUT',
+  };
+  return map[status] ?? 'ERROR';
+}
+
+/** Derive a human-readable title from HTTP status */
+function deriveProblemTitle(status: number): string {
+  const map: Record<number, string> = {
+    400: 'Bad Request',
+    401: 'Unauthenticated',
+    403: 'Forbidden',
+    404: 'Not Found',
+    409: 'Conflict',
+    422: 'Unprocessable Entity',
+    429: 'Too Many Requests',
+    500: 'Internal Server Error',
+    502: 'Bad Gateway',
+    503: 'Service Unavailable',
+    504: 'Gateway Timeout',
+  };
+  return map[status] ?? 'Error';
+}
+
+/**
+ * Assert that a ProblemDetails response represents a specific problem type.
+ * Throws if the problem type does not match.
+ */
+export function assertProblemType(problem: ProblemDetails, expectedType: string): void {
+  if (problem.type !== expectedType && !problem.type.endsWith(`/${expectedType}`)) {
+    throw new Error(`Expected problem type "${expectedType}" but got "${problem.type}"`);
+  }
+}
+
+/**
+ * Check if a ProblemDetails response is retryable (5xx or specific 4xx).
+ */
+export function isRetryableProblem(problem: ProblemDetails): boolean {
+  const retryable = new Set([408, 429, 500, 502, 503, 504]);
+  return retryable.has(problem.status);
 }

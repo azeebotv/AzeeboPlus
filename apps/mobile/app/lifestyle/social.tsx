@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi, SavedItem } from '../../src/api/lifestyle';
+import { lifestyleApi, SavedItem } from '@azeebo/react-data/api/lifestyle';
 
 export default function SocialScreen() {
   const router = useRouter();
@@ -51,7 +51,9 @@ export default function SocialScreen() {
         message: `Check out ${item.title} on Azeebo+`,
         title: item.title,
       });
-    } catch {}
+    } catch {
+      /* User cancelled share */
+    }
   }, []);
 
   const handleRemove = useCallback(
@@ -74,7 +76,7 @@ export default function SocialScreen() {
           router.push(`/lifestyle/influencer-detail?id=${item.id}`);
           break;
         case 'music':
-          router.push('/lifestyle/music');
+          router.push('/music');
           break;
         case 'venue':
           router.push('/lifestyle/nightlife');
@@ -110,7 +112,9 @@ export default function SocialScreen() {
       >
         <Image
           source={{
-            uri: item.image || 'https://placehold.co/80x80/1a1a1a/ffffff?text=📌',
+            uri:
+              item.image ||
+              'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=80&h=80&q=80',
           }}
           style={styles.savedImage}
           resizeMode="cover"
@@ -151,10 +155,10 @@ export default function SocialScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Social Screen" style={styles.container}>
       <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Saved Items</Text>

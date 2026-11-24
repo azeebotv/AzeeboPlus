@@ -11,6 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { changeLanguage, LANGUAGES, type SupportedLanguage } from '../../i18n';
 import { colors } from '../../theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface LanguageSwitcherProps {
   /** Position of the button — 'header' (top-right) or 'footer' (bottom-center) */
@@ -40,10 +41,7 @@ export default function LanguageSwitcher({ placement = 'header' }: LanguageSwitc
   return (
     <>
       <TouchableOpacity
-        style={[
-          styles.trigger,
-          placement === 'footer' && styles.triggerFooter,
-        ]}
+        style={[styles.trigger, placement === 'footer' && styles.triggerFooter]}
         onPress={() => setModalVisible(true)}
         accessibilityLabel={t('settings.selectLanguage')}
         accessibilityRole="button"
@@ -93,9 +91,7 @@ export default function LanguageSwitcher({ placement = 'header' }: LanguageSwitc
                   styles.languageOption,
                   currentLanguage === lang.code && {
                     backgroundColor:
-                      colorScheme === 'dark'
-                        ? 'rgba(232,66,10,0.15)'
-                        : 'rgba(232,66,10,0.08)',
+                      colorScheme === 'dark' ? 'rgba(232,66,10,0.15)' : 'rgba(232,66,10,0.08)',
                   },
                 ]}
                 onPress={() => handleLanguageChange(lang.code)}
@@ -122,9 +118,7 @@ export default function LanguageSwitcher({ placement = 'header' }: LanguageSwitc
                   </Text>
                   <Text style={styles.languageNative}>{lang.nativeName}</Text>
                 </View>
-                {currentLanguage === lang.code && (
-                  <Text style={styles.languageCheck}>✓</Text>
-                )}
+                {currentLanguage === lang.code && <Text style={styles.languageCheck}>✓</Text>}
               </TouchableOpacity>
             ))}
 
@@ -208,12 +202,12 @@ const styles = StyleSheet.create({
   },
   languageNative: {
     fontSize: 13,
-    color: '#888',
+    color: colors.text.tertiary,
     marginTop: 2,
   },
   languageCheck: {
     fontSize: 20,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '700',
   },
   modalCloseButton: {
@@ -224,7 +218,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   modalCloseText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 16,
     fontWeight: '600',
   },

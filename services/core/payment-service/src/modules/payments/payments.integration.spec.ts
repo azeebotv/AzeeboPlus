@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PaymentsService } from './payments.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
@@ -7,6 +11,7 @@ import { PaystackProvider } from './providers/paystack.provider.js';
 import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
 import { WebhookRetryService } from './webhook-retry.service.js';
 import { RedisService, CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -70,6 +75,16 @@ describe('PaymentsService Integration', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentsService,
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn((key: string) =>
+              Promise.resolve(
+                key === 'payment_provider_paystack' || key === 'payment_provider_flutterwave'
+              )
+            ),
+          },
+        },
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: PaystackProvider, useValue: mockPaystackProvider },
         { provide: FlutterwaveProvider, useValue: mockFlutterwaveProvider },
@@ -81,7 +96,7 @@ describe('PaymentsService Integration', () => {
           useValue: {
             getOrThrow: jest.fn().mockImplementation((key: string) => {
               const config: Record<string, string> = {
-                ANALYTICS_SERVICE_URL: 'http://analytics-service:3040',
+                ANALYTICS_SERVICE_URL: 'http://analytics-service:3008',
                 WALLET_SERVICE_URL: 'http://wallet-service:3010',
               };
               return config[key];
@@ -171,6 +186,9 @@ describe('PaymentsService Integration', () => {
     });
 
     it('should return existing payment when idempotencyKey matches', async () => {
+      // Prime the short-lived idempotency cache so the service takes the
+      // existing-payment fast path instead of creating a new intent.
+      mockCacheService.get.mockResolvedValue('true');
       mockPrismaService.paymentIntent.findUnique.mockResolvedValue({
         id: 'pi-existing',
         userId: 'user-1',
@@ -204,6 +222,7 @@ describe('PaymentsService Integration', () => {
         metadata: {},
         idempotencyKey: null,
         providerReference: null,
+        version: 0,
         createdAt: new Date('2025-01-01'),
       });
 
@@ -215,11 +234,13 @@ describe('PaymentsService Integration', () => {
           currency: 'NGN',
           description: 'test',
         })
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(InternalServerErrorException);
 
+      // The failed-mark is an optimistic-concurrency write keyed on the version
+      // the caller read (0) and atomically increments it.
       expect(mockPrismaService.paymentIntent.update).toHaveBeenCalledWith({
-        where: { id: 'pi-1' },
-        data: { status: 'failed' },
+        where: { id: 'pi-1', version: 0 },
+        data: { status: 'failed', version: { increment: 1 } },
       });
     });
   });
@@ -335,7 +356,11 @@ describe('PaymentsService Integration', () => {
       mockRedisService.setIfNotExists.mockResolvedValue(true);
       mockPaystackProvider.verifyPayment.mockRejectedValue(new Error('Provider error'));
 
-      await expect(service.verifyPayment('user-1', 'pi-1')).rejects.toThrow(BadRequestException);
+      // A plain provider error (no upstream shape) maps to an honest 500; the
+      // lock release is asserted below and happens in the finally block.
+      await expect(service.verifyPayment('user-1', 'pi-1')).rejects.toThrow(
+        InternalServerErrorException
+      );
 
       expect(mockRedisService.del).toHaveBeenCalledWith('payment_verify_lock:pi-1');
     });
@@ -471,7 +496,7 @@ describe('PaymentsService Integration', () => {
       mockPaystackProvider.processRefund.mockRejectedValue(new Error('Refund provider error'));
 
       await expect(service.requestRefund('user-1', 'pi-1', 'reason')).rejects.toThrow(
-        BadRequestException
+        InternalServerErrorException
       );
 
       expect(mockPrismaService.refund.update).toHaveBeenCalledWith({
@@ -614,6 +639,7 @@ describe('PaymentsService Integration', () => {
         amount: 5000,
         status: 'processing',
         providerReference: 'psk-ref-1',
+        version: 0,
       });
 
       const result = await service.handleWebhook(
@@ -626,9 +652,10 @@ describe('PaymentsService Integration', () => {
       );
 
       expect(result.success).toBe(true);
+      // The failed-mark is keyed on the version read (0) and increments it.
       expect(mockPrismaService.paymentIntent.update).toHaveBeenCalledWith({
-        where: { id: 'pi-1' },
-        data: { status: 'failed' },
+        where: { id: 'pi-1', version: 0 },
+        data: { status: 'failed', version: { increment: 1 } },
       });
     });
 

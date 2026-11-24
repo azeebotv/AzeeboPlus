@@ -1,20 +1,21 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { api, type User } from '@/lib/api';
-import { OptimizedImage } from '@/components/OptimizedImage';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
-
-export const metadata = {
-  title: 'Edit Profile | Azeebo',
-  description: 'Update your display name, username, email, bio, and profile photo.',
-  openGraph: {
-    title: 'Edit Profile | Azeebo',
-    description: 'Update your display name, username, email, bio, and profile photo.',
-  },
-};
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
+import { AvatarUpload } from '@/components/ui/AvatarUpload';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  User as UserIcon,
+  Mail,
+  AtSign,
+  FileText,
+  Save,
+} from 'lucide-react';
 
 export default function ProfileEditPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
@@ -51,7 +52,8 @@ export default function ProfileEditPage(): React.JSX.Element {
     });
   }, [authLoading, isAuthenticated, user, router]);
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsSaving(true);
     try {
       const result = await api.user.updateProfile({
@@ -63,7 +65,7 @@ export default function ProfileEditPage(): React.JSX.Element {
       if (result.success) {
         setSaved(true);
         if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-        savedTimerRef.current = setTimeout(() => setSaved(false), 2000);
+        savedTimerRef.current = setTimeout(() => setSaved(false), 3000);
       }
     } catch {
       /* ignore */
@@ -75,184 +77,125 @@ export default function ProfileEditPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 600,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ marginBottom: 32 }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: 14,
-              marginBottom: 16,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span>←</span> Back
-          </button>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Edit Profile</h1>
-        </div>
+    <PageShell activeNav="Profile">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-6">
+        <Link
+          href="/settings"
+          className="inline-flex items-center gap-2 text-xs font-bold text-az-ink/50 hover:text-az-ink transition-colors mb-6 group"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          <span>Back to Settings</span>
+        </Link>
+      </div>
 
-        {/* Avatar */}
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div
-            style={{
-              width: 96,
-              height: 96,
-              borderRadius: '50%',
-              overflow: 'hidden',
-              margin: '0 auto 12px',
-              border: '3px solid #E8420A',
-            }}
-          >
-            {profile.avatar ? (
-              <OptimizedImage
-                src={profile.avatar}
-                alt="Avatar"
-                width={96}
-                height={96}
-                className="w-full h-full object-cover"
+      <PageHero
+        badge="Account Identity"
+        title="Edit Profile"
+        subtitle="Manage your Azeebo VIP profile, public display handle, and custom avatar."
+        accentColor="var(--color-az-flame)"
+      />
+
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-20">
+        <form onSubmit={handleSave} className="space-y-6">
+          {/* Avatar Showcase */}
+          <div className="az-glass p-8 border border-az-glass-border text-center">
+            <div className="inline-block p-1.5 rounded-full bg-gradient-to-tr from-az-flame via-az-scarlet to-az-warning-400 mb-3 shadow-lg shadow-az-flame/20">
+              <AvatarUpload
+                currentAvatar={profile.avatar}
+                displayName={profile.displayName || profile.username}
+                onAvatarUpdate={(url) => setProfile((prev) => ({ ...prev, avatar: url }))}
+                size={96}
               />
-            ) : (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: 'var(--bg-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 36,
-                  fontWeight: 700,
-                  color: 'var(--brand-orange)',
-                }}
-              >
-                {profile.username.charAt(0).toUpperCase()}
-              </div>
-            )}
+            </div>
+            <h3 className="text-az-ink font-bold text-base mt-2">Profile Portrait</h3>
+            <p className="text-az-ink/40 text-xs mt-0.5">Click the image to upload a new avatar</p>
           </div>
-          <button
-            style={{
-              padding: '8px 20px',
-              borderRadius: 999,
-              border: '1px solid var(--border-default)',
-              background: 'transparent',
-              color: 'var(--text-secondary)',
-              fontWeight: 500,
-              fontSize: 13,
-              cursor: 'pointer',
-            }}
-          >
-            Change Photo
-          </button>
-        </div>
 
-        <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {[
-              { key: 'displayName', label: 'Display Name', type: 'text' },
-              { key: 'username', label: 'Username', type: 'text' },
-              { key: 'email', label: 'Email', type: 'email' },
-            ].map((field) => (
-              <div key={field.key}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    marginBottom: 6,
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  {field.label}
-                </label>
-                <input
-                  type={field.type}
-                  value={(profile as Record<string, string>)[field.key]}
-                  onChange={(e) => setProfile({ ...profile, [field.key]: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: 12,
-                    border: '1px solid var(--border-default)',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: 15,
-                  }}
-                />
-              </div>
-            ))}
+          {/* Form Fields */}
+          <div className="az-glass p-6 sm:p-8 border border-az-glass-border space-y-5">
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  marginBottom: 6,
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                Bio
+              <label className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <UserIcon size={14} className="text-az-flame" />
+                <span>Display Name</span>
+              </label>
+              <input
+                type="text"
+                value={profile.displayName}
+                onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
+                className="w-full px-4 py-3.5 bg-az-glass-fill border border-az-glass-border rounded-2xl text-az-ink placeholder-az-ink/30 focus:outline-none focus:border-az-flame text-sm font-medium"
+                placeholder="Your full or screen name"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <AtSign size={14} className="text-az-flame" />
+                <span>Username Handle</span>
+              </label>
+              <input
+                type="text"
+                value={profile.username}
+                onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+                className="w-full px-4 py-3.5 bg-az-glass-fill border border-az-glass-border rounded-2xl text-az-ink placeholder-az-ink/30 focus:outline-none focus:border-az-flame text-sm font-medium"
+                placeholder="@username"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Mail size={14} className="text-az-flame" />
+                <span>Email Address</span>
+              </label>
+              <input
+                type="email"
+                value={profile.email}
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                className="w-full px-4 py-3.5 bg-az-glass-fill border border-az-glass-border rounded-2xl text-az-ink placeholder-az-ink/30 focus:outline-none focus:border-az-flame text-sm font-medium"
+                placeholder="name@example.com"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <FileText size={14} className="text-az-flame" />
+                <span>Bio / Personal Tagline</span>
               </label>
               <textarea
                 value={profile.bio}
                 onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                 rows={3}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
-                  fontSize: 15,
-                  resize: 'vertical',
-                }}
+                className="w-full px-4 py-3.5 bg-az-glass-fill border border-az-glass-border rounded-2xl text-az-ink placeholder-az-ink/30 focus:outline-none focus:border-az-flame text-sm font-medium resize-none"
+                placeholder="Tell the Azeebo community what shows, movies, and lore you are following..."
               />
             </div>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="az-btn-primary"
-              style={{
-                width: '100%',
-                padding: '14px 0',
-                borderRadius: 999,
-                border: 'none',
-                background:
-                  'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-                color: 'var(--brand-white)',
-                fontWeight: 700,
-                fontSize: 16,
-                cursor: 'pointer',
-                opacity: isSaving ? 0.6 : 1,
-              }}
-            >
-              {saved ? '✓ Saved!' : isSaving ? 'Saving...' : 'Save Changes'}
-            </button>
           </div>
-        </div>
-      </main>
-      <AppFooter />
-    </div>
+
+          {saved && (
+            <div className="px-4 py-3 rounded-2xl bg-az-success-500/15 border border-az-success-500/30 text-az-success-400 text-center text-xs font-bold flex items-center justify-center gap-2">
+              <CheckCircle2 size={16} />
+              <span>Profile updated successfully!</span>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="transition-all az-btn-primary shadow-xl shadow-az-flame/25 flex items-center justify-center gap-2"
+          >
+            {isSaving ? (
+              <span>Saving Profile...</span>
+            ) : (
+              <>
+                <Save size={18} />
+                <span>Save Changes</span>
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+    </PageShell>
   );
 }

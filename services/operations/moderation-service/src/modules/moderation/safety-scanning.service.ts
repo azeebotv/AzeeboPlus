@@ -98,6 +98,9 @@ export class SafetyScanningService {
     try {
       parsed = new URL(url);
     } catch {
+      // allowed-fabricated-4xx: the only fallible call is `new URL(url)` — a
+      // pure client-input parse whose single failure shape is a malformed URL.
+      // mapAndThrow would escalate it to a 500; a 400 is the correct answer.
       throw new BadRequestException('Invalid media URL format');
     }
 
@@ -197,7 +200,9 @@ export class SafetyScanningService {
         orderBy: { createdAt: 'desc' },
       });
     } catch (error) {
-      this.logger.error(`Failed to get scans for content ${contentId}: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to get scans for content ${contentId}: ${(error as Error).message}`
+      );
       return [];
     }
   }
@@ -236,7 +241,9 @@ export class SafetyScanningService {
 
       return { isSafe: true, lastScan, issues: [] };
     } catch (error) {
-      this.logger.error(`Failed to check content safety for ${contentId}: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to check content safety for ${contentId}: ${(error as Error).message}`
+      );
       return { isSafe: false, issues: ['Failed to check content safety'] };
     }
   }

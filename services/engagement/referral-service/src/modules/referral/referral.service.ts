@@ -16,6 +16,7 @@ import {
   PaginationData,
 } from './interfaces/referral-response.interface.js';
 import { GenerateReferralCodeDto, ApplyReferralCodeDto } from './dto/referral.dto.js';
+import { FeatureFlagService, referralFlags } from '@azeebo/feature-flags';
 import { randomBytes } from 'crypto';
 import axios from 'axios';
 
@@ -29,13 +30,14 @@ export class ReferralService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    private readonly featureFlagService?: FeatureFlagService
   ) {
     this.defaultPaginationLimit = this.configService.get<number>('DEFAULT_PAGINATION_LIMIT', 20);
     this.defaultReferralReward = this.configService.get<number>('DEFAULT_REFERRAL_REWARD', 50);
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 
@@ -196,6 +198,29 @@ export class ReferralService {
       code: dto.code,
       referrerId: referralCode.userId,
     });
+
+    // referral_auto_complete: off by default — when enabled, the referral
+    // completes immediately on code application (qualifying action), instead
+    // of waiting for an explicit completeReferral call.
+    if (
+      this.featureFlagService &&
+      (await this.featureFlagService.isEnabled(referralFlags.autoComplete))
+    ) {
+      await this.completeReferral(referral.id, referralCode.userId);
+      return {
+        success: true,
+        data: {
+          message: 'Referral code applied successfully',
+          referral: {
+            id: referral.id,
+            referrerId: referral.referrerId,
+            referredId: referral.referredId,
+            status: 'completed',
+            createdAt: referral.createdAt,
+          },
+        },
+      };
+    }
 
     return {
       success: true,
@@ -429,6 +454,18 @@ export class ReferralService {
       where: { key: 'signup_reward' },
     });
 
-    return config ? Number(config.value) : this.defaultReferralReward;
+    const baseAmount = config ? Number(config.value) : this.defaultReferralReward;
+
+    // referral_reward_boost: off by default — when enabled, multiply the base
+    // signup reward by the boost factor so promotions can be toggled at runtime.
+    if (
+      this.featureFlagService &&
+      (await this.featureFlagService.isEnabled(referralFlags.rewardBoost))
+    ) {
+      const boostFactor = this.configService.get<number>('REFERRAL_REWARD_BOOST_FACTOR', 1.5);
+      return Math.round(baseAmount * boostFactor);
+    }
+
+    return baseAmount;
   }
 }

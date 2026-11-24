@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, referralFlags } from '@azeebo/feature-flags';
 
 import { ReferralService } from './referral.service.js';
 import { GenerateReferralCodeDto, ApplyReferralCodeDto } from './dto/referral.dto.js';
@@ -20,6 +21,8 @@ import { ReferralResponse } from './interfaces/referral-response.interface.js';
 
 @ApiTags('Referrals')
 @UseGuards(RateLimitGuard)
+@UseGuards(FeatureFlagGuard)
+@FeatureFlag(referralFlags.programEnabled)
 @Controller('referrals')
 export class ReferralController {
   constructor(@Inject(ReferralService) private readonly referralService: ReferralService) {}

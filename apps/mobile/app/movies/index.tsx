@@ -4,10 +4,11 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { moviePassPrice, rentPrice } from '../../src/config/prices';
-import type { Movie, SubscriptionPlan } from '../../src/types/api';
+import type { Movie, SubscriptionPlan } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 interface MovieItem {
   id: string;
@@ -87,15 +88,13 @@ export default function MoviesUniverseHome() {
 
   useEffect(() => {
     if (!isLoading && featuredMovie) {
-      try {
-        analytics.movieViewed(featuredMovie.id);
-      } catch {}
+      analytics.movieViewed(featuredMovie.id);
     }
   }, [isLoading, featuredMovie]);
 
   if (isLoading)
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Index Screen" style={styles.container}>
         <LoadingState text="Loading movies..." />
       </SafeAreaView>
     );
@@ -157,9 +156,9 @@ export default function MoviesUniverseHome() {
           <View style={styles.passBannerContent}>
             <Text style={styles.passBannerTitle}>🎥 Cinema Plus</Text>
             <Text style={styles.passBannerSubtitle}>
-              Unlimited movies from {moviePassPrice.label}
+              Unlimited movies from ₦{moviePassPrice.toLocaleString()}
             </Text>
-            <TouchableOpacity style={styles.passButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.passButton}>
               <Text style={styles.passButtonText}>Get Pass</Text>
             </TouchableOpacity>
           </View>
@@ -191,11 +190,11 @@ export default function MoviesUniverseHome() {
               </Text>
               <Text style={styles.featuredGenre}>{featuredMovie?.genre ?? ''}</Text>
               <View style={styles.featuredActions}>
-                <TouchableOpacity style={styles.playButton}>
+                <TouchableOpacity accessibilityRole="button" style={styles.playButton}>
                   <Text style={styles.playIcon}>▶</Text>
                   <Text style={styles.playText}>Watch</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.rentButton}>
+                <TouchableOpacity accessibilityRole="button" style={styles.rentButton}>
                   <Text style={styles.rentText}>Rent ₦{rentPrice.toLocaleString()}</Text>
                 </TouchableOpacity>
               </View>
@@ -208,7 +207,7 @@ export default function MoviesUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Trending Now
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -227,7 +226,7 @@ export default function MoviesUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               African Cinema
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -246,7 +245,7 @@ export default function MoviesUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Hollywood Hits
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -266,7 +265,7 @@ export default function MoviesUniverseHome() {
           </Text>
           <View style={styles.passesList}>
             {passes.map((pass) => (
-              <TouchableOpacity key={pass.id} style={styles.passCard}>
+              <TouchableOpacity accessibilityRole="button" key={pass.id} style={styles.passCard}>
                 <View style={styles.passHeader}>
                   <Text style={[styles.passName, { color: isDark ? '#fff' : '#000' }]}>
                     {pass.name}
@@ -283,7 +282,7 @@ export default function MoviesUniverseHome() {
                     </Text>
                   ))}
                 </View>
-                <TouchableOpacity style={styles.subscribeButton}>
+                <TouchableOpacity accessibilityRole="button" style={styles.subscribeButton}>
                   <Text style={styles.subscribeButtonText}>Subscribe</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -292,23 +291,23 @@ export default function MoviesUniverseHome() {
         </View>
 
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
             <Text style={styles.navIcon}>🏠</Text>
             <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
             <Text style={styles.navIcon}>📺</Text>
-            <Text style={[styles.navLabel, { color: '#FFEAA7' }]}>Watch</Text>
+            <Text style={[styles.navLabel, { color: colors.category.highlight }]}>Watch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
             <Text style={styles.navIcon}>✨</Text>
             <Text style={styles.navLabel}>Create</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
             <Text style={styles.navIcon}>⭐</Text>
             <Text style={styles.navLabel}>Rewards</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
             <Text style={styles.navIcon}>👤</Text>
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>
@@ -328,7 +327,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: '#FFEAA7',
+    color: colors.category.highlight,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -350,7 +349,7 @@ const styles = StyleSheet.create({
   },
   searchPlaceholder: {
     fontSize: 15,
-    color: '#888',
+    color: colors.text.secondary,
   },
   passBanner: {
     marginHorizontal: 16,
@@ -361,21 +360,21 @@ const styles = StyleSheet.create({
   },
   passBannerContent: {
     padding: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
   },
   passBannerTitle: {
-    color: '#FFEAA7',
+    color: colors.category.highlight,
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 4,
   },
   passBannerSubtitle: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
     marginBottom: 12,
   },
   passButton: {
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -403,7 +402,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   seeAllText: {
-    color: '#FFEAA7',
+    color: colors.category.highlight,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -419,7 +418,7 @@ const styles = StyleSheet.create({
   },
   movieThumbnail: {
     height: 180,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -442,7 +441,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   ratingText: {
-    color: '#FFEAA7',
+    color: colors.category.highlight,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -453,7 +452,7 @@ const styles = StyleSheet.create({
   },
   movieGenre: {
     fontSize: 12,
-    color: '#888',
+    color: colors.text.secondary,
   },
   featuredCard: {
     marginHorizontal: 16,
@@ -463,7 +462,7 @@ const styles = StyleSheet.create({
   },
   featuredImagePlaceholder: {
     height: 200,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -475,7 +474,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     left: 12,
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -493,7 +492,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   featuredRating: {
-    color: '#FFEAA7',
+    color: colors.category.highlight,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -510,7 +509,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   featuredGenre: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
     marginBottom: 12,
   },
@@ -523,7 +522,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
     paddingVertical: 10,
     borderRadius: 8,
     gap: 6,
@@ -541,12 +540,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#FFEAA7',
+    borderColor: colors.category.highlight,
     paddingVertical: 10,
     borderRadius: 8,
   },
   rentText: {
-    color: '#FFEAA7',
+    color: colors.category.highlight,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -560,7 +559,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#FFEAA7',
+    borderColor: colors.category.highlight,
   },
   passHeader: {
     flexDirection: 'row',
@@ -576,24 +575,24 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   passPrice: {
-    color: '#FFEAA7',
+    color: colors.category.highlight,
     fontSize: 20,
     fontWeight: '700',
   },
   passPeriod: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   passFeatures: {
     marginBottom: 12,
   },
   passFeature: {
-    color: '#ccc',
+    color: colors.neutral[300],
     fontSize: 13,
     marginBottom: 4,
   },
   subscribeButton: {
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
@@ -610,7 +609,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     backgroundColor: '#1a1a1a',
     borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
+    borderTopColor: colors.bg.tertiary,
   },
   navItem: {
     alignItems: 'center',
@@ -621,6 +620,6 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 11,
-    color: '#888',
+    color: colors.text.secondary,
   },
 });

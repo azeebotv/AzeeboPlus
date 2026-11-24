@@ -110,7 +110,7 @@ INSERT INTO "user_preferences" (id, "userId", "darkMode", notifications, "conten
    ('d0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000002', false, '{}', '[]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
    ('d0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', true, '{}', '["reality","comedy","music","vertical"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
    ('d0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', false, '{}', '["creator","lifestyle","vertical"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
-   ('d0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', false, '{}', '["movies","nollywood","vertical"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
+   ('d0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', false, '{}', '["movie","nollywood","vertical"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
    ('d0000001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000006', true, '{"email":true,"push":true,"sms":false}', '["reality","comedy","music"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
    ('d0000001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000007', false, '{"email":true,"push":false,"sms":true}', '["sports","comedy","games"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
    ('d0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', true, '{"email":false,"push":true,"sms":false}', '["reality","lifestyle","music"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
@@ -126,7 +126,7 @@ INSERT INTO "universes" (id, name, "displayName", description, icon, color, "isE
    ('u0000001-0000-0000-0000-000000000001', 'reality', 'Reality TV', 'Nigerian reality shows including Big Brother, dating shows, and competition series.', '🎬', '#E91E63', true, 1),
    ('u0000001-0000-0000-0000-000000000002', 'creator', 'Creator Content', 'Original content from top Nigerian creators, vlogs, and independent productions.', '🎨', '#9C27B0', true, 2),
    ('u0000001-0000-0000-0000-000000000003', 'lifestyle', 'Lifestyle', 'Fashion, food, travel, wellness, and everyday Nigerian living.', '🏠', '#FF9800', true, 3),
-   ('u0000001-0000-0000-0000-000000000004', 'movies', 'Movies', 'Nollywood blockbusters, indie films, and cinematic masterpieces.', '🎥', '#2196F3', true, 4),
+   ('u0000001-0000-0000-0000-000000000004', 'movie', 'Movies', 'Nollywood blockbusters, indie films, and cinematic masterpieces.', '🎥', '#2196F3', true, 4),
    ('u0000001-0000-0000-0000-000000000005', 'comedy', 'Comedy', 'Stand-up specials, comedy sketches, and hilarious Naija content.', '😂', '#FFEB3B', true, 5),
    ('u0000001-0000-0000-0000-000000000006', 'sports', 'Sports', 'Football highlights, basketball, athletics, and sports commentary.', '⚽', '#4CAF50', true, 6),
    ('u0000001-0000-0000-0000-000000000007', 'music', 'Music', 'Music videos, concert recordings, acoustic sessions, and behind-the-scenes.', '🎵', '#FF5722', true, 7),
@@ -678,7 +678,7 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO "watch_history" (id, "userId", "contentId", "contentType", universe, progress, "watchedAt", "createdAt", "updatedAt") VALUES
    ('wh00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000001', 'content', 'reality', 85, '2025-06-15T22:00:00Z', '2025-06-15T21:00:00Z', '2025-06-15T22:00:00Z'),
-   ('wh00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000018', 'content', 'movies', 100, '2025-06-11T10:00:00Z', '2025-06-11T09:00:00Z', '2025-06-11T10:00:00Z'),
+   ('wh00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000018', 'content', 'movie', 100, '2025-06-11T10:00:00Z', '2025-06-11T09:00:00Z', '2025-06-11T10:00:00Z'),
    ('wh00001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000029', 'content', 'music', 67, '2025-05-15T20:00:00Z', '2025-05-15T19:00:00Z', '2025-05-15T20:00:00Z'),
    ('wh00001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000008', 'content', 'creator', 100, '2025-06-11T16:00:00Z', '2025-06-11T15:00:00Z', '2025-06-11T16:00:00Z'),
    ('wh00001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000007', 'cnt00001-0000-0000-0000-000000000023', 'content', 'comedy', 45, '2025-06-01T20:00:00Z', '2025-06-01T19:00:00Z', '2025-06-01T20:00:00Z'),
@@ -689,11 +689,11 @@ INSERT INTO "watch_history" (id, "userId", "contentId", "contentType", universe,
    ('wh00001-0000-0000-0000-000000000010', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000005', 'content', 'comedy', 100, '2025-06-09T14:00:00Z', '2025-06-09T13:00:00Z', '2025-06-09T14:00:00Z'),
    -- Expanded watch history
    ('wh00002-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 'cnt00002-0000-0000-0000-000000000001', 'content', 'reality', 100, '2025-06-17T22:00:00Z', '2025-06-17T21:00:00Z', '2025-06-17T22:00:00Z'),
-   ('wh00002-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000006', 'cnt00002-0000-0000-0000-000000000016', 'content', 'movies', 56, '2025-06-14T19:00:00Z', '2025-06-14T18:00:00Z', '2025-06-14T19:00:00Z'),
+   ('wh00002-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000006', 'cnt00002-0000-0000-0000-000000000016', 'content', 'movie', 56, '2025-06-14T19:00:00Z', '2025-06-14T18:00:00Z', '2025-06-14T19:00:00Z'),
    ('wh00002-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000006', 'cnt00002-0000-0000-0000-000000000027', 'content', 'music', 34, '2025-04-25T20:00:00Z', '2025-04-25T19:00:00Z', '2025-04-25T20:00:00Z'),
    ('wh00002-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000007', 'cnt00003-0000-0000-0000-000000000001', 'content', 'games', 100, '2025-06-15T18:00:00Z', '2025-06-15T17:00:00Z', '2025-06-15T18:00:00Z'),
    ('wh00002-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000007', 'cnt00002-0000-0000-0000-000000000025', 'content', 'sports', 88, '2025-06-11T20:00:00Z', '2025-06-11T19:00:00Z', '2025-06-11T20:00:00Z'),
-   ('wh00002-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000008', 'cnt00002-0000-0000-0000-000000000015', 'content', 'movies', 100, '2025-06-07T18:00:00Z', '2025-06-07T17:00:00Z', '2025-06-07T18:00:00Z'),
+   ('wh00002-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000008', 'cnt00002-0000-0000-0000-000000000015', 'content', 'movie', 100, '2025-06-07T18:00:00Z', '2025-06-07T17:00:00Z', '2025-06-07T18:00:00Z'),
    ('wh00002-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000008', 'cnt00002-0000-0000-0000-000000000029', 'content', 'music', 45, '2025-06-05T10:00:00Z', '2025-06-05T09:00:00Z', '2025-06-05T10:00:00Z'),
    ('wh00002-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000011', 'cnt00001-0000-0000-0000-000000000027', 'content', 'sports', 100, '2025-06-16T18:00:00Z', '2025-06-16T17:00:00Z', '2025-06-16T18:00:00Z'),
    ('wh00002-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000012', 'cnt00003-0000-0000-0000-000000000001', 'content', 'games', 100, '2025-06-15T20:00:00Z', '2025-06-15T19:00:00Z', '2025-06-15T20:00:00Z'),
@@ -892,6 +892,17 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO "reward_accounts" (id, "userId", points, "levelId", streak, "lastLoginAt") VALUES
   ('ra00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 1250, 'lvl00001-0000-0000-0000-000000000002', 7, '2025-06-15T12:00:00Z'),
   ('ra00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000008', 800, 'lvl00001-0000-0000-0000-000000000001', 3, '2025-06-15T08:00:00Z')
+ON CONFLICT (id) DO NOTHING;
+
+-- Rewards catalog (reward-service "rewards" table) — backs the mobile
+-- Rewards tab's "Redeem Rewards" grid via GET /v1/rewards/redeem-options.
+INSERT INTO "rewards" (id, name, description, cost, type, metadata, "isActive") VALUES
+  ('rwd00001-0000-0000-0000-000000000001', '₦500 Wallet Credit', 'Convert 5,000 points into ₦500 wallet balance', 5000, 'points', '{"creditAmount":500}', true),
+  ('rwd00001-0000-0000-0000-000000000002', '₦1,000 Wallet Credit', 'Convert 9,500 points into ₦1,000 wallet balance', 9500, 'points', '{"creditAmount":1000}', true),
+  ('rwd00001-0000-0000-0000-000000000003', '7-Day Premium Pass', 'One week of premium content access', 12000, 'promo', '{"days":7}', true),
+  ('rwd00001-0000-0000-0000-000000000004', 'Cinemaxis Ticket', 'One movie ticket at any Cinemaxis location', 15000, 'bonus', '{"partner":"cinemaxis"}', true),
+  ('rwd00001-0000-0000-0000-000000000005', '2x Points Weekend Boost', 'Double points on all activities for one weekend', 7500, 'bonus', '{"durationHours":48}', true),
+  ('rwd00001-0000-0000-0000-000000000006', 'Exclusive Badge: OG Fan', 'Show off the OG Fan badge on your profile', 3000, 'promo', '{"badgeId":"og-fan"}', true)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO "points_ledger" (id, "userId", points, type, reason) VALUES

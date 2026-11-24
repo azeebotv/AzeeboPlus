@@ -1,0 +1,83 @@
+/* Design tokens for creator app (synchronized with Azeebo+ luxury dark design system) */
+:root {
+  --creator-bg: #0b090e;
+  --creator-bg-alt: #100e14;
+  --creator-text: #f5f0eb;
+  --creator-text-muted: #9a8a7a;
+  --creator-surface: #18151e;
+  --creator-surface-light: #f5f0eb;
+  --creator-orange: #e8420a;
+  --creator-red: #cc1c1c;
+  --creator-green: #0d3b2e;
+  --creator-dark: #070609;
+  --creator-darker: #100e14;
+  --creator-border: rgba(255, 255, 255, 0.08);
+  --creator-border-light: rgba(255, 255, 255, 0.04);
+}
+
+/* Global reset — ensures dark background even if React crashes */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  background-color: var(--creator-bg);
+  color: var(--creator-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+:focus-visible {
+  outline: 2px solid var(--creator-orange);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Pulsing dot for the leaderboard's LIVE badge (respects reduced-motion above) */
+@keyframes creatorLivePulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+}

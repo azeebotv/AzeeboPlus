@@ -1,24 +1,16 @@
 'use client';
 import { Suspense, lazy, useState, useCallback, useEffect, useRef } from 'react';
 
-export const metadata = {
-  title: 'My Watchlist | Azeebo',
-  description: 'Manage your saved movies and watch them later on Azeebo.',
-  openGraph: {
-    title: 'My Watchlist | Azeebo',
-    description: 'Manage your saved movies and watch them later on Azeebo.',
-  },
-};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import analytics from '@/lib/analytics';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const WATCHLIST_KEY = 'azeebo_watchlist';
 
@@ -80,6 +72,11 @@ function WatchlistPageContent(): React.JSX.Element {
           return res.success ? res.data : null;
         })
       );
+      // One missing title is a partial result; every title missing is an
+      // outage and must not read as an empty watchlist.
+      if (results.length > 0 && results.every((item) => item === null)) {
+        throw new Error('Watchlist titles could not be loaded. Please try again.');
+      }
       return results.filter(Boolean) as ContentItem[];
     },
     enabled: allIds.length > 0,
@@ -126,37 +123,22 @@ function WatchlistPageContent(): React.JSX.Element {
   const error = savedQuery.error?.message || watchlistQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Movies" />
+    <PageShell maxWidth="7xl" activeNav="Movies">
+      <PageHero
+        eyebrow="Movies"
+        title="My Watchlist"
+        description={`${movies.length} ${movies.length === 1 ? 'movie' : 'movies'} saved`}
+      />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <ScrollReveal>
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-white">My Watchlist</h1>
-              <p className="text-white/50 mt-2">
-                {movies.length} {movies.length === 1 ? 'movie' : 'movies'} saved
-              </p>
-            </div>
-          </div>
-        </ScrollReveal>
-
+      <div className="-mt-4 pb-12">
         {allIds.length === 0 && !savedQuery.isLoading ? (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-4">🎬</p>
-            <h2 className="text-xl font-bold text-white mb-2">Your watchlist is empty</h2>
-            <p className="text-white/50 mb-6">Save movies to watch later</p>
-            <Link href="/movies">
-              <motion.button
-                type="button"
-                className="az-btn-primary"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Browse Movies
-              </motion.button>
-            </Link>
-          </div>
+          <EmptyState
+            icon="Film"
+            title="Your watchlist is empty"
+            description="Save movies to watch later"
+            action={{ label: 'Browse Movies', onClick: () => (window.location.href = '/movies') }}
+            dark
+          />
         ) : isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -206,8 +188,7 @@ function WatchlistPageContent(): React.JSX.Element {
                         type="button"
                         onClick={() => removeFromWatchlist(movie.id)}
                         disabled={removeMutation.isPending}
-                        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                        style={{ backgroundColor: 'rgba(239,68,68,0.8)' }}
+                        className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full transition-all hover:scale-110 bg-az-error-500/80"
                       >
                         <svg
                           width="14"
@@ -220,26 +201,22 @@ function WatchlistPageContent(): React.JSX.Element {
                           <path d="M18 6L6 18M6 6l12 12" />
                         </svg>
                       </button>
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                      <div className="absolute inset-0 az-scrim" />
                       <div className="absolute bottom-4 left-4 right-4">
-                        <span
-                          className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                          style={{
-                            backgroundColor: 'rgba(232,66,10,0.2)',
-                            color: 'var(--brand-orange)',
-                          }}
-                        >
+                        <span className="az-caption mb-2 inline-block rounded-az-pill bg-az-scarlet/20 px-2.5 py-0.5 font-medium text-az-flame">
                           {movie.contentType || 'Movie'}
                         </span>
-                        <h3 className="text-lg font-bold text-white">{movie.title}</h3>
+                        <h3 className="az-subtitle text-az-ink">{movie.title}</h3>
                       </div>
                     </div>
                     <div className="p-4">
-                      <p className="text-sm text-white/50 mb-3 line-clamp-2">{movie.description}</p>
+                      <p className="az-body mb-3 line-clamp-2 text-az-ink-muted">
+                        {movie.description}
+                      </p>
                       <Link href={`/watch/${movie.id}`}>
                         <motion.button
                           type="button"
-                          className="az-btn-primary w-full"
+                          className="az-btn-primary"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
@@ -254,9 +231,7 @@ function WatchlistPageContent(): React.JSX.Element {
           </div>
         )}
       </div>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -266,8 +241,8 @@ export default function WatchlistPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

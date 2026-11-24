@@ -1,0 +1,68 @@
+# Minimal Alertmanager config for the local example — runnable as-is.
+#
+# Every alert is routed to a single webhook receiver. The URL is a placeholder
+# that points back at the host; nothing is delivered until you point it at a
+# real listener (e.g. a webhook.site/ngrok URL, a local echo server on 9099,
+# or Slack/email receivers — see the commented examples below).
+#
+# Check delivery locally with:
+#   python3 -m http.server 9099   # then watch the POST bodies in its logs
+
+route:
+  receiver: local-webhook
+  group_by: ['alertname', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: local-webhook
+    webhook_configs:
+      - url: http://host.docker.internal:9099/alert
+        send_resolved: true
+
+# -----------------------------------------------------------------------------
+# Real-world receivers (pick one and delete the webhook above):
+#
+# Slack (incoming webhook):
+#   - name: slack
+#     slack_configs:
+#       - api_url: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+#         channel: '#alerts'
+#         send_resolved: true
+#
+# Email (SMTP):
+#   - name: email
+#     email_configs:
+#       - to: 'ops@azeebo.tv'
+#         from: 'alertmanager@azeebo.tv'
+#         smarthost: 'smtp.example.com:587'
+#         auth_username: 'alertmanager'
+#         auth_password: 'secret'
+#
+# Then route by severity:
+#   route:
+#     group_by: ['alertname', 'service']
+#     receiver: default
+#     routes:
+#       - matchers: ['severity="critical"']
+#         receiver: slack
+#       - matchers: ['severity="warning"']
+#         receiver: slack
+#
+# Self-healing: point the SearchPgTrgmIndexesMissing alert at the search
+# service's repair endpoint so the indexes get recreated on alert delivery
+# (the service also repairs itself on a cron, so this is the belt-and-
+# suspenders path for when the cron cycle is too slow):
+#   - name: search-index-repair
+#     webhook_configs:
+#       - url: http://host.docker.internal:3013/v1/search/admin/indexes/repair
+#         headers:
+#           Authorization: 'Bearer <admin-token>'
+#         send_resolved: false
+#   route:
+#     ...
+#     routes:
+#       - matchers: ['alertname="SearchPgTrgmIndexesMissing"']
+#         receiver: search-index-repair
+# -----------------------------------------------------------------------------

@@ -227,7 +227,9 @@ export function useVideoPlayer({
     if (!container) return;
 
     if (!document.fullscreenElement) {
-      container.requestFullscreen?.().catch(() => {});
+      container.requestFullscreen?.().catch(() => {
+        /* Fullscreen request denied by browser or user */
+      });
       setState((prev) => ({ ...prev, isFullscreen: true }));
     } else {
       document.exitFullscreen?.();

@@ -1,5 +1,6 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, HttpStatus, Inject } from '@nestjs/common';
 import { CircuitBreaker, CircuitState, CircuitBreakerStats } from '@azeebo/shared-types';
+import { FeatureFlagService, gatewayFlags } from '@azeebo/feature-flags';
 // OpenTelemetry tracing - optional dependency
 let trace: unknown;
 try {
@@ -31,6 +32,7 @@ interface ProxyRequestOptions {
   timeout?: number;
   requestId?: string;
   traceId?: string;
+  serviceName?: string;
 }
 
 interface ProxyResponse {
@@ -54,6 +56,17 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
   backoffFactor: 3,
 };
 
+/** Carries the upstream status so the retry loop can decide to retry. */
+class UpstreamStatusError extends Error {
+  constructor(public readonly status: number) {
+    super(`HTTP ${status}`);
+    this.name = 'UpstreamStatusError';
+  }
+}
+
+/** Retries are limited to methods whose replays cannot duplicate side effects. */
+const RETRYABLE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
 function jitter(value: number, factor: number = 0.3): number {
   const randomization = value * factor;
   return (Math.random() * 2 - 1) * randomization;
@@ -71,7 +84,7 @@ export class CircuitBreakerProxyService {
   private readonly logger = new Logger(CircuitBreakerProxyService.name);
   private readonly circuitBreakers: Map<string, CircuitBreaker>;
 
-  constructor() {
+  constructor(@Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService) {
     this.circuitBreakers = new Map();
   }
 
@@ -97,29 +110,58 @@ export class CircuitBreakerProxyService {
       headers,
       body,
       queryString,
-      timeout = 30000,
+      // AUD-21: fallback aligned with DEFAULT_HTTP_TIMEOUT_MS (5s) so the
+      // breaker budget matches the internal-call default; long jobs pass an
+      // explicit timeout in ProxyRequestOptions.
+      timeout = 5000,
       requestId,
       traceId: _traceId,
+      serviceName: explicitServiceName,
     } = options;
 
     const target = `${targetUrl}${path}${queryString ? `?${queryString}` : ''}`;
-    let serviceName = 'unknown';
-    try {
-      serviceName = new URL(targetUrl).hostname || 'unknown';
-    } catch {
-      this.logger.warn(`Failed to parse targetUrl: ${targetUrl}`);
+    let serviceName = explicitServiceName;
+    if (!serviceName) {
+      try {
+        const url = new URL(targetUrl);
+        // Strip version prefix (/v1/, /v2/, etc.) if present, then take the service segment
+        const strippedPath = path.replace(/^\/v\d+\//, '').replace(/^\//, '');
+        const pathService = strippedPath.split('/')[0] || 'root';
+        serviceName = `${url.hostname}:${pathService}`;
+      } catch {
+        this.logger.warn(`Failed to parse targetUrl: ${targetUrl}`);
+        serviceName = 'unknown';
+      }
     }
 
-    // Use path-based key to avoid shared circuit breakers across services on same host
-    const circuitKey = `${serviceName}:${path.split('/')[1] || 'root'}`;
+    const circuitKey = serviceName;
 
     this.logger.debug(`Proxying ${method} ${path}`, { requestId });
 
     const circuitBreaker = this.getCircuitBreaker(circuitKey);
+    // Kill-switch: when gateway_circuit_breaker is disabled, bypass the breaker
+    // and call upstream directly (e.g., to ride out a breaker misconfiguration).
+    const circuitBreakingEnabled = await this.featureFlagService.isEnabled(
+      gatewayFlags.circuitBreaker
+    );
     const otelTrace = trace as { getTracer(name: string): Tracer } | undefined;
 
     if (!otelTrace?.getTracer) {
       this.logger.debug(`OpenTelemetry not available, proceeding without tracing [${requestId}]`);
+      if (!circuitBreakingEnabled) {
+        const result = await this.executeProxyRequest(
+          method,
+          target,
+          headers,
+          body,
+          timeout,
+          requestId
+        );
+        return {
+          ...result,
+          circuitState: CircuitState.CLOSED,
+        };
+      }
       const result = await circuitBreaker.execute(async () => {
         return this.executeProxyRequest(method, target, headers, body, timeout, requestId);
       });
@@ -207,17 +249,35 @@ export class CircuitBreakerProxyService {
         };
 
         if (body && method !== 'GET' && method !== 'HEAD') {
-          fetchOptions.body = JSON.stringify(body);
+          // JSON-encode only structured (object/array) bodies. String bodies
+          // are passed through verbatim (they carry their own encoding, e.g.
+          // multipart/form-data captured raw), and Buffer/Uint8Array are raw
+          // binary. The old unconditional JSON.stringify mangled multipart
+          // bodies into "[object Object]"-style garbage — upstream multer
+          // failed with "Unexpected end of form" on every file upload.
+          fetchOptions.body =
+            typeof body === 'string' || body instanceof Buffer || body instanceof Uint8Array
+              ? (body as unknown as BodyInit)
+              : JSON.stringify(body);
         }
 
         const response = await fetch(target, fetchOptions);
 
         if (response.status >= 500 || response.status === 429) {
-          throw new Error(`HTTP ${response.status}`);
+          throw new UpstreamStatusError(response.status);
         }
 
         const responseHeaders: Record<string, string> = {};
+        // set-cookie must preserve EVERY value — auth flows return multiple
+        // Set-Cookie headers (access_token + refresh_token + _csrf), and
+        // headers.entries() collapses duplicates so all but the last cookie
+        // were silently dropped (the admin panel never got its access_token).
+        const setCookies = response.headers.getSetCookie?.() ?? [];
+        if (setCookies.length > 0) {
+          responseHeaders['set-cookie'] = setCookies.join('\n');
+        }
         for (const [key, value] of response.headers.entries()) {
+          if (key === 'set-cookie') continue;
           responseHeaders[key] = value;
         }
 
@@ -243,11 +303,11 @@ export class CircuitBreakerProxyService {
       } catch (retryError) {
         lastError = retryError as Error;
         const retryStatus =
-          typeof retryError === 'object' && retryError !== null && 'status' in retryError
-            ? (retryError as { status: number }).status
-            : undefined;
+          retryError instanceof UpstreamStatusError ? retryError.status : undefined;
         const shouldRetry =
-          attempt < DEFAULT_RETRY_CONFIG.retries && this.shouldRetryStatus(retryStatus);
+          attempt < DEFAULT_RETRY_CONFIG.retries &&
+          this.shouldRetryStatus(retryStatus) &&
+          RETRYABLE_METHODS.has(method.toUpperCase());
         if (!shouldRetry) {
           throw retryError;
         }

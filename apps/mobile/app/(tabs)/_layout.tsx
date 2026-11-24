@@ -1,24 +1,29 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Feather from '@expo/vector-icons/Feather';
 import { colors, typography, spacing, radius, shadows, spring } from '../../src/theme';
-import { useWallet } from '../../src/contexts/WalletContext';
+import { useWallet } from '@azeebo/react-data/contexts/WalletContext';
 import { useNotification } from '../../src/contexts/NotificationContext';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { realityApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 interface TabIconProps {
-  name: string;
+  name: 'home' | 'search' | 'library' | 'profile' | 'watch' | 'rewards' | 'tips';
   focused: boolean;
 }
 
-const TAB_ICONS: Record<string, { active: string; inactive: string }> = {
-  home: { active: '◉', inactive: '○' },
-  watch: { active: '▶', inactive: '▷' },
-  rewards: { active: '★', inactive: '☆' },
-  tips: { active: '♥', inactive: '♡' },
-  profile: { active: '●', inactive: '○' },
+const TAB_FEATHER_ICONS: Record<string, keyof typeof Feather.glyphMap> = {
+  home: 'home',
+  search: 'search',
+  library: 'folder',
+  profile: 'user',
+  watch: 'play-circle',
+  rewards: 'award',
+  tips: 'heart',
 };
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
@@ -34,13 +39,15 @@ function TabIcon({ name, focused }: TabIconProps) {
     transform: [{ scale: scale.value }],
   }));
 
-  const iconSet = TAB_ICONS[name] || TAB_ICONS.home;
+  const iconName = TAB_FEATHER_ICONS[name] || 'circle';
 
   return (
     <Animated.View style={[styles.iconContainer, animatedStyle]}>
-      <Text style={[styles.icon, focused && styles.iconFocused]}>
-        {focused ? iconSet.active : iconSet.inactive}
-      </Text>
+      <Feather
+        name={iconName}
+        size={22}
+        color={focused ? colors.primary[500] : colors.text.tertiary}
+      />
     </Animated.View>
   );
 }
@@ -72,13 +79,19 @@ function CreateButton({ onPress }: { onPress: () => void }) {
       testID="tab-create"
     >
       <View style={styles.createButtonInner}>
-        <Text style={styles.createIcon}>+</Text>
+        <Feather name="plus" size={26} color="#FFFFFF" />
       </View>
     </AnimatedTouchable>
   );
 }
 
-function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
+function HeaderUtilities({
+  router,
+  insets,
+}: {
+  router: ReturnType<typeof useRouter>;
+  insets: { top: number };
+}) {
   const { wallet } = useWallet();
   const { unreadCount } = useNotification();
   const { user } = useAuth();
@@ -86,13 +99,16 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
   const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
-    // Check if there are any live shows
+    // Live-shows badge via the shared client (pinning wrapper, 30s timeout,
+    // auth header, RFC 7807 error normalization) — the previous raw fetch
+    // bypassed all of those.
     const checkLive = async () => {
       try {
-        const response = await fetch('/api/v1/reality/shows/live');
-        const data = await response.json();
-        setIsLive(data?.shows?.length > 0);
-      } catch {
+        const response = await realityApi.getLiveShows();
+        const shows = response.success ? response.data?.shows : undefined;
+        setIsLive(Array.isArray(shows) && shows.length > 0);
+      } catch (error) {
+        logger.warn('Live-shows check failed', undefined, error);
         setIsLive(false);
       }
     };
@@ -105,11 +121,14 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
     user?.name?.charAt(0)?.toUpperCase() || user?.displayName?.charAt(0)?.toUpperCase() || 'U';
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
       <View style={styles.headerLeft}>
-        <Text style={[styles.logo, { color: colors.text.primary }]}>
-          AZEEBO<Text style={styles.logoPlus}>+</Text>
-        </Text>
+        <Image
+          source={require('../../assets/logo-white.png')}
+          style={{ width: 108, height: 26 }}
+          resizeMode="contain"
+          accessibilityLabel="Azeebo+ Logo"
+        />
         {isLive && (
           <View style={styles.liveIndicator}>
             <View style={styles.liveDot} />
@@ -121,12 +140,28 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
       <View style={styles.headerRight}>
         <TouchableOpacity
           style={styles.headerButton}
+          onPress={() => {
+            Alert.alert(
+              'Cast to Screen',
+              'Searching for Azeebo TV, AirPlay, and Chromecast receivers on your local Wi-Fi...',
+              [{ text: 'Dismiss', style: 'cancel' }]
+            );
+          }}
+          accessibilityLabel="Cast to TV or Screen"
+          accessibilityRole="button"
+          testID="header-cast-button"
+        >
+          <Feather name="cast" size={18} color={colors.text.primary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.headerButton}
           onPress={() => router.push('/(tabs)/search')}
           accessibilityLabel="Search"
           accessibilityRole="button"
           testID="header-search-button"
         >
-          <Text style={styles.headerButtonText}>⌕</Text>
+          <Feather name="search" size={18} color={colors.text.primary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -136,7 +171,7 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
           accessibilityRole="button"
           testID="header-wallet-button"
         >
-          <Text style={styles.headerButtonText}>◈</Text>
+          <Feather name="credit-card" size={18} color={colors.text.primary} />
           <View style={styles.walletBadge}>
             <Text style={styles.walletText}>{walletBalance}</Text>
           </View>
@@ -149,7 +184,7 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
           accessibilityRole="button"
           testID="header-notifications-button"
         >
-          <Text style={styles.headerButtonText}>♡</Text>
+          <Feather name="bell" size={18} color={colors.text.primary} />
           {unreadCount > 0 && (
             <View style={styles.notificationBadge}>
               <Text style={styles.notificationText}>{unreadCount}</Text>
@@ -175,17 +210,18 @@ function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
 
 export default function TabsLayout() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
-      <HeaderUtilities router={router} />
+      <HeaderUtilities router={router} insets={insets} />
 
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
             backgroundColor: colors.bg.primary,
-            borderTopColor: colors.border.default,
+            borderTopColor: 'rgba(255,255,255,0.08)',
             borderTopWidth: 1,
             height: 84,
             paddingBottom: 24,
@@ -210,11 +246,11 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="watch"
+          name="search"
           options={{
-            title: 'Watch',
+            title: 'Search',
             tabBarIcon: ({ focused }: { focused: boolean }) => (
-              <TabIcon name="watch" focused={focused} />
+              <TabIcon name="search" focused={focused} />
             ),
           }}
         />
@@ -226,20 +262,11 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="rewards"
+          name="library"
           options={{
-            title: 'Rewards',
+            title: 'Library',
             tabBarIcon: ({ focused }: { focused: boolean }) => (
-              <TabIcon name="rewards" focused={focused} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="tipping"
-          options={{
-            title: 'Tips',
-            tabBarIcon: ({ focused }: { focused: boolean }) => (
-              <TabIcon name="tips" focused={focused} />
+              <TabIcon name="library" focused={focused} />
             ),
           }}
         />
@@ -250,6 +277,54 @@ export default function TabsLayout() {
             tabBarIcon: ({ focused }: { focused: boolean }) => (
               <TabIcon name="profile" focused={focused} />
             ),
+          }}
+        />
+        <Tabs.Screen
+          name="watch"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="rewards"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="tipping"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="referral"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="payment"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="transactions"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="wallet"
+          options={{
+            href: null,
           }}
         />
       </Tabs>
@@ -267,7 +342,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    paddingTop: 50,
+    // Top padding is injected at render time from useSafeAreaInsets() —
+    // a fixed 50px collides with notches / Dynamic Island on some devices.
     borderBottomWidth: 1,
     borderBottomColor: colors.border.default,
   },

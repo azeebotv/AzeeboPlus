@@ -1,59 +1,106 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
+import { adminApi } from '@/lib/api/admin';
+import { Icon } from '@/components/Icons';
 
 interface UserDetail {
   id: string;
   email: string;
-  username: string;
   displayName?: string;
-  phone?: string;
-  isActive: boolean;
-  emailVerified: boolean;
+  role: string;
+  isSuspended?: boolean;
+  suspensionReason?: string | null;
+  isVerified?: boolean;
   createdAt: string;
-  lastLoginAt?: string;
+  wallet?: { balance?: number; currency?: string } | null;
+  contentCount?: number;
+  notificationCount?: number;
 }
+
+const ROLES = ['user', 'creator', 'moderator', 'admin', 'super_admin'];
 
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<UserDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [showSuspend, setShowSuspend] = useState(false);
+  const [suspendReason, setSuspendReason] = useState('');
+  const [suspendDays, setSuspendDays] = useState('');
+  const [showDelete, setShowDelete] = useState(false);
+  const [revokeReason, setRevokeReason] = useState('');
+  const [showRole, setShowRole] = useState(false);
+  const [newRole, setNewRole] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    displayName: '',
+    email: '',
+    role: 'user',
+    isVerified: false,
+  });
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setIsLoading(true);
-        const response = await apiFetch<UserDetail>(`/api/v1/admin/users/${id}`);
-        if (response.success && response.data) {
-          setUser(response.data);
-        } else {
-          setError(response.message || 'Failed to load user');
-        }
-      } catch {
-        setError('Failed to load user');
-      } finally {
-        setIsLoading(false);
+  const fetchUser = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await apiFetch<UserDetail>(`/api/v1/admin/users/${id}`);
+      if (response.success && response.data) {
+        setUser(response.data);
+        setError(null);
+      } else {
+        setError(response.message || 'Failed to load user');
       }
-    };
-    if (id) fetchUser();
+    } catch (e) {
+      setError((e as Error).message || 'Failed to load user');
+    } finally {
+      setIsLoading(false);
+    }
   }, [id]);
 
-  if (isLoading) return <div style={{ padding: 32, color: '#9A8A7A' }}>Loading...</div>;
+  useEffect(() => {
+    if (id) fetchUser();
+  }, [id, fetchUser]);
+
+  /**
+   * Mutations are always shown; the backend enforces role rules (delete is
+   * superadmin-only) and failures surface in the action banner below.
+   */
+  const runAction = async (fn: () => Promise<unknown>, successMsg: string) => {
+    setActionError(null);
+    setBusy(true);
+    try {
+      await fn();
+      await fetchUser();
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      setActionError(successMsg);
+    } catch (e) {
+      const err = e as { message?: string; data?: { message?: string } };
+      setActionError(err.data?.message || err.message || 'Action failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (isLoading)
+    return <div style={{ padding: 32, color: 'var(--admin-text-muted)' }}>Loading...</div>;
   if (error) {
     return (
       <div style={{ padding: 32 }}>
-        <p style={{ color: '#CC1C1C' }}>{error}</p>
+        <p style={{ color: 'var(--admin-red)' }}>{error}</p>
         <button
           onClick={() => navigate(-1)}
           style={{
             marginTop: 12,
             padding: '8px 16px',
             borderRadius: 8,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--admin-surface)',
             background: 'transparent',
-            color: '#E8420A',
+            color: 'var(--admin-orange)',
             cursor: 'pointer',
           }}
         >
@@ -62,27 +109,10 @@ export default function UserDetailPage() {
       </div>
     );
   }
-  if (!user) return <div style={{ padding: 32, color: '#9A8A7A' }}>User not found</div>;
+  if (!user)
+    return <div style={{ padding: 32, color: 'var(--admin-text-muted)' }}>User not found</div>;
 
-  const fields = [
-    { label: 'Email', value: user.email },
-    { label: 'Username', value: user.username },
-    user.phone ? { label: 'Phone', value: user.phone } : null,
-    {
-      label: 'Status',
-      value: user.isActive ? 'Active' : 'Inactive',
-      color: user.isActive ? '#22C55E' : '#CC1C1C',
-    },
-    {
-      label: 'Email Verified',
-      value: user.emailVerified ? 'Yes' : 'No',
-      color: user.emailVerified ? '#22C55E' : '#F59E0B',
-    },
-    { label: 'Created', value: new Date(user.createdAt).toLocaleDateString() },
-    user.lastLoginAt
-      ? { label: 'Last Login', value: new Date(user.lastLoginAt).toLocaleDateString() }
-      : null,
-  ].filter(Boolean) as Array<{ label: string; value: string; color?: string }>;
+  const suspended = user.isSuspended === true;
 
   return (
     <div style={{ padding: 32, maxWidth: 800 }}>
@@ -92,35 +122,538 @@ export default function UserDetailPage() {
           marginBottom: 24,
           padding: '8px 16px',
           borderRadius: 8,
-          border: '1px solid #2A1A1A',
+          border: '1px solid var(--admin-surface)',
           background: 'transparent',
-          color: '#E8420A',
+          color: 'var(--admin-orange)',
           cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          fontSize: 13,
+          fontWeight: 600,
+          transition: 'all 0.15s ease',
         }}
       >
-        &larr; Back to Users
+        <Icon name="arrowLeft" size={16} />
+        <span>Back to Users</span>
       </button>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24, color: '#fff' }}>
-        {user.displayName || user.username}
-      </h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-text)' }}>
+          {user.displayName || user.email}
+        </h1>
+        <span
+          style={{
+            padding: '3px 12px',
+            borderRadius: 999,
+            fontSize: 12,
+            fontWeight: 700,
+            color: suspended ? 'var(--admin-red)' : 'var(--admin-emerald)',
+            background: suspended ? 'rgba(204,28,28,0.15)' : 'rgba(16,185,129,0.15)',
+          }}
+        >
+          {suspended ? 'Suspended' : 'Active'}
+        </span>
+        <span
+          style={{
+            padding: '3px 12px',
+            borderRadius: 999,
+            fontSize: 12,
+            fontWeight: 700,
+            color: 'var(--admin-orange)',
+            background: 'rgba(249,115,22,0.15)',
+          }}
+        >
+          {user.role}
+        </span>
+      </div>
+
+      {actionError && (
+        <div
+          style={{
+            marginBottom: 16,
+            padding: '10px 14px',
+            borderRadius: 8,
+            fontSize: 13,
+            color: /failed|error|not /i.test(actionError)
+              ? 'var(--admin-red)'
+              : 'var(--admin-emerald)',
+            background: /failed|error|not /i.test(actionError)
+              ? 'rgba(204,28,28,0.1)'
+              : 'rgba(16,185,129,0.1)',
+          }}
+        >
+          {actionError}
+        </div>
+      )}
+
       <div
         style={{
-          background: '#1A0A0A',
-          border: '1px solid #2A1A1A',
+          background: 'var(--admin-bg)',
+          border: '1px solid var(--admin-surface)',
           borderRadius: 12,
           padding: 24,
+          marginBottom: 24,
         }}
       >
         <div style={{ display: 'grid', gap: 16 }}>
-          {fields.map((f) => (
-            <div key={f.label}>
-              <label style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase' }}>
-                {f.label}
-              </label>
-              <p style={{ color: f.color || '#fff', marginTop: 4 }}>{f.value}</p>
-            </div>
-          ))}
+          {[
+            { label: 'Email', value: user.email },
+            { label: 'Role', value: user.role },
+            suspended
+              ? {
+                  label: 'Suspension reason',
+                  value: user.suspensionReason || '—',
+                  color: 'var(--admin-red)',
+                }
+              : null,
+            { label: 'Verified', value: user.isVerified ? 'Yes' : 'No' },
+            {
+              label: 'Wallet balance',
+              value: user.wallet
+                ? `${user.wallet.balance ?? 0} ${user.wallet.currency ?? ''}`
+                : '—',
+            },
+            { label: 'Content items', value: String(user.contentCount ?? 0) },
+            { label: 'Created', value: new Date(user.createdAt).toLocaleString() },
+          ]
+            .filter(Boolean)
+            .map((f) => {
+              const field = f as { label: string; value: string; color?: string };
+              return (
+                <div key={field.label}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--admin-text-muted)',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {field.label}
+                  </label>
+                  <p style={{ color: field.color || 'white', marginTop: 4 }}>{field.value}</p>
+                </div>
+              );
+            })}
         </div>
+      </div>
+
+      <div
+        style={{
+          border: '1px solid var(--admin-surface)',
+          borderRadius: 12,
+          padding: 20,
+          background: 'var(--admin-surface)',
+        }}
+      >
+        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Actions</h2>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {!suspended ? (
+            <button
+              onClick={() => {
+                setShowSuspend(!showSuspend);
+                setRevokeReason('');
+              }}
+              disabled={busy}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'var(--admin-red)',
+                color: 'white',
+                fontWeight: 600,
+                cursor: busy ? 'wait' : 'pointer',
+              }}
+            >
+              Suspend user…
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input
+                value={revokeReason}
+                onChange={(e) => setRevokeReason(e.target.value)}
+                placeholder="Revoke reason"
+                style={{
+                  padding: '8px 10px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-surface)',
+                  background: 'transparent',
+                  color: 'white',
+                  fontSize: 13,
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (!revokeReason.trim()) return;
+                  void runAction(
+                    () => adminApi.revokeSuspension(user.id, revokeReason.trim()),
+                    'Suspension revoked'
+                  );
+                }}
+                disabled={busy || !revokeReason.trim()}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: 'var(--admin-emerald)',
+                  color: 'white',
+                  fontWeight: 600,
+                  cursor: busy || !revokeReason.trim() ? 'wait' : 'pointer',
+                }}
+              >
+                Revoke suspension
+              </button>
+            </div>
+          )}
+          <button
+            onClick={() => {
+              setEditForm({
+                displayName: user.displayName || '',
+                email: user.email,
+                role: user.role,
+                isVerified: Boolean(user.isVerified),
+              });
+              setShowEditModal(true);
+            }}
+            disabled={busy}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 8,
+              border: 'none',
+              background: 'var(--admin-primary)',
+              color: 'white',
+              fontWeight: 600,
+              cursor: busy ? 'wait' : 'pointer',
+            }}
+          >
+            Edit Profile
+          </button>
+          <button
+            onClick={() => {
+              setShowRole(!showRole);
+              setNewRole(user.role);
+            }}
+            disabled={busy}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 8,
+              border: '1px solid var(--admin-surface)',
+              background: 'transparent',
+              color: 'var(--admin-orange)',
+              fontWeight: 600,
+              cursor: busy ? 'wait' : 'pointer',
+            }}
+          >
+            Change role…
+          </button>
+          <button
+            onClick={() => setShowDelete(!showDelete)}
+            disabled={busy}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 8,
+              border: '1px solid var(--admin-red)',
+              background: 'transparent',
+              color: 'var(--admin-red)',
+              fontWeight: 600,
+              cursor: busy ? 'wait' : 'pointer',
+            }}
+          >
+            Delete user
+          </button>
+        </div>
+
+        {showSuspend && !suspended && (
+          <div
+            style={{
+              marginTop: 14,
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}
+          >
+            <input
+              value={suspendReason}
+              onChange={(e) => setSuspendReason(e.target.value)}
+              placeholder="Reason (required)"
+              style={{
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                background: 'transparent',
+                color: 'white',
+                fontSize: 13,
+                minWidth: 220,
+              }}
+            />
+            <input
+              value={suspendDays}
+              onChange={(e) => setSuspendDays(e.target.value.replace(/\D/g, ''))}
+              placeholder="Days (empty = indefinite)"
+              style={{
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                background: 'transparent',
+                color: 'white',
+                fontSize: 13,
+                width: 170,
+              }}
+            />
+            <button
+              onClick={() => {
+                if (!suspendReason.trim()) return;
+                void runAction(
+                  () =>
+                    adminApi.suspendUser(
+                      user.id,
+                      suspendReason.trim(),
+                      suspendDays ? Number(suspendDays) : undefined
+                    ),
+                  'User suspended'
+                );
+                setShowSuspend(false);
+              }}
+              disabled={busy || !suspendReason.trim()}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'var(--admin-red)',
+                color: 'white',
+                fontWeight: 600,
+                cursor: busy || !suspendReason.trim() ? 'wait' : 'pointer',
+              }}
+            >
+              Confirm suspension
+            </button>
+          </div>
+        )}
+
+        {showRole && (
+          <div style={{ marginTop: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
+            <select
+              value={newRole}
+              onChange={(e) => setNewRole(e.target.value)}
+              style={{
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--admin-surface)',
+                background: 'var(--admin-bg)',
+                color: 'white',
+                fontSize: 13,
+              }}
+            >
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => {
+                if (newRole && newRole !== user.role) {
+                  void runAction(
+                    () => adminApi.updateUserRole(user.id, newRole),
+                    `Role changed to ${newRole}`
+                  );
+                }
+                setShowRole(false);
+              }}
+              disabled={busy || !newRole || newRole === user.role}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'var(--admin-orange)',
+                color: 'white',
+                fontWeight: 600,
+                cursor: busy ? 'wait' : 'pointer',
+              }}
+            >
+              Apply
+            </button>
+          </div>
+        )}
+
+        {showDelete && (
+          <div style={{ marginTop: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ color: 'var(--admin-red)', fontSize: 13 }}>
+              Permanently delete {user.email}? This cannot be undone.
+            </span>
+            <button
+              onClick={() => {
+                setShowDelete(false);
+                void runAction(async () => {
+                  await adminApi.deleteUser(user.id);
+                  navigate('/users');
+                }, 'User deleted');
+              }}
+              disabled={busy}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'var(--admin-red)',
+                color: 'white',
+                fontWeight: 600,
+                cursor: busy ? 'wait' : 'pointer',
+              }}
+            >
+              Yes, delete
+            </button>
+          </div>
+        )}
+
+        {showEditModal && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.75)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+            }}
+            onClick={() => setShowEditModal(false)}
+          >
+            <div
+              style={{
+                backgroundColor: 'var(--admin-dark)',
+                border: '1px solid var(--admin-card)',
+                borderRadius: 16,
+                padding: 24,
+                width: '90%',
+                maxWidth: 480,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Edit User Profile</h3>
+              <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 16 }}>
+                Update personal details, role, and verification status for this user.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.displayName}
+                    onChange={(e) => setEditForm({ ...editForm, displayName: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-surface)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-surface)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Role
+                  </label>
+                  <select
+                    value={editForm.role}
+                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-surface)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', marginTop: 4 }}>
+                  <input
+                    type="checkbox"
+                    checked={editForm.isVerified}
+                    onChange={(e) => setEditForm({ ...editForm, isVerified: e.target.checked })}
+                  />
+                  <span>Verified Account badge</span>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-card)',
+                    backgroundColor: 'transparent',
+                    color: 'var(--admin-text-muted)',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    void runAction(
+                      () => adminApi.updateUser(user.id, editForm),
+                      'User profile updated successfully'
+                    );
+                  }}
+                  disabled={busy || !editForm.displayName.trim() || !editForm.email.trim()}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: 'none',
+                    backgroundColor: 'var(--admin-primary)',
+                    color: 'white',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

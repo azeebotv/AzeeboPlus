@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import axios from 'axios';
@@ -100,7 +101,7 @@ export class ContentModerationService {
       return { isSafe: true, issues: [], scanId: scanResult.scanId };
     } catch (error) {
       this.logger.error(`Safety scan failed for content ${contentId}: ${(error as Error).message}`);
-      throw new BadRequestException('Safety scan failed, please try again later');
+      mapAndThrow(error, 'content safety check');
     }
   }
 
@@ -122,25 +123,26 @@ export class ContentModerationService {
     }
 
     // SSRF protection: validate URL before forwarding to external service
-    try {
-      const scanUrl = new URL(content.mediaAsset.originalUrl);
-      if (scanUrl.protocol !== 'https:') {
-        throw new BadRequestException('Only HTTPS media URLs are allowed for scanning');
-      }
-      const privatePatterns = [
-        /^127\./,
-        /^10\./,
-        /^172\.(1[6-9]|2\d|3[01])\./,
-        /^192\.168\./,
-        /^169\.254\./,
-        /^localhost$/i,
-      ];
-      if (privatePatterns.some((p) => p.test(scanUrl.hostname))) {
-        throw new BadRequestException('Media URLs pointing to private networks are not allowed');
-      }
-    } catch (e) {
-      if (e instanceof BadRequestException) throw e;
+    // (URL.canParse keeps the invalid-URL 400 outside any catch block —
+    // fabricating client errors inside a catch is banned by
+    // azeebo-custom/require-map-and-throw)
+    if (!URL.canParse(content.mediaAsset.originalUrl)) {
       throw new BadRequestException('Invalid media URL format');
+    }
+    const scanUrl = new URL(content.mediaAsset.originalUrl);
+    if (scanUrl.protocol !== 'https:') {
+      throw new BadRequestException('Only HTTPS media URLs are allowed for scanning');
+    }
+    const privatePatterns = [
+      /^127\./,
+      /^10\./,
+      /^172\.(1[6-9]|2\d|3[01])\./,
+      /^192\.168\./,
+      /^169\.254\./,
+      /^localhost$/i,
+    ];
+    if (privatePatterns.some((p) => p.test(scanUrl.hostname))) {
+      throw new BadRequestException('Media URLs pointing to private networks are not allowed');
     }
 
     try {
@@ -157,7 +159,7 @@ export class ContentModerationService {
       return response.data;
     } catch (error) {
       this.logger.error(`Safety scan failed for content ${contentId}: ${(error as Error).message}`);
-      throw new BadRequestException('Safety scan failed, please try again later');
+      mapAndThrow(error, 'safety scan');
     }
   }
 
@@ -204,7 +206,7 @@ export class ContentModerationService {
       this.logger.error(
         `Failed to report content to moderation service: ${(error as Error).message}`
       );
-      throw new BadRequestException('Failed to submit report. Please try again later.');
+      mapAndThrow(error, 'submitting content report');
     }
   }
 

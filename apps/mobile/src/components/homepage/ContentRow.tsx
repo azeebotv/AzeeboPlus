@@ -13,7 +13,7 @@ import { colors } from '@/theme';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import ContentCard from './ContentCard';
-import type { ContentItem } from '@/api';
+import type { ContentItem } from '@azeebo/react-data';
 const CARD_GAP = 12;
 const SIDE_PADDING = 20;
 

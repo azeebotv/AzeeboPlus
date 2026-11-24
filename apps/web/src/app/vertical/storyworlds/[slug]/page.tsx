@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api, ContentItem } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -51,11 +50,9 @@ function StoryworldDetailContent(): React.JSX.Element {
   const error = storyworldQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Vertical" />
-
+    <PageShell activeNav="Vertical" maxWidth="2xl">
       {isLoading ? (
-        <Skeleton height="500px" borderRadius="0" />
+        <Skeleton height="500px" borderRadius="16px" />
       ) : error ? (
         <div className="h-[500px] flex items-center justify-center">
           <ErrorState
@@ -66,7 +63,7 @@ function StoryworldDetailContent(): React.JSX.Element {
         </div>
       ) : storyworld ? (
         <section className="relative">
-          <div className="relative h-[500px]">
+          <div className="relative mb-6 h-[400px] overflow-hidden rounded-az-panel border border-az-glass-border sm:h-[500px]">
             <OptimizedImage
               src={storyworld.thumbnail}
               alt={storyworld.title}
@@ -74,41 +71,27 @@ function StoryworldDetailContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/60 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
+            <div className="absolute inset-0 az-scrim--hero" aria-hidden="true" />
+            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="flex items-center gap-2 mb-4">
+                <div className="mb-4 flex items-center gap-2">
                   {storyworld.isComplete && (
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{
-                        backgroundColor: 'rgba(34,197,94,0.9)',
-                        color: 'var(--brand-white)',
-                      }}
-                    >
+                    <span className="az-overline rounded-az-pill bg-az-success-500/90 px-3 py-1 text-az-ink">
                       Complete
                     </span>
                   )}
                   {storyworld.genre && (
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{
-                        backgroundColor: 'rgba(232,66,10,0.2)',
-                        color: 'var(--brand-orange)',
-                      }}
-                    >
+                    <span className="az-overline rounded-az-pill bg-az-scarlet/20 px-3 py-1 text-az-flame">
                       {storyworld.genre}
                     </span>
                   )}
                 </div>
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">
-                  {storyworld.title}
-                </h1>
-                <p className="text-white/60 text-lg max-w-3xl">{storyworld.description}</p>
+                <h1 className="az-heading mb-3 text-az-ink sm:az-display">{storyworld.title}</h1>
+                <p className="az-lead max-w-3xl text-az-ink/60">{storyworld.description}</p>
               </motion.div>
             </div>
           </div>
@@ -118,11 +101,11 @@ function StoryworldDetailContent(): React.JSX.Element {
       {storyworld && (
         <>
           {storyworld.characters && storyworld.characters.length > 0 && (
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+            <section className="py-6 sm:py-8">
               <ScrollReveal>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Characters</h2>
+                <h2 className="az-section-title mb-6 text-az-ink">Characters</h2>
               </ScrollReveal>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 {storyworld.characters.map((char, index) => (
                   <motion.div
                     key={char.id}
@@ -134,13 +117,10 @@ function StoryworldDetailContent(): React.JSX.Element {
                     <Link href={`/vertical/characters/${char.id}`}>
                       <GlowCard universe="vertical" className="text-center">
                         <div className="p-4">
-                          <div
-                            className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center font-bold text-xl text-white"
-                            style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                          >
+                          <div className="az-subtitle mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-az-flame to-az-scarlet text-az-ink">
                             {char.avatar?.charAt(0) || char.name.charAt(0)}
                           </div>
-                          <h3 className="font-semibold text-white text-sm truncate">{char.name}</h3>
+                          <h3 className="az-body-strong truncate text-az-ink">{char.name}</h3>
                         </div>
                       </GlowCard>
                     </Link>
@@ -151,15 +131,15 @@ function StoryworldDetailContent(): React.JSX.Element {
           )}
 
           {storyworld.episodes && storyworld.episodes.length > 0 && (
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+            <section className="py-6 sm:py-8">
               <ScrollReveal>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Episodes</h2>
+                <h2 className="az-section-title mb-6 text-az-ink">Episodes</h2>
               </ScrollReveal>
               <div className="space-y-3">
                 {storyworld.episodes.map((episode, index) => (
                   <Link key={episode.id} href={`/watch/${episode.id}`}>
                     <motion.div
-                      className="az-glass p-4 flex gap-4 cursor-pointer transition-all hover:scale-[1.01]"
+                      className="az-glass flex cursor-pointer gap-4 p-4"
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -171,26 +151,21 @@ function StoryworldDetailContent(): React.JSX.Element {
                           alt={episode.title}
                           width={120}
                           height={68}
-                          className="w-[120px] h-[68px] object-cover rounded flex-shrink-0"
+                          className="h-[68px] w-[120px] flex-shrink-0 rounded-az-control object-cover"
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-white text-sm truncate">
-                          {episode.title}
-                        </h3>
-                        <p className="text-xs text-white/50 mt-1 line-clamp-1">
+                        <h3 className="az-body-strong truncate text-az-ink">{episode.title}</h3>
+                        <p className="az-caption mt-1 line-clamp-1 text-az-ink/50">
                           {episode.description}
                         </p>
                       </div>
                       <div className="flex items-center">
-                        <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: 'rgba(232,66,10,0.2)' }}
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#E8420A">
+                        <span className="flex size-8 items-center justify-center rounded-full bg-az-scarlet/20 text-az-flame">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                             <polygon points="5,3 19,12 5,21" />
                           </svg>
-                        </div>
+                        </span>
                       </div>
                     </motion.div>
                   </Link>
@@ -200,9 +175,7 @@ function StoryworldDetailContent(): React.JSX.Element {
           )}
         </>
       )}
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -212,8 +185,8 @@ export default function StoryworldDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

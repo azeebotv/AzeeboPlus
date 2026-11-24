@@ -5,9 +5,9 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { ApiResponse } from '../../src/types/api';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
 
 interface TimelineEvent {
@@ -38,9 +38,7 @@ export default function TimelineScreen() {
 
   useEffect(() => {
     if (timelineQuery.isSuccess && !timelineQuery.isFetching) {
-      try {
-        analytics.verticalUniverseViewed('timeline');
-      } catch {}
+      analytics.verticalUniverseViewed('timeline');
     }
   }, [timelineQuery.isSuccess, timelineQuery.isFetching]);
 
@@ -131,7 +129,7 @@ export default function TimelineScreen() {
       style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Timeline</Text>

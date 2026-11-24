@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronLeft } from 'lucide-react';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
-import AppHeader from '@/components/layout/AppHeader';
+import PageShell from '@/components/layout/PageShell';
 import { useToast } from '@/components/ToastProvider';
 
 interface EpisodeDetail {
@@ -93,7 +94,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
 
   const handleVote = async (isSuper: boolean): Promise<void> => {
     try {
-      const result = await apiFetch('/v1/content/vote', {
+      const result = await apiFetch('/reality/votes', {
         method: 'POST',
         body: JSON.stringify({ episodeId, isSuperVote: isSuper }),
       });
@@ -107,225 +108,175 @@ export default function EpisodePlayerPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
+      <PageShell maxWidth="2xl" showFooter={false}>
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <div
-              className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{
-                border: '3px solid rgba(255,255,255,0.1)',
-                borderTopColor: 'var(--brand-orange)',
-              }}
-            />
-            <p className="mt-4 text-white/60">Loading episode...</p>
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-az-ink/10 border-t-az-flame" />
+            <p className="az-body mt-4 text-az-ink-muted">Loading episode...</p>
           </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   if (!episode) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
+      <PageShell maxWidth="2xl" showFooter={false}>
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <p className="text-white text-xl mb-4">Episode not found</p>
+            <p className="az-title mb-4 text-az-ink">Episode not found</p>
             <button
+              type="button"
               onClick={() => router.back()}
-              className="az-btn-primary"
-              style={{ width: 'auto', paddingInline: '1.5rem' }}
+              className="az-btn-primary az-btn-primary--inline az-btn-primary--sm"
             >
               Go Back
             </button>
           </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   const progress = episode.duration > 0 ? (currentTime / episode.duration) * 100 : 0;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
-      <div className="max-w-6xl mx-auto pt-4 px-4">
-        <button
-          onClick={() => router.back()}
-          className="text-white/50 hover:text-white flex items-center gap-2 mb-4 transition-colors"
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back
-        </button>
+    <PageShell maxWidth="2xl" showFooter={false}>
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="az-body mb-4 flex items-center gap-2 text-az-ink-muted transition-colors hover:text-az-ink"
+      >
+        <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+        Back
+      </button>
 
-        <div className="relative aspect-video rounded-xl overflow-hidden az-glass">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-white text-2xl font-bold mb-2">{episode.title}</h2>
-              <p className="text-white/50">
-                S{episode.seasonNumber} E{episode.episodeNumber}
-              </p>
-              {isPlaying ? (
-                <div className="flex items-end gap-1 h-10 mt-4 justify-center">
-                  <div
-                    className="w-1 animate-pulse h-5"
-                    style={{ backgroundColor: 'var(--brand-orange)' }}
-                  />
-                  <div
-                    className="w-1 animate-pulse h-8"
-                    style={{ backgroundColor: 'var(--brand-orange)', animationDelay: '0.2s' }}
-                  />
-                  <div
-                    className="w-1 animate-pulse h-6"
-                    style={{ backgroundColor: 'var(--brand-orange)', animationDelay: '0.4s' }}
-                  />
-                </div>
-              ) : (
-                <button
-                  onClick={handlePlayPause}
-                  className="mt-4 w-20 h-20 rounded-full text-white text-4xl flex items-center justify-center transition-colors"
-                  style={{ backgroundColor: 'rgba(232,66,10,0.8)' }}
-                >
-                  ▶
-                </button>
-              )}
-            </div>
+      <div className="az-glass relative aspect-video overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="az-section-title mb-2 text-az-ink">{episode.title}</h2>
+            <p className="az-body text-az-ink-muted">
+              S{episode.seasonNumber} E{episode.episodeNumber}
+            </p>
+            {isPlaying ? (
+              <div className="mt-4 flex h-10 items-end justify-center gap-1">
+                <div className="h-5 w-1 animate-pulse bg-az-flame" />
+                <div className="h-8 w-1 animate-pulse bg-az-flame [animation-delay:200ms]" />
+                <div className="h-6 w-1 animate-pulse bg-az-flame [animation-delay:400ms]" />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handlePlayPause}
+                className="mt-4 flex h-20 w-20 items-center justify-center rounded-full bg-az-scarlet/80 text-4xl text-az-ink transition-colors"
+              >
+                Play
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6">
+        <div className="mb-6">
+          <div className="mb-2 h-1 rounded-full bg-az-ink/10">
+            <div
+              className="h-full rounded-full bg-az-flame transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="az-body flex justify-between text-az-ink-muted">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(episode.duration)}</span>
           </div>
         </div>
 
-        <div className="p-6">
-          <div className="mb-6">
-            <div
-              className="h-1 rounded-full mb-2"
-              style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-            >
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${progress}%`, backgroundColor: 'var(--brand-orange)' }}
-              />
-            </div>
-            <div className="flex justify-between text-sm text-white/50">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(episode.duration)}</span>
-            </div>
-          </div>
+        <div className="mb-6 flex items-center justify-center gap-8">
+          <button
+            type="button"
+            onClick={() => handleSeek(-10)}
+            className="az-chip flex h-12 w-12 items-center justify-center text-xl text-az-ink transition-colors"
+          >
+            Rewind
+          </button>
+          <button
+            type="button"
+            onClick={handlePlayPause}
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-az-flame text-2xl text-az-surface-root transition-colors"
+          >
+            {isPlaying ? 'Pause' : 'Play'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSeek(10)}
+            className="az-chip flex h-12 w-12 items-center justify-center text-xl text-az-ink transition-colors"
+          >
+            FastForward
+          </button>
+        </div>
 
-          <div className="flex items-center justify-center gap-8 mb-6">
-            <button
-              onClick={() => handleSeek(-10)}
-              className="w-12 h-12 rounded-full flex items-center justify-center text-xl transition-colors"
-              style={{
-                border: '1px solid rgba(255,255,255,0.2)',
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                color: 'var(--brand-white)',
-              }}
-            >
-              ⏪
-            </button>
-            <button
-              onClick={handlePlayPause}
-              className="w-16 h-16 rounded-full text-white text-2xl flex items-center justify-center transition-colors"
-              style={{ backgroundColor: 'var(--brand-orange)' }}
-            >
-              {isPlaying ? '⏸' : '▶'}
-            </button>
-            <button
-              onClick={() => handleSeek(10)}
-              className="w-12 h-12 rounded-full flex items-center justify-center text-xl transition-colors"
-              style={{
-                border: '1px solid rgba(255,255,255,0.2)',
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                color: 'var(--brand-white)',
-              }}
-            >
-              ⏩
-            </button>
-          </div>
+        <div className="mb-6 flex gap-4">
+          <button
+            type="button"
+            onClick={() => setShowSubtitles(true)}
+            className="az-chip flex-1 px-4 py-3 font-medium text-az-ink transition-colors"
+          >
+            MessageCircleSubtitles
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowVoteModal(true)}
+            className="az-btn-primary flex-1"
+          >
+            VoteVote
+          </button>
+        </div>
 
-          <div className="flex gap-4 mb-6">
-            <button
-              onClick={() => setShowSubtitles(true)}
-              className="flex-1 py-3 px-4 rounded-full font-medium transition-colors"
-              style={{
-                border: '1px solid rgba(255,255,255,0.2)',
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                color: 'var(--brand-white)',
-              }}
-            >
-              💬 Subtitles
-            </button>
-            <button
-              onClick={() => setShowVoteModal(true)}
-              className="flex-1 py-3 px-4 rounded-full font-medium transition-colors az-btn-primary"
-            >
-              🗳 Vote
-            </button>
-          </div>
-
-          <div className="pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <h3 className="text-xl font-bold text-white mb-2">{episode.title}</h3>
-            <p className="text-white/50 leading-relaxed">{episode.description}</p>
-          </div>
+        <div className="border-t border-az-ink/10 pt-6">
+          <h3 className="az-title mb-2 text-az-ink">{episode.title}</h3>
+          <p className="az-lead text-az-ink-muted">{episode.description}</p>
         </div>
       </div>
 
       {showSubtitles && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center"
           role="dialog"
           aria-modal="true"
           aria-label="Select Subtitles"
         >
-          <div className="az-glass w-full max-w-md rounded-t-xl sm:rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Select Subtitles</h3>
+          <div className="az-glass w-full max-w-md p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="az-subtitle text-az-ink">Select Subtitles</h3>
               <button
+                type="button"
                 onClick={() => setShowSubtitles(false)}
-                className="text-white/50 hover:text-white text-2xl"
+                className="az-subtitle text-az-ink-muted transition-colors hover:text-az-ink"
+                aria-label="Close subtitles"
               >
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-2">
-              {['Off', ...episode.subtitles].map((sub) => (
-                <button
-                  key={sub}
-                  onClick={() => {
-                    setSelectedSubtitle(sub === 'Off' ? null : sub);
-                    setShowSubtitles(false);
-                  }}
-                  className={`w-full p-3 rounded-full text-left transition-all ${
-                    (sub === 'Off' && !selectedSubtitle) || selectedSubtitle === sub
-                      ? 'az-btn-primary'
-                      : ''
-                  }`}
-                  style={
-                    sub !== 'Off' && selectedSubtitle !== sub
-                      ? {
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          backgroundColor: 'rgba(255,255,255,0.08)',
-                          color: 'var(--brand-white)',
-                        }
-                      : undefined
-                  }
-                >
-                  {sub === 'Off' ? '🚫 Subtitles Off' : sub}
-                </button>
-              ))}
+              {['Off', ...episode.subtitles].map((sub) => {
+                const isActive = (sub === 'Off' && !selectedSubtitle) || selectedSubtitle === sub;
+                return (
+                  <button
+                    key={sub}
+                    type="button"
+                    aria-pressed={isActive}
+                    onClick={() => {
+                      setSelectedSubtitle(sub === 'Off' ? null : sub);
+                      setShowSubtitles(false);
+                    }}
+                    className={`w-full text-left transition-all ${
+                      isActive ? 'az-btn-primary' : 'az-chip text-az-ink'
+                    }`}
+                  >
+                    {sub === 'Off' ? 'Ban Subtitles Off' : sub}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -333,35 +284,33 @@ export default function EpisodePlayerPage(): React.JSX.Element {
 
       {showVoteModal && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Vote"
         >
-          <div className="az-glass rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-semibold text-white mb-2">Vote for This Episode</h3>
-            <p className="text-white/50 mb-6">Choose your voting option:</p>
+          <div className="az-glass w-full max-w-md p-6">
+            <h3 className="az-title mb-2 text-az-ink">Vote for This Episode</h3>
+            <p className="az-body mb-6 text-az-ink-muted">Choose your voting option:</p>
             <div className="space-y-3">
               <button
-                onClick={() => handleVote(false)}
-                className="w-full py-3 px-4 rounded-full font-medium transition-colors"
-                style={{
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  color: 'var(--brand-white)',
-                }}
+                type="button"
+                onClick={() => void handleVote(false)}
+                className="az-chip w-full px-4 py-3 font-medium text-az-ink transition-colors"
               >
                 Regular Vote (1x)
               </button>
               <button
-                onClick={() => handleVote(true)}
-                className="w-full py-3 px-4 rounded-full font-medium transition-colors az-btn-primary"
+                type="button"
+                onClick={() => void handleVote(true)}
+                className="az-btn-primary"
               >
                 Super Vote (2x)
               </button>
               <button
+                type="button"
                 onClick={() => setShowVoteModal(false)}
-                className="w-full py-3 px-4 text-white/50 hover:text-white transition-colors"
+                className="az-body w-full px-4 py-3 text-az-ink-muted transition-colors hover:text-az-ink"
               >
                 Cancel
               </button>
@@ -369,6 +318,6 @@ export default function EpisodePlayerPage(): React.JSX.Element {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

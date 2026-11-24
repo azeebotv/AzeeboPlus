@@ -5,11 +5,31 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Gamepad2, Star, Trophy, Flame, Gem, BarChart3, Award, Sparkles } from 'lucide-react';
 import analytics from '@/lib/analytics';
+
+function getStatIcon(name: string): React.JSX.Element {
+  switch (name) {
+    case 'Gamepad2':
+      return <Gamepad2 className="w-6 h-6 text-az-success-400 mx-auto" />;
+    case 'Star':
+      return <Star className="w-6 h-6 text-az-warning-400 mx-auto" />;
+    case 'Trophy':
+      return <Trophy className="w-6 h-6 text-az-warning-400 mx-auto" />;
+    case 'Flame':
+      return <Flame className="w-6 h-6 text-az-flame mx-auto" />;
+    case 'Gem':
+      return <Gem className="w-6 h-6 text-az-category-violet-light mx-auto" />;
+    case 'BarChart3':
+      return <BarChart3 className="w-6 h-6 text-az-secondary-400 mx-auto" />;
+    default:
+      return <Sparkles className="w-6 h-6 text-az-ink/60 mx-auto" />;
+  }
+}
 
 interface PlayerStats {
   totalGamesPlayed: number;
@@ -42,25 +62,43 @@ interface RecentGame {
   opponent?: string;
 }
 
+/* Rarity is a categorical reward ramp (like the leaderboard podium metals),
+   not a semantic status: grey is the ink layer, violet a registered category
+   hue, and only the blue/gold rungs borrow a state token because they are
+   hex-identical to it. */
 const RARITY_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-  common: { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF', border: 'rgba(156,163,175,0.3)' },
-  rare: {
-    bg: 'rgba(59,130,246,0.15)',
-    text: 'var(--color-secondary-400)',
-    border: 'rgba(59,130,246,0.3)',
+  common: {
+    bg: 'bg-az-ink-muted/15',
+    text: 'text-az-ink-muted',
+    border: 'border-az-ink-muted/30',
   },
-  epic: { bg: 'rgba(168,85,247,0.15)', text: '#C084FC', border: 'rgba(168,85,247,0.3)' },
+  rare: {
+    bg: 'bg-az-secondary-500/15',
+    text: 'text-az-secondary-400',
+    border: 'border-az-secondary-500/30',
+  },
+  epic: {
+    bg: 'bg-az-category-violet/15',
+    text: 'text-az-category-violet-light',
+    border: 'border-az-category-violet/30',
+  },
   legendary: {
-    bg: 'rgba(234,179,8,0.15)',
-    text: 'var(--color-warning-400)',
-    border: 'rgba(234,179,8,0.3)',
+    bg: 'bg-az-warning-500/15',
+    text: 'text-az-warning-400',
+    border: 'border-az-warning-500/30',
   },
 };
 
 const RESULT_STYLES: Record<string, { bg: string; text: string }> = {
-  win: { bg: 'rgba(34,197,94,0.15)', text: 'var(--color-success-500)' },
-  loss: { bg: 'rgba(239,68,68,0.15)', text: 'var(--color-error-500)' },
-  draw: { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF' },
+  win: {
+    bg: 'bg-az-success-500/15',
+    text: 'text-az-success-500',
+  },
+  loss: {
+    bg: 'bg-az-error-500/15',
+    text: 'text-az-error-500',
+  },
+  draw: { bg: 'bg-az-ink-muted/15', text: 'text-az-ink-muted' },
 };
 
 function StatsPageContent(): React.JSX.Element {
@@ -84,53 +122,47 @@ function StatsPageContent(): React.JSX.Element {
 
   const statCards = stats
     ? [
-        { label: 'Total Games', value: stats.totalGamesPlayed, icon: '🎮' },
-        { label: 'Total Score', value: stats.totalScore.toLocaleString(), icon: '⭐' },
-        { label: 'Win Rate', value: `${stats.winRate}%`, icon: '🏆' },
-        { label: 'Current Streak', value: stats.currentStreak, icon: '🔥' },
-        { label: 'Best Streak', value: stats.longestStreak, icon: '💎' },
+        { label: 'Total Games', value: stats.totalGamesPlayed, icon: 'Gamepad2' },
+        { label: 'Total Score', value: stats.totalScore.toLocaleString(), icon: 'Star' },
+        { label: 'Win Rate', value: `${stats.winRate}%`, icon: 'Trophy' },
+        { label: 'Current Streak', value: stats.currentStreak, icon: 'Flame' },
+        { label: 'Best Streak', value: stats.longestStreak, icon: 'Gem' },
         {
           label: 'Global Rank',
           value: `#${stats.rank}`,
           subtext: `of ${stats.totalPlayers.toLocaleString()}`,
-          icon: '📊',
+          icon: 'BarChart3',
         },
       ]
     : [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Games" />
-
+    <PageShell
+      activeNav="Games"
+      maxWidth="7xl"
+      glowColor="color-mix(in srgb, var(--color-az-success-500) 18%, transparent)"
+    >
       {/* Hero */}
-      <section
-        className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #22C55E 0%, #1A0A0A 100%)' }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+      <PageHero
+        eyebrow="Games Universe"
+        title="Player Stats"
+        subtitle="Your gaming performance overview"
+        glowColor="color-mix(in srgb, var(--color-az-success-500) 18%, transparent)"
+        actions={
+          <span
+            aria-hidden="true"
+            className="az-chip hidden items-center justify-center px-4 py-3 text-az-success-400 sm:inline-flex"
           >
-            📊 Player Stats
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Your gaming performance overview
-          </motion.p>
-        </div>
-      </section>
+            <BarChart3 size={24} />
+          </span>
+        }
+      />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <div>
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass p-5 rounded-xl">
+              <div key={i} className="az-glass p-5">
                 <Skeleton height="20px" width="40px" className="mb-3" />
                 <Skeleton height="28px" width="80px" />
                 <Skeleton height="14px" width="60px" className="mt-2" />
@@ -155,10 +187,12 @@ function StatsPageContent(): React.JSX.Element {
                   transition={{ delay: index * 0.08 }}
                 >
                   <GlowCard universe="games" className="p-5 text-center">
-                    <span className="text-2xl mb-2 block">{stat.icon}</span>
-                    <p className="text-2xl font-bold text-white">{stat.value}</p>
-                    <p className="text-xs text-white/50 mt-1">{stat.label}</p>
-                    {stat.subtext && <p className="text-xs text-white/30 mt-0.5">{stat.subtext}</p>}
+                    <div className="mb-2">{getStatIcon(stat.icon)}</div>
+                    <p className="az-title text-az-ink">{stat.value}</p>
+                    <p className="az-caption mt-1 text-az-ink-muted">{stat.label}</p>
+                    {stat.subtext && (
+                      <p className="az-micro-label mt-0.5 text-az-ink/30">{stat.subtext}</p>
+                    )}
                   </GlowCard>
                 </motion.div>
               ))}
@@ -167,7 +201,7 @@ function StatsPageContent(): React.JSX.Element {
             {/* Achievements */}
             {stats.achievements.length > 0 && (
               <ScrollReveal>
-                <h2 className="text-2xl font-bold text-white mb-6">Achievements</h2>
+                <h2 className="az-section-title mb-6 text-az-ink">Achievements</h2>
               </ScrollReveal>
             )}
             {stats.achievements.length > 0 && (
@@ -182,19 +216,19 @@ function StatsPageContent(): React.JSX.Element {
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.05 }}
-                      className="az-glass p-4 rounded-xl flex items-center gap-4"
-                      style={{ border: `1px solid ${rarity.border}` }}
+                      className={`flex items-center gap-4 rounded-az-feature border bg-az-glass-card p-4 ${rarity.border}`}
                     >
                       <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                        style={{ backgroundColor: rarity.bg }}
+                        className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl ${rarity.bg}`}
                       >
-                        {achievement.icon}
+                        <Award className={`h-6 w-6 ${rarity.text}`} aria-hidden />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-semibold truncate">{achievement.name}</h3>
-                        <p className="text-xs text-white/50 truncate">{achievement.description}</p>
-                        <p className="text-xs text-white/30 mt-1">
+                        <h3 className="az-body-strong truncate text-az-ink">{achievement.name}</h3>
+                        <p className="az-caption truncate text-az-ink/50">
+                          {achievement.description}
+                        </p>
+                        <p className="az-caption mt-1 text-az-ink/30">
                           {new Date(achievement.unlockedAt).toLocaleDateString('en-NG', {
                             month: 'short',
                             day: 'numeric',
@@ -203,8 +237,7 @@ function StatsPageContent(): React.JSX.Element {
                         </p>
                       </div>
                       <span
-                        className="text-xs px-2 py-0.5 rounded-full capitalize flex-shrink-0"
-                        style={{ backgroundColor: rarity.bg, color: rarity.text }}
+                        className={`az-caption flex-shrink-0 rounded-az-pill px-2 py-0.5 capitalize ${rarity.bg} ${rarity.text}`}
                       >
                         {achievement.rarity}
                       </span>
@@ -217,7 +250,7 @@ function StatsPageContent(): React.JSX.Element {
             {/* Recent Games */}
             {stats.recentGames.length > 0 && (
               <ScrollReveal>
-                <h2 className="text-2xl font-bold text-white mb-6">Recent Games</h2>
+                <h2 className="az-section-title mb-6 text-az-ink">Recent Games</h2>
               </ScrollReveal>
             )}
             {stats.recentGames.length > 0 && (
@@ -232,18 +265,16 @@ function StatsPageContent(): React.JSX.Element {
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.05 }}
-                      className="az-glass p-4 rounded-xl flex items-center gap-4"
-                      style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                      className="flex items-center gap-4 rounded-az-feature border border-az-ink/10 bg-az-glass-card p-4"
                     >
                       <span
-                        className="px-2.5 py-1 rounded-full text-xs font-semibold uppercase flex-shrink-0"
-                        style={{ backgroundColor: resultStyle.bg, color: resultStyle.text }}
+                        className={`az-overline flex-shrink-0 rounded-full px-2.5 py-1 ${resultStyle.bg} ${resultStyle.text}`}
                       >
                         {game.result}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white font-medium truncate">{game.gameType}</p>
-                        <p className="text-xs text-white/40">
+                        <p className="az-body-strong truncate text-az-ink">{game.gameType}</p>
+                        <p className="az-caption text-az-ink/40">
                           {new Date(game.playedAt).toLocaleDateString('en-NG', {
                             month: 'short',
                             day: 'numeric',
@@ -253,7 +284,7 @@ function StatsPageContent(): React.JSX.Element {
                           {game.opponent && ` vs ${game.opponent}`}
                         </p>
                       </div>
-                      <p className="font-bold text-white flex-shrink-0">
+                      <p className="az-subtitle flex-shrink-0 text-az-ink">
                         {game.score.toLocaleString()} pts
                       </p>
                     </motion.div>
@@ -263,14 +294,14 @@ function StatsPageContent(): React.JSX.Element {
             )}
           </>
         ) : (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-4">🎮</p>
-            <h2 className="text-xl font-bold text-white mb-2">No stats yet</h2>
-            <p className="text-white/50 mb-6">Play some games to see your stats</p>
+          <div className="py-20 text-center">
+            <Trophy size={40} className="mx-auto mb-4 text-az-flame" aria-hidden />
+            <h2 className="az-subtitle mb-2 text-az-ink">No stats yet</h2>
+            <p className="az-body mb-6 text-az-ink-muted">Play some games to see your stats</p>
             <Link href="/games/trivia">
               <motion.button
                 type="button"
-                className="az-btn-primary px-8"
+                className="az-btn-primary az-btn-primary--inline"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -280,9 +311,7 @@ function StatsPageContent(): React.JSX.Element {
           </div>
         )}
       </div>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -292,8 +321,8 @@ export default function StatsPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

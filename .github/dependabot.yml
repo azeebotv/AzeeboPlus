@@ -4,63 +4,53 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
     open-pull-requests-limit: 10
-    target-branch: "develop"
+    reviewers:
+      - "azeebotv/team"
     labels:
       - "dependencies"
-      - "automerge"
-    assignees:
-      - "engineering-team"
-    commit-message:
-      prefix: "chore(deps):"
-      include: "scope"
-    ignore:
-      - dependency-name: "@types/node"
-        versions: ["20.x"]
+      - "security"
     groups:
-      react-native-packages:
-        patterns:
-          - "react-native*"
-          - "@react-native*"
-      nestjs-packages:
+      nestjs:
         patterns:
           - "@nestjs/*"
-      prisma-packages:
+      prisma:
         patterns:
           - "prisma"
           - "@prisma/client"
-      eslint-packages:
+      testing:
         patterns:
-          - "eslint*"
-          - "@typescript-eslint/*"
-      testing-packages:
-        patterns:
-          - "jest*"
-          - "@jest/*"
-          - "vitest*"
-          - "@testing-library/*"
+          - "jest"
+          - "ts-jest"
+          - "@types/jest"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
-      day: "monday"
+      interval: "weekly"
     labels:
       - "dependencies"
-      - "github-actions"
-    commit-message:
-      prefix: "chore(actions):"
+      - "ci"
 
+  # Docker base image updates (Dockerfile.all-in-one and any Dockerfile.*)
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "monthly"
-      day: "wednesday"
+      interval: "weekly"
     labels:
       - "dependencies"
       - "docker"
-    commit-message:
-      prefix: "chore(docker):"
+    reviewers:
+      - "azeebotv/devops-team"
+
+  # Terraform provider + module updates
+  - package-ecosystem: "terraform"
+    directory: "/terraform"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "infrastructure"
+    reviewers:
+      - "azeebotv/devops-team"
+

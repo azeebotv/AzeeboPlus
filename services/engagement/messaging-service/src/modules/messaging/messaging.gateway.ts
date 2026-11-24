@@ -11,10 +11,22 @@ import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import { MessagingService } from './messaging.service.js';
+import { FeatureFlagService, messagingFlags } from '@azeebo/feature-flags';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [],
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
+      // LOW-07: Validate WebSocket origins against a strict allowlist.
+      if (!origin) return callback(null, true);
+      const allowed = process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [];
+      if (allowed.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Origin not allowed'), false);
+    },
     credentials: true,
   },
   namespace: '/messaging',
@@ -27,7 +39,8 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   constructor(
     private readonly messagingService: MessagingService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly featureFlagService: FeatureFlagService
   ) {}
 
   afterInit() {
@@ -119,12 +132,18 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   }
 
   @SubscribeMessage('typing')
-  handleTyping(
+  async handleTyping(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { conversationId: string; isTyping: boolean }
   ) {
     const userId = client.data.userId;
     if (!userId) return;
+
+    // messaging_typing_indicator: off by default — drop typing events so no
+    // presence traffic reaches clients until the flag is enabled.
+    if (!(await this.featureFlagService.isEnabled(messagingFlags.typingIndicator))) {
+      return;
+    }
 
     client.to(`conversation:${data.conversationId}`).emit('user_typing', {
       userId,
@@ -141,6 +160,12 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     const userId = client.data.userId;
     if (!userId) {
       return { event: 'error', data: { message: 'Not authenticated' } };
+    }
+
+    // messaging_read_receipts: off by default — drop read receipts so no
+    // delivery-confirmation traffic reaches clients until the flag is enabled.
+    if (!(await this.featureFlagService.isEnabled(messagingFlags.readReceipts))) {
+      return { event: 'mark_read_success', data: { messageId: data.messageId } };
     }
 
     const result = await this.messagingService.markAsRead(
@@ -162,12 +187,11 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   }
 
   private extractToken(client: Socket): string | null {
+    // MED-04: Removed query string token support — tokens in URLs are logged
+    // in server access logs, proxy logs, and browser history.
     const authHeader = client.handshake.auth?.token || client.handshake.headers?.authorization;
     if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
       return authHeader.substring(7);
-    }
-    if (typeof client.handshake.query?.token === 'string') {
-      return client.handshake.query.token;
     }
     return null;
   }

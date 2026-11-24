@@ -1,8 +1,10 @@
-import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CreateConversationDto, SendMessageDto } from './dto/messaging.dto.js';
+import { FeatureFlagService, messagingFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
+import { sanitizeInput } from '@azeebo/validation';
 
 @Injectable()
 export class MessagingService {
@@ -12,11 +14,12 @@ export class MessagingService {
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    private readonly featureFlagService?: FeatureFlagService
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
     this.userServiceBaseUrl = this.configService.get<string>(
       'USER_SERVICE_URL',
@@ -236,12 +239,24 @@ export class MessagingService {
         throw new NotFoundException('Conversation not found');
       }
 
+      // messaging_media_sharing: image/file payloads are gated; when off,
+      // media messages fall back to plain text so no media lands in threads.
+      const messageType = dto.type || 'text';
+      if (
+        messageType !== 'text' &&
+        this.featureFlagService &&
+        !(await this.featureFlagService.isEnabled(messagingFlags.mediaSharing))
+      ) {
+        throw new BadRequestException('Media sharing is disabled');
+      }
+
+      const sanitizedContent = sanitizeInput(dto.content) as string;
       const message = await this.prisma.message.create({
         data: {
           conversationId,
           senderId: userId,
-          content: dto.content,
-          type: dto.type || 'text',
+          content: sanitizedContent,
+          type: messageType,
         },
       });
 
@@ -272,8 +287,8 @@ export class MessagingService {
 
   async markAsRead(userId: string, conversationId: string, messageId: string) {
     try {
-      const participant = await this.prisma.conversationParticipant.findFirst({
-        where: { conversationId, userId },
+      const participant = await this.prisma.conversationParticipant.findUnique({
+        where: { conversationId_userId: { conversationId, userId } },
       });
 
       if (!participant) {
@@ -366,13 +381,13 @@ export class MessagingService {
 
   async addParticipant(userId: string, conversationId: string, newUserId: string) {
     try {
-      const participant = await this.prisma.conversationParticipant.findFirst({
-        where: { conversationId, userId },
+      const participant = await this.prisma.conversationParticipant.findUnique({
+        where: { conversationId_userId: { conversationId, userId } },
       });
       if (!participant) return { success: false, error: 'Not a member of this conversation' };
 
-      const existing = await this.prisma.conversationParticipant.findFirst({
-        where: { conversationId, userId: newUserId },
+      const existing = await this.prisma.conversationParticipant.findUnique({
+        where: { conversationId_userId: { conversationId, userId: newUserId } },
       });
       if (existing) return { success: false, error: 'User already in conversation' };
 
@@ -389,8 +404,8 @@ export class MessagingService {
 
   async removeParticipant(userId: string, conversationId: string, removeUserId: string) {
     try {
-      const participant = await this.prisma.conversationParticipant.findFirst({
-        where: { conversationId, userId },
+      const participant = await this.prisma.conversationParticipant.findUnique({
+        where: { conversationId_userId: { conversationId, userId } },
       });
       if (!participant || (participant.role !== 'admin' && userId !== removeUserId)) {
         return { success: false, error: 'Unauthorized' };
@@ -539,8 +554,8 @@ export class MessagingService {
 
   async addReaction(userId: string, messageId: string, emoji: string) {
     try {
-      const existing = await this.prisma.messageReaction.findFirst({
-        where: { messageId, userId, emoji },
+      const existing = await this.prisma.messageReaction.findUnique({
+        where: { messageId_userId_emoji: { messageId, userId, emoji } },
       });
 
       if (existing) {
@@ -581,8 +596,9 @@ export class MessagingService {
       if (parentMessage.conversationId !== conversationId)
         return { success: false, error: 'Message not in this conversation' };
 
+      const sanitizedContent = sanitizeInput(content) as string;
       const message = await this.prisma.message.create({
-        data: { conversationId, senderId: userId, content, replyToId },
+        data: { conversationId, senderId: userId, content: sanitizedContent, replyToId },
       });
 
       return { success: true, data: message };

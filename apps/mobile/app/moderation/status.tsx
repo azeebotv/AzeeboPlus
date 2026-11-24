@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, useColorScheme } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '../../src/theme';
-import { moderationApi, Report } from '../../src/api/moderation';
+import { moderationApi, Report } from '@azeebo/react-data/api/moderation';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
-import { logger } from '../../src/utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 type StatusFilter = 'all' | 'pending' | 'reviewing' | 'resolved' | 'dismissed';
 
@@ -76,7 +76,7 @@ export default function ModerationStatusScreen() {
   const renderStatusBadge = (status: string) => {
     const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
     return (
-      <View style={[styles.badge, { backgroundColor: config.bg }]}>
+      <View accessibilityLabel="Status Screen" style={[styles.badge, { backgroundColor: config.bg }]}>
         <View style={[styles.badgeDot, { backgroundColor: config.color }]} />
         <Text style={[styles.badgeText, { color: config.color }]}>{config.label}</Text>
       </View>
@@ -209,7 +209,7 @@ export default function ModerationStatusScreen() {
       ]}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text

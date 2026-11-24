@@ -1,0 +1,85 @@
+{
+  "$comment": [
+    "Rules enforced by scripts/check-rule-promotion.mjs — the tripwire that",
+    "keeps a finished lint migration finished. Each listed rule must resolve",
+    "to 'error' severity for every service under services/*/*; a service",
+    "where the rule drops to 'warn'/'off'/unconfigured (and still lints",
+    "clean) fails the gate. Today that severity lives in the eslint.config.js",
+    "base config, so the gate only ever fires if someone downgrades or",
+    "scope-exceptions the rule — exactly the drift it exists to catch.",
+    "",
+    "Entry shape:",
+    "  id               — the ESLint rule id (required)",
+    "  ratchet          — path to a lint-warning-ratchet baseline for this rule",
+    "                     (optional). Registers the rule with",
+    "                     check-lint-warning-ratchet.mjs as a per-rule",
+    "                     regression floor. For a fully-gated rule the",
+    "                     baseline sits at total 0 and acts as a canary: the",
+    "                     rule is 'error', so any warning that ever appears",
+    "                     means the severity regressed somewhere — and the",
+    "                     zero floor fails CI immediately.",
+    "  exemptWorkspaces — workspace names that lint clean but must NOT be",
+    "                     forced to 'error' (optional). Each exemption is a",
+    "                     committed decision — the gate warns if one rots.",
+    "",
+    "To migrate a NEW rule with this machinery (the flow require-map-and-throw",
+    "used): implement it, set it 'warn' repo-wide, add an entry here with a",
+    "ratchet path, and generate the baseline with",
+    "`pnpm run check:lint-ratchet -- --update`. Both gates then enforce the",
+    "migration (warnings may only decrease; clean services must reach",
+    "'error'); when the last service converts, flip the rule to 'error' in",
+    "the base config and empty the baseline with one more --update.",
+    "",
+    "Option-level campaigns work on an ALREADY-GATED rule too (the flow",
+    "banPlainErrors used on require-map-and-throw): add the option at 'error'",
+    "in the base config — if conversion debt exists, warn-block ONLY the debt",
+    "surfaces in eslint.config.js (repeating the options; flat config replaces",
+    "the whole entry) and --update baselines those warnings under this rule's",
+    "id. The per-service completion canary in scripts/__tests__/ keeps the",
+    "already-converted semantics at 'error'. If the debt is fully resolved",
+    "before the floor is ever written, no warn block and no nonzero baseline",
+    "are needed — the option simply goes live at 'error' (enforcement is then",
+    "the lint failure itself, with the zero canary guarding the severity).",
+    "The gate fails with exit 2 if a listed rule is not configured anywhere for",
+    "services — usually a typo in the id. AZEEBO_LINT_RULE=<id> runs the gate",
+    "for a single listed rule; an unlisted value is an operator error (exit 2)."
+  ],
+  "rules": [
+    {
+      "id": "azeebo-custom/require-map-and-throw",
+      "ratchet": "scripts/lint-warning-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-hex-colors",
+      "ratchet": "scripts/no-hex-colors-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-arbitrary-hex-class",
+      "ratchet": "scripts/no-arbitrary-hex-class-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-dead-class-override",
+      "ratchet": "scripts/no-dead-class-override-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-retired-brand-alias",
+      "ratchet": "scripts/no-retired-brand-alias-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-off-system-color-utility",
+      "ratchet": "scripts/no-off-system-color-utility-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/require-shared-route-boundary",
+      "ratchet": "scripts/require-shared-route-boundary-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-undefined-az-utility",
+      "ratchet": "scripts/no-undefined-az-utility-baseline.json"
+    },
+    {
+      "id": "azeebo-custom/no-low-contrast-pair",
+      "ratchet": "scripts/no-low-contrast-pair-baseline.json"
+    }
+  ]
+}

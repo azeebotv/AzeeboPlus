@@ -15,6 +15,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { DeviceService } from './device.service.js';
 import { UpdateDeviceInfoDto } from '../dto/device.dto.js';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, authFlags } from '@azeebo/feature-flags';
 import { User, ApiResponseWrapper } from '@azeebo/shared-types';
 
 interface AuthRequest extends Request {
@@ -35,8 +36,9 @@ export interface DeviceInfo {
 
 @ApiTags('Devices')
 @ApiBearerAuth()
+@FeatureFlag(authFlags.deviceLimits)
 @Controller('auth/devices')
-@UseGuards(RateLimitGuard)
+@UseGuards(FeatureFlagGuard, RateLimitGuard)
 export class DeviceController {
   constructor(@Inject(DeviceService) private readonly deviceService: DeviceService) {}
 

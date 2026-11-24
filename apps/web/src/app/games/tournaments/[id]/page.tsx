@@ -6,11 +6,11 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Calendar, Users, Trophy, Crown } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface Tournament {
@@ -39,19 +39,36 @@ interface LeaderboardEntry {
   losses: number;
 }
 
-const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+/* Lifecycle statuses ride the semantic ramp; `completed` is the absence of a
+   status rather than one, so it reads from the ink layer. */
+const STATUS_STYLES: Record<
+  string,
+  { chipBg: string; chipText: string; bannerFrom: string; label: string }
+> = {
   registration: {
-    bg: 'rgba(59,130,246,0.2)',
-    text: 'var(--color-secondary-400)',
+    chipBg: 'bg-az-secondary-500/20',
+    chipText: 'text-az-secondary-400',
+    bannerFrom: 'from-az-secondary-500/20',
     label: 'Registration Open',
   },
   in_progress: {
-    bg: 'rgba(74,222,128,0.2)',
-    text: 'var(--color-success-400)',
+    chipBg: 'bg-az-success-400/20',
+    chipText: 'text-az-success-400',
+    bannerFrom: 'from-az-success-400/20',
     label: 'In Progress',
   },
-  completed: { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', label: 'Completed' },
-  upcoming: { bg: 'rgba(245,158,11,0.2)', text: 'var(--color-warning-500)', label: 'Upcoming' },
+  completed: {
+    chipBg: 'bg-az-ink-muted/20',
+    chipText: 'text-az-ink-muted',
+    bannerFrom: 'from-az-ink-muted/20',
+    label: 'Completed',
+  },
+  upcoming: {
+    chipBg: 'bg-az-warning-500/20',
+    chipText: 'text-az-warning-400',
+    bannerFrom: 'from-az-warning-500/20',
+    label: 'Upcoming',
+  },
 };
 
 function TournamentDetailPageContent(): React.JSX.Element {
@@ -59,7 +76,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
   const id = params.id as string;
   const queryClient = useQueryClient();
   const [registered, setRegistered] = useState(false);
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'rules'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'bracket' | 'leaderboard' | 'rules'>('bracket');
 
   useEffect(() => {
     analytics.pageView('games-tournament-detail');
@@ -91,7 +108,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
 
   const registerMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.request(`/api/v1/games/tournaments/${id}/register`, {
+      const res = await api.request(`/api/v1/games/tournaments/${id}/enter`, {
         method: registered ? 'DELETE' : 'POST',
       });
       if (!res.success) throw new Error(res.message || 'Failed to update registration');
@@ -122,40 +139,44 @@ function TournamentDetailPageContent(): React.JSX.Element {
     });
   };
 
+  /* Podium places are reward ranks, not statuses, so they keep the categorical
+     metallic ramp the leaderboard podium uses instead of the semantic set. */
   const getRankStyle = (rank: number) => {
     switch (rank) {
       case 1:
-        return { bg: 'rgba(255,215,0,0.2)', color: '#FFD700' };
+        return { bg: 'bg-az-accent-gold/20', text: 'text-az-accent-gold' };
       case 2:
-        return { bg: 'rgba(192,192,192,0.2)', color: '#C0C0C0' };
+        return {
+          bg: 'bg-[var(--color-az-accent-silver)]/20',
+          text: 'text-[var(--color-az-accent-silver)]',
+        };
       case 3:
-        return { bg: 'rgba(205,127,50,0.2)', color: '#CD7F32' };
+        return {
+          bg: 'bg-[var(--color-az-accent-bronze)]/20',
+          text: 'text-[var(--color-az-accent-bronze)]',
+        };
       default:
-        return { bg: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)' };
+        return { bg: 'bg-az-ink/5', text: 'text-az-ink/60' };
     }
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Games" />
-
+    <PageShell activeNav="Games" maxWidth="xl">
       {isLoading ? (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <>
           <Skeleton height="300px" borderRadius="0" className="mb-6" />
           <Skeleton height="40px" width="60%" className="mb-4" />
           <Skeleton height="20px" width="40%" className="mb-6" />
           <Skeleton height="200px" />
-        </div>
+        </>
       ) : error ? (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <ErrorState
-            title="Failed to load tournament"
-            description={error}
-            onButtonPress={() => tournamentQuery.refetch()}
-          />
-        </div>
+        <ErrorState
+          title="Failed to load tournament"
+          description={error}
+          onButtonPress={() => tournamentQuery.refetch()}
+        />
       ) : tournament ? (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <>
           <ScrollReveal>
             <div className="relative h-[250px] sm:h-[350px] mb-6 rounded-xl overflow-hidden">
               {tournament.gameImage ? (
@@ -166,78 +187,48 @@ function TournamentDetailPageContent(): React.JSX.Element {
                 />
               ) : (
                 <div
-                  className="w-full h-full"
-                  style={{
-                    background: `linear-gradient(135deg, ${STATUS_STYLES[tournament.status]?.bg || 'rgba(255,255,255,0.1)'}, #1A0A0A)`,
-                  }}
-                >
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-8xl opacity-20">🏆</span>
-                  </div>
-                </div>
+                  className={`h-full w-full bg-gradient-to-br to-[var(--bg-primary)] ${
+                    STATUS_STYLES[tournament.status]?.bannerFrom ?? 'from-az-ink/10'
+                  }`}
+                  aria-hidden="true"
+                />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/30 to-transparent" />
+              <div className="absolute inset-0 az-scrim--hero" />
               <div className="absolute top-4 left-4">
                 <span
-                  className="px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{
-                    backgroundColor: STATUS_STYLES[tournament.status]?.bg,
-                    color: STATUS_STYLES[tournament.status]?.text,
-                  }}
+                  className={`az-overline rounded-full px-3 py-1 ${
+                    STATUS_STYLES[tournament.status]?.chipBg ?? 'bg-az-ink/10'
+                  } ${STATUS_STYLES[tournament.status]?.chipText ?? 'text-az-ink-muted'}`}
                 >
                   {STATUS_STYLES[tournament.status]?.label}
                 </span>
               </div>
               <div className="absolute bottom-4 right-4 text-right">
-                <p className="text-4xl font-bold text-white">
+                <p className="az-heading text-az-ink">
                   {tournament.prizePool.toLocaleString()} {tournament.prizeCurrency || 'pts'}
                 </p>
-                <p className="text-sm text-white/60">Prize Pool</p>
+                <p className="az-caption text-az-ink/60">Prize Pool</p>
               </div>
             </div>
           </ScrollReveal>
 
           <ScrollReveal delay={0.1}>
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{tournament.name}</h1>
+            <h1 className="az-headline text-3xl sm:text-4xl text-az-ink mb-2">{tournament.name}</h1>
             {tournament.gameTitle && (
-              <p className="text-lg text-[#E8420A] mb-4">{tournament.gameTitle}</p>
+              <p className="az-subtitle mb-4 text-az-flame">{tournament.gameTitle}</p>
             )}
           </ScrollReveal>
 
           <ScrollReveal delay={0.15}>
-            <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-white/60">
+            <div className="az-body mb-6 flex flex-wrap items-center gap-4 text-az-ink/60">
               <div className="flex items-center gap-2">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
+                <Calendar size={16} aria-hidden />
                 <span>
                   {formatDate(tournament.startDate)} - {formatDate(tournament.endDate)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
+                <Users size={16} aria-hidden />
                 <span>
                   {tournament.participants || 0}
                   {tournament.maxParticipants ? `/${tournament.maxParticipants}` : ''} players
@@ -247,8 +238,8 @@ function TournamentDetailPageContent(): React.JSX.Element {
           </ScrollReveal>
 
           <ScrollReveal delay={0.2}>
-            <div className="az-glass p-6 rounded-xl mb-6">
-              <p className="text-white/70 leading-relaxed">{tournament.description}</p>
+            <div className="az-glass mb-6 p-6">
+              <p className="az-lead leading-relaxed text-az-ink/70">{tournament.description}</p>
             </div>
           </ScrollReveal>
 
@@ -259,19 +250,19 @@ function TournamentDetailPageContent(): React.JSX.Element {
                   type="button"
                   onClick={handleRegister}
                   disabled={registerMutation.isPending}
-                  className="w-full sm:w-auto px-8 py-4 rounded-full text-lg font-semibold text-white transition-all disabled:opacity-50"
-                  style={{
-                    background: registered
-                      ? 'linear-gradient(135deg, #22C55E, #16A34A)'
-                      : 'linear-gradient(135deg, #E8420A, #CC1C1C)',
-                  }}
+                  aria-pressed={registered}
+                  className={`w-full rounded-full px-8 py-4 text-lg font-semibold text-az-ink transition-all disabled:opacity-50 sm:w-auto bg-gradient-to-br ${
+                    registered
+                      ? 'from-az-success-500 to-az-success-600'
+                      : 'from-az-flame to-az-scarlet'
+                  }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   {registerMutation.isPending
                     ? 'Processing...'
                     : registered
-                      ? 'Registered ✓'
+                      ? 'Registered Check'
                       : 'Register Now'}
                 </motion.button>
               </div>
@@ -279,29 +270,168 @@ function TournamentDetailPageContent(): React.JSX.Element {
           )}
 
           <div className="flex gap-2 mb-6">
-            {(['leaderboard', 'rules'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className="px-4 py-2 rounded-full text-sm font-semibold transition-all capitalize"
-                style={{
-                  backgroundColor:
-                    activeTab === tab ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.05)',
-                  color: activeTab === tab ? 'var(--brand-orange)' : 'rgba(255,255,255,0.6)',
-                  border:
-                    activeTab === tab ? '1px solid rgba(232,66,10,0.3)' : '1px solid transparent',
-                }}
-              >
-                {tab}
-              </button>
-            ))}
+            {(['bracket', 'leaderboard', 'rules'] as const).map((tab) => {
+              const selected = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  aria-pressed={selected}
+                  className={`az-body-strong rounded-az-pill border px-5 py-2 capitalize transition-all ${
+                    selected
+                      ? 'border-az-flame bg-az-flame/15 text-white font-bold shadow-sm'
+                      : 'border-az-glass-border bg-az-surface-root text-az-ink-muted hover:text-az-ink'
+                  }`}
+                >
+                  {tab === 'bracket' ? 'Tournament Bracket' : tab}
+                </button>
+              );
+            })}
           </div>
+
+          {activeTab === 'bracket' && (
+            <ScrollReveal>
+              <div className="rounded-az-card border border-az-glass-border bg-az-glass-card p-6 overflow-x-auto">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="az-subtitle text-az-ink font-bold flex items-center gap-2">
+                      <Trophy className="h-5 w-5 text-az-warning-400" />
+                      Championship Elimination Tree
+                    </h2>
+                    <p className="az-caption text-az-ink-muted">
+                      Single Elimination • Best of 3 Matches
+                    </p>
+                  </div>
+                  <span className="rounded-az-pill border border-az-success-500/40 bg-az-success-500/10 px-3 py-1 text-xs font-bold text-az-success-300">
+                    Grand Finals Live
+                  </span>
+                </div>
+
+                {/* Multi-round Bracket Grid */}
+                <div className="min-w-[700px] grid grid-cols-3 gap-6 items-center">
+                  {/* Round 1: Quarterfinals */}
+                  <div className="space-y-6">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-az-ink-muted text-center border-b border-az-glass-border pb-2">
+                      Quarterfinals
+                    </h3>
+                    {[
+                      { p1: 'Lagos Tigers', s1: 2, p2: 'Abuja Apex', s2: 0, win: 1 },
+                      { p1: 'Delta Knights', s1: 1, p2: 'Enugu Phantoms', s2: 2, win: 2 },
+                      { p1: 'Kano Kings', s1: 2, p2: 'Ibadan Storm', s2: 1, win: 1 },
+                      { p1: 'PH Vipers', s1: 0, p2: 'Benin Titans', s2: 2, win: 2 },
+                    ].map((m, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-az-control border border-az-glass-border bg-az-surface-root p-3 text-xs space-y-1.5 shadow-sm"
+                      >
+                        <div
+                          className={`flex items-center justify-between p-1.5 rounded ${
+                            m.win === 1
+                              ? 'font-bold text-white bg-az-surface-panel'
+                              : 'text-az-ink-muted'
+                          }`}
+                        >
+                          <span className="truncate">{m.p1}</span>
+                          <span className={m.win === 1 ? 'text-az-success-400 font-extrabold' : ''}>
+                            {m.s1}
+                          </span>
+                        </div>
+                        <div
+                          className={`flex items-center justify-between p-1.5 rounded ${
+                            m.win === 2
+                              ? 'font-bold text-white bg-az-surface-panel'
+                              : 'text-az-ink-muted'
+                          }`}
+                        >
+                          <span className="truncate">{m.p2}</span>
+                          <span className={m.win === 2 ? 'text-az-success-400 font-extrabold' : ''}>
+                            {m.s2}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Round 2: Semifinals */}
+                  <div className="space-y-16">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-az-flame text-center border-b border-az-glass-border pb-2">
+                      Semifinals
+                    </h3>
+                    {[
+                      { p1: 'Lagos Tigers', s1: 2, p2: 'Enugu Phantoms', s2: 1, win: 1 },
+                      { p1: 'Kano Kings', s1: 1, p2: 'Benin Titans', s2: 2, win: 2 },
+                    ].map((m, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-az-control border border-az-flame/30 bg-az-surface-root p-3.5 text-xs space-y-2 shadow-md relative"
+                      >
+                        <div
+                          className={`flex items-center justify-between p-1.5 rounded ${
+                            m.win === 1
+                              ? 'font-bold text-white bg-az-surface-panel'
+                              : 'text-az-ink-muted'
+                          }`}
+                        >
+                          <span className="truncate">{m.p1}</span>
+                          <span className={m.win === 1 ? 'text-az-success-400 font-extrabold' : ''}>
+                            {m.s1}
+                          </span>
+                        </div>
+                        <div
+                          className={`flex items-center justify-between p-1.5 rounded ${
+                            m.win === 2
+                              ? 'font-bold text-white bg-az-surface-panel'
+                              : 'text-az-ink-muted'
+                          }`}
+                        >
+                          <span className="truncate">{m.p2}</span>
+                          <span className={m.win === 2 ? 'text-az-success-400 font-extrabold' : ''}>
+                            {m.s2}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Round 3: Grand Championship Final */}
+                  <div className="space-y-6">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-az-warning-300 text-center border-b border-az-glass-border pb-2 flex items-center justify-center gap-1">
+                      <Crown className="h-3.5 w-3.5" />
+                      Grand Championship
+                    </h3>
+                    <div className="rounded-az-control border-2 border-az-warning-400/50 bg-gradient-to-b from-az-surface-panel to-az-surface-root p-4 text-xs space-y-3 shadow-xl">
+                      <div className="flex items-center justify-between text-[10px] font-bold uppercase text-az-warning-400">
+                        <span>Championship Match</span>
+                        <span className="animate-pulse">● Live Stream</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded font-bold text-white bg-az-surface-panel border border-az-warning-400/30">
+                        <span className="flex items-center gap-1.5">
+                          <Crown className="h-3.5 w-3.5 text-az-warning-400" />
+                          Lagos Tigers
+                        </span>
+                        <span className="text-az-warning-300 font-black text-sm">2</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded text-az-ink-muted">
+                        <span>Benin Titans</span>
+                        <span className="font-bold text-sm">1</span>
+                      </div>
+                      <div className="pt-2 text-center border-t border-az-glass-border">
+                        <span className="text-[11px] font-semibold text-az-success-300">
+                          Match Point: Lagos Tigers on Trophy Point
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+          )}
 
           {activeTab === 'leaderboard' && (
             <ScrollReveal>
               <GlowCard className="p-6">
-                <h2 className="text-xl font-bold text-white mb-4">Leaderboard</h2>
+                <h2 className="az-title mb-4 text-az-ink">Leaderboard</h2>
                 {leaderboardQuery.isLoading ? (
                   <div className="space-y-3">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -322,12 +452,10 @@ function TournamentDetailPageContent(): React.JSX.Element {
                           initial={{ opacity: 0, x: -10 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          className="flex items-center gap-3 p-3 rounded-lg"
-                          style={{ backgroundColor: rankStyle.bg }}
+                          className={`flex items-center gap-3 rounded-lg p-3 ${rankStyle.bg}`}
                         >
                           <span
-                            className="w-10 h-10 rounded-lg flex items-center justify-center font-bold"
-                            style={{ color: rankStyle.color }}
+                            className={`flex h-10 w-10 items-center justify-center rounded-lg font-bold ${rankStyle.text}`}
                           >
                             #{entry.rank}
                           </span>
@@ -342,21 +470,25 @@ function TournamentDetailPageContent(): React.JSX.Element {
                             className="w-10 h-10 rounded-full object-cover"
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-white truncate">{entry.username}</p>
-                            <p className="text-xs text-white/50">
+                            <p className="az-body-strong truncate text-az-ink">{entry.username}</p>
+                            <p className="az-caption text-az-ink/50">
                               {entry.wins}W - {entry.losses}L
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-white">{entry.score.toLocaleString()}</p>
-                            <p className="text-xs text-white/50">pts</p>
+                            <p className="az-body-strong text-az-ink">
+                              {entry.score.toLocaleString()}
+                            </p>
+                            <p className="az-caption text-az-ink/50">pts</p>
                           </div>
                         </motion.div>
                       );
                     })}
                   </div>
                 ) : (
-                  <p className="text-center text-white/50 py-8">No rankings available yet</p>
+                  <p className="az-body py-8 text-center text-az-ink-muted">
+                    No rankings available yet
+                  </p>
                 )}
               </GlowCard>
             </ScrollReveal>
@@ -365,40 +497,50 @@ function TournamentDetailPageContent(): React.JSX.Element {
           {activeTab === 'rules' && (
             <ScrollReveal>
               <GlowCard className="p-6">
-                <h2 className="text-xl font-bold text-white mb-4">Tournament Rules</h2>
+                <h2 className="az-title mb-4 text-az-ink">Tournament Rules</h2>
                 {tournament.rules ? (
-                  <div className="text-white/70 leading-relaxed whitespace-pre-wrap">
+                  <div className="az-lead leading-relaxed whitespace-pre-wrap text-az-ink/70">
                     {tournament.rules}
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
-                      <span className="text-[#E8420A]">•</span>
-                      <p className="text-white/70">
+                      <span className="text-az-flame" aria-hidden="true">
+                        •
+                      </span>
+                      <p className="text-az-ink/70">
                         All participants must register before the tournament starts
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-[#E8420A]">•</span>
-                      <p className="text-white/70">
+                      <span className="text-az-flame" aria-hidden="true">
+                        •
+                      </span>
+                      <p className="text-az-ink/70">
                         Fair play is mandatory - any cheating will result in disqualification
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-[#E8420A]">•</span>
-                      <p className="text-white/70">
+                      <span className="text-az-flame" aria-hidden="true">
+                        •
+                      </span>
+                      <p className="text-az-ink/70">
                         Matches will be played according to the standard game rules
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-[#E8420A]">•</span>
-                      <p className="text-white/70">
+                      <span className="text-az-flame" aria-hidden="true">
+                        •
+                      </span>
+                      <p className="text-az-ink/70">
                         Prizes will be distributed within 48 hours of tournament completion
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-[#E8420A]">•</span>
-                      <p className="text-white/70">Organizer decisions are final</p>
+                      <span className="text-az-flame" aria-hidden="true">
+                        •
+                      </span>
+                      <p className="text-az-ink/70">Organizer decisions are final</p>
                     </div>
                   </div>
                 )}
@@ -410,8 +552,7 @@ function TournamentDetailPageContent(): React.JSX.Element {
             <Link href="/games/tournaments">
               <motion.button
                 type="button"
-                className="px-6 py-3 rounded-full text-sm font-semibold transition-all"
-                style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'var(--brand-white)' }}
+                className="az-body-strong rounded-az-pill border border-az-ink/20 px-6 py-3 text-az-ink transition-all"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -419,11 +560,9 @@ function TournamentDetailPageContent(): React.JSX.Element {
               </motion.button>
             </Link>
           </div>
-        </div>
+        </>
       ) : null}
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -435,8 +574,8 @@ export default function TournamentDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

@@ -114,7 +114,9 @@ export class RateLimitService {
       const exists = await this.redis.get(key);
       return !!exists;
     } catch (error) {
-      this.logger.error(`Failed to check block status for IP ${this.maskIp(ip)} — failing closed. Error: ${error}`);
+      this.logger.error(
+        `Failed to check block status for IP ${this.maskIp(ip)} — failing closed. Error: ${error}`
+      );
       return true;
     }
   }

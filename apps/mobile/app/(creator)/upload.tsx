@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { contentApi, type ContentItem } from '../../src/api/content';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { contentApi, type ContentItem } from '@azeebo/react-data/api/content';
 import { colors, typography, spacing, radius } from '../../src/theme';
 
 type ContentType = 'video' | 'image' | 'audio';
@@ -153,7 +153,7 @@ export default function UploadScreen() {
   if (!isAuthenticated) return null;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Upload Screen" style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardDismissMode="interactive"
@@ -166,7 +166,13 @@ export default function UploadScreen() {
         }
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            accessibilityHint="Navigates to previous screen"
+          >
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Upload Content</Text>
@@ -184,6 +190,9 @@ export default function UploadScreen() {
                   form.contentType === type.id && styles.contentTypeButtonActive,
                 ]}
                 onPress={() => setForm({ ...form, contentType: type.id })}
+                accessibilityRole="button"
+                accessibilityLabel={`${type.label} content type`}
+                accessibilityState={{ selected: form.contentType === type.id }}
               >
                 <Text style={styles.contentTypeIcon}>{type.icon}</Text>
                 <Text
@@ -199,7 +208,12 @@ export default function UploadScreen() {
           </View>
 
           <View style={styles.filePickerArea}>
-            <TouchableOpacity style={styles.filePickerButton} onPress={handleSelectFile}>
+            <TouchableOpacity
+              style={styles.filePickerButton}
+              onPress={handleSelectFile}
+              accessibilityRole="button"
+              accessibilityLabel={form.selectedFile ? 'Change selected file' : 'Select a file to upload'}
+            >
               <Text style={styles.filePickerIcon}>{form.selectedFile ? '📁' : '📤'}</Text>
               <Text style={styles.filePickerText}>
                 {form.selectedFile ? 'File selected — tap to change' : 'Tap to select a file'}
@@ -249,6 +263,9 @@ export default function UploadScreen() {
             <TouchableOpacity
               style={[styles.universeChip, !form.universe && styles.universeChipActive]}
               onPress={() => setForm({ ...form, universe: '' })}
+              accessibilityRole="button"
+              accessibilityLabel="All universes"
+              accessibilityState={{ selected: !form.universe }}
             >
               <Text
                 style={[styles.universeChipText, !form.universe && styles.universeChipTextActive]}
@@ -261,6 +278,9 @@ export default function UploadScreen() {
                 key={u.id}
                 style={[styles.universeChip, form.universe === u.id && styles.universeChipActive]}
                 onPress={() => setForm({ ...form, universe: u.id })}
+                accessibilityRole="button"
+                accessibilityLabel={`${u.name} universe`}
+                accessibilityState={{ selected: form.universe === u.id }}
               >
                 <Text style={styles.universeChipIcon}>{u.icon}</Text>
                 <Text
@@ -280,6 +300,9 @@ export default function UploadScreen() {
             style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
             onPress={handleUpload}
             disabled={isUploading}
+            accessibilityRole="button"
+            accessibilityLabel="Upload Content"
+            accessibilityState={{ disabled: isUploading }}
           >
             {isUploading ? (
               <ActivityIndicator color="#fff" size="small" />
@@ -349,6 +372,9 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
   },
   backButton: {
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
     marginBottom: spacing.md,
   },
   backText: {

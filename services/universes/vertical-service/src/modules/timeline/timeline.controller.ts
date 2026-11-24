@@ -1,10 +1,13 @@
 import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, verticalFlags } from '@azeebo/feature-flags';
 import { TimelineService } from './timeline.service';
 import { CreateTimelineEventDto } from './dto/create-timeline-event.dto';
 
 @ApiTags('Timeline')
+@FeatureFlag(verticalFlags.timelineEnabled)
+@UseGuards(FeatureFlagGuard)
 @Controller('vertical/timeline')
 export class TimelineController {
   constructor(@Inject(TimelineService) private readonly timelineService: TimelineService) {}

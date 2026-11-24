@@ -1,7 +1,52 @@
-import { EventBusService, EventTypes, EventBusModule, EVENT_BUS_SERVICE } from './index';
+import {
+  EventBusService,
+  EventTypes,
+  EventBusModule,
+  EVENT_BUS_SERVICE,
+  EVENT_SCHEMA_REGISTRY,
+  DEAD_LETTER_QUEUE,
+  AGGREGATE_ORDERING,
+  eventConsumeFlagKey,
+} from './index';
+
+/** Minimal shape of the mocked ioredis instance used by EventBusService. */
+type MockRedis = {
+  on: jest.Mock;
+  publish: jest.Mock;
+  subscribe: jest.Mock;
+  unsubscribe: jest.Mock;
+  disconnect: jest.Mock;
+  ping: jest.Mock;
+  duplicate: jest.Mock;
+  status: string;
+};
+
+/** Test access to EventBusService internals (members aren't part of the public API). */
+interface TestableEventBus {
+  redis: MockRedis;
+  prefix: string;
+  serviceName: string;
+  maxRetries: number;
+  enableRetry: boolean;
+  subscribers: Map<string, Set<() => void>>;
+  logger: { warn: jest.Mock; error: jest.Mock };
+  handleMessage: (channel: string, message: string) => Promise<void>;
+  executeWithRetry: (
+    handler: () => Promise<unknown>,
+    event: {
+      id: string;
+      type: string;
+      source: string;
+      timestamp: string;
+      data: Record<string, unknown>;
+    }
+  ) => Promise<void>;
+}
+
+const asTestable = (bus: EventBusService): TestableEventBus => bus as unknown as TestableEventBus;
 
 jest.mock('ioredis', () => {
-  const inst: any = {};
+  const inst = {} as MockRedis;
   inst.on = jest.fn().mockReturnValue(inst);
   inst.publish = jest.fn().mockResolvedValue(1);
   inst.subscribe = jest.fn().mockResolvedValue(undefined);
@@ -14,8 +59,8 @@ jest.mock('ioredis', () => {
 });
 
 /** Helper to get the active mock Redis instance from the latest EventBusService */
-function getMockRedis(eventBus: EventBusService): any {
-  return (eventBus as any).redis;
+function getMockRedis(eventBus: EventBusService): MockRedis {
+  return asTestable(eventBus).redis;
 }
 
 describe('EventTypes', () => {
@@ -62,20 +107,23 @@ describe('EventBusService', () => {
   describe('constructor', () => {
     it('should initialize with custom config', () => {
       expect(eventBus).toBeDefined();
-      expect((eventBus as any).prefix).toBe('test:events');
-      expect((eventBus as any).serviceName).toBe('test-service');
-      expect((eventBus as any).maxRetries).toBe(3);
+      expect(asTestable(eventBus).prefix).toBe('test:events');
+      expect(asTestable(eventBus).serviceName).toBe('test-service');
+      expect(asTestable(eventBus).maxRetries).toBe(3);
     });
 
     it('should use default config values', () => {
       const bus = new EventBusService({ redisUrl: 'redis://localhost:6379' }, 'default');
-      expect((bus as any).prefix).toBe('azeebo:events');
-      expect((bus as any).maxRetries).toBe(3);
+      expect(asTestable(bus).prefix).toBe('azeebo:events');
+      expect(asTestable(bus).maxRetries).toBe(3);
     });
 
     it('should disable retry when configured', () => {
-      const bus = new EventBusService({ redisUrl: 'redis://localhost:6379', enableRetry: false }, 'no-retry');
-      expect((bus as any).enableRetry).toBe(false);
+      const bus = new EventBusService(
+        { redisUrl: 'redis://localhost:6379', enableRetry: false },
+        'no-retry'
+      );
+      expect(asTestable(bus).enableRetry).toBe(false);
     });
   });
 
@@ -93,10 +141,14 @@ describe('EventBusService', () => {
     });
 
     it('should include metadata when provided', async () => {
-      await eventBus.publish('user.created', { userId: '123' }, {
-        userId: '123',
-        correlationId: 'corr-456',
-      });
+      await eventBus.publish(
+        'user.created',
+        { userId: '123' },
+        {
+          userId: '123',
+          correlationId: 'corr-456',
+        }
+      );
 
       const redis = getMockRedis(eventBus);
       const msg = JSON.parse(redis.publish.mock.calls[0][1]);
@@ -107,7 +159,9 @@ describe('EventBusService', () => {
       const redis = getMockRedis(eventBus);
       redis.publish.mockRejectedValue(new Error('Redis connection lost'));
 
-      await expect(eventBus.publish('user.created', { userId: '123' })).rejects.toThrow('Redis connection lost');
+      await expect(eventBus.publish('user.created', { userId: '123' })).rejects.toThrow(
+        'Redis connection lost'
+      );
     });
   });
 
@@ -118,7 +172,7 @@ describe('EventBusService', () => {
 
       const redis = getMockRedis(eventBus);
       expect(redis.subscribe).toHaveBeenCalledWith('test:events:user.created');
-      expect((eventBus as any).subscribers.get('user.created')?.has(handler)).toBe(true);
+      expect(asTestable(eventBus).subscribers.get('user.created')?.has(handler)).toBe(true);
     });
 
     it('should not subscribe twice to the same channel', async () => {
@@ -135,7 +189,7 @@ describe('EventBusService', () => {
       await eventBus.unsubscribe('user.created', handler);
 
       // When all handlers are removed, the event type is removed from the map
-      expect((eventBus as any).subscribers.has('user.created')).toBe(false);
+      expect(asTestable(eventBus).subscribers.has('user.created')).toBe(false);
     });
 
     it('should unsubscribe from Redis channel when no handlers remain', async () => {
@@ -145,7 +199,7 @@ describe('EventBusService', () => {
       await eventBus.unsubscribe('user.created', handler);
 
       expect(redis.unsubscribe).toHaveBeenCalledWith('test:events:user.created');
-      expect((eventBus as any).subscribers.has('user.created')).toBe(false);
+      expect(asTestable(eventBus).subscribers.has('user.created')).toBe(false);
     });
   });
 
@@ -190,22 +244,79 @@ describe('EventBusService', () => {
         timestamp: new Date().toISOString(),
         data: { userId: '123' },
       });
-      await (eventBus as any).handleMessage('test:events:user.updated', message);
+      await asTestable(eventBus).handleMessage('test:events:user.updated', message);
 
-      expect(handler).toHaveBeenCalledWith(expect.objectContaining({ id: 'evt-1', type: 'user.updated' }));
+      expect(handler).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'evt-1', type: 'user.updated' })
+      );
     });
 
     it('should warn when no handlers for event type', async () => {
-      const logWarn = jest.spyOn((eventBus as any).logger, 'warn').mockImplementation();
-      const message = JSON.stringify({ id: 'evt-1', type: 'unknown.event', source: 'test', timestamp: new Date().toISOString(), data: {} });
-      await (eventBus as any).handleMessage('test:events:unknown.event', message);
+      const logWarn = jest.spyOn(asTestable(eventBus).logger, 'warn').mockImplementation();
+      const message = JSON.stringify({
+        id: 'evt-1',
+        type: 'unknown.event',
+        source: 'test',
+        timestamp: new Date().toISOString(),
+        data: {},
+      });
+      await asTestable(eventBus).handleMessage('test:events:unknown.event', message);
       expect(logWarn).toHaveBeenCalledWith(expect.stringContaining('unknown.event'));
     });
 
     it('should handle malformed JSON gracefully', async () => {
-      const logError = jest.spyOn((eventBus as any).logger, 'error').mockImplementation();
-      await (eventBus as any).handleMessage('test:events:test', 'invalid-json');
+      const logError = jest.spyOn(asTestable(eventBus).logger, 'error').mockImplementation();
+      await asTestable(eventBus).handleMessage('test:events:test', 'invalid-json');
       expect(logError).toHaveBeenCalledWith(expect.stringContaining('Failed to handle message'));
+    });
+
+    it('should skip events when the consumer toggle resolves false', async () => {
+      const toggle = jest.fn(async () => false);
+      const toggledBus = new EventBusService({ ...mockConfig, consumerToggle: toggle }, 'test');
+      const handler = jest.fn().mockResolvedValue(undefined);
+      await toggledBus.subscribe('payment.success', handler);
+
+      const message = JSON.stringify({
+        id: 'evt-2',
+        type: 'payment.success',
+        source: 'payment-service',
+        timestamp: new Date().toISOString(),
+        data: {},
+      });
+      const logWarn = jest.spyOn(asTestable(toggledBus).logger, 'warn').mockImplementation();
+      await asTestable(toggledBus).handleMessage('test:events:payment.success', message);
+
+      expect(toggle).toHaveBeenCalledWith('payment.success');
+      expect(handler).not.toHaveBeenCalled();
+      expect(logWarn).toHaveBeenCalledWith(expect.stringContaining('consumption disabled'));
+    });
+
+    it('should dispatch events when the consumer toggle resolves true', async () => {
+      const toggle = jest.fn(async () => true);
+      const toggledBus = new EventBusService({ ...mockConfig, consumerToggle: toggle }, 'test');
+      const handler = jest.fn().mockResolvedValue(undefined);
+      await toggledBus.subscribe('payment.success', handler);
+
+      const message = JSON.stringify({
+        id: 'evt-3',
+        type: 'payment.success',
+        source: 'payment-service',
+        timestamp: new Date().toISOString(),
+        data: {},
+      });
+      await asTestable(toggledBus).handleMessage('test:events:payment.success', message);
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    it('isConsumptionEnabled returns true when no toggle is configured', async () => {
+      expect(await eventBus.isConsumptionEnabled('user.created')).toBe(true);
+    });
+  });
+
+  describe('eventConsumeFlagKey', () => {
+    it('builds canonical events_consume_* flag keys', () => {
+      expect(eventConsumeFlagKey('user.created')).toBe('events_consume_user.created');
+      expect(eventConsumeFlagKey('payment.success')).toBe('events_consume_payment.success');
     });
   });
 
@@ -215,15 +326,30 @@ describe('EventBusService', () => {
 
     it('should succeed on first attempt', async () => {
       const handler = jest.fn().mockResolvedValue(undefined);
-      const event = { id: 'evt-1', type: 'test.event', source: 'test', timestamp: new Date().toISOString(), data: {} };
-      await (eventBus as any).executeWithRetry(handler, event);
+      const event = {
+        id: 'evt-1',
+        type: 'test.event',
+        source: 'test',
+        timestamp: new Date().toISOString(),
+        data: {},
+      };
+      await asTestable(eventBus).executeWithRetry(handler, event);
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
     it('should retry on failure', async () => {
-      const handler = jest.fn().mockRejectedValueOnce(new Error('temp')).mockResolvedValueOnce(undefined);
-      const event = { id: 'evt-1', type: 'test.event', source: 'test', timestamp: new Date().toISOString(), data: {} };
-      const p = (eventBus as any).executeWithRetry(handler, event);
+      const handler = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('temp'))
+        .mockResolvedValueOnce(undefined);
+      const event = {
+        id: 'evt-1',
+        type: 'test.event',
+        source: 'test',
+        timestamp: new Date().toISOString(),
+        data: {},
+      };
+      const p = asTestable(eventBus).executeWithRetry(handler, event);
       await jest.runAllTimersAsync();
       await p;
       expect(handler).toHaveBeenCalledTimes(2);
@@ -231,8 +357,14 @@ describe('EventBusService', () => {
 
     it('should fail after max retries', async () => {
       const handler = jest.fn().mockRejectedValue(new Error('persistent'));
-      const event = { id: 'evt-1', type: 'test.event', source: 'test', timestamp: new Date().toISOString(), data: {} };
-      const p = (eventBus as any).executeWithRetry(handler, event);
+      const event = {
+        id: 'evt-1',
+        type: 'test.event',
+        source: 'test',
+        timestamp: new Date().toISOString(),
+        data: {},
+      };
+      const p = asTestable(eventBus).executeWithRetry(handler, event);
       await jest.runAllTimersAsync();
       await p;
       expect(handler).toHaveBeenCalledTimes(3);
@@ -257,7 +389,11 @@ describe('EventBusModule', () => {
   });
 
   it('should create a dynamic module with forRootAsync', () => {
-    const mod = EventBusModule.forRootAsync({ useFactory: () => ({ redisUrl: 'redis://localhost:6379' }), inject: [], serviceName: 'test' });
+    const mod = EventBusModule.forRootAsync({
+      useFactory: () => ({ redisUrl: 'redis://localhost:6379' }),
+      inject: [],
+      serviceName: 'test',
+    });
     expect(mod.module).toBe(EventBusModule);
     expect(mod.providers).toBeDefined();
     expect(mod.exports).toBeDefined();
@@ -266,6 +402,31 @@ describe('EventBusModule', () => {
   it('should export EVENT_BUS_SERVICE token', () => {
     const mod = EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'test');
     expect(EVENT_BUS_SERVICE).toBe('EVENT_BUS_SERVICE');
-    expect(mod.providers?.[0]).toHaveProperty('provide', EVENT_BUS_SERVICE);
+    // Enhanced module: providers are [REDIS, SCHEMA_REGISTRY, DLQ, ORDERING, EVENT_BUS]
+    const eventBusProvider = mod.providers?.find(
+      (p) => (p as { provide?: string })?.provide === EVENT_BUS_SERVICE
+    );
+    expect(eventBusProvider).toBeDefined();
+  });
+
+  it('should provide enhanced services when enableEnhanced is true (default)', () => {
+    const mod = EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'test');
+    const tokens = mod.providers?.map((p) => (p as { provide?: string })?.provide);
+    expect(tokens).toContain(EVENT_BUS_SERVICE);
+    expect(tokens).toContain('EVENT_BUS_REDIS');
+    expect(tokens).toContain(EVENT_SCHEMA_REGISTRY);
+    expect(tokens).toContain(DEAD_LETTER_QUEUE);
+    expect(tokens).toContain(AGGREGATE_ORDERING);
+  });
+
+  it('should not provide enhanced services when enableEnhanced is false', () => {
+    const mod = EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'test', {
+      enableEnhanced: false,
+    });
+    const tokens = mod.providers?.map((p) => (p as { provide?: string })?.provide);
+    expect(tokens).toContain(EVENT_BUS_SERVICE);
+    expect(tokens).not.toContain(EVENT_SCHEMA_REGISTRY);
+    expect(tokens).not.toContain(DEAD_LETTER_QUEUE);
+    expect(tokens).not.toContain(AGGREGATE_ORDERING);
   });
 });

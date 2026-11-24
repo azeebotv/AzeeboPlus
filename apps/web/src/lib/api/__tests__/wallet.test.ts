@@ -81,12 +81,15 @@ describe('Wallet API Methods', () => {
 
       await wallet.withdraw(500, { bankCode: '001', accountNumber: '1234567890' });
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/wallet/withdraw', {
-        method: 'POST',
-        body: JSON.stringify({
-          amount: 500,
-          bankDetails: { bankCode: '001', accountNumber: '1234567890' },
-        }),
+      expect(client.request).toHaveBeenCalledWith(
+        '/api/v1/wallet/withdraw',
+        expect.objectContaining({ method: 'POST' })
+      );
+      const body = JSON.parse(client.request.mock.calls[0][1].body);
+      expect(body).toEqual({
+        amount: 500,
+        bankDetails: { bankCode: '001', accountNumber: '1234567890' },
+        idempotencyKey: expect.any(String),
       });
     });
   });
@@ -97,9 +100,15 @@ describe('Wallet API Methods', () => {
 
       await wallet.transfer(100, 'user-2');
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/wallet/transfer', {
-        method: 'POST',
-        body: JSON.stringify({ amount: 100, recipientId: 'user-2' }),
+      expect(client.request).toHaveBeenCalledWith(
+        '/api/v1/wallet/transfer',
+        expect.objectContaining({ method: 'POST' })
+      );
+      const body = JSON.parse(client.request.mock.calls[0][1].body);
+      expect(body).toEqual({
+        amount: 100,
+        recipientId: 'user-2',
+        idempotencyKey: expect.any(String),
       });
     });
   });
@@ -124,25 +133,6 @@ describe('Wallet API Methods', () => {
         { skipRetry: true }
       );
       expect(result.data).toEqual(mockTx);
-    });
-  });
-
-  describe('getEarnings', () => {
-    it('should GET /api/v1/wallet/earnings with range param', async () => {
-      const mockEarnings = {
-        totalEarnings: 10000,
-        pendingEarnings: 2000,
-        withdrawableBalance: 8000,
-      };
-      client.request.mockResolvedValue({ success: true, data: mockEarnings });
-
-      await wallet.getEarnings({ range: '30d' });
-
-      expect(client.request).toHaveBeenCalledWith(
-        '/api/v1/wallet/earnings?range=30d',
-        {},
-        { skipRetry: true }
-      );
     });
   });
 });

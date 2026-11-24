@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlag, subscriptionFlags } from '@azeebo/feature-flags';
 
 import { BundleService } from './bundle.service.js';
 import { CreateBundleDto } from './dto/create-bundle.dto.js';
@@ -47,6 +48,22 @@ export class BundleController {
     bundleSavings: number;
   }> {
     return this.bundleService.getBundleComparison();
+  }
+
+  @Get('current')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user bundle subscription' })
+  @ApiResponse({ status: 200, description: 'Current bundle subscription' })
+  async getCurrentBundle(@Request() req: AuthenticatedRequest): Promise<BundleSubscription | null> {
+    return this.bundleService.getCurrentBundle(req.user.id);
+  }
+
+  @Get(':id/quote')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get prorated upgrade quote for a bundle' })
+  @ApiResponse({ status: 200, description: 'Prorated upgrade quote with credits' })
+  async getUpgradeQuote(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.bundleService.getUpgradeQuote(req.user.id, id);
   }
 
   @Get(':id')
@@ -94,7 +111,8 @@ export class BundleController {
   }
 
   @Post(':id/subscribe')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(subscriptionFlags.bundles)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Subscribe to a bundle' })
@@ -109,7 +127,8 @@ export class BundleController {
   }
 
   @Delete(':id/cancel')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(subscriptionFlags.bundles)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel a bundle subscription' })
@@ -119,13 +138,5 @@ export class BundleController {
     @Param('id') id: string
   ): Promise<BundleSubscription> {
     return this.bundleService.cancelSubscription(req.user.id, id);
-  }
-
-  @Get('current')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get current user bundle subscription' })
-  @ApiResponse({ status: 200, description: 'Current bundle subscription' })
-  async getCurrentBundle(@Request() req: AuthenticatedRequest): Promise<BundleSubscription | null> {
-    return this.bundleService.getCurrentBundle(req.user.id);
   }
 }

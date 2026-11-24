@@ -12,8 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ModerationService } from './moderation.service.js';
-import { RolesGuard } from '../../common/guards/roles.guard.js';
-import { Roles } from '../../common/decorators/roles.decorator.js';
+import { RolesGuard, Roles } from '@azeebo/security';
 import { ResolveModerationDto, ModerationDecisionDto } from './dto/moderation.dto.js';
 
 @ApiTags('Moderation')

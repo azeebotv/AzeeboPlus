@@ -5,6 +5,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
 import { MfaService } from './mfa.service.js';
 import { EnableMfaDto } from '../dto/enable-mfa.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { FeatureFlag, FeatureFlagGuard, authFlags } from '@azeebo/feature-flags';
 
 interface MfaRequest {
   user: {
@@ -17,8 +18,12 @@ interface MfaRequest {
 }
 
 @ApiTags('MFA')
-@UseGuards(ServiceAuthGuard)
-@Controller('mfa')
+@FeatureFlag(authFlags.mfaTotp)
+@UseGuards(FeatureFlagGuard, ServiceAuthGuard)
+// Served through the gateway as /v1/auth/mfa/* (the gateway routes /auth and
+// prefixes the controller path) — the controller must live under 'auth/mfa'
+// to match the documented/guarded /auth/mfa/* contract.
+@Controller('auth/mfa')
 export class MfaController {
   constructor(@Inject(MfaService) private readonly mfaService: MfaService) {}
 
@@ -77,7 +82,10 @@ export class MfaController {
     const isValid = await this.mfaService.verifyMfaCode(req.user.id, dto.code);
 
     if (!isValid) {
-      return ApiResponseWrapper.error('MFA_INVALID_CODE', 'Invalid TOTP code required to disable MFA');
+      return ApiResponseWrapper.error(
+        'MFA_INVALID_CODE',
+        'Invalid TOTP code required to disable MFA'
+      );
     }
 
     await this.mfaService.disableMfa(req.user.id);

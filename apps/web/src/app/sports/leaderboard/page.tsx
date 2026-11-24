@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
 import analytics from '@/lib/analytics';
@@ -20,6 +20,14 @@ interface LeaderboardEntry {
   losses: number;
   streak: number;
 }
+
+/* Podium fills for the top three ranks, drawn from the token ramps. */
+const RANK_TONES = [
+  'bg-gradient-to-br from-az-warning-400 to-az-warning-500 text-az-surface-root',
+  'bg-gradient-to-br from-az-ink-dim to-az-ink-muted text-az-surface-root',
+  'bg-gradient-to-br from-az-flame to-az-scarlet text-az-ink',
+];
+const RANK_TONE_DEFAULT = 'bg-az-ink/10 text-az-ink';
 
 function LeaderboardPageContent(): React.JSX.Element {
   useEffect(() => {
@@ -41,35 +49,18 @@ function LeaderboardPageContent(): React.JSX.Element {
   const error = leaderboardQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Sports" />
+    <PageShell maxWidth="lg" activeNav="Sports">
+      <PageHero
+        eyebrow="Sports"
+        badge="Season Standings"
+        title="Sports Leaderboard"
+        description="See who's leading the predictions game this season"
+        accentColor="var(--color-az-universe-sports)"
+      />
 
-      <section
-        className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #0D3B2E, #E8420A)' }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Leaderboard
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            See who&apos;s leading the predictions game this season
-          </motion.p>
-        </div>
-      </section>
-
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section>
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">Top Predictors</h2>
+          <h2 className="az-section-title mb-6 text-az-ink sm:mb-8">Top Predictors</h2>
         </ScrollReveal>
 
         {isLoading ? (
@@ -99,47 +90,33 @@ function LeaderboardPageContent(): React.JSX.Element {
                 transition={{ delay: index * 0.05 }}
               >
                 <GlowCard universe="sports">
-                  <div className="p-4 flex items-center gap-4">
+                  <div className="flex items-center gap-4 p-4">
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                      style={{
-                        background:
-                          index === 0
-                            ? 'linear-gradient(135deg, #FFD700, #FFA500)'
-                            : index === 1
-                              ? 'linear-gradient(135deg, #C0C0C0, #A0A0A0)'
-                              : index === 2
-                                ? 'linear-gradient(135deg, #CD7F32, #A0522D)'
-                                : 'rgba(255,255,255,0.1)',
-                        color: index < 3 ? '#1A0A0A' : '#fff',
-                      }}
+                      className={`flex size-10 flex-shrink-0 items-center justify-center rounded-full az-body-strong ${
+                        RANK_TONES[index] ?? RANK_TONE_DEFAULT
+                      }`}
                     >
                       {entry.rank}
                     </div>
 
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                      style={{ background: 'linear-gradient(135deg, #0D3B2E, #E8420A)' }}
-                    >
+                    <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-az-flame to-az-scarlet az-body-strong text-az-ink">
                       {entry.avatar?.charAt(0) || entry.name.charAt(0)}
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-white text-sm truncate">{entry.name}</h3>
-                      <div className="flex items-center gap-3 text-xs text-white/50 mt-0.5">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="az-body-strong truncate text-az-ink">{entry.name}</h3>
+                      <div className="az-caption mt-0.5 flex items-center gap-3 text-az-ink-muted">
                         <span>{entry.wins}W</span>
                         <span>{entry.losses}L</span>
                         {entry.streak > 0 && (
-                          <span className="text-[#4ADE80]">{entry.streak} streak</span>
+                          <span className="text-az-success-400">{entry.streak} streak</span>
                         )}
                       </div>
                     </div>
 
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-lg font-bold text-white">
-                        {entry.points.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-white/40">points</p>
+                    <div className="flex-shrink-0 text-right">
+                      <p className="az-subtitle text-az-ink">{entry.points.toLocaleString()}</p>
+                      <p className="az-caption text-az-ink-muted">points</p>
                     </div>
                   </div>
                 </GlowCard>
@@ -148,33 +125,22 @@ function LeaderboardPageContent(): React.JSX.Element {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-lg text-white/50">No leaderboard data available</p>
+            <p className="az-lead text-az-ink-muted">No leaderboard data available</p>
           </div>
         )}
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
 const LazyLeaderboardPage = lazy(() => Promise.resolve({ default: LeaderboardPageContent }));
 
-export const metadata = {
-  title: 'Leaderboard | Azeebo',
-  description: 'See who is leading the sports predictions game this season.',
-  openGraph: {
-    title: 'Leaderboard | Azeebo',
-    description: 'See who is leading the sports predictions game this season.',
-  },
-};
-
 export default function LeaderboardPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

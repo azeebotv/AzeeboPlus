@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { useSavedContent, useRecentContent } from '../../src/hooks/useContentQuery';
+import { useSavedContent, useRecentContent } from '@azeebo/react-data/hooks/useContentQuery';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const TABS = [
   { id: 'watchlist', label: 'Watchlist', emoji: '📋' },
@@ -113,7 +115,7 @@ export default function LibraryScreen() {
               <Text style={styles.itemTitle}>{item.title}</Text>
               <Text style={styles.itemMeta}>{item.type || 'Content'}</Text>
             </View>
-            <TouchableOpacity style={styles.playButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.playButton}>
               <Text style={styles.playButtonText}>▶</Text>
             </TouchableOpacity>
           </TouchableOpacity>
@@ -217,13 +219,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tabActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   tabEmoji: {
     fontSize: 14,
   },
   tabLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
     fontWeight: '500',
   },
@@ -246,7 +248,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 60,
     borderRadius: 8,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -264,14 +266,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   itemMeta: {
-    color: '#666',
+    color: colors.text.tertiary,
     fontSize: 13,
   },
   playButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -283,10 +285,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
   },
   resumeText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 12,
     fontWeight: '600',
   },

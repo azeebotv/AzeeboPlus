@@ -14,11 +14,11 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "bash ../../scripts/build-package.sh",
     "test": "jest",
     "test:cov": "jest --coverage",
     "clean": "rm -rf dist",
-    "lint": "eslint src --fix"
+    "lint": "eslint src"
   },
   "dependencies": {
     "sanitize-html": "^2.17.5"

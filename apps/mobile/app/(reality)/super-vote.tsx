@@ -11,11 +11,14 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi, walletApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi, walletApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { analytics } from '../../src/utils/analytics';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
-import { votePackages as defaultVotePackages } from '../../src/config/prices';
+import { getVotePackages } from '../../src/config/prices';
+import type { VotePackage } from '@azeebo/react-data/types/api';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface Contestant {
   id: string;
@@ -23,15 +26,6 @@ interface Contestant {
   avatar: string;
   votes: number;
   rank: number;
-}
-
-interface VotePackage {
-  id: string;
-  name: string;
-  votes: number;
-  price: number;
-  description: string;
-  isPopular?: boolean;
 }
 
 export default function SuperVoteScreen() {
@@ -47,10 +41,15 @@ export default function SuperVoteScreen() {
   const [isVoting, setIsVoting] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
 
-  const votePackages: VotePackage[] = defaultVotePackages.superVote as unknown as VotePackage[];
+  const [votePackages, setVotePackages] = useState<VotePackage[]>([]);
 
   useEffect(() => {
     loadData();
+    getVotePackages('superVote')
+      .then((pkgs) => setVotePackages(pkgs))
+      .catch(() => {
+        /* non-critical: vote packages are optional UI enhancement */
+      });
   }, [episodeId]);
 
   const loadData = async () => {
@@ -123,14 +122,12 @@ export default function SuperVoteScreen() {
         voteCount: package_.votes,
       });
 
-      try {
-        analytics.realitySupervoteCreated(
-          episodeId,
-          selectedContestant!,
-          package_.votes,
-          package_.price
-        );
-      } catch {}
+      analytics.realitySupervoteCreated(
+        episodeId,
+        selectedContestant!,
+        package_.votes,
+        package_.price
+      );
 
       Alert.alert(
         'Success!',
@@ -158,7 +155,7 @@ export default function SuperVoteScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Super Vote Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading..." />
       </SafeAreaView>
     );
@@ -175,7 +172,13 @@ export default function SuperVoteScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          accessibilityHint="Navigates to previous screen"
+        >
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -200,6 +203,9 @@ export default function SuperVoteScreen() {
                   selectedContestant === contestant.id && styles.contestantCardSelected,
                 ]}
                 onPress={() => setSelectedContestant(contestant.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select contestant ${contestant.name}, rank ${contestant.rank}`}
+                accessibilityState={{ selected: selectedContestant === contestant.id }}
               >
                 <Image source={{ uri: contestant.avatar }} style={styles.contestantAvatar} />
                 <Text style={styles.contestantName}>{contestant.name}</Text>
@@ -222,6 +228,9 @@ export default function SuperVoteScreen() {
                 package_.isPopular && styles.packageCardPopular,
               ]}
               onPress={() => setSelectedPackage(package_.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`${package_.name}, ${package_.votes} votes, ₦${package_.price.toLocaleString()}`}
+              accessibilityState={{ selected: selectedPackage === package_.id }}
             >
               {package_.isPopular && (
                 <View style={styles.popularBadge}>
@@ -247,6 +256,9 @@ export default function SuperVoteScreen() {
             ]}
             onPress={handleVote}
             disabled={!selectedContestant || !selectedPackage || isVoting}
+            accessibilityRole="button"
+            accessibilityLabel="Submit Super Vote"
+            accessibilityState={{ disabled: !selectedContestant || !selectedPackage || isVoting }}
           >
             {isVoting ? (
               <ActivityIndicator color="#fff" />
@@ -263,7 +275,7 @@ export default function SuperVoteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A0A0A',
+    backgroundColor: '#0B090E',
   },
   loadingContainer: {
     flex: 1,
@@ -272,7 +284,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -284,11 +296,16 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 16,
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   headerContent: {
     flex: 1,
@@ -296,23 +313,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   subtitle: {
     fontSize: 14,
-    color: '#E8420A',
+    color: brand.flame,
   },
   balanceContainer: {
     alignItems: 'flex-end',
   },
   balanceLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   balanceValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   section: {
     padding: 24,
@@ -320,12 +337,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   contestantCard: {
     width: 140,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 12,
     marginRight: 12,
@@ -333,7 +350,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   contestantCardSelected: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
   },
   contestantAvatar: {
     width: 80,
@@ -344,15 +361,15 @@ const styles = StyleSheet.create({
   contestantName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   contestantRank: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   packageCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -360,17 +377,17 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   packageCardSelected: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
   },
   packageCardPopular: {
-    borderColor: '#E8420A',
-    backgroundColor: '#2d1f5e',
+    borderColor: brand.flame,
+    backgroundColor: colors.bg.deepRaised,
   },
   popularBadge: {
     position: 'absolute',
     top: -10,
     right: 12,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -388,24 +405,24 @@ const styles = StyleSheet.create({
   packageName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   packageDescription: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   packagePrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
   },
   footer: {
     padding: 24,
     paddingBottom: 32,
   },
   voteButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

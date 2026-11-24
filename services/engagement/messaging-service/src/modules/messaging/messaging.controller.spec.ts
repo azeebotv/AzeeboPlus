@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { MessagingController } from './messaging.controller.js';
 import { MessagingService } from './messaging.service.js';
 import { RateLimitService } from '@azeebo/security';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('MessagingController', () => {
   let controller: MessagingController;
@@ -37,6 +38,10 @@ describe('MessagingController', () => {
             resetRateLimit: jest.fn(),
             getRateLimitStatus: jest.fn(),
           },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
         Reflector,
       ],

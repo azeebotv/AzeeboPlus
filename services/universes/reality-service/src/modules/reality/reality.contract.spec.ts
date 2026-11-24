@@ -19,8 +19,10 @@ jest.mock('@nestjs/websockets', () => ({
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
+import { FeatureFlagModule } from '@azeebo/feature-flags';
 import { RealityModule } from './reality.module.js';
 import { RealityService } from './reality.service.js';
+import { RealityGateway } from './reality.gateway.js';
 import { JwtService } from '@nestjs/jwt';
 import { CacheService } from '@azeebo/shared-services';
 import { PrismaService } from '../database/prisma.service.js';
@@ -47,6 +49,37 @@ jest.mock('@azeebo/security', () => ({
   AdminGuard: jest.fn(),
   RateLimitService: jest.fn(),
 }));
+jest.mock('@azeebo/feature-flags', () => {
+  const svc = {
+    getFlag: jest.fn().mockResolvedValue(false),
+    setFlag: jest.fn().mockResolvedValue(undefined),
+    getAllFlags: jest.fn().mockResolvedValue([]),
+    isEnabled: jest.fn().mockResolvedValue(false),
+  };
+  class MockFeatureFlagService {}
+  const mockProvider = { provide: MockFeatureFlagService, useValue: svc };
+  class MockFeatureFlagModule {
+    static register() {
+      return {
+        module: MockFeatureFlagModule,
+        providers: [mockProvider],
+        exports: [MockFeatureFlagService],
+      };
+    }
+  }
+  return {
+    FeatureFlagModule: MockFeatureFlagModule,
+    FeatureFlagService: MockFeatureFlagService,
+    FeatureFlagGuard: class {},
+    FeatureFlag: () => () => {},
+    realityFlags: {
+      votingEnabled: 'reality_voting_enabled',
+      predictionsEnabled: 'reality_predictions_enabled',
+      liveVoting: 'reality_live_voting',
+      autoElimination: 'reality_auto_elimination',
+    },
+  };
+});
 
 const mockAuthGuard = {
   canActivate: (context: ExecutionContext) => {
@@ -58,13 +91,14 @@ const mockAuthGuard = {
 
 describe('Reality Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let realityService: RealityService;
 
   beforeAll(async () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [RealityModule],
+      imports: [FeatureFlagModule.register({}), RealityModule],
     })
       .overrideProvider(PrismaService)
       .useValue({
@@ -99,9 +133,12 @@ describe('Reality Controller Contract Tests', () => {
           delete: jest.fn(),
         },
         vote: {
-          findMany: jest.fn(),
+          findMany: jest.fn().mockResolvedValue([]),
+          findUnique: jest.fn(),
           create: jest.fn(),
+          count: jest.fn().mockResolvedValue(0),
         },
+        $queryRawUnsafe: jest.fn().mockResolvedValue([{ count: 0 }]),
         supervote: {
           findMany: jest.fn(),
           create: jest.fn(),
@@ -159,6 +196,8 @@ describe('Reality Controller Contract Tests', () => {
         expire: jest.fn().mockResolvedValue(1),
         exists: jest.fn().mockResolvedValue(0),
       })
+      .overrideProvider(RealityGateway)
+      .useValue({})
       .overrideProvider(JwtService)
       .useValue({
         sign: jest.fn().mockReturnValue('access-token-123'),
@@ -186,6 +225,8 @@ describe('Reality Controller Contract Tests', () => {
     app = moduleFixture.createNestApplication();
     realityService = moduleFixture.get(RealityService);
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -211,7 +252,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/reality/shows');
+      const response = await request(baseUrl).get('/reality/shows');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -235,7 +276,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/reality/shows/show-1');
+      const response = await request(baseUrl).get('/reality/shows/show-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -252,7 +293,7 @@ describe('Reality Controller Contract Tests', () => {
         .spyOn(realityService, 'getShow')
         .mockRejectedValue(new (require('@nestjs/common').NotFoundException)('Show not found'));
 
-      const response = await request(app.getHttpServer()).get('/reality/shows/nonexistent');
+      const response = await request(baseUrl).get('/reality/shows/nonexistent');
 
       expect(response.status).toBe(404);
     });
@@ -270,7 +311,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/reality/votes')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -303,7 +344,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/reality/votes')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -331,7 +372,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/reality/predictions')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -366,7 +407,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/reality/shows/show-1/leaderboard');
+      const response = await request(baseUrl).get('/reality/shows/show-1/leaderboard');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -396,7 +437,7 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/reality/pricing');
+      const response = await request(baseUrl).get('/reality/pricing');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

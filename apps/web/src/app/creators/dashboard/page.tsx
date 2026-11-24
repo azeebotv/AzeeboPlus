@@ -2,9 +2,20 @@
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import {
+  Eye,
+  Film,
+  DollarSign,
+  Users,
+  ChevronRight,
+  UploadCloud,
+  Zap,
+  BarChart3,
+  type LucideIcon,
+} from 'lucide-react';
 
 interface DashboardData {
   totalViews: number;
@@ -17,44 +28,54 @@ interface DashboardData {
 
 const dashLinks = [
   {
-    href: '/creator/content-manager',
-    label: 'Content Manager',
-    desc: 'Manage your uploaded content',
+    href: '/creator',
+    label: 'Studio Dashboard',
+    desc: 'Access your full creator studio overview',
+    icon: BarChart3,
   },
-  { href: '/creator/analytics', label: 'Analytics', desc: 'View engagement and growth metrics' },
-  { href: '/creator/earnings', label: 'Earnings', desc: 'Track revenue and payouts' },
-  { href: '/creator/profile', label: 'Profile', desc: 'Edit your creator profile' },
-  { href: '/creator/drafts', label: 'Drafts', desc: 'Continue working on drafts' },
-  { href: '/creator/scheduled', label: 'Scheduled', desc: 'Manage scheduled content' },
+  {
+    href: '/creator/upload',
+    label: 'Upload',
+    desc: 'Upload and publish new content',
+    icon: UploadCloud,
+  },
+  {
+    href: '/creator/earnings',
+    label: 'Earnings',
+    desc: 'Track revenue, royalties, and payouts',
+    icon: DollarSign,
+  },
+  {
+    href: '/creator/monetization',
+    label: 'Monetization',
+    desc: 'Manage tipping, tiers, and passes',
+    icon: Zap,
+  },
 ];
 
-function StatCard({ label, value, loading }: { label: string; value: string; loading: boolean }) {
+function StatCard({
+  label,
+  value,
+  loading,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  loading: boolean;
+  icon: LucideIcon;
+}) {
   return (
-    <div
-      style={{
-        padding: 20,
-        borderRadius: 16,
-        border: '1px solid var(--border-default)',
-        backgroundColor: 'rgba(26,10,10,0.5)',
-      }}
-    >
-      <p
-        style={{
-          color: 'var(--text-secondary)',
-          fontSize: 12,
-          marginBottom: 4,
-          textTransform: 'uppercase',
-          letterSpacing: 1,
-        }}
-      >
-        {label}
-      </p>
+    <div className="az-glass relative overflow-hidden p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="az-overline uppercase text-az-ink-muted">{label}</p>
+        <div className="flex size-8 items-center justify-center rounded-az-control bg-az-flame/10 text-az-flame">
+          <Icon size={16} />
+        </div>
+      </div>
       {loading ? (
         <Skeleton height="32px" width="120px" />
       ) : (
-        <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-          {value}
-        </p>
+        <p className="az-section-title text-az-ink">{value}</p>
       )}
     </div>
   );
@@ -68,7 +89,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['creator', 'dashboard'],
+    queryKey: ['creator', 'dashboard', 'v2'],
     queryFn: async () => {
       const result = await apiFetch<DashboardData>('/v1/creators/dashboard');
       if (result.success && result.data) return result.data;
@@ -78,101 +99,70 @@ export default function CreatorDashboardPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div
-        style={{
-          backgroundColor: 'var(--brand-near-black)',
-          minHeight: '100vh',
-          color: 'var(--text-primary)',
-        }}
-      >
-        <AppHeader />
-        <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
-          <ErrorState title="Failed to load dashboard data" />
-        </main>
-        <AppFooter />
-      </div>
+      <PageShell maxWidth="xl">
+        <ErrorState title="Failed to load dashboard data" />
+      </PageShell>
     );
   }
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 960, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Creator Dashboard</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
-          Welcome back! Here&apos;s your overview.
-        </p>
+    <PageShell maxWidth="xl">
+      <PageHero
+        eyebrow="Creator Studio"
+        title="Creator Dashboard"
+        description="Welcome back! Here's your overview."
+      />
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: 16,
-            marginBottom: 40,
-          }}
-        >
-          <StatCard
-            label="Total Views"
-            value={(dashboard?.totalViews ?? 0).toLocaleString()}
-            loading={isLoading}
-          />
-          <StatCard
-            label="Content"
-            value={String(dashboard?.totalContent ?? 0)}
-            loading={isLoading}
-          />
-          <StatCard
-            label="Earnings"
-            value={`$${(dashboard?.totalEarnings ?? 0).toLocaleString()}`}
-            loading={isLoading}
-          />
-          <StatCard
-            label="Followers"
-            value={(dashboard?.totalFollowers ?? 0).toLocaleString()}
-            loading={isLoading}
-          />
-        </div>
+      <div className="mb-10 grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+        <StatCard
+          label="Total Views"
+          value={(dashboard?.totalViews ?? 0).toLocaleString()}
+          loading={isLoading}
+          icon={Eye}
+        />
+        <StatCard
+          label="Content"
+          value={String(dashboard?.totalContent ?? 0)}
+          loading={isLoading}
+          icon={Film}
+        />
+        <StatCard
+          label="Earnings"
+          value={`₦${(dashboard?.totalEarnings ?? 0).toLocaleString()}`}
+          loading={isLoading}
+          icon={DollarSign}
+        />
+        <StatCard
+          label="Followers"
+          value={(dashboard?.totalFollowers ?? 0).toLocaleString()}
+          loading={isLoading}
+          icon={Users}
+        />
+      </div>
 
-        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Quick Links</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {dashLinks.map((link) => (
+      <h2 className="az-title mb-4 text-az-ink">Quick Links</h2>
+      <div className="flex flex-col gap-3">
+        {dashLinks.map((link) => {
+          const Icon = link.icon;
+          return (
             <button
               key={link.href}
+              type="button"
               onClick={() => router.push(link.href)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-                padding: '16px 20px',
-                borderRadius: 16,
-                border: '1px solid var(--border-default)',
-                backgroundColor: 'rgba(26,10,10,0.5)',
-                cursor: 'pointer',
-                textAlign: 'left',
-                color: 'var(--text-primary)',
-                transition: 'border-color 0.2s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--brand-orange)')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--bg-secondary)')}
+              className="az-glass flex cursor-pointer items-center gap-4 px-5 py-4 text-left text-az-ink"
             >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{link.label}</h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
-                  {link.desc}
-                </p>
-              </div>
-              <span style={{ color: 'var(--brand-orange)', fontSize: 18 }}>→</span>
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-az-control bg-az-flame/10 text-az-flame">
+                <Icon size={20} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="az-body-strong block text-az-ink">{link.label}</span>
+                <span className="az-caption block text-az-ink-muted">{link.desc}</span>
+              </span>
+              <ChevronRight size={18} className="shrink-0 text-az-flame" />
             </button>
-          ))}
-        </div>
-      </main>
-      <AppFooter />
-    </div>
+          );
+        })}
+      </div>
+    </PageShell>
   );
 }

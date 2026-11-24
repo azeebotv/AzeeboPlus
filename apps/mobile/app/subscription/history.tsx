@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { subscriptionApi, type Subscription } from '../../src/api/subscription';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { subscriptionApi, type Subscription } from '@azeebo/react-data/api/subscription';
 import { colors, typography, spacing, radius } from '../../src/theme';
-import { createLogger } from '../../src/utils/logger';
+import { createLogger } from '@azeebo/react-data/utils/logger';
 
 const logger = createLogger('SubscriptionHistory');
 
@@ -40,14 +40,15 @@ export default function SubscriptionHistoryScreen() {
     try {
       const response = await subscriptionApi.getSubscriptionHistory(pageNum, 20);
       if (response.success && response.data) {
-        const newItems = response.data.items || [];
+        const newItems = response.data.subscriptions || [];
         if (pageNum === 1) {
           setSubscriptions(newItems);
         } else {
           setSubscriptions((prev) => [...prev, ...newItems]);
         }
-        setTotalPages(response.data.totalPages || 1);
-        setHasMore(pageNum < (response.data.totalPages || 1));
+        const pages = response.data.pagination?.totalPages || 1;
+        setTotalPages(pages);
+        setHasMore(pageNum < pages);
       }
     } catch (error) {
       logger.error('Failed to load subscription history', error);
@@ -101,7 +102,7 @@ export default function SubscriptionHistoryScreen() {
   const renderItem = ({ item }: { item: Subscription }) => {
     const statusColor = getStatusColor(item.status);
     return (
-      <View style={styles.historyCard}>
+      <View accessibilityLabel="History Screen" style={styles.historyCard}>
         <View style={styles.historyHeader}>
           <View style={styles.historyInfo}>
             <Text style={styles.historyPlanName}>{item.plan?.name || 'Unknown Plan'}</Text>
@@ -151,7 +152,7 @@ export default function SubscriptionHistoryScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Subscription History</Text>

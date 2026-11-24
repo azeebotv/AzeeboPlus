@@ -9,11 +9,14 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -42,13 +45,19 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Forgot Password Screen" style={styles.container}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.content}>
           <View style={styles.header}>
+            <Image
+              source={require('../../assets/logo-white.png')}
+              style={{ width: 140, height: 34, marginBottom: 16, alignSelf: 'center' }}
+              resizeMode="contain"
+              accessibilityLabel="Azeebo+ Logo"
+            />
             <Text style={styles.title}>Reset Password</Text>
             <Text style={styles.subtitle}>
               Enter your email address and we'll send you instructions to reset your password
@@ -90,8 +99,17 @@ export default function ForgotPasswordScreen() {
           </View>
 
           <View style={styles.footer}>
-            <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-              <Text style={styles.backToLogin}>← Back to Sign In</Text>
+            <TouchableOpacity
+              onPress={() => router.push('/(auth)/login')}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              }}
+            >
+              <Feather name="arrow-left" size={16} color={colors.primary[500]} />
+              <Text style={styles.backToLogin}>Back to Sign In</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -121,7 +139,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#888',
+    color: colors.text.secondary,
     lineHeight: 24,
   },
   form: {
@@ -145,7 +163,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.2)',
   },
   resetButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -162,7 +180,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(204,28,28,0.4)',
   },
   errorText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -175,7 +193,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backToLogin: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 16,
   },
 });

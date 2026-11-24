@@ -10,9 +10,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { apiClient } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { apiClient } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface StreakData {
   currentStreak?: number;
@@ -104,8 +106,8 @@ export default function StreakScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#E8420A" />
+      <SafeAreaView accessibilityLabel="Streak Screen" style={styles.container}>
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading streak data...</Text>
       </SafeAreaView>
     );
@@ -116,10 +118,10 @@ export default function StreakScreen() {
       <ScrollView
         style={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#E8420A" />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={brand.flame} />
         }
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
 
@@ -223,12 +225,12 @@ export default function StreakScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1A0A0A' },
   content: { flex: 1, padding: 16, paddingBottom: 32 },
-  loadingText: { color: '#9CA3AF', marginTop: 12, textAlign: 'center' },
+  loadingText: { color: colors.light[400], marginTop: 12, textAlign: 'center' },
   backButton: { marginBottom: 16, paddingVertical: 4 },
   backText: { color: '#9A8A7A', fontSize: 14 },
   header: { marginBottom: 24 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#9CA3AF' },
+  subtitle: { fontSize: 14, color: colors.light[400] },
   streakCard: {
     backgroundColor: 'rgba(232,66,10,0.15)',
     borderRadius: 20,
@@ -237,8 +239,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   flameIcon: { fontSize: 48, marginBottom: 8 },
-  streakCount: { fontSize: 48, fontWeight: 'bold', color: '#E8420A' },
-  streakLabel: { fontSize: 16, color: '#9CA3AF', marginBottom: 12 },
+  streakCount: { fontSize: 48, fontWeight: 'bold', color: brand.flame },
+  streakLabel: { fontSize: 16, color: colors.light[400], marginBottom: 12 },
   todayBadge: {
     backgroundColor: 'rgba(16,185,129,0.15)',
     paddingHorizontal: 12,
@@ -256,15 +258,15 @@ const styles = StyleSheet.create({
   statsGrid: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   statCard: {
     flex: 1,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
   },
-  statLabel: { fontSize: 12, color: '#9CA3AF', marginBottom: 8 },
-  statValue: { fontSize: 20, fontWeight: 'bold', color: '#E8420A' },
+  statLabel: { fontSize: 12, color: colors.light[400], marginBottom: 8 },
+  statValue: { fontSize: 20, fontWeight: 'bold', color: brand.flame },
   calendarSection: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -277,7 +279,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   calendarDayContainer: { alignItems: 'center', width: 32 },
-  dayLabel: { fontSize: 9, color: '#6B5B4B', marginBottom: 2 },
+  dayLabel: { fontSize: 9, color: colors.category.cocoa, marginBottom: 2 },
   calendarDay: {
     width: 28,
     height: 28,
@@ -287,10 +289,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.04)',
   },
   calendarDayActive: { backgroundColor: 'rgba(232,66,10,0.25)' },
-  calendarDayToday: { borderWidth: 1, borderColor: '#E8420A' },
-  calendarDayText: { fontSize: 10, color: '#6B5B4B' },
-  calendarDayTextActive: { color: '#E8420A' },
-  calendarDayTextToday: { color: '#E8420A' },
+  calendarDayToday: { borderWidth: 1, borderColor: brand.flame },
+  calendarDayText: { fontSize: 10, color: colors.category.cocoa },
+  calendarDayTextActive: { color: brand.flame },
+  calendarDayTextToday: { color: brand.flame },
   milestonesSection: { marginBottom: 24 },
   milestoneCard: {
     flexDirection: 'row',
@@ -319,8 +321,8 @@ const styles = StyleSheet.create({
   milestoneIconUnlocked: { backgroundColor: 'rgba(16,185,129,0.15)' },
   milestoneIconText: { fontSize: 16 },
   milestoneLabel: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
-  milestoneSubtext: { fontSize: 11, color: '#9CA3AF' },
+  milestoneSubtext: { fontSize: 11, color: colors.light[400] },
   milestoneRight: { alignItems: 'flex-end' },
-  milestoneReward: { fontSize: 14, fontWeight: '700', color: '#E8420A' },
+  milestoneReward: { fontSize: 14, fontWeight: '700', color: brand.flame },
   milestoneUnlocked: { fontSize: 10, color: '#10B981', marginTop: 2 },
 });

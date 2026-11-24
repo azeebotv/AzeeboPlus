@@ -1,4 +1,4 @@
-import { Inject, Controller, Get, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Put, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
 
@@ -26,6 +26,29 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async getPlans() {
     return this.adminService.getPlans();
+  }
+
+  @Post('plans')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Create a subscription plan (admin only)' })
+  @ApiResponse({ status: 201, description: 'Plan created' })
+  @ApiResponse({ status: 409, description: 'Plan name already exists' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
+  async createPlan(
+    @Body()
+    data: {
+      name: string;
+      description?: string;
+      price?: string | number;
+      currency?: string;
+      duration?: number;
+      features?: string[];
+      tier?: string;
+      isActive?: boolean;
+    }
+  ) {
+    return this.adminService.createPlan(data);
   }
 
   @Put('plans/:id')

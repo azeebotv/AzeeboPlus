@@ -46,6 +46,7 @@ jest.mock('zod', () => {
 
 describe('Recommendation Service Integration Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockRecommendationService = {
     getContentRecommendations: jest.fn(),
@@ -94,6 +95,8 @@ describe('Recommendation Service Integration Tests', () => {
       }
     );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -130,7 +133,7 @@ describe('Recommendation Service Integration Tests', () => {
         ],
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/recommendation/content')
         .query({ userId: 'user-123', limit: '10' });
 
@@ -164,7 +167,7 @@ describe('Recommendation Service Integration Tests', () => {
         ],
       });
 
-      const response = await request(app.getHttpServer()).get('/recommendation/content');
+      const response = await request(baseUrl).get('/recommendation/content');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -185,7 +188,7 @@ describe('Recommendation Service Integration Tests', () => {
         ],
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/recommendation/creators')
         .set('Authorization', 'Bearer test-token')
         .query({ userId: 'user-123' });
@@ -221,7 +224,7 @@ describe('Recommendation Service Integration Tests', () => {
         ],
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/recommendation/cross-universe')
         .set('Authorization', 'Bearer test-token')
         .query({ userId: 'user-123' });
@@ -257,7 +260,7 @@ describe('Recommendation Service Integration Tests', () => {
         ],
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/recommendation/personalized-feed')
         .set('Authorization', 'Bearer test-token')
         .query({ userId: 'user-123' });
@@ -273,7 +276,7 @@ describe('Recommendation Service Integration Tests', () => {
         new Error('Recommendation engine unavailable')
       );
 
-      const response = await request(app.getHttpServer()).get('/recommendation/content');
+      const response = await request(baseUrl).get('/recommendation/content');
 
       expect(response.status).toBe(500);
     });
@@ -286,7 +289,7 @@ describe('Recommendation Service Integration Tests', () => {
 
       const promises = Array(3)
         .fill(null)
-        .map(() => request(app.getHttpServer()).get('/recommendation/content'));
+        .map(() => request(baseUrl).get('/recommendation/content'));
 
       const results = await Promise.all(promises);
 

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,17 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
+  Image,
   useColorScheme,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { contentApi } from '../../src/api';
-import type { ContentItem } from '../../src/api/content';
+import { contentApi } from '@azeebo/react-data';
+import type { ContentItem } from '@azeebo/react-data/api/content';
 import { colors, typography, spacing, radius, universeColors } from '../../src/theme';
-import { EmptyState } from '../../src/components/StateContainers';
+import { EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
 
 export default function SearchScreen() {
   const colorScheme = useColorScheme();
@@ -23,51 +25,90 @@ export default function SearchScreen() {
   const [results, setResults] = useState<ContentItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState('all');
+  const { universeEnabled } = useFlags();
+
+  // Universe chips use canonical DB slugs (matching the bootstrap
+  // `universe.<name>.enabled` sentinels) and are hidden when the admin toggles
+  // that universe off — same gating as the homepage explore grid.
+  const UNIVERSE_FILTERS = [
+    { key: 'reality', label: 'Reality', color: universeColors.reality },
+    { key: 'creator', label: 'Creators', color: universeColors.creator },
+    { key: 'lifestyle', label: 'Lifestyle', color: universeColors.lifestyle },
+    { key: 'vertical', label: 'Vertical', color: universeColors.vertical },
+    { key: 'music', label: 'Music', color: universeColors.music },
+  ];
 
   const filters = [
     { key: 'all', label: 'All' },
-    { key: 'reality', label: 'Reality', color: universeColors.reality },
-    { key: 'creators', label: 'Creators', color: universeColors.creators },
-    { key: 'lifestyle', label: 'Lifestyle', color: universeColors.lifestyle },
-    { key: 'vertical', label: 'Vertical', color: universeColors.vertical },
+    ...UNIVERSE_FILTERS.filter((f) => universeEnabled(f.key)),
   ];
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     setHasSearched(true);
+    setSearchError(null);
     try {
       const response = await contentApi.searchContent(searchQuery);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to search content');
+      }
       setResults(response.data?.items || []);
-    } catch {
+    } catch (err: unknown) {
       setResults([]);
+      setSearchError(
+        err instanceof Error ? err.message : 'Unable to complete search. Please try again.'
+      );
     } finally {
       setIsSearching(false);
     }
   }, [searchQuery]);
 
-  const renderItem = ({ item }: { item: ContentItem }) => (
-    <TouchableOpacity
-      style={styles.contentCard}
-      onPress={() => router.push(`/watch/${item.id}`)}
-      activeOpacity={0.8}
-      accessibilityLabel={`${item.title} by ${item.creator.name}`}
-      accessibilityRole="button"
-    >
-      <View style={styles.thumbnailContainer}>
-        <View style={[styles.thumbnail, { backgroundColor: colors.bg.tertiary }]}>
-          <Text style={styles.playIcon}>▶</Text>
+  // MOB-10-01: Apply selected universe filter to the retrieved results
+  const filteredResults = useMemo(() => {
+    if (activeFilter === 'all') return results;
+    return results.filter((item) => {
+      const itemUniverse = item.universe?.name?.toLowerCase();
+      return itemUniverse === activeFilter.toLowerCase();
+    });
+  }, [results, activeFilter]);
+
+  const renderItem = ({ item }: { item: ContentItem }) => {
+    const artworkUrl = item.thumbnail || item.mediaAsset?.thumbnailUrl;
+
+    return (
+      <TouchableOpacity
+        style={styles.contentCard}
+        onPress={() => router.push(`/watch/${item.id}`)}
+        activeOpacity={0.8}
+        accessibilityLabel={`${item.title} by ${item.creator.name}`}
+        accessibilityRole="button"
+      >
+        <View style={styles.thumbnailContainer}>
+          {artworkUrl ? (
+            <Image
+              source={{ uri: artworkUrl }}
+              style={styles.thumbnailImage}
+              resizeMode="cover"
+              accessibilityLabel={`${item.title} thumbnail`}
+            />
+          ) : (
+            <View style={[styles.thumbnail, { backgroundColor: colors.bg.tertiary }]}>
+              <Text style={styles.playIcon}>▶</Text>
+            </View>
+          )}
         </View>
-      </View>
-      <View style={styles.contentInfo}>
-        <Text style={styles.contentTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <Text style={styles.contentCreator}>{item.creator.name}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+        <View style={styles.contentInfo}>
+          <Text style={styles.contentTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <Text style={styles.contentCreator}>{item.creator.name}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView
@@ -135,6 +176,8 @@ export default function SearchScreen() {
           <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text style={styles.loadingText}>Searching...</Text>
         </View>
+      ) : searchError ? (
+        <ErrorState title="Search Failed" description={searchError} onRetry={handleSearch} />
       ) : !hasSearched ? (
         <View style={styles.centerContainer}>
           <Text style={styles.emptyIcon}>⌕</Text>
@@ -143,7 +186,7 @@ export default function SearchScreen() {
         </View>
       ) : (
         <FlatList
-          data={results}
+          data={filteredResults}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.resultsList}
@@ -271,6 +314,10 @@ const styles = StyleSheet.create({
     width: 120,
     height: 80,
     position: 'relative',
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
   },
   thumbnail: {
     width: '100%',

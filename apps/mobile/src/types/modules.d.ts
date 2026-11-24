@@ -1,8 +1,12 @@
 declare module 'react-i18next' {
   export function useTranslation(): {
-    t: (key: string, fallback?: string) => string;
+    t: (key: string, fallbackOrOptions?: string | Record<string, unknown>) => string;
     i18n: { language: string };
   };
+  export const I18nextProvider: (props: {
+    i18n: unknown;
+    children?: React.ReactNode;
+  }) => React.ReactElement;
   export function Trans(props: { i18nKey: string; children?: React.ReactNode }): React.ReactElement;
   export function initReactI18next(): {
     type: string;
@@ -25,21 +29,36 @@ declare module '@expo/vector-icons' {
 declare module '@expo/vector-icons/Ionicons' {
   import { ComponentType } from 'react';
   import { StyleProp, TextStyle } from 'react-native';
-  const Ionicons: ComponentType<{ name: string; size?: number; color?: string; style?: StyleProp<TextStyle> }>;
+  const Ionicons: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
   export default Ionicons;
 }
 
 declare module '@expo/vector-icons/MaterialIcons' {
   import { ComponentType } from 'react';
   import { StyleProp, TextStyle } from 'react-native';
-  const MaterialIcons: ComponentType<{ name: string; size?: number; color?: string; style?: StyleProp<TextStyle> }>;
+  const MaterialIcons: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
   export default MaterialIcons;
 }
 
 declare module '@expo/vector-icons/FontAwesome' {
   import { ComponentType } from 'react';
   import { StyleProp, TextStyle } from 'react-native';
-  const FontAwesome: ComponentType<{ name: string; size?: number; color?: string; style?: StyleProp<TextStyle> }>;
+  const FontAwesome: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
   export default FontAwesome;
 }
 

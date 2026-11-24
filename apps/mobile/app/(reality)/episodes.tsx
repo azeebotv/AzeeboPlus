@@ -11,9 +11,11 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { realityApi } from '../../src/api/engagement';
-import { logger } from '../../src/utils/logger';
+import { realityApi } from '@azeebo/react-data/api/engagement';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface EpisodeData {
   id: string;
@@ -63,9 +65,7 @@ export default function EpisodesScreen() {
 
   useEffect(() => {
     loadEpisodes();
-    try {
-      analytics.realityShowViewed(showId);
-    } catch {}
+    analytics.realityShowViewed(showId);
   }, [showId]);
 
   const loadEpisodes = async () => {
@@ -141,9 +141,9 @@ export default function EpisodesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Episodes Screen" style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
           <Text style={styles.loadingText}>Loading episodes...</Text>
         </View>
       </SafeAreaView>
@@ -155,7 +155,7 @@ export default function EpisodesScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadEpisodes}>
+          <TouchableOpacity accessibilityRole="button" style={styles.retryButton} onPress={loadEpisodes}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -166,7 +166,7 @@ export default function EpisodesScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   headerContent: {
     flex: 1,
@@ -270,11 +270,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   seasonSelector: {
     paddingHorizontal: 24,
@@ -286,14 +286,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     marginRight: 8,
   },
   seasonButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   seasonButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   episodeNumber: {
     fontSize: 12,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '600',
   },
   episodeDuration: {
@@ -352,12 +352,12 @@ const styles = StyleSheet.create({
   episodeTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   episodeDescription: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 8,
     lineHeight: 16,
   },
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

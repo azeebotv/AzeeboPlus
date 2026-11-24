@@ -8,6 +8,8 @@ import { DatabaseModule } from './modules/database/database.module.js';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, referralFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -20,6 +22,18 @@ import { CacheModule } from '@azeebo/shared-services';
     DatabaseModule,
     HealthModule,
     ReferralModule,
+    // Referral feature gates: program ON; reward boost and auto-complete OFF
+    // until promoted.
+    FlagMetricsModule.register({ service: 'referral-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('referral-service'),
+      defaultFlags: {
+        [referralFlags.programEnabled]: true,
+        [referralFlags.rewardBoost]: false,
+        [referralFlags.autoComplete]: false,
+      },
+    }),
   ],
   providers: [
     {

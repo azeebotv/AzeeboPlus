@@ -1,5 +1,6 @@
-import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
+import { Injectable, Logger, NestMiddleware, Inject } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+import { FeatureFlagService, gatewayFlags } from '@azeebo/feature-flags';
 
 /**
  * Backward-compatibility redirect middleware (T-H21, T-H22, T-H24).
@@ -18,7 +19,17 @@ export class LegacyRedirectMiddleware implements NestMiddleware {
   /** Prefixes that need versioning when they appear directly after /api/ */
   private readonly LEGACY_PREFIXES = ['wallet', 'payments', 'notifications'];
 
-  use(req: Request, res: Response, next: NextFunction): void {
+  constructor(
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+  ) {}
+
+  async use(req: Request, res: Response, next: NextFunction): Promise<void> {
+    // Kill-switch: gateway_legacy_redirect=false disables the redirects once
+    // legacy clients have been drained.
+    if (!(await this.featureFlagService.isEnabled(gatewayFlags.legacyRedirect))) {
+      return next();
+    }
+
     const originalUrl: string = req.originalUrl || req.url;
 
     // Only intercept /api/{service}… that are NOT already versioned

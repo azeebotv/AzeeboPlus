@@ -256,23 +256,23 @@ export function DashboardLayout({
   className = '',
 }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="min-h-screen bg-az-surface-root">
       <div className="flex">
         <aside
           className={`
-            fixed left-0 top-0 h-screen bg-bg-secondary border-r border-border-default
+            fixed left-0 top-0 h-screen bg-az-surface-raised border-r border-az-glass-border
             transition-all duration-300 z-40
             ${sidebarCollapsed ? 'w-16' : 'w-64'}
           `}
         >
           <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-border-default">
+            <div className="flex items-center justify-between p-4 border-b border-az-glass-border">
               {!sidebarCollapsed && (
-                <span className="font-bold text-lg text-primary-400">Azeebo+</span>
+                <span className="font-bold text-lg text-az-primary-400">Azeebo+</span>
               )}
               <button
                 onClick={onSidebarToggle}
-                className="p-2 rounded-lg hover:bg-bg-tertiary transition-colors"
+                className="p-2 rounded-lg hover:bg-az-surface-panel transition-colors"
                 aria-label="Toggle sidebar"
               >
                 <Icon name={sidebarCollapsed ? 'ChevronRight' : 'ChevronLeft'} size="md" />
@@ -288,13 +288,13 @@ export function DashboardLayout({
           `}
         >
           {header && (
-            <header className="sticky top-0 z-30 bg-bg-secondary border-b border-border-default">
+            <header className="sticky top-0 z-30 bg-az-surface-raised border-b border-az-glass-border">
               {header}
             </header>
           )}
           <div className={`p-6 ${className}`}>{children}</div>
           {footer && (
-            <footer className="bg-bg-secondary border-t border-border-default py-4 px-6">
+            <footer className="bg-az-surface-raised border-t border-az-glass-border py-4 px-6">
               {footer}
             </footer>
           )}
@@ -313,13 +313,13 @@ export interface AuthLayoutProps {
 
 export function AuthLayout({ children, logo, footer, className = '' }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bg-primary to-bg-secondary flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-az-surface-root to-az-surface-raised flex items-center justify-center p-4">
       <div className={`w-full max-w-md ${className}`}>
         {logo && <div className="flex justify-center mb-8">{logo}</div>}
-        <div className="bg-bg-secondary rounded-2xl shadow-xl border border-border-default p-8">
+        <div className="bg-az-surface-raised rounded-2xl shadow-xl border border-az-glass-border p-8">
           {children}
         </div>
-        {footer && <div className="mt-6 text-center text-sm text-text-tertiary">{footer}</div>}
+        {footer && <div className="mt-6 text-center text-sm text-az-ink-muted">{footer}</div>}
       </div>
     </div>
   );
@@ -341,15 +341,15 @@ export function ContentLayout({
   className = '',
 }: ContentLayoutProps) {
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="min-h-screen bg-az-surface-root">
       {header && (
-        <header className="sticky top-0 z-30 bg-bg-secondary border-b border-border-default">
+        <header className="sticky top-0 z-30 bg-az-surface-raised border-b border-az-glass-border">
           {header}
         </header>
       )}
       <div className="flex">
         {sidebar && (
-          <aside className="hidden lg:block w-64 flex-shrink-0 bg-bg-secondary border-r border-border-default">
+          <aside className="hidden lg:block w-64 flex-shrink-0 bg-az-surface-raised border-r border-az-glass-border">
             <div className="p-4">{sidebar}</div>
           </aside>
         )}
@@ -358,7 +358,7 @@ export function ContentLayout({
         </main>
       </div>
       {footer && (
-        <footer className="bg-bg-secondary border-t border-border-default py-4 px-6">
+        <footer className="bg-az-surface-raised border-t border-az-glass-border py-4 px-6">
           {footer}
         </footer>
       )}
@@ -384,16 +384,16 @@ export function SettingsLayout({
   className = '',
 }: SettingsLayoutProps) {
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="min-h-screen bg-az-surface-root">
       {header && (
-        <header className="sticky top-0 z-30 bg-bg-secondary border-b border-border-default">
+        <header className="sticky top-0 z-30 bg-az-surface-raised border-b border-az-glass-border">
           {header}
         </header>
       )}
       <div className="flex">
-        <aside className="hidden lg:block w-72 flex-shrink-0 bg-bg-secondary border-r border-border-default">
-          <div className="p-4 border-b border-border-default">
-            <h2 className="text-lg font-semibold text-text-primary">Settings</h2>
+        <aside className="hidden lg:block w-72 flex-shrink-0 bg-az-surface-raised border-r border-az-glass-border">
+          <div className="p-4 border-b border-az-glass-border">
+            <h2 className="text-lg font-semibold text-az-ink">Settings</h2>
           </div>
           <nav className="p-4 space-y-1">
             {navItems.map((item) => (
@@ -404,8 +404,8 @@ export function SettingsLayout({
                   w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors
                   ${
                     activeItem === item.id
-                      ? 'bg-primary-500/10 text-primary-400'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
+                      ? 'bg-az-primary-500/10 text-az-primary-400'
+                      : 'text-az-ink-dim hover:text-az-ink hover:bg-az-surface-panel'
                   }
                 `}
                 aria-current={activeItem === item.id ? 'page' : undefined}
@@ -436,8 +436,8 @@ export function PageHeader({ title, subtitle, actions, className = '' }: PageHea
     <header className={`mb-6 ${className}`}>
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">{title}</h1>
-          {subtitle && <p className="mt-1 text-text-secondary">{subtitle}</p>}
+          <h1 className="text-2xl font-bold text-az-ink">{title}</h1>
+          {subtitle && <p className="mt-1 text-az-ink-dim">{subtitle}</p>}
         </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>

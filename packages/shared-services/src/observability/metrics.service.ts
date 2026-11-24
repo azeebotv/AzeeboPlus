@@ -399,9 +399,12 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
       lines.push(`# TYPE ${name} ${metric.type}`);
 
       for (const v of values) {
-        const labels = v.labels && Object.keys(v.labels).length > 0
-          ? `{${Object.entries(v.labels).map(([k, v]) => `${k}="${v}"`).join(',')}}`
-          : '';
+        const labels =
+          v.labels && Object.keys(v.labels).length > 0
+            ? `{${Object.entries(v.labels)
+                .map(([k, v]) => `${k}="${v}"`)
+                .join(',')}}`
+            : '';
         lines.push(`${name}${labels} ${v.value}`);
       }
     }

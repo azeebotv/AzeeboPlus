@@ -1,0 +1,139 @@
+name: Performance Budget
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '22.16.0'
+  PNPM_VERSION: '10.33.2'
+
+jobs:
+  performance-budget:
+    name: Check Performance Budgets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Workspace packages ship from dist/ — `next build` cannot resolve them
+      # (analytics-sdk, feature-flags/registries, ...) until they are built.
+      # Clients come first: packages/security and shared-services compile
+      # against generated Prisma clients.
+      - name: Generate Prisma clients
+        run: pnpm run prisma:generate
+
+      - name: Build workspace packages
+        run: pnpm --filter './packages/**' run build
+
+      - name: Build web app
+        run: |
+          # Bake the gateway origin into the build: with output:standalone,
+          # next start serves the config baked at build time, so the runtime
+          # env alone would be ignored and /api/* would 500 against nothing.
+          API_GATEWAY_URL=http://localhost:3013 pnpm --filter @azeebo/web build
+
+      - name: Start mock API gateway
+        run: |
+          # Lighthouse must measure the real UI, not error states: without a
+          # backend, every page's data fetch 500s (console errors on all
+          # pages), browse renders its empty state, and LCP/TTI measure
+          # spinner waits. The mock serves the same { success, data } envelope
+          # with byte-identical responses for stable, comparable runs.
+          node scripts/build-mock-api.mjs &
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:3013/api/v1/public/settings > /dev/null 2>&1 && break || sleep 1
+          done
+          curl -sf http://localhost:3013/api/v1/public/settings > /dev/null
+
+      - name: Start web app
+        run: |
+          # `next start` serves the production build on port 3000; the API
+          # rewrites were baked at build time to the mock gateway below.
+          pnpm --filter @azeebo/web start &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000 > /dev/null 2>&1 && break || sleep 2
+          done
+          # Fail loudly instead of measuring a dead server.
+          curl -sf http://localhost:3000 > /dev/null || { echo 'web app did not start'; exit 1; }
+
+      - name: Warm caches before measuring
+        run: |
+          # First-hit requests pay one-time costs (Next.js image optimizer
+          # processing each source image, JIT route compilation). Lighthouse
+          # runs single-pass, so those land in the measurement. Warm the
+          # three measured URLs (which also primes the optimizer for every
+          # referenced image variant) plus the proxy target once.
+          for path in / /home /browse; do
+            curl -sf "http://localhost:3000$path" > /dev/null
+          done
+          sleep 5
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@512cc908a55bfb0ad231facca52adf3d3a651df4 # v12
+        with:
+          urls: |
+            http://localhost:3000
+            http://localhost:3000/home
+            http://localhost:3000/browse
+          configPath: ./lighthouserc.json
+          uploadArtifacts: true
+
+      - name: Check Bundle Size
+        run: |
+          echo "=== Bundle Size Report ==="
+          du -sh apps/web/.next/static/chunks/*.js | sort -hr | head -20
+          echo ""
+          echo "=== Total Bundle Size ==="
+          du -sh apps/web/.next/static/
+
+      - name: Validate Performance Budgets
+        run: |
+          # Check if any single JS bundle exceeds 300KB
+          MAX_BUNDLE_SIZE=307200  # 300KB in bytes
+          VIOLATIONS=0
+
+          for file in apps/web/.next/static/chunks/*.js; do
+            if [ -f "$file" ]; then
+              SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+              if [ "$SIZE" -gt "$MAX_BUNDLE_SIZE" ]; then
+                echo "❌ BUDGET VIOLATION: $file is $(($SIZE / 1024))KB (max: 300KB)"
+                VIOLATIONS=$((VIOLATIONS + 1))
+              fi
+            fi
+          done
+
+          # Check total bundle size
+          TOTAL_SIZE=$(du -sb apps/web/.next/static/ | cut -f1)
+          MAX_TOTAL=1572864  # 1.5MB in bytes
+
+          if [ "$TOTAL_SIZE" -gt "$MAX_TOTAL" ]; then
+            echo "❌ TOTAL BUDGET VIOLATION: Total bundle is $(($TOTAL_SIZE / 1048576))MB (max: 1.5MB)"
+            VIOLATIONS=$((VIOLATIONS + 1))
+          fi
+
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo ""
+            echo "❌ Performance budget check failed with $VIOLATIONS violation(s)"
+            exit 1
+          else
+            echo "✅ All performance budgets passed"
+          fi
+

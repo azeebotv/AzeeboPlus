@@ -5,8 +5,9 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -55,7 +56,7 @@ export default function FanContestsScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Fan Contests Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading contests..." />
       </SafeAreaView>
     );
@@ -75,7 +76,7 @@ export default function FanContestsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -109,7 +110,7 @@ export default function FanContestsScreen() {
               </View>
             </View>
             {contest.status === 'active' && (
-              <TouchableOpacity style={styles.entryButton} onPress={() => handleEntry(contest)}>
+              <TouchableOpacity accessibilityRole="button" style={styles.entryButton} onPress={() => handleEntry(contest)}>
                 <Text style={styles.entryButtonText}>Enter</Text>
               </TouchableOpacity>
             )}
@@ -138,7 +139,7 @@ export default function FanContestsScreen() {
               >
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmButton} onPress={confirmEntry}>
+              <TouchableOpacity accessibilityRole="button" style={styles.confirmButton} onPress={confirmEntry}>
                 <Text style={styles.confirmText}>Confirm</Text>
               </TouchableOpacity>
             </View>
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -182,14 +183,14 @@ const styles = StyleSheet.create({
   emojiLarge: { fontSize: 30 },
   contestInfo: { flex: 1 },
   contestTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  contestDesc: { color: '#888', fontSize: 12, marginBottom: 8 },
+  contestDesc: { color: colors.text.secondary, fontSize: 12, marginBottom: 8 },
   contestMeta: { flexDirection: 'row', gap: 12, marginBottom: 4 },
-  metaText: { color: '#888', fontSize: 12 },
+  metaText: { color: colors.text.secondary, fontSize: 12 },
   contestFooter: { flexDirection: 'row', gap: 12 },
-  entryFee: { color: '#E74C3C', fontSize: 12, fontWeight: '600' },
-  deadline: { color: '#888', fontSize: 12 },
+  entryFee: { color: colors.error[500], fontSize: 12, fontWeight: '600' },
+  deadline: { color: colors.text.secondary, fontSize: 12 },
   entryButton: {
-    backgroundColor: '#E74C3C',
+    backgroundColor: colors.error[500],
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -199,9 +200,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
   },
-  completedText: { color: '#888', fontSize: 12 },
+  completedText: { color: colors.text.secondary, fontSize: 12 },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.8)',
@@ -210,9 +211,9 @@ const styles = StyleSheet.create({
   },
   modalContent: { width: '85%', padding: 24, borderRadius: 16 },
   modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 12, textAlign: 'center' },
-  modalText: { color: '#ccc', fontSize: 14, textAlign: 'center', marginBottom: 8 },
+  modalText: { color: colors.neutral[300], fontSize: 14, textAlign: 'center', marginBottom: 8 },
   modalFee: {
-    color: '#E74C3C',
+    color: colors.error[500],
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
@@ -224,15 +225,15 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
   },
-  cancelText: { color: '#888', fontSize: 14, fontWeight: '600' },
+  cancelText: { color: colors.text.secondary, fontSize: 14, fontWeight: '600' },
   confirmButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#E74C3C',
+    backgroundColor: colors.error[500],
     alignItems: 'center',
   },
   confirmText: { color: '#fff', fontSize: 14, fontWeight: '600' },

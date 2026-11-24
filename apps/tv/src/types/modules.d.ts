@@ -1,0 +1,89 @@
+declare module 'react-i18next' {
+  export function useTranslation(): {
+    t: (key: string, fallbackOrOptions?: string | Record<string, unknown>) => string;
+    i18n: { language: string };
+  };
+  export const I18nextProvider: (props: {
+    i18n: unknown;
+    children?: React.ReactNode;
+  }) => React.ReactElement;
+  export function Trans(props: { i18nKey: string; children?: React.ReactNode }): React.ReactElement;
+  export function initReactI18next(): {
+    type: string;
+    init: (options: {
+      resources: unknown;
+      lng: string;
+      fallbackLng: string;
+      interpolation: { escapeValue: boolean };
+    }) => void;
+  };
+}
+
+declare module '@expo/vector-icons' {
+  export { default as Ionicons } from '@expo/vector-icons/Ionicons';
+  export { default as MaterialIcons } from '@expo/vector-icons/MaterialIcons';
+  export { default as FontAwesome } from '@expo/vector-icons/FontAwesome';
+  export { default as MaterialCommunityIcons } from '@expo/vector-icons/MaterialCommunityIcons';
+}
+
+declare module '@expo/vector-icons/Ionicons' {
+  import { ComponentType } from 'react';
+  import { StyleProp, TextStyle } from 'react-native';
+  const Ionicons: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
+  export default Ionicons;
+}
+
+declare module '@expo/vector-icons/MaterialIcons' {
+  import { ComponentType } from 'react';
+  import { StyleProp, TextStyle } from 'react-native';
+  const MaterialIcons: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
+  export default MaterialIcons;
+}
+
+declare module '@expo/vector-icons/FontAwesome' {
+  import { ComponentType } from 'react';
+  import { StyleProp, TextStyle } from 'react-native';
+  const FontAwesome: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
+  export default FontAwesome;
+}
+
+declare module '@expo/vector-icons/MaterialCommunityIcons' {
+  import { ComponentType } from 'react';
+  import { StyleProp, TextStyle } from 'react-native';
+  const MaterialCommunityIcons: ComponentType<{
+    name: string;
+    size?: number;
+    color?: string;
+    style?: StyleProp<TextStyle>;
+  }>;
+  export default MaterialCommunityIcons;
+}
+
+declare module 'expo-linear-gradient' {
+  import { ComponentType, ReactNode } from 'react';
+  import { ViewStyle } from 'react-native';
+  export interface LinearGradientProps {
+    colors: string[];
+    start?: { x: number; y: number };
+    end?: { x: number; y: number };
+    locations?: number[];
+    style?: ViewStyle | ViewStyle[];
+    children?: ReactNode;
+  }
+  export const LinearGradient: ComponentType<LinearGradientProps>;
+}

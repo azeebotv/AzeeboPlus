@@ -5,10 +5,20 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import {
+  Film,
+  Music,
+  Trophy,
+  Scroll,
+  FlaskConical,
+  Globe,
+  Brain,
+  type LucideIcon,
+} from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface TriviaCategory {
@@ -41,15 +51,15 @@ interface TriviaSession {
   totalAnswered: number;
 }
 
-const categoryIcons: Record<string, string> = {
-  movies: '🎬',
-  music: '🎵',
-  sports: '⚽',
-  history: '📜',
-  science: '🔬',
-  geography: '🌍',
-  general: '🧠',
-  nollywood: '🎥',
+const categoryIcons: Record<string, LucideIcon> = {
+  movies: Film,
+  music: Music,
+  sports: Trophy,
+  history: Scroll,
+  science: FlaskConical,
+  geography: Globe,
+  general: Brain,
+  nollywood: Film,
 };
 
 function TriviaPageContent(): React.JSX.Element {
@@ -74,7 +84,7 @@ function TriviaPageContent(): React.JSX.Element {
   const categoriesQuery = useQuery({
     queryKey: ['trivia-categories'],
     queryFn: async () => {
-      const res = await apiFetch<TriviaCategory[]>('/api/v1/games/trivia/categories');
+      const res = await apiFetch<TriviaCategory[]>('/api/v1/games/trivia');
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Failed to load trivia categories');
     },
@@ -84,8 +94,8 @@ function TriviaPageContent(): React.JSX.Element {
   const startSessionMutation = useMutation({
     mutationFn: async (categoryId: string) => {
       const res = await apiFetch<{ sessionId: string; questions: TriviaQuestion[] }>(
-        '/api/v1/games/trivia/start',
-        { method: 'POST', body: JSON.stringify({ categoryId, questionCount: 10 }) }
+        '/api/v1/games/sessions',
+        { method: 'POST', body: JSON.stringify({ challengeId: categoryId }) }
       );
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Failed to start trivia session');
@@ -106,15 +116,16 @@ function TriviaPageContent(): React.JSX.Element {
   });
 
   const answerMutation = useMutation({
-    mutationFn: async ({ questionId, answer }: { questionId: string; answer: string }) => {
-      const res = await apiFetch<TriviaResult>(`/api/v1/games/trivia/answer`, {
-        method: 'POST',
-        body: JSON.stringify({
-          sessionId: session?.sessionId,
-          questionId,
-          answer,
-        }),
-      });
+    mutationFn: async ({ answer }: { questionId: string; answer: string }) => {
+      const res = await apiFetch<TriviaResult>(
+        `/api/v1/games/sessions/${session?.sessionId}/submit`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            answer,
+          }),
+        }
+      );
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Failed to submit answer');
     },
@@ -153,7 +164,7 @@ function TriviaPageContent(): React.JSX.Element {
       setTimeLeft(session.questions[nextIndex].timeLimit || 30);
     } else {
       setSession(null);
-      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      queryClient.invalidateQueries({ queryKey: ['leaderboard', 'games'] });
     }
   }, [session, queryClient]);
 
@@ -179,26 +190,25 @@ function TriviaPageContent(): React.JSX.Element {
   const progress = session ? ((session.currentIndex + 1) / session.questions.length) * 100 : 0;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Games" />
-
+    <PageShell
+      activeNav="Games"
+      maxWidth="7xl"
+      glowColor="color-mix(in srgb, var(--color-az-category-violet) 14%, transparent)"
+    >
       {session && currentQuestion ? (
         /* Active Trivia Session */
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="mx-auto max-w-3xl py-2 sm:py-4">
           {/* Progress Bar */}
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-white/50">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="az-body text-az-ink/50">
                 Question {session.currentIndex + 1} of {session.questions.length}
               </span>
-              <span className="text-sm font-semibold" style={{ color: 'var(--brand-orange)' }}>
-                Score: {session.score}
-              </span>
+              <span className="az-body-strong text-az-flame">Score: {session.score}</span>
             </div>
-            <div className="h-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+            <div className="h-2 rounded-az-pill bg-az-ink/10">
               <motion.div
-                className="h-full rounded-full"
-                style={{ backgroundColor: 'var(--brand-orange)' }}
+                className="h-full rounded-az-pill bg-az-flame"
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.3 }}
@@ -207,19 +217,20 @@ function TriviaPageContent(): React.JSX.Element {
           </div>
 
           {/* Timer */}
-          <div className="flex items-center justify-center mb-6">
+          <div className="mb-6 flex items-center justify-center">
             <motion.div
-              className="w-16 h-16 rounded-full flex items-center justify-center"
-              style={{
-                border: `3px solid ${timeLeft <= 10 ? 'var(--color-error-500)' : 'var(--brand-orange)'}`,
-                backgroundColor: timeLeft <= 10 ? 'rgba(239,68,68,0.1)' : 'rgba(232,66,10,0.1)',
-              }}
+              className={`flex size-16 items-center justify-center rounded-az-pill border-[3px] ${
+                timeLeft <= 10
+                  ? 'border-az-error-500 bg-az-error-500/10'
+                  : 'border-az-flame bg-az-scarlet/10'
+              }`}
               animate={timeLeft <= 10 ? { scale: [1, 1.1, 1] } : {}}
               transition={{ duration: 0.5, repeat: timeLeft <= 10 ? Infinity : 0 }}
             >
               <span
-                className="text-2xl font-bold"
-                style={{ color: timeLeft <= 10 ? 'var(--color-error-500)' : 'var(--brand-orange)' }}
+                className={`az-section-title ${
+                  timeLeft <= 10 ? 'text-az-error-500' : 'text-az-flame'
+                }`}
               >
                 {timeLeft}
               </span>
@@ -228,8 +239,8 @@ function TriviaPageContent(): React.JSX.Element {
 
           {/* Question */}
           <ScrollReveal>
-            <GlowCard universe="games" className="p-8 mb-8">
-              <h2 className="text-xl sm:text-2xl font-bold text-white text-center mb-8">
+            <GlowCard universe="games" className="mb-8 p-8">
+              <h2 className="az-title mb-8 text-center text-az-ink sm:az-section-title">
                 {currentQuestion.question}
               </h2>
 
@@ -245,30 +256,19 @@ function TriviaPageContent(): React.JSX.Element {
                       type="button"
                       onClick={() => handleAnswer(option)}
                       disabled={!!selectedAnswer}
-                      className="p-4 rounded-xl text-left font-medium transition-all"
-                      style={{
-                        border: `2px solid ${
-                          isCorrect
-                            ? 'var(--color-success-500)'
-                            : isWrong
-                              ? 'var(--color-error-500)'
-                              : isSelected
-                                ? 'var(--brand-orange)'
-                                : 'rgba(255,255,255,0.1)'
-                        }`,
-                        backgroundColor: isCorrect
-                          ? 'rgba(34,197,94,0.1)'
+                      className={`az-lead rounded-az-card border-2 p-4 text-left text-az-ink transition-all ${
+                        isCorrect
+                          ? 'border-az-success-500 bg-az-success-500/10'
                           : isWrong
-                            ? 'rgba(239,68,68,0.1)'
+                            ? 'border-az-error-500 bg-az-error-500/10'
                             : isSelected
-                              ? 'rgba(232,66,10,0.1)'
-                              : 'rgba(255,255,255,0.05)',
-                        color: 'var(--brand-white)',
-                      }}
+                              ? 'border-az-flame bg-az-scarlet/10'
+                              : 'border-az-ink/10 bg-az-ink/5'
+                      }`}
                       whileHover={!selectedAnswer ? { scale: 1.02 } : undefined}
                       whileTap={!selectedAnswer ? { scale: 0.98 } : undefined}
                     >
-                      <span className="text-sm text-white/40 mr-2">
+                      <span className="az-body mr-2 text-az-ink/40">
                         {String.fromCharCode(65 + index)}.
                       </span>
                       {option}
@@ -287,32 +287,29 @@ function TriviaPageContent(): React.JSX.Element {
               className="text-center"
             >
               <div
-                className="inline-block px-6 py-3 rounded-xl mb-4"
-                style={{
-                  backgroundColor: lastResult.correct
-                    ? 'rgba(34,197,94,0.15)'
-                    : 'rgba(239,68,68,0.15)',
-                  border: `1px solid ${lastResult.correct ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-                }}
+                className={`mb-4 inline-block rounded-az-card border px-6 py-3 ${
+                  lastResult.correct
+                    ? 'bg-az-success-500/15 border-az-success-500/30'
+                    : 'bg-az-error-500/15 border-az-error-500/30'
+                }`}
               >
                 <span
-                  className="text-lg font-bold"
-                  style={{
-                    color: lastResult.correct
-                      ? 'var(--color-success-500)'
-                      : 'var(--color-error-500)',
-                  }}
+                  className={`az-subtitle ${
+                    lastResult.correct ? 'text-az-success-500' : 'text-az-error-500'
+                  }`}
                 >
                   {lastResult.correct ? `Correct! +${lastResult.points} pts` : 'Wrong!'}
                 </span>
               </div>
               {!lastResult.correct && (
-                <p className="text-white/50 mb-4">The answer was: {lastResult.correctAnswer}</p>
+                <p className="az-lead mb-4 text-az-ink/50">
+                  The answer was: {lastResult.correctAnswer}
+                </p>
               )}
               <motion.button
                 type="button"
                 onClick={handleNext}
-                className="az-btn-primary px-8"
+                className="az-btn-primary"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -326,36 +323,18 @@ function TriviaPageContent(): React.JSX.Element {
       ) : (
         /* Category Selection */
         <>
-          {/* Hero */}
-          <section
-            className="relative py-16 sm:py-20"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #1A0A0A 100%)' }}
-          >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <motion.h1
-                className="text-4xl sm:text-5xl font-bold text-white mb-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                🧠 Trivia
-              </motion.h1>
-              <motion.p
-                className="text-xl text-white/80 max-w-2xl mx-auto"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                Test your knowledge and earn rewards
-              </motion.p>
-            </div>
-          </section>
+          <PageHero
+            eyebrow="Games Universe"
+            title="BrainTrivia"
+            subtitle="Test your knowledge and earn rewards"
+            accentColor="var(--color-az-category-violet)"
+            glowColor="color-mix(in srgb, var(--color-az-category-violet) 16%, transparent)"
+          />
 
           {/* Categories Grid */}
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+          <section className="py-2 sm:py-4">
             <ScrollReveal>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-                Choose a Category
-              </h2>
+              <h2 className="az-section-title mb-6 text-az-ink sm:mb-8">Choose a Category</h2>
             </ScrollReveal>
 
             {isLoading ? (
@@ -387,29 +366,29 @@ function TriviaPageContent(): React.JSX.Element {
                     transition={{ delay: index * 0.1 }}
                   >
                     <GlowCard universe="games" className="overflow-hidden">
-                      <div
-                        className="h-44 flex items-center justify-center"
-                        style={{
-                          background: `linear-gradient(135deg, rgba(139,92,246,0.3), #1A0A0A)`,
-                        }}
-                      >
-                        <span className="text-6xl">
-                          {categoryIcons[category.name?.toLowerCase()] || '🧠'}
-                        </span>
-                      </div>
+                      {(() => {
+                        const CategoryIcon = categoryIcons[category.name?.toLowerCase()] || Brain;
+                        return (
+                          <div className="group relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-az-category-violet/25 to-az-surface-root/85">
+                            <div className="flex size-20 items-center justify-center rounded-az-panel border border-az-category-violet/30 bg-az-category-violet/15 text-az-category-violet-light shadow-xl shadow-az-category-violet/10 transition-all duration-300 group-hover:scale-110 group-hover:border-az-category-violet-light/50">
+                              <CategoryIcon size={38} strokeWidth={1.75} />
+                            </div>
+                          </div>
+                        );
+                      })()}
                       <div className="p-5">
-                        <h3 className="font-bold text-white text-lg mb-1">{category.name}</h3>
-                        <p className="text-sm text-white/50 mb-4 line-clamp-2">
+                        <h3 className="az-subtitle mb-1 text-az-ink">{category.name}</h3>
+                        <p className="az-body mb-4 line-clamp-2 text-az-ink/50">
                           {category.description}
                         </p>
-                        <p className="text-xs text-white/40 mb-4">
+                        <p className="az-caption mb-4 text-az-ink/40">
                           {category.questionCount} questions
                         </p>
                         <motion.button
                           type="button"
                           onClick={() => startSessionMutation.mutate(category.id)}
                           disabled={startSessionMutation.isPending}
-                          className="az-btn-primary w-full"
+                          className="az-btn-primary"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
@@ -421,25 +400,20 @@ function TriviaPageContent(): React.JSX.Element {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-lg text-white/50">No trivia categories available yet</p>
+              <div className="py-12 text-center">
+                <p className="az-lead text-az-ink-muted">No trivia categories available yet</p>
               </div>
             )}
           </section>
 
           {/* Leaderboard Link */}
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-            <div className="az-glass p-6 rounded-xl text-center">
-              <p className="text-white/50 mb-3">Want to see how you rank?</p>
+          <section className="pb-12">
+            <div className="az-glass p-6 text-center">
+              <p className="az-lead mb-3 text-az-ink/50">Want to see how you rank?</p>
               <Link href="/games/leaderboard">
                 <motion.button
                   type="button"
-                  className="px-6 py-2 rounded-full text-sm font-semibold"
-                  style={{
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    backgroundColor: 'rgba(255,255,255,0.08)',
-                    color: 'var(--brand-white)',
-                  }}
+                  className="az-body-strong rounded-az-pill border border-az-ink/20 bg-az-ink/10 px-6 py-2 text-az-ink"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -451,22 +425,18 @@ function TriviaPageContent(): React.JSX.Element {
         </>
       )}
 
-      <AppFooter />
-
       {toast && (
         <div
-          className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
-          style={{
-            backgroundColor:
-              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-            border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
-          }}
+          className={`fixed bottom-6 right-6 z-50 rounded-az-card border px-6 py-3 shadow-lg transition-all ${
+            toast.type === 'success'
+              ? 'bg-az-success-500/15 border-az-success-500/30 text-az-success-500'
+              : 'bg-az-error-500/15 border-az-error-500/30 text-az-error-500'
+          }`}
         >
           {toast.message}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 
@@ -476,8 +446,8 @@ export default function TriviaPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

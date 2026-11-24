@@ -8,6 +8,7 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 
+  directUrl   = env("DIRECT_DATABASE_URL")
 }
 
 model CreatorProfile {
@@ -17,9 +18,14 @@ model CreatorProfile {
   avatar      String?
   bio         String?
   banner      String?
-  socialLinks Json?
-  settings    Json?
-  verified    Boolean  @default(false)
+  socialLinks   Json?
+  settings      Json?
+  payoutMethod  String?
+  minimumPayout Decimal? @db.Decimal(18, 2)
+  tipEnabled    Boolean? @default(true)
+  tipMin        Decimal? @default(1) @db.Decimal(18, 2)
+  tipMax        Decimal? @default(100) @db.Decimal(18, 2)
+  verified      Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -91,6 +97,14 @@ model ChallengeEntry {
   userId      String
   challengeId String
   contentUrl  String
+  // Review lifecycle: pending → under_review → winner | rejected.
+  // 'rejected' is terminal; 'winner' may still be overturned by re-review.
+  status      String   @default("pending")
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  // Moderator's note to the participant (why it was rejected, what to
+  // improve, …). Surfaced to the creator in the portal submissions view.
+  reviewNote  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -99,16 +113,21 @@ model ChallengeEntry {
   @@unique([userId, challengeId])
   @@map("challenge_entries")
   @@index([userId])
+  @@index([status])
 }
 
 model PayoutRequest {
   id             String   @id @default(uuid())
   creatorId      String
+  userId         String?
   amount         Decimal  @db.Decimal(18, 2)
+  currency       String?  @default("NGN")
   method         String
-  accountDetails Json
+  accountDetails Json?
+  metadata       Json?
   status         String   @default("pending")
   processedAt    DateTime?
+  completedAt    DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

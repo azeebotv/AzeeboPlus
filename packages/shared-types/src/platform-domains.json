@@ -1,0 +1,25 @@
+{
+  "baseDomain": "azeeboplus.com",
+  "subdomains": {
+    "root": "",
+    "app": "app",
+    "api": "api",
+    "admin": "admin",
+    "creator": "creator",
+    "cdn": "cdn",
+    "media": "media",
+    "stream": "stream",
+    "runbooks": "runbooks",
+    "stagingRoot": "staging",
+    "stagingApi": "staging-api"
+  },
+  "stagingSubdomains": {
+    "app": "app",
+    "www": "www",
+    "admin": "admin",
+    "creator": "creator",
+    "cdn": "cdn",
+    "media": "media",
+    "stream": "stream"
+  }
+}

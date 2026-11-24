@@ -10,25 +10,42 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { AnalyticsService } from './analytics.service.js';
+import { WEPAnalyticsService } from './wep-analytics.service.js';
 import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
-import { IngestEventsDto } from './dto/analytics.dto.js';
+import { IngestEventsDto, WebVitalDto } from './dto/analytics.dto.js';
 
 @ApiTags('Analytics')
 @ApiBearerAuth()
 @Controller('analytics')
 @UseGuards(RateLimitGuard)
 export class AnalyticsController {
-  constructor(@Inject(AnalyticsService) private readonly analyticsService: AnalyticsService) {}
+  constructor(
+    @Inject(AnalyticsService) private readonly analyticsService: AnalyticsService,
+    @Inject(WEPAnalyticsService) private readonly wepAnalytics: WEPAnalyticsService
+  ) {}
+
+  @Get('bootstrap')
+  @RateLimit(120, 60000)
+  @ApiOperation({ summary: 'Get client-side sampling config for the analytics-sdk' })
+  @ApiResponse({ status: 200, description: 'Sampling config' })
+  async getBootstrap(): Promise<{
+    success: boolean;
+    data: { enabled: boolean; samplingRate: number };
+  }> {
+    const data = await this.analyticsService.getClientSamplingConfig();
+    return { success: true, data };
+  }
 
   @Post('events')
   @RateLimit(100, 60000)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Ingest product events' })
+  @ApiOperation({ summary: 'Ingest product events (consent-enforced)' })
   @ApiResponse({ status: 200, description: 'Events ingested' })
   async ingestEvents(@Body() body: IngestEventsDto): Promise<AnalyticsResponse> {
     return this.analyticsService.ingestEvents(
@@ -38,8 +55,37 @@ export class AnalyticsController {
         sessionId?: string;
         metadata?: Record<string, unknown>;
         timestamp?: string;
-      }[]
+      }[],
+      body.consent,
+      body.consentVersion
     );
+  }
+
+  @Post('web-vitals')
+  @RateLimit(200, 60000)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Ingest client web-vitals RUM metric' })
+  @ApiResponse({ status: 200, description: 'Web-vital recorded' })
+  async ingestWebVital(@Body() body: WebVitalDto): Promise<{ success: boolean }> {
+    // Whitelist only the known vital fields — arbitrary client-controlled
+    // payloads must not be persisted into the PII store.
+    const whitelist: Record<string, unknown> = {
+      session_id: body.id,
+      platform: 'web',
+      timestamp: new Date().toISOString(),
+      name: body.name,
+      value: body.value,
+      rating: body.rating,
+      delta: body.delta,
+      navigationType: body.navigationType,
+      page: body.page,
+    };
+    await this.analyticsService.trackEvent(
+      `web_vital_${body.name.toLowerCase()}`,
+      undefined,
+      whitelist
+    );
+    return { success: true };
   }
 
   @Get('me/summary')
@@ -140,6 +186,16 @@ export class AnalyticsController {
     return this.analyticsService.getDailyStats(targetDate);
   }
 
+  @Get('search/corrections')
+  @ApiOperation({ summary: 'Search correction acceptance (shown vs accepted over time)' })
+  @ApiResponse({ status: 200, description: 'Daily correction acceptance series' })
+  async getSearchCorrections(@Query('days') days?: string): Promise<AnalyticsResponse> {
+    const parsedDays = days ? Number(days) : 30;
+    return this.analyticsService.getSearchCorrections(
+      Number.isFinite(parsedDays) ? parsedDays : 30
+    );
+  }
+
   @Post('track')
   @RateLimit(100, 60000)
   @HttpCode(HttpStatus.OK)
@@ -147,10 +203,17 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Event tracked' })
   async trackEvent(
     @Request() req: { user: { sub: string; id: string } },
-    @Body() body: { type: string; metadata?: Record<string, unknown> }
+    @Body()
+    body: { eventName?: string; type?: string; userId?: string; metadata?: Record<string, unknown> }
   ): Promise<unknown> {
-    const userId = req.user?.sub;
-    return this.analyticsService.trackEvent(body.type, userId, body.metadata);
+    // Services emit the canonical EventPayload shape ({ eventName }); the
+    // legacy { type } alias is still accepted for old clients.
+    const eventName = body.eventName ?? body.type;
+    if (!eventName) {
+      throw new BadRequestException('Event name is required (eventName or type)');
+    }
+    const userId = body.userId ?? req.user?.sub;
+    return this.analyticsService.trackEvent(eventName, userId, body.metadata);
   }
 
   @Post('track-batch')
@@ -162,11 +225,24 @@ export class AnalyticsController {
     @Request() req: { user: { sub: string; id: string } },
     @Body()
     body: {
-      events: Array<{ type: string; metadata?: Record<string, unknown> }>;
+      events: Array<{
+        eventName?: string;
+        type?: string;
+        userId?: string;
+        metadata?: Record<string, unknown>;
+      }>;
     }
   ): Promise<{ success: boolean }> {
     const userId = req.user?.sub;
-    const eventsWithUser = body.events.map((e) => ({ ...e, userId }));
+    const eventsWithUser = body.events.map((e) => {
+      // Canonical EventPayload shape first; legacy { type } alias accepted.
+      const eventName = e.eventName ?? e.type;
+      return {
+        type: eventName ?? '',
+        userId: e.userId ?? userId,
+        metadata: e.metadata,
+      };
+    });
     return this.analyticsService.trackBatch(eventsWithUser);
   }
 
@@ -184,5 +260,61 @@ export class AnalyticsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getRealtime(): Promise<AnalyticsResponse> {
     return this.analyticsService.getRealtime();
+  }
+
+  // ========================
+  // WEP & Campaign Attribution
+  // ========================
+
+  @Get('wep/user/:userId')
+  @ApiOperation({ summary: 'Calculate WEP for a user' })
+  @ApiResponse({ status: 200, description: 'User WEP calculation' })
+  async getUserWEP(
+    @Param('userId') userId: string,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string
+  ) {
+    const result = await this.wepAnalytics.calculateUserWEP(
+      userId,
+      new Date(startDate),
+      new Date(endDate)
+    );
+    return { success: true, data: result };
+  }
+
+  @Get('wep/platform')
+  @ApiOperation({ summary: 'Get platform-wide WEP metrics' })
+  @ApiResponse({ status: 200, description: 'Platform WEP' })
+  async getPlatformWEP(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    const result = await this.wepAnalytics.getPlatformWEP(new Date(startDate), new Date(endDate));
+    return { success: true, data: result };
+  }
+
+  @Get('wep/contribution')
+  @ApiOperation({ summary: 'Get contribution per WEP' })
+  @ApiResponse({ status: 200, description: 'Contribution per WEP' })
+  async getContributionPerWEP(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string
+  ) {
+    const result = await this.wepAnalytics.getContributionPerWEP(
+      new Date(startDate),
+      new Date(endDate)
+    );
+    return { success: true, data: result };
+  }
+
+  @Get('campaigns/attribution')
+  @ApiOperation({ summary: 'Get campaign attribution analytics' })
+  @ApiResponse({ status: 200, description: 'Campaign attribution' })
+  async getCampaignAttribution(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string
+  ) {
+    const result = await this.wepAnalytics.getCampaignAttribution(
+      new Date(startDate),
+      new Date(endDate)
+    );
+    return { success: true, data: result };
   }
 }

@@ -12,6 +12,8 @@ import { AdminModule } from './modules/admin/admin.module.js';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, sportsFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -28,6 +30,19 @@ import { CacheModule } from '@azeebo/shared-services';
     FanContestsModule,
     HealthModule,
     AdminModule,
+    // Sports feature gates: predictions + live scores ON; fan contests and
+    // third-party odds ingestion OFF until launched.
+    FlagMetricsModule.register({ service: 'sports-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('sports-service'),
+      defaultFlags: {
+        [sportsFlags.predictionMarkets]: true,
+        [sportsFlags.fanContests]: false,
+        [sportsFlags.liveScores]: true,
+        [sportsFlags.oddsFeeds]: false,
+      },
+    }),
   ],
   providers: [
     {

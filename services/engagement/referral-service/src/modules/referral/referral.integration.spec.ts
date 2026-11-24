@@ -4,7 +4,8 @@ import { ReferralService } from './referral.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
-import { Prisma } from '@prisma/client';
+import { FeatureFlagService } from '@azeebo/feature-flags';
+import { Prisma } from '../../prisma/client/index.js';
 
 describe('ReferralService Integration', () => {
   let service: ReferralService;
@@ -58,6 +59,10 @@ describe('ReferralService Integration', () => {
           },
         },
         { provide: CacheService, useValue: mockCacheService },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(false) },
+        },
       ],
     }).compile();
 

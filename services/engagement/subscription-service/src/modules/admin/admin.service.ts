@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import type { SubscriptionPlan } from '../../prisma/client/index.js';
 
@@ -42,10 +42,52 @@ export class AdminService {
     };
   }
 
-  async getPlans(): Promise<SubscriptionPlan[]> {
-    return this.prisma.subscriptionPlan.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+  async getPlans(): Promise<(SubscriptionPlan & { subscriberCount: number })[]> {
+    const [plans, counts] = await Promise.all([
+      this.prisma.subscriptionPlan.findMany({
+        orderBy: { createdAt: 'desc' },
+      }),
+      // Real per-plan subscriber counts — the admin panel renders this column
+      // and must never show fabricated numbers.
+      this.prisma.subscription.groupBy({ by: ['planId'], _count: true }),
+    ]);
+    const countByPlan = new Map(counts.map((c) => [c.planId, c._count]));
+    return plans.map((p) => ({ ...p, subscriberCount: countByPlan.get(p.id) ?? 0 }));
+  }
+
+  async createPlan(data: {
+    name: string;
+    description?: string;
+    price?: string | number;
+    currency?: string;
+    duration?: number;
+    features?: string[];
+    tier?: string;
+    isActive?: boolean;
+  }): Promise<SubscriptionPlan> {
+    try {
+      return await this.prisma.subscriptionPlan.create({
+        data: {
+          name: data.name,
+          description: data.description ?? '',
+          price: String(data.price ?? 0),
+          currency: data.currency ?? 'NGN',
+          duration: data.duration ?? 30,
+          features: data.features ?? [],
+          tier: data.tier ?? 'basic',
+          isActive: data.isActive ?? true,
+        },
+      });
+    } catch (error) {
+      // P2002: unique constraint (plan names are unique).
+      // allowed-fabricated-4xx: this 409 is not fabricated — the catch inspects
+      // the caught error's own code before choosing it, and every other cause
+      // falls through to the rethrow below with its status intact.
+      if ((error as { code?: string }).code === 'P2002') {
+        throw new ConflictException(`A plan named "${data.name}" already exists`);
+      }
+      throw error;
+    }
   }
 
   async updatePlan(

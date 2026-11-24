@@ -1,10 +1,13 @@
 'use client';
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { DollarSign, Wallet, Clock, TrendingUp, Sparkles, ArrowUpRight } from 'lucide-react';
 
 interface EarningsData {
   totalEarnings: number;
@@ -27,6 +30,7 @@ export default function CreatorEarningsPage(): React.JSX.Element {
     data: earnings,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['creator', 'earnings', period],
     queryFn: async () => {
@@ -45,253 +49,182 @@ export default function CreatorEarningsPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div
-        style={{
-          backgroundColor: 'var(--brand-near-black)',
-          minHeight: '100vh',
-          color: 'var(--text-primary)',
-        }}
-      >
-        <AppHeader active="Creator" />
-        <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-          <ErrorState title="Failed to load earnings" />
-        </main>
-        <AppFooter />
-      </div>
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 12%, transparent)">
+        <div className="max-w-xl mx-auto py-20 px-4">
+          <ErrorState
+            title="Failed to load earnings"
+            description="Unable to sync royalty ledgers from the treasury."
+            onButtonPress={() => refetch()}
+          />
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader active="Creator" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Earnings</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
-          Track your revenue and payouts
-        </p>
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
+      <PageHero
+        badge="Treasury & Settlement"
+        title="Royalties & Earnings"
+        description="Comprehensive accounting of streaming payouts, tip micro-transactions, and ad revenues across the universe."
+      />
 
-        <div style={{ marginBottom: 24 }}>
-          <label
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: 13,
-              marginBottom: 8,
-              display: 'block',
-            }}
-          >
-            Period
-          </label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {(['7d', '30d', '90d'] as const).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border-default)',
-                  background: period === p ? 'rgba(232,66,10,0.2)' : 'transparent',
-                  color: period === p ? 'var(--brand-orange)' : 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                }}
-              >
-                {p.toUpperCase()}
-              </button>
-            ))}
+      <div className="max-w-5xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Period Selector */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-mono uppercase tracking-wider text-az-ink/50">
+            Accounting Horizon
+          </span>
+          <div className="flex items-center gap-1.5 p-1 az-glass border border-az-glass-border">
+            {(['7d', '30d', '90d'] as const).map((p) => {
+              const isActive = period === p;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPeriod(p)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-[var(--color-az-flame)] text-az-surface-root shadow-lg'
+                      : 'text-az-ink/60 hover:text-az-ink'
+                  }`}
+                >
+                  {p.toUpperCase()}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {isLoading ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
-            ))}
-          </div>
-        ) : earnings ? (
-          <>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                gap: 16,
-                marginBottom: 32,
-              }}
-            >
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                }}
-              >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
-                  Total Earnings
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  ₦{earnings.totalEarnings.toLocaleString()}
-                </p>
-              </div>
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                }}
-              >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
-                  Available Balance
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-success-400)' }}>
-                  ₦{earnings.availableBalance.toLocaleString()}
-                </p>
-              </div>
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                }}
-              >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
-                  Pending
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-warning-500)' }}>
-                  ₦{earnings.pendingEarnings.toLocaleString()}
-                </p>
-              </div>
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                }}
-              >
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 4 }}>
-                  Lifetime
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  ₦{earnings.lifetimeEarnings.toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Revenue Breakdown</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-                {Object.entries(earnings.revenueBreakdown).map(([key, value]) => (
-                  <div
-                    key={key}
-                    style={{
-                      padding: 16,
-                      borderRadius: 12,
-                      border: '1px solid var(--border-default)',
-                      backgroundColor: 'rgba(26,10,10,0.5)',
-                    }}
-                  >
-                    <p
-                      style={{
-                        color: 'var(--text-secondary)',
-                        fontSize: 12,
-                        textTransform: 'capitalize',
-                      }}
-                    >
-                      {key.replace(/([A-Z])/g, ' $1')}
+        {/* Primary Metric Cards */}
+        <ScrollReveal>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              {
+                label: 'Total Earnings',
+                value: `₦${earnings?.totalEarnings.toLocaleString() || '0'}`,
+                icon: DollarSign,
+                color: 'text-[var(--color-az-flame)]',
+                border: 'hover:border-[var(--color-az-flame)]/40',
+              },
+              {
+                label: 'Available Balance',
+                value: `₦${earnings?.availableBalance.toLocaleString() || '0'}`,
+                icon: Wallet,
+                color: 'text-az-success-400',
+                border: 'hover:border-az-success-500/40',
+              },
+              {
+                label: 'Pending In Transit',
+                value: `₦${earnings?.pendingEarnings.toLocaleString() || '0'}`,
+                icon: Clock,
+                color: 'text-az-warning-400',
+                border: 'hover:border-az-warning-500/40',
+              },
+              {
+                label: 'Lifetime Accrual',
+                value: `₦${earnings?.lifetimeEarnings.toLocaleString() || '0'}`,
+                icon: TrendingUp,
+                color: 'text-az-category-violet-light',
+                border: 'hover:border-az-category-violet/40',
+              },
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className={`az-glass p-5 sm:p-6 border border-az-glass-border ${stat.border} transition-all`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-az-ink/40">
+                      {stat.label}
+                    </span>
+                    <div className="w-8 h-8 rounded-lg bg-az-glass-fill border border-az-glass-border flex items-center justify-center">
+                      <Icon className={`w-4 h-4 ${stat.color}`} />
+                    </div>
+                  </div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <p className="az-headline text-2xl sm:text-3xl font-extrabold text-az-ink">
+                      {stat.value}
                     </p>
-                    <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </ScrollReveal>
+
+        {/* Revenue Breakdown */}
+        {earnings && (
+          <ScrollReveal delay={0.1}>
+            <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+              <h2 className="text-lg font-bold text-az-ink mb-6 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[var(--color-az-flame)]" />
+                Revenue Stream Decomposition
+              </h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {Object.entries(earnings.revenueBreakdown).map(([key, value]) => (
+                  <div key={key} className="p-4 rounded-xl bg-az-ink/[0.03] border border-az-ink/5">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-az-ink/40 block mb-1">
+                      {key.replace(/([A-Z])/g, ' $1')}
+                    </span>
+                    <p className="text-xl font-bold text-az-ink tracking-tight">
                       ₦{value.toLocaleString()}
                     </p>
                   </div>
                 ))}
               </div>
             </div>
+          </ScrollReveal>
+        )}
 
-            <div>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Recent Earnings</h2>
-              {earnings.earningsHistory.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-                  No recent earnings
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {earnings.earningsHistory.map((item, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: 16,
-                        borderRadius: 16,
-                        border: '1px solid var(--border-default)',
-                        backgroundColor: 'rgba(26,10,10,0.5)',
-                      }}
-                    >
-                      <div>
-                        <p
-                          style={{
-                            fontWeight: 600,
-                            fontSize: 14,
-                            color: 'var(--text-primary)',
-                            margin: 0,
-                          }}
-                        >
-                          {item.source}
-                        </p>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{item.date}</p>
+        {/* Recent Payout History */}
+        <ScrollReveal delay={0.2}>
+          <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+            <h2 className="text-lg font-bold text-az-ink mb-6">Recent Settlement Ledger</h2>
+            {!earnings || earnings.earningsHistory.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-sm text-az-ink/40">No earnings recorded for this timeframe.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {earnings.earningsHistory.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-xl bg-az-ink/[0.03] border border-az-ink/5 hover:border-az-glass-border flex items-center justify-between transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-az-glass-fill border border-az-glass-border flex items-center justify-center">
+                        <ArrowUpRight className="w-4 h-4 text-az-success-400" />
                       </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <p
-                          style={{
-                            fontWeight: 600,
-                            fontSize: 14,
-                            color:
-                              item.status === 'pending'
-                                ? 'var(--color-warning-500)'
-                                : 'var(--color-success-400)',
-                          }}
-                        >
-                          ₦{item.amount.toLocaleString()}
-                        </p>
-                        <p
-                          style={{
-                            fontSize: 11,
-                            color: 'var(--text-tertiary)',
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {item.status}
-                        </p>
+                      <div>
+                        <p className="text-sm font-semibold text-az-ink">{item.source}</p>
+                        <p className="text-xs text-az-ink/40">{item.date}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-            No earnings data available yet.
-          </p>
-        )}
-      </main>
-      <AppFooter />
-    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-az-success-400">
+                        +₦{item.amount.toLocaleString()}
+                      </p>
+                      <span
+                        className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full ${
+                          item.status === 'completed'
+                            ? 'bg-az-success-500/10 text-az-success-400'
+                            : 'bg-az-warning-500/10 text-az-warning-400'
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollReveal>
+      </div>
+    </PageShell>
   );
 }

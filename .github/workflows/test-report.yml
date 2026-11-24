@@ -1,0 +1,41 @@
+name: Test Report
+
+on:
+  workflow_run:
+    workflows: ["CI", "PR Checks"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+
+    steps:
+      - name: Download test results
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        continue-on-error: true
+        with:
+          name: test-sweep-artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Publish Test Report
+        uses: dorny/test-reporter@3eeb9fc888e82e8be2fb356bbeec2750231672bc # v1
+        if: always()
+        with:
+          name: Test Results
+          path: '**/*.xml'
+          reporter: jest-junit
+
+      - name: Publish Coverage Report
+        uses: davelosert/vitest-coverage-report-action@c4bbc33a89b7ace0e63d35f1f7d4bcee31155a73 # v2
+        if: always()
+        with:
+          working-directory: apps/web
+

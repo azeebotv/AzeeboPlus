@@ -11,10 +11,11 @@ import {
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { creatorApi } from '../../src/api/creator';
-import { apiClient } from '../../src/api/client';
-import { logger } from '../../src/utils/logger';
+import { creatorApi } from '@azeebo/react-data/api/creator';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 export default function CreatorSignup() {
   const colorScheme = useColorScheme();
@@ -117,7 +118,7 @@ export default function CreatorSignup() {
 
   if (isLoadingOptions) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Signup Screen" style={styles.container}>
         <LoadingState text="Loading options..." />
       </SafeAreaView>
     );
@@ -135,7 +136,7 @@ export default function CreatorSignup() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={handleBack}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -304,7 +305,7 @@ export default function CreatorSignup() {
 
           <View style={styles.buttonBar}>
             {step > 1 && (
-              <TouchableOpacity style={styles.backButtonMain} onPress={handleBack}>
+              <TouchableOpacity accessibilityRole="button" style={styles.backButtonMain} onPress={handleBack}>
                 <Text style={styles.backButtonMainText}>Back</Text>
               </TouchableOpacity>
             )}
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -366,12 +367,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   progressCircleActive: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.category.teal,
   },
   progressItemActive: {},
   progressNumber: {
@@ -382,10 +383,10 @@ const styles = StyleSheet.create({
   progressLine: {
     flex: 1,
     height: 2,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
   },
   progressLineActive: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.category.teal,
   },
   content: {
     flex: 1,
@@ -400,7 +401,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   stepDesc: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
     marginBottom: 24,
   },
@@ -418,7 +419,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   optionCardActive: {
-    borderColor: '#4ECDC4',
+    borderColor: colors.category.teal,
   },
   optionEmoji: {
     fontSize: 32,
@@ -436,7 +437,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.category.teal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -453,7 +454,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   optionListItemActive: {
-    borderColor: '#4ECDC4',
+    borderColor: colors.category.teal,
   },
   optionListLabel: {
     fontSize: 16,
@@ -492,7 +493,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
   },
   backButtonMainText: {
     color: '#fff',
@@ -504,7 +505,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.category.teal,
   },
   nextButtonText: {
     color: '#000',

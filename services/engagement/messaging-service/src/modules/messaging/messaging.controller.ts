@@ -17,6 +17,7 @@ import { MessagingService } from './messaging.service.js';
 import { CreateConversationDto, SendMessageDto, MarkAsReadDto } from './dto/messaging.dto.js';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 import { User } from '@azeebo/shared-types';
+import { FeatureFlag, FeatureFlagGuard, messagingFlags } from '@azeebo/feature-flags';
 
 interface AuthRequest extends Request {
   user: User;
@@ -26,6 +27,8 @@ interface AuthRequest extends Request {
 @ApiBearerAuth()
 @Controller('messaging')
 @UseGuards(RateLimitGuard, ServiceAuthGuard)
+@UseGuards(FeatureFlagGuard)
+@FeatureFlag(messagingFlags.dmEnabled)
 export class MessagingController {
   constructor(@Inject(MessagingService) private readonly messagingService: MessagingService) {}
 
@@ -189,6 +192,8 @@ export class MessagingController {
   }
 
   @Post('conversations/:conversationId/read')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(messagingFlags.readReceipts)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Mark message as read' })
   @ApiResponse({ status: 200, description: 'Message marked as read' })

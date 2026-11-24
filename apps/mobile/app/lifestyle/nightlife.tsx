@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi, NightlifeVenue } from '../../src/api/lifestyle';
+import { lifestyleApi, NightlifeVenue } from '@azeebo/react-data/api/lifestyle';
 
 const CATEGORIES = ['All', 'Bars', 'Clubs', 'Lounges', 'Rooftops', 'Lounge'];
 
@@ -57,7 +57,9 @@ export default function NightlifeScreen() {
     >
       <Image
         source={{
-          uri: item.image || 'https://placehold.co/400x200/1a1a1a/ffffff?text=Venue',
+          uri:
+            item.image ||
+            'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=400&h=200&q=80',
         }}
         style={styles.venueImage}
         resizeMode="cover"
@@ -110,7 +112,9 @@ export default function NightlifeScreen() {
     >
       <Image
         source={{
-          uri: item.image || 'https://placehold.co/300x200/1a1a1a/ffffff?text=Venue',
+          uri:
+            item.image ||
+            'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=300&h=200&q=80',
         }}
         style={styles.featuredImage}
         resizeMode="cover"
@@ -129,10 +133,10 @@ export default function NightlifeScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Nightlife Screen" style={styles.container}>
       <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Nightlife</Text>

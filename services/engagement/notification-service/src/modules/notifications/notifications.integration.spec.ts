@@ -4,6 +4,7 @@ jest.mock('@azeebo/shared-services', () => ({
   EmailService: 'EmailService',
   SmsService: 'SmsService',
   CacheService: 'CacheService',
+  RedisService: 'RedisService',
   cacheKey: (...args: unknown[]) => args.join(':'),
 }));
 
@@ -12,10 +13,25 @@ import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { NotificationsService } from './notifications.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
-import { FirebaseService, EmailService, SmsService, CacheService } from '@azeebo/shared-services';
+import {
+  FirebaseService,
+  EmailService,
+  SmsService,
+  CacheService,
+  RedisService,
+} from '@azeebo/shared-services';
+import { FeatureFlagService, notificationFlags } from '@azeebo/feature-flags';
 
 describe('NotificationsService Integration', () => {
   let service: NotificationsService;
+
+  const mockFlagService = {
+    isEnabled: jest
+      .fn()
+      .mockImplementation((key: string) =>
+        Promise.resolve(key !== notificationFlags.preferencesV2)
+      ),
+  };
 
   const mockPrismaService = {
     notification: {
@@ -83,6 +99,18 @@ describe('NotificationsService Integration', () => {
           },
         },
         { provide: CacheService, useValue: mockCacheService },
+        {
+          provide: RedisService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            del: jest.fn().mockResolvedValue(0),
+          },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: mockFlagService,
+        },
       ],
     }).compile();
 
@@ -224,6 +252,103 @@ describe('NotificationsService Integration', () => {
         where: { userId: 'user-1' },
         update: { categoryOverrides: { email: true, sms: true, push: false } },
         create: expect.any(Object),
+      });
+    });
+
+    it('(v2) writes per-channel columns + separate categoryOverrides when the flag is on', async () => {
+      mockFlagService.isEnabled.mockResolvedValue(true);
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(null);
+      mockPrismaService.notificationPreference.upsert.mockResolvedValue({});
+
+      const result = await service.updatePreferences('user-1', {
+        email: false,
+        push: true,
+        quietHoursStart: '22:00',
+        timezone: 'Africa/Lagos',
+        categoryOverrides: { payment: false },
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockPrismaService.notificationPreference.upsert).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+        update: expect.objectContaining({
+          emailEnabled: false,
+          pushEnabled: true,
+          quietHoursStart: '22:00',
+          timezone: 'Africa/Lagos',
+          categoryOverrides: { payment: false },
+        }),
+        create: expect.objectContaining({
+          emailEnabled: false,
+          pushEnabled: true,
+          quietHoursStart: '22:00',
+          timezone: 'Africa/Lagos',
+          categoryOverrides: { payment: false },
+        }),
+      });
+    });
+
+    it('(v2) drops v2-only fields while the flag is off (legacy flat map only)', async () => {
+      mockFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key !== notificationFlags.preferencesV2)
+      );
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(null);
+      mockPrismaService.notificationPreference.upsert.mockResolvedValue({});
+
+      await service.updatePreferences('user-1', {
+        email: false,
+        quietHoursStart: '22:00',
+        timezone: 'Africa/Lagos',
+      });
+
+      expect(mockPrismaService.notificationPreference.upsert).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+        update: { categoryOverrides: { email: false } },
+        create: { userId: 'user-1', categoryOverrides: { email: false } },
+      });
+    });
+  });
+
+  describe('getPreferences', () => {
+    it('returns the legacy flat settings map when the flag is off', async () => {
+      mockFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key !== notificationFlags.preferencesV2)
+      );
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue({
+        categoryOverrides: { email: true, push: false },
+      });
+
+      const result = await service.getPreferences('user-1');
+
+      const data = result.data as Record<string, unknown>;
+      expect(data.settings).toEqual({ email: true, push: false });
+    });
+
+    it('returns the full v2 surface when the flag is on', async () => {
+      mockFlagService.isEnabled.mockResolvedValue(true);
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue({
+        pushEnabled: true,
+        emailEnabled: false,
+        smsEnabled: true,
+        inAppEnabled: true,
+        quietHoursStart: '22:00',
+        quietHoursEnd: '07:00',
+        timezone: 'Africa/Lagos',
+        categoryOverrides: { payment: false },
+      });
+
+      const result = await service.getPreferences('user-1');
+
+      const data = result.data as Record<string, unknown>;
+      expect(data).toEqual({
+        push: true,
+        email: false,
+        sms: true,
+        inApp: true,
+        quietHoursStart: '22:00',
+        quietHoursEnd: '07:00',
+        timezone: 'Africa/Lagos',
+        categoryOverrides: { payment: false },
       });
     });
   });

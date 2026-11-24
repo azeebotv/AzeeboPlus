@@ -16,26 +16,55 @@ import {
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let mockAxiosFn: any;
-function createMockAxiosInstance() {
-  mockAxiosFn = jest.fn();
-  mockAxiosFn.interceptors = {
+/** Callable axios instance mock with the client methods + jest mock controls. */
+type MockAxiosInstance = jest.Mock & {
+  interceptors: {
+    request: { use: jest.Mock; eject: jest.Mock };
+    response: { use: jest.Mock };
+  };
+  get: jest.Mock;
+  post: jest.Mock;
+  put: jest.Mock;
+  patch: jest.Mock;
+  delete: jest.Mock;
+};
+
+/** Test access to ServiceClient internals (not part of the public API). */
+interface TestableServiceClient {
+  retryRequest: (
+    request: () => Promise<unknown>,
+    maxAttempts: number,
+    baseDelayMs: number
+  ) => Promise<unknown>;
+  isRetryableError: (error: { response?: { status?: unknown }; code?: unknown }) => boolean;
+}
+
+const asServiceClient = (client: ServiceClient): TestableServiceClient =>
+  client as unknown as TestableServiceClient;
+
+let mockAxiosFn: MockAxiosInstance;
+function createMockAxiosInstance(): MockAxiosInstance {
+  const mock = jest.fn() as MockAxiosInstance;
+  mock.interceptors = {
     request: { use: jest.fn(), eject: jest.fn() },
     response: { use: jest.fn() },
   };
-  mockAxiosFn.get = jest.fn();
-  mockAxiosFn.post = jest.fn();
-  mockAxiosFn.put = jest.fn();
-  mockAxiosFn.patch = jest.fn();
-  mockAxiosFn.delete = jest.fn();
+  mock.get = jest.fn();
+  mock.post = jest.fn();
+  mock.put = jest.fn();
+  mock.patch = jest.fn();
+  mock.delete = jest.fn();
+  mockAxiosFn = mock;
   return mockAxiosFn;
 }
 
 // Mock axios.isAxiosError to work with our test objects
-(mockedAxios as any).isAxiosError = jest.fn().mockImplementation(
-  (error: any) => error?.response?.status !== undefined || error?.code !== undefined
-);
+(mockedAxios as unknown as { isAxiosError: jest.Mock }).isAxiosError = jest
+  .fn()
+  .mockImplementation(
+    (error: { response?: { status?: unknown }; code?: unknown }) =>
+      error?.response?.status !== undefined || error?.code !== undefined
+  );
 
 let mockCryptoUuidCounter = 0;
 jest.mock('crypto', () => ({
@@ -62,7 +91,8 @@ describe('withRetry', () => {
   });
 
   it('should retry on failure and eventually succeed', async () => {
-    const fn = jest.fn()
+    const fn = jest
+      .fn()
       .mockRejectedValueOnce(new Error('Attempt 1 failed'))
       .mockRejectedValueOnce(new Error('Attempt 2 failed'))
       .mockResolvedValueOnce('success');
@@ -81,12 +111,15 @@ describe('withRetry', () => {
 
     // Use real timers so setTimeout rejects naturally
     jest.useRealTimers();
-    await expect(withRetry(fn, { maxAttempts: 2, baseDelayMs: 1 })).rejects.toThrow('Persistent failure');
+    await expect(withRetry(fn, { maxAttempts: 2, baseDelayMs: 1 })).rejects.toThrow(
+      'Persistent failure'
+    );
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
   it('should respect custom retryOn condition', async () => {
-    const fn = jest.fn()
+    const fn = jest
+      .fn()
       .mockRejectedValueOnce(new Error('Some non-retry error'))
       .mockRejectedValueOnce(new Error('Should not get here'));
 
@@ -105,7 +138,9 @@ describe('withRetry', () => {
 
     const startTime = Date.now();
     jest.useRealTimers();
-    await expect(withRetry(fn, { maxAttempts: 3, baseDelayMs: 5, jitterFactor: 0 })).rejects.toThrow();
+    await expect(
+      withRetry(fn, { maxAttempts: 3, baseDelayMs: 5, jitterFactor: 0 })
+    ).rejects.toThrow();
     const elapsed = Date.now() - startTime;
     expect(elapsed).toBeGreaterThanOrEqual(10);
   }, 10000);
@@ -156,7 +191,7 @@ describe('NoopTokenStorage', () => {
 
 describe('ApiClient', () => {
   let client: ApiClient;
-  let axiosInstance: any;
+  let axiosInstance: MockAxiosInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -174,7 +209,7 @@ describe('ApiClient', () => {
       expect(mockedAxios.create).toHaveBeenCalledWith(
         expect.objectContaining({
           baseURL: 'http://test-api.com',
-          timeout: 30000,
+          timeout: 5000,
         })
       );
     });
@@ -182,7 +217,8 @@ describe('ApiClient', () => {
     it('should create with custom config', () => {
       new ApiClient({
         baseUrl: 'http://custom.com',
-        timeout: 5000,
+        // Explicit override — long jobs opt out of the 5s default (AUD-21).
+        timeout: 30000,
         tokenStorage: new NoopTokenStorage(),
         defaultHeaders: { 'X-Custom': 'value' },
       });
@@ -190,7 +226,7 @@ describe('ApiClient', () => {
       expect(mockedAxios.create).toHaveBeenCalledWith(
         expect.objectContaining({
           baseURL: 'http://custom.com',
-          timeout: 5000,
+          timeout: 30000,
           headers: expect.objectContaining({ 'X-Custom': 'value' }),
         })
       );
@@ -278,9 +314,7 @@ describe('ApiClient', () => {
         response: { status: 503 },
       };
 
-      axiosInstance
-        .mockRejectedValueOnce(mockError)
-        .mockResolvedValueOnce({ data: 'recovered' });
+      axiosInstance.mockRejectedValueOnce(mockError).mockResolvedValueOnce({ data: 'recovered' });
 
       const result = await client.get('/retry-5xx');
       expect(result.success).toBe(true);
@@ -323,7 +357,7 @@ describe('ApiClient', () => {
 
 describe('ServiceClient', () => {
   let serviceClient: ServiceClient;
-  let axiosInstance: any;
+  let axiosInstance: MockAxiosInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -415,21 +449,23 @@ describe('ServiceClient', () => {
   describe('retryRequest', () => {
     it('should succeed on first attempt', async () => {
       const request = jest.fn().mockResolvedValue({ data: 'ok' });
-      const result = await (serviceClient as any).retryRequest(request, 3, 10);
+      const result = await asServiceClient(serviceClient).retryRequest(request, 3, 10);
       expect(result).toEqual({ data: 'ok' });
     });
 
     it('should retry on retryable error', async () => {
       jest.useFakeTimers({ legacyFakeTimers: false });
       // Create an error that passes isRetryableError
-      const retryableError = new Error('ECONNREFUSED') as any;
-      retryableError.code = 'ECONNREFUSED';
+      const retryableError = Object.assign(new Error('ECONNREFUSED'), {
+        code: 'ECONNREFUSED',
+      });
 
-      const request = jest.fn()
+      const request = jest
+        .fn()
         .mockRejectedValueOnce(retryableError)
         .mockResolvedValueOnce({ data: 'recovered' });
 
-      const resultPromise = (serviceClient as any).retryRequest(request, 1, 10);
+      const resultPromise = asServiceClient(serviceClient).retryRequest(request, 1, 10);
       await jest.advanceTimersByTimeAsync(50);
       const result = await resultPromise;
 
@@ -441,34 +477,60 @@ describe('ServiceClient', () => {
 
   describe('isRetryableError', () => {
     it('should return true for 408 status', () => {
-      expect((serviceClient as any).isRetryableError({ response: { status: 408 } })).toBe(true);
+      expect(asServiceClient(serviceClient).isRetryableError({ response: { status: 408 } })).toBe(
+        true
+      );
     });
 
     it('should return true for 429 status', () => {
-      expect((serviceClient as any).isRetryableError({ response: { status: 429 } })).toBe(true);
+      expect(asServiceClient(serviceClient).isRetryableError({ response: { status: 429 } })).toBe(
+        true
+      );
     });
 
     it('should return true for 502/503/504 status', () => {
-      expect((serviceClient as any).isRetryableError({ response: { status: 502 } })).toBe(true);
-      expect((serviceClient as any).isRetryableError({ response: { status: 503 } })).toBe(true);
-      expect((serviceClient as any).isRetryableError({ response: { status: 504 } })).toBe(true);
+      expect(asServiceClient(serviceClient).isRetryableError({ response: { status: 502 } })).toBe(
+        true
+      );
+      expect(asServiceClient(serviceClient).isRetryableError({ response: { status: 503 } })).toBe(
+        true
+      );
+      expect(asServiceClient(serviceClient).isRetryableError({ response: { status: 504 } })).toBe(
+        true
+      );
     });
 
     it('should return true for connection errors', () => {
-      expect((serviceClient as any).isRetryableError({ code: 'ECONNABORTED', response: undefined })).toBe(true);
-      expect((serviceClient as any).isRetryableError({ code: 'ECONNREFUSED', response: undefined })).toBe(true);
+      expect(
+        asServiceClient(serviceClient).isRetryableError({
+          code: 'ECONNABORTED',
+          response: undefined,
+        })
+      ).toBe(true);
+      expect(
+        asServiceClient(serviceClient).isRetryableError({
+          code: 'ECONNREFUSED',
+          response: undefined,
+        })
+      ).toBe(true);
     });
 
     it('should return false for non-retryable errors', () => {
-      expect((serviceClient as any).isRetryableError({ response: { status: 400 } })).toBe(false);
-      expect((serviceClient as any).isRetryableError({ response: { status: 401 } })).toBe(false);
-      expect((serviceClient as any).isRetryableError({ response: { status: 403 } })).toBe(false);
+      expect(asServiceClient(serviceClient).isRetryableError({ response: { status: 400 } })).toBe(
+        false
+      );
+      expect(asServiceClient(serviceClient).isRetryableError({ response: { status: 401 } })).toBe(
+        false
+      );
+      expect(asServiceClient(serviceClient).isRetryableError({ response: { status: 403 } })).toBe(
+        false
+      );
     });
   });
 });
 
 describe('Service-specific clients', () => {
-  let mockInstance: any;
+  let mockInstance: MockAxiosInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -488,7 +550,9 @@ describe('Service-specific clients', () => {
     });
 
     it('should refresh token', async () => {
-      mockInstance.post.mockResolvedValue({ data: { accessToken: 'new-token', refreshToken: 'new-refresh' } });
+      mockInstance.post.mockResolvedValue({
+        data: { accessToken: 'new-token', refreshToken: 'new-refresh' },
+      });
       const client = new AuthServiceClient();
       await client.refreshToken('refresh-token');
     });
@@ -508,7 +572,9 @@ describe('Service-specific clients', () => {
     });
 
     it('should get wallet', async () => {
-      mockInstance.get.mockResolvedValue({ data: { id: 'w1', userId: 'u1', balance: '1000', currency: 'NGN' } });
+      mockInstance.get.mockResolvedValue({
+        data: { id: 'w1', userId: 'u1', balance: '1000', currency: 'NGN' },
+      });
       const client = new WalletServiceClient();
       await client.getWallet('user-1');
     });

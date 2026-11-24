@@ -3,10 +3,34 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import {
+  Trophy,
+  Medal,
+  Award,
+  Film,
+  Gamepad2,
+  Tv,
+  Music,
+  Star,
+  BarChart3,
+  ArrowUp,
+  ArrowDown,
+} from 'lucide-react';
+
+function renderCatIcon(icon?: string): React.JSX.Element {
+  if (!icon) return <Trophy className="w-4 h-4" />;
+  const lower = icon.toLowerCase();
+  if (lower.includes('film') || lower.includes('movie')) return <Film className="w-4 h-4" />;
+  if (lower.includes('game')) return <Gamepad2 className="w-4 h-4" />;
+  if (lower.includes('tv') || lower.includes('show')) return <Tv className="w-4 h-4" />;
+  if (lower.includes('music')) return <Music className="w-4 h-4" />;
+  if (lower.includes('star') || lower.includes('award')) return <Star className="w-4 h-4" />;
+  return <Trophy className="w-4 h-4" />;
+}
 
 interface RankingEntry {
   userId: string;
@@ -23,6 +47,31 @@ interface RankingCategory {
   name: string;
   icon: string;
   description: string;
+}
+
+/* Podium places are reward ranks, not statuses, so they keep the categorical
+   metallic ramp instead of the semantic colour set. */
+const MEDALS: Record<number, { ring: string; tone: string; icon: typeof Trophy }> = {
+  1: { ring: 'border-az-accent-gold', tone: 'text-az-accent-gold', icon: Trophy },
+  2: {
+    ring: 'border-[var(--color-az-accent-silver)]',
+    tone: 'text-[var(--color-az-accent-silver)]',
+    icon: Medal,
+  },
+  3: {
+    ring: 'border-[var(--color-az-accent-bronze)]',
+    tone: 'text-[var(--color-az-accent-bronze)]',
+    icon: Award,
+  },
+};
+
+function chipClasses(isActive: boolean): string {
+  return [
+    'az-body-strong inline-flex items-center gap-2 whitespace-nowrap rounded-az-pill border px-4 py-2 transition-all',
+    isActive
+      ? 'border-transparent bg-gradient-to-br from-az-scarlet to-az-flame text-az-ink shadow-az-glow'
+      : 'border-az-ink/20 bg-az-ink/8 text-az-ink hover:border-az-glass-border-hover hover:bg-az-glass-fill',
+  ].join(' ');
 }
 
 export default function RankingsPage(): React.JSX.Element {
@@ -83,211 +132,176 @@ export default function RankingsPage(): React.JSX.Element {
   const isLoading = categoriesQuery.isLoading || rankingsQuery.isLoading;
   const error = categoriesQuery.error?.message || rankingsQuery.error?.message || null;
 
-  const getRankBadge = (rank: number): { emoji: string; color: string } => {
-    switch (rank) {
-      case 1:
-        return { emoji: '🥇', color: 'var(--color-warning-400)' };
-      case 2:
-        return { emoji: '🥈', color: '#D1D5DB' };
-      case 3:
-        return { emoji: '🥉', color: '#D97706' };
-      default:
-        return { emoji: '', color: 'rgba(255,255,255,0.4)' };
-    }
-  };
+  const categoryChips = (
+    <div
+      className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+      role="listbox"
+      aria-label="Ranking categories"
+    >
+      <button
+        type="button"
+        onClick={() => setSelectedCategory('overall')}
+        role="option"
+        aria-selected={selectedCategory === 'overall'}
+        className={chipClasses(selectedCategory === 'overall')}
+      >
+        <BarChart3 className="w-4 h-4" aria-hidden="true" />
+        Overall
+      </button>
+      {categories.map((cat) => (
+        <button
+          key={cat.id}
+          type="button"
+          onClick={() => setSelectedCategory(cat.id)}
+          role="option"
+          aria-selected={selectedCategory === cat.id}
+          className={chipClasses(selectedCategory === cat.id)}
+        >
+          {renderCatIcon(cat.icon)}
+          <span>{cat.name}</span>
+        </button>
+      ))}
+    </div>
+  );
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Rankings" />
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">Rankings</h1>
-          <p className="text-white/50 text-lg">See who&apos;s on top across different categories</p>
-        </div>
+    <PageShell
+      activeNav="Rankings"
+      maxWidth="lg"
+      glowColor="color-mix(in srgb, var(--color-az-warning-500) 18%, transparent)"
+    >
+      <PageHero
+        title="Rankings"
+        description="See who's on top across different categories"
+        actions={categoryChips}
+      />
 
-        <div
-          className="flex gap-2 overflow-x-auto pb-4 mb-8"
-          role="listbox"
-          aria-label="Ranking categories"
-        >
-          <button
-            onClick={() => setSelectedCategory('overall')}
-            role="option"
-            aria-selected={selectedCategory === 'overall'}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === 'overall' ? 'az-btn-primary' : ''}`}
-            style={
-              selectedCategory !== 'overall'
-                ? {
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    backgroundColor: 'rgba(255,255,255,0.08)',
-                    color: 'var(--brand-white)',
-                  }
-                : undefined
-            }
-          >
-            📊 Overall
-          </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              role="option"
-              aria-selected={selectedCategory === cat.id}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === cat.id ? 'az-btn-primary' : ''}`}
-              style={
-                selectedCategory !== cat.id
-                  ? {
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      backgroundColor: 'rgba(255,255,255,0.08)',
-                      color: 'var(--brand-white)',
-                    }
-                  : undefined
-              }
-            >
-              {cat.icon} {cat.name}
-            </button>
+      {isLoading ? (
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="az-glass h-20">
+              <Skeleton height="100%" borderRadius="16px" />
+            </div>
           ))}
         </div>
-
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="az-glass h-20">
-                <Skeleton height="100%" borderRadius="16px" />
-              </div>
-            ))}
-          </div>
-        ) : error ? (
-          <ErrorState
-            title="Failed to load rankings"
-            description={error}
-            buttonText="Retry"
-            onButtonPress={() => rankingsQuery.refetch()}
-          />
-        ) : (
-          rankingData && (
-            <>
-              {rankingData.entries.length >= 3 && (
-                <div className="grid grid-cols-3 gap-4 mb-8">
-                  {[1, 0, 2].map((idx) => {
-                    const entry = rankingData.entries[idx];
-                    if (!entry) return null;
-                    const badge = getRankBadge(entry.rank);
-                    return (
+      ) : error ? (
+        <ErrorState
+          title="Failed to load rankings"
+          description={error}
+          buttonText="Retry"
+          onButtonPress={() => rankingsQuery.refetch()}
+        />
+      ) : (
+        rankingData && (
+          <>
+            {rankingData.entries.length >= 3 && (
+              <div className="mb-8 grid grid-cols-3 gap-4">
+                {[1, 0, 2].map((idx) => {
+                  const entry = rankingData.entries[idx];
+                  if (!entry) return null;
+                  const medal = MEDALS[entry.rank] ?? MEDALS[1];
+                  const RankIcon = medal.icon;
+                  return (
+                    <div
+                      key={entry.userId}
+                      className={`az-glass p-6 text-center ${idx === 0 ? 'col-start-2 az-glass--glow' : ''}`}
+                    >
+                      <RankIcon
+                        className={`mx-auto mb-2 size-6 ${medal.tone}`}
+                        aria-hidden="true"
+                      />
                       <div
-                        key={entry.userId}
-                        className={`az-glass p-6 text-center ${idx === 0 ? 'col-start-2' : ''}`}
-                        style={
-                          idx === 0 ? { boxShadow: '0 0 30px rgba(234,179,8,0.2)' } : undefined
-                        }
+                        className={`mx-auto mb-3 flex size-20 items-center justify-center overflow-hidden rounded-full border-2 bg-gradient-to-br from-az-flame to-az-scarlet az-title font-bold text-az-ink ${medal.ring}`}
                       >
-                        <div className="text-4xl mb-2">{badge.emoji}</div>
-                        <div
-                          className="w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold text-white"
-                          style={{
-                            background: `linear-gradient(135deg, ${badge.color}, ${badge.color}dd)`,
-                          }}
-                        >
-                          {entry.avatar ? (
-                            <OptimizedImage
-                              src={entry.avatar}
-                              alt={entry.displayName}
-                              className="w-full h-full rounded-full object-cover"
-                            />
-                          ) : (
-                            entry.displayName.charAt(0)
-                          )}
-                        </div>
-                        <h3 className="font-bold text-white">{entry.displayName}</h3>
-                        <p
-                          className="text-xl font-bold mt-1"
-                          style={{ color: 'var(--brand-orange)' }}
-                        >
-                          {entry.score.toLocaleString()}
-                        </p>
-                        {entry.change !== 0 && (
-                          <p
-                            className={`text-sm mt-1 font-medium`}
-                            style={{
-                              color:
-                                entry.change > 0
-                                  ? 'var(--color-success-500)'
-                                  : 'var(--color-error-500)',
-                            }}
-                          >
-                            {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
-                          </p>
+                        {entry.avatar ? (
+                          <OptimizedImage
+                            src={entry.avatar}
+                            alt={entry.displayName}
+                            className="size-full rounded-full object-cover"
+                          />
+                        ) : (
+                          entry.displayName.charAt(0)
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="az-glass overflow-hidden">
-                <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                  {rankingData.entries
-                    .slice(rankingData.entries.length >= 3 ? 3 : 0)
-                    .map((entry) => (
-                      <div
-                        key={entry.userId}
-                        className="flex items-center gap-4 p-4 hover:bg-white/5 transition-colors"
-                      >
-                        <span
-                          className="w-8 text-center font-bold"
-                          style={{ color: 'rgba(255,255,255,0.4)' }}
+                      <h3 className="az-body-strong text-az-ink">{entry.displayName}</h3>
+                      <p className={`az-subtitle mt-1 font-bold ${medal.tone}`}>
+                        {entry.score.toLocaleString()}
+                      </p>
+                      {entry.change !== 0 && (
+                        <p
+                          className={`az-caption mt-1 inline-flex items-center gap-0.5 font-medium ${
+                            entry.change > 0 ? 'text-az-success-500' : 'text-az-error-500'
+                          }`}
                         >
-                          #{entry.rank}
-                        </span>
-                        <div
-                          className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white"
-                          style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                        >
-                          {entry.avatar ? (
-                            <OptimizedImage
-                              src={entry.avatar}
-                              alt={entry.displayName}
-                              className="w-full h-full rounded-full object-cover"
-                            />
+                          {entry.change > 0 ? (
+                            <ArrowUp className="size-3.5" aria-hidden="true" />
                           ) : (
-                            entry.displayName.charAt(0)
+                            <ArrowDown className="size-3.5" aria-hidden="true" />
                           )}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-white">{entry.displayName}</h3>
-                          <p className="text-sm text-white/50">Level {entry.level}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-lg" style={{ color: 'var(--brand-orange)' }}>
-                            {entry.score.toLocaleString()}
-                          </p>
-                          {entry.change !== 0 && (
-                            <p
-                              className="text-sm font-medium"
-                              style={{
-                                color:
-                                  entry.change > 0
-                                    ? 'var(--color-success-500)'
-                                    : 'var(--color-error-500)',
-                              }}
-                            >
-                              {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                </div>
+                          {Math.abs(entry.change)}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+            )}
 
-              <p className="text-center text-sm text-white/30 mt-6">
-                Updated: {new Date(rankingData.lastUpdated).toLocaleString()}
-              </p>
-            </>
-          )
-        )}
-      </main>
-      <AppFooter />
-    </div>
+            <div className="az-glass overflow-hidden">
+              <div className="divide-y divide-az-ink/8">
+                {rankingData.entries.slice(rankingData.entries.length >= 3 ? 3 : 0).map((entry) => (
+                  <div
+                    key={entry.userId}
+                    className="flex items-center gap-4 p-4 transition-colors hover:bg-az-glass-fill"
+                  >
+                    <span className="az-body-strong w-8 text-center text-az-ink/40">
+                      #{entry.rank}
+                    </span>
+                    <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-az-flame to-az-scarlet az-title font-bold text-az-ink">
+                      {entry.avatar ? (
+                        <OptimizedImage
+                          src={entry.avatar}
+                          alt={entry.displayName}
+                          className="size-full rounded-full object-cover"
+                        />
+                      ) : (
+                        entry.displayName.charAt(0)
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="az-body-strong truncate text-az-ink">{entry.displayName}</h3>
+                      <p className="az-caption text-az-ink/50">Level {entry.level}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="az-lead font-bold text-az-ink-dim">
+                        {entry.score.toLocaleString()}
+                      </p>
+                      {entry.change !== 0 && (
+                        <p
+                          className={`az-caption inline-flex items-center justify-end gap-0.5 font-medium ${
+                            entry.change > 0 ? 'text-az-success-500' : 'text-az-error-500'
+                          }`}
+                        >
+                          {entry.change > 0 ? (
+                            <ArrowUp className="size-3.5" aria-hidden="true" />
+                          ) : (
+                            <ArrowDown className="size-3.5" aria-hidden="true" />
+                          )}
+                          {Math.abs(entry.change)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="az-caption mt-6 text-center text-az-ink/30">
+              Updated: {new Date(rankingData.lastUpdated).toLocaleString()}
+            </p>
+          </>
+        )
+      )}
+    </PageShell>
   );
 }

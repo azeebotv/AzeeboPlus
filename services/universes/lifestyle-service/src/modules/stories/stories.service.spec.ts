@@ -50,6 +50,13 @@ describe('StoriesService', () => {
             storyCategory: {
               findMany: jest.fn(),
             },
+            $transaction: jest.fn((fn: unknown) => {
+              const prismaMock = (service as unknown as { prisma: Record<string, unknown> })
+                ?.prisma;
+              return typeof fn === 'function'
+                ? (fn as (tx: unknown) => unknown)(prismaMock ?? {})
+                : Promise.all(fn as unknown[]);
+            }),
           },
         },
       ],
@@ -104,9 +111,7 @@ describe('StoriesService', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      (prismaService.storyCategory.findMany as jest.Mock).mockRejectedValue(
-        new Error('DB error')
-      );
+      (prismaService.storyCategory.findMany as jest.Mock).mockRejectedValue(new Error('DB error'));
 
       const result = await service.getCategories();
 

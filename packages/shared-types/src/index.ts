@@ -4,6 +4,7 @@
 // ApiError: { code, message, details? }
 
 import type { ApiError } from './api-response-types';
+import type { Universe } from './universe';
 
 // Permission types
 /** Union of all granular permission strings used across the platform. */
@@ -173,17 +174,8 @@ export interface ContentItem {
 /** Supported content media types. */
 export type ContentType = 'video' | 'audio' | 'image' | 'article' | 'document';
 
-/** Platform universe categories. */
-export type Universe =
-  | 'reality'
-  | 'creator'
-  | 'lifestyle'
-  | 'vertical'
-  | 'movie'
-  | 'games'
-  | 'comedy'
-  | 'sports'
-  | 'music';
+// `Universe` is defined in universe.ts, derived from the canonical UNIVERSE_SLUGS
+// list so the type-level union and runtime universe values can never drift.
 export type PublishStatus = 'draft' | 'pending' | 'published' | 'archived';
 
 export interface ContentCreateRequest {
@@ -428,6 +420,20 @@ export interface AnalyticsEventRequest {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Canonical analytics event payload for service-to-service tracking (the wire
+ * shape POSTed to `POST /analytics/track`). Services must emit this shape so
+ * the analytics ingestion accepts the event; adopters use the `eventName`
+ * field (not `type`, which was the historical controller-only alias).
+ */
+export interface EventPayload {
+  eventName: string;
+  userId?: string;
+  sessionId?: string;
+  timestamp?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface FunnelAnalyticsRequest {
   funnelName: string;
   startDate: Date;
@@ -590,7 +596,7 @@ export { environmentSchema, validateEnvironment } from './env-validation';
 export type { EnvironmentVariables } from './env-validation';
 
 // Pricing constants and utilities
-export { getPricing } from './pricing';
+export { getPricing, PRICE_CONFIG } from './pricing';
 export type { PricingPlan, WalletPricing, ContentPricing } from './pricing';
 
 // Secret Validation
@@ -598,12 +604,14 @@ export type { PricingPlan, WalletPricing, ContentPricing } from './pricing';
 export { validateStartup, isPlaceholderSecret, validateNoPlaceholders } from './secret-validation';
 
 // Data Classification types
-export { DataClassification, PiiCategory, ConsentType, AuditLogEntry } from './data-classification';
+export { DataClassification, PiiCategory, ConsentType } from './data-classification';
+export { DEFAULT_RETENTION_POLICIES } from './data-classification';
 export type {
   DataClassificationMetadata,
   UserDataExport,
   UserDataDeletionRequest,
   RetentionPolicy,
+  AuditLogEntry,
 } from './data-classification';
 
 // Privacy Policy types
@@ -614,6 +622,12 @@ export type {
   ConsentAuditLog,
 } from './privacy-policy';
 export { PRIVACY_POLICY, checkConsentCompliance } from './privacy-policy';
+
+// Universe slugs + key builders (single source of truth for universe-scoped
+// feature-flag keys and nav sentinels — see universe.ts).
+export { UNIVERSE_SLUGS, universeEnabledKey, universeFlagKey } from './universe';
+export { BASE_DOMAIN, DOMAINS, ORIGINS, getCdnBaseUrl, getPublicBaseUrl } from './domains';
+export type { Universe, UniverseSlug } from './universe';
 
 // Universe-specific types
 export interface UniverseKpi {

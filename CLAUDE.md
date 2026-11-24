@@ -9,23 +9,23 @@
 
 ```
 azeebo-plus/
-├── apps/                  # Standalone full-stack dashboards + mobile/web clients
+├── apps/                  # Standalone full-stack dashboards + mobile/web/tv clients
 │   ├── mobile/            # Expo React Native (port 8081)
 │   ├── web/               # Next.js frontend (port 4000)
+│   ├── tv/                # Expo React Native TV app (port 8082)
 │   ├── admin/             # Standalone admin dashboard — Vite+React frontend + NestJS backend (port 4016)
 │   └── creator/           # Standalone creator dashboard — Vite+React frontend + NestJS backend (port 4014)
-├── services/              # Microservices (categorized)
-│   ├── core/              # auth, user, wallet, payment, content, search, media
+├── services/              # Microservices (categorized - 29 total)
+│   ├── core/              # auth, user, wallet, payment, content, search, media, knowledge
 │   ├── universes/         # reality, creator, lifestyle, vertical, movie, games, comedy, sports, live-event
 │   ├── engagement/        # notification, reward, referral, messaging, engagement, subscription
 │   ├── operations/        # moderation, queue, support
 │   ├── intelligence/      # analytics, recommendation
 │   └── gateway/           # api-gateway
-├── packages/              # Shared libraries (ui, tokens, types, utils, etc.)
+├── packages/              # Shared libraries (26 packages: ui, tokens, types, utils, etc.)
 ├── infra/                 # Kubernetes, config, scripts
 ├── prisma/                # Root-level seed data
 └── docs/                  # Documentation
-```
 ```
 
 ### Key Principles
@@ -39,13 +39,14 @@ azeebo-plus/
 
 ---
 
-## Frontend (Mobile / Web)
+## Frontend (Mobile / Web / TV)
 
 - TypeScript only — no `any`
 - Reuse shared UI components from `/packages/ui` before creating new ones
 - Every screen must include: loading, empty, error, and success states
 - Design tokens from `/packages/design-tokens` — no hardcoded colors/spacing
-- React Navigation (mobile) with bottom tabs + universe switcher in Watch
+- React Navigation (mobile/TV) with bottom/side tabs + universe switcher in Watch
+- TV (`apps/tv`): 10-foot UI, D-pad focus-visible highlights, QR code device linking
 - React Query for server state — no manual caching
 - Zustand for client state only when needed
 - Firebase for auth, analytics, and notifications
@@ -98,6 +99,7 @@ azeebo-plus/
 | Core | content-service | 3004 | azeebo_content |
 | Core | search-service | 3005 | azeebo_search |
 | Core | media-service | 3019 | azeebo_media |
+| Core | knowledge-service | 3020 | azeebo_knowledge |
 | Universe | reality-service | 3010 | azeebo_reality |
 | Universe | creator-service | 3018 | azeebo_creator |
 | Universe | lifestyle-service | 3016 | azeebo_lifestyle |
@@ -115,7 +117,7 @@ azeebo-plus/
 | Engagement | subscription-service | 3026 | azeebo_subscription |
 | Operations | moderation-service | 3022 | azeebo_moderation |
 | Operations | queue-service | 3015 | azeebo_queue |
-| Operations | support-service | 3020 | azeebo_support |
+| Operations | support-service | 3028 | azeebo_support |
 | Intelligence | analytics-service | 3008 | azeebo_analytics |
 | Intelligence | recommendation-service | 3009 | azeebo_recommendation |
 | Gateway | api-gateway | 3013 | — |
@@ -150,3 +152,12 @@ Before merging any PR, check:
 - Do NOT build entire universes in one prompt — break into bounded tasks
 - Do NOT use different patterns across universes
 - Do NOT skip analytics events on conversion screens
+
+---
+
+## References
+
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Complete system architecture & service catalog
+- [docs/SERVICES.md](./docs/SERVICES.md) - Microservices endpoint catalog & API specifications
+- [docs/DEVELOPER-GUIDE.md](./docs/DEVELOPER-GUIDE.md) - Developer onboarding & day-to-day guide
+- [docs/AGENTS.md](./docs/AGENTS.md) - Multi-agent development architecture

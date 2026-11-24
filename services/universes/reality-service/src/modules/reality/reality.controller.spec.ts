@@ -13,6 +13,8 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { RealityController } from './reality.controller.js';
 import { RealityService } from './reality.service.js';
+import { VoteFraudDetectionService } from './vote-fraud-detection.service.js';
+import { RealityGateway } from './reality.gateway.js';
 import { RateLimitService } from '@azeebo/security';
 
 jest.mock('@azeebo/shared-services', () => ({
@@ -24,6 +26,17 @@ jest.mock('@azeebo/security', () => ({
   RateLimit: () => () => {},
   AdminGuard: jest.fn(),
   RateLimitService: jest.fn(),
+}));
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagService: jest.fn(),
+  FeatureFlagGuard: jest.fn(),
+  FeatureFlag: () => () => {},
+  realityFlags: {
+    votingEnabled: 'reality_voting_enabled',
+    predictionsEnabled: 'reality_predictions_enabled',
+    liveVoting: 'reality_live_voting',
+    autoElimination: 'reality_auto_elimination',
+  },
 }));
 
 describe('RealityController', () => {
@@ -79,6 +92,21 @@ describe('RealityController', () => {
         {
           provide: RealityService,
           useValue: mockRealityService,
+        },
+        {
+          provide: RealityGateway,
+          useValue: {
+            getViewerCount: jest.fn().mockResolvedValue(0),
+          },
+        },
+        {
+          provide: VoteFraudDetectionService,
+          useValue: {
+            checkVote: jest
+              .fn()
+              .mockResolvedValue({ passed: true, flags: [], riskScore: 0, action: 'allow' }),
+            getVoteAuditTrail: jest.fn(),
+          },
         },
         {
           provide: RateLimitService,

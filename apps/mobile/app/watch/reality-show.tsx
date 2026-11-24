@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { realityApi } from '../../src/api/engagement';
-import { walletApi } from '../../src/api/wallet';
-import { apiClient } from '../../src/api/client';
-import { logger } from '../../src/utils/logger';
-import { ApiResponse } from '../../src/types/api';
-import { defaultImages } from '../../src/theme';
+import { realityApi } from '@azeebo/react-data/api/engagement';
+import { walletApi } from '@azeebo/react-data/api/wallet';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { ApiResponse } from '@azeebo/react-data/types/api';
+import { defaultImages, colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
 
@@ -150,7 +151,7 @@ export default function RealityShowScreen() {
           { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
-        <ActivityIndicator size="large" color="#E8420A" />
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text
           style={[styles.loadingText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
         >
@@ -170,7 +171,7 @@ export default function RealityShowScreen() {
         ]}
       >
         <Text style={[styles.errorText, { color: '#ef4444' }]}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={loadData}>
+        <TouchableOpacity accessibilityRole="button" style={styles.retryButton} onPress={loadData}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -185,7 +186,7 @@ export default function RealityShowScreen() {
       ]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text
@@ -218,7 +219,7 @@ export default function RealityShowScreen() {
           <Text style={styles.walletLabel}>Wallet Balance</Text>
           <Text style={styles.walletAmount}>₦{walletBalance.toLocaleString()}</Text>
         </View>
-        <TouchableOpacity style={styles.fundButton}>
+        <TouchableOpacity accessibilityRole="button" style={styles.fundButton}>
           <Text style={styles.fundText}>Fund Wallet</Text>
         </TouchableOpacity>
       </View>
@@ -232,7 +233,7 @@ export default function RealityShowScreen() {
 
         <View style={styles.voteAmountSelector}>
           <TouchableOpacity
-            style={[styles.voteButton, voteAmount > 1 && { backgroundColor: '#E8420A' }]}
+            style={[styles.voteButton, voteAmount > 1 && { backgroundColor: brand.flame }]}
             onPress={() => setVoteAmount(Math.max(1, voteAmount - 1))}
           >
             <Text style={[styles.voteButtonText, voteAmount > 1 && { color: '#ffffff' }]}>-</Text>
@@ -246,7 +247,7 @@ export default function RealityShowScreen() {
             {voteAmount} Vote{voteAmount > 1 ? 's' : ''}
           </Text>
           <TouchableOpacity
-            style={[styles.voteButton, { backgroundColor: '#E8420A' }]}
+            style={[styles.voteButton, { backgroundColor: brand.flame }]}
             onPress={() => setVoteAmount(voteAmount + 1)}
           >
             <Text style={styles.voteButtonText}>+</Text>
@@ -270,13 +271,16 @@ export default function RealityShowScreen() {
               style={[
                 styles.contestantCard,
                 contestant.status === 'evicted' && { opacity: 0.5 },
-                selectedContestant === contestant.id && { borderColor: '#E8420A', borderWidth: 2 },
+                selectedContestant === contestant.id && {
+                  borderColor: brand.flame,
+                  borderWidth: 2,
+                },
               ]}
             >
               <View
                 style={[
                   styles.contestantAvatar,
-                  contestant.status !== 'evicted' && { backgroundColor: '#E8420A' },
+                  contestant.status !== 'evicted' && { backgroundColor: brand.flame },
                 ]}
               >
                 <Text style={styles.avatarText}>{contestant.avatar}</Text>
@@ -301,7 +305,10 @@ export default function RealityShowScreen() {
         <TouchableOpacity
           onPress={handleVote}
           disabled={!selectedContestant || walletBalance < voteCost}
-          style={[styles.submitVoteButton, !selectedContestant && { backgroundColor: '#333' }]}
+          style={[
+            styles.submitVoteButton,
+            !selectedContestant && { backgroundColor: colors.bg.tertiary },
+          ]}
         >
           <Text style={styles.submitVoteText}>Confirm Vote</Text>
         </TouchableOpacity>
@@ -353,7 +360,7 @@ export default function RealityShowScreen() {
         >
           Predictions
         </Text>
-        <TouchableOpacity style={styles.predictionCard} onPress={() => router.push('/prediction')}>
+        <TouchableOpacity accessibilityRole="button" style={styles.predictionCard} onPress={() => router.push('/prediction')}>
           <Text
             style={[
               styles.predictionTitle,
@@ -367,7 +374,7 @@ export default function RealityShowScreen() {
               .filter((c) => c.status === 'active')
               .slice(0, 4)
               .map((contestant) => (
-                <TouchableOpacity key={contestant.id} style={styles.predictionOption}>
+                <TouchableOpacity accessibilityRole="button" key={contestant.id} style={styles.predictionOption}>
                   <Text style={styles.predictionAvatar}>{contestant.avatar}</Text>
                   <Text
                     style={[
@@ -427,7 +434,7 @@ export default function RealityShowScreen() {
                   >
                     <Text style={styles.modalCancelText}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.modalConfirm} onPress={confirmVote}>
+                  <TouchableOpacity accessibilityRole="button" style={styles.modalConfirm} onPress={confirmVote}>
                     <Text style={styles.modalConfirmText}>Confirm</Text>
                   </TouchableOpacity>
                 </View>
@@ -457,7 +464,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -542,23 +549,23 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.bg.tertiary,
   },
   walletInfo: {
     flex: 1,
   },
   walletLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
     marginBottom: 4,
   },
   walletAmount: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 20,
     fontWeight: '700',
   },
   fundButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
@@ -587,14 +594,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.neutral[100],
     alignItems: 'center',
     justifyContent: 'center',
   },
   voteButtonText: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#666',
+    color: colors.text.tertiary,
   },
   voteAmountText: {
     fontSize: 20,
@@ -607,11 +614,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   priceText: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
   },
   priceAmount: {
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '700',
   },
   insufficientFunds: {
@@ -638,7 +645,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#ccc',
+    backgroundColor: colors.neutral[300],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -658,11 +665,11 @@ const styles = StyleSheet.create({
   },
   voteCount: {
     fontSize: 12,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '600',
   },
   submitVoteButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -686,13 +693,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.bg.tertiary,
   },
   rank: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: 14,
@@ -700,7 +707,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   topRank: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     color: '#fff',
   },
   leaderboardAvatar: {
@@ -717,19 +724,19 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 2,
   },
   leaderboardVotes: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#E8420A',
+    color: brand.flame,
   },
   predictionSection: {
     padding: 16,
@@ -756,10 +763,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: colors.neutral[800],
   },
   predictionAvatar: {
     fontSize: 20,
@@ -769,7 +776,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   predictionHint: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 13,
     fontWeight: '500',
     textAlign: 'right',
@@ -799,13 +806,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalDetailText: {
-    color: '#aaa',
+    color: colors.neutral[400],
     fontSize: 14,
     marginBottom: 8,
     textAlign: 'center',
   },
   modalHighlight: {
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '600',
   },
   modalButtons: {
@@ -814,7 +821,7 @@ const styles = StyleSheet.create({
   },
   modalCancel: {
     flex: 1,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     padding: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -826,7 +833,7 @@ const styles = StyleSheet.create({
   },
   modalConfirm: {
     flex: 2,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -850,7 +857,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   successMessage: {
-    color: '#aaa',
+    color: colors.neutral[400],
     fontSize: 14,
     textAlign: 'center',
   },
@@ -869,7 +876,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

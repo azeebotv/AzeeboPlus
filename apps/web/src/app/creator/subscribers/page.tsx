@@ -1,10 +1,13 @@
 'use client';
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { Users, UserPlus, TrendingUp, UserMinus, Globe, Sparkles } from 'lucide-react';
 
 type Tab = 'list' | 'demographics';
 
@@ -31,334 +34,215 @@ export default function CreatorSubscribersPage(): React.JSX.Element {
     staleTime: 30000,
   });
 
-  const { data: subData, isLoading, error: queryError } = subscribersQuery;
+  const { data: subData, isLoading, error: queryError, refetch } = subscribersQuery;
   const { data: stats, isLoading: statsLoading } = statsQuery;
   const subscribers = subData?.subscribers ?? [];
   const subscriberStats = stats ?? subData?.stats ?? null;
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader active="Creator" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Subscribers</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
-          Manage your subscribers and view demographics
-        </p>
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
+      <PageHero
+        badge="Audience Circle"
+        title="Subscriber Community"
+        description="Monitor tier memberships, direct supporter retention, and geographical distribution of your audience."
+      />
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-          {(['list', 'demographics'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              style={{
-                padding: '8px 20px',
-                borderRadius: 8,
-                border: '1px solid var(--border-default)',
-                background: tab === t ? 'var(--brand-orange)' : 'transparent',
-                color: tab === t ? '#fff' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                fontSize: 13,
-                fontWeight: tab === t ? 600 : 400,
-              }}
-            >
-              {t === 'list' ? 'Subscriber List' : 'Demographics'}
-            </button>
-          ))}
-        </div>
-
-        {/* Stats cards */}
+      <div className="max-w-4xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Stats Row */}
         {!statsLoading && subscriberStats && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: 16,
-              marginBottom: 24,
-            }}
-          >
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 12,
-                backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--border-default)',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-secondary)',
-                  textTransform: 'uppercase',
-                  marginBottom: 4,
-                }}
-              >
-                Total
-              </p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-success-400)' }}>
-                {subscriberStats.totalSubscribers.toLocaleString()}
-              </p>
+          <ScrollReveal>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                {
+                  label: 'Total Active',
+                  value: subscriberStats.totalSubscribers.toLocaleString(),
+                  icon: Users,
+                  color: 'text-az-success-400',
+                },
+                {
+                  label: 'New (7 Days)',
+                  value: `+${subscriberStats.newThisWeek.toLocaleString()}`,
+                  icon: UserPlus,
+                  color: 'text-az-secondary-400',
+                },
+                {
+                  label: 'New (30 Days)',
+                  value: `+${subscriberStats.newThisMonth.toLocaleString()}`,
+                  icon: TrendingUp,
+                  color: 'text-[var(--color-az-flame)]',
+                },
+                {
+                  label: 'Churn Rate',
+                  value: `${subscriberStats.churnRate}%`,
+                  icon: UserMinus,
+                  color: 'text-az-error-400',
+                },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.label}
+                    className="az-glass p-5 border border-az-glass-border transition-all"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-az-ink/40">
+                        {item.label}
+                      </span>
+                      <Icon className={`w-3.5 h-3.5 ${item.color}`} />
+                    </div>
+                    <p className="text-2xl font-extrabold text-az-ink tracking-tight">
+                      {item.value}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 12,
-                backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--border-default)',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-secondary)',
-                  textTransform: 'uppercase',
-                  marginBottom: 4,
-                }}
-              >
-                New This Week
-              </p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-secondary-400)' }}>
-                {subscriberStats.newThisWeek.toLocaleString()}
-              </p>
-            </div>
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 12,
-                backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--border-default)',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-secondary)',
-                  textTransform: 'uppercase',
-                  marginBottom: 4,
-                }}
-              >
-                New This Month
-              </p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-accent-gold)' }}>
-                {subscriberStats.newThisMonth.toLocaleString()}
-              </p>
-            </div>
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 12,
-                backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--border-default)',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-secondary)',
-                  textTransform: 'uppercase',
-                  marginBottom: 4,
-                }}
-              >
-                Churn Rate
-              </p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-error-400)' }}>
-                {subscriberStats.churnRate}%
-              </p>
-            </div>
-          </div>
+          </ScrollReveal>
         )}
+
+        {/* Tab Switcher */}
+        <div className="flex items-center gap-1.5 p-1 az-glass border border-az-glass-border self-start w-fit">
+          {(['list', 'demographics'] as Tab[]).map((t) => {
+            const isActive = tab === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${
+                  isActive
+                    ? 'bg-[var(--color-az-flame)] text-az-surface-root shadow-lg'
+                    : 'text-az-ink/60 hover:text-az-ink'
+                }`}
+              >
+                {t === 'list' ? 'Subscribers Ledger' : 'Audience Demographics'}
+              </button>
+            );
+          })}
+        </div>
 
         {tab === 'list' ? (
           isLoading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    padding: 16,
-                    borderRadius: 12,
-                    backgroundColor: 'rgba(255,255,255,0.03)',
-                  }}
-                >
-                  <Skeleton height="20px" width="150px" />
-                  <div style={{ marginTop: 8 }}>
-                    <Skeleton height="12px" width="100px" />
-                  </div>
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="az-glass p-5 border border-az-glass-border space-y-2">
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-3 w-28" />
                 </div>
               ))}
             </div>
           ) : queryError ? (
-            <ErrorState
-              title="Failed to load subscribers"
-              description={queryError?.message || 'An error occurred'}
-              onButtonPress={() => subscribersQuery.refetch()}
-            />
+            <div className="max-w-md mx-auto py-12">
+              <ErrorState
+                title="Failed to load subscribers"
+                description={queryError.message}
+                onButtonPress={() => refetch()}
+              />
+            </div>
           ) : subscribers.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-              No subscribers yet
-            </p>
+            <div className="az-glass p-12 text-center border border-az-glass-border">
+              <Users className="w-12 h-12 text-az-ink/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-az-ink mb-2">No Active Subscribers Yet</h3>
+              <p className="text-xs text-az-ink/50 max-w-sm mx-auto">
+                Promote your exclusive universe releases to convert viewers into paid subscribers.
+              </p>
+            </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="space-y-3">
               {subscribers.map((sub) => (
-                <div
-                  key={sub.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: 16,
-                    borderRadius: 12,
-                    border: '1px solid var(--border-default)',
-                    backgroundColor: 'rgba(26,10,10,0.5)',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 22,
-                      backgroundColor: 'var(--bg-secondary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <span style={{ color: 'var(--text-secondary)', fontSize: 16 }}>
-                      {sub.displayName[0]}
-                    </span>
+                <ScrollReveal key={sub.id}>
+                  <div className="az-glass p-4 sm:p-5 border border-az-glass-border transition-all flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-full bg-[var(--color-az-flame)]/15 border border-[var(--color-az-flame)]/30 flex items-center justify-center flex-shrink-0 text-az-ink font-bold text-sm">
+                        {sub.displayName ? sub.displayName[0].toUpperCase() : 'U'}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-az-ink">{sub.displayName}</p>
+                        <p className="text-xs text-az-ink/40 mt-0.5">
+                          Subscribed {new Date(sub.subscribedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {sub.plan && (
+                        <span className="text-[10px] font-mono font-bold uppercase px-3 py-1 rounded-full bg-[var(--color-az-flame)]/15 border border-[var(--color-az-flame)]/30 text-[var(--color-az-flame)]">
+                          {sub.plan}
+                        </span>
+                      )}
+                      {sub.isGifted && (
+                        <span className="text-[10px] font-mono font-bold uppercase px-3 py-1 rounded-full bg-az-warning-500/15 border border-az-warning-500/30 text-az-warning-400">
+                          Gift Pass
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{sub.displayName}</p>
-                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                      Subscribed {new Date(sub.subscribedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  {sub.plan && (
-                    <span
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: 20,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        backgroundColor: 'rgba(232,66,10,0.15)',
-                        color: 'var(--brand-orange)',
-                      }}
-                    >
-                      {sub.plan}
-                    </span>
-                  )}
-                  {sub.isGifted && (
-                    <span
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: 20,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        backgroundColor: 'rgba(245,158,11,0.15)',
-                        color: 'var(--color-accent-gold)',
-                      }}
-                    >
-                      Gift
-                    </span>
-                  )}
-                </div>
+                </ScrollReveal>
               ))}
             </div>
           )
         ) : statsLoading || !subscriberStats?.demographics ? (
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-            Loading demographics...
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/* Age Groups */}
-            <div>
-              <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Age Groups</h3>
-              {subscriberStats.demographics.ageGroups.map((group) => (
-                <div key={group.range} style={{ marginBottom: 8 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: 13,
-                      marginBottom: 4,
-                    }}
-                  >
-                    <span style={{ color: 'var(--text-secondary)' }}>{group.range}</span>
-                    <span style={{ color: 'var(--text-primary)' }}>
-                      {group.count.toLocaleString()} ({group.percentage}%)
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: 'var(--bg-secondary)',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: '100%',
-                        borderRadius: 3,
-                        backgroundColor: 'var(--brand-orange)',
-                        width: `${group.percentage}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Top Regions */}
-            <div>
-              <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Top Regions</h3>
-              {subscriberStats.demographics.topRegions.map((region) => (
-                <div key={region.region} style={{ marginBottom: 8 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: 13,
-                      marginBottom: 4,
-                    }}
-                  >
-                    <span style={{ color: 'var(--text-secondary)' }}>{region.region}</span>
-                    <span style={{ color: 'var(--text-primary)' }}>
-                      {region.count.toLocaleString()} ({region.percentage}%)
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: 'var(--bg-secondary)',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: '100%',
-                        borderRadius: 3,
-                        backgroundColor: 'var(--color-secondary-400)',
-                        width: `${region.percentage}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="az-glass p-12 text-center border border-az-glass-border">
+            <p className="text-xs text-az-ink/50">Aggregating subscriber telemetry...</p>
           </div>
+        ) : (
+          <ScrollReveal>
+            <div className="space-y-6">
+              {/* Age Groups */}
+              <div className="az-glass p-6 sm:p-7 border border-az-glass-border">
+                <h3 className="text-sm font-bold text-az-ink mb-6 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[var(--color-az-flame)]" />
+                  Age Demographics
+                </h3>
+                <div className="space-y-4">
+                  {subscriberStats.demographics.ageGroups.map((group) => (
+                    <div key={group.range} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-az-ink/60">{group.range} years</span>
+                        <span className="text-az-ink font-mono font-bold">
+                          {group.count.toLocaleString()} ({group.percentage}%)
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-az-glass-fill overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-[var(--color-az-flame)] to-az-warning-500 rounded-full"
+                          style={{ width: `${group.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Top Regions */}
+              <div className="az-glass p-6 sm:p-7 border border-az-glass-border">
+                <h3 className="text-sm font-bold text-az-ink mb-6 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-az-secondary-400" />
+                  Regional Density
+                </h3>
+                <div className="space-y-4">
+                  {subscriberStats.demographics.topRegions.map((region) => (
+                    <div key={region.region} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-az-ink/60">{region.region}</span>
+                        <span className="text-az-ink font-mono font-bold">
+                          {region.count.toLocaleString()} ({region.percentage}%)
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-az-glass-fill overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-az-secondary-500 to-az-secondary-500 rounded-full"
+                          style={{ width: `${region.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </ScrollReveal>
         )}
-      </main>
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }

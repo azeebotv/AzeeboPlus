@@ -1,11 +1,15 @@
 'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { Camera, CheckCircle2, User, Save } from 'lucide-react';
 
 interface CreatorProfile {
   displayName: string;
@@ -17,6 +21,11 @@ interface CreatorProfile {
 export default function CreatorProfilePage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [saved, setSaved] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
+  const [youtube, setYoutube] = useState('');
+  const [twitter, setTwitter] = useState('');
+  const [instagram, setInstagram] = useState('');
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -41,6 +50,16 @@ export default function CreatorProfilePage(): React.JSX.Element {
     },
   });
 
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.displayName || '');
+      setBio(profile.bio || '');
+      setYoutube(profile.socialLinks?.youtube || '');
+      setTwitter(profile.socialLinks?.twitter || '');
+      setInstagram(profile.socialLinks?.instagram || '');
+    }
+  }, [profile]);
+
   const updateMutation = useMutation({
     mutationFn: (data: Partial<CreatorProfile>) =>
       apiFetch('/v1/creators/me', {
@@ -51,244 +70,199 @@ export default function CreatorProfilePage(): React.JSX.Element {
       queryClient.invalidateQueries({ queryKey: ['creator', 'profile'] });
       setSaved(true);
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-      savedTimerRef.current = setTimeout(() => setSaved(false), 2000);
+      savedTimerRef.current = setTimeout(() => setSaved(false), 3000);
     },
   });
 
+  const handleSave = () => {
+    updateMutation.mutate({
+      displayName,
+      bio,
+      socialLinks: { youtube, twitter, instagram },
+    });
+  };
+
   if (isLoading) {
     return (
-      <div
-        className="min-h-screen"
-        style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-      >
-        <AppHeader active="Creator" />
-        <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
-          <Skeleton className="h-12 w-full mb-6" />
-          <Skeleton className="h-40 w-full mb-6" />
-          <Skeleton className="h-12 w-32" />
-        </main>
-        <AppFooter />
-      </div>
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
+        <div className="max-w-2xl mx-auto py-20 px-4 space-y-6">
+          <Skeleton className="h-12 w-48 rounded-2xl" />
+          <Skeleton className="h-64 w-full rounded-3xl" />
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Creator" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Creator Profile</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
-          Manage your creator profile
-        </p>
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
+      <PageHero
+        badge="Studio Identity"
+        title="Creator Profile"
+        description="Curate your public director persona, showcase social links, and update your artist bio."
+      />
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ position: 'relative' }}>
-            {profile?.avatar && (
-              <OptimizedImage
-                src={profile.avatar}
-                alt="Profile"
-                className="w-24 h-24 rounded-full object-cover"
-              />
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                opacity: 0,
-                cursor: 'pointer',
-              }}
-            />
-          </div>
+      <div className="max-w-2xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
+        <ScrollReveal>
+          <div className="az-glass p-6 sm:p-8 border border-az-glass-border space-y-6">
+            {/* Avatar & Hero Info */}
+            <div className="flex items-center gap-5 pb-6 border-b border-az-glass-border">
+              <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-az-glass-fill border border-az-glass-border flex items-center justify-center group flex-shrink-0">
+                {profile?.avatar ? (
+                  <OptimizedImage
+                    src={profile.avatar}
+                    alt="Profile Avatar"
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <User className="w-8 h-8 text-az-ink/40" />
+                )}
+                <label
+                  htmlFor="avatar-upload"
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity"
+                >
+                  <Camera className="w-5 h-5 text-az-ink" />
+                  <input id="avatar-upload" type="file" accept="image/*" className="sr-only" />
+                </label>
+              </div>
 
-          <div>
-            <label
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: 13,
-                marginBottom: 4,
-                display: 'block',
-              }}
-            >
-              Display Name
-            </label>
-            <input
-              type="text"
-              value={profile?.displayName || ''}
-              onChange={(e) => updateMutation.mutate({ displayName: e.target.value })}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 8,
-                border: '1px solid var(--border-default)',
-                background: 'var(--bg-tertiary)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-              }}
-            />
-          </div>
-
-          <div>
-            <label
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: 13,
-                marginBottom: 4,
-                display: 'block',
-              }}
-            >
-              Bio
-            </label>
-            <textarea
-              value={profile?.bio || ''}
-              onChange={(e) => updateMutation.mutate({ bio: e.target.value })}
-              placeholder="Tell us about yourself..."
-              rows={4}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 8,
-                border: '1px solid var(--border-default)',
-                background: 'var(--bg-tertiary)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-                resize: 'vertical',
-              }}
-            />
-          </div>
-
-          <div>
-            <label
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: 13,
-                marginBottom: 4,
-                display: 'block',
-              }}
-            >
-              YouTube URL
-            </label>
-            <input
-              type="url"
-              value={profile?.socialLinks?.youtube || ''}
-              onChange={(e) =>
-                updateMutation.mutate({
-                  socialLinks: {
-                    youtube: e.target.value,
-                    twitter: profile?.socialLinks?.twitter ?? '',
-                    instagram: profile?.socialLinks?.instagram ?? '',
-                  },
-                })
-              }
-              placeholder="https://youtube.com/..."
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 8,
-                border: '1px solid var(--border-default)',
-                background: 'var(--bg-tertiary)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-              }}
-            />
-          </div>
-
-          <div>
-            <label
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: 13,
-                marginBottom: 4,
-                display: 'block',
-              }}
-            >
-              Twitter URL
-            </label>
-            <input
-              type="url"
-              value={profile?.socialLinks?.twitter ?? ''}
-              onChange={(e) =>
-                updateMutation.mutate({
-                  socialLinks: {
-                    youtube: profile?.socialLinks?.youtube ?? '',
-                    twitter: e.target.value,
-                    instagram: profile?.socialLinks?.instagram ?? '',
-                  },
-                })
-              }
-              placeholder="https://twitter.com/..."
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 8,
-                border: '1px solid var(--border-default)',
-                background: 'var(--bg-tertiary)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-              }}
-            />
-          </div>
-
-          <div>
-            <label
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: 13,
-                marginBottom: 4,
-                display: 'block',
-              }}
-            >
-              Instagram URL
-            </label>
-            <input
-              type="url"
-              value={profile?.socialLinks?.instagram ?? ''}
-              onChange={(e) =>
-                updateMutation.mutate({
-                  socialLinks: {
-                    youtube: profile?.socialLinks?.youtube ?? '',
-                    twitter: profile?.socialLinks?.twitter ?? '',
-                    instagram: e.target.value,
-                  },
-                })
-              }
-              placeholder="https://instagram.com/..."
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 8,
-                border: '1px solid var(--border-default)',
-                background: 'var(--bg-tertiary)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-              }}
-            />
-          </div>
-
-          {saved && (
-            <div
-              style={{
-                padding: '12px 16px',
-                backgroundColor: 'rgba(10,165,232,0.2)',
-                border: '1px solid var(--color-secondary-400)',
-                borderRadius: 8,
-              }}
-            >
-              <p style={{ color: 'var(--color-secondary-400)', fontSize: 14, margin: 0 }}>
-                Profile saved successfully!
-              </p>
+              <div>
+                <h3 className="text-base font-bold text-az-ink">
+                  {displayName || 'Verified Creator'}
+                </h3>
+                <p className="text-xs text-az-ink/50 mt-0.5">
+                  Visible publicly across movie credits and channel headers.
+                </p>
+              </div>
             </div>
-          )}
-        </div>
-      </main>
-      <AppFooter />
-    </div>
+
+            {/* Inputs */}
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="creator-name"
+                  className="text-az-ink text-xs font-semibold mb-2 block"
+                >
+                  Display Name
+                </label>
+                <input
+                  id="creator-name"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="e.g. Kunle Afolayan"
+                  className="w-full px-4 py-3 rounded-xl bg-az-glass-fill border border-az-glass-border text-az-ink placeholder-az-ink/30 text-sm focus:outline-none focus:border-[var(--color-az-flame)] transition-colors"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="creator-bio"
+                  className="text-az-ink text-xs font-semibold mb-2 block"
+                >
+                  Artist Bio
+                </label>
+                <textarea
+                  id="creator-bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Tell your audience about your cinematic voice and upcoming projects..."
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl bg-az-glass-fill border border-az-glass-border text-az-ink placeholder-az-ink/30 text-sm focus:outline-none focus:border-[var(--color-az-flame)] transition-colors resize-y"
+                />
+              </div>
+
+              <div className="pt-2">
+                <span className="text-xs font-mono uppercase tracking-wider text-az-ink/40 block mb-3">
+                  External Channels & Portfolios
+                </span>
+
+                <div className="space-y-3">
+                  <div>
+                    <label
+                      htmlFor="creator-youtube"
+                      className="text-az-ink/60 text-xs font-medium mb-1 block"
+                    >
+                      YouTube Channel
+                    </label>
+                    <input
+                      id="creator-youtube"
+                      type="url"
+                      value={youtube}
+                      onChange={(e) => setYoutube(e.target.value)}
+                      placeholder="https://youtube.com/@yourchannel"
+                      className="w-full px-4 py-2.5 rounded-xl bg-az-glass-fill border border-az-glass-border text-az-ink placeholder-az-ink/30 text-xs focus:outline-none focus:border-[var(--color-az-flame)]"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="creator-twitter"
+                      className="text-az-ink/60 text-xs font-medium mb-1 block"
+                    >
+                      X / Twitter Profile
+                    </label>
+                    <input
+                      id="creator-twitter"
+                      type="url"
+                      value={twitter}
+                      onChange={(e) => setTwitter(e.target.value)}
+                      placeholder="https://x.com/yourhandle"
+                      className="w-full px-4 py-2.5 rounded-xl bg-az-glass-fill border border-az-glass-border text-az-ink placeholder-az-ink/30 text-xs focus:outline-none focus:border-[var(--color-az-flame)]"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="creator-instagram"
+                      className="text-az-ink/60 text-xs font-medium mb-1 block"
+                    >
+                      Instagram Profile
+                    </label>
+                    <input
+                      id="creator-instagram"
+                      type="url"
+                      value={instagram}
+                      onChange={(e) => setInstagram(e.target.value)}
+                      placeholder="https://instagram.com/yourhandle"
+                      className="w-full px-4 py-2.5 rounded-xl bg-az-glass-fill border border-az-glass-border text-az-ink placeholder-az-ink/30 text-xs focus:outline-none focus:border-[var(--color-az-flame)]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-az-glass-border">
+              <AnimatePresence>
+                {saved && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="flex items-center gap-1.5 text-xs text-az-success-400 font-semibold"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Profile Updated
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div className="ml-auto">
+                <motion.button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={updateMutation.isPending}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="az-btn-primary flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  {updateMutation.isPending ? 'Saving...' : 'Save Profile'}
+                </motion.button>
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+      </div>
+    </PageShell>
   );
 }

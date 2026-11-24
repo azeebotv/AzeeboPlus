@@ -1,0 +1,84 @@
+# =============================================================================
+# Azeebo+ local monitoring — Prometheus + Alertmanager stack
+# =============================================================================
+# Loads ./alerts.yml (the fuzzy-search alerting rules) so the rules are
+# runnable and testable on a dev machine without any cloud infra. Also scrapes
+# the api-gateway so the flag lifecycle counters (flag_stale_running_total,
+# flag_auto_disabled_total, …) exist locally — the data behind the admin
+# stale-serving report.
+#
+# Usage:
+#   cd services/core/search-service/prometheus
+#   docker compose up -d
+#
+# Services to run on the host first (their metrics endpoints get scraped):
+#   cd services/core/search-service && npm run start:dev   # port 3005
+#   cd services/gateway/api-gateway  && npm run start:dev   # port 3013
+#
+# Then open:
+#   Prometheus rules:   http://localhost:9090/#/alerts
+#   Alertmanager UI:    http://localhost:9093
+#
+# Admin stale-serving badge out of the box:
+#   Set PROMETHEUS_URL=http://localhost:9090 in apps/admin/.env, restart the
+#   admin backend, and the Global Flags page's serving-past-expiry / auto-off
+#   badges + header lines work (GET /admin/feature-flags/stale/metrics).
+#
+# Grafana dashboard: import ./grafana-dashboard.json (Dashboards → Import) and
+# point it at the Prometheus data source. It visualizes the fuzzy-guard gauges
+# (search_fuzzy_degraded, search_pg_trgm_state/indexes, search_pg_trgm_indexes_missing)
+# plus the population-job counters (search_index_population_runs_total / _rows_total).
+#
+# To watch an alert fire locally: enable search_typo_tolerance while pg_trgm
+# is unavailable (search_fuzzy_degraded → 1 after 2m), or drop the migration's
+# GIN indexes (search_pg_trgm_indexes_missing → 1 after 5m). Resolve it and
+# the alert clears after the `for` duration passes.
+#
+# Docker Desktop (macOS/Windows) resolves host.docker.internal automatically;
+# the extra_hosts entry below makes the same target work on Linux hosts.
+# =============================================================================
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: azeebo-prometheus
+    restart: unless-stopped
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      # The alerting rules live next to this file. Edits are picked up on
+      # config reload:  docker compose exec prometheus kill -HUP 1
+      - ./alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    extra_hosts:
+      # Resolves host.docker.internal to the host gateway on Linux.
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - azeebo-monitoring
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: azeebo-alertmanager
+    restart: unless-stopped
+    ports:
+      - '9093:9093'
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - azeebo-monitoring
+
+volumes:
+  prometheus-data:
+  alertmanager-data:
+
+networks:
+  azeebo-monitoring:
+    driver: bridge

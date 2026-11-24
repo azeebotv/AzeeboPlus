@@ -2,21 +2,28 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { authApi } from '../../src/api';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 
 export default function RoleSelectionScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { selectRole } = useAuth();
 
-  const handleRoleSelection = async (role: 'user' | 'creator' | 'both') => {
+  // The same union as react-data's SelectableRole; kept as literals so this
+  // screen needs no value import from the package barrel.
+  const handleRoleSelection = async (role: 'user' | 'creator') => {
     setIsLoading(true);
     setError(null);
     try {
-      await authApi.selectRole(role);
-      router.replace('/(auth)/profile-setup' as never);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to select role');
+      // selectRole adopts the re-minted access token, so the new role is live on
+      // the next request instead of after the old token expires.
+      const result = await selectRole(role);
+      if (!result.success) {
+        setError(result.message || 'Failed to select role');
+        return;
+      }
+      router.replace('/(auth)/profile-setup');
     } finally {
       setIsLoading(false);
     }
@@ -24,7 +31,7 @@ export default function RoleSelectionScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Role Selection Screen" style={styles.container}>
         <Text style={styles.loadingText}>Loading...</Text>
       </SafeAreaView>
     );
@@ -66,22 +73,9 @@ export default function RoleSelectionScreen() {
           <View style={styles.optionText}>
             <Text style={styles.optionTitle}>Creator</Text>
             <Text style={styles.optionDescription}>Build your audience and brand</Text>
-            <Text style={styles.optionSub}>Showcase your talent, reach millions and connect</Text>
-          </View>
-        </Pressable>
-
-        <Pressable
-          style={[styles.optionButton, styles.bothButton]}
-          onPress={() => handleRoleSelection('both')}
-          disabled={isLoading}
-        >
-          <View style={styles.optionIcon}>
-            <Text style={styles.iconText}>💻</Text>
-          </View>
-          <View style={styles.optionText}>
-            <Text style={styles.optionTitle}>Creator & User</Text>
-            <Text style={styles.optionDescription}>Experience the best of both worlds</Text>
-            <Text style={styles.optionSub}>Consume content and create your journey</Text>
+            <Text style={styles.optionSub}>
+              Publish and get paid — keeps full viewer access to everything a Regular User gets
+            </Text>
           </View>
         </Pressable>
       </View>

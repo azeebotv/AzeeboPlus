@@ -22,6 +22,23 @@ jest.mock('@azeebo/security', () => {
   };
 });
 
+// Feature flags are integration-tested elsewhere; mock the package so this
+// contract spec doesn't load the real package (and its @nestjs/common peer
+// chain) into the jest module graph.
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagService: class {},
+  gatewayFlags: {
+    maintenanceMode: 'gateway_maintenance_mode',
+    newRoutes: 'gateway_new_routes',
+    circuitBreaker: 'gateway_circuit_breaker',
+    responseCache: 'gateway_response_cache',
+    strictRateLimits: 'gateway_strict_rate_limits',
+    csrfEnforce: 'gateway_csrf_enforce',
+    legacyRedirect: 'gateway_legacy_redirect',
+    apiV2: 'gateway_api_v2',
+  },
+}));
+
 import { SERVICE_CONFIGS } from './proxy.controller';
 
 describe('Proxy Controller - API Contract Verification', () => {
@@ -94,6 +111,17 @@ describe('Proxy Controller - API Contract Verification', () => {
     expect(userEndpoints).toContain('/me');
     expect(userEndpoints).toContain('/me/preferences');
     expect(userEndpoints).toContain('/me/saved');
+  });
+
+  // The endpoints manifest doubles as the deny-by-default allowlist
+  // (gateway_endpoint_enforcement), so a client call whose method+path pair is
+  // missing here never reaches user-service once that flag is on.
+  it('declares the users data-rights endpoints the web client calls', () => {
+    const usersRoute = SERVICE_CONFIGS.find((r) => r.path === '/users');
+    const pairs = usersRoute?.endpoints?.map((e) => `${e.method} ${e.path}`) || [];
+    expect(pairs).toContain('DELETE /me');
+    expect(pairs).toContain('GET /me/export');
+    expect(pairs).toContain('GET /me/deletion-status');
   });
 
   it('should have wallet endpoints', () => {
@@ -178,5 +206,36 @@ describe('Proxy Controller - API Contract Verification', () => {
     const endpoints = subscriptionRoute?.endpoints?.map((e) => e.path) || [];
     expect(endpoints).toContain('/plans');
     expect(endpoints).toContain('/subscribe');
+  });
+});
+
+describe('Proxy Controller - Admin universe-flag undo routes', () => {
+  const adminRoute = () => SERVICE_CONFIGS.find((r) => r.path === '/admin');
+
+  it('routes /admin to the admin service (default strategy: /v1/admin/*)', () => {
+    const route = adminRoute();
+    expect(route).toBeDefined();
+    expect(route?.envKey).toBe('ADMIN_SERVICE_URL');
+    expect(route?.fallbackUrl).toBe('http://admin-app:4016');
+    // apps/admin serves URI-versioned routes (/v1/admin/...), so the gateway
+    // must use the default strategy that preserves the version prefix.
+    expect(route?.pathStrategy).toBe('default');
+  });
+
+  it('registers POST /universes/feature-flags/restore for forwarding', () => {
+    const endpoints = adminRoute()?.endpoints ?? [];
+    const restore = endpoints.find((e) => e.path === '/universes/feature-flags/restore');
+    expect(restore).toBeDefined();
+    expect(restore?.method).toBe('POST');
+    // The prune + recently-deleted siblings ride the same no-prefix path, so
+    // ops can undo a prune without a redeploy.
+    expect(
+      endpoints.some(
+        (e) => e.method === 'POST' && e.path === '/universes/feature-flags/prune-stale'
+      )
+    ).toBe(true);
+    expect(
+      endpoints.some((e) => e.method === 'GET' && e.path === '/universes/feature-flags/deleted')
+    ).toBe(true);
   });
 });

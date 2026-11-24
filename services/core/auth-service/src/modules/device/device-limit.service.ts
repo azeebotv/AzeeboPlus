@@ -1,22 +1,32 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagService, subscriptionFlags } from '@azeebo/feature-flags';
+import axios from 'axios';
 
 export interface DeviceCheckResult {
   allowed: boolean;
   activeDevices: number;
   maxDevices: number;
+  source: 'plan' | 'default';
   message?: string;
 }
 
 @Injectable()
 export class DeviceLimitService {
   private readonly logger = new Logger(DeviceLimitService.name);
+  private readonly subscriptionServiceUrl: string;
 
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
-    @Inject(ConfigService) private config: ConfigService
-  ) {}
+    @Inject(ConfigService) private config: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+  ) {
+    this.subscriptionServiceUrl = this.config.get<string>(
+      'SUBSCRIPTION_SERVICE_URL',
+      'http://subscription-service:3010'
+    );
+  }
 
   async checkDeviceLimit(userId: string): Promise<DeviceCheckResult> {
     try {
@@ -30,12 +40,29 @@ export class DeviceLimitService {
         },
       });
 
-      const maxDevices = this.config.get<number>('DEFAULT_MAX_DEVICES', 1);
+      // subscription_device_limits: when on, the device cap comes from the
+      // user's active subscription plan (plan.maxDevices) instead of the
+      // DEFAULT_MAX_DEVICES env default. Falls back to the default when the
+      // user has no active subscription or the subscription-service is down.
+      let maxDevices = this.config.get<number>('DEFAULT_MAX_DEVICES', 1);
+      let source: 'plan' | 'default' = 'default';
+      try {
+        if (await this.featureFlagService.isEnabled(subscriptionFlags.deviceLimits, userId)) {
+          const planMax = await this.fetchPlanMaxDevices(userId);
+          if (planMax !== null && planMax > 0) {
+            maxDevices = planMax;
+            source = 'plan';
+          }
+        }
+      } catch (error) {
+        this.logger.warn(`subscription_device_limits unavailable, using default cap: ${error}`);
+      }
 
       return {
         allowed: activeDevices < maxDevices,
         activeDevices,
         maxDevices,
+        source,
         message:
           activeDevices >= maxDevices
             ? `Device limit reached (${activeDevices}/${maxDevices}). Revoke a device to continue.`
@@ -43,7 +70,34 @@ export class DeviceLimitService {
       };
     } catch (error) {
       this.logger.error(`Failed to check device limit: ${error}`);
-      return { allowed: true, activeDevices: 0, maxDevices: 1 };
+      return { allowed: true, activeDevices: 0, maxDevices: 1, source: 'default' };
+    }
+  }
+
+  /**
+   * Fetches the user's active subscription plan's maxDevices from the
+   * subscription-service, forwarding the user identity the same way the
+   * gateway does (x-user-id + x-gateway-secret) so ServiceAuthGuard accepts it.
+   * Returns null when the user has no active subscription or the fetch fails.
+   */
+  private async fetchPlanMaxDevices(userId: string): Promise<number | null> {
+    const secret = process.env.GATEWAY_SECRET || process.env.INTERNAL_API_KEY;
+    if (!secret) return null;
+
+    try {
+      const response = await axios.get(`${this.subscriptionServiceUrl}/v1/subscriptions/current`, {
+        headers: {
+          'x-user-id': userId,
+          'x-gateway-secret': secret,
+        },
+        timeout: 5000,
+      });
+      const subscription = response.data?.data;
+      const planMax = subscription?.plan?.maxDevices;
+      return typeof planMax === 'number' && planMax > 0 ? planMax : null;
+    } catch (error) {
+      this.logger.warn(`Failed to fetch plan device limit for user ${userId}: ${error}`);
+      return null;
     }
   }
 

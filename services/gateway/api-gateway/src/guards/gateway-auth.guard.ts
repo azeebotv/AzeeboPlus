@@ -9,6 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
+import { timingSafeEqual } from 'crypto';
 import { IS_PUBLIC_KEY } from '@azeebo/security';
 
 /**
@@ -25,45 +26,117 @@ export class GatewayAuthGuard implements CanActivate {
 
   /**
    * Path patterns that do not require authentication.
-   * These are auth endpoints where the user doesn't have a token yet.
+   * Only truly public endpoints are listed here — health, auth, docs,
+   * public settings, and read-only content listings.
+   *
+   * Creator profiles, engagement data, subscription plans, and
+   * universe-specific trending require authentication for
+   * personalized behavior and access control.
    */
   private static readonly PUBLIC_PATH_PATTERNS: RegExp[] = [
-    // Auth endpoints (pre-login)
+    // Auth endpoints (pre-login — user has no token yet)
     /^\/(api\/)?(v\d+\/)?auth\/(login|signup|register|refresh|forgot-password|reset-password|verify-email|resend-verification|social\/(google|apple)(\/authorize)?|social\/callback|otp\/(send|verify))$/,
     /^\/(api\/)?(v\d+\/)?auth\/health$/,
-    // Gateway health
+    // SPA cookie management: the client exchanges its freshly-issued tokens for
+    // httpOnly cookies right after login and bootstraps the CSRF cookie. Both
+    // must be reachable without an existing token (cookie POST carries the
+    // token in its body; DELETE is the logout path).
+    /^\/(api\/)?(v\d+\/)?auth\/cookie$/,
+    /^\/(api\/)?(v\d+\/)?auth\/csrf$/,
+    // Gateway health checks
     /^\/(health|ready|live)$/,
+    // Client feature-flag bootstrap (public, per-user evaluation)
+    /^\/feature-flags\/bootstrap$/,
     // Swagger UI
     /^\/docs(\/.*)?$/,
-    // Public settings/universes (content-service)
+    // Public settings/universes (no user context needed)
     /^\/api\/v\d+\/public\//,
-    // Public content browsing — explicit routes only, no catch-all
-    /^\/api\/v\d+\/content\/(home|watch|featured|trending|new-releases|featured-slides|popular-region|search|categories|tags)$/,
-    // Content detail (read-only, @Public on controller)
-    /^\/api\/v\d+\/content\/[^/]+$/,
+    // Public navigation menus
+    /^\/api\/v\d+\/admin\/menus\/public\/[a-zA-Z0-9_-]+$/,
+    // Public content browsing — read-only listings (no personalization)
+    /^\/api\/v\d+\/content\/(home|watch|featured|trending|new-releases|featured-slides|popular-region|categories|tags)$/,
+    // Content detail (read-only)
+    /^\/api\/v\d+\/content\/[a-zA-Z0-9_-]+$/,
     // Content comments and related
-    /^\/api\/v\d+\/content\/[^/]+\/(comments|related)$/,
-    // Universe-specific content by slug (read-only)
-    /^\/api\/v\d+\/content\/universe\/[^/]+$/,
-    /^\/api\/v\d+\/content\/category\/[^/]+$/,
-    // Universe detail
-    /^\/api\/v\d+\/universe\/[^/]+$/,
-    // Creator discovery and public profiles — explicit sub-routes
+    /^\/api\/v\d+\/content\/[a-zA-Z0-9_-]+\/(comments|related)$/,
+    // Universe-specific content by slug
+    /^\/api\/v\d+\/content\/universe\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/content\/category\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/content\/categories\/[a-zA-Z0-9_-]+\/content$/,
+    /^\/api\/v\d+\/content\/tags\/[a-zA-Z0-9_-]+\/content$/,
+    /^\/api\/v\d+\/content\/available$/,
+    // Public creator discovery and public profiles
     /^\/api\/v\d+\/creators\/discover$/,
-    /^\/api\/v\d+\/creators\/[^/]+\/content$/,
-    /^\/api\/v\d+\/creators\/[^/]+$/,
-    // Universe-specific trending and listing (read-only) — explicit sub-routes
-    /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)\/(trending|featured|popular|new|list)$/,
-    /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)\/[^/]+$/,
-    /^\/api\/v\d+\/(comedy|games|reality|movie|sports|lifestyle|vertical)$/,
+    /^\/api\/v\d+\/creators\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/creators\/[a-zA-Z0-9_-]+\/content$/,
+    /^\/api\/v\d+\/creators\/boards\/[a-zA-Z0-9_-]+$/,
+    // Reality universe public browsing
+    /^\/api\/v\d+\/reality\/(shows|shows\/current|shows\/live|contestants|clips|featured|pricing|premium-extras)$/,
+    /^\/api\/v\d+\/reality\/shows\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/reality\/shows\/[a-zA-Z0-9_-]+\/(episodes|contestants|leaderboard|votes|predictions|likes|comments)$/,
+    /^\/api\/v\d+\/reality\/contestants\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/reality\/episodes\/[a-zA-Z0-9_-]+$/,
+    // Movies universe public browsing
+    /^\/api\/v\d+\/movies(\/(premieres|passes|genres|featured|trending|african|hollywood|rental|dbo\/overview|viewing-windows\/active))?$/,
+    /^\/api\/v\d+\/movies\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/movies\/[a-zA-Z0-9_-]+\/(viewing-windows|availability)$/,
+    /^\/api\/v\d+\/movies\/genre\/[a-zA-Z0-9_-]+(\/\d+)?$/,
+    // Comedy universe public browsing
+    /^\/api\/v\d+\/comedy\/(comedians|specials|series|clips|trending|categories|top-rated|challenges)$/,
+    /^\/api\/v\d+\/comedy\/(comedians|specials|series|clips|challenges)\/[a-zA-Z0-9_-]+$/,
+    // Games universe public browsing
+    /^\/api\/v\d+\/games(\/(home|tournaments|challenges|trending|trivia|leaderboard))?$/,
+    /^\/api\/v\d+\/games\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/games\/tournaments\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/games\/tournaments\/[a-zA-Z0-9_-]+\/leaderboard$/,
+    // Sports universe public browsing
+    /^\/api\/v\d+\/sports\/(home|categories|live|fixtures|upcoming|highlights|predictions|leaderboard|fan-contests|live-scores)$/,
+    /^\/api\/v\d+\/sports\/fixtures\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/sports\/highlights\/[a-zA-Z0-9_-]+$/,
+    // Live events universe public browsing
+    /^\/api\/v\d+\/live-events$/,
+    /^\/api\/v\d+\/live-events\/[a-zA-Z0-9_-]+$/,
+    // Vertical universe public browsing
+    /^\/api\/v\d+\/vertical\/(storyworlds|characters|locations|lore|titles|crossovers|timeline)$/,
+    /^\/api\/v\d+\/vertical\/(storyworlds|characters|lore|titles|crossovers)\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/vertical\/titles\/[a-zA-Z0-9_-]+\/(episodes|characters|related)$/,
+    /^\/api\/v\d+\/vertical\/storyworlds\/[a-zA-Z0-9_-]+\/(titles|characters|theories|realms|orisa)$/,
+    // Lifestyle universe public events & city guide
+    /^\/api\/v\d+\/lifestyle\/(events|city-guide|city-guide\/featured|city-guide\/tags|influencers|celebrities)$/,
+    /^\/api\/v\d+\/lifestyle\/events\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/lifestyle\/events\/[a-zA-Z0-9_-]+\/attendees$/,
+    /^\/api\/v\d+\/lifestyle\/city-guide\/[a-zA-Z0-9_-]+$/,
+    // Universe detail
+    /^\/api\/v\d+\/universe\/[a-zA-Z0-9_-]+$/,
     // Search suggestions and trending searches
     /^\/api\/v\d+\/search\/(trending|suggestions)$/,
-    // Engagement public data (leaderboard, rankings, prediction results)
-    /^\/api\/v\d+\/engagement\/(leaderboard|rankings|predictions\/[^/]+\/results)$/,
-    // Subscription plans (public, for upsell)
-    /^\/api\/v\d+\/subscription\/plans(\/[^/]+)?$/,
-    // Moderation report types
+    // Lifestyle music — read-only listings/detail served on the public
+    // /lifestyle/music browse page (writes still require auth)
+    /^\/api\/v\d+\/lifestyle\/music$/,
+    /^\/api\/v\d+\/lifestyle\/music\/(trending|genres)$/,
+    // genre-detail & artist-detail pages (slug/id = slugified name, derived from entries)
+    /^\/api\/v\d+\/lifestyle\/music\/(genres|artists)\/[a-z0-9-]+$/,
+    /^\/api\/v\d+\/lifestyle\/music\/[a-z0-9-]+$/,
+    // Lifestyle guides (9TLIFE) — read-only public catalogs and detail pages;
+    // everything under /lifestyle/admin stays auth-gated (exact segments only).
+    /^\/api\/v\d+\/lifestyle\/(itineraries|neighborhoods|partners|offers)$/,
+    /^\/api\/v\d+\/lifestyle\/(itineraries|neighborhoods|partners|offers)\/[a-z0-9-]+$/,
+    // Borrow page — the approved-partner catalogue is public marketing surface
+    // (no personalization, no application data). /borrow/admin/* stays gated:
+    // the slug segment pattern deliberately excludes 'admin'.
+    /^\/api\/v\d+\/borrow\/banks$/,
+    /^\/api\/v\d+\/borrow\/banks\/[a-z0-9-]+$/,
+    // Participation result page (writes — votes, quiz submits — still require auth)
+    /^\/api\/v\d+\/participation\/[a-z0-9-]+\/result$/,
+    // Participation hub + detail pages — read-only listings (votes/quiz attempts
+    // and challenge submissions remain auth-gated on the same services)
+    /^\/api\/v\d+\/(polls|quizzes|challenges)$/,
+    /^\/api\/v\d+\/(polls|quizzes|challenges)\/[a-zA-Z0-9-]+$/,
+    // Moderation report types (needed for report forms before login)
     /^\/api\/v\d+\/moderation\/report-types$/,
+    // Public challenge boards — read-only leaderboard data behind the shared
+    // /boards/:challengeId pages (writes and everything else stay gated)
+    /^\/api\/v\d+\/creator\/boards\/[a-zA-Z0-9_-]+$/,
   ];
 
   constructor(
@@ -77,17 +150,58 @@ export class GatewayAuthGuard implements CanActivate {
       context.getClass(),
     ]);
 
+    const request = context.switchToHttp().getRequest();
+
+    // SECURITY (AUD-01): Strip untrusted client identity headers before route processing
+    delete request.headers['x-user-id'];
+    delete request.headers['x-user-email'];
+    delete request.headers['x-user-role'];
+    delete request.headers['x-gateway-secret'];
+
     if (isPublic) {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-
     // Check if the path matches a known public pattern
     const requestPath = request.path || request.url;
-    const isPublicPath = GatewayAuthGuard.PUBLIC_PATH_PATTERNS.some((pattern) =>
-      pattern.test(requestPath)
-    );
+
+    // AUD-19: Swagger docs are only public in local dev when SWAGGER_ENABLED=true
+    if (requestPath.startsWith('/docs')) {
+      const isLocalDev =
+        process.env.NODE_ENV === 'development' || process.env.DEPLOY_ENV === 'local';
+      if (!isLocalDev || process.env.SWAGGER_ENABLED !== 'true') {
+        const internalKey = request.headers['x-internal-api-key'];
+        const configuredKey = this.configService.get<string>('INTERNAL_API_KEY');
+        // Timing-safe compare so the key check doesn't leak its value one
+        // byte at a time through response timing.
+        const provided = Buffer.from(typeof internalKey === 'string' ? internalKey : '');
+        const expected = Buffer.from(configuredKey ?? '');
+        if (
+          !configuredKey ||
+          provided.length !== expected.length ||
+          !timingSafeEqual(provided, expected)
+        ) {
+          throw new UnauthorizedException('Swagger documentation is restricted');
+        }
+      }
+      return true;
+    }
+
+    // AUD-05: Public content/lifestyle/search patterns only permit safe read-only methods
+    const isPublicPath = GatewayAuthGuard.PUBLIC_PATH_PATTERNS.some((pattern) => {
+      if (!pattern.test(requestPath)) return false;
+      if (
+        requestPath.includes('/auth/') ||
+        requestPath.includes('/health') ||
+        requestPath.includes('/ready') ||
+        requestPath.includes('/live') ||
+        requestPath.includes('/feature-flags/')
+      ) {
+        return true;
+      }
+      const method = (request.method || 'GET').toUpperCase();
+      return method === 'GET' || method === 'HEAD' || method === 'OPTIONS';
+    });
 
     if (isPublicPath) {
       return true;
@@ -106,6 +220,14 @@ export class GatewayAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing or invalid Authorization header');
     }
 
+    // Configuration failures are misconfiguration, not bad credentials — hoisted
+    // above the try so they surface as the 500-class error they are instead of
+    // being flattened into a lying 401.
+    const jwtSecret = this.configService.get<string>('JWT_ACCESS_SECRET');
+    if (!jwtSecret) {
+      throw new Error('JWT_ACCESS_SECRET environment variable is required');
+    }
+
     try {
       const payload = this.verifyToken(token);
 
@@ -119,6 +241,11 @@ export class GatewayAuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
+      // allowed-fabricated-4xx: token verification is pure client input — every
+      // failure shape (malformed, expired, wrong signature) must be
+      // indistinguishable to callers (anti-enumeration), so a uniform 401 is
+      // the correct answer and mapAndThrow would wrongly escalate a plain JWT
+      // error to a 500. Configuration failures are no longer caught here.
       this.logger.warn(`Auth validation failed: ${(error as Error).message}`);
       throw new UnauthorizedException('Invalid or expired token');
     }
@@ -160,11 +287,14 @@ export class GatewayAuthGuard implements CanActivate {
         role: payload.role,
       };
     } catch (error) {
+      // allowed-fabricated-4xx: deliberate cause-inspected classification —
+      // jwt error types distinguish expired vs malformed credentials, which
+      // mapAndThrow cannot see; auth failures are 401, never a 500.
       if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('Token expired');
+        throw new UnauthorizedException('Token expired');
       }
       if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error(`Invalid token: ${(error as Error).message}`);
+        throw new UnauthorizedException(`Invalid token: ${(error as Error).message}`);
       }
       throw error;
     }

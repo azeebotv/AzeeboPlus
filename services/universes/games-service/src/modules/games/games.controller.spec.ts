@@ -6,6 +6,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { GamesController } from './games.controller.js';
 import { GamesService } from './games.service.js';
+import { GameRealtimeService } from './game-realtime.service.js';
 import { RateLimitService } from '@azeebo/security';
 
 jest.mock('@azeebo/shared-services', () => ({
@@ -15,8 +16,19 @@ jest.mock('@azeebo/shared-services', () => ({
 jest.mock('@azeebo/security', () => ({
   RateLimitGuard: jest.fn(),
   RateLimit: () => () => {},
+  ServiceAuthGuard: jest.fn(),
   AdminGuard: jest.fn(),
   RateLimitService: jest.fn(),
+}));
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagService: jest.fn(),
+  FeatureFlagGuard: class {},
+  FeatureFlag: () => () => {},
+  gamesFlags: {
+    tournamentsEnabled: 'games_tournaments_enabled',
+    triviaAi: 'games_trivia_ai',
+    leaderboardsSeasonal: 'games_leaderboards_seasonal',
+  },
 }));
 
 describe('GamesController', () => {
@@ -48,6 +60,16 @@ describe('GamesController', () => {
         {
           provide: GamesService,
           useValue: mockGamesService,
+        },
+        {
+          provide: GameRealtimeService,
+          useValue: {
+            createSession: jest.fn(),
+            joinSession: jest.fn(),
+            startSession: jest.fn(),
+            getPlayerSession: jest.fn(),
+            getGameSessions: jest.fn(),
+          },
         },
         {
           provide: RateLimitService,

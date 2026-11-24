@@ -43,6 +43,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { pseudonymizeIdentifier } from '@azeebo/security';
 
 @ApiTags('System Settings')
 @ApiBearerAuth()
@@ -426,7 +427,7 @@ export class SystemSettingsController {
     @Body() data: AdminUserDto,
     @Req() req: { user?: { sub: string; id?: string }; ip?: string }
   ) {
-    this.logger.log(`Creating admin user: ${data.email}`);
+    this.logger.log(`Creating admin user: ${pseudonymizeIdentifier(data.email)}`);
     const result = await this.systemSettingsService.createAdminUser(data);
     await this.auditLogService.log({
       actorId: this.getActorId(req),

@@ -1,6 +1,7 @@
 import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagService, contentFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 export interface AccessCheckResult {
@@ -16,7 +17,8 @@ export class AccessControlService {
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {}
 
   async checkGeoAccess(
@@ -80,6 +82,16 @@ export class AccessControlService {
         return {
           hasAccess: false,
           reason: `Content requires age ${content.minAge}+`,
+        };
+      }
+
+      // content_premium_gate: while the flag is off the entitlement checks
+      // below are bypassed and all published content is unlocked (promo/free
+      // mode). Flipping it on starts enforcing rental/pass/premium gating.
+      if (!(await this.featureFlagService.isEnabled(contentFlags.premiumGate))) {
+        return {
+          hasAccess: true,
+          accessType: content.windowType === 'basic' ? 'free' : 'unlocked',
         };
       }
 
@@ -491,37 +503,38 @@ export class AccessControlService {
       const skip = (page - 1) * limit;
       const now = new Date();
 
-      const freeContent = await this.prisma.contentItem.findMany({
-        where: {
-          status: 'published',
-          windowType: 'basic',
-          ...(universeId ? { universeId } : {}),
-        },
-        include: { universe: true },
-        skip,
-        take: limit,
-      });
+      // Parallel fetch free content + user access data (fixes sequential queries)
+      const [freeContent, userRentals, userPasses] = await Promise.all([
+        this.prisma.contentItem.findMany({
+          where: {
+            status: 'published',
+            windowType: 'basic',
+            ...(universeId ? { universeId } : {}),
+          },
+          include: { universe: true },
+          skip,
+          take: limit,
+        }),
+        this.prisma.rental.findMany({
+          where: {
+            userId,
+            status: 'active',
+            endTime: { gt: now },
+          },
+          select: { contentId: true },
+        }),
+        this.prisma.pass.findMany({
+          where: {
+            userId,
+            status: 'active',
+            endTime: { gt: now },
+            ...(universeId ? { universeId } : {}),
+          },
+        }),
+      ]);
 
       const accessibleContentIds: string[] = [];
-
-      const userRentals = await this.prisma.rental.findMany({
-        where: {
-          userId,
-          status: 'active',
-          endTime: { gt: now },
-        },
-        select: { contentId: true },
-      });
       accessibleContentIds.push(...userRentals.map((r) => r.contentId));
-
-      const userPasses = await this.prisma.pass.findMany({
-        where: {
-          userId,
-          status: 'active',
-          endTime: { gt: now },
-          ...(universeId ? { universeId } : {}),
-        },
-      });
 
       if (userPasses.length > 0) {
         const universeIds = userPasses

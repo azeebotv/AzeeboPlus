@@ -1,13 +1,21 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { FeatureFlagService, subscriptionFlags } from '@azeebo/feature-flags';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto.js';
 import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto.js';
 import type { SubscriptionPlan, Subscription } from '../../prisma/client/index.js';
-import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
+import { CircuitBreaker } from '@azeebo/shared-types';
 import { randomUUID } from 'crypto';
 import axios from 'axios';
+import {
+  walletLookupUrl,
+  walletDebitUrl,
+  walletDebitPayload,
+  walletInternalHeaders as buildWalletInternalHeaders,
+} from '../../wallet-payloads.js';
 
 @Injectable()
 export class SubscriptionService {
@@ -15,6 +23,9 @@ export class SubscriptionService {
   private readonly paymentServiceBaseUrl: string;
   private readonly walletServiceBaseUrl: string;
   private readonly analyticsServiceBaseUrl: string;
+  // Secret for internal wallet-service calls — same resolution order the
+  // wallet-service InternalSecretGuard uses to validate it.
+  private readonly internalApiKey: string;
   private readonly circuitBreaker = new CircuitBreaker({
     failureThreshold: 5,
     resetTimeout: 60000,
@@ -23,7 +34,8 @@ export class SubscriptionService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
     this.paymentServiceBaseUrl = this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL');
     this.walletServiceBaseUrl = this.configService.get<string>(
@@ -32,8 +44,20 @@ export class SubscriptionService {
     );
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
+    this.internalApiKey =
+      this.configService.get<string>('GATEWAY_SECRET') ??
+      this.configService.getOrThrow<string>('INTERNAL_API_KEY');
+  }
+
+  /**
+   * Headers for internal wallet-service calls (subscription + renewal debits).
+   * Those routes carry no user identity — the shared secret authenticates
+   * the service itself (wallet-service InternalSecretGuard).
+   */
+  private walletInternalHeaders(): Record<string, string> {
+    return buildWalletInternalHeaders(this.internalApiKey);
   }
 
   async getPlans(): Promise<SubscriptionPlan[]> {
@@ -85,18 +109,41 @@ export class SubscriptionService {
       throw new NotFoundException(`Plan ${dto.planId} not found`);
     }
 
-    const paymentMethod = dto.paymentMethod ?? 'external';
+    const [freeTrialEnabled, promoEnabled] = await Promise.all([
+      this.featureFlagService.isEnabled(subscriptionFlags.freeTrial, userId),
+      this.featureFlagService.isEnabled(subscriptionFlags.promoDiscounts, userId),
+    ]);
 
-    if (paymentMethod === 'external' && !dto.paymentReference) {
-      throw new BadRequestException(
-        'Payment reference is required for external payments. Please complete payment first.'
-      );
+    // Free trial: first-time subscribers (no prior subscription record) get a
+    // trial period with no charge when the flag is on.
+    const hasPriorSubscription = (await this.prisma.subscription.count({ where: { userId } })) > 0;
+    const isTrial = freeTrialEnabled && !hasPriorSubscription;
+
+    // Promo discount: apply the promoCode percentage when the flag is on.
+    let chargedPrice = Number(plan.price);
+    let appliedPromo: { code: string; percent: number } | undefined;
+    if (promoEnabled && dto.promoCode) {
+      const percent = this.getPromoDiscountPercent(dto.promoCode);
+      if (percent > 0) {
+        chargedPrice = Number((chargedPrice * (1 - percent / 100)).toFixed(2));
+        appliedPromo = { code: dto.promoCode, percent };
+      }
     }
 
-    if (paymentMethod === 'wallet') {
-      await this.debitWallet(userId, Number(plan.price), `Subscription to ${plan.name}`);
-    } else {
-      await this.verifyExternalPayment(dto.paymentReference!, plan);
+    const paymentMethod = isTrial ? 'trial' : (dto.paymentMethod ?? 'external');
+
+    if (!isTrial) {
+      if (paymentMethod === 'external' && !dto.paymentReference) {
+        throw new BadRequestException(
+          'Payment reference is required for external payments. Please complete payment first.'
+        );
+      }
+
+      if (paymentMethod === 'wallet') {
+        await this.debitWallet(userId, chargedPrice, `Subscription to ${plan.name}`);
+      } else {
+        await this.verifyExternalPayment(dto.paymentReference!, plan, chargedPrice);
+      }
     }
 
     const subscription = await this.prisma.$transaction(async (tx) => {
@@ -119,7 +166,7 @@ export class SubscriptionService {
       }
 
       const endDate = new Date();
-      endDate.setDate(endDate.getDate() + plan.duration);
+      endDate.setDate(endDate.getDate() + (isTrial ? this.getTrialDays() : plan.duration));
 
       const newSubscription = await tx.subscription.create({
         data: {
@@ -127,7 +174,7 @@ export class SubscriptionService {
           planId: dto.planId,
           endDate,
           autoRenew: dto.autoRenew ?? true,
-          lastPaymentDate: new Date(),
+          lastPaymentDate: isTrial ? null : new Date(),
           paymentMethod: paymentMethod,
         },
         include: {
@@ -138,11 +185,13 @@ export class SubscriptionService {
       await tx.subscriptionTransaction.create({
         data: {
           subscriptionId: newSubscription.id,
-          amount: plan.price,
+          amount: isTrial ? 0 : chargedPrice,
           currency: plan.currency,
           status: 'completed',
-          paymentProvider: paymentMethod === 'wallet' ? 'wallet' : 'external',
-          description: `Subscription to ${plan.name}${dto.paymentReference ? ` - ref: ${dto.paymentReference}` : ''}`,
+          paymentProvider: isTrial ? 'trial' : paymentMethod === 'wallet' ? 'wallet' : 'external',
+          description: isTrial
+            ? `Free trial of ${plan.name} (${this.getTrialDays()} days)`
+            : `Subscription to ${plan.name}${appliedPromo ? ` - promo ${appliedPromo.code} (-${appliedPromo.percent}%)` : ''}${dto.paymentReference ? ` - ref: ${dto.paymentReference}` : ''}`,
         },
       });
 
@@ -152,7 +201,12 @@ export class SubscriptionService {
     await this.cache.invalidate(`subscription:user:${userId}`);
     await this.cache.invalidate('subscription:plans');
 
-    this.trackAnalyticsEvent('subscription_created', userId, { planId: dto.planId, paymentMethod });
+    this.trackAnalyticsEvent('subscription_created', userId, {
+      planId: dto.planId,
+      paymentMethod,
+      isTrial,
+      promoCode: appliedPromo?.code,
+    });
     return subscription;
   }
 
@@ -375,13 +429,12 @@ export class SubscriptionService {
 
   private async debitWallet(userId: string, amount: number, description: string): Promise<void> {
     try {
-      const walletResponse = await axios.get(
-        `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-        {
-          timeout: 10000,
-        }
-      );
-      const wallet = walletResponse.data?.wallet || walletResponse.data;
+      const walletResponse = await axios.get(walletLookupUrl(this.walletServiceBaseUrl, userId), {
+        headers: this.walletInternalHeaders(),
+        timeout: 10000,
+      });
+      // Internal lookup responds enveloped: { success, data: { balance, … } }.
+      const wallet = walletResponse.data?.data;
       if (!wallet) {
         throw new BadRequestException('Wallet not found. Please fund your wallet first.');
       }
@@ -393,32 +446,19 @@ export class SubscriptionService {
       const idempotencyKey = randomUUID();
 
       await axios.post(
-        `${this.walletServiceBaseUrl}/wallet/debit`,
-        {
-          walletId: wallet.id,
-          amount,
-          description,
-          idempotencyKey,
-        },
-        { timeout: 10000 }
+        walletDebitUrl(this.walletServiceBaseUrl, userId),
+        walletDebitPayload(amount, description, idempotencyKey),
+        { headers: this.walletInternalHeaders(), timeout: 10000 }
       );
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      if (error instanceof CircuitBreakerOpenError) {
-        throw new BadRequestException(
-          'Wallet service is temporarily unavailable. Please try again later.'
-        );
-      }
-      this.logger.error(`Failed to debit wallet: ${(error as Error).message}`);
-      throw new BadRequestException('Unable to process wallet payment. Please try again.');
+      mapAndThrow(error, 'debiting wallet');
     }
   }
 
   private async verifyExternalPayment(
     paymentReference: string,
-    plan: SubscriptionPlan
+    plan: SubscriptionPlan,
+    chargedPrice?: number
   ): Promise<void> {
     let paymentVerification;
     try {
@@ -428,13 +468,7 @@ export class SubscriptionService {
         })
       );
     } catch (error) {
-      if (error instanceof CircuitBreakerOpenError) {
-        throw new BadRequestException(
-          'Payment service is temporarily unavailable. Please try again later.'
-        );
-      }
-      this.logger.error(`Failed to verify payment reference: ${(error as Error).message}`);
-      throw new BadRequestException('Unable to verify payment. Please try again.');
+      mapAndThrow(error, 'verifying payment');
     }
 
     if (paymentVerification.data?.status !== 'completed') {
@@ -443,10 +477,36 @@ export class SubscriptionService {
       );
     }
 
-    if (Number(paymentVerification.data?.amount).toFixed(2) !== Number(plan.price).toFixed(2)) {
+    const expected = chargedPrice ?? Number(plan.price);
+    if (Number(paymentVerification.data?.amount).toFixed(2) !== expected.toFixed(2)) {
       throw new BadRequestException(
-        `Payment amount (${paymentVerification.data?.amount}) does not match plan price (${plan.price})`
+        `Payment amount (${paymentVerification.data?.amount}) does not match expected amount (${expected})`
       );
+    }
+  }
+
+  /**
+   * Free trial length in days (subscription_free_trial flag). Env-tunable via
+   * SUBSCRIPTION_TRIAL_DAYS, default 7.
+   */
+  private getTrialDays(): number {
+    const days = parseInt(this.configService.get<string>('SUBSCRIPTION_TRIAL_DAYS', '7'), 10);
+    return Number.isFinite(days) && days > 0 ? days : 7;
+  }
+
+  /**
+   * Promo registry (subscription_promo_discounts flag): a JSON map of code →
+   * discount percentage from the SUBSCRIPTION_PROMO_CODES env var, e.g.
+   * `{"LAUNCH10": 10, "WELCOME20": 20}`. Unknown/expired codes return 0.
+   */
+  private getPromoDiscountPercent(promoCode: string): number {
+    try {
+      const raw = this.configService.get<string>('SUBSCRIPTION_PROMO_CODES', '{}');
+      const registry = JSON.parse(raw) as Record<string, number>;
+      const percent = registry[promoCode];
+      return typeof percent === 'number' && percent > 0 && percent <= 100 ? percent : 0;
+    } catch {
+      return 0;
     }
   }
 

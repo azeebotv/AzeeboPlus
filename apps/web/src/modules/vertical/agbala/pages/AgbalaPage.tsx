@@ -7,35 +7,35 @@ const PATHS = [
     id: 'warrior',
     name: 'Warrior',
     description: 'Strength, honor, and combat mastery',
-    color: '#C41E3A',
+    color: 'var(--color-az-category-crimson)',
   },
   {
     id: 'sage',
     name: 'Sage',
     description: 'Wisdom, knowledge, and ancient truths',
-    color: '#1E90FF',
+    color: 'var(--color-az-category-sky)',
   },
   {
     id: 'trickster',
     name: 'Trickster',
     description: 'Cunning, deception, and survival',
-    color: '#FFD700',
+    color: 'var(--color-az-accent-gold)',
   },
   {
     id: 'healer',
     name: 'Healer',
     description: 'Compassion, restoration, and balance',
-    color: '#32CD32',
+    color: 'var(--color-az-success-400)',
   },
 ];
 
 export default function AgbalaPage() {
   return (
-    <div className="min-h-screen bg-[var(--brand-near-black)] text-[var(--brand-white)]">
+    <div className="min-h-screen bg-[var(--color-az-surface-root)] text-[var(--color-az-ink)]">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <header className="text-center mb-16">
           <h1 className="text-4xl font-bold mb-4">Agbala</h1>
-          <p className="text-xl text-[var(--brand-white)]/50">
+          <p className="text-xl text-[var(--color-az-ink)]/50">
             Choose your path. Shape your destiny.
           </p>
         </header>
@@ -47,11 +47,11 @@ export default function AgbalaPage() {
               <Link
                 key={path.id}
                 href={`/vertical/agbala/${path.id}`}
-                className="block p-6 rounded-lg border border-gray-700 hover:border-gray-500 transition-colors"
+                className="block p-6 rounded-lg border border-az-glass-border hover:border-az-glass-border-hover transition-colors"
                 style={{ borderColor: path.color }}
               >
                 <h3 className="text-xl font-semibold mb-2">{path.name}</h3>
-                <p className="text-gray-400">{path.description}</p>
+                <p className="text-az-ink-muted">{path.description}</p>
               </Link>
             ))}
           </div>
@@ -60,7 +60,7 @@ export default function AgbalaPage() {
         <section className="text-center">
           <Link
             href="/vertical/agbala/quiz"
-            className="inline-block px-8 py-4 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-400 transition-colors"
+            className="inline-block px-8 py-4 bg-az-warning-500 text-black font-semibold rounded-lg hover:bg-az-warning-400 transition-colors"
           >
             Take the Destiny Quiz
           </Link>

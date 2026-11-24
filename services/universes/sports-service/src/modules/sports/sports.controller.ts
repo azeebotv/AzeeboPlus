@@ -1,6 +1,7 @@
 import { Inject, Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, sportsFlags } from '@azeebo/feature-flags';
 
 import { SportsService } from './sports.service.js';
 import { SportsResponse } from './interfaces/sports-response.interface.js';
@@ -13,6 +14,7 @@ import { CreateSportsPredictionDto, EnterContestDto } from './dto/prediction.dto
 export class SportsController {
   constructor(@Inject(SportsService) private readonly sportsService: SportsService) {}
 
+  @Public()
   @Get('home')
   @Get('live')
   @ApiOperation({ summary: 'Sports home / live matches' })
@@ -21,6 +23,7 @@ export class SportsController {
     return this.sportsService.getHome();
   }
 
+  @Public()
   @Get('categories')
   @ApiOperation({ summary: 'Sports categories' })
   @ApiResponse({ status: 200, description: 'Sports categories' })
@@ -28,6 +31,7 @@ export class SportsController {
     return this.sportsService.getHome();
   }
 
+  @Public()
   @Get('upcoming')
   @Get('fixtures')
   @ApiOperation({ summary: 'Upcoming fixtures / events' })
@@ -36,6 +40,7 @@ export class SportsController {
     return this.sportsService.getEvents();
   }
 
+  @Public()
   @Get('fixtures/:id')
   @ApiOperation({ summary: 'Get fixture details' })
   @ApiResponse({ status: 200, description: 'Fixture details' })
@@ -43,6 +48,7 @@ export class SportsController {
     return this.sportsService.getEventById(id);
   }
 
+  @Public()
   @Get('predictions')
   @Get('prediction-leagues')
   @ApiOperation({ summary: 'Prediction opportunities / leagues' })
@@ -63,6 +69,7 @@ export class SportsController {
     return this.sportsService.submitPrediction(req.user.id, body);
   }
 
+  @Public()
   @Get('leaderboard')
   @ApiOperation({ summary: 'Sports leaderboard' })
   @ApiResponse({ status: 200, description: 'Leaderboard' })
@@ -70,6 +77,7 @@ export class SportsController {
     return this.sportsService.getLeaderboard();
   }
 
+  @Public()
   @Get('fan-boards')
   @Get('fan-contests')
   @ApiOperation({ summary: 'Fan boards / contests' })
@@ -90,13 +98,18 @@ export class SportsController {
     return this.sportsService.enterFanContest(req.user.id, body);
   }
 
+  @Public()
   @Get('live/scores')
-  @ApiOperation({ summary: 'Live match scores' })
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(sportsFlags.liveScores)
+  @ApiOperation({ summary: 'Live match scores (sports_live_scores)' })
   @ApiResponse({ status: 200, description: 'Live scores' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async getLiveScores(): Promise<SportsResponse> {
     return this.sportsService.getHome();
   }
 
+  @Public()
   @Get('live/match/:matchId')
   @ApiOperation({ summary: 'Live match details' })
   @ApiResponse({ status: 200, description: 'Match details' })
@@ -104,6 +117,7 @@ export class SportsController {
     return this.sportsService.getEventById(matchId);
   }
 
+  @Public()
   @Get('prediction-options')
   @ApiOperation({ summary: 'Prediction options for current match' })
   @ApiResponse({ status: 200, description: 'Prediction options' })
@@ -111,6 +125,7 @@ export class SportsController {
     return this.sportsService.getPredictions();
   }
 
+  @Public()
   @Get('score-options')
   @ApiOperation({ summary: 'Score prediction options' })
   @ApiResponse({ status: 200, description: 'Score options' })
@@ -118,6 +133,7 @@ export class SportsController {
     return this.sportsService.getPredictions();
   }
 
+  @Public()
   @Get('current-match')
   @ApiOperation({ summary: 'Current featured match' })
   @ApiResponse({ status: 200, description: 'Current match' })

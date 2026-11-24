@@ -7,11 +7,12 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl   = env("DIRECT_DATABASE_URL")
 }
 
 model Universe {
   id          String   @id @default(uuid())
-  name        String   @unique // reality, creator, lifestyle, vertical, movie, games, comedy, sports
+  name        String   @unique // canonical slugs: reality, creator, lifestyle, vertical, movie, games, comedy, sports, music
   displayName String
   description String?
   icon        String?
@@ -338,4 +339,110 @@ model GeoRestriction {
   @@unique([countryCode])
   @@index([countryCode])
   @@index([isActive])
+}
+
+model Download {
+  id          String   @id @default(uuid())
+  contentId   String
+  userId      String
+  quality     String   @default("medium") // low, medium, high
+  status      String   @default("pending") // pending, downloading, completed, failed, expired
+  progress    Int      @default(0)
+  fileSize    BigInt   @default(0)
+  url         String?
+  downloadedAt DateTime @default(now())
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("downloads")
+  @@index([userId])
+  @@index([contentId])
+  @@index([userId, status])
+  @@index([expiresAt])
+}
+
+model ShareLink {
+  id          String   @id @default(uuid())
+  contentId   String
+  shortCode   String   @unique
+  shortUrl    String
+  platform    String   // twitter, facebook, whatsapp, copy, native
+  shareCount  Int      @default(0)
+  clickCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("share_links")
+  @@index([contentId])
+  @@index([shortCode])
+  @@index([platform])
+}
+
+model ShareEvent {
+  id          String   @id @default(uuid())
+  contentId   String
+  platform    String
+  userId      String
+  timestamp   DateTime @default(now())
+
+  @@map("share_events")
+  @@index([contentId])
+  @@index([platform])
+  @@index([timestamp])
+}
+
+model Review {
+  id              String   @id @default(uuid())
+  contentId       String
+  userId          String
+  rating          Int      // 1-5
+  title           String?
+  body            String?
+  containsSpoilers Boolean @default(false)
+  helpfulCount    Int      @default(0)
+  replyCount      Int      @default(0)
+  status          String   @default("published") // published, pending, rejected
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  helpfuls  ReviewHelpful[]
+  reports   ReviewReport[]
+
+  @@map("reviews")
+  @@unique([contentId, userId])
+  @@index([contentId])
+  @@index([userId])
+  @@index([rating])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ReviewHelpful {
+  id        String   @id @default(uuid())
+  reviewId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@map("review_helpfuls")
+  @@unique([reviewId, userId])
+  @@index([reviewId])
+  @@index([userId])
+}
+
+model ReviewReport {
+  id        String   @id @default(uuid())
+  reviewId  String
+  userId    String
+  reason    String
+  status    String   @default("pending") // pending, reviewed, dismissed
+  createdAt DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@map("review_reports")
+  @@index([reviewId])
+  @@index([status])
 }

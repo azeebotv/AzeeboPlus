@@ -12,8 +12,10 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface Contestant {
   id: string;
@@ -124,9 +126,9 @@ export default function ContestantProfileScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Contestant Screen" style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
           <Text style={styles.loadingText}>Loading profile...</Text>
         </View>
       </SafeAreaView>
@@ -138,7 +140,7 @@ export default function ContestantProfileScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Contestant not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -151,7 +153,7 @@ export default function ContestantProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.coverContainer}>
           <Image source={{ uri: contestant.coverImage }} style={styles.coverImage} />
-          <TouchableOpacity style={styles.backButtonAbsolute} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButtonAbsolute} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
         </View>
@@ -247,7 +249,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   errorContainer: {
@@ -256,14 +258,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     marginBottom: 16,
   },
   backButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 8,
   },
   backButtonText: {
@@ -312,16 +314,16 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   location: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 4,
   },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginTop: 24,
@@ -333,11 +335,11 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
   },
   statLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 4,
   },
   statDivider: {
@@ -345,7 +347,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   voteButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -365,25 +367,25 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 12,
   },
   bio: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     lineHeight: 22,
   },
   socialLinks: {
     gap: 8,
   },
   socialButton: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
   },
   socialButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },

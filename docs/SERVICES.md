@@ -1,7 +1,7 @@
 # Azeebo+ Service Catalog
 
 > Complete catalog of all microservices, their responsibilities, and endpoints.
-> Last Updated: 2026-07-22
+> Last Updated: 2026-09-28
 
 ---
 
@@ -9,7 +9,7 @@
 
 ```
 services/
-├── core/                    # Platform essentials (7 services)
+├── core/                    # Platform essentials (8 services)
 ├── universes/               # Universe business logic (9 services)
 ├── engagement/              # User interaction (6 services)
 ├── operations/              # Platform operations (3 services)
@@ -17,7 +17,7 @@ services/
 └── gateway/                 # API routing (1 service)
 ```
 
-**Total: 28 microservices + 4 frontends**
+**Total: 29 microservices + 5 frontends**
 
 ---
 
@@ -39,9 +39,11 @@ services/
 - **Database:** `azeebo_user`
 - **Responsibility:** User profiles, preferences, follows, saved items, watch history, privacy/GDPR
 - **Endpoints:**
-  - Users: `GET /users/me`, `PATCH /users/me`, `GET /users/:id`, `POST /users/:id/follow`, `DELETE /users/:id/follow`, `GET /users/:id/followers`, `GET /users/:id/following`, `GET /users/me/preferences`, `PUT /users/me/preferences`, `GET /users/me/history`, `GET /users/me/saved`, `POST /users/me/saved`, `DELETE /users/me/saved/:contentId`, `POST /users/me/complete-profile`
+  - Users: `GET /users/me`, `PATCH /users/me`, `GET /users/:id`, `POST /users/:id/follow`, `DELETE /users/:id/follow`, `GET /users/:id/followers`, `GET /users/:id/following`, `GET /users/me/preferences`, `PUT /users/me/preferences`, `GET /users/me/history`, `POST /users/me/history`, `GET /users/me/saved`, `POST /users/me/saved`, `DELETE /users/me/saved/:contentId`, `POST /users/me/complete-profile`, `GET /users/me/universe-affinity`, `PATCH /users/me/universe-affinity`, `GET /users/me/continue-watching`, `GET /users/me/universes`
+  - Avatar: `POST /users/me/avatar`, `DELETE /users/me/avatar`, `GET /users/me/avatar/upload-url`
+  - Privacy Settings: `GET /users/me/privacy-settings`, `PUT /users/me/privacy-settings`
   - Interactions: `GET /interactions/watchlist`, `DELETE /interactions/watchlist/:contentId`, `GET /interactions/history`, `DELETE /interactions/history/:contentId`, `GET /interactions/favorites`, `POST /interactions/favorites`, `DELETE /interactions/favorites/:contentId`
-  - Privacy: `POST /privacy/deletion-request`, `DELETE /privacy/data/:userId`, `GET /privacy/data/:userId/export`, `GET /privacy/deletion-status/:userId`
+  - GDPR: `POST /privacy/deletion-request`, `DELETE /privacy/data/:userId`, `GET /privacy/data/:userId/export`, `GET /privacy/deletion-status/:userId`
   - Admin: `GET /admin/stats`, `GET /admin/users/:id`, `PATCH /admin/users/:id`, `POST /admin/users/:id/suspend`, `GET /admin/subscriptions`, `PUT /admin/subscriptions/:id`, `DELETE /admin/subscriptions/:id`, `GET /admin/analytics`, `GET /admin/audit-logs`
 
 ### wallet-service (`:3002`)
@@ -87,6 +89,20 @@ services/
   - Premium: `POST /media/premium/url`, `GET /media/premium/url/:token/analytics`, `DELETE /media/premium/url/:token`
   - Admin: `GET /admin/stats`, `GET /admin/uploads`, `DELETE /admin/uploads/:id`
 
+### knowledge-service (`:3020`)
+- **Database:** `azeebo_knowledge`
+- **Responsibility:** Canonical narrative events, knowledge graph units, spoiler filtering, user knowledge grants, equivalence sets, checkpoint triggers, and reading projections
+- **Endpoints:**
+  - Canonical Events: `POST /knowledge/events`, `GET /knowledge/events/:id`, `PATCH /knowledge/events/:id/supersede`
+  - Knowledge Units: `POST /knowledge/units`, `GET /knowledge/units/:id`, `POST /knowledge/units/:id/correct`
+  - Knowledge Grants: `POST /knowledge/grants`, `GET /knowledge/users/:userId/grants`, `GET /knowledge/users/:userId/known-ids`
+  - Projections: `GET /knowledge/users/:userId/projection`, `POST /knowledge/users/:userId/projection/rebuild`
+  - Equivalence Sets: `POST /knowledge/equivalence-sets`, `GET /knowledge/equivalence-sets/:setCode`
+  - Checkpoints: `POST /knowledge/checkpoints`, `POST /knowledge/checkpoints/:id/trigger`
+  - Spoiler Control: `POST /knowledge/spoiler-filter`
+  - Aggregates (AOU Hub): `GET /knowledge/summary`, `GET /knowledge/what-you-know`, `GET /knowledge/locked`
+  - Health: `GET /health`
+
 ---
 
 ## Universe Services
@@ -101,7 +117,8 @@ services/
   - Voting: `POST /reality/votes`, `POST /reality/votes/quantity`, `POST /reality/supervotes`
   - Predictions: `POST /reality/predictions`, `GET /reality/predictions/:showId`, `GET /reality/shows/:showId/predictions`
   - Other: `GET /reality/shows/:showId/leaderboard`, `GET /reality/clips`, `GET /reality/wallet/balance`, `GET /reality/pricing`, `GET /reality/premium-extras`, `POST /reality/premium-extras/:extraId/purchase`
-  - Admin: `GET /admin/reality-shows`, `GET /admin/reality-shows/:showId`, `PUT /admin/reality-shows/:showId/status`
+  - Admin (reality-service): `GET /admin/reality-shows`, `GET /admin/reality-shows/:showId`, `PUT /admin/reality-shows/:showId/status`, `POST /admin/reality-shows/:showId/auto-eliminate`
+  - Admin (apps/admin BFF): `GET /admin/reality-shows`, `GET /admin/reality-shows/:id`, `POST /admin/reality-shows`, `PATCH /admin/reality-shows/:id`, `PUT /admin/reality-shows/:id/status`, `DELETE /admin/reality-shows/:id` (served directly by `apps/admin/src/modules/reality-shows/`)
 
 ### creator-service (`:3018`)
 - **Database:** `azeebo_creator`
@@ -114,19 +131,23 @@ services/
 
 ### lifestyle-service (`:3016`)
 - **Database:** `azeebo_lifestyle`
-- **Responsibility:** Events, venues, nightlife, influencer content, city guides, challenges, polls, quizzes
+- **Responsibility:** Events, venues, nightlife, influencer content, city guides, challenges, polls, quizzes, music, stories, social
 - **Endpoints:**
   - Feed: `GET /lifestyle/feed`, `GET /lifestyle/feed/trending`
-  - Stories: `GET /lifestyle/stories`, `POST /lifestyle/stories`, `PATCH /lifestyle/stories/:id`, `DELETE /lifestyle/stories/:id`
-  - Events: `GET /lifestyle/events`, `POST /lifestyle/events`, `PATCH /lifestyle/events/:id`, `DELETE /lifestyle/events/:id`, `POST /lifestyle/events/:id/rsvp`, `DELETE /lifestyle/events/:id/rsvp`
-  - City Guide: `GET /lifestyle/city-guide`, `POST /lifestyle/city-guide`, `PATCH /lifestyle/city-guide/:id`, `DELETE /lifestyle/city-guide/:id`
-  - Music: `GET /lifestyle/music`, `POST /lifestyle/music`, `PATCH /lifestyle/music/:id`, `DELETE /lifestyle/music/:id`
-  - Celebrity: `GET /lifestyle/celebrities`, `POST /lifestyle/celebrities`, `PATCH /lifestyle/celebrities/:id`, `DELETE /lifestyle/celebrities/:id`
-  - Nightlife: `GET /lifestyle/nightlife`, `POST /lifestyle/nightlife`, `PATCH /lifestyle/nightlife/:id`, `DELETE /lifestyle/nightlife/:id`
-  - Influencer: `GET /lifestyle/influencers`, `POST /lifestyle/influencers`, `PATCH /lifestyle/influencers/:id`, `DELETE /lifestyle/influencers/:id`
-  - Challenges: `GET /challenges`, `POST /challenges`, `POST /challenges/:id/submit`, `POST /challenges/submissions/:id/vote`
-  - Polls: `GET /polls`, `POST /polls`, `POST /polls/:id/vote`
-  - Quizzes: `GET /quizzes`, `POST /quizzes`, `POST /quizzes/:id/start`, `POST /quizzes/attempts/:attemptId/submit`
+  - Stories: `GET /lifestyle/stories`, `GET /lifestyle/stories/categories`, `GET /lifestyle/stories/:slug`, `POST /lifestyle/stories`, `PATCH /lifestyle/stories/:id`, `DELETE /lifestyle/stories/:id`, `POST /lifestyle/stories/:id/view`
+  - Events: `GET /lifestyle/events`, `GET /lifestyle/events/categories`, `GET /lifestyle/events/upcoming`, `GET /lifestyle/events/:slug`, `POST /lifestyle/events`, `PATCH /lifestyle/events/:id`, `DELETE /lifestyle/events/:id`, `POST /lifestyle/events/:id/rsvp`, `DELETE /lifestyle/events/:id/rsvp`, `GET /lifestyle/events/:id/attendees`
+  - City Guide: `GET /lifestyle/city-guide`, `GET /lifestyle/city-guide/featured`, `GET /lifestyle/city-guide/search`, `GET /lifestyle/city-guide/tags`, `GET /lifestyle/city-guide/:slug`, `POST /lifestyle/city-guide`, `PATCH /lifestyle/city-guide/:id`, `DELETE /lifestyle/city-guide/:id`
+  - Music: `GET /lifestyle/music`, `GET /lifestyle/music/trending`, `GET /lifestyle/music/genres`, `GET /lifestyle/music/genres/:slug`, `GET /lifestyle/music/artists/:id`, `GET /lifestyle/music/:slug`, `POST /lifestyle/music`, `PATCH /lifestyle/music/:id`, `DELETE /lifestyle/music/:id`
+  - Celebrity: `GET /lifestyle/celebrity`, `GET /lifestyle/celebrity/featured`, `GET /lifestyle/celebrity/:slug`, `GET /lifestyle/celebrity/:celebrityId/news`, `POST /lifestyle/celebrity`, `POST /lifestyle/celebrity/news`, `PATCH /lifestyle/celebrity/:id`, `DELETE /lifestyle/celebrity/:id`
+  - Nightlife: `GET /lifestyle/nightlife`, `GET /lifestyle/nightlife/featured`, `GET /lifestyle/nightlife/:slug`, `POST /lifestyle/nightlife`, `PATCH /lifestyle/nightlife/:id`, `DELETE /lifestyle/nightlife/:id`
+  - Influencer: `GET /lifestyle/influencers`, `GET /lifestyle/influencers/featured`, `GET /lifestyle/influencers/:slug`, `GET /lifestyle/influencers/:influencerId/collaborations`, `POST /lifestyle/influencers`, `POST /lifestyle/influencers/collaborations`, `PATCH /lifestyle/influencers/:id`, `DELETE /lifestyle/influencers/:id`
+  - Challenges: `GET /lifestyle/challenges`, `GET /lifestyle/challenges/:id`, `POST /lifestyle/challenges`, `POST /lifestyle/challenges/:id/submit`, `POST /lifestyle/challenges/submissions/:id/vote`
+  - Polls: `GET /lifestyle/polls`, `GET /lifestyle/polls/:id`, `POST /lifestyle/polls`, `POST /lifestyle/polls/:id/vote`
+  - Quizzes: `GET /lifestyle/quizzes`, `GET /lifestyle/quizzes/:id`, `POST /lifestyle/quizzes`, `POST /lifestyle/quizzes/:id/start`, `POST /lifestyle/quizzes/attempts/:attemptId/submit`, `GET /lifestyle/quizzes/:id/leaderboard`
+  - Guides: `GET /lifestyle/guides/itineraries`, `GET /lifestyle/guides/itineraries/:id`, `POST /lifestyle/guides/itineraries`, `PATCH /lifestyle/guides/itineraries/:id`, `DELETE /lifestyle/guides/itineraries/:id`, `GET /lifestyle/guides/neighborhoods`, `GET /lifestyle/guides/neighborhoods/:id`, `POST /lifestyle/guides/neighborhoods`, `PATCH /lifestyle/guides/neighborhoods/:id`, `DELETE /lifestyle/guides/neighborhoods/:id`, `GET /lifestyle/guides/partners`, `GET /lifestyle/guides/partners/:id`, `POST /lifestyle/guides/partners`, `PATCH /lifestyle/guides/partners/:id`, `DELETE /lifestyle/guides/partners/:id`, `GET /lifestyle/guides/partners/:partnerId/offers`, `GET /lifestyle/guides/offers/:id`, `POST /lifestyle/guides/partners/:partnerId/offers`, `PATCH /lifestyle/guides/offers/:id`, `DELETE /lifestyle/guides/offers/:id`
+  - Social: `POST /lifestyle/social/save`, `DELETE /lifestyle/social/save`, `GET /lifestyle/social/saved`, `GET /lifestyle/social/saved/check`, `POST /lifestyle/social/share`, `GET /lifestyle/social/share/count`
+  - Participation: `GET /lifestyle/participation/:id/result`
+  - Admin: `GET /admin/stats`, `GET /admin/content`, `GET /admin/users`
 
 ### vertical-service (`:3017`)
 - **Database:** `azeebo_vertical`
@@ -135,7 +156,7 @@ services/
   - Universes: `GET /vertical/universes`, `GET /vertical/universes/map/:slug`, `GET /vertical/universes/locations`
   - Characters: `GET /vertical/characters`, `GET /vertical/characters/:slug`, `GET /vertical/characters/:slug/relationships`
   - Timeline: `GET /vertical/timeline`, `GET /vertical/timeline/event/:id`, `GET /vertical/timeline/upcoming`
-  - Titles: `GET /vertical/titles`, `GET /vertical/titles/featured`, `GET /vertical/titles/:slug`
+  - Titles: `GET /vertical/titles`, `GET /vertical/titles/featured`, `GET /vertical/titles/:slug`, `GET /vertical/titles/:slug/episodes`, `GET /vertical/titles/:slug/characters`, `GET /vertical/titles/:slug/related`, `POST /vertical/titles`, `PATCH /vertical/titles/:id`, `DELETE /vertical/titles/:id`, `POST /vertical/titles/:titleId/chapters`, `GET /vertical/titles/:titleId/chapters/:number`
   - Lore: `GET /vertical/lore`, `GET /vertical/lore/categories`, `GET /vertical/lore/:slug`
   - Crossovers: `GET /vertical/crossovers`, `GET /vertical/crossovers/recaps`
   - Storyworlds: `GET /vertical/storyworlds`, `GET /vertical/storyworlds/:slug`, `GET /vertical/storyworlds/:slug/titles`, `GET /vertical/storyworlds/:slug/characters`, `GET /vertical/storyworlds/:slug/theories`, `POST /vertical/storyworlds/:slug/theories`
@@ -147,6 +168,7 @@ services/
   - Movies: `GET /movies`, `GET /movies/premieres`, `GET /movies/watchlist`, `POST /movies/watchlist`, `DELETE /movies/watchlist/:movieId`, `GET /movies/:movieId`, `POST /movies/:movieId/rent`, `GET /movies/me/library`
   - Filmmakers: `GET /movies/filmmakers/projects`, `POST /movies/filmmakers/projects`, `POST /movies/filmmakers/back`
   - Passes: `GET /movies/passes`, `POST /movies/passes/subscribe`, `DELETE /movies/passes/cancel`, `GET /movies/passes/access/:movieId`
+  - Digital Box Office: `GET /movies/dbo/overview`
   - Admin: `GET /admin/stats`, `GET /admin/movies`, `GET /admin/premieres`
 
 ### games-service (`:3014`)
@@ -163,22 +185,26 @@ services/
 - **Database:** `azeebo_comedy`
 - **Responsibility:** Skits, comedians, specials, comedy challenges
 - **Endpoints:**
-  - Feed: `GET /comedy`, `GET /comedy/trending`
+  - Feed: `GET /comedy`, `GET /comedy/trending`, `GET /comedy/categories`, `GET /comedy/top-rated`
   - Clips: `GET /comedy/clips`, `GET /comedy/clips/:id`, `POST /comedy/clips/:id/like`, `POST /comedy/clips/:id/comment`, `POST /comedy/clips/:clipId/share`
-  - Comedians: `GET /comedy/comedians`
+  - Comedians: `GET /comedy/comedians`, `GET /comedy/comedians/:id`
   - Series: `GET /comedy/series`
   - Specials: `GET /comedy/specials`, `GET /comedy/specials/:id`, `POST /comedy/specials/:id/like`
   - Challenges: `GET /comedy/challenges`, `POST /comedy/challenges`
   - Trends: `POST /comedy/trends/record`
+  - Admin: `GET /admin/stats`, `GET /admin/clips`, `GET /admin/comedians`
 
 ### sports-service (`:3021`)
 - **Database:** `azeebo_sports`
-- **Responsibility:** Sports content, predictions, fan boards, contests
+- **Responsibility:** Sports content, predictions, fan boards, contests, live scores, highlights
 - **Endpoints:**
-  - Sports: `GET /sports/home`, `GET /sports/highlights`, `GET /sports/fixtures`, `GET /sports/fixtures/:id`, `GET /sports/leaderboard`
-  - Predictions: `GET /sports/predictions`, `POST /sports/predictions`, `GET /sports/predictions/leaderboard`, `GET /sports/predictions/my`, `POST /sports/predictions/:id/predict`, `POST /sports/predictions/:id/settle`
-  - Fan Contests: `GET /sports/fan-contests`, `GET /sports/fan-contests/:id`, `POST /sports/fan-contests/:id/enter`, `POST /sports/fan-contests/:id/score`, `GET /sports/fan-contests/:id/leaderboard`
-  - Fixtures: `GET /sports/fixtures`, `GET /sports/fixtures/sports`, `POST /sports/fixtures/:id/result`
+  - Sports Hub: `GET /sports/home`, `GET /sports/live`, `GET /sports/categories`, `GET /sports/upcoming`, `GET /sports/leaderboard`, `GET /sports/fan-boards`, `GET /sports/fan-contests`, `POST /sports/fan-contests/:id/enter`, `GET /sports/prediction-options`, `GET /sports/score-options`, `GET /sports/current-match`, `GET /sports/prediction-leagues`, `GET /sports/predictions`, `POST /sports/predictions`
+  - Live Scores: `GET /sports/live/scores`, `GET /sports/live/match/:matchId`
+  - Highlights: `GET /sports/highlights`, `GET /sports/highlights/:id`
+  - Fixtures: `GET /fixtures`, `GET /fixtures/sports`, `GET /fixtures/:id`, `POST /fixtures/:id/metadata`, `POST /fixtures/:id/result`
+  - Prediction Markets: `GET /prediction-markets`, `GET /prediction-markets/leaderboard`, `GET /prediction-markets/my`, `GET /prediction-markets/:id`, `POST /prediction-markets/create`, `POST /prediction-markets/:id/predict`, `POST /prediction-markets/:id/settle`
+  - Fan Contests: `GET /fan-contests`, `GET /fan-contests/:id`, `POST /fan-contests/:id/enter`, `POST /fan-contests/:id/score`, `GET /fan-contests/:id/leaderboard`, `GET /fan-contests/:id/rank/:userId`, `POST /fan-contests/:id/end`
+  - Admin: `GET /admin/stats`, `GET /admin/events`, `GET /admin/predictions`
 
 ### live-event-service (`:3027`)
 - **Database:** `azeebo_live_event`
@@ -218,10 +244,11 @@ services/
 
 ### messaging-service (`:3024`)
 - **Database:** `azeebo_messaging`
-- **Responsibility:** Direct messaging, conversations
+- **Responsibility:** Direct messaging, conversations, watch parties, live chat
 - **Endpoints:**
-  - Messaging: `GET /messaging/conversations`, `GET /messaging/conversations/:id/messages`, `POST /messaging/conversations`, `POST /messaging/conversations/:id/messages`, `POST /messaging/conversations/:id/read`, `DELETE /messaging/conversations/:id`
-  - Admin: `GET /admin/stats`, `GET /admin/conversations`, `GET /admin/conversations/:id/messages`
+  - Messaging: `GET /messaging/conversations`, `GET /messaging/conversations/search`, `GET /messaging/conversations/:id/messages`, `GET /messaging/messages/search`, `POST /messaging/conversations`, `PUT /messaging/conversations/:id`, `POST /messaging/conversations/:id/messages`, `POST /messaging/conversations/:id/messages/reply`, `POST /messaging/conversations/:id/messages/:messageId/react`, `GET /messaging/conversations/:id/messages/:messageId/reactions`, `GET /messaging/conversations/:id/messages/:messageId/thread`, `PUT /messaging/messages/:messageId`, `DELETE /messaging/messages/:messageId`, `PUT /messaging/messages/:messageId/pin`, `POST /messaging/conversations/:id/read`, `POST /messaging/conversations/:id/participants`, `DELETE /messaging/conversations/:id/participants/:userId`, `PUT /messaging/conversations/:id/mute`, `PUT /messaging/conversations/:id/archive`, `DELETE /messaging/conversations/:id`
+  - Watch Parties: `POST /messaging/watch-parties`, `POST /messaging/watch-parties/join`, `GET /messaging/watch-parties/my`, `GET /messaging/watch-parties/:partyId`, `POST /messaging/watch-parties/:partyId/playback`, `POST /messaging/watch-parties/:partyId/sync`, `POST /messaging/watch-parties/:partyId/chat`, `GET /messaging/watch-parties/:partyId/chat`, `POST /messaging/watch-parties/:partyId/leave`, `DELETE /messaging/watch-parties/:partyId`
+  - Admin: `GET /admin/stats`, `GET /admin/conversations`, `GET /admin/conversations/:id/messages`, `GET /admin/messages`, `DELETE /admin/conversations/:id`, `PUT /admin/conversations/:id`, `DELETE /admin/messages/:id`
 
 ### engagement-service (`:3023`)
 - **Database:** `azeebo_engagement`
@@ -252,7 +279,7 @@ services/
 - **Endpoints:**
   - `GET /queue/stats`, `GET /queue/:queue/jobs`, `GET /queue/:queue/jobs/failed`, `GET /queue/:queue/jobs/:jobId`, `POST /queue/:queue/jobs/:jobId/retry`, `POST /queue/:queue/retry-all-failed`, `DELETE /queue/:queue/jobs/:jobId`, `POST /queue/:queue/pause`, `POST /queue/:queue/resume`, `POST /queue/:queue/clean`
 
-### support-service (`:3020`)
+### support-service (`:3028`)
 - **Database:** `azeebo_support`
 - **Responsibility:** Support tickets, refunds, chargebacks, appeals, disputes, suspensions, takedowns
 - **Endpoints:** 40+ endpoints (see support-service for full list)
@@ -283,5 +310,5 @@ services/
 ### api-gateway (`:3013`)
 - **Database:** None (stateless)
 - **Responsibility:** Request routing, JWT validation, rate limiting, CORS, health aggregation
-- **Routes to:** All 27 backend services
+- **Routes to:** All 28 downstream backend services
 - **Health:** `GET /health`, `GET /ready`, `GET /live`

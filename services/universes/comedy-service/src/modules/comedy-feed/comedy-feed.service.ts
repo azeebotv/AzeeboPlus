@@ -426,4 +426,61 @@ export class ComedyFeedService {
       } as never;
     }
   }
+
+  /**
+   * Category catalog for the comedy home screen: distinct special genres.
+   * (There is no dedicated category table — genre strings on specials are
+   * the de-facto taxonomy.)
+   */
+  async getCategories(): Promise<{ success: boolean; data?: unknown[] }> {
+    try {
+      const specials = await this.prisma.comedySpecial.findMany({
+        where: { genre: { not: null } },
+        select: { genre: true },
+        distinct: ['genre'],
+      });
+      return {
+        success: true,
+        data: specials.map((s) => ({
+          id: s.genre as string,
+          name: s.genre as string,
+          emoji: '🎤',
+        })),
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to get categories: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: true, data: [] };
+    }
+  }
+
+  /**
+   * Top-rated clips for the comedy home screen: most-liked clips.
+   * (No rating field exists — like count is the rating proxy.)
+   */
+  async getTopRated(): Promise<{ success: boolean; data?: unknown[] }> {
+    try {
+      const clips = await this.prisma.comedyClip.findMany({
+        orderBy: { likeCount: 'desc' },
+        take: 10,
+      });
+      return {
+        success: true,
+        data: clips.map((c) => ({
+          id: c.id,
+          title: c.title,
+          rating: (c.likeCount / 1000).toFixed(1),
+          emoji: '🔥',
+        })),
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to get top-rated: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: true, data: [] };
+    }
+  }
 }

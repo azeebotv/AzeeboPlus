@@ -5,10 +5,10 @@
   "description": "Azeebo+ Wallet Service",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "bash ../../../scripts/build-service.sh",
     "start": "node dist/main.js",
-    "start:dev": "bash start-dev.sh",
-    "lint": "eslint src --fix",
+    "start:dev": "bash ../../../scripts/start-dev-service.sh",
+    "lint": "eslint src",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -19,6 +19,7 @@
   "dependencies": {
     "@azeebo/error-handling": "workspace:*",
     "@azeebo/event-bus": "workspace:*",
+    "@azeebo/feature-flags": "workspace:*",
     "@azeebo/observability": "workspace:*",
     "@azeebo/opentelemetry": "workspace:*",
     "@azeebo/logger": "workspace:*",
@@ -42,6 +43,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "@azeebo/utils": "workspace:*",
+    "@azeebo/flag-metrics": "workspace:*",
     "axios": "^1.7.0"
   },
   "devDependencies": {

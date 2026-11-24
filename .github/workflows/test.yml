@@ -1,0 +1,201 @@
+name: Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '22.16.0'
+  PNPM_VERSION: '10.33.2'
+
+jobs:
+  test-web:
+    name: Web App Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Workspace packages ship from dist/ (feature-flags/registries,
+      # analytics-sdk, shared-types, ...) — without building them first the app
+      # bundles/tests cannot resolve them outside a developer's warmed-up tree.
+      # Clients are generated first because packages/security and
+      # packages/shared-services compile against generated Prisma clients.
+      - run: pnpm run prisma:generate
+      - run: pnpm --filter './packages/**' run build
+      - run: pnpm --filter @azeebo/web test
+        env:
+          CI: true
+
+  test-admin:
+    name: Admin App Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # See test-web: dist-exporting packages must be built before app tests.
+      - run: pnpm run prisma:generate
+      - run: pnpm --filter './packages/**' run build
+      - run: pnpm --filter @azeebo/admin test
+        env:
+          CI: true
+
+  # Browser render sweep for the Ops Health pgbouncer card: mounts the real
+  # admin client against page.route-mocked /api/v1 endpoints (no backend or
+  # database needed — playwright starts the vite dev server itself) and
+  # snapshots the card's accessibility tree, so a table/column/badge/text
+  # regression fails CI instead of shipping. Chromium-only: the aria snapshot
+  # is text-based and engine-agnostic, and 5 browser projects would just
+  # multiply the same assertions. Uploads test artifacts on failure.
+  test-admin-e2e:
+    name: Admin App E2E (pgbouncer card)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # See test-web: dist-exporting packages must be built before the app
+      # (its vite dev server imports them).
+      - run: pnpm run prisma:generate
+      - run: pnpm --filter './packages/**' run build
+      - run: pnpm --filter @azeebo/admin exec playwright install --with-deps chromium
+      - run: pnpm --filter @azeebo/admin test:e2e --project=chromium
+        env:
+          CI: true
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: admin-e2e-artifacts
+          path: |
+            apps/admin/test-results/
+            apps/admin/client/test-results/
+            apps/admin/client/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  test-creator:
+    name: Creator App Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # See test-web: dist-exporting packages must be built before app tests.
+      - run: pnpm run prisma:generate
+      - run: pnpm --filter './packages/**' run build
+      - run: pnpm --filter @azeebo/creator test
+        env:
+          CI: true
+
+  test-mobile:
+    name: Mobile App Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # See test-web: dist-exporting packages must be built before app tests.
+      # Mobile jest compiles workspace sources (flags.test.ts imports
+      # @azeebo/feature-flags/registries and @azeebo/shared-types), so both
+      # the generated clients and the package dist entries must exist.
+      - run: pnpm run prisma:generate
+      - run: pnpm --filter './packages/**' run build
+      # NOTE: no `--if-present` on the script call below — pnpm forwards it to
+      # jest, which rejects it as an unknown CLI flag. The script exists.
+      - run: pnpm --filter @azeebo/mobile test
+        env:
+          CI: true
+
+  test-backend:
+    name: Backend Service Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        service:
+          - analytics-service
+          - api-gateway
+          - auth-service
+          - comedy-service
+          - content-service
+          - creator-service
+          - engagement-service
+          - games-service
+          - knowledge-service
+          - lifestyle-service
+          - live-event-service
+          - media-service
+          - messaging-service
+          - moderation-service
+          - movie-service
+          - notification-service
+          - payment-service
+          - queue-service
+          - reality-service
+          - recommendation-service
+          - referral-service
+          - reward-service
+          - search-service
+          - sports-service
+          - subscription-service
+          - support-service
+          - user-service
+          - vertical-service
+          - wallet-service
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run prisma:generate --if-present
+      # Services import dist-exporting packages (shared-services, event-bus,
+      # ...) — jest's ts-jest compilation needs their type entries to exist.
+      - run: pnpm --filter './packages/**' run build
+      - run: pnpm --filter @azeebo/${{ matrix.service }} test
+        env:
+          CI: true
+

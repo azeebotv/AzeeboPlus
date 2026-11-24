@@ -25,6 +25,34 @@ export interface AnalyticsConfig {
   flushInterval?: number;
   flushBatchSize?: number;
   defaultConsent?: Partial<Record<ConsentCategory, boolean>>;
+  /**
+   * Sampling config resolution: when `clientSampling` is true (default) the SDK
+   * fetches `GET {endpoint}/v1/analytics/bootstrap` once and pre-samples events
+   * client-side using the server's `analytics_client_sampling` flag + rate.
+   */
+  clientSampling?: boolean;
+  /** Bootstrap fetch TTL in ms (default 5 minutes). */
+  bootstrapTtlMs?: number;
+}
+
+/** Client-side sampling config resolved from the analytics bootstrap endpoint. */
+export interface SamplingConfig {
+  enabled: boolean;
+  samplingRate: number;
+}
+
+const DEFAULT_SAMPLING: SamplingConfig = { enabled: false, samplingRate: 100 };
+
+/** Deterministic per-entity sampling so a user is fully kept or fully dropped. */
+export function isEntitySampled(entity: string | undefined, rate: number): boolean {
+  if (rate >= 100) return true;
+  if (rate <= 0) return false;
+  const seed = entity ?? 'anonymous';
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return hash % 100 < rate;
 }
 
 /** User context attached to analytics events for identification. */
@@ -35,7 +63,20 @@ export interface UserContext {
   platform?: string;
 }
 
+const CONSENT_COOKIE_NAME = '__Host-azeebo_consent';
+const CONSENT_COOKIE_VERSION = '1.0';
+const CONSENT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+/** Legacy SDK-local storage key — read-only fallback, never written. */
 const CONSENT_STORAGE_KEY = 'azeebo_analytics_consent';
+
+/** Shape of the shared first-party consent cookie written by the host app. */
+interface SharedConsentCookie {
+  necessary?: boolean;
+  analytics?: boolean;
+  marketing?: boolean;
+  timestamp?: string;
+  version?: string;
+}
 
 const DEFAULT_CONSENT: Record<ConsentCategory, boolean> = {
   [ConsentCategory.ESSENTIAL]: true,
@@ -45,7 +86,12 @@ const DEFAULT_CONSENT: Record<ConsentCategory, boolean> = {
   [ConsentCategory.THIRD_PARTY]: false,
 };
 
-/** Manages user consent state per category with localStorage persistence. */
+/**
+ * Manages user consent state per category, reading and writing the host
+ * app's shared `__Host-azeebo_consent` cookie (AUD-45) so the banner, the
+ * analytics layer, and server-side gating all observe one value. The
+ * SDK-local localStorage record is honoured as a legacy read fallback.
+ */
 export class ConsentManager {
   private consentState: Record<ConsentCategory, boolean>;
   private onChange?: (category: ConsentCategory, granted: boolean) => void;
@@ -56,7 +102,7 @@ export class ConsentManager {
   ) {
     this.onChange = onChange;
     this.consentState = { ...DEFAULT_CONSENT, ...defaultConsent };
-    this.loadFromStorage();
+    this.load();
   }
 
   hasConsent(category: ConsentCategory): boolean {
@@ -65,7 +111,7 @@ export class ConsentManager {
 
   setConsent(category: ConsentCategory, granted: boolean): void {
     this.consentState[category] = granted;
-    this.saveToStorage();
+    this.save();
     this.onChange?.(category, granted);
   }
 
@@ -73,25 +119,61 @@ export class ConsentManager {
     return { ...this.consentState };
   }
 
-  private loadFromStorage(): void {
+  private load(): void {
     try {
-      if (typeof localStorage === 'undefined') return;
-      const raw = localStorage.getItem(CONSENT_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<Record<ConsentCategory, boolean>>;
-        this.consentState = { ...DEFAULT_CONSENT, ...parsed };
+      if (typeof document !== 'undefined') {
+        const match = document.cookie.match(
+          new RegExp('(?:^|;\\s*)' + CONSENT_COOKIE_NAME + '=([^;]*)')
+        );
+        if (match?.[1]) {
+          const parsed = JSON.parse(decodeURIComponent(match[1])) as SharedConsentCookie | null;
+          if (parsed && typeof parsed === 'object' && parsed.version === CONSENT_COOKIE_VERSION) {
+            // The shared cookie has no field for SDK-only categories
+            // (personalization, third_party) — they keep their defaults.
+            this.consentState = {
+              ...this.consentState,
+              essential: parsed.necessary === true,
+              analytics: parsed.analytics === true,
+              marketing: parsed.marketing === true,
+            };
+            return;
+          }
+        }
+      }
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem(CONSENT_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as Partial<Record<ConsentCategory, boolean>>;
+          this.consentState = { ...DEFAULT_CONSENT, ...parsed };
+        }
       }
     } catch {
-      // localStorage unavailable or corrupt — keep defaults
+      // storage unavailable or corrupt — keep current state
     }
   }
 
-  private saveToStorage(): void {
+  private save(): void {
     try {
-      if (typeof localStorage === 'undefined') return;
-      localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(this.consentState));
+      if (typeof document === 'undefined') return;
+      const payload: SharedConsentCookie = {
+        necessary: this.consentState[ConsentCategory.ESSENTIAL],
+        analytics: this.consentState[ConsentCategory.ANALYTICS],
+        marketing: this.consentState[ConsentCategory.MARKETING],
+        timestamp: new Date().toISOString(),
+        version: CONSENT_COOKIE_VERSION,
+      };
+      // `__Host-` requires Secure + Path=/ and forbids a Domain attribute.
+      document.cookie = `${CONSENT_COOKIE_NAME}=${encodeURIComponent(
+        JSON.stringify(payload)
+      )}; Path=/; Secure; SameSite=Lax; Max-Age=${CONSENT_COOKIE_MAX_AGE}`;
+      // The cookie is now the single source — retire the SDK-local copy.
+      try {
+        localStorage.removeItem(CONSENT_STORAGE_KEY);
+      } catch {
+        // storage unavailable — nothing to retire
+      }
     } catch {
-      // localStorage unavailable — silently ignore
+      // storage unavailable — silently ignore
     }
   }
 }
@@ -110,6 +192,9 @@ export class Analytics {
   private maxRetries = 3;
   private maxQueueSize = 1000;
   private consentManager: ConsentManager;
+  private samplingConfig: SamplingConfig = DEFAULT_SAMPLING;
+  private samplingFetchedAt = 0;
+  private samplingFetchPromise: Promise<void> | null = null;
 
   constructor(config: AnalyticsConfig = {}) {
     this.config = {
@@ -117,10 +202,24 @@ export class Analytics {
       debug: false,
       flushInterval: 30000,
       flushBatchSize: 10,
+      clientSampling: true,
+      bootstrapTtlMs: 5 * 60 * 1000,
       ...config,
     };
 
-    this.consentManager = new ConsentManager(config.defaultConsent);
+    this.consentManager = new ConsentManager(config.defaultConsent, (category, granted) => {
+      // AUD-45: revoking consent must drop everything already queued and
+      // forget the user context — collected-but-unsent data is still
+      // collected data.
+      if (!granted && category === ConsentCategory.ANALYTICS) {
+        this.queue = [];
+        this.userContext = null;
+      }
+    });
+
+    if (this.config.clientSampling !== false && this.config.endpoint) {
+      void this.refreshSamplingConfig();
+    }
 
     if (this.config.endpoint && this.config.enabled) {
       this.flushTimer = setInterval(() => {
@@ -129,16 +228,78 @@ export class Analytics {
     }
   }
 
+  /**
+   * Fetches the server-side sampling config (`analytics_client_sampling` flag +
+   * effective rate) from the bootstrap endpoint. Falls back to full sampling on
+   * any error so tracking is never blocked by this call.
+   */
+  async refreshSamplingConfig(): Promise<SamplingConfig> {
+    if (!this.config.endpoint || this.config.clientSampling === false) {
+      return DEFAULT_SAMPLING;
+    }
+    if (this.samplingFetchPromise) {
+      await this.samplingFetchPromise;
+      return this.samplingConfig;
+    }
+    this.samplingFetchPromise = (async () => {
+      try {
+        const now = Date.now();
+        if (now - this.samplingFetchedAt < (this.config.bootstrapTtlMs ?? 5 * 60 * 1000)) {
+          return;
+        }
+        const response = await fetch(`${this.config.endpoint}/v1/analytics/bootstrap`, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!response.ok) return;
+        const body = (await response.json()) as { success?: boolean; data?: SamplingConfig };
+        if (body?.data) {
+          this.samplingConfig = {
+            enabled: body.data.enabled === true,
+            samplingRate: typeof body.data.samplingRate === 'number' ? body.data.samplingRate : 100,
+          };
+          this.samplingFetchedAt = Date.now();
+        }
+      } catch {
+        // Bootstrap unavailable — keep full sampling
+      } finally {
+        this.samplingFetchPromise = null;
+      }
+    })();
+    await this.samplingFetchPromise;
+    return this.samplingConfig;
+  }
+
+  /** Whether a given entity should be sent given the current sampling config. */
+  shouldSample(entity: string | undefined): boolean {
+    return isEntitySampled(entity, this.samplingConfig.samplingRate);
+  }
+
+  getSamplingConfig(): Readonly<SamplingConfig> {
+    return this.samplingConfig;
+  }
+
   track(event: AnalyticsEvent): void {
     if (!this.config.enabled) return;
 
     const category = event.category ?? ConsentCategory.ANALYTICS;
     if (!this.consentManager.hasConsent(category)) {
       if (this.config.debug) {
-        // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console, azeebo-custom/no-console-log
         console.log('[Analytics] Skipping event (no consent):', event.name, 'category:', category);
       }
       return;
+    }
+
+    // Client-side sampling (mirrors the server's deterministic per-entity hash).
+    if (this.samplingConfig.enabled) {
+      const entity = event.userId ?? event.sessionId ?? this.userContext?.userId;
+      if (!this.shouldSample(entity)) {
+        if (this.config.debug) {
+          // eslint-disable-next-line no-console, azeebo-custom/no-console-log
+          console.log('[Analytics] Skipping event (sampled out):', event.name);
+        }
+        return;
+      }
     }
 
     const fullEvent: AnalyticsEvent = {
@@ -154,7 +315,7 @@ export class Analytics {
     }
 
     if (this.config.debug) {
-      // eslint-disable-next-line no-console
+      // eslint-disable-next-line no-console, azeebo-custom/no-console-log
       console.log('[Analytics]', fullEvent.name, fullEvent.properties);
     }
 
@@ -164,7 +325,9 @@ export class Analytics {
   }
 
   async flush(): Promise<void> {
-    if (this.isFlushing || this.queue.length === 0 || !this.config.endpoint) return;
+    // `endpoint: ''` selects a same-origin relative POST target, so only an
+    // undefined endpoint disables delivery.
+    if (this.isFlushing || this.queue.length === 0 || this.config.endpoint === undefined) return;
 
     this.isFlushing = true;
     const eventsToSend = [...this.queue];
@@ -184,6 +347,15 @@ export class Analytics {
             sessionId: event.sessionId,
             timestamp: event.timestamp?.toISOString() || new Date().toISOString(),
           })),
+          // Server-side consent enforcement: the server drops any event whose
+          // category was not granted, and keeps a ledger of this state.
+          consent: {
+            analytics: this.consentManager.hasConsent(ConsentCategory.ANALYTICS),
+            marketing: this.consentManager.hasConsent(ConsentCategory.MARKETING),
+            personalization: this.consentManager.hasConsent(ConsentCategory.PERSONALIZATION),
+            third_party: this.consentManager.hasConsent(ConsentCategory.THIRD_PARTY),
+          },
+          consentVersion: 'sdk-1.0',
         }),
       });
 
@@ -212,9 +384,11 @@ export class Analytics {
   setUser(user: UserContext | null): void {
     this.userContext = user;
     if (user) {
+      // Identity events are analytics-category (not ESSENTIAL): they carry
+      // user_id/plan and must never be collected for opted-out visitors.
       this.track({
         name: 'user_identified',
-        category: ConsentCategory.ESSENTIAL,
+        category: ConsentCategory.ANALYTICS,
         properties: {
           user_id: user.userId,
           plan: user.plan,

@@ -14,11 +14,12 @@ import { TicketModule } from './modules/ticket/ticket.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { DatabaseModule } from './modules/database/database.module';
-import { AuthGuard } from './common/guards/auth.guard';
 import { RateLimiterModule, AdminGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, supportFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -41,13 +42,25 @@ import { CacheModule } from '@azeebo/shared-services';
     SuspensionModule,
     DashboardModule,
     AnalyticsModule,
+    // Support feature gates: AI chatbot, self-service refunds, AI escalation
+    // and automated takedown processing all OFF until launched.
+    FlagMetricsModule.register({ service: 'support-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('support-service'),
+      defaultFlags: {
+        [supportFlags.aiChatbot]: false,
+        [supportFlags.selfServiceRefunds]: false,
+        [supportFlags.escalationAi]: false,
+        [supportFlags.takedownsAuto]: false,
+      },
+    }),
   ],
   providers: [
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,
     },
-    AuthGuard,
     {
       provide: AdminGuard,
       useFactory: (jwtService: JwtService) =>
@@ -59,6 +72,6 @@ import { CacheModule } from '@azeebo/shared-services';
       useClass: ServiceAuthGuard,
     },
   ],
-  exports: [AuthGuard, JwtModule, AdminGuard],
+  exports: [JwtModule, AdminGuard],
 })
 export class AppModule {}

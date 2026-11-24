@@ -87,6 +87,58 @@ HEALTH_CHECK_INTERVAL=2
 # All services use user 'azeebo' with password from env or default for local dev
 DB_USER="${DB_USER:-azeebo}"
 DB_PASS="${DB_PASS:-azeebo_dev_2024}"
+
+# Admin role used for bootstrap DDL (CREATE ROLE / CREATE DATABASE).
+# Installations differ: stock Postgres packages ship a "postgres" superuser,
+# while dev stacks (e.g. FlyEnv) create only the OS user or a custom role and
+# no "postgres" at all. Resolve once against the live server; PGADMIN_USER
+# overrides auto-detection.
+resolve_pg_admin() {
+  if [[ -n "${PGADMIN_USER:-}" ]]; then
+    return 0
+  fi
+  local candidate
+  for candidate in "$(id -un)" "$DB_USER" "postgres"; do
+    if psql -U "$candidate" -d postgres -tc "SELECT 1" >/dev/null 2>&1; then
+      PGADMIN_USER="$candidate"
+      log_debug "Postgres admin role: $PGADMIN_USER"
+      return 0
+    fi
+  done
+  log_error "No usable Postgres admin role (tried $(id -un), $DB_USER, postgres). Set PGADMIN_USER."
+  return 1
+}
+# Kill dev-runner processes whose listeners are already gone but whose
+# watchers (nest --watch / tsx watch / vite / next) still live. Port sweeps
+# cannot see these listenerless parents; across restart sessions they
+# accumulate ~2.5k file descriptors each (chokidar) until macOS hits
+# kern.maxfiles and every new boot fails with "Too many open files in
+# system". Scoped to this repo's paths so unrelated node processes survive.
+reap_runner_orphans() {
+  local killed=0 pid cmd cwd
+  while IFS= read -r pid; do
+    [[ -z "$pid" ]] && continue
+    cmd="$(ps -o command= -p "$pid" 2>/dev/null)" || continue
+    case "$cmd" in
+      *"nest.js start"*|*"tsx/dist/cli"*|*"pnpm start:dev"*|*"pnpm dev"*|*"next/dist/bin/next"*|*"vite.js"*)
+        # argv is often relative ("node ./node_modules/..."), so scope by
+        # the process working directory instead of the command line.
+        cwd="$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | head -1)"
+        case "$cwd" in
+          "$ROOT_DIR"|"$ROOT_DIR"/*)
+            kill "$pid" 2>/dev/null && killed=$((killed + 1)) || true
+            ;;
+        esac
+        ;;
+    esac
+  done < <(pgrep -f "nest\.js start|tsx/dist/cli|pnpm start:dev|pnpm dev|next/dist/bin/next|vite\.js" 2>/dev/null || true)
+  if (( killed > 0 )); then
+    sleep 1
+    log_info "  reaped $killed orphaned runner/watcher process(es)"
+  fi
+  return 0
+}
+
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_BASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}"
@@ -276,6 +328,8 @@ generate_local_secrets() {
 JWT_ACCESS_SECRET=${jwt_access}
 JWT_REFRESH_SECRET=${jwt_refresh}
 GATEWAY_SECRET=${gateway_secret}
+# Feature-flag store (FeatureFlagService falls back to REDIS_URL if unset)
+FEATURE_FLAG_REDIS_URL=redis://localhost:6379
 ENVEOF
   chmod 600 "$env_local"
   log_ok "Secrets saved to .env.local"
@@ -337,7 +391,8 @@ load_env() {
   # Operations
   export MODERATION_SERVICE_URL="${MODERATION_SERVICE_URL:-http://localhost:3022}"
   export QUEUE_SERVICE_URL="${QUEUE_SERVICE_URL:-http://localhost:3015}"
-  export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL:-http://localhost:3020}"
+  export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL:-http://localhost:3028}"
+  export KNOWLEDGE_SERVICE_URL="${KNOWLEDGE_SERVICE_URL:-http://localhost:3020}"
   # Universes
   export REALITY_SERVICE_URL="${REALITY_SERVICE_URL:-http://localhost:3010}"
   export MOVIE_SERVICE_URL="${MOVIE_SERVICE_URL:-http://localhost:3011}"
@@ -346,6 +401,8 @@ load_env() {
   export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL:-http://localhost:3016}"
   export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL:-http://localhost:3017}"
   export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL:-http://localhost:3018}"
+  export LIVE_EVENT_SERVICE_URL="${LIVE_EVENT_SERVICE_URL:-http://localhost:3027}"
+  export CREATOR_APP_URL="${CREATOR_APP_URL:-http://localhost:4014}"
   export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL:-http://localhost:3021}"
 }
 
@@ -391,6 +448,7 @@ DB_SERVICES=(
   "content-service|services/core/content-service|azeebo_content|3004"
   "search-service|services/core/search-service|azeebo_search|3005"
   "media-service|services/core/media-service|azeebo_media|3019"
+  "knowledge-service|services/core/knowledge-service|azeebo_knowledge|3020"
   "notification-service|services/engagement/notification-service|azeebo_notification|3006"
   "reward-service|services/engagement/reward-service|azeebo_reward|3007"
   "engagement-service|services/engagement/engagement-service|azeebo_engagement|3023"
@@ -407,8 +465,9 @@ DB_SERVICES=(
   "lifestyle-service|services/universes/lifestyle-service|azeebo_lifestyle|3016"
   "vertical-service|services/universes/vertical-service|azeebo_vertical|3017"
   "creator-service|services/universes/creator-service|azeebo_creator|3018"
+  "live-event-service|services/universes/live-event-service|azeebo_live_event|3027"
   "queue-service|services/operations/queue-service|azeebo_queue|3015"
-  "support-service|services/operations/support-service|azeebo_support|3020"
+  "support-service|services/operations/support-service|azeebo_support|3028"
   "moderation-service|services/operations/moderation-service|azeebo_moderation|3022"
   "auth-service|services/core/auth-service|azeebo_auth|3000"
   "admin|apps/admin|azeebo_admin|4016"
@@ -418,9 +477,15 @@ DB_SERVICES=(
 setup_multi_db() {
   section "Setting Up Per-Service Databases"
 
+  resolve_pg_admin || return 1
+
   # Ensure the azeebo user exists
-  psql -U postgres -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" 2>/dev/null | grep -q 1 || \
-    psql -U postgres -c "CREATE USER $DB_USER WITH SUPERUSER PASSWORD '$DB_PASS';" 2>/dev/null
+  # Admin DDL targets the maintenance DB explicitly: without -d, psql
+  # defaults to a database named after the connecting role, which usually
+  # doesn't exist — the connection error is swallowed by 2>/dev/null and
+  # set -e aborts setup with no message.
+  psql -U "$PGADMIN_USER" -d postgres -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" 2>/dev/null | grep -q 1 || \
+    psql -U "$PGADMIN_USER" -d postgres -c "CREATE USER $DB_USER WITH SUPERUSER PASSWORD '$DB_PASS';" 2>/dev/null
   log_ok "User '$DB_USER' ready"
 
   local created=0
@@ -428,10 +493,10 @@ setup_multi_db() {
     IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
 
     # Create database if it doesn't exist
-    if psql -U postgres -tc "SELECT 1 FROM pg_database WHERE datname='$db_name'" 2>/dev/null | grep -q 1; then
+    if psql -U "$PGADMIN_USER" -d postgres -tc "SELECT 1 FROM pg_database WHERE datname='$db_name'" 2>/dev/null | grep -q 1; then
       log_debug "  $db_name: exists"
     else
-      psql -U postgres -c "CREATE DATABASE $db_name OWNER $DB_USER;" 2>/dev/null
+      psql -U "$PGADMIN_USER" -d postgres -c "CREATE DATABASE $db_name OWNER $DB_USER;" 2>/dev/null
       log_ok "  $db_name: created"
       created=$((created + 1))
     fi
@@ -447,7 +512,7 @@ setup_multi_db() {
 run_prisma_generate() {
   section "Generating Prisma Clients"
 
-  local count=0
+  local count=0 failed=0
   for entry in "${DB_SERVICES[@]}"; do
     IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
     count=$((count + 1))
@@ -463,10 +528,20 @@ run_prisma_generate() {
     if gen_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1)"; then
       log_ok "  [$count] $svc_name: generated"
     else
-      log_warn "  [$count] $svc_name: failed"
-      log_debug "    $gen_output"
+      log_error "  [$count] $svc_name: prisma generate FAILED"
+      # Show the real error unconditionally — a hidden failure here becomes a
+      # cryptic "Cannot find module '.prisma/client'" crash later.
+      printf '%s\n' "$gen_output" | sed 's/^/    /'
+      failed=$((failed + 1))
     fi
   done
+
+  if (( failed > 0 )); then
+    log_error "$failed Prisma client(s) failed to generate"
+    log_error "Fix the errors above (usually a schema or datasource problem), or regenerate manually:"
+    log_error "  pnpm run prisma:generate"
+    return 1
+  fi
 }
 
 # T0: Shared packages that ALL services depend on.
@@ -505,11 +580,19 @@ build_t0_packages() {
       continue
     fi
 
-    # shared-services needs prisma generate first
+    # shared-services needs prisma generate first — failures must abort (its
+    # build and everything depending on it cannot succeed with a stale/missing
+    # client), and the error must be visible instead of swallowed.
     if [[ "$pkg" == "shared-services" ]]; then
       if [[ -f "$pkg_dir/prisma/schema.prisma" ]]; then
         local db_url="${DB_BASE_URL}/azeebo_content?schema=public"
-        (cd "$pkg_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1) >/dev/null 2>&1 || true
+        log_info "  [$count] shared-services: generating Prisma client first..."
+        if ! gen_ss_output="$(cd "$pkg_dir" && DATABASE_URL="$db_url" pnpm exec prisma generate 2>&1)"; then
+          log_error "  [$count] shared-services: prisma generate FAILED — cannot build"
+          printf '%s\n' "$gen_ss_output" | sed 's/^/    /'
+          return 1
+        fi
+        log_ok "  [$count] shared-services: client generated"
       fi
     fi
 
@@ -545,9 +628,12 @@ run_migrations() {
 
     local db_url="${DB_BASE_URL}/${db_name}?schema=public"
     log_info "  [$count] $svc_name -> $db_name..."
+    # DIRECT_DATABASE_URL: 28 schemas declare directUrl; services without a
+    # per-service .env get it only from here (local dev points both at the
+    # same database — no proxy in the way).
     local migrate_output
     set +e
-    migrate_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma migrate deploy 2>&1)"
+    migrate_output="$(cd "$service_dir" && DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" pnpm exec prisma migrate deploy 2>&1)"
     local rc=$?
     set -e
 
@@ -561,7 +647,7 @@ run_migrations() {
         log_info "  [$count] $svc_name: migration history stuck, using db push..."
         local push_output
         set +e
-        push_output="$(cd "$service_dir" && DATABASE_URL="$db_url" pnpm exec prisma db push --accept-data-loss 2>&1)"
+        push_output="$(cd "$service_dir" && DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" pnpm exec prisma db push --accept-data-loss 2>&1)"
         local push_rc=$?
         set -e
         if [[ $push_rc -eq 0 ]]; then
@@ -598,9 +684,10 @@ db_reset() {
     return 0
   fi
 
+  resolve_pg_admin || return 1
   for entry in "${DB_SERVICES[@]}"; do
     IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
-    psql -U postgres -c "DROP DATABASE IF EXISTS $db_name;" 2>/dev/null
+    psql -U "$PGADMIN_USER" -d postgres -c "DROP DATABASE IF EXISTS $db_name;" 2>/dev/null
     log_info "  Dropped $db_name"
   done
 
@@ -621,6 +708,7 @@ CORE_SERVICES=(
   "@azeebo/content-service|services/core/content-service|3004"
   "@azeebo/search-service|services/core/search-service|3005"
   "@azeebo/media-service|services/core/media-service|3019"
+  "@azeebo/knowledge-service|services/core/knowledge-service|3020"
 )
 
 ENGAGEMENT_SERVICES=(
@@ -646,11 +734,12 @@ UNIVERSE_SERVICES=(
   "@azeebo/lifestyle-service|services/universes/lifestyle-service|3016"
   "@azeebo/vertical-service|services/universes/vertical-service|3017"
   "@azeebo/creator-service|services/universes/creator-service|3018"
+  "@azeebo/live-event-service|services/universes/live-event-service|3027"
 )
 
 OPERATIONS_SERVICES=(
   "@azeebo/queue-service|services/operations/queue-service|3015"
-  "@azeebo/support-service|services/operations/support-service|3020"
+  "@azeebo/support-service|services/operations/support-service|3028"
   "@azeebo/moderation-service|services/operations/moderation-service|3022"
 )
 
@@ -662,6 +751,11 @@ FRONTEND_SERVICES=(
   "@azeebo/web|apps/web|4000"
   "@azeebo/admin|apps/admin|4016"
   "@azeebo/creator|apps/creator|4014"
+  # Vite dev servers for the two hybrid apps' SPAs — their backends above
+  # only serve APIs (creator's root 404s by design; the SPA lives on 5174).
+  # Ports must match each client/vite.config.ts (dev-port-drift gate).
+  "@azeebo/admin-client|apps/admin|5173"
+  "@azeebo/creator-client|apps/creator|5174"
 )
 
 ALL_SERVICE_GROUPS=(
@@ -741,9 +835,20 @@ start_service() {
   export NODE_ENV="development"
   export PORT="$port"
 
+  # Search's index-population job reads the content DB through its own
+  # pool; without CONTENT_DATABASE_URL every scheduled run failed (the key
+  # lives only in each machine's gitignored service .env otherwise).
+  if [[ "$pkg" == "@azeebo/search-service" && -z "${CONTENT_DATABASE_URL:-}" ]]; then
+    export CONTENT_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST:-127.0.0.1}:${DB_PORT:-5432}/azeebo_content?schema=public"
+    log_debug "  $pkg: defaulted CONTENT_DATABASE_URL -> azeebo_content"
+  fi
+
   local run_cmd_str
 
-  if [[ "$dir" == "apps/web" ]]; then
+  if [[ "$pkg" == *-client ]]; then
+    # Vite SPA dev server for the hybrid apps (web uses Next instead).
+    run_cmd_str="cd \"$service_dir\" && pnpm dev:client"
+  elif [[ "$dir" == "apps/web" ]]; then
     export NEXT_PUBLIC_API_URL="http://localhost:3013"
     export WATCHPACK_POLLING=true
     export CHOKIDAR_USEPOLLING=true
@@ -776,9 +881,11 @@ start_service() {
       return 1
     fi
 
-    # HTTP health check (try versioned and unversioned paths)
+    # HTTP health check (try versioned, live, and unversioned paths)
     if curl -sf "http://localhost:$port/api/health" >/dev/null 2>&1 || \
        curl -sf "http://localhost:$port/v1/health" >/dev/null 2>&1 || \
+       curl -sf "http://localhost:$port/v1/health/live" >/dev/null 2>&1 || \
+       curl -sf "http://localhost:$port/health/live" >/dev/null 2>&1 || \
        curl -sf "http://localhost:$port/health" >/dev/null 2>&1 || \
        curl -sf "http://localhost:$port/" >/dev/null 2>&1; then
       log_ok "  $pkg healthy on port $port (PID $pid, ${waited}s)"
@@ -906,9 +1013,9 @@ cmd_setup() {
     log_ok "Dependencies already installed"
   fi
 
-  run_prisma_generate
-  run_migrations
-  build_t0_packages
+  run_prisma_generate || return 1
+  run_migrations || return 1
+  build_t0_packages || return 1
 
   # Seed demo data
   section "Seeding Demo Data"
@@ -926,12 +1033,18 @@ cmd_start() {
   fi
   validate_env || return 1
 
+  # Ensure local PgBouncer is running (services configured with pgbouncer on 6432)
+  if [[ -f "$ROOT_DIR/scripts/database/start-pgbouncer.mjs" ]] && command -v pgbouncer &>/dev/null; then
+    node "$ROOT_DIR/scripts/database/start-pgbouncer.mjs" || log_warn "PgBouncer startup failed; direct connections may be used"
+  fi
+
   # Kill any orphaned processes from previous sessions before starting
   section "Cleaning up orphaned processes"
+  reap_runner_orphans
   local all_ports=(
     3000 3001 3002 3003 3004 3005 3006 3007 3008 3009
     3010 3011 3012 3013 3014 3015 3016 3017 3018 3019
-    3020 3021 3022 3023 3024 3025 3026 4000 4014 4016
+    3020 3021 3022 3023 3024 3025 3026 3027 3028 4000 4014 4016 5173 5174
   )
   local cleaned=0
   for port in "${all_ports[@]}"; do
@@ -995,7 +1108,7 @@ cmd_start() {
 
   # Build T0 shared packages first (services depend on these)
   if [[ "$do_no_build" != "true" ]]; then
-    build_t0_packages
+    build_t0_packages || return 1
   fi
 
   [[ "$do_core" == "true" ]]       && start_group "core" "${CORE_SERVICES[@]}"
@@ -1013,7 +1126,9 @@ cmd_start() {
   log_ok "Services started in ${elapsed}s. Check .logs/ for output."
   log_info "Press Ctrl+C to stop all services."
   echo ""
-  wait || true
+  while true; do
+    sleep 2
+  done
 }
 
 cmd_start_interactive() {
@@ -1080,10 +1195,11 @@ cmd_start_interactive() {
 cmd_stop() {
   section "Stopping All Services"
   local stopped=0
+  reap_runner_orphans
   local all_ports=(
     3000 3001 3002 3003 3004 3005 3006 3007 3008 3009
     3010 3011 3012 3013 3014 3015 3016 3017 3018 3019
-    3020 3021 3022 3023 3024 3025 3026 4000 4014 4016
+    3020 3021 3022 3023 3024 3025 3026 3027 3028 4000 4014 4016 5173 5174
   )
   for port in "${all_ports[@]}"; do
     local pids
@@ -1156,8 +1272,9 @@ cmd_db() {
         IFS='|' read -r svc_name svc_dir db_name port <<< "$entry"
         if [[ "$svc_name" == "$service" ]]; then
           log_warn "Resetting database for $service ($db_name)..."
-          psql -U postgres -c "DROP DATABASE IF EXISTS $db_name;" 2>/dev/null
-          psql -U postgres -c "CREATE DATABASE $db_name OWNER $DB_USER;" 2>/dev/null
+          resolve_pg_admin || return 1
+          psql -U "$PGADMIN_USER" -d postgres -c "DROP DATABASE IF EXISTS $db_name;" 2>/dev/null
+          psql -U "$PGADMIN_USER" -d postgres -c "CREATE DATABASE $db_name OWNER $DB_USER;" 2>/dev/null
           local db_url="${DB_BASE_URL}/${db_name}?schema=public"
           if [[ -f "$ROOT_DIR/$svc_dir/prisma/schema.prisma" ]]; then
             local migrate_out
@@ -1253,7 +1370,7 @@ cmd_deploy() {
   log_info "Building and deploying all services locally"
 
   # Build T0 packages
-  build_t0_packages
+  build_t0_packages || return 1
 
   # Build admin and creator client SPAs
   section "Building Admin Client"

@@ -261,6 +261,17 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         userId: 'user-1',
         contestantId: 'contestant-1',
       });
+      // The duplicate check runs INSIDE the $transaction callback — mock the
+      // transaction to invoke it with the prisma mock as `tx`, so the check
+      // actually fires (previously the mock fell through to a crash that the
+      // catch block fabricated into a 409, so this test passed by accident).
+      mockPrismaService.$transaction.mockImplementation(
+        async (callback: (tx: unknown) => Promise<unknown>) => callback(mockPrismaService)
+      );
+
+      mockedAxios.get.mockResolvedValue({
+        data: { id: 'wallet-1', userId: 'user-1', balance: 100 },
+      });
 
       await expect(
         service.submitSupervote('user-1', {
@@ -299,9 +310,9 @@ describe('RealityService Integration - Cross-Service Communication', () => {
 
       expect(result.success).toBe(true);
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/analytics/track'),
+        expect.stringContaining('/v1/analytics/events'),
         expect.objectContaining({
-          eventName: 'vote_submitted',
+          type: 'vote_submitted',
           userId: 'user-1',
           universe: 'reality',
         }),
@@ -355,9 +366,9 @@ describe('RealityService Integration - Cross-Service Communication', () => {
 
       expect(result.success).toBe(true);
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/analytics/track'),
+        expect.stringContaining('/v1/analytics/events'),
         expect.objectContaining({
-          eventName: 'prediction_placed',
+          type: 'prediction_placed',
           userId: 'user-1',
         }),
         expect.objectContaining({ timeout: 10000 })

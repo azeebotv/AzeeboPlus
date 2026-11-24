@@ -1,5 +1,17 @@
-import { Inject, Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CityGuideService } from './city-guide.service';
 import { UpdateCityGuideDto } from './dto/update-city-guide.dto';
@@ -25,6 +37,8 @@ interface CreateCityGuideData {
 
 @ApiTags('City Guide')
 @UseGuards(ServiceAuthGuard)
+@FeatureFlag(lifestyleFlags.cityGuide)
+@UseGuards(FeatureFlagGuard)
 @Controller('lifestyle/city-guide')
 export class CityGuideController {
   constructor(@Inject(CityGuideService) private readonly cityGuideService: CityGuideService) {}

@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
@@ -55,7 +56,10 @@ export class AdminService {
         },
       });
     } catch (error) {
-      this.logger.error(`Failed to create audit log for action ${entry.action}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to create audit log for action ${entry.action}`,
+        (error as Error).stack
+      );
     }
   }
 
@@ -314,7 +318,10 @@ export class AdminService {
       return { message: 'Watch history deleted successfully' };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Failed to delete watch history for user ${userId}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to delete watch history for user ${userId}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -499,7 +506,7 @@ export class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw new NotFoundException(`Content moderation failed: ${(error as Error).message}`);
+      mapAndThrow(error, 'content moderation');
     }
   }
 
@@ -512,9 +519,7 @@ export class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw new NotFoundException(
-        `Failed to fetch moderation reports: ${(error as Error).message}`
-      );
+      mapAndThrow(error, 'fetching moderation reports');
     }
   }
 
@@ -538,7 +543,7 @@ export class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw new NotFoundException(`Failed to resolve report: ${(error as Error).message}`);
+      mapAndThrow(error, 'resolving report');
     }
   }
 
@@ -581,9 +586,7 @@ export class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw new NotFoundException(
-        `Failed to fetch verification requests: ${(error as Error).message}`
-      );
+      mapAndThrow(error, 'fetching verification requests');
     }
   }
 
@@ -613,7 +616,7 @@ export class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw new NotFoundException(`Failed to verify creator: ${(error as Error).message}`);
+      mapAndThrow(error, 'verifying creator');
     }
   }
 }

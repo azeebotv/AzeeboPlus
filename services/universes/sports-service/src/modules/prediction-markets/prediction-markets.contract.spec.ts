@@ -11,6 +11,7 @@ import { PredictionMarketsService } from './prediction-markets.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
+import { FeatureFlagGuard } from '@azeebo/feature-flags';
 
 jest.mock('@azeebo/shared-services', () => ({
   CacheService: jest.fn(),
@@ -47,6 +48,7 @@ const mockAuthGuard = {
 
 describe('Prediction Markets Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let predictionMarketsService: PredictionMarketsService;
 
   beforeAll(async () => {
@@ -85,6 +87,8 @@ describe('Prediction Markets Controller Contract Tests', () => {
       })
       .overrideGuard(RateLimitGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(FeatureFlagGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .overrideGuard(AuthGuard('jwt'))
       .useValue(mockAuthGuard)
       .compile();
@@ -93,6 +97,8 @@ describe('Prediction Markets Controller Contract Tests', () => {
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     predictionMarketsService = moduleFixture.get(PredictionMarketsService);
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -124,7 +130,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/predictions');
+      const response = await request(baseUrl).get('/v1/sports/predictions');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -160,7 +166,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/predictions/market-1');
+      const response = await request(baseUrl).get('/v1/sports/predictions/market-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -182,7 +188,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/predictions/nonexistent');
+      const response = await request(baseUrl).get('/v1/sports/predictions/nonexistent');
 
       expect([404, 200]).toContain(response.status);
       expect(response.body).toEqual({
@@ -209,13 +215,11 @@ describe('Prediction Markets Controller Contract Tests', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(app.getHttpServer())
-        .post('/v1/sports/predictions/market-1/predict')
-        .send({
-          userId: 'user-123',
-          selectedOption: 'Team A',
-          stake: 100,
-        });
+      const response = await request(baseUrl).post('/v1/sports/predictions/market-1/predict').send({
+        userId: 'user-123',
+        selectedOption: 'Team A',
+        stake: 100,
+      });
 
       expect(response.status).toBe(201);
       expect(response.body).toEqual({
@@ -241,7 +245,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/sports/predictions/leaderboard');
+      const response = await request(baseUrl).get('/v1/sports/predictions/leaderboard');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -275,7 +279,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/v1/sports/predictions/create')
         .set('Authorization', 'Bearer valid-token')
         .send({

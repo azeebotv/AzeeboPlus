@@ -10,9 +10,9 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { messagingApi } from '../src/api';
-import { useAuth } from '../src/contexts/AuthContext';
-import { logger } from '../src/utils/logger';
+import { messagingApi } from '@azeebo/react-data';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../src/theme';
 
 interface Conversation {
@@ -151,7 +151,7 @@ export default function MessagesScreen() {
 
   if (selectedConversation) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Messages Screen" style={styles.container}>
         <View style={styles.container}>
           <View style={styles.chatHeader}>
             <TouchableOpacity

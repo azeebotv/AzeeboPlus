@@ -15,10 +15,10 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "bash ../../scripts/build-package.sh",
     "clean": "rm -rf dist",
     "watch": "tsc --watch",
-    "lint": "eslint src --fix",
+    "lint": "eslint src",
     "test": "jest",
     "test:cov": "jest --coverage"
   },

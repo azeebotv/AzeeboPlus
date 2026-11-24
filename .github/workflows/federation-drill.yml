@@ -1,0 +1,98 @@
+name: Federation Drill
+
+# Runs the federation drill against an ephemeral Postgres container on every
+# PR that touches the database federation tooling — the same drills the weekly
+# LaunchAgent runs on dev machines (scripts/database/federation-drill.sh), but
+# fully hermetic: the runner's Postgres starts empty, is seeded from the
+# checked-in fixture (scripts/database/ci/drill-fixture.sql), and is thrown
+# away with the job. Catches federation regressions in PRs instead of on a
+# dev machine days later.
+#
+# CI-specific hardening (differs from dev on purpose):
+#   - The bootstrap apply of federate-admin-db.sh doubles as the
+#     "fresh-checkout first federation" test: it must succeed on a cold,
+#     empty azeebo_admin.
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'scripts/database/**'
+      - '.github/workflows/federation-drill.yml'
+  workflow_dispatch:
+
+env:
+  # superuser for CREATE EXTENSION postgres_fdw (and the password_required
+  # user mapping step); azeebo owns the databases like in dev.
+  SUPERUSER: ci_superuser
+  SUPERUSER_PASSWORD: ci_superuser_pw
+  PGHOST: localhost
+  PGPORT: '5432'
+  PGUSER: azeebo
+  PGPASSWORD: azeebo_ci_pw
+
+jobs:
+  drill:
+    name: Federation drill (ephemeral Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci_superuser
+          POSTGRES_PASSWORD: ci_superuser_pw
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_superuser -d postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Install postgres client tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Provision roles, the 7 service DBs, and fixture schemas
+        run: |
+          set -euo pipefail
+          export PGPASSWORD="$SUPERUSER_PASSWORD"
+          # azeebo role: owns the service DBs ( CREATEDB for the drill clones.
+          psql -h "$PGHOST" -U "$SUPERUSER" -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE "azeebo" LOGIN PASSWORD 'azeebo_ci_pw' CREATEDB;
+          SQL
+          for db in azeebo_auth azeebo_wallet azeebo_content azeebo_notification azeebo_payment azeebo_moderation azeebo_creator; do
+            psql -h "$PGHOST" -U "$SUPERUSER" -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE \"$db\" OWNER \"azeebo\""
+            # fixture is idempotent and applied to every service DB; each DB
+            # only "uses" the tables it owns (extras are harmless). Applied as
+            # azeebo, not the superuser: the drill connects as azeebo and
+            # mutates the fixture tables (DELETE/ALTER), which PG ownership
+            # rules only allow for the role that created them.
+            PGPASSWORD=azeebo_ci_pw psql -h "$PGHOST" -U azeebo -d "$db" -v ON_ERROR_STOP=1 -f scripts/database/ci/drill-fixture.sql
+          done
+          psql -h "$PGHOST" -U "$SUPERUSER" -d postgres -tAc "CREATE DATABASE azeebo_admin OWNER \"azeebo\"" || true
+
+      - name: Bootstrap federation (cold azeebo_admin — first-federation test)
+        run: |
+          set -euo pipefail
+          export PGPASSWORD="$PGPASSWORD"
+          bash scripts/database/federate-admin-db.sh
+
+      - name: Run the drill (both scenarios)
+        run: |
+          set -euo pipefail
+          export PGPASSWORD="$PGPASSWORD"
+          bash scripts/database/federation-drill.sh
+
+      - name: Upload drill output on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: federation-drill-output
+          path: /tmp/federation-drill-heal-*.log
+          if-no-files-found: ignore

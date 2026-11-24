@@ -9,8 +9,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
-import { realityApi } from '../../../src/api';
-import { logger } from '../../../src/utils/logger';
+import { realityApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface PredictionResult {
   id: string;
@@ -64,8 +66,8 @@ export default function PredictionResultsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E8420A" />
+      <SafeAreaView accessibilityLabel="Results Screen" style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading results...</Text>
       </SafeAreaView>
     );
@@ -85,7 +87,7 @@ export default function PredictionResultsScreen() {
         style={styles.container}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#E8420A']} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[brand.flame]} />
         }
       >
         <View style={styles.header}>
@@ -164,7 +166,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 12,
   },
   errorText: {
@@ -183,10 +185,10 @@ const styles = StyleSheet.create({
   },
   question: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   resultCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -199,7 +201,7 @@ const styles = StyleSheet.create({
   },
   resultLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   badge: {
     paddingHorizontal: 12,
@@ -210,7 +212,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B98120',
   },
   badgeError: {
-    backgroundColor: '#EF444420',
+    backgroundColor: colors.alpha.danger20,
   },
   badgeText: {
     fontSize: 12,
@@ -236,7 +238,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -244,15 +246,15 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   rewardsCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
   },

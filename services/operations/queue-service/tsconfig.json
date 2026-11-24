@@ -2,28 +2,25 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "declaration": true,
-    "types": [
-      "node",
-      "jest"
-    ],
+    "types": ["node", "jest"],
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
     "paths": {
+      "@azeebo/security/log-redaction": ["../../../packages/security/dist/log-redaction"],
       "@azeebo/*": ["../../../packages/*/dist"],
-      "@queue/*": [
-        "./*"
-      ]
-    }
+      "@queue/*": ["./*"]
+    },
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": true,
+    "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/**/*.spec.ts"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "src/**/*.spec.ts"]
 }

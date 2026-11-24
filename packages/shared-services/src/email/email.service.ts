@@ -36,10 +36,15 @@ export class EmailService implements OnModuleInit {
   private registerTemplates(): void {
     const templateOverrides: Record<string, string | undefined> = {
       welcome: this.configService.get('EMAIL_TEMPLATE_WELCOME_HTML'),
+      'email-verification': this.configService.get('EMAIL_TEMPLATE_EMAIL_VERIFICATION_HTML'),
       'password-reset': this.configService.get('EMAIL_TEMPLATE_PASSWORD_RESET_HTML'),
+      'magic-link': this.configService.get('EMAIL_TEMPLATE_MAGIC_LINK_HTML'),
+      digest: this.configService.get('EMAIL_TEMPLATE_DIGEST_HTML'),
       'payment-confirmation': this.configService.get('EMAIL_TEMPLATE_PAYMENT_CONFIRMATION_HTML'),
       'content-published': this.configService.get('EMAIL_TEMPLATE_CONTENT_PUBLISHED_HTML'),
       'content-featured': this.configService.get('EMAIL_TEMPLATE_CONTENT_FEATURED_HTML'),
+      'challenge-review': this.configService.get('EMAIL_TEMPLATE_CHALLENGE_REVIEW_HTML'),
+      'flag-stale': this.configService.get('EMAIL_TEMPLATE_FLAG_STALE_HTML'),
     };
 
     this.templates['welcome'] = Handlebars.compile(
@@ -50,6 +55,48 @@ export class EmailService implements OnModuleInit {
         <p>Hello {{displayName}},</p>
         <p>Thank you for joining Azeebo+. We're excited to have you on board.</p>
         <p>Start exploring our platform and discover amazing content from your favorite creators.</p>
+        <p>Best regards,<br>The Azeebo+ Team</p>
+      </div>
+    `
+    );
+
+    this.templates['email-verification'] = Handlebars.compile(
+      templateOverrides['email-verification'] ||
+        `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">Verify Your Email Address</h1>
+        <p>Hello {{displayName}},</p>
+        <p>Welcome to Azeebo+! Please confirm your email address by clicking the button below:</p>
+        <p><a href="{{verificationUrl}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Verify Email</a></p>
+        <p>This link will expire in 1 hour.</p>
+        <p>If you didn't create an account with Azeebo+, you can safely ignore this email.</p>
+        <p>Best regards,<br>The Azeebo+ Team</p>
+      </div>
+    `
+    );
+
+    this.templates['digest'] = Handlebars.compile(
+      templateOverrides['digest'] ||
+        `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">Your Daily Digest</h1>
+        <p>Hello {{displayName}},</p>
+        <p>Here's what you missed while you were away ({{count}} unread notification(s)):</p>
+        <ul>{{{items}}}</ul>
+        <p>Best regards,<br>The Azeebo+ Team</p>
+      </div>
+    `
+    );
+
+    this.templates['magic-link'] = Handlebars.compile(
+      templateOverrides['magic-link'] ||
+        `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">Your Sign-In Link</h1>
+        <p>Hello {{displayName}},</p>
+        <p>Click the button below to sign in to Azeebo+ securely. This link is single-use and expires in 15 minutes.</p>
+        <p><a href="{{magicLinkUrl}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Sign In</a></p>
+        <p>If you didn't request this link, you can safely ignore this email.</p>
         <p>Best regards,<br>The Azeebo+ Team</p>
       </div>
     `
@@ -113,6 +160,54 @@ export class EmailService implements OnModuleInit {
         <p><a href="{{contentLink}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View Featured Content</a></p>
         <p>Keep creating amazing content!</p>
         <p>Best regards,<br>The Azeebo+ Team</p>
+      </div>
+    `
+    );
+
+    // Challenge entry review outcome: sent to the participant when a
+    // moderator moves their entry to under_review, winner, or rejected.
+    // Data: displayName, challengeTitle, statusLabel, prize, reviewUrl.
+    // statusLabel is the human phrase chosen by the caller (winner / rejected
+    // / under review) — avoids needing a custom equality helper here.
+    this.templates['challenge-review'] = Handlebars.compile(
+      templateOverrides['challenge-review'] ||
+        `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">Challenge Entry Update</h1>
+        <p>Hello {{displayName}},</p>
+        <p>Your entry for <strong>"{{challengeTitle}}"</strong> {{statusPhrase}}.</p>
+        {{#if prize}}<p>Prize: <strong>{{prize}}</strong></p>{{/if}}
+        {{#if reviewUrl}}
+        <p><a href="{{reviewUrl}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View Challenge</a></p>
+        {{/if}}
+        <p>Best regards,<br>The Azeebo+ Team</p>
+      </div>
+    `
+    );
+
+    // Stale feature-flag sweep: sent to the flag's owner (or the ops digest)
+    // when a flag's staleAfter passes. Data: flagKey, owner, staleAfter,
+    // enabled, description, adminUrl.
+    this.templates['flag-stale'] = Handlebars.compile(
+      templateOverrides['flag-stale'] ||
+        `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">Action Required: Stale Feature Flag</h1>
+        <p>Hi{{#if owner}} {{owner}}{{/if}},</p>
+        {{#if universe}}
+        <p>Scope: <strong>Universe</strong> — {{universe}} (per-universe flag, managed on the
+        per-universe Feature Flags page).</p>
+        {{/if}}
+        <p>The feature flag <strong>{{flagKey}}</strong> passed its <code>staleAfter</code> expiry
+        (<code>{{staleAfter}}</code>) and is now a removal candidate. Leaving stale flags around
+        increases the governance surface and hides dead code paths behind toggles.</p>
+        <p><strong>Please take one of these actions:</strong></p>
+        <ul>
+          <li>Remove the flag (it falls back to its registered default), or</li>
+          <li>Renew its <code>staleAfter</code> if the feature is still active.</li>
+        </ul>
+        <p><a href="{{adminUrl}}" style="background-color: #E31E24; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Review in the Admin Panel</a></p>
+        <p>Best regards,<br>The Azeebo+ Platform Team</p>
       </div>
     `
     );

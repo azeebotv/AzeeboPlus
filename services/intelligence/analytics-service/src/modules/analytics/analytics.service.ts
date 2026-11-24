@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma } from '../../prisma/client/index.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { AnalyticsResponse } from './interfaces/analytics-response.interface.js';
+import { PIIMinimizationService } from './pii-minimization.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { FeatureFlagService, analyticsFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 interface Event {
@@ -34,10 +36,12 @@ const ALLOWED_EVENT_NAMES = [
   'payment_success',
   'payment_failed',
   'payment_initiated',
+  'payment_provider_failover',
   'refund_initiated',
   'refund_completed',
   'reward_earned',
   'reward_redeemed',
+  'media_upload',
   'creator_follow',
   'creator_followed',
   'creator_tip_sent',
@@ -70,9 +74,42 @@ const ALLOWED_EVENT_NAMES = [
   'tip_received',
   'verification_approved',
   'verification_submitted',
+  'content_search_correction_shown',
+  'content_search_correction_accepted',
+  'flag_stale_enabled',
+  'consent_state',
 ];
 
 const REQUIRED_METADATA_FIELDS = ['session_id', 'platform', 'timestamp'];
+
+/**
+ * Events that serve core service functionality or security/finance records
+ * and are therefore ingestible without analytics consent. Everything else
+ * requires the sender's granted analytics consent (deny-by-default).
+ */
+const ESSENTIAL_EVENT_NAMES = new Set([
+  'login',
+  'login_success',
+  'login_failed',
+  'signup',
+  'signup_started',
+  'signup_completed',
+  'payment_initiated',
+  'payment_success',
+  'payment_failed',
+  'payment_provider_failover',
+  'refund_initiated',
+  'refund_completed',
+  'error_occurred',
+  'flag_stale_enabled',
+]);
+
+type BatchConsent = {
+  analytics: boolean;
+  marketing: boolean;
+  personalization?: boolean;
+  third_party?: boolean;
+};
 
 @Injectable()
 export class AnalyticsService {
@@ -83,7 +120,9 @@ export class AnalyticsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
+    private readonly piiMinimization: PIIMinimizationService
   ) {
     this.userServiceUrl = this.configService.get<string>(
       'USER_SERVICE_URL',
@@ -93,6 +132,60 @@ export class AnalyticsService {
       'CONTENT_SERVICE_URL',
       'http://content-service:3004'
     );
+  }
+
+  /**
+   * Resolves the effective sampling rate (0–100) from `analytics_sampling_rate`.
+   * 100 (default) means every event is kept; lower values drop events.
+   */
+  private async getSamplingRate(): Promise<number> {
+    const value = await this.featureFlagService.getValue(analyticsFlags.samplingRate);
+    if (typeof value !== 'number' || Number.isNaN(value)) return 100;
+    return Math.min(100, Math.max(0, Math.round(value)));
+  }
+
+  /** Deterministic per-entity sampling so a user/entity is fully kept or fully dropped. */
+  private isSampled(entity: string | undefined, rate: number): boolean {
+    if (rate >= 100) return true;
+    if (rate <= 0) return false;
+    const seed = entity ?? 'anonymous';
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+    }
+    return hash % 100 < rate;
+  }
+
+  /**
+   * Client-side sampling config for the analytics-sdk: when the
+   * `analytics_client_sampling` flag is on, clients pre-sample events using the
+   * same rate before shipping them, cutting server-side dropped traffic.
+   */
+  async getClientSamplingConfig(): Promise<{
+    enabled: boolean;
+    samplingRate: number;
+  }> {
+    const enabled = await this.featureFlagService.isEnabled(analyticsFlags.clientSampling);
+    const samplingRate = await this.getSamplingRate();
+    return { enabled, samplingRate };
+  }
+
+  /** Shared ingest write path: batch (createMany) or per-event writes. */
+  private async writeEvents(rows: Array<Record<string, unknown>>): Promise<void> {
+    if (rows.length === 0) return; // everything was sampled out
+    const batchIngest = await this.featureFlagService.isEnabled(analyticsFlags.batchIngest);
+    if (batchIngest) {
+      await this.prisma.productEvent.createMany({
+        data: rows as Prisma.ProductEventCreateManyInput[],
+      });
+    } else {
+      // Batch with $transaction for atomicity (fixes N+1)
+      await this.prisma.$transaction(
+        rows.map((row) =>
+          this.prisma.productEvent.create({ data: row as Prisma.ProductEventCreateInput })
+        )
+      );
+    }
   }
 
   private async getUserCount(): Promise<number> {
@@ -186,7 +279,22 @@ export class AnalyticsService {
     return { valid: true };
   }
 
-  async ingestEvents(events: Event[]): Promise<AnalyticsResponse> {
+  /** Deny-by-default consent check: essential allowlist or granted analytics consent. */
+  private hasConsentFor(event: Event, consent?: BatchConsent): boolean {
+    if (ESSENTIAL_EVENT_NAMES.has(event.type) || event.type.startsWith('consent_')) return true;
+    return consent?.analytics === true;
+  }
+
+  async ingestEvents(
+    events: Event[],
+    consent?: {
+      analytics: boolean;
+      marketing: boolean;
+      personalization?: boolean;
+      third_party?: boolean;
+    },
+    consentVersion?: string
+  ): Promise<AnalyticsResponse> {
     if (!events || events.length === 0) {
       throw new BadRequestException('No events provided');
     }
@@ -211,25 +319,73 @@ export class AnalyticsService {
       throw new BadRequestException(`All events failed validation: ${validationErrors.join('; ')}`);
     }
 
+    // Server-side consent enforcement (deny-by-default): events are only
+    // persisted when the batch consent state grants their category. The
+    // client-declared category is not trusted for essential bypasses — only
+    // events on the ESSENTIAL_EVENT_NAMES allowlist skip the consent check.
+    const consentErrors: string[] = [];
+    const consentedEvents = validEvents.filter((event, i) => {
+      if (this.hasConsentFor(event, consent)) return true;
+      consentErrors.push(`Event[${i}]: ${event.type} requires consent`);
+      return false;
+    });
+
+    // Record the consent state itself as an essential event so lawful-basis
+    // evidence exists server-side regardless of the analytics choice. The
+    // ledger row is written alongside user events but not counted in
+    // `ingested`, which reports user events only.
+    const rows: Array<{
+      eventName: string;
+      userId?: string;
+      sessionId?: string;
+      metadata?: Prisma.InputJsonValue;
+      timestamp: Date;
+    }> = [];
+
+    if (consent) {
+      rows.push({
+        eventName: 'consent_state',
+        metadata: {
+          consent: { ...consent },
+          consentVersion: consentVersion ?? 'unknown',
+          timestamp: new Date().toISOString(),
+        } as Prisma.InputJsonValue,
+        timestamp: new Date(),
+      });
+    }
+
     try {
-      await this.prisma.productEvent.createMany({
-        data: validEvents.map((event) => ({
+      const samplingRate = await this.getSamplingRate();
+      const sampled = consentedEvents.filter((event) =>
+        this.isSampled(event.userId ?? event.sessionId, samplingRate)
+      );
+
+      for (const event of sampled) {
+        rows.push({
           eventName: event.type,
           userId: event.userId,
           sessionId: event.sessionId,
-          metadata: (event.metadata || undefined) as Prisma.InputJsonValue,
+          metadata: event.metadata
+            ? (this.piiMinimization.minimizeEvent(event.metadata) as Prisma.InputJsonValue)
+            : undefined,
           timestamp: event.timestamp ? new Date(event.timestamp) : new Date(),
-        })),
-      });
+        });
+      }
+
+      await this.writeEvents(rows);
 
       await this.cache.invalidate('analytics:*');
 
       return {
         success: true,
         data: {
-          ingested: validEvents.length,
-          rejected: validationErrors.length,
-          validationErrors: validationErrors.length > 0 ? validationErrors : undefined,
+          ingested: sampled.length,
+          sampled: consentedEvents.length - sampled.length,
+          rejected: validationErrors.length + consentErrors.length,
+          validationErrors:
+            validationErrors.length + consentErrors.length > 0
+              ? [...validationErrors, ...consentErrors]
+              : undefined,
         },
       };
     } catch (error) {
@@ -480,6 +636,12 @@ export class AnalyticsService {
       throw new BadRequestException(`Invalid event name: ${type}`);
     }
     try {
+      // Sampling: drop the event before write when the effective rate excludes it.
+      const samplingRate = await this.getSamplingRate();
+      if (!this.isSampled(userId, samplingRate)) {
+        return { success: true, data: { sampled: true } };
+      }
+
       const result = await this.prisma.productEvent.create({
         data: {
           eventName: type,
@@ -517,14 +679,17 @@ export class AnalyticsService {
       );
     }
     try {
-      await this.prisma.productEvent.createMany({
-        data: events.map((event) => ({
+      const samplingRate = await this.getSamplingRate();
+      const sampled = events.filter((event) => this.isSampled(event.userId, samplingRate));
+
+      await this.writeEvents(
+        sampled.map((event) => ({
           eventName: event.type,
           userId: event.userId,
           metadata: (event.metadata || undefined) as Prisma.InputJsonValue,
           timestamp: new Date(),
-        })),
-      });
+        }))
+      );
 
       await this.cache.invalidate('analytics:*');
 
@@ -580,6 +745,85 @@ export class AnalyticsService {
     } catch (error) {
       this.logger.error(
         `getDailyStats failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: (error as Error).message },
+      };
+    }
+  }
+
+  /**
+   * Search correction acceptance: daily counts of 'did you mean' suggestions
+   * shown vs accepted, plus the acceptance rate — the raw material for the
+   * admin Search Analytics panel. `days` is clamped to [1, 90] server-side.
+   */
+  async getSearchCorrections(days = 30): Promise<AnalyticsResponse> {
+    const safeDays = Math.min(Math.max(1, Math.floor(days)), 90);
+    const startDate = new Date();
+    startDate.setUTCHours(0, 0, 0, 0);
+    startDate.setUTCDate(startDate.getUTCDate() - (safeDays - 1));
+
+    try {
+      const rows = (await this.prisma.$queryRaw`
+        SELECT
+          DATE_TRUNC('day', pe."timestamp")::date AS day,
+          COUNT(*) FILTER (WHERE pe."eventName" = 'content_search_correction_shown') AS shown,
+          COUNT(*) FILTER (WHERE pe."eventName" = 'content_search_correction_accepted') AS accepted
+        FROM "product_events" pe
+        WHERE pe."eventName" IN (
+          'content_search_correction_shown',
+          'content_search_correction_accepted'
+        )
+          AND pe."timestamp" >= ${startDate}
+        GROUP BY 1
+        ORDER BY 1
+      `) as { day: Date; shown: bigint | number; accepted: bigint | number }[];
+
+      const byDay = new Map<string, { shown: number; accepted: number }>();
+      for (const row of rows) {
+        const key = new Date(row.day).toISOString().slice(0, 10);
+        byDay.set(key, {
+          shown: Number(row.shown ?? 0),
+          accepted: Number(row.accepted ?? 0),
+        });
+      }
+
+      // Fill the contiguous range so the chart never has holes.
+      const series: { date: string; shown: number; accepted: number; rate: number }[] = [];
+      let totalShown = 0;
+      let totalAccepted = 0;
+      const cursor = new Date(startDate);
+      for (let i = 0; i < safeDays; i++) {
+        const key = cursor.toISOString().slice(0, 10);
+        const day = byDay.get(key) || { shown: 0, accepted: 0 };
+        totalShown += day.shown;
+        totalAccepted += day.accepted;
+        series.push({
+          date: key,
+          shown: day.shown,
+          accepted: day.accepted,
+          rate: day.shown > 0 ? day.accepted / day.shown : 0,
+        });
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
+      }
+
+      return {
+        success: true,
+        data: {
+          days: safeDays,
+          overall: {
+            shown: totalShown,
+            accepted: totalAccepted,
+            rate: totalShown > 0 ? totalAccepted / totalShown : 0,
+          },
+          series,
+        },
+      };
+    } catch (error) {
+      this.logger.error(
+        `getSearchCorrections failed: ${(error as Error).message}`,
         (error as Error).stack
       );
       return {

@@ -12,8 +12,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { apiClient } from '../../src/api/client';
-import { createLogger } from '../../src/utils/logger';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { createLogger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const logger = createLogger('AddFunds');
 
@@ -46,9 +48,8 @@ export default function AddFundsScreen() {
   const handleAddFunds = async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.post<{ success: boolean }>('/api/v1/wallet/add', {
+      const res = await apiClient.post<{ success: boolean }>('/api/v1/wallet/fund', {
         amount,
-        method: 'card',
       });
       if (res.success) {
         Alert.alert('Success', 'Funds added to your wallet!');
@@ -65,9 +66,9 @@ export default function AddFundsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Add Funds Screen" style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Add Funds</Text>
@@ -138,7 +139,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -174,15 +175,15 @@ const styles = StyleSheet.create({
   quickLabel: { color: '#fff', fontSize: 14, fontWeight: '600', marginBottom: 12 },
   quickButtons: { flexDirection: 'row', gap: 8 },
   quickButton: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
   },
-  quickButtonSelected: { backgroundColor: '#E8420A' },
+  quickButtonSelected: { backgroundColor: brand.flame },
   quickButtonText: { color: '#fff', fontSize: 14 },
   addButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

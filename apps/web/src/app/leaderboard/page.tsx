@@ -1,11 +1,13 @@
 'use client';
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { Trophy, Medal, Award, Flame, Sparkles, Crown } from 'lucide-react';
 
 interface LeaderboardEntry {
   rank: number;
@@ -21,7 +23,7 @@ export default function LeaderboardPage(): React.JSX.Element {
   const [timeframe, setTimeframe] = useState<'weekly' | 'monthly' | 'allTime'>('weekly');
 
   const leaderboardQuery = useQuery({
-    queryKey: ['leaderboard', timeframe],
+    queryKey: ['leaderboard', 'engagement', timeframe],
     queryFn: async () => {
       const response = await apiFetch<LeaderboardEntry[] | { items?: LeaderboardEntry[] }>(
         `/engagement/leaderboard?timePeriod=${timeframe}`
@@ -39,137 +41,114 @@ export default function LeaderboardPage(): React.JSX.Element {
   const isLoading = leaderboardQuery.isLoading;
   const error = leaderboardQuery.error?.message || null;
 
-  const getRankStyle = (rank: number): { bg: string; color: string } => {
-    if (rank === 1)
-      return { bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', color: '#1A0A0A' };
-    if (rank === 2)
-      return { bg: 'linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)', color: '#1A0A0A' };
-    if (rank === 3)
-      return {
-        bg: 'linear-gradient(135deg, #CD7F32 0%, #A0522D 100%)',
-        color: 'var(--brand-white)',
-      };
-    return { bg: 'var(--bg-secondary)', color: 'var(--text-secondary)' };
+  const getRankBadge = (rank: number) => {
+    if (rank === 1) {
+      return (
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-az-warning-500 to-az-warning-300 text-black flex items-center justify-center font-black shadow-az-glow-gold">
+          <Crown className="w-5 h-5 fill-black" />
+        </div>
+      );
+    }
+    if (rank === 2) {
+      return (
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-az-ink-dim to-az-ink text-black flex items-center justify-center font-black shadow-az-glow-silver">
+          <Medal className="w-5 h-5" />
+        </div>
+      );
+    }
+    if (rank === 3) {
+      return (
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-az-warning-700 to-az-warning-500 text-az-ink flex items-center justify-center font-black shadow-az-glow-bronze">
+          <Award className="w-5 h-5" />
+        </div>
+      );
+    }
+    return (
+      <div className="w-10 h-10 rounded-2xl bg-az-glass-fill border border-az-glass-border text-az-ink/60 flex items-center justify-center font-mono font-bold text-sm">
+        {rank}
+      </div>
+    );
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 800,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Leaderboard</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-            Top contributors on Azeebo+
-          </p>
-        </div>
+    <PageShell glowColor="rgba(234,179,8,0.12)">
+      <PageHero
+        badge="Community Honor Roll"
+        title="Creator & Fan Leaderboard"
+        description="Celebrate the most dedicated African cinema enthusiasts, top live reality voters, trivia champions, and community curators on Azeebo+."
+      />
 
-        {/* Timeframe selector */}
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 32 }}>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 -mt-4">
+        {/* Timeframe Selector Tabs */}
+        <div className="flex items-center justify-center gap-2 mb-10 overflow-x-auto pb-2">
           {(
             [
               ['weekly', 'This Week'],
               ['monthly', 'This Month'],
-              ['allTime', 'All Time'],
+              ['allTime', 'All Time Legends'],
             ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setTimeframe(key)}
-              style={{
-                padding: '10px 24px',
-                borderRadius: 999,
-                border: timeframe === key ? 'none' : '1px solid #2A1A1A',
-                background:
-                  timeframe === key
-                    ? 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)'
-                    : 'transparent',
-                color: timeframe === key ? '#fff' : 'var(--text-secondary)',
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: 'pointer',
-              }}
-            >
-              {label}
-            </button>
-          ))}
+          ).map(([key, label]) => {
+            const active = timeframe === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setTimeframe(key)}
+                className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all ${
+                  // 12px label: the gradient's flame stop holds white at only
+                  // 3.18:1, so the active tab is solid flame with deep ink (6.03:1).
+                  active
+                    ? 'bg-az-flame text-az-surface-root shadow-az-glow'
+                    : 'bg-az-glass-fill hover:bg-az-glass-card text-az-ink/60 hover:text-az-ink border border-az-ink/5'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
+        {/* Content State */}
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <Spinner size="lg" color="#E8420A" />
+          <div className="flex flex-col items-center justify-center py-20">
+            <Spinner size="lg" color="#EC691F" />
+            <p className="text-az-ink/40 text-xs mt-4">Tabulating point standings...</p>
           </div>
         ) : error ? (
-          <ErrorState
-            title="Failed to load leaderboard"
-            description={error}
-            buttonText="Retry"
-            onButtonPress={() => leaderboardQuery.refetch()}
-          />
+          <div className="az-glass p-8 border border-az-glass-border text-center">
+            <ErrorState
+              title="Failed to load leaderboard"
+              description={error}
+              buttonText="Retry"
+              onButtonPress={() => leaderboardQuery.refetch()}
+            />
+          </div>
         ) : entries.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🏆</div>
-            <h3 style={{ fontSize: 18 }}>No leaderboard data yet</h3>
-            <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
-              Start engaging to climb the ranks!
+          <div className="az-glass p-12 border border-az-glass-border text-center max-w-md mx-auto">
+            <div className="w-16 h-16 rounded-2xl bg-az-flame/10 border border-az-flame/20 flex items-center justify-center text-az-flame mx-auto mb-4">
+              <Trophy className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-bold text-az-ink mb-2">No leaderboard rankings yet</h3>
+            <p className="text-xs text-az-ink/50 leading-relaxed max-w-xs mx-auto">
+              Participate in reality show votes, trivia quizzes, and streaming challenges to climb
+              to the podium!
             </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="space-y-3">
             {entries.map((entry) => {
-              const rankStyle = getRankStyle(entry.rank);
+              const isTopThree = entry.rank <= 3;
               return (
                 <div
                   key={entry.userId}
-                  className="az-glass"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 16,
-                    padding: '16px 20px',
-                    borderRadius: 16,
-                  }}
+                  className={`az-glass p-4 sm:p-5 border transition-all duration-300 flex items-center gap-4 ${
+                    isTopThree ? 'from-az-flame/[0.04] to-transparent' : 'border-az-glass-border'
+                  }`}
                 >
-                  <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '50%',
-                      background: rankStyle.bg,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: 16,
-                      color: rankStyle.color,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {entry.rank}
-                  </div>
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: '50%',
-                      overflow: 'hidden',
-                      flexShrink: 0,
-                      border: entry.rank <= 3 ? '2px solid #E8420A' : '2px solid #2A1A1A',
-                    }}
-                  >
+                  {/* Rank Badge */}
+                  <div className="flex-shrink-0">{getRankBadge(entry.rank)}</div>
+
+                  {/* Avatar */}
+                  <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 relative border-2 border-az-glass-border shadow-md">
                     {entry.avatar ? (
                       <OptimizedImage
                         src={entry.avatar}
@@ -179,32 +158,41 @@ export default function LeaderboardPage(): React.JSX.Element {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          backgroundColor: 'var(--bg-secondary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 18,
-                        }}
-                      >
+                      <div className="w-full h-full bg-gradient-to-br from-az-scarlet to-az-flame text-az-ink flex items-center justify-center font-bold text-sm">
                         {entry.displayName.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ fontWeight: 600, fontSize: 15 }}>{entry.displayName}</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-                      Level {entry.level}
-                    </p>
+
+                  {/* User details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className="font-bold text-az-ink text-sm sm:text-base truncate tracking-tight">
+                        {entry.displayName}
+                      </h3>
+                      {entry.rank === 1 && (
+                        <Sparkles className="w-3.5 h-3.5 text-az-warning-400 flex-shrink-0" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-az-ink/50">
+                      <span className="px-2 py-0.5 rounded-full bg-az-glass-fill border border-az-glass-border font-mono text-[10px] text-az-ink/70">
+                        LVL {entry.level}
+                      </span>
+                      {entry.badges?.length > 0 && <span>• {entry.badges.length} badges</span>}
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontWeight: 700, fontSize: 18, color: 'var(--brand-orange)' }}>
-                      {(entry.score ?? 0).toLocaleString()}
+
+                  {/* Score */}
+                  <div className="text-right flex-shrink-0">
+                    <div className="flex items-center justify-end gap-1">
+                      <Flame className="w-3.5 h-3.5 text-az-flame" />
+                      <span className="font-extrabold text-base sm:text-lg text-az-ink font-mono tracking-tight">
+                        {(entry.score ?? 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-az-ink/40 font-medium uppercase tracking-wider">
+                      Points
                     </p>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: 11 }}>pts</p>
                   </div>
                 </div>
               );
@@ -212,7 +200,6 @@ export default function LeaderboardPage(): React.JSX.Element {
           </div>
         )}
       </main>
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

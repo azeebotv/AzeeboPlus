@@ -83,6 +83,8 @@ export const environmentSchema = z.object({
 
   // Security
   ADMIN_EMAIL: z.string().email().optional(),
+  GATEWAY_SECRET: z.string().min(32, 'GATEWAY_SECRET must be at least 32 characters'),
+  INTERNAL_API_KEY: z.string().min(32, 'INTERNAL_API_KEY must be at least 32 characters'),
 
   // All-in-one mode (disables localhost restrictions for single-container deployments)
   ALL_IN_ONE: z.string().optional(),
@@ -164,6 +166,11 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
 
   if (env.JWT_REFRESH_SECRET.length < 64) {
     errors.push('JWT_REFRESH_SECRET should be at least 64 characters in production');
+  }
+
+  // AUD-16: GATEWAY_SECRET must differ from INTERNAL_API_KEY
+  if (env.GATEWAY_SECRET && env.INTERNAL_API_KEY && env.GATEWAY_SECRET === env.INTERNAL_API_KEY) {
+    errors.push('GATEWAY_SECRET must differ from INTERNAL_API_KEY');
   }
 
   // Check that payment secrets are configured (skip in all-in-one mode - can be configured later)

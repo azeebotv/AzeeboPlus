@@ -32,8 +32,13 @@ export function createAuthMethods(client: RequestClient) {
       });
     },
 
+    /**
+     * Called with no argument this is the cookie-only flow: POST /auth/refresh
+     * with an empty body and let the httpOnly refresh_token cookie authenticate.
+     * auth.controller.ts falls back to that cookie when the body omits the token.
+     */
     refreshToken: async (
-      refreshToken: string
+      refreshToken?: string
     ): Promise<ApiResponse<{ access_token: string; refresh_token: string }>> => {
       // T-M15: Enable retryOn401 for clock-skew resilience on the refresh path.
       // Max 3 attempts with exponential backoff (1 s -> 2 s -> 4 s), respecting
@@ -42,7 +47,7 @@ export function createAuthMethods(client: RequestClient) {
         '/api/v1/auth/refresh',
         {
           method: 'POST',
-          body: JSON.stringify({ refreshToken }),
+          ...(refreshToken ? { body: JSON.stringify({ refreshToken }) } : {}),
         },
         { retryOn401: true }
       );

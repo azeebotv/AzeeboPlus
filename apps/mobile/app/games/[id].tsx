@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { apiClient } from '../../src/api';
-import type { Game, GameLevel, LeaderboardEntry, Achievement } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data';
+import type { Game, GameLevel, LeaderboardEntry, Achievement } from '@azeebo/react-data/types/api';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 export default function GameplayPage() {
   const colorScheme = useColorScheme();
@@ -33,9 +34,7 @@ export default function GameplayPage() {
         apiClient.get<Achievement[]>(`/games/${id}/achievements`),
       ]);
       setGame(gameRes);
-      try {
-        analytics.gameStarted(String(id), 'session_' + Date.now());
-      } catch {}
+      analytics.gameStarted(String(id), 'session_' + Date.now());
       setLevels(levelsRes || []);
       setLeaderboard(leaderboardRes || []);
       setAchievements(achievementsRes || []);
@@ -80,7 +79,9 @@ export default function GameplayPage() {
 
   if (!game) {
     return (
-      <EmptyState icon="🎮" title="Game not found" description="This game could not be found" />
+      <View accessibilityLabel="Games Screen" style={styles.container}>
+        <EmptyState icon="🎮" title="Game not found" description="This game could not be found" />
+      </View>
     );
   }
 
@@ -88,7 +89,7 @@ export default function GameplayPage() {
     return (
       <View style={styles.gameContainer}>
         <View style={styles.gameHeader}>
-          <TouchableOpacity onPress={handlePause}>
+          <TouchableOpacity accessibilityRole="button" onPress={handlePause}>
             <Text style={styles.pauseIcon}>⏸️</Text>
           </TouchableOpacity>
           <View style={styles.gameStats}>
@@ -115,7 +116,7 @@ export default function GameplayPage() {
                 <Text style={styles.scoreButtonText}>+500</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.gameOverButton} onPress={handleGameOver}>
+            <TouchableOpacity accessibilityRole="button" style={styles.gameOverButton} onPress={handleGameOver}>
               <Text style={styles.gameOverText}>End Game</Text>
             </TouchableOpacity>
           </View>
@@ -123,25 +124,25 @@ export default function GameplayPage() {
 
         <View style={styles.controlsArea}>
           <View style={styles.dpad}>
-            <TouchableOpacity style={styles.dpadButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.dpadButton}>
               <Text style={styles.dpadIcon}>⬆️</Text>
             </TouchableOpacity>
             <View style={styles.dpadRow}>
-              <TouchableOpacity style={styles.dpadButton}>
+              <TouchableOpacity accessibilityRole="button" style={styles.dpadButton}>
                 <Text style={styles.dpadIcon}>⬅️</Text>
               </TouchableOpacity>
               <View style={styles.dpadCenter} />
-              <TouchableOpacity style={styles.dpadButton}>
+              <TouchableOpacity accessibilityRole="button" style={styles.dpadButton}>
                 <Text style={styles.dpadIcon}>➡️</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.dpadButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.dpadButton}>
               <Text style={styles.dpadIcon}>⬇️</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.actionButtons}>
             {controls.slice(2).map((control) => (
-              <TouchableOpacity key={control.id} style={styles.actionButton}>
+              <TouchableOpacity accessibilityRole="button" key={control.id} style={styles.actionButton}>
                 <Text style={styles.actionIcon}>{control.icon}</Text>
               </TouchableOpacity>
             ))}
@@ -154,7 +155,7 @@ export default function GameplayPage() {
   return (
     <View style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
@@ -167,7 +168,7 @@ export default function GameplayPage() {
         <View style={styles.gamePreview}>
           <View style={styles.previewPlaceholder}>
             <Text style={styles.previewEmoji}>{game.emoji || '🎮'}</Text>
-            <TouchableOpacity style={styles.playButton} onPress={handlePlay}>
+            <TouchableOpacity accessibilityRole="button" style={styles.playButton} onPress={handlePlay}>
               <Text style={styles.playIcon}>▶</Text>
               <Text style={styles.playText}>Play Now</Text>
             </TouchableOpacity>
@@ -297,7 +298,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -313,7 +314,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   gameGenre: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
   },
   content: {
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
     height: 200,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
   },
   previewEmoji: {
     fontSize: 80,
@@ -338,7 +339,7 @@ const styles = StyleSheet.create({
   playButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.category.purple,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 10,
@@ -363,15 +364,15 @@ const styles = StyleSheet.create({
   },
   scoreDivider: {
     width: 1,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
   },
   scoreLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 13,
     marginBottom: 4,
   },
   scoreValue: {
-    color: '#DDA0DD',
+    color: colors.category.purple,
     fontSize: 20,
     fontWeight: '700',
   },
@@ -410,7 +411,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   levelDifficulty: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   levelStars: {
@@ -431,21 +432,21 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.bg.tertiary,
   },
   leaderboardItemYou: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
   },
   rankBadge: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rankBadgeTop: {
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.category.purple,
   },
   rankText: {
     color: '#fff',
@@ -467,7 +468,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   playerScore: {
-    color: '#DDA0DD',
+    color: colors.category.purple,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -489,7 +490,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -508,7 +509,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   achievementDesc: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   gameContainer: {
@@ -535,7 +536,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   gameHighScore: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   gameArea: {
@@ -562,13 +563,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   scoreButton: {
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.category.purple,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
   },
   scoreButtonSpecial: {
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
   },
   scoreButtonText: {
     color: '#000',
@@ -604,7 +605,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -623,7 +624,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.category.purple,
     alignItems: 'center',
     justifyContent: 'center',
   },

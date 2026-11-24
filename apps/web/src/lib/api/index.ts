@@ -1,13 +1,20 @@
 // ApiClient – assembled from domain-specific modules
 // Re-exports everything for backward compatibility with `import { api, apiFetch, ... } from '../lib/api'`
 
-import { resolvedApiUrl, RETRY_CONFIG, gatewayPath } from './base';
+import {
+  resolvedApiUrl,
+  RETRY_CONFIG,
+  gatewayPath,
+  generateCorrelationId,
+  generateIdempotencyKey,
+} from './base';
 import type { RetryOptions } from './base';
 import { createAuthMethods } from './auth';
 import { createUserMethods } from './user';
 import { createContentMethods } from './content';
 import { createRealityMethods } from './reality';
 import { createWalletMethods } from './wallet';
+import { createBorrowMethods } from './borrow';
 import { createPaymentMethods } from './payment';
 import { createRecommendationMethods } from './recommendation';
 import { createUniverseMethods } from './universe';
@@ -25,6 +32,26 @@ const logger = createWebLogger('ApiClient');
 
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
+
+/**
+ * Plant the httpOnly refresh_token cookie (7 days) through a Next route.
+ * lib/api/base.ts's cookie-first auth recovery POSTs /auth/refresh with no
+ * body and relies on this cookie; without it, apiFetch-based pages 401
+ * forever once the 15-min access cookie expires.
+ */
+export async function plantRefreshCookie(refreshToken: string): Promise<void> {
+  if (typeof window === 'undefined' || !refreshToken) return;
+  try {
+    await fetch('/api/auth/refresh-cookie', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: refreshToken, refresh_token: refreshToken }),
+      credentials: 'include',
+    });
+  } catch {
+    logger.error('Failed to plant refresh cookie via API');
+  }
+}
 
 export async function setAuthCookie(value: string, maxAge: number = 30 * 60): Promise<void> {
   if (typeof window !== 'undefined') {
@@ -92,6 +119,7 @@ class ApiClient {
   content: ReturnType<typeof createContentMethods>;
   reality: ReturnType<typeof createRealityMethods>;
   wallet: ReturnType<typeof createWalletMethods>;
+  borrow: ReturnType<typeof createBorrowMethods>;
   payment: ReturnType<typeof createPaymentMethods>;
   recommendation: ReturnType<typeof createRecommendationMethods>;
   universe: ReturnType<typeof createUniverseMethods>;
@@ -118,6 +146,7 @@ class ApiClient {
     this.content = createContentMethods(this);
     this.reality = createRealityMethods(this);
     this.wallet = createWalletMethods(this);
+    this.borrow = createBorrowMethods(this);
     this.payment = createPaymentMethods(this);
     this.recommendation = createRecommendationMethods(this);
     this.universe = createUniverseMethods(this);
@@ -144,24 +173,39 @@ class ApiClient {
    * Deduplicates concurrent refresh attempts.
    * Returns the auth response on success, null on failure.
    */
-  async attemptRefresh(): Promise<import('./base').RefreshTokensResponse | null> {
+  async attemptRefresh(
+    explicitToken?: string
+  ): Promise<import('./base').RefreshTokensResponse | null> {
     if (this.refreshPromise) {
       return this.refreshPromise;
     }
 
     this.refreshPromise = (async (): Promise<import('./base').RefreshTokensResponse | null> => {
       try {
-        const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-        if (!refreshToken) return null;
+        const refreshToken =
+          explicitToken ||
+          (typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null);
 
-        const response = await this.auth.refreshToken(refreshToken);
+        // The refresh token lives only in an httpOnly cookie, so "JS cannot
+        // read it" is the normal case, not a dead end. Falling back to the
+        // cookie-only POST is what keeps a session alive past the 15-minute
+        // access cookie; returning null here used to make every ApiClient 401
+        // hard-redirect a still-valid user to the login page.
+        const response = refreshToken
+          ? await this.auth.refreshToken(refreshToken)
+          : await this.auth.refreshToken();
+
         if (response.success && response.data) {
           this.token = response.data.access_token;
           localStorage.setItem(ACCESS_TOKEN_KEY, response.data.access_token);
-          localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
+          // AUD-03: Sweep legacy refresh tokens from localStorage
+          localStorage.removeItem(REFRESH_TOKEN_KEY);
 
-          // Update the middleware auth cookie with the new access token
+          // Update the middleware auth cookie with the new access token,
+          // and keep the httpOnly refresh cookie in sync with rotation so
+          // the cookie-first recovery in lib/api/base.ts keeps working.
           setAuthCookie(response.data.access_token);
+          void plantRefreshCookie(response.data.refresh_token);
           return response.data;
         }
         return null;
@@ -213,8 +257,19 @@ class ApiClient {
       ...(options.headers as Record<string, string>),
     };
 
+    // Correlation ID for request tracing (TAA §9)
+    if (!headers['x-correlation-id']) {
+      headers['x-correlation-id'] = generateCorrelationId();
+    }
+
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    // Idempotency key for state-changing methods (TAA §9)
+    const method = (options.method || 'GET').toUpperCase();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !headers['Idempotency-Key']) {
+      headers['Idempotency-Key'] = generateIdempotencyKey();
     }
 
     const controller = new AbortController();
@@ -286,10 +341,24 @@ class ApiClient {
         return this.buildErrorResponse(data, response.status);
       }
 
+      // T-FIX: Some upstream controllers return HTTP 200 with an error
+      // envelope ({ success: false, ... }). Honor that instead of treating
+      // the whole envelope as payload data (which broke pages calling
+      // .find()/.map() on the result).
+      if (
+        data &&
+        typeof data === 'object' &&
+        'success' in data &&
+        (data as Record<string, unknown>).success === false
+      ) {
+        return this.buildErrorResponse(data as Record<string, unknown>, response.status);
+      }
+
+      const body = data as Record<string, unknown>;
       return {
         success: true,
-        data: data.data || data,
-        message: data.message,
+        data: body.data !== undefined ? body.data : data,
+        message: body.message as string | undefined,
       };
     } catch (error) {
       clearTimeout(timeoutId);
@@ -339,7 +408,7 @@ export const api = new ApiClient(resolvedApiUrl);
 // Re-export the standalone fetch helper
 // ---------------------------------------------------------------------------
 
-export { apiFetch, resolvedApiUrl } from './base';
+export { apiFetch, resolvedApiUrl, generateIdempotencyKey } from './base';
 
 // ---------------------------------------------------------------------------
 // Re-export ALL types for backward compatibility
@@ -373,3 +442,5 @@ export type {
   UserUniverseEngagement,
   RecommendationGroup,
 } from './engagement';
+
+export type { PartnerBankOffer } from './borrow';

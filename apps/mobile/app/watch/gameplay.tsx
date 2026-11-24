@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { apiClient } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { apiClient } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface GameQuestion {
   id: number;
@@ -85,9 +87,7 @@ export default function GameplayScreen() {
 
   useEffect(() => {
     if (isGameOver) {
-      try {
-        analytics.gameCompleted('trivia', score, 60 - timeLeft);
-      } catch {}
+      analytics.gameCompleted('trivia', score, 60 - timeLeft);
     }
   }, [isGameOver]);
 
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
     marginBottom: 4,
   },
@@ -305,20 +305,20 @@ const styles = StyleSheet.create({
   optionButton: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.neutral[100],
     borderWidth: 2,
     borderColor: '#e0e0e0',
   },
   optionText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
+    color: colors.neutral[800],
   },
   nextButton: {
     margin: 16,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
   },
   nextText: {
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
   resultsTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#E8420A',
+    color: brand.flame,
     marginBottom: 24,
   },
   resultsScore: {
@@ -342,13 +342,13 @@ const styles = StyleSheet.create({
   },
   scoreLabel: {
     fontSize: 16,
-    color: '#888',
+    color: colors.text.secondary,
     marginBottom: 8,
   },
   scoreValue: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#E8420A',
+    color: brand.flame,
   },
   resultsStats: {
     flexDirection: 'row',
@@ -361,18 +361,18 @@ const styles = StyleSheet.create({
   resultStatValue: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#E8420A',
+    color: brand.flame,
     marginBottom: 4,
   },
   resultStatLabel: {
     fontSize: 14,
-    color: '#888',
+    color: colors.text.secondary,
   },
   playAgainButton: {
     paddingHorizontal: 48,
     paddingVertical: 16,
     borderRadius: 30,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   playAgainText: {
     color: '#fff',

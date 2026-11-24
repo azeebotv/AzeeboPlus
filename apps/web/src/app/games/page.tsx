@@ -5,10 +5,10 @@ import { motion } from 'framer-motion';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { useUniversesQuery } from '@/hooks/useUniverses';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -19,15 +19,7 @@ function GamesPageContent(): React.JSX.Element {
     analytics.pageView('games');
   }, []);
 
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
-      return res.data;
-    },
-    staleTime: 300000,
-  });
+  const universesQuery = useUniversesQuery();
 
   const gamesUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'games');
 
@@ -39,24 +31,25 @@ function GamesPageContent(): React.JSX.Element {
   } = useQuery<ContentItem[], Error>({
     queryKey: ['games-content', gamesUniverse?.id],
     queryFn: async () => {
-      if (!gamesUniverse?.id) throw new Error('Games universe not found');
+      if (!gamesUniverse?.id) return [];
       const result = await api.content.getContentByUniverse(gamesUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
-      throw new Error(result.message || 'Failed to load games.');
+      return [];
     },
+    enabled: !!gamesUniverse?.id,
     staleTime: 60000,
   });
 
-  return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Games" />
+  const effectiveLoading = universesQuery.isLoading || (!!gamesUniverse?.id && isLoading);
 
-      {/* Hero Section */}
+  return (
+    <PageShell activeNav="Games" maxWidth="7xl">
+      {/* Featured game spotlight */}
       <section className="relative">
-        {isLoading ? (
-          <Skeleton height="400px" className="sm:h-[500px]" borderRadius="0px" />
+        {effectiveLoading ? (
+          <Skeleton height="400px" className="sm:h-[500px]" borderRadius="16px" />
         ) : error ? (
           <div className="h-[400px] sm:h-[500px] flex items-center justify-center">
             <motion.div
@@ -73,74 +66,22 @@ function GamesPageContent(): React.JSX.Element {
             </motion.div>
           </div>
         ) : games.length > 0 ? (
-          <div className="relative h-[400px] sm:h-[500px]">
-            <motion.div
-              className="absolute inset-0"
-              initial={{ scale: 1.1, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-            >
-              <OptimizedImage
-                src={games[0].thumbnail}
-                alt={games[0].title}
-                fill
-                className="object-cover"
-                priority
-              />
-            </motion.div>
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
-            <AmbientGlow color="rgba(59,130,246,0.25)" size={500} className="bottom-0 right-0" />
-
-            <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
-              <motion.div
-                className="flex items-center gap-2 mb-3 sm:mb-4"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.4 }}
-              >
-                <span
-                  className="px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
-                >
+          <PageHero
+            eyebrow="Games Universe"
+            badge={games[0].contentType || 'Game'}
+            title={games[0].title}
+            subtitle={games[0].description}
+            accentColor="var(--color-az-secondary-500)"
+            glowColor="color-mix(in srgb, var(--color-az-secondary-500) 25%, transparent)"
+            actions={
+              <>
+                <span className="az-overline rounded-az-pill bg-az-flame px-3 py-1 text-az-surface-root">
                   Premium
                 </span>
-                <span
-                  className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{
-                    backgroundColor: 'rgba(59,130,246,0.2)',
-                    color: 'var(--color-secondary-400)',
-                  }}
-                >
-                  {games[0].contentType || 'Game'}
-                </span>
-              </motion.div>
-              <motion.h2
-                className="text-3xl sm:text-4xl font-bold text-white mb-2"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25, duration: 0.5 }}
-              >
-                {games[0].title}
-              </motion.h2>
-              <motion.p
-                className="text-white/60 text-base sm:text-lg mb-5 sm:mb-6 max-w-2xl"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35, duration: 0.5 }}
-              >
-                {games[0].description}
-              </motion.p>
-              <motion.div
-                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45, duration: 0.5 }}
-              >
                 <Link href={`/watch/${games[0].id}`}>
                   <motion.button
                     type="button"
-                    className="az-btn-primary"
-                    style={{ width: 'auto', paddingInline: '2rem' }}
+                    className="az-btn-primary az-btn-primary--inline"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -150,34 +91,30 @@ function GamesPageContent(): React.JSX.Element {
                 <Link href="/rankings">
                   <motion.button
                     type="button"
-                    className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                    style={{
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      backgroundColor: 'rgba(255,255,255,0.08)',
-                    }}
+                    className="az-body-strong rounded-az-pill border border-az-ink/20 bg-az-ink/10 px-6 py-3 text-az-ink transition-all"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     Leaderboard
                   </motion.button>
                 </Link>
-              </motion.div>
-            </div>
-          </div>
+              </>
+            }
+          />
         ) : (
           <div className="h-[400px] sm:h-[500px] flex items-center justify-center">
-            <p className="text-base sm:text-lg text-white/60">No games available</p>
+            <p className="az-lead text-az-ink/60 sm:text-lg">No games available</p>
           </div>
         )}
       </section>
 
       {/* Games Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section className="py-2 sm:py-4">
         <ScrollReveal>
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">Featured Games</h2>
-              <p className="text-sm sm:text-base mt-1 text-white/50">Play and earn rewards</p>
+              <h2 className="az-section-title text-az-ink">Featured Games</h2>
+              <p className="az-body mt-1 text-az-ink-muted">Play and earn rewards</p>
             </div>
           </div>
         </ScrollReveal>
@@ -207,34 +144,24 @@ function GamesPageContent(): React.JSX.Element {
                       height={192}
                       className="w-full h-44 sm:h-48 object-cover"
                     />
-                    <span
-                      className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={{
-                        backgroundColor: 'var(--brand-orange)',
-                        color: 'var(--brand-white)',
-                      }}
-                    >
+                    <span className="az-overline absolute top-2 right-2 rounded-az-pill bg-az-flame px-2.5 py-0.5 text-az-surface-root">
                       Premium
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 az-scrim" />
                     <div className="absolute bottom-4 left-4 right-4">
-                      <span
-                        className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{
-                          backgroundColor: 'rgba(59,130,246,0.2)',
-                          color: 'var(--color-secondary-400)',
-                        }}
-                      >
+                      <span className="az-caption mb-2 inline-block rounded-az-pill bg-az-secondary-500/20 px-2.5 py-0.5 text-az-secondary-400">
                         {game.contentType || 'Game'}
                       </span>
-                      <h3 className="text-lg sm:text-xl font-bold text-white">{game.title}</h3>
+                      <h3 className="az-title text-az-ink">{game.title}</h3>
                     </div>
                   </div>
                   <div className="p-4">
-                    <p className="text-sm text-white/50 mb-3 line-clamp-2">{game.description}</p>
+                    <p className="az-body mb-3 line-clamp-2 text-az-ink-muted">
+                      {game.description}
+                    </p>
                     <motion.button
                       type="button"
-                      className="az-btn-primary w-full"
+                      className="az-btn-primary"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -247,13 +174,11 @@ function GamesPageContent(): React.JSX.Element {
           </StaggerGrid>
         ) : (
           <div className="text-center py-10 sm:py-12">
-            <p className="text-base sm:text-lg text-white/50">No games available yet</p>
+            <p className="az-lead text-az-ink-muted sm:text-lg">No games available yet</p>
           </div>
         )}
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -263,8 +188,8 @@ export default function GamesPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

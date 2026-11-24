@@ -20,10 +20,20 @@ export class ContentTypeValidationMiddleware implements NestMiddleware {
       return;
     }
 
-    if (!contentType.includes('application/json')) {
+    // Accept JSON bodies plus the form encodings used for uploads and HTML
+    // forms. The middleware's purpose (SEC-006) is to reject requests with an
+    // ambiguous or absent body type — not to block file uploads, which send
+    // multipart/form-data (browser/RN sets the boundary automatically).
+    const isAllowed =
+      contentType.includes('application/json') ||
+      contentType.includes('multipart/form-data') ||
+      contentType.includes('application/x-www-form-urlencoded');
+
+    if (!isAllowed) {
       res.status(400).json({
         statusCode: 400,
-        message: 'Content-Type must be application/json',
+        message:
+          'Content-Type must be application/json, multipart/form-data, or application/x-www-form-urlencoded',
       });
       return;
     }

@@ -1,10 +1,12 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { CheckCircle2, Sparkles, Wallet, CreditCard, ShieldCheck, X } from 'lucide-react';
 
 interface Plan {
   id: string;
@@ -95,292 +97,189 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 1000,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 700 }}>Subscription Plans</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 8, fontSize: 16 }}>
-            Choose the plan that works best for you
-          </p>
-          {walletBalance !== null && (
-            <p
-              style={{ color: 'var(--brand-forest)', marginTop: 8, fontSize: 14, fontWeight: 600 }}
-            >
-              Wallet Balance: ₦{walletBalance.toLocaleString()}
-            </p>
-          )}
-        </div>
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
+      <PageHero
+        badge="Streaming Access"
+        title="Subscription Plans"
+        description="Select the perfect pass to unlock uninterrupted 4K African cinema premieres, reality TV voting rights, and ad-free listening."
+        rightElement={
+          walletBalance !== null ? (
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-az-glass-fill border border-az-glass-border text-xs text-az-ink/80">
+              <Wallet className="w-3.5 h-3.5 text-az-flame" />
+              <span>
+                Wallet Balance:{' '}
+                <strong className="text-az-ink">₦{walletBalance.toLocaleString()}</strong>
+              </span>
+            </div>
+          ) : undefined
+        }
+      />
 
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 -mt-4">
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                border: '3px solid #2A1A1A',
-                borderTopColor: 'var(--brand-orange)',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }}
-            />
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-10 h-10 border-4 border-az-glass-border border-t-[var(--color-az-flame)] rounded-full animate-spin mb-4" />
+            <p className="text-xs text-az-ink/40">Loading plan options...</p>
           </div>
         ) : error ? (
-          <div style={{ textAlign: 'center', padding: 60 }}>
-            <p style={{ color: 'var(--brand-orange)', marginBottom: 16 }}>{error}</p>
+          <div className="az-glass p-8 border border-az-glass-border text-center max-w-md mx-auto">
+            <p className="text-az-error-400 text-sm mb-4 leading-relaxed">{error}</p>
             <button
               onClick={() => {
                 setError(null);
                 setIsLoading(true);
                 loadPlans();
               }}
-              style={{
-                padding: '10px 24px',
-                borderRadius: 8,
-                background: 'var(--brand-orange)',
-                color: 'var(--brand-white)',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 14,
-                fontWeight: 600,
-              }}
+              className="az-btn-primary"
             >
               Try Again
             </button>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: 20,
-            }}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
             {plans.map((plan) => {
               const isCurrent = currentPlan === plan.id;
+              const isPopular = plan.isPopular;
               return (
                 <div
                   key={plan.id}
-                  className="az-glass"
-                  style={{
-                    padding: 28,
-                    borderRadius: 20,
-                    position: 'relative',
-                    border: plan.isPopular ? '2px solid #E8420A' : '1px solid #2A1A1A',
-                  }}
+                  className={`az-glass p-7 sm:p-8 border transition-all duration-300 flex flex-col justify-between relative ${
+                    isPopular
+                      ? 'from-az-flame/[0.08] to-transparent scale-105 z-10'
+                      : 'border-az-glass-border'
+                  }`}
                 >
-                  {plan.isPopular && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: -12,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        padding: '4px 16px',
-                        borderRadius: 999,
-                        background:
-                          'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: 'var(--brand-white)',
-                      }}
-                    >
+                  {isPopular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-az-scarlet to-az-flame text-az-ink text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
                       Most Popular
                     </div>
                   )}
-                  <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{plan.name}</h3>
-                  <p
-                    style={{
-                      fontSize: 32,
-                      fontWeight: 700,
-                      color: 'var(--brand-orange)',
-                      marginBottom: 20,
-                    }}
-                  >
-                    ₦{plan.price.toLocaleString()}
-                    <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>
-                      /month
-                    </span>
-                  </p>
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}
-                  >
-                    {(plan.features ?? []).map((feature, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          fontSize: 14,
-                          color: 'var(--text-secondary)',
-                        }}
-                      >
-                        <span style={{ color: 'var(--brand-forest)' }}>✓</span> {feature}
-                      </div>
-                    ))}
-                  </div>
-                  {isCurrent ? (
-                    <div
-                      style={{
-                        padding: '12px 0',
-                        textAlign: 'center',
-                        borderRadius: 999,
-                        border: '1px solid #0D3B2E',
-                        color: 'var(--brand-forest)',
-                        fontWeight: 600,
-                        fontSize: 14,
-                      }}
-                    >
-                      Current Plan
+
+                  <div>
+                    <h3 className="text-xl font-extrabold text-az-ink mb-2 tracking-tight">
+                      {plan.name}
+                    </h3>
+                    <div className="flex items-baseline gap-1 mb-6 pb-6 border-b border-az-glass-border">
+                      <span className="az-headline text-3xl sm:text-4xl text-az-ink">
+                        ₦{plan.price.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-az-ink/50 font-normal">/ month</span>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setConfirmPlan(plan)}
-                      disabled={subscribing === plan.id}
-                      className="az-btn-primary"
-                      style={{
-                        width: '100%',
-                        padding: '12px 0',
-                        borderRadius: 999,
-                        border: plan.isPopular ? 'none' : '1px solid #2A1A1A',
-                        background: plan.isPopular
-                          ? 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)'
-                          : 'transparent',
-                        color: plan.isPopular ? '#fff' : 'var(--text-secondary)',
-                        fontWeight: 600,
-                        fontSize: 14,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {subscribing === plan.id ? 'Processing...' : 'Subscribe'}
-                    </button>
-                  )}
+
+                    <div className="space-y-3 mb-8">
+                      {(plan.features ?? []).map((feature, i) => (
+                        <div key={i} className="flex items-start gap-2.5 text-xs text-az-ink/70">
+                          <CheckCircle2 className="w-4 h-4 text-az-flame flex-shrink-0 mt-0.5" />
+                          <span className="leading-relaxed">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    {isCurrent ? (
+                      <div className="w-full py-3.5 rounded-2xl bg-az-success-500/10 border border-az-success-500/20 text-az-success-400 text-xs font-bold text-center tracking-wide">
+                        Current Active Plan
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmPlan(plan)}
+                        disabled={subscribing === plan.id}
+                        className={`w-full font-bold tracking-wide transition-all ${
+                          isPopular
+                            ? 'az-btn-primary shadow-lg hover:shadow-az-flame/20'
+                            : 'text-az-ink'
+                        }`}
+                      >
+                        {subscribing === plan.id ? 'Processing...' : 'Choose ' + plan.name}
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
+
+        {/* Security and Guarantee Badge */}
+        <div className="mt-12 az-glass p-6 border border-az-glass-border text-center max-w-xl mx-auto flex items-center justify-center gap-3 text-xs text-az-ink/50">
+          <ShieldCheck className="w-5 h-5 text-az-success-400 flex-shrink-0" />
+          <span>
+            Encrypted Nigerian & African banking standards. Cancel or change your subscription
+            anytime.
+          </span>
+        </div>
       </main>
 
+      {/* Confirmation Modal */}
       {confirmPlan &&
         (() => {
           const canAffordWallet = walletBalance !== null && walletBalance >= confirmPlan.price;
           return (
             <div
-              style={{
-                position: 'fixed',
-                inset: 0,
-                backgroundColor: 'rgba(0,0,0,0.7)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1000,
-                padding: 24,
-              }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in"
               onClick={() => setConfirmPlan(null)}
             >
               <div
-                className="az-glass"
-                style={{ padding: 32, borderRadius: 20, maxWidth: 400, width: '100%' }}
+                className="az-glass p-8 border max-w-sm w-full relative"
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
+                <button
+                  onClick={() => setConfirmPlan(null)}
+                  className="absolute top-5 right-5 text-az-ink/40 hover:text-az-ink transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <h3 className="text-xl font-extrabold text-az-ink mb-1 tracking-tight">
                   Confirm Subscription
                 </h3>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: 4 }}>
-                  {confirmPlan.name} — ₦{confirmPlan.price.toLocaleString()}/month
+                <p className="text-xs text-az-ink/60 mb-6">
+                  {confirmPlan.name} • ₦{confirmPlan.price.toLocaleString()}/month
                 </p>
 
                 {walletBalance !== null && (
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: 20, fontSize: 14 }}>
-                    Wallet: ₦{walletBalance.toLocaleString()}
-                  </p>
+                  <div className="p-3.5 rounded-2xl bg-az-glass-fill border border-az-glass-border mb-6 flex items-center justify-between text-xs">
+                    <span className="text-az-ink/60">Wallet Balance:</span>
+                    <strong className="text-az-ink font-mono">
+                      ₦{walletBalance.toLocaleString()}
+                    </strong>
+                  </div>
                 )}
 
-                <div
-                  style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}
-                >
+                <div className="space-y-3 mb-4">
                   {walletBalance !== null && (
                     <button
                       onClick={() => handleSubscribe(confirmPlan.id, 'wallet')}
                       disabled={subscribing === confirmPlan.id || !canAffordWallet}
-                      style={{
-                        width: '100%',
-                        padding: '12px 0',
-                        borderRadius: 999,
-                        background: canAffordWallet
-                          ? 'linear-gradient(135deg, #0D3B2E 0%, #0A5C36 100%)'
-                          : 'var(--bg-secondary)',
-                        color: canAffordWallet ? '#fff' : '#666',
-                        border: 'none',
-                        cursor: canAffordWallet ? 'pointer' : 'not-allowed',
-                        fontWeight: 600,
-                        fontSize: 14,
-                      }}
+                      className={`w-full py-3.5 px-4 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                        canAffordWallet
+                          ? 'bg-az-success-600 hover:bg-az-success-500 text-az-surface-root shadow-lg'
+                          : 'bg-az-glass-fill text-az-ink/30 border border-az-ink/5 cursor-not-allowed'
+                      }`}
                     >
+                      <Wallet className="w-4 h-4" />
                       {subscribing === confirmPlan.id
                         ? 'Processing...'
                         : canAffordWallet
-                          ? 'Pay from Wallet'
-                          : 'Insufficient Balance'}
+                          ? 'Pay from Wallet Balance'
+                          : 'Insufficient Wallet Funds'}
                     </button>
                   )}
                   <button
                     onClick={() => handleSubscribe(confirmPlan.id, 'external')}
                     disabled={subscribing === confirmPlan.id}
-                    style={{
-                      width: '100%',
-                      padding: '12px 0',
-                      borderRadius: 999,
-                      background:
-                        'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-                      color: 'var(--brand-white)',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      fontSize: 14,
-                    }}
+                    className="az-btn-primary flex items-center justify-center gap-2 shadow-lg"
                   >
+                    <CreditCard className="w-4 h-4" />
                     {subscribing === confirmPlan.id ? 'Processing...' : 'Pay with Card / Transfer'}
                   </button>
                 </div>
-
-                <button
-                  onClick={() => setConfirmPlan(null)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 0',
-                    borderRadius: 999,
-                    background: 'transparent',
-                    color: 'var(--text-secondary)',
-                    border: '1px solid var(--border-default)',
-                    cursor: 'pointer',
-                    fontSize: 14,
-                  }}
-                >
-                  Cancel
-                </button>
               </div>
             </div>
           );
         })()}
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

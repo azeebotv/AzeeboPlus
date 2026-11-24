@@ -1,0 +1,466 @@
+name: Dockerized E2E (flag chain + failover + pg_trgm + security + cache-thrash)
+
+# Runs the opt-in dockerized e2e suites that need real infrastructure,
+# plus a FlagCacheThrash load assertion against a staging gateway:
+#
+#   test:flags:redis        admin toggle → Redis → service chain (in-process,
+#                           apps/admin feature-flags.redis-live spec, prefix
+#                           feature_flags_test:)
+#   flag-chain containers   the REAL admin + api-gateway containers (built from
+#                           their Dockerfiles) boot against the shared Redis;
+#                           the admin API PUTs gateway_maintenance_mode=true and
+#                           the gateway container must flip to 503, then back.
+#                           Proves the admin → Redis → service chain across
+#                           processes/containers (docker-compose.flagchain.yml +
+#                           scripts/flag-chain-container-check.mjs). Runs on
+#                           pushes and workflow_dispatch only — the two docker
+#                           builds are the slowest part of this job, so PRs keep
+#                           the fast jest suites.
+#   test:payments:failover  Paystack down → Flutterwave fallback against a real
+#                           Postgres + Redis (payments.failover.e2e spec)
+#   test:e2e:security       security services e2e against REAL Redis (BreakGlass
+#                           sessions with TTL) + REAL PostgreSQL (DualControl
+#                           approval workflow + ImmutableAudit hash chain).
+#                           Proves persistence, concurrent access, and chain
+#                           integrity (security.integration.e2e spec).
+#   test:e2e:pgtrgm         search-service pg_trgm fuzzy search against REAL
+#                           Postgres (schema-first `prisma db push` + the
+#                           extension and GIN indexes applied as idempotent
+#                           raw SQL) and REAL Redis
+#                           (search_typo_tolerance flag); proves the trigram
+#                           path serves scored results and falls back when off
+#                           (search.pgtrgm.e2e spec, prefix search_e2e:)
+#   cache-thrash check      a minimal staging gateway (same flag machinery the
+#                           real api-gateway uses, service label api-gateway)
+#                           is booted against the Redis service container,
+#                           loaded over HTTP (flag eval + bootstrap), and a
+#                           post-load step asserts the FlagCacheThrash alert
+#                           condition (run-window Redis read share <= 10% for
+#                           both the per-key TTL cache and the list cache).
+#   all-in-one-smoke        builds Dockerfile.all-in-one and boots the image
+#                           with its REAL entrypoint (Postgres init → service
+#                           DBs → Prisma migrations → supervisord), waits for
+#                           the image HEALTHCHECK, probes the exposed ports and
+#                           runs scripts/docker-smoke-tests.sh (nginx → gateway
+#                           → every service health). This is the gate that
+#                           validates Dockerfile/deploy changes (e.g. the T-1
+#                           prisma-generate step) without a local Docker
+#                           engine. PRs only trigger it when Docker-relevant
+#                           files change (docker-changes filter); push and
+#                           workflow_dispatch always run it.
+#
+# Redis and Postgres run as GitHub Actions SERVICE CONTAINERS (fast, standard
+# CI pattern). Only the two provider STUBS (paystack-mock / flutterwave-mock)
+# are booted via docker-compose.test.yml, since they're local volume-mounted
+# node stubs with control endpoints (__control/status) that only exist there.
+# The suites are pointed at the service containers with env overrides, so the
+# compose file's dev ports (6380/5433) are not needed in CI. The flag-chain
+# containers reach the same service containers via host.docker.internal.
+
+permissions:
+  contents: read
+  # dorny/paths-filter resolves PR changed files via the GitHub API; without
+  # pull-requests: read it dies with "Resource not accessible by integration"
+  # and the whole workflow skips its suites.
+  pull-requests: read
+
+on:
+  pull_request:
+    branches: [main, develop, Major-Upgrade]
+  push:
+    branches: [main, develop, Major-Upgrade]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22.16.0'
+  PNPM_VERSION: '10.33.2'
+  # GitHub service containers are reachable at localhost on the mapped port.
+  REDIS_TEST_URL: redis://localhost:6379
+  PAYMENT_TEST_DATABASE_URL: postgresql://azeebo_test:azeebo_test@localhost:5432/azeebo_payment_test?schema=public
+  # CI-only shared JWT secret for the real-container flag chain (admin + gateway
+  # containers mint/verify test tokens with it; never used in production).
+  JWT_SECRET: 'ci-flagchain-jwt-secret-0123456789abcdef0123456789abcdef0123456789abcdef'
+
+jobs:
+  # Workflow-syntax gate: runs BEFORE the dockerized-e2e job (which `needs:`
+  # this job), so actionlint validates every workflow's YAML/action syntax
+  # before the Redis/Postgres service containers even boot. Pinned actionlint
+  # binary (v1.7.12, linux/amd64) downloaded from the official release.
+  #
+  # One known pattern is suppressed via -ignore: cd.yml uses step-level
+  # `if: ${{ secrets.X != '' }}` deploy conditions, which the official context
+  # availability table does NOT list for steps.if (secrets is absent from the
+  # allowed set), so actionlint flags them. Runtime tolerance means deploys
+  # work today, but fixing that is a deploy-behavior decision for the owner —
+  # it is deliberately excluded from this gate rather than changed here.
+  actionlint:
+    name: Actionlint (workflow syntax)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Run actionlint on all workflows
+        run: |
+          # GitHub release downloads from runner IPs are occasionally
+          # rate-limited/transient; retry so the syntax gate doesn't flake.
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 3 -o /tmp/actionlint.tar.gz \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          tar -C /tmp -xzf /tmp/actionlint.tar.gz actionlint
+          /tmp/actionlint -color -shellcheck= -pyflakes= \
+            -ignore 'context "secrets" is not allowed here' \
+            .github/workflows/*.yml
+
+  # Path filter for the all-in-one smoke job. PRs only run the (slow) docker
+  # build when the Dockerfile or its inputs actually changed; on push and
+  # workflow_dispatch the filter is skipped and the result defaults to true
+  # (those events always run the smoke).
+  docker-changes:
+    name: Detect Docker-relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      docker: ${{ steps.filter.outputs.docker || steps.manual.outputs.docker }}
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@15192bc058cc28a13dbf6cde61f19e18988b7af6 # v3
+        with:
+          filters: |
+            docker:
+              - 'Dockerfile.all-in-one'
+              - '.dockerignore'
+              - 'deploy/**'
+              - 'docker-compose.all-in-one.yml'
+              - 'scripts/generate-prisma-clients.sh'
+              - 'scripts/patch-prisma-client.sh'
+              - 'scripts/docker-smoke-tests.sh'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+      - id: manual
+        if: github.event_name != 'pull_request'
+        run: echo "docker=true" >> "$GITHUB_OUTPUT"
+
+  all-in-one-smoke:
+    name: All-in-One build + entrypoint healthcheck
+    runs-on: ubuntu-latest
+    needs: [actionlint, docker-changes]
+    timeout-minutes: 120
+    if: ${{ github.event_name != 'pull_request' || needs.docker-changes.outputs.docker == 'true' }}
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Build all-in-one image
+        run: |
+          docker build -f Dockerfile.all-in-one \
+            -t azeebo-all-in-one:smoke \
+            --build-arg NEXT_PUBLIC_API_URL=http://localhost:3013 \
+            --build-arg CACHEBUST="${{ github.sha }}" \
+            .
+
+      - name: Boot container with entrypoint
+        run: |
+          docker run -d --name azeebo-smoke --shm-size=1g \
+            -p 80:80 -p 3013:3013 -p 4000:4000 -p 4014:4014 -p 4016:4016 \
+            -e POSTGRES_USER=azeebo \
+            -e POSTGRES_PASSWORD=smoke_postgres_pw \
+            -e POSTGRES_DB=azeebo_dev \
+            -e REDIS_PASSWORD=smoke_redis_pw \
+            -e JWT_ACCESS_SECRET=smoke_jwt_access_secret_0123456789abcdef0123456789abcdef0123456789abcdef \
+            -e JWT_REFRESH_SECRET=smoke_jwt_refresh_secret_0123456789abcdef0123456789abcdef0123456789abcdef \
+            -e INTERNAL_API_KEY=smoke_internal_api_key \
+            -e GATEWAY_SECRET=smoke_gateway_secret \
+            -e WEBHOOK_SECRET=smoke_webhook_secret \
+            -e ALLOWED_ORIGINS=http://localhost:80,http://localhost:3013 \
+            azeebo-all-in-one:smoke
+
+      - name: Wait for Docker HEALTHCHECK (nginx /health → gateway)
+        run: |
+          for i in $(seq 1 90); do
+            status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' azeebo-smoke 2>/dev/null || echo "starting")
+            echo "poll ${i}/90: $status"
+            [ "$status" = "healthy" ] && exit 0
+            if [ "$status" = "unhealthy" ]; then
+              echo "::group::container log tail (unhealthy)"
+              docker logs azeebo-smoke --tail 200 2>&1 || true
+              echo "::endgroup::"
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "Timed out waiting for container to become healthy"
+          echo "::group::container log tail (timeout)"
+          docker logs azeebo-smoke --tail 200 2>&1 || true
+          echo "::endgroup::"
+          exit 1
+
+      - name: Probe exposed entry points
+        run: |
+          set -e
+          echo "== gateway :3013/health =="
+          curl -fsS --max-time 10 http://localhost:3013/health; echo
+          echo "== nginx :80/health =="
+          curl -fsS --max-time 10 http://localhost/health; echo
+          # Frontends start last (supervisord priority 60) — poll until they
+          # answer; they only need to boot, not return 200.
+          for name_port in "web 4000 /" "creator 4014 /" "admin 4016 /"; do
+            read -r name port path <<< "$name_port"
+            code="000"
+            for i in $(seq 1 30); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://localhost:${port}${path}" 2>/dev/null || echo "000")
+              [ "$code" != "000" ] && break
+              sleep 5
+            done
+            if [ "$code" = "000" ]; then
+              echo "FAIL $name :$port never answered"
+              exit 1
+            fi
+            echo "OK $name :$port answered HTTP $code"
+          done
+
+      - name: Service health smoke checks (nginx → gateway → services)
+        run: bash scripts/docker-smoke-tests.sh http://localhost:80
+
+      - name: All-in-one dynamic gateway routing table & health smoke test
+        run: ALL_IN_ONE_E2E=1 ALL_IN_ONE_IMAGE=azeebo-all-in-one:smoke node --test scripts/__tests__/all-in-one-smoke.test.mjs
+
+      # Full gateway sweep: every registered GET route, minted dev token,
+      # fails on any 5xx. Uses the same secrets the container was booted with.
+      # The admin/creator standalone apps are skipped (out of smoke scope here).
+      - name: Gateway-wide GET endpoint smoke (all services)
+        run: node scripts/smoke-gateway-get.mjs
+        env:
+          GATEWAY_URL: http://localhost:3013
+          JWT_ACCESS_SECRET: smoke_jwt_access_secret_0123456789abcdef0123456789abcdef0123456789abcdef
+          JWT_ISSUER: azeebo-auth
+          JWT_AUDIENCE: azeebo-api
+          SMOKE_SKIP_SERVICES: admin,creator
+          SMOKE_CONCURRENCY: '2'
+      # Ops API contract smoke (REAL payload, unlike the mocked Playwright
+      # render sweep): /admin/ops/services + /admin/ops/transport-flips
+      # field-shape assertions — transport enum per answered service, flip
+      # counter invariants, store mode, trend totals. Mints the same dev JWT
+      # as the gateway smoke (the admin JwtStrategy is stateless), so no
+      # seeded user is needed in the container. Fails fast on payload drift:
+      # the Ops cards' fields changing shape breaks CI here instead of
+      # shipping blanks behind the mocked e2e.
+      - name: Ops API contract smoke (services + transport-flips)
+        run: node scripts/ops-smoke.mjs
+        env:
+          ADMIN_URL: http://localhost:4016
+          JWT_ACCESS_SECRET: smoke_jwt_access_secret_0123456789abcdef0123456789abcdef0123456789abcdef
+          JWT_ISSUER: azeebo-auth
+          JWT_AUDIENCE: azeebo-api
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: |
+          docker inspect azeebo-smoke --format 'health={{if .State.Health}}{{.State.Health.Status}}{{else}}n/a{{end}}' 2>/dev/null || true
+          docker logs azeebo-smoke --tail 300 2>&1 || true
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker rm -f azeebo-smoke 2>/dev/null || true
+          docker image rm azeebo-all-in-one:smoke 2>/dev/null || true
+
+  dockerized-e2e:
+    name: Dockerized e2e suites
+    runs-on: ubuntu-latest
+    needs: actionlint
+    timeout-minutes: 50
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: azeebo_test
+          POSTGRES_PASSWORD: azeebo_test
+          POSTGRES_DB: azeebo_payment_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U azeebo_test -d azeebo_payment_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # Generated Prisma clients must exist for the failover spec's
+      # `prisma migrate deploy` + PrismaService (payment), the admin
+      # FeatureFlagsService import graph, and every suite that imports
+      # `@prisma/client` at module load. Generate for ALL schemas (the
+      # per-service filters below would only cover three of them).
+      - name: Generate Prisma clients
+        run: pnpm run prisma:generate
+
+      # Workspace packages ship dist-based exports (dist is gitignored), so
+      # they must be built before any suite imports them. Every dockerized
+      # suite (admin redis-live, payment failover, search pg_trgm) and the
+      # staging gateway import @azeebo/* packages; pnpm -r orders the builds
+      # topologically (deps first). test-utils and contract-tests are excluded
+      # (their builds need @prisma/client generation / spec-only src that the
+      # docker context strips); no suite here imports either.
+      - name: Build workspace packages
+        run: pnpm -r --filter './packages/**' --filter '!@azeebo/test-utils' --filter '!@azeebo/contract-tests' run build
+
+      - name: Flag chain e2e — admin → Redis (test:flags:redis)
+        run: pnpm --filter @azeebo/admin test:redis
+        env:
+          RUN_LIVE_REDIS: '1'
+          REDIS_TEST_URL: ${{ env.REDIS_TEST_URL }}
+
+      # --- Real-container flag chain: admin API container → shared Redis →
+      # api-gateway container. Push + manual dispatch only: the two docker
+      # builds are the slowest steps in this job, so PRs keep the fast jest
+      # suites and workflow_dispatch can run this against any branch.
+      - name: Create admin test database
+        if: github.event_name != 'pull_request'
+        run: |
+          CID=$(docker ps -q --filter "publish=5432" | head -1)
+          if [ -z "$CID" ]; then
+            echo "postgres service container not found"
+            exit 1
+          fi
+          docker exec "$CID" psql -U azeebo_test -c 'CREATE DATABASE azeebo_admin_test' || true
+
+      - name: Migrate admin schema (azeebo_admin_test)
+        if: github.event_name != 'pull_request'
+        run: |
+          DATABASE_URL="postgresql://azeebo_test:azeebo_test@localhost:5432/azeebo_admin_test?schema=public" \
+            pnpm --filter @azeebo/admin exec prisma migrate deploy
+
+      - name: Build flag-chain images (admin + api-gateway)
+        if: github.event_name != 'pull_request'
+        run: docker compose -f docker-compose.flagchain.yml build
+        env:
+          FLAGCHAIN_JWT_SECRET: ${{ env.JWT_SECRET }}
+
+      - name: Boot flag-chain containers against the shared Redis
+        if: github.event_name != 'pull_request'
+        run: |
+          docker compose -f docker-compose.flagchain.yml up -d --wait || {
+            echo '::group::gateway container logs'
+            docker compose -f docker-compose.flagchain.yml logs gateway || true
+            echo '::endgroup::'
+            echo '::group::admin container logs'
+            docker compose -f docker-compose.flagchain.yml logs admin || true
+            echo '::endgroup::'
+            exit 1
+          }
+        env:
+          FLAGCHAIN_JWT_SECRET: ${{ env.JWT_SECRET }}
+
+      - name: Flag chain across containers — admin toggles gateway kill-switch
+        if: github.event_name != 'pull_request'
+        run: node scripts/flag-chain-container-check.mjs
+        env:
+          ADMIN_URL: http://localhost:4016
+          GATEWAY_URL: http://localhost:3013
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+
+      - name: Boot provider stubs (paystack DOWN / flutterwave UP)
+        run: docker compose -f docker-compose.test.yml up -d --wait paystack-mock flutterwave-mock
+
+      - name: Payment failover e2e — Paystack down → Flutterwave (test:payments:failover)
+        run: pnpm --filter @azeebo/payment-service test:e2e:failover
+        env:
+          RUN_PAYMENT_FAILOVER_E2E: '1'
+          REDIS_TEST_URL: ${{ env.REDIS_TEST_URL }}
+          PAYMENT_TEST_DATABASE_URL: ${{ env.PAYMENT_TEST_DATABASE_URL }}
+          PAYSTACK_MOCK_URL: http://localhost:8091
+          FLUTTERWAVE_MOCK_URL: http://localhost:8092
+
+      # The postgres service container only creates POSTGRES_DB; create the
+      # dedicated search database for the pg_trgm suite (idempotent). The
+      # suite applies its schema itself via `prisma db push` (schema-first),
+      # so this step only has to create the empty database.
+      - name: Create search test database
+        run: |
+          CID=$(docker ps -q --filter "publish=5432" | head -1)
+          if [ -z "$CID" ]; then
+            echo "postgres service container not found"
+            exit 1
+          fi
+          docker exec "$CID" psql -U azeebo_test -c 'CREATE DATABASE azeebo_search_test' || true
+
+      - name: Search pg_trgm e2e — real Postgres + Redis (test:e2e:pgtrgm)
+        run: pnpm --filter @azeebo/search-service test:e2e:pgtrgm
+        env:
+          RUN_SEARCH_PGTRGM_E2E: '1'
+          REDIS_TEST_URL: ${{ env.REDIS_TEST_URL }}
+          SEARCH_TEST_DATABASE_URL: postgresql://azeebo_test:azeebo_test@localhost:5432/azeebo_search_test?schema=public
+
+      # --- Security E2E: BreakGlass Redis + DualControl PostgreSQL + ImmutableAudit PostgreSQL
+      - name: Create security test database
+        run: |
+          CID=$(docker ps -q --filter "publish=5432" | head -1)
+          if [ -z "$CID" ]; then
+            echo "postgres service container not found"
+            exit 1
+          fi
+          docker exec "$CID" psql -U azeebo_test -c 'CREATE DATABASE azeebo_security_test' || true
+
+      - name: Security E2E — real Redis + PostgreSQL (test:e2e:security)
+        run: pnpm --filter @azeebo/security test:e2e:security
+        env:
+          RUN_SECURITY_E2E: '1'
+          REDIS_TEST_URL: ${{ env.REDIS_TEST_URL }}
+          SECURITY_TEST_DATABASE_URL: postgresql://azeebo_test:azeebo_test@localhost:5432/azeebo_security_test?schema=public
+
+      # --- FlagCacheThrash: load a staging gateway, then assert the alert
+      # condition from the run-window counter deltas. The gateway's flag data
+      # lives under the ci_flags: prefix and never touches real flags.
+      - name: Boot staging gateway (flag eval + bootstrap + /metrics)
+        run: |
+          nohup node scripts/staging-gateway.mjs > /tmp/staging-gateway.log 2>&1 &
+          echo $! > /tmp/staging-gateway.pid
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:4017/metrics >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS http://localhost:4017/metrics >/dev/null
+        env:
+          REDIS_URL: ${{ env.REDIS_TEST_URL }}
+          PORT: '4017'
+
+      - name: Snapshot pre-load cache counters
+        run: node scripts/flag-cache-thrash-check.mjs snapshot --out /tmp/flags-before.json --url http://localhost:4017/metrics
+
+      - name: Load the staging gateway (flag eval + bootstrap)
+        run: node scripts/flag-eval-load-http.mjs
+        env:
+          BASE_URL: http://localhost:4017
+          REQUESTS: '4000'
+          CONCURRENCY: '50'
+
+      - name: Assert FlagCacheThrash — run-window Redis read share ≤ 10%
+        run: node scripts/flag-cache-thrash-check.mjs check --before /tmp/flags-before.json --url http://localhost:4017/metrics --threshold 0.1
+
+      - name: Tear down staging gateway
+        if: always()
+        run: kill $(cat /tmp/staging-gateway.pid) 2>/dev/null || true
+
+      - name: Tear down flag-chain containers
+        if: always()
+        run: docker compose -f docker-compose.flagchain.yml down --remove-orphans || true
+        env:
+          FLAGCHAIN_JWT_SECRET: ${{ env.JWT_SECRET }}
+
+      - name: Tear down provider stubs
+        if: always()
+        run: docker compose -f docker-compose.test.yml down

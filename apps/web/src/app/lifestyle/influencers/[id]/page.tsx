@@ -1,22 +1,17 @@
 'use client';
-import { Suspense, lazy, useEffect } from 'react';
 
-export const metadata = {
-  title: 'Influencer Profile | Azeebo',
-  description: 'View influencer profile, content, and exclusive updates on Azeebo.',
-  openGraph: {
-    title: 'Influencer Profile | Azeebo',
-    description: 'View influencer profile, content, and exclusive updates on Azeebo.',
-  },
-};
+import { Suspense, lazy, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { requireData } from '@/lib/payload';
+import { PageShell } from '@/components/layout/PageShell';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { Users, Play, ArrowLeft, Sparkles } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 function InfluencerDetailContent(): React.JSX.Element {
@@ -30,97 +25,123 @@ function InfluencerDetailContent(): React.JSX.Element {
   const {
     data: influencer,
     isLoading,
+    isError,
     error,
     refetch,
   } = useQuery({
     queryKey: ['influencer', id],
     queryFn: async (): Promise<ContentItem | null> => {
       const res = await api.request<ContentItem>(`/api/v1/content/${id}`);
-      return (res.success ? res.data : null) as ContentItem | null;
+      return requireData(res) ?? null;
     },
     staleTime: 60000,
     enabled: !!id,
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Lifestyle" />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <Link
-          href="/lifestyle/influencers"
-          className="text-sm text-white/40 hover:text-white/60 transition-colors mb-6 inline-block"
-        >
-          ← Back to Influencers
-        </Link>
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-16 space-y-6">
+        <div className="flex items-center justify-between">
+          <Breadcrumbs
+            items={[
+              { label: 'Home', href: '/home' },
+              { label: 'Lifestyle', href: '/lifestyle' },
+              { label: 'Influencers', href: '/lifestyle/influencers' },
+              { label: influencer?.title || 'Creator Profile' },
+            ]}
+          />
+          <Link
+            href="/lifestyle/influencers"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-az-ink/50 hover:text-az-ink transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            All Influencers
+          </Link>
+        </div>
 
         {isLoading ? (
-          <div className="space-y-6">
-            <Skeleton height="400px" borderRadius="0px" />
-            <Skeleton height="40px" width="50%" />
-            <Skeleton height="20px" width="80%" />
-            <Skeleton height="20px" width="60%" />
+          <div className="space-y-6 py-6">
+            <Skeleton className="h-[360px] w-full rounded-3xl" />
+            <Skeleton className="h-8 w-1/2 rounded-lg" />
+            <Skeleton className="h-20 w-full rounded-2xl" />
           </div>
-        ) : error ? (
-          <ErrorState
-            title="Failed to load influencer"
-            description={error.message}
-            onButtonPress={() => refetch()}
-          />
+        ) : isError ? (
+          <div className="max-w-md mx-auto py-16">
+            <ErrorState
+              title="Failed to Load Creator"
+              description={error.message}
+              onButtonPress={() => refetch()}
+            />
+          </div>
         ) : influencer ? (
-          <div>
-            <div className="relative h-[400px] mb-8">
-              <OptimizedImage
-                src={influencer.thumbnail}
-                alt={influencer.title}
-                fill
-                className="object-cover rounded-lg"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-transparent to-transparent rounded-lg" />
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">{influencer?.title}</h1>
-            <span
-              className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-6"
-              style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
-            >
-              {influencer?.contentType || 'Influencer'}
-            </span>
-            <p className="text-white/60 text-lg leading-relaxed mb-8">{influencer?.description}</p>
-            <div className="flex items-center gap-4">
-              <Link
-                href={`/watch/${influencer?.id}`}
-                className="az-btn-primary"
-                style={{
-                  width: 'auto',
-                  paddingInline: '2rem',
-                  display: 'inline-block',
-                  textAlign: 'center',
-                }}
-              >
-                Watch Now
-              </Link>
-              <Link
-                href="/lifestyle/influencers"
-                className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all inline-block"
-                style={{
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                }}
-              >
-                View More Influencers
-              </Link>
+          <div className="space-y-8">
+            <ScrollReveal>
+              <div className="relative aspect-[21/9] sm:h-[420px] w-full rounded-3xl overflow-hidden border border-az-glass-border bg-az-glass-fill shadow-2xl">
+                <OptimizedImage
+                  src={influencer.thumbnail}
+                  alt={influencer.title}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 az-scrim--hero" />
+
+                <div className="absolute top-4 left-4">
+                  <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-[var(--color-az-flame)] border border-[var(--color-az-flame)]/30 text-xs font-mono font-bold uppercase">
+                    {influencer.contentType || 'Featured Creator'}
+                  </span>
+                </div>
+
+                <div className="absolute bottom-6 left-6 right-6 space-y-3">
+                  <h1 className="az-headline text-2xl sm:text-4xl font-extrabold text-az-ink">
+                    {influencer.title}
+                  </h1>
+                  <p className="text-sm text-az-ink/70 max-w-2xl line-clamp-2 leading-relaxed">
+                    {influencer.description}
+                  </p>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            <div className="az-glass p-8 border border-az-glass-border flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="space-y-1 text-center sm:text-left">
+                <h3 className="text-base font-bold text-az-ink flex items-center justify-center sm:justify-start gap-2">
+                  <Sparkles className="w-4 h-4 text-[var(--color-az-flame)]" />
+                  Creator Feature & Vlogs
+                </h3>
+                <p className="text-xs text-az-ink/50">
+                  Follow their lifestyle episodes, day-in-the-life vlogs, and brand edits
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <Link
+                  href={`/watch/${influencer.id}`}
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs font-bold text-az-surface-root bg-[var(--color-az-flame)] hover:bg-[var(--color-az-flame)]/90 transition-all shadow-lg shadow-[var(--color-az-flame)]/25"
+                >
+                  <Play className="w-4 h-4 fill-white" />
+                  Watch Content
+                </Link>
+                <Link
+                  href="/lifestyle/influencers"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-semibold text-az-ink/80 hover:text-az-ink az-glass hover:bg-az-glass-card transition-all border border-az-glass-border"
+                >
+                  More Creators
+                </Link>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">Influencer not found</p>
+          <div className="az-glass p-16 text-center border border-az-glass-border max-w-md mx-auto">
+            <Users className="w-12 h-12 text-az-ink/20 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-az-ink mb-2">Creator Not Found</h3>
+            <p className="text-xs text-az-ink/50">
+              The requested creator profile could not be loaded.
+            </p>
           </div>
         )}
       </div>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -130,8 +151,8 @@ export default function InfluencerDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

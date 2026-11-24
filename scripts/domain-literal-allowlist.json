@@ -1,0 +1,61 @@
+{
+  "$comment": "Third-party hosts that may appear literally in compose files, workflows, Dockerfiles, .env.example templates and deploy/ configs — whether written as a URL, a host-ish key value or a bare token. Every entry needs a reason AND must still be referenced by a tracked file: check-domain-literals.mjs fails when an entry no longer appears anywhere in the repo, because a dead exception hides the next hardcoded use of that host. Hosts on our own domains are never allowed here — read them from deploy/domains.env (generated from packages/shared-types/src/platform-domains.json). Loopback, single-label service DNS, .internal/.local/.test suffixes and RFC example.* domains are ignored by the checker and must not be listed.",
+  "allowedHosts": [
+    {
+      "host": "github.com",
+      "reason": "OCI image source labels and tool downloads for CI (actionlint release tarball)."
+    },
+    {
+      "host": "githubusercontent.com",
+      "reason": "Release asset redirects served by GitHub for the same CI tool downloads."
+    },
+    {
+      "host": "ghcr.io",
+      "reason": "Container registry the deploy workflows push to and pull from."
+    },
+    {
+      "host": "docker.io",
+      "reason": "Base and test-service images pulled by compose (postgres, redis, alpine)."
+    },
+    {
+      "host": "amazonaws.com",
+      "reason": "S3 media origin, CloudFront logging bucket and AWS API endpoints."
+    },
+    {
+      "host": "cloudfront.net",
+      "reason": "CloudFront distribution domains referenced by CDN configuration."
+    },
+    {
+      "host": "googleapis.com",
+      "reason": "Google Fonts stylesheet host whitelisted in the CSP."
+    },
+    {
+      "host": "gstatic.com",
+      "reason": "Google Fonts file host whitelisted in the CSP."
+    },
+    {
+      "host": "firebaseapp.com",
+      "reason": "Firebase Auth tenant domains are per-project (<project>.firebaseapp.com) and cannot come from our registry."
+    },
+    {
+      "host": "sendgrid.net",
+      "reason": "Transactional email SMTP relay host documented in deploy/staging.env.example."
+    },
+    {
+      "host": "gmail.com",
+      "reason": "Developer SMTP relay (smtp.gmail.com) documented in service .env.example templates."
+    },
+    {
+      "host": "sentry.io",
+      "reason": "Error-reporting ingest endpoint used by service deployments."
+    },
+    {
+      "host": "paystack.co",
+      "reason": "Payment provider API and webhook origin."
+    },
+    {
+      "host": "flutterwave.com",
+      "reason": "Payment provider API and webhook origin."
+    }
+  ]
+}

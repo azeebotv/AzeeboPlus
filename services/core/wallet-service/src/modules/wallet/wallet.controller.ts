@@ -13,7 +13,8 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, AdminGuard, IdempotencyGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlag, walletFlags } from '@azeebo/feature-flags';
 import { CacheInterceptor, Cache } from '../../cache/index.js';
 
 import { WalletService } from './wallet.service.js';
@@ -25,6 +26,7 @@ import { ChargeWalletDto } from './dto/charge-wallet.dto.js';
 import { CreditReverseDto } from './dto/credit-reverse.dto.js';
 import { DebitWalletDto, CreditWalletDto } from './dto/wallet-operation.dto.js';
 import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto.js';
+import { LinkBankAccountDto } from './dto/link-bank-account.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 interface AuthenticatedRequest {
@@ -34,6 +36,7 @@ interface AuthenticatedRequest {
     role?: string;
     email?: string;
   };
+  headers: Record<string, string | string[] | undefined>;
 }
 
 @ApiTags('Wallet')
@@ -44,7 +47,7 @@ export class WalletController {
   constructor(@Inject(WalletService) private readonly walletService: WalletService) {}
 
   @Get()
-  @Cache({ key: 'wallet:balance', ttl: 60 })
+  @Cache({ key: 'wallet:balance:{userId}', ttl: 60 })
   @ApiOperation({ summary: 'Get wallet balance' })
   @ApiResponse({ status: 200, description: 'Wallet balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -54,7 +57,7 @@ export class WalletController {
   }
 
   @Get('transactions')
-  @Cache({ key: 'wallet:transactions', ttl: 60 })
+  @Cache({ key: 'wallet:transactions:{userId}:{page}:{limit}', ttl: 60 })
   @ApiOperation({ summary: 'Get wallet transaction history' })
   @ApiResponse({ status: 200, description: 'Transaction history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -79,7 +82,7 @@ export class WalletController {
   }
 
   @Get('summary')
-  @Cache({ key: 'wallet:summary', ttl: 60 })
+  @Cache({ key: 'wallet:summary:{userId}', ttl: 60 })
   @ApiOperation({ summary: 'Get wallet summary widget' })
   @ApiResponse({ status: 200, description: 'Wallet summary' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -90,7 +93,7 @@ export class WalletController {
 
   @Post('fund')
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(RateLimitGuard)
+  @UseGuards(IdempotencyGuard, RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Initialize wallet funding' })
   @ApiResponse({ status: 201, description: 'Payment intent created' })
@@ -102,7 +105,8 @@ export class WalletController {
   }
 
   @Post('redeem-reward')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(walletFlags.redeemRewards)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Convert reward points to wallet balance' })
   @ApiResponse({ status: 200, description: 'Reward redeemed' })
@@ -117,7 +121,8 @@ export class WalletController {
   }
 
   @Post('bonus-credit')
-  @UseGuards(AdminGuard, RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, AdminGuard, RateLimitGuard)
+  @FeatureFlag(walletFlags.bonusCredit)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Add bonus credit to wallet' })
   @ApiResponse({ status: 200, description: 'Bonus credit added' })
@@ -138,7 +143,8 @@ export class WalletController {
   }
 
   @Post('promo-credit')
-  @UseGuards(AdminGuard, RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, AdminGuard, RateLimitGuard)
+  @FeatureFlag(walletFlags.promoCredit)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Add promo credit to wallet' })
   @ApiResponse({ status: 200, description: 'Promo credit added' })
@@ -245,26 +251,38 @@ export class WalletController {
   }
 
   @Post('withdraw')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, IdempotencyGuard, RateLimitGuard)
+  @FeatureFlag(walletFlags.withdrawalsEnabled)
   @RateLimit(5, 3600000)
   @ApiOperation({ summary: 'Withdraw funds from wallet' })
   @ApiResponse({ status: 200, description: 'Withdrawal initiated' })
   @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async withdraw(@Request() req: AuthenticatedRequest, @Body() withdrawDto: WithdrawWalletDto) {
-    const result = await this.walletService.withdraw(req.user.id, withdrawDto);
+    const headerKey = req.headers['idempotency-key'];
+    const result = await this.walletService.withdraw(
+      req.user.id,
+      withdrawDto,
+      Array.isArray(headerKey) ? headerKey[0] : headerKey
+    );
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Post('transfer')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, IdempotencyGuard, RateLimitGuard)
+  @FeatureFlag(walletFlags.transfersEnabled)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Transfer funds to another user' })
   @ApiResponse({ status: 200, description: 'Transfer completed' })
   @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async transfer(@Request() req: AuthenticatedRequest, @Body() transferDto: TransferWalletDto) {
-    const result = await this.walletService.transfer(req.user.id, transferDto);
+    const headerKey = req.headers['idempotency-key'];
+    const result = await this.walletService.transfer(
+      req.user.id,
+      transferDto,
+      Array.isArray(headerKey) ? headerKey[0] : headerKey
+    );
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
@@ -276,6 +294,74 @@ export class WalletController {
   @ApiResponse({ status: 404, description: 'Transaction not found' })
   async getTransaction(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     const result = await this.walletService.getTransaction(req.user.id, id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  // ─── Alias routes (frontend uses different names) ──────────────────
+
+  @Get('balance')
+  @Cache({ key: 'wallet:balance:{userId}', ttl: 60 })
+  @ApiOperation({ summary: 'Get wallet balance (alias for GET /)' })
+  @ApiResponse({ status: 200, description: 'Wallet balance' })
+  async getBalanceAlias(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getBalance(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('accounts')
+  @ApiOperation({ summary: 'Get linked bank accounts' })
+  @ApiResponse({ status: 200, description: 'List of bank accounts' })
+  async getAccounts(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getLinkedAccounts(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('bank-accounts')
+  @ApiOperation({ summary: 'Get linked bank accounts (alias)' })
+  async getBankAccounts(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getLinkedAccounts(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Post('bank-accounts')
+  @ApiOperation({ summary: 'Link a bank account' })
+  async linkBankAccount(@Request() req: AuthenticatedRequest, @Body() dto: LinkBankAccountDto) {
+    const result = await this.walletService.linkBankAccount(req.user.id, dto);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('withdrawal-methods')
+  @ApiOperation({ summary: 'Get available withdrawal methods' })
+  async getWithdrawalMethods(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getWithdrawalMethods(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('withdrawal-pricing')
+  @ApiOperation({ summary: 'Get withdrawal pricing/fees' })
+  async getWithdrawalPricing(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getWithdrawalPricing(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('pricing')
+  @ApiOperation({ summary: 'Get wallet pricing (fees, limits)' })
+  async getPricing() {
+    const result = await this.walletService.getWalletPricing();
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Get('payment-methods')
+  @ApiOperation({ summary: 'Get available payment methods' })
+  async getPaymentMethods(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getPaymentMethods(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
+  }
+
+  @Post('deposit')
+  @ApiOperation({ summary: 'Deposit funds (alias for fund)' })
+  async deposit(@Request() req: AuthenticatedRequest, @Body() fundDto: FundWalletDto) {
+    const result = await this.walletService.initializeFunding(req.user.id, fundDto);
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 }

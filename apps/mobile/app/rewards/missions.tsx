@@ -7,12 +7,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { apiClient } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { apiClient } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface Mission {
   id: string;
@@ -33,6 +36,20 @@ export default function MissionsScreen() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+
+  const claimMission = async (missionId: string) => {
+    setClaimingId(missionId);
+    try {
+      await apiClient.post(`/rewards/missions/${missionId}/claim`);
+      Alert.alert('Bounty Claimed! 🎉', 'Your mission points have been added to your balance.');
+      await loadData();
+    } catch (err) {
+      Alert.alert('Error', (err as Error).message || 'Failed to claim reward');
+    } finally {
+      setClaimingId(null);
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -82,8 +99,8 @@ export default function MissionsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#E8420A" />
+      <SafeAreaView accessibilityLabel="Missions Screen" style={styles.container}>
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading missions...</Text>
       </SafeAreaView>
     );
@@ -94,10 +111,10 @@ export default function MissionsScreen() {
       <ScrollView
         style={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#E8420A" />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={brand.flame} />
         }
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
 
@@ -145,6 +162,19 @@ export default function MissionsScreen() {
                     />
                   </View>
                 </View>
+
+                {(mission.progress ?? 0) >= (mission.total ?? 100) && (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    disabled={claimingId === mission.id}
+                    onPress={() => claimMission(mission.id)}
+                    style={styles.claimButton}
+                  >
+                    <Text style={styles.claimButtonText}>
+                      {claimingId === mission.id ? 'Claiming...' : `Claim +${mission.points} pts`}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             ))
           )}
@@ -176,19 +206,19 @@ export default function MissionsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1A0A0A' },
   content: { flex: 1, padding: 16, paddingBottom: 32 },
-  loadingText: { color: '#9CA3AF', marginTop: 12, textAlign: 'center' },
+  loadingText: { color: colors.light[400], marginTop: 12, textAlign: 'center' },
   backButton: { marginBottom: 16, paddingVertical: 4 },
   backText: { color: '#9A8A7A', fontSize: 14 },
   header: { marginBottom: 24 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#9CA3AF' },
+  subtitle: { fontSize: 14, color: colors.light[400] },
   section: { marginBottom: 24 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 16 },
   emptyContainer: { alignItems: 'center', paddingVertical: 40 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 16, color: '#9CA3AF' },
+  emptyText: { fontSize: 16, color: colors.light[400] },
   missionCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -209,14 +239,19 @@ const styles = StyleSheet.create({
   missionTypeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#E8420A',
+    color: brand.flame,
     textTransform: 'capitalize',
   },
-  missionPoints: { fontSize: 16, fontWeight: '700', color: '#E8420A' },
+  missionPoints: { fontSize: 16, fontWeight: '700', color: brand.flame },
   missionPointsCompleted: { fontSize: 16, fontWeight: '700', color: '#10B981' },
   missionTitle: { fontSize: 16, fontWeight: '700', color: '#FFFFFF', marginBottom: 4 },
-  missionTitleCompleted: { fontSize: 16, fontWeight: '700', color: '#9CA3AF', marginBottom: 4 },
-  missionDescription: { fontSize: 13, color: '#9CA3AF', marginBottom: 16 },
+  missionTitleCompleted: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.light[400],
+    marginBottom: 4,
+  },
+  missionDescription: { fontSize: 13, color: colors.light[400], marginBottom: 16 },
   missionDescriptionCompleted: { fontSize: 13, color: '#6B7280', marginBottom: 8 },
   progressSection: { marginTop: 4 },
   progressHeader: {
@@ -224,8 +259,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 6,
   },
-  progressLabel: { fontSize: 12, color: '#9CA3AF' },
-  progressValue: { fontSize: 12, color: '#9CA3AF' },
+  progressLabel: { fontSize: 12, color: colors.light[400] },
+  progressValue: { fontSize: 12, color: colors.light[400] },
   progressTrack: {
     height: 6,
     borderRadius: 3,
@@ -235,7 +270,7 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 3,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   completedBadge: {
     backgroundColor: 'rgba(16,185,129,0.15)',
@@ -244,4 +279,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   completedBadgeText: { fontSize: 12, fontWeight: '600', color: '#10B981' },
+  claimButton: {
+    marginTop: 12,
+    backgroundColor: brand.flame,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  claimButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
 });

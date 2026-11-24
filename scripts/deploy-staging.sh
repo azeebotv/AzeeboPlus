@@ -31,6 +31,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
+# ---- Domain registry ----
+source "$SCRIPT_DIR/lib/domain-env.sh"
+
 # ---- Configuration ----
 IMAGE="${GHCR_IMAGE:-ghcr.io/azeebo/azeebo-plus}"
 TAG="${TAG:-$(cd "$ROOT_DIR" && git rev-parse --short HEAD 2>/dev/null || echo 'latest')}"
@@ -268,7 +271,7 @@ run_health_checks() {
 
     for entry in "${endpoints[@]}"; do
       IFS=':' read -r port name path <<< "$entry"
-      local url="https://app.azeeboplus.com:${port}${path}"
+      local url="https://${APP_HOST}:${port}${path}"
 
       if curl -sf --max-time 10 "$url" >/dev/null 2>&1; then
         ok "  ${name}: healthy (port ${port})"

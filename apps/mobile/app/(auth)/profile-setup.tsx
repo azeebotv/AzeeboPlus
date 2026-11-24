@@ -13,10 +13,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { userApi } from '../../src/api/user';
-import { apiClient } from '../../src/api/client';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { userApi } from '@azeebo/react-data/api/user';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
@@ -104,7 +106,7 @@ export default function ProfileSetupScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView accessibilityLabel="Profile Setup Screen" style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -160,7 +162,7 @@ export default function ProfileSetupScreen() {
                 Choose at least 3 to get personalized recommendations
               </Text>
               {isLoadingInterests ? (
-                <ActivityIndicator color="#E8420A" />
+                <ActivityIndicator color={brand.flame} />
               ) : interestsError ? (
                 <ErrorState description={interestsError} onRetry={fetchInterests} />
               ) : (
@@ -197,7 +199,7 @@ export default function ProfileSetupScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+            <TouchableOpacity accessibilityRole="button" style={styles.skipButton} onPress={handleSkip}>
               <Text style={styles.skipButtonText}>Skip for now</Text>
             </TouchableOpacity>
           </View>
@@ -227,12 +229,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     textAlign: 'center',
   },
   form: {
@@ -243,20 +245,20 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
     fontWeight: '500',
   },
   interestSubtitle: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
     marginBottom: 12,
   },
   input: {
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.neutral[700],
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -271,7 +273,7 @@ const styles = StyleSheet.create({
   },
   charCount: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
     textAlign: 'right',
     marginTop: 4,
   },
@@ -291,14 +293,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#1a1a1a',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.neutral[700],
   },
   interestChipSelected: {
-    backgroundColor: '#E8420A',
-    borderColor: '#E8420A',
+    backgroundColor: brand.flame,
+    borderColor: brand.flame,
   },
   interestText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
   },
   interestTextSelected: {
@@ -306,7 +308,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   completeButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -326,7 +328,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   skipButtonText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
 });

@@ -5,10 +5,13 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { AuthRepository } from './auth.repository.js';
 import { OtpService } from './otp/otp.service.js';
+import { MfaService } from './mfa/mfa.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService, CacheService } from '@azeebo/shared-services';
 import { ConfigService } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlagService } from '@azeebo/feature-flags';
+import { AuditLogService } from '../audit/audit.service.js';
 import * as bcrypt from 'bcrypt';
 
 class MockRateLimitGuard {
@@ -19,12 +22,15 @@ class MockRateLimitGuard {
 
 describe('Auth Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
   let hashedPassword: string;
 
   const mockAuthRepository = {
     findByEmail: jest.fn(),
     findById: jest.fn(),
     create: jest.fn(),
+    countSessionsByUserId: jest.fn().mockResolvedValue(0),
+    deleteOldestSessions: jest.fn().mockResolvedValue(0),
     createSession: jest.fn(),
     findSessionByUserId: jest.fn(),
     deleteSessionByUserId: jest.fn(),
@@ -47,6 +53,16 @@ describe('Auth Controller Contract Tests', () => {
     exists: jest.fn().mockResolvedValue(0),
   };
 
+  // Flag-aware mock: guards pass (true) but the email-verification signup branch
+  // stays OFF so the default contract flows issue tokens.
+  const mockFeatureFlagService = {
+    isEnabled: jest
+      .fn()
+      .mockImplementation((key: string) =>
+        Promise.resolve(key !== 'auth_email_verification_required')
+      ),
+  };
+
   beforeAll(async () => {
     hashedPassword = bcrypt.hashSync('password123', 10);
 
@@ -63,12 +79,20 @@ describe('Auth Controller Contract Tests', () => {
       controllers: [AuthController],
       providers: [
         AuthService,
+        {
+          provide: AuditLogService,
+          useValue: { log: jest.fn().mockResolvedValue(undefined) },
+        },
         { provide: AuthRepository, useValue: mockAuthRepository },
         { provide: RedisService, useValue: mockRedisService },
         { provide: CacheService, useValue: { get: jest.fn(), set: jest.fn(), delete: jest.fn() } },
         {
           provide: OtpService,
           useValue: { generateOtp: jest.fn(), verifyOtp: jest.fn(), sendOtpToUser: jest.fn() },
+        },
+        {
+          provide: MfaService,
+          useValue: { verifyMfaCode: jest.fn().mockResolvedValue(true) },
         },
         JwtService,
         {
@@ -98,9 +122,15 @@ describe('Auth Controller Contract Tests', () => {
             }),
           },
         },
+        {
+          provide: FeatureFlagService,
+          useValue: mockFeatureFlagService,
+        },
       ],
     })
       .overrideGuard(RateLimitGuard)
+      .useClass(MockRateLimitGuard)
+      .overrideGuard(FeatureFlagGuard)
       .useClass(MockRateLimitGuard)
       .compile();
 
@@ -123,6 +153,8 @@ describe('Auth Controller Contract Tests', () => {
       }
     );
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -163,7 +195,7 @@ describe('Auth Controller Contract Tests', () => {
         return `token-${(payload as any).sub}`;
       });
 
-      const response = await request(app.getHttpServer()).post('/auth/signup').send({
+      const response = await request(baseUrl).post('/auth/signup').send({
         email: 'test@example.com',
         password: 'password123',
         displayName: 'Test User',
@@ -174,6 +206,44 @@ describe('Auth Controller Contract Tests', () => {
       expect(response.body.data).toHaveProperty('user');
       expect(response.body.data).toHaveProperty('access_token');
       expect(response.body.data).toHaveProperty('refresh_token');
+    });
+
+    it('should require email verification and issue no tokens when the flag is on', async () => {
+      mockAuthRepository.findByEmail.mockResolvedValue(null);
+      mockAuthRepository.create.mockResolvedValue({
+        id: 'user-123',
+        email: 'test@example.com',
+        password: 'hashed',
+        displayName: 'Test User',
+        role: 'user',
+        avatar: null,
+        mfaEnabled: false,
+        mfaSecret: null,
+        mfaBackupCodes: null,
+        isVerified: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === 'auth_email_verification_required')
+      );
+
+      try {
+        const response = await request(baseUrl).post('/auth/signup').send({
+          email: 'test@example.com',
+          password: 'password123',
+          displayName: 'Test User',
+        });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.requiresEmailVerification).toBe(true);
+        expect(response.body.data).not.toHaveProperty('access_token');
+        expect(response.body.data).not.toHaveProperty('refresh_token');
+      } finally {
+        mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+          Promise.resolve(key !== 'auth_email_verification_required')
+        );
+      }
     });
   });
 
@@ -208,7 +278,7 @@ describe('Auth Controller Contract Tests', () => {
         return `token-${(payload as any).sub}`;
       });
 
-      const response = await request(app.getHttpServer()).post('/auth/login').send({
+      const response = await request(baseUrl).post('/auth/login').send({
         email: 'test@example.com',
         password: 'password123',
       });
@@ -218,6 +288,68 @@ describe('Auth Controller Contract Tests', () => {
       expect(response.body.data).toHaveProperty('user');
       expect(response.body.data).toHaveProperty('access_token');
       expect(response.body.data).toHaveProperty('refresh_token');
+    });
+  });
+
+  describe('POST /auth/verify-email', () => {
+    it('should verify email and auto-login with fresh tokens', async () => {
+      const jwtService = app.get(JwtService);
+
+      mockRedisService.get.mockResolvedValue('user-123');
+      mockRedisService.del.mockResolvedValue(1);
+      mockRedisService.incr.mockResolvedValue(1);
+      mockAuthRepository.findById.mockResolvedValue({
+        id: 'user-123',
+        email: 'test@example.com',
+        password: hashedPassword,
+        displayName: 'Test User',
+        role: 'user',
+        avatar: null,
+        isVerified: false,
+        mfaEnabled: false,
+        mfaSecret: null,
+        mfaBackupCodes: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockAuthRepository.verifyEmail.mockResolvedValue({
+        id: 'user-123',
+        email: 'test@example.com',
+        password: hashedPassword,
+        displayName: 'Test User',
+        role: 'user',
+        avatar: null,
+        isVerified: true,
+        mfaEnabled: false,
+        mfaSecret: null,
+        mfaBackupCodes: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockAuthRepository.createSession.mockResolvedValue({
+        id: 'session-123',
+        userId: 'user-123',
+        refreshToken: 'refresh-token',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      jest.spyOn(jwtService, 'sign').mockImplementation((payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return `token-${(payload as any).sub}`;
+      });
+
+      const response = await request(baseUrl)
+        .post('/auth/verify-email')
+        .send({ token: 'valid-verification-token' });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.message).toContain('verified');
+      // Post-verification auto-login: tokens are issued directly.
+      expect(response.body.data).toHaveProperty('access_token');
+      expect(response.body.data).toHaveProperty('refresh_token');
+      expect(response.body.data).toHaveProperty('user');
     });
   });
 
@@ -254,7 +386,7 @@ describe('Auth Controller Contract Tests', () => {
       });
       jest.spyOn(jwtService, 'sign').mockReturnValue('new-access-token');
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/auth/refresh')
         .send({ refreshToken: 'valid-refresh-token' });
 
@@ -270,7 +402,7 @@ describe('Auth Controller Contract Tests', () => {
         throw new Error('Invalid token');
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/auth/refresh')
         .send({ refreshToken: 'invalid-refresh-token' });
 
@@ -284,7 +416,7 @@ describe('Auth Controller Contract Tests', () => {
     it('should return success response', async () => {
       mockAuthRepository.deleteSessionByUserId.mockResolvedValue(1);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .post('/auth/logout')
         .set('Authorization', 'Bearer valid-token');
 
@@ -313,7 +445,7 @@ describe('Auth Controller Contract Tests', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/auth/me')
         .set('Authorization', 'Bearer valid-token');
 
@@ -330,7 +462,7 @@ describe('Auth Controller Contract Tests', () => {
     it('should return error for missing authorization', async () => {
       // Without Authorization header, middleware won't set req.user
       // The service should handle missing user gracefully
-      const response = await request(app.getHttpServer()).get('/auth/me');
+      const response = await request(baseUrl).get('/auth/me');
 
       // Without the global ServiceAuthGuard, unauthenticated requests
       // may return 500 (no user) or be handled by the service

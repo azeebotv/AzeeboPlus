@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MessagingService } from './messaging.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 jest.mock('axios');
 
@@ -39,6 +40,10 @@ describe('MessagingService', () => {
         {
           provide: ConfigService,
           useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
       ],
     }).compile();

@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, Alert } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface Draft {
   id: string;
@@ -121,7 +123,7 @@ export default function DraftsScreen() {
           </View>
           <View style={styles.draftActions}>
             <Text style={styles.lastSaved}>Saved {formatDate(item.lastSaved)}</Text>
-            <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
+            <TouchableOpacity accessibilityRole="button" style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
               <Text style={styles.deleteButtonText}>🗑</Text>
             </TouchableOpacity>
           </View>
@@ -132,7 +134,7 @@ export default function DraftsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Drafts Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading drafts..." />
       </SafeAreaView>
     );
@@ -149,7 +151,7 @@ export default function DraftsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Drafts</Text>
@@ -192,7 +194,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -208,19 +210,19 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   addButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -242,17 +244,17 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
   },
   emptyDescription: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     textAlign: 'center',
     marginBottom: 24,
   },
   createButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -267,7 +269,7 @@ const styles = StyleSheet.create({
   },
   draftCard: {
     flexDirection: 'row',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
@@ -290,7 +292,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginRight: 8,
   },
   draftType: {
@@ -298,7 +300,7 @@ const styles = StyleSheet.create({
   },
   draftDescription: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 12,
   },
   draftFooter: {
@@ -316,12 +318,12 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 2,
   },
   progressText: {
     fontSize: 10,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   draftActions: {
     flexDirection: 'row',

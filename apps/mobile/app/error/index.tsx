@@ -1,5 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function ErrorScreen() {
   const colorScheme = useColorScheme();
@@ -23,7 +25,7 @@ export default function ErrorScreen() {
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.primaryButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>Go Back</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -60,7 +62,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: '#888',
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 1.6,
   },
@@ -68,7 +70,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -83,10 +85,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
   },
   secondaryButtonText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 16,
     fontWeight: '600',
   },

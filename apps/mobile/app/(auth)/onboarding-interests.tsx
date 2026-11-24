@@ -3,9 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
-import { logger } from '../../src/utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function OnboardingInterestsScreen() {
   const colorScheme = useColorScheme();
@@ -55,7 +57,7 @@ export default function OnboardingInterestsScreen() {
 
   if (isLoadingInterests) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Onboarding Interests Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading interests..." />
       </SafeAreaView>
     );
@@ -86,7 +88,7 @@ export default function OnboardingInterestsScreen() {
               onPress={() => toggleInterest(interest.id)}
               style={[
                 styles.interestButton,
-                selectedInterests.includes(interest.id) && { backgroundColor: '#E8420A' },
+                selectedInterests.includes(interest.id) && { backgroundColor: brand.flame },
               ]}
             >
               <Text style={styles.interestIcon}>{interest.icon}</Text>
@@ -113,7 +115,7 @@ export default function OnboardingInterestsScreen() {
           disabled={selectedInterests.length < 3}
           style={[
             styles.continueButton,
-            selectedInterests.length < 3 && { backgroundColor: '#ccc' },
+            selectedInterests.length < 3 && { backgroundColor: colors.neutral[300] },
           ]}
         >
           <Text style={styles.continueButtonText}>Continue</Text>
@@ -139,7 +141,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#888',
+    color: colors.text.secondary,
   },
   interestsScroll: {
     flex: 1,
@@ -156,7 +158,7 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 14,
     borderRadius: 12,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.neutral[100],
     borderWidth: 2,
     borderColor: 'transparent',
   },
@@ -166,7 +168,7 @@ const styles = StyleSheet.create({
   interestLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.neutral[800],
   },
   footer: {
     marginTop: 24,
@@ -174,7 +176,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 14,
-    color: '#888',
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   progressComplete: {
@@ -182,7 +184,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   continueButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

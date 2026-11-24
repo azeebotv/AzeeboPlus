@@ -14,8 +14,11 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, Public, ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlag, creatorFlags } from '@azeebo/feature-flags';
 
 import { CreatorsService } from './creators.service.js';
+import { CreatorPayoutService } from '../creator/creator-payout.service.js';
+import { CreatorTrustSafetyService } from '../creator/creator-trust-safety.service.js';
 import { CreatorResponse } from './interfaces/creator-response.interface.js';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import {
@@ -26,6 +29,7 @@ import {
   UpdateTierDto,
   PublishContentDto,
   UpdateCreatorSettingsDto,
+  CreateExclusiveContentDto,
 } from './dto/creator.dto.js';
 
 interface UpdateProfileBody {
@@ -68,7 +72,12 @@ interface PayoutBody {
 @UseGuards(ServiceAuthGuard)
 @Controller('creators')
 export class CreatorsController {
-  constructor(@Inject(CreatorsService) private readonly creatorsService: CreatorsService) {}
+  constructor(
+    @Inject(CreatorsService) private readonly creatorsService: CreatorsService,
+    @Inject(CreatorPayoutService) private readonly payoutService: CreatorPayoutService,
+    @Inject(CreatorTrustSafetyService)
+    private readonly trustSafetyService: CreatorTrustSafetyService
+  ) {}
 
   @Post('onboard')
   @UseGuards(RateLimitGuard)
@@ -236,7 +245,8 @@ export class CreatorsController {
   }
 
   @Get('analytics')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(creatorFlags.monetizationInsights)
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get creator analytics' })
   @ApiResponse({ status: 200, description: 'Analytics data' })
@@ -251,6 +261,15 @@ export class CreatorsController {
   @ApiResponse({ status: 200, description: 'Challenges list' })
   async getChallenges(@Query('creatorId') creatorId?: string): Promise<CreatorResponse> {
     return this.creatorsService.getChallenges(creatorId);
+  }
+
+  @Get('challenges/my')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: "Get the authenticated creator's own challenge entries" })
+  @ApiResponse({ status: 200, description: 'My challenge entries' })
+  async getMyChallenges(@Request() req: { user: { id: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getMyChallenges(req.user.id);
   }
 
   @Get('stats')
@@ -310,7 +329,8 @@ export class CreatorsController {
   }
 
   @Post('tips/:creatorId')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(creatorFlags.tipsEnabled)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Send tip to creator' })
   @ApiResponse({ status: 201, description: 'Tip sent' })
@@ -353,7 +373,8 @@ export class CreatorsController {
   }
 
   @Post('subscribe/:creatorId')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(creatorFlags.subscriptionsEnabled)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Subscribe to creator' })
   @ApiResponse({ status: 201, description: 'Subscribed' })
@@ -366,7 +387,8 @@ export class CreatorsController {
   }
 
   @Delete('subscribe/:creatorId')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(creatorFlags.subscriptionsEnabled)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Cancel subscription' })
   @ApiResponse({ status: 200, description: 'Subscription cancelled' })
@@ -378,7 +400,8 @@ export class CreatorsController {
   }
 
   @Post('payouts')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(creatorFlags.payoutsEnabled)
   @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Request payout' })
   @ApiResponse({ status: 201, description: 'Payout requested' })
@@ -412,6 +435,45 @@ export class CreatorsController {
     @Body() body: PublishContentDto
   ): Promise<CreatorResponse> {
     return this.creatorsService.participateInChallenge(req.user.id, challengeId, body.contentUrl);
+  }
+
+  @Get('challenges/:challengeId/leaderboard')
+  @ApiOperation({ summary: 'Get challenge leaderboard (entries ranked winner-first)' })
+  @ApiResponse({ status: 200, description: 'Ranked leaderboard' })
+  async getChallengeLeaderboard(
+    @Param('challengeId') challengeId: string
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.getChallengeLeaderboard(challengeId);
+  }
+
+  @Get('challenges/entries')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
+  @ApiOperation({ summary: 'List challenge entries for review (admin/moderator)' })
+  @ApiResponse({ status: 200, description: 'Challenge entries with participant names' })
+  async listChallengeEntries(
+    @Query('status') status?: string,
+    @Query('challengeId') challengeId?: string,
+    @Query('take') take?: string
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.listChallengeEntriesForReview(
+      status,
+      challengeId,
+      take ? Number(take) : undefined
+    );
+  }
+
+  @Patch('challenges/entries/:entryId/review')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
+  @ApiOperation({ summary: 'Review a challenge entry (admin/moderator)' })
+  @ApiResponse({ status: 200, description: 'Entry status updated' })
+  async reviewChallengeEntry(
+    @Request() req: { user: { id: string; role?: string } },
+    @Param('entryId') entryId: string,
+    @Body() body: { action: 'under_review' | 'winner' | 'rejected'; note?: string }
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.reviewChallengeEntry(req.user.id, entryId, body.action, body.note);
   }
 
   @Put('settings')
@@ -448,5 +510,93 @@ export class CreatorsController {
     @Query('limit') limit = 20
   ): Promise<CreatorResponse> {
     return this.creatorsService.getCreatorContent(creatorId, Number(page), Number(limit));
+  }
+
+  @Post('exclusive-content')
+  @ApiBearerAuth()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Create exclusive content for tier supporters' })
+  @ApiResponse({ status: 201, description: 'Exclusive content created' })
+  async createExclusiveContent(
+    @Request() req: { user: { id: string } },
+    @Body() body: CreateExclusiveContentDto
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.createExclusiveContent(req.user.id, body);
+  }
+
+  @Public()
+  @Get(':creatorId/exclusive-content')
+  @ApiOperation({ summary: 'Get creator exclusive content (gated by tip tier)' })
+  @ApiResponse({ status: 200, description: 'Exclusive content list' })
+  async getExclusiveContent(
+    @Param('creatorId') creatorId: string,
+    @Request() req?: { user?: { id?: string } }
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.getExclusiveContent(creatorId, req?.user?.id);
+  }
+
+  @Delete('exclusive-content/:id')
+  @ApiBearerAuth()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Delete exclusive content' })
+  @ApiResponse({ status: 200, description: 'Exclusive content deleted' })
+  async deleteExclusiveContent(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.deleteExclusiveContent(req.user.id, id);
+  }
+
+  // ========================
+  // Payout endpoints
+  // ========================
+
+  @Get('payouts/summary')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get payout earnings summary' })
+  @ApiResponse({ status: 200, description: 'Earnings summary' })
+  async getPayoutSummary(@Request() req: { user: { id: string } }) {
+    const earnings = await this.payoutService.getCreatorEarnings(req.user.id);
+    return { success: true, data: earnings };
+  }
+
+  @Get('payouts/history')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get detailed payout history' })
+  @ApiResponse({ status: 200, description: 'Payout history' })
+  async getPayoutDetailedHistory(
+    @Request() req: { user: { id: string } },
+    @Query('limit') limit?: number
+  ) {
+    const history = await this.payoutService.getPayoutHistory(req.user.id, limit);
+    return { success: true, data: history };
+  }
+
+  // ========================
+  // Trust & Safety endpoints
+  // ========================
+
+  @Get('trust-score')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get creator trust score' })
+  @ApiResponse({ status: 200, description: 'Trust score' })
+  async getTrustScore(@Request() req: { user: { id: string } }) {
+    const score = await this.trustSafetyService.getTrustScore(req.user.id);
+    return { success: true, data: score };
+  }
+
+  @Get('monetization-eligibility')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Check monetization eligibility' })
+  @ApiResponse({ status: 200, description: 'Eligibility check' })
+  async checkMonetizationEligibility(@Request() req: { user: { id: string } }) {
+    const eligibility = await this.trustSafetyService.checkMonetizationEligibility(req.user.id);
+    return { success: true, data: eligibility };
   }
 }

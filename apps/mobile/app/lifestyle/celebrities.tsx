@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi, Celebrity } from '../../src/api/lifestyle';
+import { lifestyleApi, Celebrity } from '@azeebo/react-data/api/lifestyle';
 
 export default function CelebritiesScreen() {
   const router = useRouter();
@@ -54,7 +54,9 @@ export default function CelebritiesScreen() {
     >
       <Image
         source={{
-          uri: item.photo || 'https://placehold.co/120x120/1a1a1a/ffffff?text=★',
+          uri:
+            item.photo ||
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80',
         }}
         style={styles.celebrityPhoto}
         resizeMode="cover"
@@ -85,7 +87,9 @@ export default function CelebritiesScreen() {
     >
       <Image
         source={{
-          uri: item.photo || 'https://placehold.co/300x400/1a1a1a/ffffff?text=★',
+          uri:
+            item.photo ||
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&h=400&q=80',
         }}
         style={styles.featuredImage}
         resizeMode="cover"
@@ -103,10 +107,10 @@ export default function CelebritiesScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Celebrities Screen" style={styles.container}>
       <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Celebrities</Text>

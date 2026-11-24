@@ -17,13 +17,22 @@ jest.mock('axios', () => ({
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service.js';
+import { PIIMinimizationService } from './pii-minimization.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
+
+/** Flag mock matching registered defaults: sampling 100, others off. */
+class MockFeatureFlagService {
+  isEnabled = jest.fn().mockResolvedValue(false);
+  getValue = jest.fn().mockResolvedValue(100);
+}
 
 describe('AnalyticsService', () => {
   let service: AnalyticsService;
+  let flags: MockFeatureFlagService;
 
   const mockPrismaService = {
     productEvent: {
@@ -64,9 +73,11 @@ describe('AnalyticsService', () => {
   };
 
   beforeEach(async () => {
+    flags = new MockFeatureFlagService();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AnalyticsService,
+        PIIMinimizationService,
         { provide: PrismaService, useValue: mockPrismaService },
         {
           provide: ConfigService,
@@ -82,6 +93,7 @@ describe('AnalyticsService', () => {
             invalidate: jest.fn().mockResolvedValue(undefined),
           },
         },
+        { provide: FeatureFlagService, useValue: flags },
       ],
     }).compile();
 
@@ -111,11 +123,53 @@ describe('AnalyticsService', () => {
 
       mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 1 });
 
-      const result = await service.ingestEvents(events);
+      const result = await service.ingestEvents(events, { analytics: true, marketing: false });
 
       expect(result.success).toBe(true);
       expect(result.data!.ingested).toBe(1);
       expect(result.data!.rejected).toBe(0);
+    });
+
+    it('should drop analytics-category events without granted consent', async () => {
+      const events = [
+        {
+          type: 'content_view',
+          userId: 'user-1',
+          sessionId: 'session-1',
+          metadata: { session_id: 's1', platform: 'mobile', timestamp: '2026-01-01T00:00:00Z' },
+        },
+      ];
+
+      const result = await service.ingestEvents(events);
+
+      expect(result.success).toBe(true);
+      expect(result.data!.ingested).toBe(0);
+      expect(result.data!.rejected).toBe(1);
+    });
+
+    it('should persist consent_state as an essential event when consent is supplied', async () => {
+      const events = [
+        {
+          type: 'login',
+          userId: 'user-1',
+          metadata: { session_id: 's1', platform: 'web', timestamp: '2026-01-01T00:00:00Z' },
+        },
+      ];
+
+      mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 2 });
+
+      const result = await service.ingestEvents(
+        events,
+        { analytics: false, marketing: false },
+        '1.0'
+      );
+
+      expect(result.success).toBe(true);
+      // login is essential; consent_state is appended as the ledger record
+      const createdNames = mockPrismaService.productEvent.create.mock.calls.map(
+        (call: [{ data: { eventName: string } }]) => call[0].data.eventName
+      );
+      expect(createdNames.sort()).toEqual(['consent_state', 'login']);
     });
 
     it('should reject empty events array', async () => {
@@ -144,10 +198,55 @@ describe('AnalyticsService', () => {
 
       mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 1 });
 
+      const result = await service.ingestEvents(events, { analytics: true, marketing: false });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.ingested).toBe(1);
+    });
+
+    it('should accept search correction events (shown + accepted)', async () => {
+      const events = [
+        {
+          type: 'content_search_correction_shown',
+          metadata: { session_id: 's1', platform: 'web', timestamp: '2026-01-01T00:00:00Z' },
+        },
+        {
+          type: 'content_search_correction_accepted',
+          metadata: { session_id: 's1', platform: 'web', timestamp: '2026-01-01T00:00:00Z' },
+        },
+      ];
+
+      mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 2 });
+
+      const result = await service.ingestEvents(events, { analytics: true, marketing: false });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.ingested).toBe(2);
+      expect(result.data!.rejected).toBe(0);
+    });
+
+    it('should accept flag_stale_enabled events (payment-style stale-flag analytics)', async () => {
+      const events = [
+        {
+          type: 'flag_stale_enabled',
+          metadata: {
+            key: 'search_suggestions_ai',
+            service: 'search-service',
+            staleAfter: '2026-01-01T00:00:00Z',
+            session_id: 's1',
+            platform: 'web',
+            timestamp: '2026-01-01T00:00:00Z',
+          },
+        },
+      ];
+
+      mockPrismaService.productEvent.createMany.mockResolvedValue({ count: 1 });
+
       const result = await service.ingestEvents(events);
 
       expect(result.success).toBe(true);
       expect(result.data!.ingested).toBe(1);
+      expect(result.data!.rejected).toBe(0);
     });
 
     it('should reject events with missing required metadata fields', async () => {
@@ -238,6 +337,54 @@ describe('AnalyticsService', () => {
       expect(result.success).toBe(true);
       expect(result.data!.cohorts).toBeDefined();
       expect(result.data!.period).toBe('week');
+    });
+  });
+
+  describe('getSearchCorrections', () => {
+    it('should aggregate correction events into a daily series', async () => {
+      mockPrismaService.$queryRaw.mockResolvedValue([
+        {
+          day: new Date(),
+          shown: 10,
+          accepted: 4,
+        },
+      ]);
+
+      const result = await service.getSearchCorrections(7);
+      const data = result.data as {
+        days: number;
+        overall: { shown: number; accepted: number; rate: number };
+        series: { date: string; shown: number; accepted: number; rate: number }[];
+      };
+
+      expect(result.success).toBe(true);
+      expect(data.days).toBe(7);
+      expect(data.series).toHaveLength(7);
+      expect(data.overall.shown).toBe(10);
+      expect(data.overall.accepted).toBe(4);
+      expect(data.overall.rate).toBeCloseTo(0.4);
+      // The single mock row lands on today — the last day of the series.
+      const last = data.series[data.series.length - 1];
+      expect(last.shown).toBe(10);
+      expect(last.accepted).toBe(4);
+      expect(last.rate).toBeCloseTo(0.4);
+    });
+
+    it('should fill zero days and clamp the range to 90', async () => {
+      mockPrismaService.$queryRaw.mockResolvedValue([]);
+
+      const result = await service.getSearchCorrections(200);
+      const data = result.data as {
+        days: number;
+        overall: { shown: number; accepted: number; rate: number };
+        series: { date: string; shown: number; accepted: number; rate: number }[];
+      };
+
+      expect(result.success).toBe(true);
+      expect(data.days).toBe(90);
+      expect(data.series).toHaveLength(90);
+      expect(data.series.every((d) => d.shown === 0)).toBe(true);
+      expect(data.overall.rate).toBe(0);
     });
   });
 

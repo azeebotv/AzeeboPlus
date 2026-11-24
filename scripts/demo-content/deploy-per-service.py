@@ -109,7 +109,7 @@ def seed_content_service():
         ("u0000001-0000-0000-0000-000000000001","reality","Reality TV","Nigerian reality shows including Big Brother, dating shows, and competition series.","🎬","#E91E63","true",1),
         ("u0000001-0000-0000-0000-000000000002","creator","Creator Content","Original content from top Nigerian creators, vlogs, and independent productions.","🎨","#9C27B0","true",2),
         ("u0000001-0000-0000-0000-000000000003","lifestyle","Lifestyle","Fashion, food, travel, wellness, and everyday Nigerian living.","🏠","#FF9800","true",3),
-        ("u0000001-0000-0000-0000-000000000004","movies","Movies","Nollywood blockbusters, indie films, and cinematic masterpieces.","🎥","#2196F3","true",4),
+        ("u0000001-0000-0000-0000-000000000004","movie","Movies","Nollywood blockbusters, indie films, and cinematic masterpieces.","🎥","#2196F3","true",4),
         ("u0000001-0000-0000-0000-000000000005","comedy","Comedy","Stand-up specials, comedy sketches, and hilarious Naija content.","😂","#FFEB3B","true",5),
         ("u0000001-0000-0000-0000-000000000006","sports","Sports","Football highlights, basketball, athletics, and sports commentary.","⚽","#4CAF50","true",6),
         ("u0000001-0000-0000-0000-000000000007","music","Music","Music videos, concert recordings, acoustic sessions, and behind-the-scenes.","🎵","#FF5722","true",7),

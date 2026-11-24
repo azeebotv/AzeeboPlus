@@ -1,13 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module.js';
 import { createHelmetConfig, configureCors } from '@azeebo/security';
 
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { validateEnvironment } from '@azeebo/shared-types';
-
 
 async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
@@ -19,7 +19,7 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-    app.use(createHelmetConfig());
+  app.use(createHelmetConfig());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -49,6 +49,7 @@ async function bootstrap(): Promise<void> {
 
   // Versioning disabled: controllers already prefix routes with 'v1/' manually
 
+  app.useWebSocketAdapter(new IoAdapter(app));
   app.enableShutdownHooks();
 
   const port = process.env.PORT || 3006;

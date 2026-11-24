@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function OnboardingWelcomeScreen() {
   const colorScheme = useColorScheme();
@@ -76,7 +78,7 @@ export default function OnboardingWelcomeScreen() {
           >
             <Text style={styles.primaryButtonText}>Get Started</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
+          <TouchableOpacity accessibilityRole="button" onPress={() => router.replace('/(auth)/login')}>
             <Text style={styles.secondaryButtonText}>Sign In</Text>
           </TouchableOpacity>
         </View>
@@ -108,7 +110,7 @@ const styles = StyleSheet.create({
     bottom: '20%',
     borderRadius: 100,
     borderWidth: 2,
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
     opacity: 0.3,
   },
   ring2: {
@@ -119,7 +121,7 @@ const styles = StyleSheet.create({
     bottom: '10%',
     borderRadius: 100,
     borderWidth: 2,
-    borderColor: '#6366F1',
+    borderColor: colors.category.indigo,
     opacity: 0.2,
   },
   ring3: {
@@ -148,7 +150,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: '#888',
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 1.6,
     marginBottom: 32,
@@ -175,7 +177,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   primaryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -186,7 +188,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   secondaryButtonText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 16,
     fontWeight: '500',
     textAlign: 'center',

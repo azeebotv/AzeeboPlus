@@ -24,16 +24,16 @@ export const Default: Story = {
     title: 'Modal Title',
     description: 'This is a description of the modal content.',
     children: (
-      <p className="text-text-secondary">
+      <p className="text-az-ink-dim">
         Modal body content goes here. You can include forms, text, or any other components.
       </p>
     ),
     footer: (
       <div className="flex justify-end gap-3">
-        <button className="px-4 py-2 text-sm font-medium text-text-primary bg-bg-secondary border border-border-default rounded-lg hover:bg-bg-tertiary transition-colors">
+        <button className="px-4 py-2 text-sm font-medium text-az-ink bg-az-surface-raised border border-az-glass-border rounded-lg hover:bg-az-surface-panel transition-colors">
           Cancel
         </button>
-        <button className="px-4 py-2 text-sm font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-600 transition-colors">
+        <button className="px-4 py-2 text-sm font-medium text-white bg-az-primary-500 rounded-lg hover:bg-az-primary-600 transition-colors">
           Save
         </button>
       </div>
@@ -47,7 +47,7 @@ export const Small: Story = {
     size: 'sm',
     title: 'Small Modal',
     description: 'A compact modal for simple confirmations.',
-    children: <p className="text-text-secondary">Are you sure you want to proceed?</p>,
+    children: <p className="text-az-ink-dim">Are you sure you want to proceed?</p>,
   },
 };
 
@@ -58,9 +58,9 @@ export const Large: Story = {
     title: 'Large Modal',
     children: (
       <div className="space-y-4">
-        <p className="text-text-secondary">This modal has more space for complex content.</p>
-        <div className="p-4 bg-bg-tertiary rounded-lg">
-          <p className="text-sm text-text-secondary">Additional information panel</p>
+        <p className="text-az-ink-dim">This modal has more space for complex content.</p>
+        <div className="p-4 bg-az-surface-panel rounded-lg">
+          <p className="text-sm text-az-ink-dim">Additional information panel</p>
         </div>
       </div>
     ),
@@ -72,7 +72,7 @@ export const WithoutHeader: Story = {
     isOpen: true,
     children: (
       <div className="text-center py-8">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-500/20 flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-az-primary-500/20 flex items-center justify-center">
           <svg
             width="32"
             height="32"
@@ -80,14 +80,14 @@ export const WithoutHeader: Story = {
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
-            className="text-primary-400"
+            className="text-az-primary-400"
           >
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
             <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-text-primary mb-2">Success!</h3>
-        <p className="text-text-secondary">Your changes have been saved.</p>
+        <h3 className="text-lg font-semibold text-az-ink mb-2">Success!</h3>
+        <p className="text-az-ink-dim">Your changes have been saved.</p>
       </div>
     ),
   },
@@ -111,7 +111,7 @@ export const ConfirmDialogDefault: StoryObj = {
       <>
         <button
           onClick={() => setIsOpen(true)}
-          className="px-4 py-2 text-sm font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-600 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-white bg-az-primary-500 rounded-lg hover:bg-az-primary-600 transition-colors"
         >
           Open Confirm Dialog
         </button>
@@ -136,7 +136,7 @@ export const ConfirmDialogDanger: StoryObj = {
       <>
         <button
           onClick={() => setIsOpen(true)}
-          className="px-4 py-2 text-sm font-medium text-white bg-error-500 rounded-lg hover:bg-error-600 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-white bg-az-error-600 rounded-lg hover:bg-az-error-700 transition-colors"
         >
           Delete Account
         </button>

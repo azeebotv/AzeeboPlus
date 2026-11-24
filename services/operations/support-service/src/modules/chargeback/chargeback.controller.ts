@@ -20,7 +20,7 @@ import {
 } from './dto/chargeback.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { Prisma } from '../../prisma/client/index.js';
-import { AuthGuard } from '../../common/guards/auth.guard';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { AdminGuard } from '@azeebo/security';
 
 interface AuthenticatedRequest {
@@ -32,7 +32,7 @@ interface AuthenticatedRequest {
 
 @ApiTags('Chargebacks')
 @Controller('support/chargebacks')
-@UseGuards(AuthGuard)
+@UseGuards(ServiceAuthGuard)
 @ApiBearerAuth()
 export class ChargebackController {
   constructor(@Inject(ChargebackService) private chargebackService: ChargebackService) {}

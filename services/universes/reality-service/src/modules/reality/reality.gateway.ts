@@ -10,10 +10,20 @@ import {
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
+import { FeatureFlagService, realityFlags } from '@azeebo/feature-flags';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [],
+    origin: (origin, callback) => {
+      // LOW-07: Validate WebSocket origins against a strict allowlist.
+      // No origin (same-origin / server-to-server) is always allowed.
+      if (!origin) return callback(null, true);
+      const allowed = process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [];
+      if (allowed.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Origin not allowed'), false);
+    },
     credentials: true,
   },
   namespace: '/reality',
@@ -24,7 +34,10 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
 
   private readonly logger = new Logger(RealityGateway.name);
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly featureFlagService: FeatureFlagService
+  ) {}
 
   afterInit() {
     this.server.use(async (client: Socket, next) => {
@@ -62,12 +75,11 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
   }
 
   private extractToken(client: Socket): string | null {
+    // MED-04: Removed query string token support — tokens in URLs are logged
+    // in server access logs, proxy logs, and browser history.
     const authHeader = client.handshake.auth?.token || client.handshake.headers?.authorization;
     if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
       return authHeader.substring(7);
-    }
-    if (typeof client.handshake.query?.token === 'string') {
-      return client.handshake.query.token;
     }
     return null;
   }
@@ -92,12 +104,22 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
   }
 
   @SubscribeMessage('new_vote')
-  handleNewVote(
+  async handleNewVote(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { showId: string; contestantId: string }
-  ): void {
+  ): Promise<void> {
     const userId = client.data.userId;
     if (!userId) return;
+    // reality_live_voting: realtime vote relay is off until the flag is on
+    // (the REST /votes endpoints stay gated by reality_voting_enabled).
+    if (!(await this.featureFlagService.isEnabled(realityFlags.liveVoting))) {
+      client.emit('vote_update', {
+        showId: data.showId,
+        rejected: true,
+        reason: 'Live voting is not enabled',
+      });
+      return;
+    }
     const room = `show:${data.showId}`;
     this.server.to(room).emit('vote_update', {
       showId: data.showId,
@@ -233,5 +255,11 @@ export class RealityGateway implements OnGatewayConnection, OnGatewayDisconnect 
 
   broadcastToRoom(room: string, event: string, data: unknown): void {
     this.server.to(room).emit(event, data);
+  }
+
+  async getViewerCount(showId: string): Promise<number> {
+    const room = `show:${showId}`;
+    const sockets = await this.server.in(room).fetchSockets();
+    return sockets.length;
   }
 }

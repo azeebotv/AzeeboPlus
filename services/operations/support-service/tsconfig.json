@@ -13,14 +13,26 @@
       "supertest"
     ],
     "paths": {
-      "@azeebo/*": ["../../../packages/*/dist"],
+      "@azeebo/*": [
+        "../../../packages/*/dist"
+      ],
+      "@azeebo/security/log-redaction": [
+        "../../../packages/security/dist/log-redaction"
+      ],
       "@prisma/client": [
         "./src/prisma/client"
       ],
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "src/**/*"

@@ -68,7 +68,14 @@ export class FundCreatorDto {
 }
 
 export class UpdateTierDto {
+  /**
+   * Optional: `POST /creators/subscribe/:id` defaults a missing tier to 'free'
+   * (`body.tier || 'free'`), and the web subscribe button sends no body at all.
+   * Without `@IsOptional()` the pipe required the field and every such request
+   * was a 400 before the default could apply.
+   */
   @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   tier?: string;
 }
@@ -130,4 +137,24 @@ export class UpdateCreatorSettingsDto {
   @ValidateNested()
   @Type(() => PrivacySettingsDto)
   privacy?: PrivacySettingsDto;
+}
+
+export class CreateExclusiveContentDto {
+  @ApiProperty({ description: 'Title of exclusive post' })
+  @IsString()
+  title!: string;
+
+  @ApiPropertyOptional({ description: 'Description or caption' })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiProperty({ description: 'Media URL of exclusive video or asset' })
+  @IsString()
+  mediaUrl!: string;
+
+  @ApiPropertyOptional({ default: 'gold', enum: ['bronze', 'silver', 'gold', 'platinum'] })
+  @IsOptional()
+  @IsString()
+  minTier?: string;
 }

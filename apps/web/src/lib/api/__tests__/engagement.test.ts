@@ -76,12 +76,12 @@ describe('Engagement API Methods', () => {
     expect(client.request).toHaveBeenCalledWith('/api/v1/content/popular-region?limit=12');
   });
 
-  it('getPersonalizedRecommendations should GET /api/v1/recommendation/personalized', async () => {
+  it('getPersonalizedRecommendations should GET /api/v1/recommendation/personalized-feed', async () => {
     client.request.mockResolvedValue({ success: true, data: [] });
 
     await engagement.getPersonalizedRecommendations();
 
-    expect(client.request).toHaveBeenCalledWith('/api/v1/recommendation/personalized');
+    expect(client.request).toHaveBeenCalledWith('/api/v1/recommendation/personalized-feed');
   });
 
   it('getFeaturedSlides should GET /api/v1/content/featured-slides', async () => {

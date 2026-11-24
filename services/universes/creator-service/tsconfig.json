@@ -2,25 +2,21 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "types": [
-      "jest",
-      "node"
-    ],
+    "types": ["jest", "node"],
     "paths": {
+      "@azeebo/security/log-redaction": ["../../../packages/security/dist/log-redaction"],
       "@azeebo/*": ["../../../packages/*/dist"],
-      "@prisma/client": [
-        "./src/prisma/client"
-      ],
-      "@creator/*": [
-        "./*"
-      ]
-    }
+      "@prisma/client": ["./src/prisma/client"],
+      "@creator/*": ["./*"]
+    },
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": true,
+    "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

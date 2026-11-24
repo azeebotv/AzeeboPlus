@@ -27,7 +27,7 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
-    app.use(createHelmetConfig());
+  app.use(createHelmetConfig());
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 

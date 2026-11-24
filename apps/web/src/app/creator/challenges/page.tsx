@@ -1,11 +1,15 @@
 'use client';
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import type { Challenge, ChallengeSubmission } from '@/lib/api/creator';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { Users, Award, ArrowRight, X, Send, Trophy } from 'lucide-react';
 
 type FilterTab = 'all' | 'active' | 'upcoming' | 'completed';
 type ViewTab = 'challenges' | 'submissions';
@@ -13,10 +17,11 @@ type ViewTab = 'challenges' | 'submissions';
 export default function CreatorChallengesPage(): React.JSX.Element {
   const [filter, setFilter] = useState<FilterTab>('all');
   const [view, setView] = useState<ViewTab>('challenges');
-  const [submittingId, setSubmittingId] = useState<string | null>(null);
-  const [showSubmit, setShowSubmit] = useState(false);
+  const [, setSubmittingId] = useState<string | null>(null);
+  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
   const [submitUrl, setSubmitUrl] = useState('');
   const [submitDesc, setSubmitDesc] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const challengesQuery = useQuery({
     queryKey: ['creator-challenges', filter],
@@ -47,17 +52,17 @@ export default function CreatorChallengesPage(): React.JSX.Element {
 
   const filtered = filter === 'all' ? challenges : challenges.filter((c) => c.status === filter);
 
-  const handleSubmit = async (challenge: Challenge) => {
-    if (!submitUrl.trim()) return;
-    setSubmittingId(challenge.id);
+  const handleSubmit = async () => {
+    if (!selectedChallenge || !submitUrl.trim()) return;
+    setIsSubmitting(true);
     try {
       const res = await api.creator.submitChallengeEntry({
-        challengeId: challenge.id,
+        challengeId: selectedChallenge.id,
         contentUrl: submitUrl.trim(),
         description: submitDesc.trim(),
       });
       if (res.success) {
-        setShowSubmit(false);
+        setSelectedChallenge(null);
         setSubmitUrl('');
         setSubmitDesc('');
         submissionsQuery.refetch();
@@ -67,423 +72,291 @@ export default function CreatorChallengesPage(): React.JSX.Element {
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Submission failed');
     } finally {
+      setIsSubmitting(false);
       setSubmittingId(null);
     }
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader active="Creator" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Challenges</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
-          Participate in platform challenges and earn rewards
-        </p>
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
+      <PageHero
+        badge="Community Bounties"
+        title="Creator Challenges"
+        description="Compete in filmmaking & storytelling prompts, showcase your craft, and earn rewards and platform distribution."
+      />
 
-        {/* View Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-          {(['challenges', 'submissions'] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              style={{
-                padding: '8px 20px',
-                borderRadius: 8,
-                border: '1px solid var(--border-default)',
-                background: view === v ? 'var(--brand-orange)' : 'transparent',
-                color: view === v ? '#fff' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                fontSize: 13,
-                fontWeight: view === v ? 600 : 400,
-              }}
-            >
-              {v === 'challenges' ? 'Active Challenges' : 'My Submissions'}
-            </button>
-          ))}
-        </div>
-
-        {/* Filter Pills */}
-        {view === 'challenges' && (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-            {(['all', 'active', 'upcoming', 'completed'] as FilterTab[]).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: 20,
-                  border: '1px solid var(--border-default)',
-                  background: filter === f ? 'rgba(232,66,10,0.2)' : 'transparent',
-                  color: filter === f ? 'var(--brand-orange)' : 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  textTransform: 'capitalize',
-                }}
-              >
-                {f}
-              </button>
-            ))}
+      <div className="max-w-4xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* Navigation Mode & Filter Tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-1.5 p-1 az-glass border border-az-glass-border self-start">
+            {(['challenges', 'submissions'] as const).map((v) => {
+              const isActive = view === v;
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setView(v)}
+                  className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-[var(--color-az-flame)] text-az-surface-root shadow-lg'
+                      : 'text-az-ink/60 hover:text-az-ink'
+                  }`}
+                >
+                  {v === 'challenges' ? 'Available Challenges' : 'My Submissions'}
+                </button>
+              );
+            })}
           </div>
-        )}
+
+          {view === 'challenges' && (
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+              {(['all', 'active', 'upcoming', 'completed'] as FilterTab[]).map((f) => {
+                const isSelected = filter === f;
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFilter(f)}
+                    className={`px-3 py-1 rounded-full text-xs font-mono uppercase tracking-wider transition-all ${
+                      isSelected
+                        ? 'bg-az-ink/15 text-az-ink border border-az-ink/20'
+                        : 'text-az-ink/40 hover:text-az-ink/70'
+                    }`}
+                  >
+                    {f}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {view === 'challenges' ? (
           isLoading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    padding: 20,
-                    borderRadius: 16,
-                    backgroundColor: 'rgba(255,255,255,0.03)',
-                  }}
-                >
-                  <Skeleton height="20px" width="200px" />
-                  <div style={{ marginTop: 8 }}>
-                    <Skeleton height="14px" width="300px" />
-                  </div>
-                  <div style={{ marginTop: 8 }}>
-                    <Skeleton height="14px" width="250px" />
-                  </div>
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="az-glass p-6 border border-az-glass-border space-y-3">
+                  <Skeleton className="h-6 w-48 rounded-lg" />
+                  <Skeleton className="h-4 w-full rounded-md" />
+                  <Skeleton className="h-4 w-2/3 rounded-md" />
                 </div>
               ))}
             </div>
           ) : error ? (
-            <ErrorState
-              title="Failed to load challenges"
-              description={error}
-              onButtonPress={() => challengesQuery.refetch()}
-            />
+            <div className="max-w-md mx-auto py-12">
+              <ErrorState
+                title="Failed to load challenges"
+                description={error}
+                onButtonPress={() => challengesQuery.refetch()}
+              />
+            </div>
           ) : filtered.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-              No challenges found
-            </p>
+            <div className="az-glass p-12 text-center border border-az-glass-border">
+              <Trophy className="w-12 h-12 text-az-ink/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-az-ink mb-2">No Challenges Found</h3>
+              <p className="text-xs text-az-ink/50">
+                Check back soon for new prompt announcements.
+              </p>
+            </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="space-y-4">
               {filtered.map((challenge) => (
-                <div
-                  key={challenge.id}
-                  style={{
-                    padding: 20,
-                    borderRadius: 16,
-                    border: '1px solid var(--border-default)',
-                    backgroundColor: 'rgba(26,10,10,0.5)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      marginBottom: 12,
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>
-                        {challenge.title}
-                      </h3>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4 }}>
-                        {challenge.description}
-                      </p>
-                    </div>
-                    <span
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: 20,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        whiteSpace: 'nowrap',
-                        marginLeft: 12,
-                        backgroundColor:
-                          challenge.status === 'active'
-                            ? 'rgba(74,222,128,0.15)'
-                            : challenge.status === 'upcoming'
-                              ? 'rgba(245,158,11,0.15)'
-                              : 'rgba(154,138,122,0.15)',
-                        color:
-                          challenge.status === 'active'
-                            ? 'var(--color-success-400)'
-                            : challenge.status === 'upcoming'
-                              ? 'var(--color-warning-500)'
-                              : 'var(--text-secondary)',
-                      }}
-                    >
-                      {challenge.status}
-                    </span>
-                  </div>
-                  {challenge.rules && challenge.rules.length > 0 && (
-                    <div style={{ marginBottom: 12 }}>
-                      <p
-                        style={{
-                          color: 'var(--text-secondary)',
-                          fontSize: 12,
-                          fontWeight: 600,
-                          marginBottom: 4,
-                        }}
-                      >
-                        Rules:
-                      </p>
-                      {(challenge.rules ?? []).slice(0, 2).map((rule: string, i: number) => (
-                        <p
-                          key={i}
-                          style={{ color: 'var(--text-secondary)', fontSize: 12, margin: 0 }}
-                        >
-                          • {rule}
+                <ScrollReveal key={challenge.id}>
+                  <div className="az-glass p-6 sm:p-7 border border-az-glass-border transition-all">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+                      <div className="space-y-1">
+                        <h3 className="text-lg font-bold text-az-ink tracking-tight">
+                          {challenge.title}
+                        </h3>
+                        <p className="text-xs text-az-ink/60 leading-relaxed">
+                          {challenge.description}
                         </p>
-                      ))}
-                    </div>
-                  )}
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: 24,
-                      color: 'var(--text-secondary)',
-                      fontSize: 13,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <span>{challenge.participantCount.toLocaleString()} participants</span>
-                    <span>Reward: {challenge.rewardPoints} pts</span>
-                    {challenge.maxParticipants && (
-                      <span>
-                        Spots: {challenge.participantCount}/{challenge.maxParticipants}
-                      </span>
-                    )}
-                    {challenge.status === 'active' && (
-                      <button
-                        onClick={() => {
-                          setShowSubmit(true);
-                          setSubmittingId(challenge.id);
-                        }}
-                        style={{
-                          marginLeft: 'auto',
-                          padding: '6px 16px',
-                          borderRadius: 8,
-                          border: 'none',
-                          backgroundColor: 'var(--brand-orange)',
-                          color: 'var(--brand-white)',
-                          cursor: 'pointer',
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
+                      </div>
+                      <span
+                        className={`text-[10px] font-mono uppercase px-3 py-1 rounded-full border self-start ${
+                          challenge.status === 'active'
+                            ? 'bg-az-success-500/10 text-az-success-400 border-az-success-500/20'
+                            : challenge.status === 'upcoming'
+                              ? 'bg-az-warning-500/10 text-az-warning-400 border-az-warning-500/20'
+                              : 'bg-az-glass-fill text-az-ink/40 border-az-glass-border'
+                        }`}
                       >
-                        Submit Entry
-                      </button>
+                        {challenge.status}
+                      </span>
+                    </div>
+
+                    {challenge.rules && challenge.rules.length > 0 && (
+                      <div className="mb-5 p-3.5 rounded-xl bg-az-ink/[0.02] border border-az-ink/5 space-y-1.5">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-az-ink/40 block">
+                          Submission Guidelines:
+                        </span>
+                        {challenge.rules.slice(0, 2).map((rule, idx) => (
+                          <p key={idx} className="text-xs text-az-ink/60 flex items-center gap-2">
+                            <span className="w-1 h-1 rounded-full bg-[var(--color-az-flame)]" />
+                            {rule}
+                          </p>
+                        ))}
+                      </div>
                     )}
+
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-az-ink/5 text-xs text-az-ink/50">
+                      <div className="flex items-center gap-5">
+                        <span className="flex items-center gap-1.5">
+                          <Users className="w-4 h-4 text-az-ink/40" />
+                          {challenge.participantCount.toLocaleString()} creators entered
+                        </span>
+                        <span className="flex items-center gap-1.5 text-az-ink/80 font-semibold">
+                          <Award className="w-4 h-4 text-[var(--color-az-flame)]" />
+                          Prize: {challenge.rewardPoints} pts
+                        </span>
+                      </div>
+
+                      {challenge.status === 'active' && (
+                        <motion.button
+                          type="button"
+                          onClick={() => setSelectedChallenge(challenge)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="az-btn-primary flex items-center gap-1.5 ml-auto"
+                        >
+                          Submit Entry
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </motion.button>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </ScrollReveal>
               ))}
             </div>
           )
         ) : isSubmissionsLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                style={{ padding: 20, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.03)' }}
-              >
-                <Skeleton height="20px" width="180px" />
-                <div style={{ marginTop: 8 }}>
-                  <Skeleton height="14px" width="250px" />
-                </div>
+              <div key={i} className="az-glass p-6 border border-az-glass-border space-y-3">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-32" />
               </div>
             ))}
           </div>
         ) : submissions.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-            No submissions yet
-          </p>
+          <div className="az-glass p-12 text-center border border-az-glass-border">
+            <Trophy className="w-12 h-12 text-az-ink/30 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-az-ink mb-2">No Submissions Recorded</h3>
+            <p className="text-xs text-az-ink/50">
+              Submit your entries to active challenges to view feedback and status here.
+            </p>
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="space-y-3">
             {submissions.map((sub) => (
               <div
                 key={sub.id}
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                }}
+                className="az-glass p-5 border border-az-glass-border flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>{sub.challengeTitle}</h3>
-                  <span
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: 20,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      backgroundColor:
-                        sub.status === 'approved'
-                          ? 'rgba(74,222,128,0.15)'
-                          : sub.status === 'rejected'
-                            ? 'rgba(239,68,68,0.15)'
-                            : 'rgba(245,158,11,0.15)',
-                      color:
-                        sub.status === 'approved'
-                          ? 'var(--color-success-400)'
-                          : sub.status === 'rejected'
-                            ? 'var(--color-error-500)'
-                            : 'var(--color-warning-500)',
-                    }}
-                  >
-                    {sub.status.replace('_', ' ')}
-                  </span>
-                </div>
-                {sub.reviewerNote && (
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 4 }}>
-                    Note: {sub.reviewerNote}
+                <div>
+                  <h3 className="text-sm font-bold text-az-ink">{sub.challengeTitle}</h3>
+                  <p className="text-xs text-az-ink/40 mt-0.5">
+                    Submitted: {new Date(sub.createdAt).toLocaleDateString()}
                   </p>
-                )}
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 4 }}>
-                  Submitted: {new Date(sub.createdAt).toLocaleDateString()}
-                </p>
+                  {sub.reviewerNote && (
+                    <p className="text-xs text-az-ink/60 mt-1 italic">Note: {sub.reviewerNote}</p>
+                  )}
+                </div>
+                <span
+                  className={`text-[10px] font-mono uppercase px-3 py-1 rounded-full border self-start sm:self-center ${
+                    sub.status === 'approved'
+                      ? 'bg-az-success-500/10 text-az-success-400 border-az-success-500/20'
+                      : sub.status === 'rejected'
+                        ? 'bg-az-error-500/10 text-az-error-400 border-az-error-500/20'
+                        : 'bg-az-warning-500/10 text-az-warning-400 border-az-warning-500/20'
+                  }`}
+                >
+                  {sub.status.replace('_', ' ')}
+                </span>
               </div>
             ))}
           </div>
         )}
-      </main>
+      </div>
 
-      {/* Submit Modal */}
-      {showSubmit &&
-        submittingId &&
-        (() => {
-          const challenge = challenges.find((c) => c.id === submittingId);
-          if (!challenge) return null;
-          return (
-            <div
-              style={{
-                position: 'fixed',
-                inset: 0,
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 100,
-                padding: 24,
-              }}
+      {/* Submission Modal */}
+      <AnimatePresence>
+        {selectedChallenge && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="az-glass p-6 sm:p-8 border max-w-lg w-full space-y-6 relative"
             >
-              <div
-                style={{
-                  backgroundColor: 'var(--brand-near-black)',
-                  borderRadius: 16,
-                  padding: 24,
-                  maxWidth: 480,
-                  width: '100%',
-                  border: '1px solid var(--border-default)',
-                }}
-              >
-                <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
-                  Submit to Challenge
-                </h2>
-                <p style={{ color: 'var(--brand-orange)', fontSize: 14, marginBottom: 20 }}>
-                  {challenge.title}
-                </p>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: 12,
-                    color: 'var(--text-secondary)',
-                    marginBottom: 4,
-                  }}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-az-ink">Submit to Challenge</h2>
+                  <p className="text-xs text-[var(--color-az-flame)] font-semibold mt-0.5">
+                    {selectedChallenge.title}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedChallenge(null)}
+                  className="w-8 h-8 rounded-full bg-az-glass-fill border border-az-glass-border flex items-center justify-center text-az-ink/50 hover:text-az-ink"
                 >
-                  Content URL
-                </label>
-                <input
-                  value={submitUrl}
-                  onChange={(e) => setSubmitUrl(e.target.value)}
-                  placeholder="https://example.com/your-content"
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border-default)',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: 14,
-                    marginBottom: 16,
-                    boxSizing: 'border-box',
-                  }}
-                />
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: 12,
-                    color: 'var(--text-secondary)',
-                    marginBottom: 4,
-                  }}
-                >
-                  Description (optional)
-                </label>
-                <textarea
-                  value={submitDesc}
-                  onChange={(e) => setSubmitDesc(e.target.value)}
-                  placeholder="Tell us about your entry..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border-default)',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: 14,
-                    marginBottom: 20,
-                    boxSizing: 'border-box',
-                    resize: 'vertical',
-                  }}
-                />
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <button
-                    onClick={() => {
-                      setShowSubmit(false);
-                      setSubmittingId(null);
-                    }}
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      borderRadius: 8,
-                      border: '1px solid var(--border-default)',
-                      backgroundColor: 'transparent',
-                      color: 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      fontSize: 14,
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleSubmit(challenge)}
-                    disabled={!submitUrl.trim()}
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      borderRadius: 8,
-                      border: 'none',
-                      backgroundColor: 'var(--brand-orange)',
-                      color: 'var(--brand-white)',
-                      cursor: 'pointer',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      opacity: !submitUrl.trim() ? 0.5 : 1,
-                    }}
-                  >
-                    Submit
-                  </button>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-az-ink text-xs font-semibold mb-2 block">
+                    Content URL (Video or Drive link)
+                  </label>
+                  <input
+                    type="url"
+                    value={submitUrl}
+                    onChange={(e) => setSubmitUrl(e.target.value)}
+                    placeholder="https://azeebo.plus/watch/... or external link"
+                    className="w-full px-4 py-3 rounded-xl bg-az-glass-fill border border-az-glass-border text-az-ink placeholder-az-ink/30 text-sm focus:outline-none focus:border-[var(--color-az-flame)]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-az-ink text-xs font-semibold mb-2 block">
+                    Director Statement / Description
+                  </label>
+                  <textarea
+                    value={submitDesc}
+                    onChange={(e) => setSubmitDesc(e.target.value)}
+                    placeholder="Explain the narrative angle and how your entry adheres to the prompt..."
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-xl bg-az-glass-fill border border-az-glass-border text-az-ink placeholder-az-ink/30 text-sm focus:outline-none focus:border-[var(--color-az-flame)] resize-y"
+                  />
                 </div>
               </div>
-            </div>
-          );
-        })()}
 
-      <AppFooter />
-    </div>
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedChallenge(null)}
+                  className="flex-1 py-3 rounded-full border border-az-glass-border text-az-ink/60 hover:text-az-ink text-xs font-bold"
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={!submitUrl.trim() || isSubmitting}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 az-btn-primary flex items-center justify-center gap-2"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  {isSubmitting ? 'Submitting...' : 'Confirm Submission'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </PageShell>
   );
 }

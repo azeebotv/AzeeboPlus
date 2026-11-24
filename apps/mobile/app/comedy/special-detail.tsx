@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { apiClient } from '../../src/api';
+import { apiClient } from '@azeebo/react-data';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 interface SpecialDetail {
   id: string;
@@ -38,9 +39,7 @@ export default function SpecialDetailScreen() {
       try {
         const res = await apiClient.get<SpecialDetail>(`/comedy/specials/${id}`);
         setSpecial(res);
-        try {
-          analytics.comedyClipViewed(String(id));
-        } catch {}
+        analytics.comedyClipViewed(String(id));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load special');
       } finally {
@@ -52,7 +51,7 @@ export default function SpecialDetailScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Special Detail Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading special..." />
       </SafeAreaView>
     );
@@ -84,7 +83,7 @@ export default function SpecialDetailScreen() {
             <Text style={styles.durationText}>{special.duration}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
       </View>
@@ -113,7 +112,7 @@ export default function SpecialDetailScreen() {
         </Text>
 
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => setIsLiked(!isLiked)}>
+          <TouchableOpacity accessibilityRole="button" style={styles.actionButton} onPress={() => setIsLiked(!isLiked)}>
             <Text style={styles.actionIcon}>{isLiked ? '❤️' : '🤍'}</Text>
             <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>
               {isLiked ? 'Liked' : 'Like'}
@@ -210,13 +209,13 @@ const styles = StyleSheet.create({
   content: { padding: 16 },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  metaText: { color: '#888', fontSize: 14 },
+  metaText: { color: colors.text.secondary, fontSize: 14 },
   comedianRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 },
   comedianAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -229,7 +228,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.bg.tertiary,
     marginBottom: 24,
   },
   actionButton: { alignItems: 'center', gap: 4 },
@@ -240,7 +239,7 @@ const styles = StyleSheet.create({
   relatedCard: { width: 140, borderRadius: 10, overflow: 'hidden' },
   relatedThumb: {
     height: 100,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },

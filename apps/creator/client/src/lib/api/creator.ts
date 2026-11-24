@@ -1,24 +1,60 @@
-import { apiFetch } from './base';
+import { apiFetch, xhrUpload as uploadWithProgress, type ApiError } from './base';
 import type {
   DashboardStats,
   ContentList,
   AnalyticsData,
   EarningsData,
+  EarningsSummaryData,
+  EarningsHistoryData,
   PayoutRequest,
   PayoutSettings,
+  PayoutsData,
   ContentItem,
   CreatorSettings,
-  PayoutsData,
   SubscribersData,
   UploadProgress,
   MonetizationData,
+  MonetizationTier,
   Challenge,
   ChallengeSubmission,
+  SubmissionDetail,
+  CreatorProfile,
 } from '../creator-types';
 
 const API = '/api/v1';
 
+/**
+ * Mutations return `{ success: false, message }` with HTTP 200 on business
+ * failures (e.g. "Pending payout already exists"). Throw so react-query
+ * marks the mutation failed and the UI shows the real error.
+ */
+export class RequestFailedError extends Error {
+  readonly statusCode?: number;
+  constructor(message: string, statusCode?: number) {
+    super(message);
+    this.name = 'RequestFailedError';
+    this.statusCode = statusCode;
+  }
+}
+
+export function assertSuccess<T>(res: { success: boolean; message?: string } & { data?: T }): T {
+  if (!res.success) {
+    throw new RequestFailedError(res.message || 'Request failed');
+  }
+  return res.data as T;
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof RequestFailedError) return err.message;
+  const apiErr = err as ApiError;
+  return apiErr?.message || 'Something went wrong. Please try again.';
+}
+
 export const creatorApi = {
+  RequestFailedError,
+  errorMessage,
+  assertSuccess,
+
   getDashboard: () => apiFetch<DashboardStats>(`${API}/creator/dashboard`),
 
   getContent: (page = 1, limit = 20, status?: string) => {
@@ -44,11 +80,21 @@ export const creatorApi = {
       method: 'DELETE',
     }),
 
+  publishContent: (id: string) =>
+    apiFetch<ContentItem>(`${API}/creator/content/${id}/publish`, {
+      method: 'POST',
+    }),
+
   getAnalytics: (period = '30days') =>
     apiFetch<AnalyticsData>(`${API}/creator/analytics?period=${period}`),
 
   getEarnings: (period = 'this-month') =>
     apiFetch<EarningsData>(`${API}/creator/earnings?period=${period}`),
+
+  getEarningsSummary: () => apiFetch<EarningsSummaryData>(`${API}/creator/earnings/summary`),
+
+  getEarningsHistory: (limit = 50) =>
+    apiFetch<EarningsHistoryData>(`${API}/creator/earnings/history?limit=${limit}`),
 
   requestPayout: () =>
     apiFetch<PayoutRequest>(`${API}/creator/payouts/request`, {
@@ -60,6 +106,8 @@ export const creatorApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+
+  getSettings: () => apiFetch<CreatorSettings>(`${API}/creator/settings`),
 
   updateSettings: (data: CreatorSettings) =>
     apiFetch<{ success: boolean }>(`${API}/creator/settings`, {
@@ -79,23 +127,50 @@ export const creatorApi = {
   // Subscribers
   getSubscribers: () => apiFetch<SubscribersData>(`${API}/creator/subscribers`),
 
-  // Upload
+  // Studio UI flags (gates v2 surfaces: new analytics, upload v2, payouts UI, onboarding)
+  getStudioFlags: () =>
+    apiFetch<Array<{ key: string; enabled: boolean; value?: unknown }>>(`${API}/creator/flags`),
+
+  // Uploads — tracked as content items in the local DB
   getUploads: () => apiFetch<UploadProgress[]>(`${API}/creator/uploads`),
 
-  uploadContent: (data: FormData) =>
-    apiFetch<UploadProgress>(`${API}/creator/uploads`, {
-      method: 'POST',
-      body: data,
-      headers: {},
-    }),
+  uploadContent: (data: FormData) => uploadWithProgress<UploadProgress>(`${API}/creator/uploads`, data),
+
+  uploadContentWithProgress: (
+    data: FormData,
+    onProgress: (percent: number) => void
+  ) => uploadWithProgress<UploadProgress>(`${API}/creator/uploads`, data, onProgress),
 
   // Monetization
   getMonetization: () => apiFetch<MonetizationData>(`${API}/creator/monetization`),
 
   updateMonetization: (data: Partial<MonetizationData>) =>
-    apiFetch<{ success: boolean }>(`${API}/creator/monetization`, {
+    apiFetch<MonetizationData>(`${API}/creator/monetization`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    }),
+
+  // Subscription tiers (creator-owned CRUD)
+  listTiers: () => apiFetch<MonetizationTier[]>(`${API}/creator/monetization/tiers`),
+
+  createTier: (data: { name: string; price: number; perks?: string[]; isActive?: boolean }) =>
+    apiFetch<MonetizationTier>(`${API}/creator/monetization/tiers`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateTier: (
+    id: string,
+    data: { name?: string; price?: number; perks?: string[]; isActive?: boolean }
+  ) =>
+    apiFetch<MonetizationTier>(`${API}/creator/monetization/tiers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteTier: (id: string) =>
+    apiFetch<{ success: boolean }>(`${API}/creator/monetization/tiers/${id}`, {
+      method: 'DELETE',
     }),
 
   // Challenges
@@ -104,9 +179,96 @@ export const creatorApi = {
   getChallengeSubmissions: () =>
     apiFetch<ChallengeSubmission[]>(`${API}/creator/challenges/submissions`),
 
-  submitChallenge: (challengeId: string, title: string) =>
-    apiFetch<ChallengeSubmission>(`${API}/creator/challenges/${challengeId}/submit`, {
+  getChallengeSubmissionDetail: (submissionId: string) =>
+    apiFetch<SubmissionDetail>(`${API}/creator/challenges/submissions/${submissionId}`),
+
+  getPlaybackUrl: (contentId: string) =>
+    apiFetch<{
+      url: string;
+      expiresIn: number;
+      kind: 'signed' | 'premium';
+      expiresAt: string | null;
+    }>(`${API}/creator/content/${contentId}/playback`),
+
+  submitChallenge: (challengeId: string, title: string, contentId?: string) =>
+    apiFetch<{ success: boolean; submissionId?: string }>(
+      `${API}/creator/challenges/${challengeId}/submit`,
+      {
+        method: 'POST',
+        body: JSON.stringify(contentId ? { title, contentId } : { title }),
+      }
+    ),
+
+  getChallengeLeaderboard: (challengeId: string) =>
+    apiFetch<{
+      challenge: { id: string; title: string; prize?: number; endDate?: string };
+      totalEntries: number;
+      entries: {
+        position: number;
+        entryId: string;
+        userId: string;
+        displayName: string;
+        status: string;
+        submittedAt: string;
+      }[];
+    }>(`${API}/creator/challenges/${challengeId}/leaderboard`),
+
+  /** Public board data — no auth (shared /boards/:challengeId pages). */
+  getPublicBoard: (challengeId: string) =>
+    apiFetch<{
+      challenge: { id: string; title: string; prize?: number; endDate?: string };
+      totalEntries: number;
+      entries: {
+        position: number;
+        displayName: string;
+        status: string;
+        submittedAt: string;
+      }[];
+    }>(`${API}/creator/boards/${challengeId}`, { skipAuthRetry: true }),
+
+  // Profile
+  getProfile: () => apiFetch<CreatorProfile>(`${API}/creator/profile`),
+
+  updateProfile: (data: {
+    bio?: string;
+    banner?: string;
+    displayName?: string;
+    avatar?: string;
+    website?: string;
+    socialLinks?: { twitter?: string; instagram?: string; youtube?: string; tiktok?: string };
+  }) =>
+    apiFetch<CreatorProfile>(`${API}/creator/profile`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  // Exclusive content (gated behind Gold/Platinum supporter tiers)
+  getExclusiveContent: () =>
+    apiFetch<
+      Array<{
+        id: string;
+        title: string;
+        description?: string;
+        mediaUrl?: string;
+        minTier: string;
+        locked: boolean;
+        createdAt: string;
+      }>
+    >(`${API}/creators/me/exclusive-content`),
+
+  createExclusiveContent: (data: {
+    title: string;
+    description?: string;
+    mediaUrl: string;
+    minTier?: string;
+  }) =>
+    apiFetch<{ id: string; title: string; minTier: string }>(`${API}/creators/me/exclusive-content`, {
       method: 'POST',
-      body: JSON.stringify({ title }),
+      body: JSON.stringify(data),
+    }),
+
+  deleteExclusiveContent: (id: string) =>
+    apiFetch<{ success: boolean; message: string }>(`${API}/creators/me/exclusive-content/${id}`, {
+      method: 'DELETE',
     }),
 };

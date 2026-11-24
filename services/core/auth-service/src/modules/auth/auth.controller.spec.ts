@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import type { Response } from 'express';
 import { ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { AuthRepository } from './auth.repository.js';
 import { RateLimitService } from '@azeebo/security';
+import { FeatureFlagService, FeatureFlagGuard } from '@azeebo/feature-flags';
 import { Reflector } from '@nestjs/core';
 import { User } from '@azeebo/shared-types';
 import { SelectableRole } from './dto/select-role.dto.js';
@@ -54,11 +56,14 @@ describe('AuthController', () => {
     },
   };
 
-  const mockReq = (overrides: { user?: User; ip?: string } = {}): any => ({
-    user: overrides.user ?? mockUser,
-    ip: overrides.ip ?? '127.0.0.1',
-    headers: { 'user-agent': 'test-agent' },
-  });
+  type SpecRequest = Parameters<typeof AuthController.prototype.login>[0];
+
+  const mockReq = (overrides: { user?: User; ip?: string } = {}): SpecRequest =>
+    ({
+      user: overrides.user ?? mockUser,
+      ip: overrides.ip ?? '127.0.0.1',
+      headers: { 'user-agent': 'test-agent' },
+    }) as unknown as SpecRequest;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -72,24 +77,28 @@ describe('AuthController', () => {
             refreshToken: jest.fn().mockResolvedValue(mockRefreshTokenResponse),
             logout: jest.fn().mockResolvedValue({ success: true }),
             getProfile: jest.fn().mockReturnValue({ success: true, data: mockUser }),
-            forgotPassword: jest
-              .fn()
-              .mockResolvedValue({ success: true, message: 'If the email exists, a reset link has been sent' }),
+            forgotPassword: jest.fn().mockResolvedValue({
+              success: true,
+              message: 'If the email exists, a reset link has been sent',
+            }),
             resetPassword: jest
               .fn()
               .mockResolvedValue({ success: true, message: 'Password reset successfully' }),
-            verifyEmail: jest
-              .fn()
-              .mockResolvedValue({ success: true, message: 'Email verified successfully' }),
-            resendVerification: jest
-              .fn()
-              .mockResolvedValue({ success: true, message: 'If the email exists, a verification link has been sent' }),
+            verifyEmail: jest.fn().mockResolvedValue({
+              success: true,
+              data: { message: 'Email verified successfully' },
+            }),
+            resendVerification: jest.fn().mockResolvedValue({
+              success: true,
+              message: 'If the email exists, a verification link has been sent',
+            }),
             selectRole: jest
               .fn()
               .mockResolvedValue({ success: true, message: 'Role selected successfully' }),
-            requestOtp: jest
-              .fn()
-              .mockResolvedValue({ success: true, message: 'If the email exists, an OTP has been sent' }),
+            requestOtp: jest.fn().mockResolvedValue({
+              success: true,
+              message: 'If the email exists, an OTP has been sent',
+            }),
             verifyOtp: jest.fn().mockResolvedValue(mockAuthResponse),
           },
         },
@@ -99,6 +108,14 @@ describe('AuthController', () => {
             findByEmail: jest.fn(),
             create: jest.fn(),
           },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true), getValue: jest.fn() },
+        },
+        {
+          provide: FeatureFlagGuard,
+          useValue: { canActivate: jest.fn().mockResolvedValue(true) },
         },
         {
           provide: RateLimitService,
@@ -160,9 +177,9 @@ describe('AuthController', () => {
         new BadRequestException('Validation failed')
       );
 
-      await expect(controller.signup(mockReq(), { ...registerDto, email: 'invalid' })).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(
+        controller.signup(mockReq(), { ...registerDto, email: 'invalid' })
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -201,9 +218,11 @@ describe('AuthController', () => {
 
   describe('POST /auth/refresh', () => {
     const refreshTokenDto = { refreshToken: 'valid-refresh-token' };
+    const mockReq = { cookies: {} } as never;
+    const mockRes = { cookie: jest.fn() } as unknown as Response;
 
     it('should refresh the access token', async () => {
-      const result = await controller.refreshToken(refreshTokenDto);
+      const result = await controller.refreshToken(refreshTokenDto, mockReq, mockRes);
 
       expect(authService.refreshToken).toHaveBeenCalledWith(refreshTokenDto);
       expect(result.success).toBe(true);
@@ -217,7 +236,7 @@ describe('AuthController', () => {
         new UnauthorizedException('Invalid refresh token')
       );
 
-      await expect(controller.refreshToken(refreshTokenDto)).rejects.toThrow(
+      await expect(controller.refreshToken(refreshTokenDto, mockReq, mockRes)).rejects.toThrow(
         UnauthorizedException
       );
     });
@@ -227,8 +246,33 @@ describe('AuthController', () => {
         new UnauthorizedException('Invalid refresh token')
       );
 
-      await expect(controller.refreshToken({ refreshToken: 'revoked-token' })).rejects.toThrow(
-        UnauthorizedException
+      await expect(
+        controller.refreshToken({ refreshToken: 'revoked-token' }, mockReq, mockRes)
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should fall back to the refresh_token cookie when the body omits the token', async () => {
+      const cookieReq = {
+        cookies: { refresh_token: 'cookie-refresh-token' },
+      } as never;
+
+      await controller.refreshToken({} as typeof refreshTokenDto, cookieReq, mockRes);
+
+      expect(authService.refreshToken).toHaveBeenCalledWith({
+        refreshToken: 'cookie-refresh-token',
+      });
+
+      // Cookie-driven rotation must write the rotated pair back as cookies
+      // so the browser's next request carries a fresh access_token.
+      expect(mockRes.cookie).toHaveBeenCalledWith(
+        'access_token',
+        expect.any(String),
+        expect.objectContaining({ httpOnly: true, path: '/' })
+      );
+      expect(mockRes.cookie).toHaveBeenCalledWith(
+        'refresh_token',
+        expect.any(String),
+        expect.objectContaining({ httpOnly: true, path: '/' })
       );
     });
   });
@@ -263,7 +307,11 @@ describe('AuthController', () => {
     it('should send a reset email', async () => {
       const result = await controller.forgotPassword(mockReq(), forgotPasswordDto);
 
-      expect(authService.forgotPassword).toHaveBeenCalledWith(forgotPasswordDto, '127.0.0.1', 'test-agent');
+      expect(authService.forgotPassword).toHaveBeenCalledWith(
+        forgotPasswordDto,
+        '127.0.0.1',
+        'test-agent'
+      );
       expect(result.success).toBe(true);
       expect(result.message).toContain('reset link');
     });
@@ -292,7 +340,11 @@ describe('AuthController', () => {
     it('should reset the password with a valid token', async () => {
       const result = await controller.resetPassword(mockReq(), resetPasswordDto);
 
-      expect(authService.resetPassword).toHaveBeenCalledWith(resetPasswordDto, '127.0.0.1', 'test-agent');
+      expect(authService.resetPassword).toHaveBeenCalledWith(
+        resetPasswordDto,
+        '127.0.0.1',
+        'test-agent'
+      );
       expect(result.success).toBe(true);
       expect(result.message).toContain('Password reset successfully');
     });
@@ -313,7 +365,10 @@ describe('AuthController', () => {
       );
 
       await expect(
-        controller.resetPassword(mockReq(), { token: 'invalid-token', newPassword: 'NewSecureP@ss1' })
+        controller.resetPassword(mockReq(), {
+          token: 'invalid-token',
+          newPassword: 'NewSecureP@ss1',
+        })
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -328,7 +383,7 @@ describe('AuthController', () => {
         'test-agent'
       );
       expect(result.success).toBe(true);
-      expect(result.message).toContain('verified');
+      expect(result.data?.message).toContain('verified');
     });
 
     it('should propagate BadRequestException for expired token', async () => {

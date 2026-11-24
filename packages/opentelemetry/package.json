@@ -14,10 +14,10 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "bash ../../scripts/build-package.sh",
     "clean": "rm -rf dist",
     "test": "jest --passWithNoTests",
-    "lint": "eslint src --fix"
+    "lint": "eslint src"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",

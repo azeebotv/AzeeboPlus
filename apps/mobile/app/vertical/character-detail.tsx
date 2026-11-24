@@ -4,7 +4,7 @@ import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, defaultImages } from '../../src/theme';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
 
@@ -51,9 +51,7 @@ export default function CharacterDetailScreen() {
     try {
       const res = await apiClient.get<CharacterDetail>(`/v1/vertical/characters/${id}`);
       setData(res);
-      try {
-        analytics.verticalCharacterViewed(res.id);
-      } catch {}
+      analytics.verticalCharacterViewed(res.id);
     } catch {
       setError('Failed to load character');
     } finally {
@@ -93,7 +91,7 @@ export default function CharacterDetailScreen() {
         <View style={styles.heroSection}>
           <Image source={{ uri: data.heroImage || PLACEHOLDER_AVATAR }} style={styles.heroImage} />
           <View style={styles.heroOverlay}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backIcon}>←</Text>
             </TouchableOpacity>
           </View>

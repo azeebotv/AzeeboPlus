@@ -4,16 +4,21 @@ jest.mock('@azeebo/shared-services', () => ({
   EmailService: 'EmailService',
   SmsService: 'SmsService',
   CacheService: 'CacheService',
+  RedisService: 'RedisService',
   cacheKey: (...args: unknown[]) => args.join(':'),
 }));
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationsService } from './notifications.service.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { RedisService } from '@azeebo/shared-services';
 import { FirebaseService, EmailService, SmsService, CacheService } from '@azeebo/shared-services';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { FeatureFlagService, notificationFlags } from '@azeebo/feature-flags';
+import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
@@ -59,6 +64,20 @@ describe('NotificationsService', () => {
     sendSmsWithTemplate: jest.fn(),
   };
 
+  const mockRedisService = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue(undefined),
+    del: jest.fn().mockResolvedValue(0),
+  };
+
+  const mockFeatureFlagService = {
+    isEnabled: jest
+      .fn()
+      .mockImplementation((key: string) =>
+        Promise.resolve(key !== notificationFlags.preferencesV2)
+      ),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -71,13 +90,23 @@ describe('NotificationsService', () => {
           provide: CacheService,
           useValue: { get: jest.fn(), set: jest.fn(), invalidate: jest.fn() },
         },
+        {
+          provide: RedisService,
+          useValue: mockRedisService,
+        },
         { provide: ConfigService, useValue: { get: jest.fn(), getOrThrow: jest.fn() } },
+        { provide: FeatureFlagService, useValue: mockFeatureFlagService },
       ],
     }).compile();
 
     service = module.get<NotificationsService>(NotificationsService);
 
     jest.clearAllMocks();
+    // clearAllMocks keeps implementations; re-establish the default so a
+    // kill-switch test doesn't leak into later tests.
+    mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+      Promise.resolve(key !== notificationFlags.preferencesV2)
+    );
   });
 
   afterAll(async () => {
@@ -227,6 +256,67 @@ describe('NotificationsService', () => {
       expect(result.success).toBe(true);
       const data = result.data as Record<string, unknown>;
       expect(data.unreadCount).toBe(7);
+    });
+  });
+
+  describe('daily digest (notification_digest)', () => {
+    it('rejects the run while the flag is off (403)', async () => {
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key !== notificationFlags.digest)
+      );
+
+      await expect(service.sendDailyDigest('user-1')).rejects.toThrow(ForbiddenException);
+      expect(mockPrismaService.notification.findMany).not.toHaveBeenCalled();
+    });
+
+    it('emails a user their unread items and records the marker', async () => {
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key !== notificationFlags.preferencesV2)
+      );
+      (mockPrismaService.notification.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 'n1',
+          userId: 'user-1',
+          type: 'payment',
+          title: 'Payment',
+          message: '$50 received',
+          createdAt: new Date(),
+        },
+      ]);
+      (mockEmailService.sendEmail as jest.Mock).mockResolvedValue(true);
+      mockedAxios.get.mockResolvedValue({
+        data: { data: { id: 'user-1', email: 'u@example.com', displayName: 'U' } },
+      });
+
+      const result = await service.sendDailyDigest('user-1');
+
+      expect(result.data.sent).toBe(1);
+      expect(mockEmailService.sendEmail).toHaveBeenCalledWith(
+        'u@example.com',
+        'Your Azeebo+ Daily Digest',
+        'digest',
+        expect.objectContaining({ count: 1 })
+      );
+      expect(mockedAxios.get).toHaveBeenCalled();
+      // Marker records when the digest ran so the next one starts from here.
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        'notification:digest:last:user-1',
+        expect.any(String),
+        7 * 24 * 3600
+      );
+    });
+
+    it('skips users with nothing unread since the last digest', async () => {
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key !== notificationFlags.preferencesV2)
+      );
+      (mockPrismaService.notification.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.sendDailyDigest('user-1');
+
+      expect(result.data.sent).toBe(0);
+      expect(result.data.skipped).toBe(1);
+      expect(mockEmailService.sendEmail).not.toHaveBeenCalled();
     });
   });
 
@@ -436,6 +526,57 @@ describe('NotificationsService', () => {
           'password-reset',
           { displayName: 'Test User', resetLink: 'https://reset.link' }
         );
+      });
+    });
+
+    describe('sendTemplatedEmail', () => {
+      it('should send a first-class template by name with its subject', async () => {
+        mockEmailService.sendEmail.mockResolvedValue(true);
+
+        const result = await service.sendTemplatedEmail({
+          to: 'test@example.com',
+          template: 'email-verification',
+          data: {
+            displayName: 'Test User',
+            verificationUrl: 'https://azeebo.plus/auth/verify-email?token=abc',
+          },
+        });
+
+        expect(result).toBe(true);
+        expect(mockEmailService.sendEmail).toHaveBeenCalledWith(
+          'test@example.com',
+          'Verify Your Email Address',
+          'email-verification',
+          {
+            displayName: 'Test User',
+            verificationUrl: 'https://azeebo.plus/auth/verify-email?token=abc',
+          }
+        );
+      });
+
+      it('should reject unknown templates', async () => {
+        await expect(
+          service.sendTemplatedEmail({
+            to: 'test@example.com',
+            template: 'not-a-template',
+            data: {},
+          })
+        ).rejects.toThrow(BadRequestException);
+
+        expect(mockEmailService.sendEmail).not.toHaveBeenCalled();
+      });
+
+      it('should skip sends when the email kill-switch is off', async () => {
+        mockFeatureFlagService.isEnabled.mockResolvedValue(false);
+
+        const result = await service.sendTemplatedEmail({
+          to: 'test@example.com',
+          template: 'email-verification',
+          data: {},
+        });
+
+        expect(result).toBe(false);
+        expect(mockEmailService.sendEmail).not.toHaveBeenCalled();
       });
     });
 

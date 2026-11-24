@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { SportsService } from './sports.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
@@ -38,6 +42,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
       findUnique: jest.fn(),
     },
     contestEntry: {
+      findUnique: jest.fn(),
       findFirst: jest.fn(),
       create: jest.fn(),
     },
@@ -64,7 +69,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
             }),
             getOrThrow: jest.fn().mockImplementation((key: string) => {
               const config: Record<string, string> = {
-                ANALYTICS_SERVICE_URL: 'http://analytics-service:3040',
+                ANALYTICS_SERVICE_URL: 'http://analytics-service:3008',
                 WALLET_SERVICE_URL: 'http://wallet-service:3050',
               };
               return config[key];
@@ -311,7 +316,9 @@ describe('SportsService Integration - Cross-Service Communication', () => {
           eventId: 'event-1',
           prediction: { winner: 'Brazil' },
         })
-      ).rejects.toThrow(BadRequestException);
+        // A Prisma failure after the wallet debit is a server fault (the saga
+        // compensates either way) — mapAndThrow maps it honestly to 500.
+      ).rejects.toThrow(InternalServerErrorException);
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
         expect.stringContaining('/wallet/credit'),
@@ -350,7 +357,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
         status: 'active',
         endsAt: new Date('2099-12-31'),
       });
-      mockPrismaService.contestEntry.findFirst.mockResolvedValue(null);
+      mockPrismaService.contestEntry.findUnique.mockResolvedValue(null);
 
       mockedAxios.get.mockResolvedValue({
         data: { id: 'wallet-1', balance: 100 },
@@ -420,7 +427,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
         status: 'active',
         endsAt: new Date('2099-12-31'),
       });
-      mockPrismaService.contestEntry.findFirst.mockResolvedValue({
+      mockPrismaService.contestEntry.findUnique.mockResolvedValue({
         id: 'entry-existing',
         userId: 'user-1',
         contestId: 'contest-1',
@@ -439,7 +446,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
         status: 'active',
         endsAt: new Date('2099-12-31'),
       });
-      mockPrismaService.contestEntry.findFirst.mockResolvedValue(null);
+      mockPrismaService.contestEntry.findUnique.mockResolvedValue(null);
 
       mockedAxios.get.mockRejectedValue(new Error('Wallet service unavailable'));
 
@@ -452,7 +459,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
         status: 'active',
         endsAt: new Date('2099-12-31'),
       });
-      mockPrismaService.contestEntry.findFirst.mockResolvedValue(null);
+      mockPrismaService.contestEntry.findUnique.mockResolvedValue(null);
 
       mockedAxios.get.mockResolvedValue({
         data: { id: 'wallet-1', balance: 10 },
@@ -469,7 +476,7 @@ describe('SportsService Integration - Cross-Service Communication', () => {
         status: 'active',
         endsAt: new Date('2099-12-31'),
       });
-      mockPrismaService.contestEntry.findFirst.mockResolvedValue(null);
+      mockPrismaService.contestEntry.findUnique.mockResolvedValue(null);
 
       mockedAxios.get.mockResolvedValue({
         data: { id: 'wallet-1', balance: 100 },
@@ -485,8 +492,10 @@ describe('SportsService Integration - Cross-Service Communication', () => {
 
       mockPrismaService.contestEntry.create.mockRejectedValue(new Error('DB error'));
 
+      // A Prisma failure after the wallet debit is a server fault (the saga
+      // compensates either way) — mapAndThrow maps it honestly to 500.
       await expect(service.enterContest('user-1', 'contest-1')).rejects.toThrow(
-        BadRequestException
+        InternalServerErrorException
       );
 
       expect(mockedAxios.post).toHaveBeenCalledWith(

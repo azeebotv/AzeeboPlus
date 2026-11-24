@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ExecutionContext, VersioningType } from '@nestjs/common';
+import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
@@ -9,8 +10,20 @@ import { PrismaService } from '../database/prisma.service.js';
 import { PaystackProvider } from './providers/paystack.provider.js';
 import { FlutterwaveProvider } from './providers/flutterwave.provider.js';
 import { WebhookRetryService } from './webhook-retry.service.js';
+import { FeatureFlagService } from '@azeebo/feature-flags';
+
+// Unique per jest run: a live Redis (REDIS_URL set) keeps idempotency keys
+// for 24h, so fixed keys would 409 on the second run.
+const runId = Date.now();
 
 describe('Payments Service Authorization Tests', () => {
+  let app: INestApplication;
+  let baseUrl: string;
+
+  // Mutable auth state read at request time by the shared guard + middleware —
+  // every test runs against ONE bound app (no per-test listen/close churn).
+  let authEnabled: boolean;
+
   const mockPaymentsService = {
     initializePayment: jest.fn().mockResolvedValue({
       success: true,
@@ -63,23 +76,27 @@ describe('Payments Service Authorization Tests', () => {
     }),
   };
 
-  const createMockAuthGuard = (canActivate: boolean) => ({
+  // Global guard mirroring production's ServiceAuthGuard ordering: auth runs
+  // BEFORE route guards (IdempotencyGuard), so unauthenticated requests are
+  // rejected with 403, not 409. Webhooks stay public.
+  const mockAuthGuard = {
     canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
-      if (canActivate) {
-        const req = context.switchToHttp().getRequest();
-        req.user = { sub: 'user-123' };
+      const req = context.switchToHttp().getRequest();
+      if (!authEnabled) {
+        return req.path?.includes('/webhook');
       }
-      return canActivate;
+      req.user = { sub: 'user-123' };
+      return true;
     }),
-  });
+  };
 
-  const createTestApp = async (authGuardReturnValue: boolean) => {
-    const mockAuthGuard = createMockAuthGuard(authGuardReturnValue);
-
+  const createTestApp = async (): Promise<INestApplication> => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [PaymentsController],
       providers: [
+        { provide: APP_GUARD, useValue: mockAuthGuard },
         { provide: PaymentsService, useValue: mockPaymentsService },
+        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
         { provide: PrismaService, useValue: {} },
         { provide: PaystackProvider, useValue: {} },
         { provide: FlutterwaveProvider, useValue: {} },
@@ -94,9 +111,9 @@ describe('Payments Service Authorization Tests', () => {
 
     const testApp = moduleFixture.createNestApplication();
     testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
-    // Mock ServiceAuthGuard: set req.user based on authGuardReturnValue
+    // Mock ServiceAuthGuard behavior: set req.user based on authEnabled
     testApp.use((req: { user?: unknown }, _res: unknown, next: () => void) => {
-      if (authGuardReturnValue && !req.user) {
+      if (authEnabled && !req.user) {
         req.user = { id: 'user-123', sub: 'user-123', role: 'user' };
       }
       next();
@@ -104,18 +121,33 @@ describe('Payments Service Authorization Tests', () => {
     return testApp;
   };
 
+  beforeAll(async () => {
+    authEnabled = true;
+    app = await createTestApp();
+    await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  beforeEach(() => {
+    authEnabled = true;
+  });
+
   afterEach(async () => {
     jest.clearAllMocks();
   });
 
   describe('Authorization - POST /v1/payments/initialize', () => {
     it('should allow authenticated users to initialize payment', async () => {
-      const testApp = await createTestApp(true);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `auth-init-${runId}-1`)
         .send({
           amount: 1000,
           currency: 'NGN',
@@ -126,15 +158,11 @@ describe('Payments Service Authorization Tests', () => {
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(mockPaymentsService.initializePayment).toHaveBeenCalled();
-
-      await testApp.close();
     });
 
     it('should reject unauthenticated users from initializing payment', async () => {
-      const testApp = await createTestApp(false);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer()).post('/v1/payments/initialize').send({
+      authEnabled = false;
+      const response = await request(baseUrl).post('/v1/payments/initialize').send({
         amount: 1000,
         currency: 'NGN',
         paymentMethod: 'card',
@@ -144,15 +172,11 @@ describe('Payments Service Authorization Tests', () => {
       // Without user context, request fails auth (403) or crashes (500)
       expect([403, 500]).toContain(response.status);
       expect(mockPaymentsService.initializePayment).not.toHaveBeenCalled();
-
-      await testApp.close();
     });
 
     it('should reject requests with missing authorization header', async () => {
-      const testApp = await createTestApp(false);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer()).post('/v1/payments/initialize').send({
+      authEnabled = false;
+      const response = await request(baseUrl).post('/v1/payments/initialize').send({
         amount: 1000,
         currency: 'NGN',
         paymentMethod: 'card',
@@ -160,132 +184,84 @@ describe('Payments Service Authorization Tests', () => {
 
       // Without auth, request fails (403) or crashes (500)
       expect([403, 500]).toContain(response.status);
-
-      await testApp.close();
     });
   });
 
   describe('Authorization - GET /v1/payments/history', () => {
     it('should allow authenticated users to view payment history', async () => {
-      const testApp = await createTestApp(true);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .get('/v1/payments/history')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(mockPaymentsService.getPaymentHistory).toHaveBeenCalled();
-
-      await testApp.close();
     });
 
     it('should reject unauthenticated users from viewing payment history', async () => {
-      const testApp = await createTestApp(false);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer()).get('/v1/payments/history');
+      authEnabled = false;
+      const response = await request(baseUrl).get('/v1/payments/history');
 
       // Without user context, request fails auth (403) or crashes (500)
       expect([403, 500]).toContain(response.status);
       expect(mockPaymentsService.getPaymentHistory).not.toHaveBeenCalled();
-
-      await testApp.close();
     });
   });
 
   describe('Authorization - GET /payments/:id', () => {
     it('should allow authenticated users to view payment details', async () => {
-      const testApp = await createTestApp(true);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .get('/v1/payments/pay-abc123')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(mockPaymentsService.getPayment).toHaveBeenCalled();
-
-      await testApp.close();
     });
 
     it('should reject unauthenticated users from viewing payment details', async () => {
-      const testApp = await createTestApp(false);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer()).get('/v1/payments/pay-abc123');
+      authEnabled = false;
+      const response = await request(baseUrl).get('/v1/payments/pay-abc123');
 
       // Without user context, request fails auth (403) or crashes (500)
       expect([403, 500]).toContain(response.status);
       expect(mockPaymentsService.getPayment).not.toHaveBeenCalled();
-
-      await testApp.close();
     });
   });
 
   describe('Authorization - POST /v1/payments/refund-request', () => {
     it('should allow authenticated users to request refunds', async () => {
-      const testApp = await createTestApp(true);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = true;
+      const response = await request(baseUrl)
         .post('/v1/payments/refund-request')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `auth-refund-${runId}-1`)
         .send({
           transactionId: 'trx-abc123',
           reason: 'Product not received',
         });
 
       expect(response.status).toBe(201);
-
-      await testApp.close();
     });
 
     it('should reject unauthenticated users from requesting refunds', async () => {
-      const testApp = await createTestApp(false);
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
-        .post('/v1/payments/refund-request')
-        .send({
-          transactionId: 'trx-abc123',
-          reason: 'Product not received',
-        });
+      authEnabled = false;
+      const response = await request(baseUrl).post('/v1/payments/refund-request').send({
+        transactionId: 'trx-abc123',
+        reason: 'Product not received',
+      });
 
       // Without user context, request fails auth (403) or crashes (500)
       expect([403, 500]).toContain(response.status);
-
-      await testApp.close();
     });
   });
 
   describe('Authorization - Webhook endpoint', () => {
     it('should allow webhook requests without authentication (handled by WebhookController)', async () => {
-      const mockAuthGuard = createMockAuthGuard(false);
-
-      const moduleFixture: TestingModule = await Test.createTestingModule({
-        controllers: [PaymentsController],
-        providers: [
-          { provide: PaymentsService, useValue: mockPaymentsService },
-          { provide: PrismaService, useValue: {} },
-          { provide: PaystackProvider, useValue: {} },
-          { provide: FlutterwaveProvider, useValue: {} },
-          { provide: WebhookRetryService, useValue: {} },
-        ],
-      })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue(mockAuthGuard)
-        .overrideGuard(RateLimitGuard)
-        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
-        .compile();
-
-      const testApp = moduleFixture.createNestApplication();
-      testApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
-      await testApp.init();
-
-      const response = await request(testApp.getHttpServer())
+      authEnabled = false;
+      const response = await request(baseUrl)
         .post('/v1/payments/webhook')
         .send({
           event: 'charge.success',
@@ -293,8 +269,6 @@ describe('Payments Service Authorization Tests', () => {
         });
 
       expect(response.status).toBe(404);
-
-      await testApp.close();
     });
   });
 });

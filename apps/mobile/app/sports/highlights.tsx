@@ -4,8 +4,9 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -42,7 +43,7 @@ export default function HighlightsScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Highlights Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading highlights..." />
       </SafeAreaView>
     );
@@ -66,7 +67,7 @@ export default function HighlightsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -126,7 +127,7 @@ const styles = StyleSheet.create({
   highlightCard: { borderRadius: 12, overflow: 'hidden', marginBottom: 16 },
   thumbnail: {
     height: 200,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -151,6 +152,6 @@ const styles = StyleSheet.create({
   durationText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   highlightInfo: { padding: 14 },
   highlightTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
-  highlightMatch: { color: '#E74C3C', fontSize: 13, marginBottom: 4 },
-  highlightViews: { color: '#888', fontSize: 12 },
+  highlightMatch: { color: colors.error[500], fontSize: 13, marginBottom: 4 },
+  highlightViews: { color: colors.text.secondary, fontSize: 12 },
 });

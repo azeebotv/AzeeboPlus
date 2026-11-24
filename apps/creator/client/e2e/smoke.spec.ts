@@ -20,7 +20,99 @@ const CREATOR_NAV_ITEMS = [
 async function mockAuth(page: import('@playwright/test').Page) {
   await page.addInitScript((user) => {
     localStorage.setItem('azeebo_creator_user', JSON.stringify(user));
+    localStorage.setItem('azeebo_creator_user_token', 'test-creator-token');
   }, MOCK_CREATOR_USER);
+
+  await page.route('**/api/v1/creator/flags', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [
+          { key: 'creator_new_analytics', enabled: true },
+          { key: 'creator_upload_v2', enabled: true },
+          { key: 'creator_payouts_ui', enabled: true },
+          { key: 'creator_onboarding_wizard', enabled: true },
+        ],
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/creator/dashboard', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          totalViews: 120500,
+          viewsChange: '+14.2%',
+          totalEarnings: 845000,
+          earningsChange: '+8.1%',
+          subscribers: 3200,
+          subscribersCount: 3200,
+          subscribersChange: '+120',
+          contentCount: 42,
+          contentChange: '+3',
+          recentContent: [],
+        },
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/creator/analytics**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          totalViews: 120500,
+          avgWatchTime: '2:15',
+          engagementRate: 4.8,
+          newSubscribers: 120,
+          viewsOverTime: [],
+          demographics: [],
+          topContent: [],
+        },
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/creator/earnings**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          total: 845000,
+          count: 12,
+          pendingPayout: 125000,
+          lifetimeEarnings: 1500000,
+          lastPayout: 200000,
+          history: [],
+        },
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/creator/content**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          items: [],
+          total: 0,
+          page: 1,
+          limit: 20,
+        },
+      }),
+    });
+  });
 }
 
 test.describe('Creator App Smoke Tests', () => {

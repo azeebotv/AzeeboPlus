@@ -71,10 +71,49 @@ export interface WalletResponse {
     | BonusCreditData
     | PromoCreditData
     | AuditTrailData
+    | BankAccountData[]
+    | WithdrawalMethodData[]
+    | WithdrawalPricingData
+    | WalletPricingData
+    | PaymentMethodData[]
     | Record<string, unknown>
     | { message: string };
   error?: {
     code: string;
     message: string;
   };
+}
+
+export interface BankAccountData {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  isDefault: boolean;
+  createdAt: Date;
+}
+
+export interface WithdrawalMethodData {
+  id: string;
+  name: string;
+  processingTime: string;
+  fee: number;
+}
+
+export interface WithdrawalPricingData {
+  minimumAmount: number;
+  maximumAmount: number;
+  fees: Array<{ method: string; percentage: number; flat: number; min: number; max: number }>;
+}
+
+export interface WalletPricingData {
+  minimumDeposit: number;
+  maximumDeposit: number;
+  fees: Array<{ method: string; percentage: number; flat: number }>;
+}
+
+export interface PaymentMethodData {
+  id: string;
+  name: string;
+  enabled: boolean;
 }

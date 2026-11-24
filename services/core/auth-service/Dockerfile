@@ -1,7 +1,37 @@
-# T-C12: Pin base image to digest for reproducible builds
-# Resolve: docker pull node:22.16.0-alpine && docker inspect --format='{{index .RepoDigests 0}}' node:22.16.0-alpine
-# Then replace tag with: FROM node:22.16.0-alpine@sha256:<RESOLVED_DIGEST> AS builder
-FROM node:22.16.0-alpine AS builder
+# ============================================================================
+# Canonical parameterized Dockerfile for every NestJS service.
+#
+# This file is the single source of truth: each per-service Dockerfile
+# (services/*/*/Dockerfile) is rendered from it by
+# `scripts/check-dockerfile-drift.mjs --update`, which also gates CI against
+# the rendered output. Do not edit per-service files directly — edit this
+# template, re-render, and commit.
+#
+# Render args (see the args table in scripts/check-dockerfile-drift.mjs):
+#   SERVICE_PATH   repo-relative service dir, e.g. services/core/auth-service
+#   SERVICE_NAME   image description label, e.g. Azeebo+ Auth Service
+#   PORT           exposed port + healthcheck port
+#   PRISMA         inline | script | none
+#                    inline: `npx prisma generate` against this service's
+#                            schema in the builder stage
+#                    script: scripts/generate-prisma-clients.sh — generates
+#                            clients for EVERY schema in the context (service
+#                            + workspace packages). Load-bearing for services
+#                            whose build resolves other packages' clients.
+#   CLIENT_COPY    client | src | none — extra runtime copy of the generated
+#                    client, matching where each service's compiled code
+#                    resolves it from:
+#                    client: src/prisma/client → dist/prisma/client
+#                    src:    src/prisma        → dist/<SERVICE_PATH>/src/prisma
+#                    none:   no extra copy (client resolvable from dist, or
+#                            the service has no prisma client at all)
+#
+# NOTE: this template is not directly buildable (conditional lines are
+# Docker comments and ${VARS} are substituted by the renderer). Build the
+# rendered per-service Dockerfiles.
+# ============================================================================
+
+FROM node:22.16.0-alpine@sha256:41e4389f3d988d2ed55392df4db1420ad048ae53324a8e2b7c6d19508288107e AS builder
 WORKDIR /app
 
 RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
@@ -15,12 +45,11 @@ RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Ret
 COPY services/core/auth-service/src ./services/core/auth-service/src
 COPY services/core/auth-service/tsconfig*.json ./services/core/auth-service/
 COPY services/core/auth-service/prisma ./services/core/auth-service/prisma
+COPY scripts/generate-prisma-clients.sh ./scripts/generate-prisma-clients.sh
+RUN bash scripts/generate-prisma-clients.sh
+RUN pnpm --filter ./services/core/auth-service run build
 
-RUN for i in 1 2 3 4 5; do pnpm --filter @azeebo/auth-service prisma:generate && break || (echo "Retry prisma generate $i/5..." && sleep 15); done
-RUN pnpm --filter @azeebo/auth-service run build
-
-# T-C12: Pin runner stage to same digest as builder
-FROM node:22.16.0-alpine AS runner
+FROM node:22.16.0-alpine@sha256:41e4389f3d988d2ed55392df4db1420ad048ae53324a8e2b7c6d19508288107e AS runner
 WORKDIR /app
 
 LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"
@@ -32,23 +61,21 @@ RUN apk add --no-cache tini && \
     adduser -S nodejs -u 65532 && \
     for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY services/core/auth-service/package.json ./services/core/auth-service/
+COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --chown=nodejs:nodejs services/core/auth-service/package.json ./services/core/auth-service/
 # Copy workspace packages so @azeebo/shared-types, @azeebo/security,
 # @azeebo/logger, etc. are resolvable at runtime (pnpm install creates
 # symlinks under node_modules pointing into packages/).
-COPY packages ./packages
+COPY --chown=nodejs:nodejs packages ./packages
 
 RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
-COPY --from=builder /app/services/core/auth-service/dist ./services/core/auth-service/dist
-COPY --from=builder /app/services/core/auth-service/prisma ./services/core/auth-service/prisma
-# The compiled prisma.service.js requires ../../prisma/client, resolved from
-# dist/services/core/auth-service/src/modules/database/prisma.service.js →
-# dist/services/core/auth-service/src/prisma/client. The prisma generate step
-# inside the builder stage emits the client to src/prisma/client (per the
-# schema's `output = "../src/prisma/client"`), so copy it from there.
-COPY --from=builder /app/services/core/auth-service/src/prisma ./services/core/auth-service/dist/services/core/auth-service/src/prisma
+COPY --chown=nodejs:nodejs --from=builder /app/services/core/auth-service/dist ./services/core/auth-service/dist
+COPY --chown=nodejs:nodejs --from=builder /app/services/core/auth-service/prisma ./services/core/auth-service/prisma
+# The compiled prisma.service.js resolves the client relative to its dist
+# location, so mirror the generated src/prisma tree into the mirrored dist
+# path of the service.
+COPY --chown=nodejs:nodejs --from=builder /app/services/core/auth-service/src/prisma ./services/core/auth-service/dist/services/core/auth-service/src/prisma
 
 RUN chown -R nodejs:nodejs /app
 

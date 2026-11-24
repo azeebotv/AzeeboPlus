@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiClient } from '../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { analytics } from '../src/utils/analytics';
-import { defaultImages } from '../src/theme';
+import { defaultImages, colors } from '../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
 
@@ -86,9 +87,7 @@ export default function VerticalTitleScreen() {
         apiClient.get<TimelineItem[]>(`/vertical/titles/${id}/timeline`),
       ]);
       setTitleData(titleRes);
-      try {
-        analytics.verticalTitleViewed(titleRes.id);
-      } catch {}
+      analytics.verticalTitleViewed(titleRes.id);
       setCharacters(charsRes);
       setLoreData(loreRes);
       setTimeline(timelineRes);
@@ -105,7 +104,7 @@ export default function VerticalTitleScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Vertical Title Screen" style={styles.container}>
         <LoadingState text="Loading title..." />
       </SafeAreaView>
     );
@@ -128,7 +127,7 @@ export default function VerticalTitleScreen() {
             style={styles.heroImage}
           />
           <View style={styles.heroOverlay}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backIcon}>←</Text>
             </TouchableOpacity>
             <View style={styles.heroContent}>
@@ -161,10 +160,10 @@ export default function VerticalTitleScreen() {
               {isFollowing ? '✓ Following' : '+ Follow'}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.watchButton}>
+          <TouchableOpacity accessibilityRole="button" style={styles.watchButton}>
             <Text style={styles.watchButtonText}>▶ Watch Now</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shareButton}>
+          <TouchableOpacity accessibilityRole="button" style={styles.shareButton}>
             <Text style={styles.shareIcon}>↗️</Text>
           </TouchableOpacity>
         </View>
@@ -224,7 +223,7 @@ export default function VerticalTitleScreen() {
           {activeTab === 'characters' && (
             <View style={styles.charactersList}>
               {characters.map((character) => (
-                <TouchableOpacity key={character.id} style={styles.characterCard}>
+                <TouchableOpacity accessibilityRole="button" key={character.id} style={styles.characterCard}>
                   <View style={styles.characterAvatar}>
                     <Text style={styles.characterAvatarText}>{character.avatar}</Text>
                   </View>
@@ -333,7 +332,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   genreBadge: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -382,10 +381,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
   },
   followButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   followButtonText: {
     color: '#fff',
@@ -395,7 +394,7 @@ const styles = StyleSheet.create({
   followButtonTextActive: {},
   watchButton: {
     flex: 1,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
@@ -409,7 +408,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 8,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -419,7 +418,7 @@ const styles = StyleSheet.create({
   tabsContainer: {
     backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: colors.bg.tertiary,
   },
   tabs: {
     flexDirection: 'row',
@@ -433,15 +432,15 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabActive: {
-    borderBottomColor: '#E8420A',
+    borderBottomColor: brand.flame,
   },
   tabText: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
     fontWeight: '600',
   },
   tabTextActive: {
-    color: '#E8420A',
+    color: brand.flame,
   },
   content: {
     padding: 16,
@@ -473,7 +472,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -481,11 +480,11 @@ const styles = StyleSheet.create({
   castAvatarText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#E8420A',
+    color: brand.flame,
   },
   castName: {
     fontSize: 12,
-    color: '#888',
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   charactersList: {
@@ -502,7 +501,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -519,18 +518,18 @@ const styles = StyleSheet.create({
   },
   characterRole: {
     fontSize: 12,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '600',
     marginBottom: 4,
   },
   characterActor: {
     fontSize: 12,
-    color: '#888',
+    color: colors.text.secondary,
     marginBottom: 6,
   },
   characterDescription: {
     fontSize: 13,
-    color: '#aaa',
+    color: colors.neutral[400],
     lineHeight: 18,
   },
   loreList: {
@@ -547,7 +546,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -564,7 +563,7 @@ const styles = StyleSheet.create({
   },
   loreText: {
     fontSize: 13,
-    color: '#888',
+    color: colors.text.secondary,
     lineHeight: 20,
   },
   timeline: {},
@@ -579,12 +578,12 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     marginVertical: 8,
   },
   timelineContent: {
@@ -598,12 +597,12 @@ const styles = StyleSheet.create({
   },
   timelineEpisode: {
     fontSize: 12,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '600',
   },
   timelineYear: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   timelineTitle: {
     fontSize: 15,
@@ -612,6 +611,6 @@ const styles = StyleSheet.create({
   },
   timelineDescription: {
     fontSize: 13,
-    color: '#888',
+    color: colors.text.secondary,
   },
 });

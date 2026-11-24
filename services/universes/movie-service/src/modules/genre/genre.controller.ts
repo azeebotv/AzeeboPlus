@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, AdminGuard, Public } from '@azeebo/security';
 import { GenreService } from './genre.service.js';
 
 @ApiTags('Genres')
@@ -19,6 +19,7 @@ import { GenreService } from './genre.service.js';
 export class GenreController {
   constructor(@Inject(GenreService) private readonly genreService: GenreService) {}
 
+  @Public()
   @Get()
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -28,6 +29,7 @@ export class GenreController {
     return this.genreService.listGenres({ activeOnly: activeOnly !== 'false' });
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get genre by ID' })
   @ApiResponse({ status: 200, description: 'Genre details' })
@@ -36,6 +38,7 @@ export class GenreController {
     return this.genreService.getGenreById(id);
   }
 
+  @Public()
   @Get('slug/:slug')
   @ApiOperation({ summary: 'Get genre by slug' })
   @ApiResponse({ status: 200, description: 'Genre details' })
@@ -44,6 +47,7 @@ export class GenreController {
     return this.genreService.getGenreBySlug(slug);
   }
 
+  @Public()
   @Get(':id/movies')
   @ApiOperation({ summary: 'Get movies by genre' })
   @ApiResponse({ status: 200, description: 'Movies in genre' })

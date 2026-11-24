@@ -6,9 +6,24 @@ import BrandLogo from '../auth/BrandLogo';
 
 interface AppFooterProps {
   siteName?: string;
+  logoVariant?: 'light' | 'orange';
+  logoHeight?: number;
 }
 
-export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): React.JSX.Element {
+// Footer chrome on the generated `az-*` vocabulary: the legacy brand aliases
+// collapse onto `az-flame` / `az-surface-root`, the label roles become type
+// utilities, and the 12px/16px corners move onto the radius tokens they already
+// matched (`rounded-az-card` / `rounded-az-panel`).
+const FOOTER_STORE_BADGE_CLS =
+  'flex items-center gap-3 px-5 py-3 min-w-[180px] rounded-az-card text-az-ink/50 hover:text-az-ink hover:bg-az-glass-fill transition-all duration-200 border border-az-ink/8 whitespace-nowrap';
+const FOOTER_STORE_KICKER_CLS = 'az-micro-label text-az-ink/30';
+const FOOTER_STORE_LABEL_CLS = 'az-body-strong text-az-ink -mt-0.5';
+
+export default function AppFooter({
+  siteName = 'Azeebo+',
+  logoVariant = 'light',
+  logoHeight,
+}: AppFooterProps): React.JSX.Element {
   const { t } = useTranslation();
   const FOOTER_LINKS = {
     platform: {
@@ -30,6 +45,7 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
         { label: t('footer.comedy'), href: '/browse?category=comedy' },
         { label: t('footer.sports'), href: '/browse?category=sports' },
         { label: t('footer.lifestyle'), href: '/browse?category=lifestyle' },
+        { label: t('footer.music'), href: '/music' },
       ],
     },
     support: {
@@ -46,7 +62,7 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
       links: [
         { label: t('footer.terms'), href: '/terms' },
         { label: t('footer.privacy'), href: '/privacy' },
-        { label: t('footer.cookiePolicy'), href: '/privacy#cookies' },
+        { label: t('footer.cookiePolicy'), href: '/cookies' },
         { label: t('footer.guidelines'), href: '/guidelines' },
       ],
     },
@@ -148,16 +164,15 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
   };
 
   return (
-    <footer
-      className="relative"
-      style={{ backgroundColor: 'var(--brand-near-black)' }}
-      role="contentinfo"
-    >
-      {/* Ambient glow */}
+    <footer className="relative bg-az-surface-root" role="contentinfo">
+      {/* Ambient glow — `.az-ambient-red` only draws a centred circle, so the
+          top-weighted ellipse Figma puts behind the footer stays inline here,
+          already pointed at the scarlet token. */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at top, rgba(232,66,10,0.06), transparent 60%)',
+          background:
+            'radial-gradient(ellipse at top, color-mix(in srgb, var(--color-az-scarlet) 6%, transparent), transparent 60%)',
         }}
         aria-hidden="true"
       />
@@ -168,28 +183,21 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
           <div className="sm:col-span-2 lg:col-span-4">
             <Link
               href="/"
-              className="inline-block focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--brand-near-black)] rounded-lg"
+              className="inline-block focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame focus-visible:ring-offset-2 focus-visible:ring-offset-az-surface-root rounded-lg"
               aria-label={t('footer.homeAria', { siteName })}
             >
-              <BrandLogo variant="orange" />
+              <BrandLogo variant={logoVariant} height={logoHeight} />
             </Link>
-            <p className="text-white/40 text-sm mt-4 max-w-xs leading-relaxed">
+            <p className="text-az-ink/40 text-sm mt-4 max-w-xs leading-relaxed">
               {t('footer.description')}
             </p>
 
             {/* Newsletter Signup */}
             <div className="mt-6">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-white/30 mb-3">
-                {t('footer.newsletterHeading')}
-              </h3>
+              <h3 className="az-overline text-az-ink/30 mb-3">{t('footer.newsletterHeading')}</h3>
               {newsletterStatus === 'success' ? (
                 <div
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm"
-                  style={{
-                    background: 'rgba(34,197,94,0.1)',
-                    color: '#4ade80',
-                    border: '1px solid rgba(34,197,94,0.2)',
-                  }}
+                  className="flex items-center gap-2 px-4 py-3 rounded-az-card text-sm bg-az-success-500/10 text-az-success-500 border border-az-success-500/20"
                   role="status"
                 >
                   <svg
@@ -220,10 +228,10 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                           setEmail(e.target.value);
                           if (emailError) validateEmail(e.target.value);
                         }}
-                        className={`w-full px-4 py-2.5 rounded-xl text-sm text-white placeholder-white/25 bg-white/5 border transition-all outline-none ${
+                        className={`w-full px-4 py-2.5 rounded-az-card text-sm text-az-ink placeholder:text-az-glass-placeholder bg-az-glass-fill border transition-all outline-none ${
                           emailError
-                            ? 'border-red-500/50 focus:border-red-500'
-                            : 'border-white/8 focus:border-[#E8420A]/50 focus:bg-white/10'
+                            ? 'border-az-error-500/50 focus:border-az-error-500'
+                            : 'border-az-ink/8 focus:border-az-flame/50 focus:bg-az-glass-card'
                         }`}
                         aria-invalid={!!emailError}
                         aria-describedby={emailError ? 'newsletter-error' : undefined}
@@ -233,11 +241,7 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                     <button
                       type="submit"
                       disabled={newsletterStatus === 'loading'}
-                      className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 hover:shadow-lg"
-                      style={{
-                        background: 'linear-gradient(135deg, #E8420A, #CC1C1C)',
-                        boxShadow: '0 4px 14px rgba(232,66,10,0.2)',
-                      }}
+                      className="az-cta-small px-5 py-2.5 rounded-az-card text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 shadow-az-glow"
                     >
                       {newsletterStatus === 'loading' ? (
                         <svg
@@ -266,12 +270,16 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                     </button>
                   </div>
                   {emailError && (
-                    <p id="newsletter-error" className="text-red-400 text-xs mt-1.5" role="alert">
+                    <p
+                      id="newsletter-error"
+                      className="az-caption text-az-error-400 mt-1.5"
+                      role="alert"
+                    >
                       {emailError}
                     </p>
                   )}
                   {newsletterStatus === 'error' && (
-                    <p className="text-red-400 text-xs mt-1.5" role="alert">
+                    <p className="az-caption text-az-error-400 mt-1.5" role="alert">
                       {t('footer.errorGeneric')}
                     </p>
                   )}
@@ -289,7 +297,7 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 rounded-xl text-white/35 hover:text-white transition-all duration-200 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]"
+                    className="p-2.5 rounded-az-card text-az-ink/35 hover:text-az-ink transition-all duration-200 hover:bg-az-glass-card focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame"
                     aria-label={t('footer.socialAria', { social: social.label })}
                   >
                     {social.icon}
@@ -302,15 +310,13 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
           {/* Link Columns */}
           {Object.values(FOOTER_LINKS).map((column) => (
             <div key={column.heading} className="lg:col-span-2">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-white/30 mb-4">
-                {column.heading}
-              </h3>
+              <h3 className="az-overline text-az-ink/30 mb-4">{column.heading}</h3>
               <ul className="space-y-3" role="list">
                 {column.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-white/50 hover:text-[#E8420A] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:rounded"
+                      className="text-sm text-az-ink/50 hover:text-az-flame transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame focus-visible:rounded"
                     >
                       {link.label}
                     </Link>
@@ -322,15 +328,13 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
 
           {/* App Download */}
           <div className="lg:col-span-2">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white/30 mb-4">
-              {t('footer.getTheApp')}
-            </h3>
+            <h3 className="az-overline text-az-ink/30 mb-4">{t('footer.getTheApp')}</h3>
             <div className="flex flex-row gap-3">
               <a
                 href="https://apps.apple.com/app/azeebo-plus/id6499489987"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 px-5 py-3 min-w-[180px] rounded-xl text-white/50 hover:text-white hover:bg-white/5 transition-all duration-200 border border-white/8 whitespace-nowrap"
+                className={FOOTER_STORE_BADGE_CLS}
                 aria-label={t('footer.downloadAppStore')}
               >
                 <svg
@@ -343,17 +347,15 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                 </svg>
                 <div>
                   {' '}
-                  <p className="text-[10px] uppercase tracking-wider text-white/30">
-                    {t('footer.downloadOn')}
-                  </p>
-                  <p className="text-sm font-semibold text-white -mt-0.5">{t('footer.appStore')}</p>
+                  <p className={FOOTER_STORE_KICKER_CLS}>{t('footer.downloadOn')}</p>
+                  <p className={FOOTER_STORE_LABEL_CLS}>{t('footer.appStore')}</p>
                 </div>
               </a>
               <a
                 href="https://play.google.com/store/apps/details?id=com.azeebo.plus"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 px-5 py-3 min-w-[180px] rounded-xl text-white/50 hover:text-white hover:bg-white/5 transition-all duration-200 border border-white/8 whitespace-nowrap"
+                className={FOOTER_STORE_BADGE_CLS}
                 aria-label={t('footer.downloadGooglePlay')}
               >
                 <svg
@@ -366,12 +368,8 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                 </svg>
                 <div>
                   {' '}
-                  <p className="text-[10px] uppercase tracking-wider text-white/30">
-                    {t('footer.getItOn')}
-                  </p>
-                  <p className="text-sm font-semibold text-white -mt-0.5">
-                    {t('footer.googlePlay')}
-                  </p>
+                  <p className={FOOTER_STORE_KICKER_CLS}>{t('footer.getItOn')}</p>
+                  <p className={FOOTER_STORE_LABEL_CLS}>{t('footer.googlePlay')}</p>
                 </div>
               </a>
             </div>
@@ -379,39 +377,36 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
         </div>
 
         {/* Bottom Bar */}
-        <div
-          className="mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
-        >
-          <div className="flex items-center gap-2 text-sm text-white/30">
+        <div className="mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-t-az-ink/6">
+          <div className="flex items-center gap-2 text-sm text-az-ink/30">
             <span>
               &copy; {new Date().getFullYear()} {siteName}
             </span>
-            <span className="text-white/15">|</span>
+            <span className="text-az-ink/15">|</span>
             <span>{t('footer.copyrightCompany')}</span>
           </div>
           <div className="flex items-center gap-5">
             <Link
               href="/terms"
-              className="text-xs text-white/25 hover:text-white/50 transition-colors"
+              className="text-xs text-az-ink/25 hover:text-az-ink/50 transition-colors"
             >
               {t('footer.bottomTerms')}
             </Link>
             <Link
               href="/privacy"
-              className="text-xs text-white/25 hover:text-white/50 transition-colors"
+              className="text-xs text-az-ink/25 hover:text-az-ink/50 transition-colors"
             >
               {t('footer.bottomPrivacy')}
             </Link>
             <Link
               href="/support"
-              className="text-xs text-white/25 hover:text-white/50 transition-colors"
+              className="text-xs text-az-ink/25 hover:text-az-ink/50 transition-colors"
             >
               {t('footer.bottomSupport')}
             </Link>
             <Link
               href="/guidelines"
-              className="text-xs text-white/25 hover:text-white/50 transition-colors"
+              className="text-xs text-az-ink/25 hover:text-az-ink/50 transition-colors"
             >
               {t('footer.bottomGuidelines')}
             </Link>
@@ -423,23 +418,20 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
       <button
         onClick={scrollToTop}
         className={`
-          fixed bottom-6 right-6 z-50 p-3 rounded-full shadow-2xl
+          fixed bottom-6 right-6 z-50 p-3 rounded-full
+          bg-[image:var(--gradient-az-cta)] shadow-az-glow
           transition-all duration-300 ease-out
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame focus-visible:ring-offset-2
           ${
             showBackToTop
               ? 'opacity-100 translate-y-0 pointer-events-auto'
               : 'opacity-0 translate-y-4 pointer-events-none'
           }
         `}
-        style={{
-          background: 'linear-gradient(135deg, #E8420A, #CC1C1C)',
-          boxShadow: '0 8px 24px rgba(232,66,10,0.3)',
-        }}
         aria-label={t('footer.backToTop')}
       >
         <svg
-          className="w-5 h-5 text-white"
+          className="w-5 h-5 text-az-ink"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

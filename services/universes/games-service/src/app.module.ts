@@ -8,9 +8,10 @@ import { TournamentModule } from './modules/tournament/tournament.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { AdminModule } from './modules/admin/admin.module.js';
-import { RateLimiterModule } from '@azeebo/security';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { RateLimiterModule, ServiceAuthGuard, SecurityModule } from '@azeebo/security';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, gamesFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -19,12 +20,25 @@ import { CacheModule } from '@azeebo/shared-services';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
+    SecurityModule,
     CacheModule,
     DatabaseModule,
     GamesModule,
     GameCatalogModule,
     TournamentModule,
     HealthModule,
+    // Games toggles: tournament engine, AI trivia, and seasonal leaderboards
+    // all default OFF until the features launch.
+    FlagMetricsModule.register({ service: 'games-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('games-service'),
+      defaultFlags: {
+        [gamesFlags.tournamentsEnabled]: false,
+        [gamesFlags.triviaAi]: false,
+        [gamesFlags.leaderboardsSeasonal]: false,
+      },
+    }),
     AdminModule,
   ],
   providers: [

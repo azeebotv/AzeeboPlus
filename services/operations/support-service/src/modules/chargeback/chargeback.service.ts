@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client/index.js';
@@ -145,7 +146,7 @@ export class ChargebackService {
         this.logger.error(
           `Failed to process chargeback resolution ${id}: ${(error as Error).message}`
         );
-        throw new BadRequestException('Failed to process chargeback resolution');
+        mapAndThrow(error, 'processing chargeback resolution');
       }
     } else {
       try {
@@ -159,9 +160,7 @@ export class ChargebackService {
         this.logger.log(`Chargeback lost: payment ${chargeback.paymentId}`);
       } catch (error) {
         this.logger.error(`Failed to update payment service: ${(error as Error).message}`);
-        throw new BadRequestException(
-          `Failed to update payment service for chargeback ${id}. Requires manual intervention.`
-        );
+        mapAndThrow(error, 'updating payment service for chargeback');
       }
     }
 

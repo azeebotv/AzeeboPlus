@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { api } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { useUniversesQuery } from '@/hooks/useUniverses';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
 
@@ -14,15 +15,7 @@ export default function ComedyPlayerPage(): React.JSX.Element {
     analytics.pageView('comedy-player');
   }, []);
 
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
-      return res.data;
-    },
-    staleTime: 300000,
-  });
+  const universesQuery = useUniversesQuery();
 
   const comedyUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'comedy');
 
@@ -43,142 +36,61 @@ export default function ComedyPlayerPage(): React.JSX.Element {
   const clips = clipsQuery.data || [];
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Comedy" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Comedy Player</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
-          Browse and play comedy clips, specials, and series
-        </p>
+    <PageShell activeNav="Comedy">
+      <PageHero
+        eyebrow="Comedy Universe"
+        title="Comedy Player"
+        subtitle="Browse and play comedy clips, specials, and series"
+        actions={
+          <>
+            <Link href="/comedy/series" className="az-chip px-4 py-2 az-body-strong text-az-ink">
+              Series
+            </Link>
+            <Link href="/comedy/specials" className="az-chip px-4 py-2 az-body-strong text-az-ink">
+              Specials
+            </Link>
+            <Link href="/comedy/comedians" className="az-chip px-4 py-2 az-body-strong text-az-ink">
+              Comedians
+            </Link>
+          </>
+        }
+      />
 
-        <div style={{ display: 'flex', gap: 12, marginBottom: 32, flexWrap: 'wrap' }}>
-          <Link
-            href="/comedy/series"
-            style={{
-              padding: '10px 20px',
-              borderRadius: 8,
-              border: '1px solid var(--border-default)',
-              textDecoration: 'none',
-              color: 'var(--text-primary)',
-              fontSize: 14,
-              fontWeight: 600,
-            }}
-          >
-            Series
-          </Link>
-          <Link
-            href="/comedy/specials"
-            style={{
-              padding: '10px 20px',
-              borderRadius: 8,
-              border: '1px solid var(--border-default)',
-              textDecoration: 'none',
-              color: 'var(--text-primary)',
-              fontSize: 14,
-              fontWeight: 600,
-            }}
-          >
-            Specials
-          </Link>
-          <Link
-            href="/comedy/comedians"
-            style={{
-              padding: '10px 20px',
-              borderRadius: 8,
-              border: '1px solid var(--border-default)',
-              textDecoration: 'none',
-              color: 'var(--text-primary)',
-              fontSize: 14,
-              fontWeight: 600,
-            }}
-          >
-            Comedians
-          </Link>
+      {clipsQuery.isLoading ? (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} height="280px" borderRadius="16px" />
+          ))}
         </div>
-
-        {clipsQuery.isLoading ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} height="280px" borderRadius="16px" />
-            ))}
-          </div>
-        ) : clipsQuery.error ? (
-          <ErrorState title="Failed to load comedy clips" />
-        ) : clips.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-            No comedy clips available yet.
-          </p>
-        ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {clips.map((clip) => (
-              <Link
-                key={clip.id}
-                href={`/comedy/player/${clip.id}`}
-                style={{
-                  textDecoration: 'none',
-                  borderRadius: 16,
-                  overflow: 'hidden',
-                  border: '1px solid var(--border-default)',
-                }}
-              >
-                <div
-                  style={{
-                    position: 'relative',
-                    aspectRatio: '16/9',
-                    backgroundColor: 'var(--bg-tertiary)',
-                  }}
-                >
-                  {clip.thumbnail && (
-                    <OptimizedImage src={clip.thumbnail} alt="" fill className="object-cover" />
-                  )}
-                </div>
-                <div style={{ padding: 12 }}>
-                  <h3
-                    style={{
-                      fontWeight: 600,
-                      fontSize: 14,
-                      color: 'var(--text-primary)',
-                      margin: 0,
-                    }}
-                  >
-                    {clip.title}
-                  </h3>
-                  {clip.description && (
-                    <p
-                      style={{
-                        color: 'var(--text-secondary)',
-                        fontSize: 12,
-                        margin: '4px 0 0',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {clip.description}
-                    </p>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </main>
-      <AppFooter />
-    </div>
+      ) : clipsQuery.error ? (
+        <ErrorState title="Failed to load comedy clips" />
+      ) : clips.length === 0 ? (
+        <div className="az-glass px-6 py-16 text-center">
+          <p className="az-lead text-az-ink">No comedy clips available yet.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+          {clips.map((clip) => (
+            <Link
+              key={clip.id}
+              href={`/comedy/player/${clip.id}`}
+              className="az-glass block overflow-hidden"
+            >
+              <div className="relative aspect-video bg-az-surface-raised">
+                {clip.thumbnail && (
+                  <OptimizedImage src={clip.thumbnail} alt="" fill className="object-cover" />
+                )}
+              </div>
+              <div className="p-3">
+                <h3 className="az-body-strong text-az-ink">{clip.title}</h3>
+                {clip.description && (
+                  <p className="az-caption text-az-ink-muted mt-1 truncate">{clip.description}</p>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </PageShell>
   );
 }

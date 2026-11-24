@@ -7,7 +7,6 @@ import {
   Delete,
   Body,
   Param,
-  ParseUUIDPipe,
   UseGuards,
   Request,
   Query,
@@ -21,6 +20,9 @@ import { CacheInterceptor, Cache } from '@azeebo/shared-services';
 
 import { ContentService } from './content.service.js';
 import { AccessControlService } from './access-control.service.js';
+import { ContentReleaseSchedulerService } from './content-release-scheduler.service.js';
+import { ContentVersioningService } from './content-versioning.service.js';
+import { ACDPValidationService } from './content-acdp-validation.service.js';
 import { CreateContentDto } from './dto/create-content.dto.js';
 import { UpdateContentDto } from './dto/update-content.dto.js';
 import { CreateMediaAssetDto } from './dto/create-media-asset.dto.js';
@@ -34,7 +36,11 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 export class ContentController {
   constructor(
     @Inject(ContentService) private readonly contentService: ContentService,
-    @Inject(AccessControlService) private readonly accessControlService: AccessControlService
+    @Inject(AccessControlService) private readonly accessControlService: AccessControlService,
+    @Inject(ContentReleaseSchedulerService)
+    private readonly releaseScheduler: ContentReleaseSchedulerService,
+    @Inject(ContentVersioningService) private readonly versioningService: ContentVersioningService,
+    @Inject(ACDPValidationService) private readonly acdpValidation: ACDPValidationService
   ) {}
 
   // ========================
@@ -223,6 +229,9 @@ export class ContentController {
   }
 
   // Category endpoints
+  // Categories are rendered on the public /browse page for logged-out
+  // visitors (featured + universes already are) — reads must be public too.
+  @Public()
   @Get('categories')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
@@ -232,7 +241,10 @@ export class ContentController {
     return this.contentService.getCategories();
   }
 
+  @Public()
   @Get('categories/:id/content')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get content by category' })
   @ApiResponse({ status: 200, description: 'Content list' })
   async getContentByCategory(@Param('id') id: string): Promise<ContentResponse> {
@@ -538,13 +550,14 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addCommentToContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { text?: string; content?: string }
+    @Param('id') id: string,
+    @Body() body: { text?: string; content?: string; parentId?: string }
   ): Promise<ContentResponse> {
     return this.contentService.addCommentToContent(
       req.user.id,
       id,
-      body.text || body.content || ''
+      body.text || body.content || '',
+      body.parentId
     );
   }
 
@@ -557,13 +570,52 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createMediaAsset(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() createMediaAssetDto: CreateMediaAssetDto
   ): Promise<ContentResponse> {
     return this.contentService.createMediaAsset(
       req.user.id,
       id,
       createMediaAssetDto,
+      req.user.role
+    );
+  }
+
+  @Post(':id/media/upload-url')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Get a presigned upload URL for content media' })
+  @ApiResponse({ status: 201, description: 'Upload URL created' })
+  @ApiResponse({ status: 404, description: 'Content not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createMediaUploadUrl(
+    @Request() req: { user: { id: string; role?: string } },
+    @Param('id') id: string,
+    @Body() body: { fileName: string; fileSize: number; contentType: string }
+  ): Promise<{
+    success: boolean;
+    data: { signedUrl: string; mediaAssetId: string };
+  }> {
+    return this.contentService.createMediaUploadUrl(req.user.id, id, body, req.user.role);
+  }
+
+  @Post(':id/media/complete')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Complete a direct upload and register the media asset' })
+  @ApiResponse({ status: 201, description: 'Media asset registered' })
+  @ApiResponse({ status: 400, description: 'Upload not found in storage' })
+  @ApiResponse({ status: 404, description: 'Content not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async completeMediaUpload(
+    @Request() req: { user: { id: string; role?: string } },
+    @Param('id') id: string,
+    @Body() body: { mediaAssetId: string }
+  ): Promise<ContentResponse> {
+    return this.contentService.completeMediaUpload(
+      req.user.id,
+      id,
+      body.mediaAssetId,
       req.user.role
     );
   }
@@ -577,7 +629,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generateThumbnail(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() body: { width?: number; height?: number; quality?: number }
   ): Promise<ContentResponse> {
     return this.contentService.generateThumbnail(id, body);
@@ -590,7 +642,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async publishContent(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.publishContent(req.user.id, id, req.user.role);
   }
@@ -602,7 +654,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unpublishContent(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.unpublishContent(req.user.id, id, req.user.role);
   }
@@ -614,7 +666,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async reportContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() body: { type: string; reason: string }
   ): Promise<ContentResponse> {
     return this.contentService.reportContent(req.user.id, id, body);
@@ -627,7 +679,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async startTranscoding(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() body: { formats?: string[]; resolutions?: string[]; bitrates?: number[] }
   ): Promise<ContentResponse> {
     return this.contentService.startTranscoding(id, body);
@@ -638,10 +690,7 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Scan result' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async scanContentForSafety(
-    @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string
-  ) {
+  async scanContentForSafety(@Request() _req: { user: { id: string } }, @Param('id') id: string) {
     const result = await this.contentService.scanContentForSafety(id);
     return ApiResponseWrapper.success(result);
   }
@@ -653,8 +702,8 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addCategoryToContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('categoryId', ParseUUIDPipe) categoryId: string
+    @Param('id') id: string,
+    @Param('categoryId') categoryId: string
   ): Promise<ContentResponse> {
     return this.contentService.addCategoryToContent(req.user.id, id, categoryId);
   }
@@ -666,8 +715,8 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addTagToContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('tagId', ParseUUIDPipe) tagId: string
+    @Param('id') id: string,
+    @Param('tagId') tagId: string
   ): Promise<ContentResponse> {
     return this.contentService.addTagToContent(req.user.id, id, tagId);
   }
@@ -679,7 +728,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addContentRelationship(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() body: { relatedContentId: string; type: string }
   ): Promise<ContentResponse> {
     return this.contentService.addContentRelationship(
@@ -701,7 +750,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateContent(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() updateContentDto: UpdateContentDto
   ): Promise<ContentResponse> {
     return this.contentService.updateContent(req.user.id, id, updateContentDto, req.user.role);
@@ -714,7 +763,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateMediaAsset(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() updateMediaAssetDto: UpdateMediaAssetDto
   ): Promise<ContentResponse> {
     return this.contentService.updateMediaAsset(
@@ -733,7 +782,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateCategory(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body()
     body: { name?: string; slug?: string; description?: string; icon?: string; color?: string }
   ): Promise<ContentResponse> {
@@ -755,7 +804,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateTag(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() body: { name?: string; description?: string }
   ): Promise<ContentResponse> {
     return this.contentService.updateTag(id, body.name, body.description);
@@ -772,7 +821,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteContent(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteContent(req.user.id, id, req.user.role);
   }
@@ -784,7 +833,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteMediaAsset(
     @Request() req: { user: { id: string; role?: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteMediaAsset(req.user.id, id, req.user.role);
   }
@@ -796,8 +845,8 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeCategoryFromContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('categoryId', ParseUUIDPipe) categoryId: string
+    @Param('id') id: string,
+    @Param('categoryId') categoryId: string
   ): Promise<ContentResponse> {
     return this.contentService.removeCategoryFromContent(req.user.id, id, categoryId);
   }
@@ -809,8 +858,8 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeTagFromContent(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('tagId', ParseUUIDPipe) tagId: string
+    @Param('id') id: string,
+    @Param('tagId') tagId: string
   ): Promise<ContentResponse> {
     return this.contentService.removeTagFromContent(req.user.id, id, tagId);
   }
@@ -822,8 +871,8 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeContentRelationship(
     @Request() req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('relatedContentId', ParseUUIDPipe) relatedContentId: string
+    @Param('id') id: string,
+    @Param('relatedContentId') relatedContentId: string
   ): Promise<ContentResponse> {
     return this.contentService.removeContentRelationship(req.user.id, id, relatedContentId);
   }
@@ -837,7 +886,7 @@ export class ContentController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async deleteCategory(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteCategory(id);
   }
@@ -851,8 +900,138 @@ export class ContentController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async deleteTag(
     @Request() _req: { user: { id: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteTag(id);
+  }
+
+  // ========================
+  // Versioning endpoints
+  // ========================
+
+  @Get(':id/versions')
+  @ApiOperation({ summary: 'Get content version history' })
+  @ApiResponse({ status: 200, description: 'Version history' })
+  async getVersionHistory(@Param('id') id: string) {
+    const versions = await this.versioningService.getVersionHistory(id);
+    return ApiResponseWrapper.success(versions);
+  }
+
+  @Get(':id/versions/:versionNumber')
+  @ApiOperation({ summary: 'Get specific content version' })
+  @ApiResponse({ status: 200, description: 'Version detail' })
+  async getVersion(@Param('id') id: string, @Param('versionNumber') versionNumber: string) {
+    const version = await this.versioningService.getVersion(id, Number(versionNumber));
+    return ApiResponseWrapper.success(version);
+  }
+
+  @Post(':id/versions')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Create content version snapshot (admin)' })
+  @ApiResponse({ status: 201, description: 'Version created' })
+  async createVersionSnapshot(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string,
+    @Body() body: { changeNote?: string }
+  ) {
+    const version = await this.versioningService.createSnapshot(id, req.user.id, body.changeNote);
+    return ApiResponseWrapper.success(version);
+  }
+
+  @Post(':id/versions/:versionNumber/rollback')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Rollback content to specific version (admin)' })
+  @ApiResponse({ status: 200, description: 'Rollback successful' })
+  async rollbackToVersion(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string,
+    @Param('versionNumber') versionNumber: string
+  ) {
+    const result = await this.versioningService.rollbackToVersion(
+      id,
+      Number(versionNumber),
+      req.user.id
+    );
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get(':id/versions/compare')
+  @ApiOperation({ summary: 'Compare two content versions' })
+  @ApiResponse({ status: 200, description: 'Version comparison' })
+  async compareVersions(
+    @Param('id') id: string,
+    @Query('a') versionA: string,
+    @Query('b') versionB: string
+  ) {
+    const result = await this.versioningService.compareVersions(
+      id,
+      Number(versionA),
+      Number(versionB)
+    );
+    return ApiResponseWrapper.success(result);
+  }
+
+  // ========================
+  // Release window validation
+  // ========================
+
+  @Post('validate/release-window')
+  @ApiOperation({ summary: 'Validate release window constraints' })
+  @ApiResponse({ status: 200, description: 'Validation result' })
+  async validateReleaseWindow(
+    @Body()
+    body: {
+      releaseDate?: string;
+      theatricalReleaseDate?: string;
+      streamingReleaseDate?: string;
+      windowEndDate?: string;
+      windowType?: string;
+    }
+  ) {
+    const result = this.releaseScheduler.validateReleaseWindow({
+      releaseDate: body.releaseDate ? new Date(body.releaseDate) : undefined,
+      theatricalReleaseDate: body.theatricalReleaseDate
+        ? new Date(body.theatricalReleaseDate)
+        : undefined,
+      streamingReleaseDate: body.streamingReleaseDate
+        ? new Date(body.streamingReleaseDate)
+        : undefined,
+      windowEndDate: body.windowEndDate ? new Date(body.windowEndDate) : undefined,
+      windowType: body.windowType,
+    });
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get('available')
+  @Public()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get content with active streaming windows' })
+  @ApiResponse({ status: 200, description: 'Available content IDs' })
+  async getAvailableContent(@Query('universeId') universeId?: string) {
+    const ids = await this.releaseScheduler.getAvailableContent(universeId);
+    return ApiResponseWrapper.success(ids);
+  }
+
+  // ========================
+  // ACDP validation
+  // ========================
+
+  @Post('validate/acdp')
+  @ApiOperation({ summary: 'Validate content metadata against ACDP requirements' })
+  @ApiResponse({ status: 200, description: 'ACDP validation result' })
+  async validateACDP(@Body() body: Record<string, unknown>) {
+    const result = this.acdpValidation.validateContentMetadata(body);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Post('validate/universe-fit')
+  @ApiOperation({ summary: 'Validate content fits target universe age rating' })
+  @ApiResponse({ status: 200, description: 'Universe fit validation' })
+  async validateUniverseFit(
+    @Body() body: { content: Record<string, unknown>; universeName: string }
+  ) {
+    const result = this.acdpValidation.validateUniverseFit(body.content, body.universeName);
+    return ApiResponseWrapper.success(result);
   }
 }

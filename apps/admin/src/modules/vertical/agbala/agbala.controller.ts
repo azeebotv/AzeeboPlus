@@ -1,5 +1,6 @@
 import {
   Controller,
+  Inject,
   Get,
   Post,
   Patch,
@@ -11,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  Logger,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { AgbalaService } from './agbala.service';
@@ -38,12 +40,16 @@ function resolveId(result: unknown): string | undefined {
   );
 }
 
-@Controller('admin/vertical/agbala')
+@Controller('admin/agbala')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
 export class AgbalaController {
+  private readonly logger = new Logger(AgbalaController.name);
+
   constructor(
+    @Inject(AgbalaService)
     private readonly agbalaService: AgbalaService,
+    @Inject(AuditLogService)
     private readonly auditLogService: AuditLogService
   ) {}
 
@@ -54,16 +60,39 @@ export class AgbalaController {
     @Query('limit') limit?: string,
     @Query('search') search?: string
   ) {
-    return this.agbalaService.getStoryworlds({
-      page: page ? parseInt(page) : undefined,
-      limit: limit ? parseInt(limit) : undefined,
-      search,
-    });
+    try {
+      return await this.agbalaService.getStoryworlds({
+        page: page ? parseInt(page) : undefined,
+        limit: limit ? parseInt(limit) : undefined,
+        search,
+      });
+    } catch (e) {
+      this.logger.warn(
+        `Agbala vertical-service offline for getStoryworlds: ${(e as Error).message}`
+      );
+      return {
+        success: true,
+        data: [],
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        _offline: true,
+      };
+    }
   }
 
   @Get('storyworlds/:id')
   async getStoryworld(@Param('id') id: string) {
-    return this.agbalaService.getStoryworld(id);
+    try {
+      return await this.agbalaService.getStoryworld(id);
+    } catch (e) {
+      this.logger.warn(
+        `Agbala vertical-service offline for getStoryworld: ${(e as Error).message}`
+      );
+      return { success: false, data: null, message: 'Storyworld unavailable or service offline' };
+    }
   }
 
   @Post('storyworlds')
@@ -115,8 +144,33 @@ export class AgbalaController {
 
   // === Characters ===
   @Get('storyworlds/:storyworldId/characters')
-  async getCharacters(@Param('storyworldId') storyworldId: string) {
-    return this.agbalaService.getCharacters(storyworldId);
+  async getCharacters(
+    @Param('storyworldId') storyworldId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string
+  ) {
+    try {
+      return await this.agbalaService.getCharacters(storyworldId, {
+        page: page ? parseInt(page, 10) : undefined,
+        limit: limit ? parseInt(limit, 10) : undefined,
+        search: search || undefined,
+      });
+    } catch (e) {
+      this.logger.warn(
+        `Agbala vertical-service offline for getCharacters: ${(e as Error).message}`
+      );
+      return {
+        success: true,
+        data: [],
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        _offline: true,
+      };
+    }
   }
 
   @Post('storyworlds/:storyworldId/characters')
@@ -171,6 +225,35 @@ export class AgbalaController {
   }
 
   // === Paths ===
+  @Get('storyworlds/:storyworldId/paths')
+  async getPaths(
+    @Param('storyworldId') storyworldId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string
+  ) {
+    try {
+      return await this.agbalaService.getPaths({
+        storyworldId,
+        page: page ? parseInt(page) : undefined,
+        limit: limit ? parseInt(limit) : undefined,
+        search,
+      });
+    } catch (e) {
+      this.logger.warn(`Agbala vertical-service offline for getPaths: ${(e as Error).message}`);
+      return {
+        success: true,
+        data: [],
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        _offline: true,
+      };
+    }
+  }
+
   @Post('storyworlds/:storyworldId/paths')
   async createPath(
     @Param('storyworldId') storyworldId: string,
@@ -229,11 +312,25 @@ export class AgbalaController {
     @Query('page') page?: string,
     @Query('limit') limit?: string
   ) {
-    return this.agbalaService.getQuizzes({
-      storyworldId,
-      page: page ? parseInt(page) : undefined,
-      limit: limit ? parseInt(limit) : undefined,
-    });
+    try {
+      return await this.agbalaService.getQuizzes({
+        storyworldId,
+        page: page ? parseInt(page) : undefined,
+        limit: limit ? parseInt(limit) : undefined,
+      });
+    } catch (e) {
+      this.logger.warn(`Agbala vertical-service offline for getQuizzes: ${(e as Error).message}`);
+      return {
+        success: true,
+        data: [],
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        _offline: true,
+      };
+    }
   }
 
   @Post('quizzes')
@@ -268,10 +365,26 @@ export class AgbalaController {
   // === Moderation ===
   @Get('moderation/review-queue')
   async getReviewQueue(@Query('page') page?: string, @Query('limit') limit?: string) {
-    return this.agbalaService.getPendingReviews({
-      page: page ? parseInt(page) : undefined,
-      limit: limit ? parseInt(limit) : undefined,
-    });
+    try {
+      return await this.agbalaService.getPendingReviews({
+        page: page ? parseInt(page) : undefined,
+        limit: limit ? parseInt(limit) : undefined,
+      });
+    } catch (e) {
+      this.logger.warn(
+        `Agbala vertical-service offline for getReviewQueue: ${(e as Error).message}`
+      );
+      return {
+        success: true,
+        data: [],
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        _offline: true,
+      };
+    }
   }
 
   @Post('moderation/:contentId/approve')

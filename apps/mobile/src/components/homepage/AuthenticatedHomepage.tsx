@@ -1,16 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { api } from '@/api';
-import type { ContentItem } from '@/api';
-import type { HomepageRecommendationGroup } from '@/api';
+import { api } from '@azeebo/react-data';
+import type { ContentItem } from '@azeebo/react-data';
+import type { HomepageRecommendationGroup } from '@azeebo/react-data';
 import { colors } from '@/theme';
+import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
 import { BrandButton } from '@/components/ui/BrandButton';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
-import { logger } from '@/utils/logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 import HeroCarousel from './HeroCarousel';
 import ContentRow from './ContentRow';
 
@@ -30,13 +31,17 @@ export default function AuthenticatedHomepage({
 }: AuthenticatedHomepageProps) {
   const router = useRouter();
   const { t } = useTranslation();
+  const { isEnabled } = useFlags();
+  // mobile_recommendations-style gating mirrors the web app: the personalized
+  // rail and the newer supplementary rails are server-gated.
+  const showRecommendationsRail = isEnabled('mobile_new_home');
+  const showNewHomeRails = isEnabled('mobile_new_home');
 
   // Section 1: Hero Slides
   const [featuredSlides, setFeaturedSlides] = useState<ContentItem[]>([]);
 
   // Section 2: Recently Watched
   const [recentlyWatched, setRecentlyWatched] = useState<ContentItem[]>([]);
-  const [recentlyWatchedOffset, setRecentlyWatchedOffset] = useState(0);
   const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
@@ -52,7 +57,6 @@ export default function AuthenticatedHomepage({
 
   // Section 5: Supplementary
   const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
-  const [continueWatching] = useState<ContentItem[]>([]);
   const [newReleases, setNewReleases] = useState<ContentItem[]>([]);
   const [popularInRegion, setPopularInRegion] = useState<ContentItem[]>([]);
   const [isLoadingSupplementary, setIsLoadingSupplementary] = useState(true);
@@ -79,58 +83,70 @@ export default function AuthenticatedHomepage({
   // --- Section 2: Recently Watched (with infinite scroll) ---
   const HISTORY_PAGE_SIZE = 10;
 
-  const loadRecentlyWatched = useCallback(
-    async (cancelled?: boolean) => {
-      try {
-        const response = await api.content.getContentList({
-          page: Math.floor(recentlyWatchedOffset / HISTORY_PAGE_SIZE) + 1,
-          limit: HISTORY_PAGE_SIZE,
-        });
-        if (!cancelled && response.success && response.data) {
-          const newItems = response.data.items || [];
-          setRecentlyWatched((prev) =>
-            recentlyWatchedOffset === 0 ? newItems : [...prev, ...newItems]
-          );
-          setHasMoreHistory(newItems.length === HISTORY_PAGE_SIZE);
-        }
-      } catch (error) {
-        if (!cancelled) logger.error('Failed to load recently watched:', error);
-      } finally {
-        if (!cancelled) setIsLoadingHistory(false);
-      }
-    },
-    [recentlyWatchedOffset]
-  );
+  // Single loader keyed by page number. The previous version had two
+  // divergent code paths (initial effect + load-more) mutating
+  // `recentlyWatchedOffset` before the fetch resolved, which duplicated items
+  // on rapid triggers. One guarded, page-indexed loader fixes both.
+  const historyPageRef = useRef(1);
+  const isLoadingMoreHistoryRef = useRef(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    loadRecentlyWatched(cancelled);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const loadMoreHistory = useCallback(async () => {
-    const nextOffset = recentlyWatchedOffset + HISTORY_PAGE_SIZE;
-    setRecentlyWatchedOffset(nextOffset);
+  const loadRecentlyWatched = useCallback(async () => {
+    setIsLoadingHistory(true);
     try {
       const response = await api.content.getContentList({
-        page: Math.floor(nextOffset / HISTORY_PAGE_SIZE) + 1,
+        page: 1,
         limit: HISTORY_PAGE_SIZE,
       });
       if (response.success && response.data) {
-        setRecentlyWatched((prev) => [...prev, ...(response.data?.items || [])]);
-        setHasMoreHistory(response.data.items?.length === HISTORY_PAGE_SIZE);
+        const newItems = response.data.items || [];
+        setRecentlyWatched(newItems);
+        setHasMoreHistory(newItems.length === HISTORY_PAGE_SIZE);
+        historyPageRef.current = 1;
+      }
+    } catch (error) {
+      logger.error('Failed to load recently watched:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadRecentlyWatched();
+  }, [loadRecentlyWatched]);
+
+  const loadMoreHistory = useCallback(async () => {
+    if (isLoadingMoreHistoryRef.current || !hasMoreHistory) return;
+    isLoadingMoreHistoryRef.current = true;
+    const nextPage = historyPageRef.current + 1;
+    try {
+      const response = await api.content.getContentList({
+        page: nextPage,
+        limit: HISTORY_PAGE_SIZE,
+      });
+      if (response.success && response.data) {
+        const newItems = response.data.items || [];
+        setRecentlyWatched((prev) => {
+          const seen = new Set(prev.map((i) => i.id));
+          return [...prev, ...newItems.filter((i) => !seen.has(i.id))];
+        });
+        setHasMoreHistory(newItems.length === HISTORY_PAGE_SIZE);
+        historyPageRef.current = nextPage;
       }
     } catch (error) {
       logger.error('Failed to load more history:', error);
+    } finally {
+      isLoadingMoreHistoryRef.current = false;
     }
-  }, [recentlyWatchedOffset]);
+  }, [hasMoreHistory]);
 
-  const recentlyWatchedProgressMap: Record<string, number> = {};
-  recentlyWatched.forEach((item) => {
-    recentlyWatchedProgressMap[item.id] = 0;
-  });
+  // Real resume positions when the history feed supplies them; 0 otherwise.
+  const recentlyWatchedProgressMap: Record<string, number> = useMemo(() => {
+    const map: Record<string, number> = {};
+    recentlyWatched.forEach((item) => {
+      map[item.id] = item.watchProgress ?? 0;
+    });
+    return map;
+  }, [recentlyWatched]);
 
   // --- Section 3: Universe-Specific Content ---
   useEffect(() => {
@@ -310,8 +326,8 @@ export default function AuthenticatedHomepage({
         </View>
       ) : null}
 
-      {/* ===== Section 4: Personalized Recommendations ===== */}
-      {recommendationGroups.length > 0 ? (
+      {/* ===== Section 4: Personalized Recommendations (gated by mobile_new_home) ===== */}
+      {showRecommendationsRail && recommendationGroups.length > 0 ? (
         <View testID="recommendation-sections">
           {recommendationGroups.map((group, index) => (
             <ScrollReveal key={`${group.title}-${index}`}>
@@ -327,50 +343,48 @@ export default function AuthenticatedHomepage({
         </View>
       ) : null}
 
-      {/* ===== Section 5: Supplementary Sections ===== */}
+      {/* ===== Section 5: Supplementary Sections (gated by mobile_new_home) ===== */}
+      {showNewHomeRails ? (
+        <>
+          {/* Continue Watching was removed: it rendered a permanently-empty
+              rail with a hard-coded 50% progress fabrication. Real Continue
+              Watching needs a history-backed query — the Recently Watched rail
+              above already shows true per-item resume progress from watch
+              history. */}
 
-      {/* Continue Watching */}
-      <ContentRow
-        title={t('home.continueWatching')}
-        subtitle={t('home.continueWatchingSubtitle')}
-        sectionId="continue-watching"
-        items={continueWatching}
-        isLoading={isLoadingSupplementary}
-        showProgress
-        progressMap={Object.fromEntries(continueWatching.map((c) => [c.id, 0.5]))}
-      />
+          {/* Trending Now */}
+          <ContentRow
+            title={t('home.trending')}
+            subtitle={t('home.trendingAcrossPlatform')}
+            sectionId="trending"
+            items={trendingContent}
+            isLoading={isLoadingSupplementary}
+            cardSize="lg"
+          />
 
-      {/* Trending Now */}
-      <ContentRow
-        title={t('home.trending')}
-        subtitle={t('home.trendingAcrossPlatform')}
-        sectionId="trending"
-        items={trendingContent}
-        isLoading={isLoadingSupplementary}
-        cardSize="lg"
-      />
+          {/* New Releases */}
+          <ScrollReveal>
+            <ContentRow
+              title={t('home.newReleases')}
+              subtitle={t('home.newReleasesSubtitle')}
+              sectionId="new-releases"
+              items={newReleases}
+              isLoading={isLoadingSupplementary}
+            />
+          </ScrollReveal>
 
-      {/* New Releases */}
-      <ScrollReveal>
-        <ContentRow
-          title={t('home.newReleases')}
-          subtitle={t('home.newReleasesSubtitle')}
-          sectionId="new-releases"
-          items={newReleases}
-          isLoading={isLoadingSupplementary}
-        />
-      </ScrollReveal>
-
-      {/* Popular in Your Region */}
-      <ScrollReveal>
-        <ContentRow
-          title={t('home.popularInYourRegion')}
-          subtitle={t('home.popularNearYou')}
-          sectionId="popular-region"
-          items={popularInRegion}
-          isLoading={isLoadingSupplementary}
-        />
-      </ScrollReveal>
+          {/* Popular in Your Region */}
+          <ScrollReveal>
+            <ContentRow
+              title={t('home.popularInYourRegion')}
+              subtitle={t('home.popularNearYou')}
+              sectionId="popular-region"
+              items={popularInRegion}
+              isLoading={isLoadingSupplementary}
+            />
+          </ScrollReveal>
+        </>
+      ) : null}
 
       {/* Referral CTA */}
       <ScrollReveal>

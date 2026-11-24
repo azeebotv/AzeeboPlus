@@ -7,7 +7,7 @@ const COOKIE_OPTIONS = {
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
   path: '/',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  maxAge: 15 * 60 * 1000, // 15 minutes — access tokens rotate via refresh
 };
 
 @ApiTags('Auth')
@@ -25,7 +25,7 @@ export class AuthCookieController {
     if (body.refresh_token) {
       res.cookie('refresh_token', body.refresh_token, {
         ...COOKIE_OPTIONS,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours — shortened from 7 days (AUD-47)
       });
     }
     res.json({ success: true });

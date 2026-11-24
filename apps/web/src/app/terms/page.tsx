@@ -1,162 +1,106 @@
-'use client';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import type { Metadata } from 'next';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
+import { Scale } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Terms of Service - Azeebo+',
+  description: 'Terms of Service and legal agreements governing Azeebo+ usage',
+};
+
+const SECTIONS = [
+  {
+    num: '01',
+    title: 'Acceptance of Legal Terms',
+    body: 'By creating an account, initiating an Azeebo Pay wallet, or accessing video streams on Azeebo+ ("the Platform"), you confirm that you are at least 18 years of age and agree to be bound by these Terms of Service, our Community Guidelines, and Privacy Disclosures. If you do not consent to these terms, discontinue use immediately.',
+  },
+  {
+    num: '02',
+    title: 'Account Verification & Security',
+    body: 'You are solely responsible for maintaining the confidentiality of your account credentials, passkeys, and two-factor tokens. Azeebo+ accepts no liability for losses arising from compromised devices or credentials. Any unauthorized access must be reported to security@azeeboplus.com immediately.',
+  },
+  {
+    num: '03',
+    title: 'Content Licensing & Intellectual Property',
+    body: 'All cinematographic works, original sound recordings, character lore, interactive game mechanics, and visual assets are exclusive intellectual property of Virtual Media Network Limited and licensed Nollywood production partners. You are granted a limited, personal, non-exclusive license to stream content for personal enjoyment.',
+  },
+  {
+    num: '04',
+    title: 'Universe Passes, Wallet & Subscriptions',
+    body: 'All subscription fees, universe access passes, and wallet top-ups are denominated and settled in Nigerian Naira (₦). Recurring passes automatically renew on the billing cycle date unless canceled at least 24 hours prior. Refunds are evaluated strictly pursuant to our Consumer Protection Policy within 14 calendar days.',
+  },
+  {
+    num: '05',
+    title: 'Live Eviction & Participatory Voting',
+    body: 'Votes submitted across reality shows represent participatory fan engagement. Vote allowances and Super Votes are non-refundable once cast on the ledger. Manipulative voting practices, bot scripting, and sybil attacks will lead to account disqualification and potential criminal reporting.',
+  },
+  {
+    num: '06',
+    title: 'Creator Monetization & Payouts',
+    body: 'Studio partners and certified creators earn compensation calculated on viewing engagement minutes, fan bounties, and universe pass allocations. Payout disbursements to verified Nigerian bank accounts are subject to anti-money laundering (AML) checks and withholding tax compliance.',
+  },
+  {
+    num: '07',
+    title: 'Limitation of Liability & Service Availability',
+    body: 'Azeebo+ is delivered on an "as available" basis. While we maintain a 99.9% uptime target across African and international CDNs, Virtual Media Network Limited is not liable for indirect or consequential damages caused by ISP outages, device incompatibility, or local bandwidth throttles.',
+  },
+  {
+    num: '08',
+    title: 'Governing Law & Dispute Resolution',
+    body: 'These Terms are governed by and construed in accordance with the laws of the Federal Republic of Nigeria. Any unresolved disputes arising hereunder shall be submitted to binding arbitration in Lagos under the Arbitration and Mediation Act.',
+  },
+];
 
 export default function TermsPage(): React.JSX.Element {
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 700,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Terms of Service</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
-          Last updated: January 2026
-        </p>
+    <PageShell activeNav="Support">
+      <PageHero
+        badge="Legal & Regulatory Framework"
+        title="Terms of Service"
+        subtitle="The formal legal agreement between you and Virtual Media Network Limited regarding the use of Azeebo+."
+        accentColor="var(--color-az-flame)"
+      />
 
-        <div className="az-glass" style={{ padding: 32, borderRadius: 20, lineHeight: 1.8 }}>
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              marginBottom: 12,
-              color: 'var(--brand-orange)',
-            }}
-          >
-            1. Acceptance of Terms
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
-            By accessing and using Azeebo+ (&quot;the Platform&quot;), you agree to be bound by
-            these Terms of Service. If you do not agree to these terms, please do not use the
-            Platform.
-          </p>
-
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              marginBottom: 12,
-              color: 'var(--brand-orange)',
-            }}
-          >
-            2. User Accounts
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
-            You must be at least 18 years old to create an account. You are responsible for
-            maintaining the confidentiality of your account credentials and for all activities that
-            occur under your account.
-          </p>
-
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              marginBottom: 12,
-              color: 'var(--brand-orange)',
-            }}
-          >
-            3. Content
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
-            Users and creators retain ownership of their content. By uploading content to Azeebo+,
-            you grant us a license to distribute, promote, and display your content on the Platform.
-            Creators are responsible for ensuring their content complies with applicable laws and
-            does not infringe on third-party rights.
-          </p>
-
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              marginBottom: 12,
-              color: 'var(--brand-orange)',
-            }}
-          >
-            4. Subscriptions & Payments
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
-            Subscription fees are charged in Nigerian Naira (₦). All payments are processed through
-            our approved payment gateways. Subscriptions auto-renew unless cancelled. Refund
-            requests are handled on a case-by-case basis within 14 days of purchase.
-          </p>
-
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              marginBottom: 12,
-              color: 'var(--brand-orange)',
-            }}
-          >
-            5. Creator Earnings
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
-            Creator earnings are calculated based on content performance and subscriber engagement.
-            Minimum payout threshold applies. Azeebo+ reserves the right to adjust revenue share
-            terms with 30 days&apos; notice to creators.
-          </p>
-
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              marginBottom: 12,
-              color: 'var(--brand-orange)',
-            }}
-          >
-            6. Prohibited Conduct
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
-            Users may not upload harmful, illegal, or infringing content; attempt to hack or disrupt
-            the Platform; harass other users; or use the Platform for any unlawful purpose.
-            Violations may result in account suspension or termination.
-          </p>
-
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              marginBottom: 12,
-              color: 'var(--brand-orange)',
-            }}
-          >
-            7. Limitation of Liability
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
-            Azeebo+ is provided &quot;as is&quot; without warranties of any kind. We are not liable
-            for any indirect, incidental, or consequential damages arising from your use of the
-            Platform.
-          </p>
-
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              marginBottom: 12,
-              color: 'var(--brand-orange)',
-            }}
-          >
-            8. Changes to Terms
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-            We reserve the right to modify these terms at any time. Continued use of the Platform
-            after changes constitutes acceptance of the new terms.
-          </p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-20">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-az-glass-border">
+          <span className="az-micro-label text-az-ink-muted uppercase font-mono">
+            Effective Date: January 2026 • Version 3.1
+          </span>
+          <span className="az-micro-label text-az-flame uppercase font-bold">
+            Jurisdiction: Lagos, Nigeria
+          </span>
         </div>
-      </main>
-      <AppFooter />
-    </div>
+
+        <div className="space-y-4">
+          {SECTIONS.map((sec) => (
+            <div
+              key={sec.num}
+              className="az-glass p-6 sm:p-8 transition-colors hover:border-az-glass-border-hover"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <span className="az-overline text-az-flame font-mono">{sec.num}</span>
+                <h2 className="az-title text-az-ink">{sec.title}</h2>
+              </div>
+              <p className="az-lead text-az-ink-muted">{sec.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-12 az-glass p-8 text-center">
+          <Scale size={24} className="text-az-flame mx-auto mb-3" />
+          <h3 className="az-subtitle text-az-ink mb-1">Legal Queries &amp; Formal Notices</h3>
+          <p className="az-body text-az-ink-muted max-w-lg mx-auto mb-4">
+            Formal legal notices should be directed to our Legal Department at Virtual Media Network
+            Limited, Lagos, Nigeria.
+          </p>
+          <a
+            href="mailto:legal@azeeboplus.com"
+            className="az-btn-primary inline-flex items-center gap-2"
+          >
+            <span>legal@azeeboplus.com</span>
+          </a>
+        </div>
+      </div>
+    </PageShell>
   );
 }

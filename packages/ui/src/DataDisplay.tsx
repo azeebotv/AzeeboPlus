@@ -90,9 +90,9 @@ export function Table<T>({
 
   if (!data || data.length === 0) {
     return (
-      <div className={`bg-bg-secondary rounded-xl border border-border-default ${className}`}>
+      <div className={`bg-az-surface-raised rounded-xl border border-az-glass-border ${className}`}>
         {emptyState || (
-          <div className="py-12 text-center text-text-tertiary">
+          <div className="py-12 text-center text-az-ink-muted">
             <Icon name="Inbox" size="xl" className="mx-auto mb-3 opacity-50" />
             <p>No data available</p>
           </div>
@@ -103,17 +103,26 @@ export function Table<T>({
 
   return (
     <div
-      className={`bg-bg-secondary rounded-xl border border-border-default overflow-hidden ${className}`}
+      className={`bg-az-surface-raised rounded-xl border border-az-glass-border overflow-hidden ${className}`}
     >
       <div className="overflow-x-auto">
         <table className={`w-full ${compact ? 'text-sm' : ''}`}>
           <thead>
-            <tr className="border-b border-border-default bg-bg-tertiary">
+            <tr className="border-b border-az-glass-border bg-az-surface-panel">
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
+                  aria-sort={
+                    column.sortable
+                      ? sortConfig?.key === column.key
+                        ? sortConfig.direction === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : 'none'
+                      : undefined
+                  }
                   className={`
-                    px-4 py-3 text-left text-sm font-medium text-text-secondary
+                    px-4 py-3 text-left text-sm font-medium text-az-ink-dim
                     ${column.align === 'center' ? 'text-center' : ''}
                     ${column.align === 'right' ? 'text-right' : ''}
                     ${column.width ? column.width : ''}
@@ -122,7 +131,8 @@ export function Table<T>({
                   {column.sortable ? (
                     <button
                       onClick={() => handleSort(column.key)}
-                      className="flex items-center gap-1 hover:text-text-primary transition-colors w-full"
+                      aria-label={`Sort by ${String(column.label)}`}
+                      className="flex items-center gap-1 hover:text-az-ink transition-colors w-full"
                     >
                       {column.label}
                       {getSortIcon(column)}
@@ -141,9 +151,9 @@ export function Table<T>({
                 <tr
                   key={key}
                   className={`
-                    border-b border-border-default/50 last:border-b-0
-                    ${striped && rowIndex % 2 === 0 ? 'bg-bg-primary' : ''}
-                    ${hoverable ? 'hover:bg-bg-tertiary/50 cursor-pointer' : ''}
+                    border-b border-az-glass-border/50 last:border-b-0
+                    ${striped && rowIndex % 2 === 0 ? 'bg-az-surface-root' : ''}
+                    ${hoverable ? 'hover:bg-az-surface-panel/50 cursor-pointer' : ''}
                     transition-colors
                   `}
                   onClick={() => onRowClick?.(row)}
@@ -154,7 +164,7 @@ export function Table<T>({
                       <td
                         key={String(column.key)}
                         className={`
-                          px-4 py-3 text-sm text-text-primary
+                          px-4 py-3 text-sm text-az-ink
                           ${column.align === 'center' ? 'text-center' : ''}
                           ${column.align === 'right' ? 'text-right' : ''}
                           ${column.width ? column.width : ''}
@@ -173,7 +183,7 @@ export function Table<T>({
         </table>
       </div>
       {pagination && (
-        <div className="border-t border-border-default px-4 py-3 flex justify-center">
+        <div className="border-t border-az-glass-border px-4 py-3 flex justify-center">
           <Pagination
             currentPage={pagination.currentPage}
             totalPages={pagination.totalPages}
@@ -216,11 +226,12 @@ export function ListItem({
     <button
       onClick={onClick}
       disabled={disabled}
+      aria-pressed={active}
       className={`
         w-full flex items-center gap-3 px-4 py-3 rounded-lg
         transition-all duration-200 text-left
-        ${active ? 'bg-primary-500/10 text-primary-400' : ''}
-        ${!active && !disabled ? 'hover:bg-bg-tertiary text-text-secondary' : ''}
+        ${active ? 'bg-az-primary-500/10 text-az-primary-400' : ''}
+        ${!active && !disabled ? 'hover:bg-az-surface-panel text-az-ink-dim' : ''}
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
       `}
     >
@@ -228,7 +239,7 @@ export function ListItem({
         <div
           className={`
           flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
-          ${active ? 'bg-primary-500/20' : 'bg-bg-tertiary'}
+          ${active ? 'bg-az-primary-500/20' : 'bg-az-surface-panel'}
         `}
         >
           {getIcon(icon)}
@@ -236,7 +247,7 @@ export function ListItem({
       )}
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate">{title}</p>
-        {description && <p className="text-sm text-text-tertiary truncate">{description}</p>}
+        {description && <p className="text-sm text-az-ink-muted truncate">{description}</p>}
       </div>
       {actions}
     </button>
@@ -255,7 +266,7 @@ export function List({ children, className = '', bordered = false }: ListProps) 
       {React.Children.map(children, (child, index) => (
         <div
           key={index}
-          className={bordered ? 'border-b border-border-default/50 last:border-b-0' : ''}
+          className={bordered ? 'border-b border-az-glass-border/50 last:border-b-0' : ''}
         >
           {child}
         </div>
@@ -292,28 +303,28 @@ export function CardListItem({
   return (
     <button
       onClick={onClick}
-      className="w-full bg-bg-secondary border border-border-default rounded-xl p-4 text-left hover:border-primary-500/30 hover:shadow-md transition-all duration-200"
+      className="w-full bg-az-surface-raised border border-az-glass-border rounded-xl p-4 text-left hover:border-az-primary-500/30 hover:shadow-md transition-all duration-200"
     >
       <div className="flex gap-4">
         {image ? (
-          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-bg-tertiary">
+          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-az-surface-panel">
             <img src={image} alt={title} className="w-full h-full object-cover" />
           </div>
         ) : icon ? (
-          <div className="w-16 h-16 rounded-lg bg-primary-500/10 flex items-center justify-center flex-shrink-0">
+          <div className="w-16 h-16 rounded-lg bg-az-primary-500/10 flex items-center justify-center flex-shrink-0">
             {getIcon(icon)}
           </div>
         ) : null}
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-text-primary truncate">{title}</p>
+          <p className="font-medium text-az-ink truncate">{title}</p>
           {description && (
-            <p className="text-sm text-text-secondary mt-1 line-clamp-2">{description}</p>
+            <p className="text-sm text-az-ink-dim mt-1 line-clamp-2">{description}</p>
           )}
           {meta && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-text-tertiary">{meta}</div>
+            <div className="mt-2 flex items-center gap-2 text-xs text-az-ink-muted">{meta}</div>
           )}
         </div>
-        <Icon name="ChevronRight" size="md" className="text-text-tertiary flex-shrink-0" />
+        <Icon name="ChevronRight" size="md" className="text-az-ink-muted flex-shrink-0" />
       </div>
     </button>
   );
@@ -334,12 +345,12 @@ export function DisplayBadge({
   className = '',
 }: DisplayBadgeProps) {
   const variantStyles = {
-    default: 'bg-bg-tertiary text-text-secondary',
-    primary: 'bg-primary-500/10 text-primary-400',
-    success: 'bg-success-500/10 text-success-400',
-    warning: 'bg-warning-500/10 text-warning-400',
-    error: 'bg-error-500/10 text-error-400',
-    info: 'bg-secondary-500/10 text-secondary-400',
+    default: 'bg-az-surface-panel text-az-ink-dim',
+    primary: 'bg-az-primary-500/10 text-az-primary-400',
+    success: 'bg-az-success-500/10 text-az-success-400',
+    warning: 'bg-az-warning-500/10 text-az-warning-400',
+    error: 'bg-az-error-500/10 text-az-error-400',
+    info: 'bg-az-secondary-500/10 text-az-secondary-400',
   };
 
   const sizeStyles = {
@@ -357,6 +368,72 @@ export function DisplayBadge({
       `}
     >
       {children}
+    </span>
+  );
+}
+
+// TipTierBadge for Creator Tipping Perks
+export interface TipTierBadgeProps {
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | string;
+  size?: 'sm' | 'md';
+  className?: string;
+  showIcon?: boolean;
+}
+
+export function TipTierBadge({
+  tier,
+  size = 'sm',
+  className = '',
+  showIcon = true,
+}: TipTierBadgeProps) {
+  const normalizedTier = tier?.toLowerCase();
+  if (!normalizedTier || normalizedTier === 'none') return null;
+
+  const tierConfig: Record<string, { label: string; bg: string; text: string; icon: string }> = {
+    bronze: {
+      label: 'Bronze Supporter',
+      bg: 'bg-az-warning-900/30 border-az-warning-700/50',
+      text: 'text-az-warning-400',
+      icon: '🥉',
+    },
+    silver: {
+      label: 'Silver Supporter',
+      bg: 'bg-az-surface-raised border-az-glass-border',
+      text: 'text-az-ink-dim',
+      icon: '🥈',
+    },
+    gold: {
+      label: 'Gold Supporter',
+      bg: 'bg-az-warning-900/40 border-az-warning-500/50',
+      text: 'text-az-warning-300',
+      icon: '🥇',
+    },
+    platinum: {
+      label: 'Platinum VIP',
+      bg: 'bg-az-primary-900/40 border-az-primary-400/60 shadow-sm',
+      text: 'text-az-primary-300 font-bold',
+      icon: '💎',
+    },
+  };
+
+  const config = tierConfig[normalizedTier] || {
+    label: normalizedTier,
+    bg: 'bg-az-surface-panel border-az-glass-border',
+    text: 'text-az-ink-dim',
+    icon: '⭐',
+  };
+
+  const sizeStyles = {
+    sm: 'px-2 py-0.5 text-xs border',
+    md: 'px-3 py-1 text-sm border',
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full ${config.bg} ${config.text} ${sizeStyles[size]} ${className}`}
+    >
+      {showIcon && <span aria-hidden="true">{config.icon}</span>}
+      <span>{config.label}</span>
     </span>
   );
 }
@@ -379,11 +456,11 @@ export function Tag({
     <span
       className={`
         inline-flex items-center gap-1 font-medium rounded-full
-        ${variant === 'default' ? 'bg-bg-tertiary text-text-secondary' : ''}
-        ${variant === 'primary' ? 'bg-primary-500/10 text-primary-400' : ''}
-        ${variant === 'success' ? 'bg-success-500/10 text-success-400' : ''}
-        ${variant === 'warning' ? 'bg-warning-500/10 text-warning-400' : ''}
-        ${variant === 'error' ? 'bg-error-500/10 text-error-400' : ''}
+        ${variant === 'default' ? 'bg-az-surface-panel text-az-ink-dim' : ''}
+        ${variant === 'primary' ? 'bg-az-primary-500/10 text-az-primary-400' : ''}
+        ${variant === 'success' ? 'bg-az-success-500/10 text-az-success-400' : ''}
+        ${variant === 'warning' ? 'bg-az-warning-500/10 text-az-warning-400' : ''}
+        ${variant === 'error' ? 'bg-az-error-500/10 text-az-error-400' : ''}
         ${size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'}
         ${className}
       `}
@@ -444,15 +521,15 @@ export function ProgressRing({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-primary-500 transition-all duration-500"
+          className="text-az-primary-500 transition-all duration-500"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-lg font-bold text-text-primary">{progress}%</span>
-        {label && <span className="text-xs text-text-tertiary">{label}</span>}
+        <span className="text-lg font-bold text-az-ink">{progress}%</span>
+        {label && <span className="text-xs text-az-ink-muted">{label}</span>}
       </div>
     </div>
   );
@@ -483,14 +560,16 @@ export function StatCard({ title, value, icon, trend, className = '' }: StatCard
   const hasTrend = trend && trend.value != null && trend.label;
 
   return (
-    <div className={`bg-bg-secondary border border-border-default rounded-xl p-5 ${className}`}>
+    <div
+      className={`bg-az-surface-raised border border-az-glass-border rounded-xl p-5 ${className}`}
+    >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-text-secondary">{title}</p>
-          <p className="text-2xl font-bold text-text-primary mt-1">{value ?? '-'}</p>
+          <p className="text-sm font-medium text-az-ink-dim">{title}</p>
+          <p className="text-2xl font-bold text-az-ink mt-1">{value ?? '-'}</p>
           {hasTrend && (
             <div
-              className={`flex items-center gap-1 mt-2 text-sm ${trend?.positive ? 'text-success-400' : 'text-error-400'}`}
+              className={`flex items-center gap-1 mt-2 text-sm ${trend?.positive ? 'text-az-success-400' : 'text-az-error-400'}`}
             >
               {trend?.positive ? (
                 <Icon name="TrendingUp" size="sm" />
@@ -498,12 +577,12 @@ export function StatCard({ title, value, icon, trend, className = '' }: StatCard
                 <Icon name="TrendingDown" size="sm" />
               )}
               <span>{trend?.value}%</span>
-              <span className="text-text-tertiary">{trend?.label}</span>
+              <span className="text-az-ink-muted">{trend?.label}</span>
             </div>
           )}
         </div>
         {icon && (
-          <div className="w-12 h-12 rounded-xl bg-primary-500/10 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-az-primary-500/10 flex items-center justify-center">
             {getIcon(icon)}
           </div>
         )}
@@ -531,9 +610,9 @@ export function EmptyState({ icon, title, description, action, className = '' }:
 
   return (
     <div className={`flex flex-col items-center justify-center py-12 text-center ${className}`}>
-      {icon && <div className="text-text-tertiary opacity-50 mb-4">{getIcon(icon)}</div>}
-      <h3 className="text-lg font-semibold text-text-primary mb-2">{title}</h3>
-      {description && <p className="text-text-secondary mb-6 max-w-sm">{description}</p>}
+      {icon && <div className="text-az-ink-muted opacity-50 mb-4">{getIcon(icon)}</div>}
+      <h3 className="text-lg font-semibold text-az-ink mb-2">{title}</h3>
+      {description && <p className="text-az-ink-dim mb-6 max-w-sm">{description}</p>}
       {action}
     </div>
   );
@@ -558,16 +637,16 @@ export function Timeline({ items, className = '', reversed = false }: TimelinePr
   const displayItems = reversed ? [...items].reverse() : items;
 
   const dotColors = {
-    primary: 'bg-primary-500',
-    success: 'bg-success-500',
-    warning: 'bg-warning-500',
-    error: 'bg-error-500',
+    primary: 'bg-az-primary-500',
+    success: 'bg-az-success-500',
+    warning: 'bg-az-warning-500',
+    error: 'bg-az-error-500',
   };
 
   return (
     <div className={`relative ${className}`}>
       <div
-        className={`absolute ${reversed ? 'right-4' : 'left-4'} top-0 bottom-0 w-px bg-border-default`}
+        className={`absolute ${reversed ? 'right-4' : 'left-4'} top-0 bottom-0 w-px bg-az-glass-border`}
       />
       <div className={`space-y-4 ${reversed ? 'pr-12' : 'pl-12'}`}>
         {displayItems.map((item, index) => {
@@ -587,18 +666,18 @@ export function Timeline({ items, className = '', reversed = false }: TimelinePr
                 `}
               >
                 {item.icon && (
-                  <div className="w-5 h-5 rounded-full bg-bg-secondary flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-az-surface-raised flex items-center justify-center">
                     {getIcon(item.icon)}
                   </div>
                 )}
               </div>
               <div>
                 <div className={`flex items-center gap-2 ${reversed ? 'flex-row-reverse' : ''}`}>
-                  <h4 className="font-medium text-text-primary">{item.title}</h4>
-                  {item.time && <span className="text-xs text-text-tertiary">{item.time}</span>}
+                  <h4 className="font-medium text-az-ink">{item.title}</h4>
+                  {item.time && <span className="text-xs text-az-ink-muted">{item.time}</span>}
                 </div>
                 {item.description && (
-                  <p className="text-sm text-text-secondary mt-1">{item.description}</p>
+                  <p className="text-sm text-az-ink-dim mt-1">{item.description}</p>
                 )}
               </div>
             </div>

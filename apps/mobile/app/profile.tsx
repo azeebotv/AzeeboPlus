@@ -11,10 +11,11 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../src/api';
+import { apiClient } from '@azeebo/react-data';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
-import { useAuth } from '../src/contexts/AuthContext';
-import { radius } from '../src/theme';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { radius, colors } from '../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface ProfileData {
   avatar?: string;
@@ -29,7 +30,11 @@ export default function ProfilePage() {
   const insets = useSafeAreaInsets();
   const [saved, setSaved] = useState(false);
 
-  const { data: profile, isLoading, error } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
       if (!isAuthenticated) return null;
@@ -51,7 +56,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Profile Screen" style={styles.container}>
         <LoadingState text="Loading profile..." />
       </SafeAreaView>
     );
@@ -60,7 +65,10 @@ export default function ProfilePage() {
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
-        <ErrorState title="Error Loading Profile" description="Failed to load profile. Please try again." />
+        <ErrorState
+          title="Error Loading Profile"
+          description="Failed to load profile. Please try again."
+        />
       </SafeAreaView>
     );
   }
@@ -91,7 +99,10 @@ export default function ProfilePage() {
                 </Text>
               </View>
             )}
-            <TouchableOpacity style={styles.editAvatarButton} accessibilityLabel="Edit profile photo">
+            <TouchableOpacity
+              style={styles.editAvatarButton}
+              accessibilityLabel="Edit profile photo"
+            >
               <Text style={styles.editAvatarText}>Edit</Text>
             </TouchableOpacity>
           </View>
@@ -151,7 +162,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -159,7 +170,7 @@ const styles = StyleSheet.create({
   editAvatarButton: {
     position: 'absolute',
     bottom: -10,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.sm,
@@ -182,10 +193,10 @@ const styles = StyleSheet.create({
   savedBanner: {
     backgroundColor: 'rgba(10,165,232,0.2)',
     borderLeftWidth: 4,
-    borderLeftColor: '#0EA5F9',
+    borderLeftColor: colors.category.blue,
     padding: 12,
     borderRadius: radius.sm,
     marginTop: 16,
   },
-  savedText: { color: '#0EA5F9', fontSize: 14 },
+  savedText: { color: colors.category.blue, fontSize: 14 },
 });

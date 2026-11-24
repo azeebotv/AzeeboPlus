@@ -4,13 +4,16 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
 import { FirebaseService, EmailService, SmsService } from '@azeebo/shared-services';
-import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { CacheService, cacheKey, RedisService } from '@azeebo/shared-services';
+import { FeatureFlagService, notificationFlags } from '@azeebo/feature-flags';
+import { SendEmailDto } from './dto/send-email.dto.js';
 import axios from 'axios';
 
 interface UserData {
@@ -26,13 +29,32 @@ export class NotificationsService {
   private readonly userServiceBaseUrl: string;
   private readonly analyticsServiceBaseUrl: string;
 
+  // First-class transactional email templates: the template name maps to the
+  // subject sent with it. Only templates listed here can be sent through the
+  // internal POST /v1/notifications/email endpoint — anything else is a 400.
+  // The HTML bodies live in EmailService.registerTemplates (shared-services).
+  private static readonly EMAIL_SUBJECTS: Record<string, string> = {
+    'challenge-review': 'Your Challenge Entry Has Been Reviewed',
+    'email-verification': 'Verify Your Email Address',
+    'password-reset': 'Password Reset Request',
+    'magic-link': 'Your Azeebo+ Sign-In Link',
+    digest: 'Your Azeebo+ Daily Digest',
+    'flag-stale': 'Action Required: Stale Feature Flag',
+  };
+
+  // AUD-12: how many user-service lookups may be in flight at once while
+  // pre-fetching digest recipients (each call has a 5s timeout).
+  private static readonly DIGEST_USER_FETCH_CONCURRENCY = 10;
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(FirebaseService) private readonly firebaseService: FirebaseService,
     @Inject(EmailService) private readonly emailService: EmailService,
     @Inject(SmsService) private readonly smsService: SmsService,
     @Inject(CacheService) private readonly cache: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
     this.userServiceBaseUrl = this.configService.get<string>(
       'USER_SERVICE_URL',
@@ -40,7 +62,7 @@ export class NotificationsService {
     );
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 
@@ -71,6 +93,33 @@ export class NotificationsService {
       this.logger.warn(`Failed to fetch user data for ${userId}: ${error}`);
       return null;
     }
+  }
+
+  /**
+   * AUD-12: run `fn` over `items` with at most `limit` promises in flight,
+   * preserving input order in the result array. A rejected item resolves to
+   * `null` so one bad lookup can never abort the whole batch.
+   */
+  private async mapWithConcurrency<T, R>(
+    items: readonly T[],
+    fn: (item: T) => Promise<R>,
+    limit: number
+  ): Promise<(R | null)[]> {
+    const results: (R | null)[] = new Array(items.length).fill(null);
+    let cursor = 0;
+    const workers = Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, async () => {
+      while (cursor < items.length) {
+        const index = cursor++;
+        try {
+          results[index] = await fn(items[index]);
+        } catch (error) {
+          this.logger.warn(`Prefetch item failed at index ${index}: ${(error as Error).message}`);
+          results[index] = null;
+        }
+      }
+    });
+    await Promise.all(workers);
+    return results;
   }
 
   async getNotifications(
@@ -192,27 +241,87 @@ export class NotificationsService {
   }
 
   // updatePreferences writes to the canonical NotificationPreference model
-  // for proper relational storage and querying.
+  // for proper relational storage and querying. With notification_preferences_v2
+  // ON the full model surface is honored (per-channel columns, quiet hours,
+  // timezone, category overrides); OFF it preserves the legacy flat-map
+  // behavior (categoryOverrides only) so the migration switch is real.
   async updatePreferences(
     userId: string,
-    preferences: Record<string, boolean>
+    preferences: {
+      email?: boolean;
+      push?: boolean;
+      sms?: boolean;
+      inApp?: boolean;
+      quietHoursStart?: string;
+      quietHoursEnd?: string;
+      timezone?: string;
+      categoryOverrides?: Record<string, boolean>;
+      [key: string]: unknown;
+    }
   ): Promise<{ success: boolean; data: { message: string } }> {
     try {
-      // Read existing preferences from NotificationPreference or fall back to empty
+      const v2Enabled = await this.featureFlagService.isEnabled(notificationFlags.preferencesV2);
+
       const existing = await this.prisma.notificationPreference.findUnique({
         where: { userId },
       });
       const existingPrefs = (existing?.categoryOverrides as Record<string, boolean>) || {};
-      const deepMerged = { ...existingPrefs, ...preferences };
+      const {
+        quietHoursStart: _quietHoursStart,
+        quietHoursEnd: _quietHoursEnd,
+        timezone: _timezone,
+        categoryOverrides: _categoryOverrides,
+        ...legacyFlatPrefs
+      } = preferences;
+      // Legacy path merges the flat channel map into categoryOverrides (the
+      // pre-v2 shape); the v2 path keeps the per-channel columns + a separate
+      // categoryOverrides map.
+      const deepMerged = v2Enabled
+        ? {
+            ...existingPrefs,
+            ...(preferences.categoryOverrides || {}),
+          }
+        : {
+            ...existingPrefs,
+            ...legacyFlatPrefs,
+          };
 
-      await this.prisma.notificationPreference.upsert({
-        where: { userId },
-        update: { categoryOverrides: deepMerged as Prisma.InputJsonValue },
-        create: {
-          userId,
-          categoryOverrides: deepMerged as Prisma.InputJsonValue,
-        },
-      });
+      if (v2Enabled) {
+        await this.prisma.notificationPreference.upsert({
+          where: { userId },
+          update: {
+            pushEnabled: preferences.push ?? existing?.pushEnabled ?? true,
+            emailEnabled: preferences.email ?? existing?.emailEnabled ?? true,
+            smsEnabled: preferences.sms ?? existing?.smsEnabled ?? false,
+            inAppEnabled: preferences.inApp ?? existing?.inAppEnabled ?? true,
+            quietHoursStart: preferences.quietHoursStart ?? existing?.quietHoursStart ?? null,
+            quietHoursEnd: preferences.quietHoursEnd ?? existing?.quietHoursEnd ?? null,
+            timezone: preferences.timezone ?? existing?.timezone ?? null,
+            categoryOverrides: deepMerged as Prisma.InputJsonValue,
+          },
+          create: {
+            userId,
+            pushEnabled: preferences.push ?? true,
+            emailEnabled: preferences.email ?? true,
+            smsEnabled: preferences.sms ?? false,
+            inAppEnabled: preferences.inApp ?? true,
+            quietHoursStart: preferences.quietHoursStart ?? null,
+            quietHoursEnd: preferences.quietHoursEnd ?? null,
+            timezone: preferences.timezone ?? null,
+            categoryOverrides: deepMerged as Prisma.InputJsonValue,
+          },
+        });
+      } else {
+        // Legacy path: only the flat category override map is touched.
+        await this.prisma.notificationPreference.upsert({
+          where: { userId },
+          update: { categoryOverrides: deepMerged as Prisma.InputJsonValue },
+          create: {
+            userId,
+            categoryOverrides: deepMerged as Prisma.InputJsonValue,
+          },
+        });
+      }
 
       await this.cache.invalidate(`notification:preferences:${userId}*`);
 
@@ -245,11 +354,24 @@ export class NotificationsService {
         where: { userId },
       });
 
+      const v2Enabled = await this.featureFlagService.isEnabled(notificationFlags.preferencesV2);
+
       const result = {
         success: true,
-        data: {
-          settings: pref?.categoryOverrides || {},
-        },
+        data: v2Enabled
+          ? {
+              push: pref?.pushEnabled ?? true,
+              email: pref?.emailEnabled ?? true,
+              sms: pref?.smsEnabled ?? false,
+              inApp: pref?.inAppEnabled ?? true,
+              quietHoursStart: pref?.quietHoursStart ?? null,
+              quietHoursEnd: pref?.quietHoursEnd ?? null,
+              timezone: pref?.timezone ?? null,
+              categoryOverrides: pref?.categoryOverrides || {},
+            }
+          : {
+              settings: pref?.categoryOverrides || {},
+            },
       };
 
       await this.cache.set(cacheK, result, 300);
@@ -424,6 +546,14 @@ export class NotificationsService {
     body: string,
     data?: Record<string, string>
   ): Promise<boolean> {
+    // Channel kill-switch: push is enabled while either platform is on.
+    const pushEnabled =
+      (await this.featureFlagService.isEnabled(notificationFlags.pushIos)) ||
+      (await this.featureFlagService.isEnabled(notificationFlags.pushAndroid));
+    if (!pushEnabled) {
+      this.logger.warn(`Push notifications disabled by flag; skipping user ${userId}`);
+      return false;
+    }
     try {
       // Get all push tokens for the user
       const tokens = await this.prisma.pushToken.findMany({
@@ -450,7 +580,188 @@ export class NotificationsService {
     }
   }
 
+  /**
+   * Sends a first-class transactional email (e.g. the verification link) by
+   * template name through the shared EmailService. Used by internal services
+   * via POST /v1/notifications/email. Subject and HTML live here/in the
+   * shared template registry, so callers never assemble email content.
+   */
+  async sendTemplatedEmail(dto: SendEmailDto): Promise<boolean> {
+    // Channel kill-switch: halt transactional email sends instantly.
+    if (!(await this.featureFlagService.isEnabled(notificationFlags.emailEnabled))) {
+      this.logger.warn(`Email sends disabled by flag; skipping ${dto.to}`);
+      return false;
+    }
+
+    const subject = NotificationsService.EMAIL_SUBJECTS[dto.template];
+    if (!subject) {
+      throw new BadRequestException(`Unknown email template: ${dto.template}`);
+    }
+
+    try {
+      const result = await this.emailService.sendEmail(dto.to, subject, dto.template, dto.data);
+      if (result) {
+        this.trackAnalyticsEvent('notification_email_sent', 'system', {
+          type: 'email',
+          template: dto.template,
+        });
+      }
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `sendTemplatedEmail failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Daily digest (notification_digest): emails each user a summary of their
+   * unread notifications since the last digest (24h default), tracked via a
+   * per-user Redis marker so digests never duplicate. Flag off → 403.
+   * Admin-triggered via POST /v1/notifications/admin/digest/send.
+   */
+  async sendDailyDigest(userId?: string): Promise<{
+    success: boolean;
+    data: { sent: number; skipped: number; users: number };
+  }> {
+    if (!(await this.featureFlagService.isEnabled(notificationFlags.digest))) {
+      throw new ForbiddenException('Daily digests are not enabled');
+    }
+
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const targetUserIds: string[] = [];
+
+    if (userId) {
+      targetUserIds.push(userId);
+    } else {
+      const rows = await this.prisma.notification.findMany({
+        where: { readAt: null, createdAt: { gte: cutoff } },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+      targetUserIds.push(...rows.map((r) => r.userId));
+    }
+
+    let sent = 0;
+    let skipped = 0;
+
+    // Batch-fetch all unread notifications for all target users in one query (fixes N+1)
+    const allNotifications = await this.prisma.notification.findMany({
+      where: {
+        userId: { in: targetUserIds },
+        readAt: null,
+        createdAt: { gte: cutoff },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: targetUserIds.length * 20,
+      select: {
+        id: true,
+        userId: true,
+        type: true,
+        title: true,
+        message: true,
+        createdAt: true,
+      },
+    });
+
+    // Group by userId
+    const notificationsByUser = new Map<string, typeof allNotifications>();
+    for (const n of allNotifications) {
+      const list = notificationsByUser.get(n.userId) || [];
+      list.push(n);
+      notificationsByUser.set(n.userId, list);
+    }
+
+    // Batch-fetch Redis markers
+    const markers = await Promise.all(
+      targetUserIds.map((id) => this.redisService.get(`notification:digest:last:${id}`))
+    );
+    const markerMap = new Map(targetUserIds.map((id, i) => [id, markers[i]]));
+
+    // Resolve each user's pending items once, up front (marker-aware), so only
+    // real recipients get a lookup and the send loop never re-filters.
+    const itemsByUser = new Map<string, typeof allNotifications>();
+    for (const targetId of targetUserIds) {
+      const lastSentRaw = markerMap.get(targetId);
+      const since = lastSentRaw ? new Date(parseInt(lastSentRaw, 10)) : cutoff;
+      const items = (notificationsByUser.get(targetId) || []).filter((n) => n.createdAt >= since);
+      if (items.length > 0) {
+        itemsByUser.set(targetId, items);
+      }
+    }
+
+    // AUD-12: pre-fetch every recipient's user record with bounded concurrency
+    // instead of awaiting getUserData serially inside the loop — the old code
+    // scaled as O(N×5s) worst-case (one 5s axios timeout per recipient).
+    // getUserData fails soft (null on error), which the loop treats as a skip.
+    const recipientIds = [...itemsByUser.keys()];
+    const users = await this.mapWithConcurrency(
+      recipientIds,
+      (id) => this.getUserData(id),
+      NotificationsService.DIGEST_USER_FETCH_CONCURRENCY
+    );
+    const userMap = new Map(recipientIds.map((id, i) => [id, users[i]]));
+
+    for (const targetId of targetUserIds) {
+      try {
+        const items = itemsByUser.get(targetId);
+        if (!items) {
+          skipped++;
+          continue;
+        }
+
+        const user = userMap.get(targetId) ?? null;
+        if (!user?.email) {
+          skipped++;
+          continue;
+        }
+
+        const digestHtml = items
+          .map(
+            (item) =>
+              `<li><strong>${item.title.replace(/</g, '&lt;')}</strong> — ${item.message.replace(/</g, '&lt;')}</li>`
+          )
+          .join('');
+
+        const ok = await this.emailService.sendEmail(
+          user.email,
+          NotificationsService.EMAIL_SUBJECTS['digest'],
+          'digest',
+          { count: items.length, items: digestHtml, displayName: user.displayName || 'there' }
+        );
+        if (ok) {
+          sent++;
+          await this.redisService.set(
+            `notification:digest:last:${targetId}`,
+            String(Date.now()),
+            7 * 24 * 3600
+          );
+          this.trackAnalyticsEvent('notification_digest_sent', targetId, {
+            count: items.length,
+          });
+        } else {
+          skipped++;
+        }
+      } catch (error) {
+        this.logger.warn(`Digest failed for user ${targetId}: ${(error as Error).message}`);
+        skipped++;
+      }
+    }
+
+    return {
+      success: true,
+      data: { sent, skipped, users: targetUserIds.length },
+    };
+  }
+
   async sendEmailNotification(userId: string, subject: string, body: string): Promise<boolean> {
+    // Channel kill-switch: halt transactional email sends instantly.
+    if (!(await this.featureFlagService.isEnabled(notificationFlags.emailEnabled))) {
+      this.logger.warn(`Email notifications disabled by flag; skipping user ${userId}`);
+      return false;
+    }
     try {
       const user = await this.getUserData(userId);
       if (!user?.email) {
@@ -621,6 +932,11 @@ export class NotificationsService {
   }
 
   async sendSmsNotification(userId: string, message: string): Promise<boolean> {
+    // Channel kill-switch: halt SMS sends instantly.
+    if (!(await this.featureFlagService.isEnabled(notificationFlags.smsEnabled))) {
+      this.logger.warn(`SMS notifications disabled by flag; skipping user ${userId}`);
+      return false;
+    }
     try {
       // Get user phone number via user-service
       const user = await this.getUserData(userId);

@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 import { InfluencerService } from './influencer.service';
 
 interface CreateInfluencerData {
@@ -46,6 +47,8 @@ interface UpdateInfluencerData {
 }
 
 @ApiTags('Influencer')
+@FeatureFlag(lifestyleFlags.influencerVerification)
+@UseGuards(FeatureFlagGuard)
 @Controller('lifestyle/influencers')
 export class InfluencerController {
   constructor(@Inject(InfluencerService) private readonly influencerService: InfluencerService) {}

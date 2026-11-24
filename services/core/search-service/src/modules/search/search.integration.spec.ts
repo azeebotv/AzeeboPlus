@@ -4,11 +4,15 @@ import { SearchService } from './search.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
+import { MetricsService } from '../metrics/metrics.service.js';
 
 describe('SearchService Integration', () => {
   let service: SearchService;
 
   const mockPrismaService = {
+    // Fuzzy (search_typo_tolerance) retrieval runs through raw SQL.
+    $queryRaw: jest.fn().mockResolvedValue([]),
     contentItem: {
       findMany: jest.fn(),
       count: jest.fn(),
@@ -16,9 +20,11 @@ describe('SearchService Integration', () => {
     },
     creatorProfile: {
       findMany: jest.fn(),
+      count: jest.fn(),
     },
     universe: {
       findMany: jest.fn(),
+      count: jest.fn(),
     },
     searchQueryLog: {
       findMany: jest.fn(),
@@ -55,6 +61,22 @@ describe('SearchService Integration', () => {
           },
         },
         { provide: CacheService, useValue: mockCacheService },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            // Everything ON except search_typo_tolerance so the integration
+            // search() tests exercise the exact path.
+            isEnabled: jest
+              .fn()
+              .mockImplementation((key: string) =>
+                Promise.resolve(key !== 'search_typo_tolerance')
+              ),
+          },
+        },
+        {
+          provide: MetricsService,
+          useValue: { setFuzzyStatus: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -91,7 +113,9 @@ describe('SearchService Integration', () => {
       mockPrismaService.contentItem.findMany.mockResolvedValue(mockContent);
       mockPrismaService.contentItem.count.mockResolvedValue(1);
       mockPrismaService.creatorProfile.findMany.mockResolvedValue(mockCreators);
+      mockPrismaService.creatorProfile.count.mockResolvedValue(1);
       mockPrismaService.universe.findMany.mockResolvedValue(mockUniverses);
+      mockPrismaService.universe.count.mockResolvedValue(1);
 
       const result = await service.search('reality');
 
@@ -99,6 +123,8 @@ describe('SearchService Integration', () => {
       expect(result.data?.results?.content).toHaveLength(1);
       expect(result.data?.results?.content?.[0]?.title).toBe('Reality Show');
       expect(result.data?.total).toBe(3);
+      expect(result.data?.creatorsPagination?.total).toBe(1);
+      expect(result.data?.universesPagination?.total).toBe(1);
       expect(mockCacheService.set).toHaveBeenCalled();
     });
 
@@ -106,13 +132,17 @@ describe('SearchService Integration', () => {
       mockPrismaService.contentItem.findMany.mockResolvedValue([]);
       mockPrismaService.contentItem.count.mockResolvedValue(0);
       mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
+      mockPrismaService.creatorProfile.count.mockResolvedValue(0);
       mockPrismaService.universe.findMany.mockResolvedValue([]);
+      mockPrismaService.universe.count.mockResolvedValue(0);
 
       const result = await service.search('nonexistent');
 
       expect(result.success).toBe(true);
       expect(result.data?.results?.content).toHaveLength(0);
       expect(result.data?.total).toBe(0);
+      expect(result.data?.creatorsPagination?.total).toBe(0);
+      expect(result.data?.universesPagination?.total).toBe(0);
     });
 
     it('should return cached results when available', async () => {

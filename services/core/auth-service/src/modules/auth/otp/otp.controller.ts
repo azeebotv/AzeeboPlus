@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 import { OtpService } from './otp.service.js';
 import { RateLimitGuard } from '../../../common/guards/rate-limit.guard.js';
+import { FeatureFlag, FeatureFlagGuard, authFlags } from '@azeebo/feature-flags';
 
 interface OtpRequest {
   user: { sub: string; id: string };
@@ -14,12 +15,16 @@ interface OtpRequest {
 }
 
 @ApiTags('OTP')
-@Controller('otp')
+// Served through the gateway as /v1/auth/otp/* — must live under 'auth/otp'
+// to match the documented /auth/otp/* contract (gateway endpoint list,
+// auth throttler patterns, and the web/mobile clients).
+@Controller('auth/otp')
 export class OtpController {
   constructor(@Inject(OtpService) private readonly otpService: OtpService) {}
 
   @Post('send')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(authFlags.otpSms)
   @ApiOperation({ summary: 'Send OTP to user phone' })
   @ApiResponse({ status: 200, description: 'OTP sent successfully' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
@@ -37,7 +42,8 @@ export class OtpController {
   }
 
   @Post('verify')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(authFlags.otpSms)
   @ApiOperation({ summary: 'Verify OTP code' })
   @ApiResponse({ status: 200, description: 'OTP verified successfully' })
   @ApiResponse({ status: 400, description: 'Invalid OTP' })

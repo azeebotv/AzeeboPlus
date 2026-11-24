@@ -14,8 +14,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../../src/contexts/AuthContext';
-import { userApi } from '../../../src/api';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { userApi } from '@azeebo/react-data';
+import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -83,7 +85,7 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView accessibilityLabel="Edit Screen" style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -98,7 +100,7 @@ export default function EditProfileScreen() {
 
           <View style={styles.form}>
             <View style={styles.avatarSection}>
-              <TouchableOpacity style={styles.avatarContainer} onPress={handleChangeAvatar}>
+              <TouchableOpacity accessibilityRole="button" style={styles.avatarContainer} onPress={handleChangeAvatar}>
                 {avatar ? (
                   <Image source={{ uri: avatar }} style={styles.avatar} />
                 ) : (
@@ -167,7 +169,7 @@ export default function EditProfileScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
+            <TouchableOpacity accessibilityRole="button" style={styles.cancelButton} onPress={() => router.back()}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -196,7 +198,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   form: {
     flex: 1,
@@ -217,7 +219,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -230,7 +232,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -245,7 +247,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
     fontWeight: '500',
   },
@@ -253,7 +255,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.neutral[700],
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -263,20 +265,20 @@ const styles = StyleSheet.create({
     borderColor: '#EF4444',
   },
   readOnlyInput: {
-    backgroundColor: '#111',
+    backgroundColor: colors.neutral[950],
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: colors.neutral[900],
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
   readOnlyText: {
     fontSize: 16,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   hintText: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
     marginTop: 4,
   },
   textArea: {
@@ -285,7 +287,7 @@ const styles = StyleSheet.create({
   },
   charCount: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
     textAlign: 'right',
     marginTop: 4,
   },
@@ -295,7 +297,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   saveButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -315,7 +317,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButtonText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 16,
   },
 });

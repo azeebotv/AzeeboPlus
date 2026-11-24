@@ -1,7 +1,8 @@
-import { Inject, Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminService } from './admin.service.js';
 import { AdminGuard } from '@azeebo/security';
+import { Request } from 'express';
 
 @ApiTags('Admin - Auth Service')
 @Controller('admin')
@@ -45,8 +46,9 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'User suspended' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async suspendUser(@Param('id') id: string) {
-    return this.adminService.suspendUser(id);
+  async suspendUser(@Param('id') id: string, @Req() req: Request) {
+    const actorId = (req as { user?: { sub?: string } }).user?.sub;
+    return this.adminService.suspendUser(id, actorId, req.ip);
   }
 
   @Post('users/:id/activate')
@@ -54,7 +56,8 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'User activated' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async activateUser(@Param('id') id: string) {
-    return this.adminService.activateUser(id);
+  async activateUser(@Param('id') id: string, @Req() req: Request) {
+    const actorId = (req as { user?: { sub?: string } }).user?.sub;
+    return this.adminService.activateUser(id, actorId, req.ip);
   }
 }

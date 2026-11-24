@@ -20,7 +20,7 @@ describe('BundleService', () => {
     id: 'bundle-1',
     name: 'Entertainment Bundle',
     description: 'Reality, Comedy & Movies',
-    universeIds: ['reality', 'comedy', 'movies'],
+    universeIds: ['reality', 'comedy', 'movie'],
     price: 2100,
     originalPrice: 3000,
     discountPercent: 30,
@@ -78,6 +78,10 @@ describe('BundleService', () => {
               create: jest.fn(),
               update: jest.fn(),
               count: jest.fn(),
+            },
+            subscription: {
+              findMany: jest.fn().mockResolvedValue([]),
+              updateMany: jest.fn().mockResolvedValue({ count: 0 }),
             },
             $transaction: jest.fn(),
           },
@@ -166,6 +170,36 @@ describe('BundleService', () => {
     });
   });
 
+  describe('getUpgradeQuote', () => {
+    it('should calculate prorated credit from active single subscriptions', async () => {
+      (prismaService.bundlePass.findUnique as jest.Mock).mockResolvedValue(mockBundle);
+      const now = Date.now();
+      (prismaService.subscription.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 'sub-single-1',
+          userId: 'user-1',
+          planId: 'plan-reality',
+          status: 'active',
+          startDate: new Date(now - 15 * 24 * 60 * 60 * 1000),
+          endDate: new Date(now + 15 * 24 * 60 * 60 * 1000),
+          plan: {
+            id: 'plan-reality',
+            name: 'Reality Monthly',
+            price: 1000,
+          },
+        },
+      ]);
+
+      const quote = await service.getUpgradeQuote('user-1', 'bundle-1');
+
+      expect(quote.bundleId).toBe('bundle-1');
+      expect(quote.bundlePrice).toBe(2100);
+      expect(quote.proratedCredit).toBeGreaterThan(0);
+      expect(quote.effectivePrice).toBeLessThan(2100);
+      expect(quote.activeSubscriptions).toHaveLength(1);
+    });
+  });
+
   describe('createBundle', () => {
     it('should create a new bundle', async () => {
       (prismaService.bundlePass.create as jest.Mock).mockResolvedValue(mockBundle);
@@ -238,7 +272,7 @@ describe('BundleService', () => {
       });
 
       (axios.get as jest.Mock).mockResolvedValue({
-        data: { id: 'wallet-1', balance: 5000 },
+        data: { data: { id: 'wallet-1', balance: 5000 } },
       });
       (axios.post as jest.Mock).mockResolvedValue({ data: {} });
 
@@ -251,9 +285,9 @@ describe('BundleService', () => {
     it('should throw NotFoundException if bundle not found', async () => {
       (prismaService.bundlePass.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        service.subscribe('user-1', 'nonexistent', mockSubscribeDto)
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.subscribe('user-1', 'nonexistent', mockSubscribeDto)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException if bundle is inactive', async () => {
@@ -262,9 +296,9 @@ describe('BundleService', () => {
         isActive: false,
       });
 
-      await expect(
-        service.subscribe('user-1', 'bundle-1', mockSubscribeDto)
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.subscribe('user-1', 'bundle-1', mockSubscribeDto)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw BadRequestException for external payment without reference', async () => {
@@ -278,7 +312,7 @@ describe('BundleService', () => {
     it('should throw BadRequestException if user already has active subscription', async () => {
       (prismaService.bundlePass.findUnique as jest.Mock).mockResolvedValue(mockBundle);
       (axios.get as jest.Mock).mockResolvedValue({
-        data: { id: 'wallet-1', balance: 5000 },
+        data: { data: { id: 'wallet-1', balance: 5000 } },
       });
       (axios.post as jest.Mock).mockResolvedValue({ data: {} });
       (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => {
@@ -291,9 +325,9 @@ describe('BundleService', () => {
         return cb(tx);
       });
 
-      await expect(
-        service.subscribe('user-1', 'bundle-1', mockSubscribeDto)
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.subscribe('user-1', 'bundle-1', mockSubscribeDto)).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 

@@ -5,8 +5,9 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -59,7 +60,7 @@ export default function FixturesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Fixtures Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading fixtures..." />
       </SafeAreaView>
     );
@@ -88,7 +89,7 @@ export default function FixturesScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -188,11 +189,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     marginRight: 10,
   },
-  filterChipActive: { backgroundColor: '#E74C3C' },
-  filterText: { color: '#888', fontSize: 13, fontWeight: '600' },
+  filterChipActive: { backgroundColor: colors.error[500] },
+  filterText: { color: colors.text.secondary, fontSize: 13, fontWeight: '600' },
   filterTextActive: { color: '#fff' },
   sectionHeader: { paddingHorizontal: 16, paddingVertical: 8 },
-  sectionDate: { fontSize: 14, fontWeight: '700', color: '#E74C3C' },
+  sectionDate: { fontSize: 14, fontWeight: '700', color: colors.error[500] },
   listContent: { paddingBottom: 30 },
   fixtureCard: { marginHorizontal: 16, marginBottom: 12, padding: 16, borderRadius: 12 },
   fixtureLeague: {
@@ -201,15 +202,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  leagueText: { color: '#888', fontSize: 12 },
+  leagueText: { color: colors.text.secondary, fontSize: 12 },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
   },
-  statusLive: { backgroundColor: '#E74C3C' },
-  statusText: { color: '#888', fontSize: 11, fontWeight: '600' },
+  statusLive: { backgroundColor: colors.error[500] },
+  statusText: { color: colors.text.secondary, fontSize: 11, fontWeight: '600' },
   statusTextLive: { color: '#fff' },
   fixtureTeams: {
     flexDirection: 'row',
@@ -222,13 +223,13 @@ const styles = StyleSheet.create({
   teamEmoji: { fontSize: 24 },
   teamName: { fontSize: 14, fontWeight: '600' },
   scoreBox: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
   scoreText: { fontSize: 20, fontWeight: '700' },
   vsBox: { paddingHorizontal: 20 },
-  vsText: { color: '#888', fontSize: 16, fontWeight: '600' },
-  venueText: { color: '#888', fontSize: 12, textAlign: 'center' },
+  vsText: { color: colors.text.secondary, fontSize: 16, fontWeight: '600' },
+  venueText: { color: colors.text.secondary, fontSize: 12, textAlign: 'center' },
 });

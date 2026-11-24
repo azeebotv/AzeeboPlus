@@ -9,6 +9,9 @@ import { HealthModule } from './modules/health/health.module.js';
 import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, engagementFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { JOB_RETENTION_POLICY } from '@azeebo/queue-policy';
 
 @Module({
   imports: [
@@ -22,10 +25,24 @@ import { CacheModule } from '@azeebo/shared-services';
         port: parseInt(process.env.REDIS_PORT || '6379'),
         password: process.env.REDIS_PASSWORD,
       },
+      defaultJobOptions: JOB_RETENTION_POLICY,
     }),
     EngagementModule,
     AdminModule,
     HealthModule,
+    // Engagement feature gates: leaderboards/rankings/event-ingest ON;
+    // predictions OFF until launched.
+    FlagMetricsModule.register({ service: 'engagement-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('engagement-service'),
+      defaultFlags: {
+        [engagementFlags.leaderboards]: true,
+        [engagementFlags.rankings]: true,
+        [engagementFlags.predictions]: false,
+        [engagementFlags.eventIngest]: true,
+      },
+    }),
   ],
   providers: [
     {

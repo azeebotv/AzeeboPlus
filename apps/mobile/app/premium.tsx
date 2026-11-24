@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../src/contexts/AuthContext';
-import { subscriptionApi } from '../src/api/subscription';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { subscriptionApi } from '@azeebo/react-data/api/subscription';
 import { colors, typography, spacing, radius } from '../src/theme';
 
 const PREMIUM_FEATURES = [
@@ -126,10 +126,10 @@ export default function PremiumAccessScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Premium Screen" style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
         </View>
@@ -197,7 +197,11 @@ export default function PremiumAccessScreen() {
                   selectedPlan === 'yearly' && styles.planOptionPriceActive,
                 ]}
               >
-                {plansQuery.isLoading ? '...' : (selectedPlan === 'yearly' ? priceDisplay : altPriceDisplay)}
+                {plansQuery.isLoading
+                  ? '...'
+                  : selectedPlan === 'yearly'
+                    ? priceDisplay
+                    : altPriceDisplay}
               </Text>
             </TouchableOpacity>
           </View>
@@ -218,7 +222,7 @@ export default function PremiumAccessScreen() {
         <View style={styles.bundleSection}>
           <Text style={styles.bundleTitle}>Bundle Passes</Text>
           <Text style={styles.bundleDesc}>Save up to 40% with multi-universe bundles</Text>
-          <TouchableOpacity style={styles.bundleButton} onPress={() => router.push('/bundles')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.bundleButton} onPress={() => router.push('/bundles')}>
             <Text style={styles.bundleButtonText}>View Bundles</Text>
           </TouchableOpacity>
         </View>

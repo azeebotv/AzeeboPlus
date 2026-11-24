@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, moderationFlags } from '@azeebo/feature-flags';
 
 import { ModerationService } from './moderation.service.js';
 import { ModerationResponse } from './interfaces/moderation-response.interface.js';
@@ -136,6 +137,8 @@ export class ModerationController {
   @Post('scan')
   @RateLimit(20, 60000)
   @UseGuards(AdminGuard)
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(moderationFlags.aiScans)
   @ApiOperation({ summary: 'Scan content media for safety issues' })
   @ApiResponse({ status: 200, description: 'Scan result' })
   @ApiResponse({ status: 400, description: 'Invalid input' })

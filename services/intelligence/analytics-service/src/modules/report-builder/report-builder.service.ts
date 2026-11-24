@@ -1,6 +1,8 @@
 import { Inject, Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { Prisma } from '../../prisma/client/index.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagService, analyticsFlags } from '@azeebo/feature-flags';
 import {
   CreateReportDto,
   ExecuteReportDto,
@@ -49,9 +51,20 @@ interface QueryOptions {
 
 @Injectable()
 export class ReportBuilderService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
+  ) {}
+
+  /** Kill-switch: report builder v2 defaults OFF until the pipeline is validated. */
+  private async assertEnabled(): Promise<void> {
+    if (!(await this.featureFlagService.isEnabled(analyticsFlags.reportBuilderV2))) {
+      throw new BadRequestException('Report builder is disabled');
+    }
+  }
 
   async createReport(userId: string, dto: CreateReportDto): Promise<ReportResult> {
+    await this.assertEnabled();
     try {
       const report = await this.prisma.customReport.create({
         data: {
@@ -76,13 +89,12 @@ export class ReportBuilderService {
         data: report,
       };
     } catch (error) {
-      throw new BadRequestException(
-        `Failed to create report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'creating report');
     }
   }
 
   async getReport(reportId: string, userId: string): Promise<ReportResult> {
+    await this.assertEnabled();
     try {
       const report = await this.prisma.customReport.findUnique({
         where: { id: reportId },
@@ -104,9 +116,7 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(
-        `Failed to get report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'getting report');
     }
   }
 
@@ -115,6 +125,7 @@ export class ReportBuilderService {
     role: string,
     filters?: { category?: string; isPublic?: boolean }
   ): Promise<ReportResult> {
+    await this.assertEnabled();
     try {
       const where: Record<string, unknown> = {};
 
@@ -140,13 +151,12 @@ export class ReportBuilderService {
         data: reports,
       };
     } catch (error) {
-      throw new BadRequestException(
-        `Failed to list reports: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'listing reports');
     }
   }
 
   async executeReport(userId: string, dto: ExecuteReportDto): Promise<ReportResult> {
+    await this.assertEnabled();
     const startTime = Date.now();
 
     try {
@@ -246,6 +256,7 @@ export class ReportBuilderService {
     userId: string,
     dto: Partial<CreateReportDto>
   ): Promise<ReportResult> {
+    await this.assertEnabled();
     try {
       const report = await this.prisma.customReport.findUnique({
         where: { id: reportId },
@@ -289,13 +300,12 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(
-        `Failed to update report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'updating report');
     }
   }
 
   async deleteReport(reportId: string, userId: string): Promise<ReportResult> {
+    await this.assertEnabled();
     try {
       const report = await this.prisma.customReport.findUnique({
         where: { id: reportId },
@@ -321,9 +331,7 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(
-        `Failed to delete report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'deleting report');
     }
   }
 
@@ -332,6 +340,7 @@ export class ReportBuilderService {
     userId: string,
     limit: number = 20
   ): Promise<ReportResult> {
+    await this.assertEnabled();
     try {
       const report = await this.prisma.customReport.findUnique({
         where: { id: reportId },
@@ -359,9 +368,7 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(
-        `Failed to get execution history: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'getting execution history');
     }
   }
 
@@ -656,9 +663,7 @@ export class ReportBuilderService {
 
       return results as Record<string, unknown>[];
     } catch (error) {
-      throw new BadRequestException(
-        `Query execution failed: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
-      );
+      mapAndThrow(error, 'executing report query');
     }
   }
 

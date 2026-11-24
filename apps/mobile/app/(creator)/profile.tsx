@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface CreatorProfile {
   id: string;
@@ -108,9 +110,9 @@ export default function CreatorProfileScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Profile Screen" style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
           <Text style={styles.loadingText}>Loading profile...</Text>
         </View>
       </SafeAreaView>
@@ -122,7 +124,7 @@ export default function CreatorProfileScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Failed to load profile</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadProfile}>
+          <TouchableOpacity accessibilityRole="button" style={styles.retryButton} onPress={loadProfile}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -133,7 +135,7 @@ export default function CreatorProfileScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Creator Profile</Text>
@@ -184,25 +186,25 @@ export default function CreatorProfileScreen() {
             <Text style={styles.sectionTitle}>Social Links</Text>
             <View style={styles.socialCard}>
               {profile.socialLinks.instagram && (
-                <TouchableOpacity style={styles.socialLink}>
+                <TouchableOpacity accessibilityRole="button" style={styles.socialLink}>
                   <Text style={styles.socialIcon}>📷</Text>
                   <Text style={styles.socialText}>Instagram</Text>
                 </TouchableOpacity>
               )}
               {profile.socialLinks.twitter && (
-                <TouchableOpacity style={styles.socialLink}>
+                <TouchableOpacity accessibilityRole="button" style={styles.socialLink}>
                   <Text style={styles.socialIcon}>🐦</Text>
                   <Text style={styles.socialText}>Twitter</Text>
                 </TouchableOpacity>
               )}
               {profile.socialLinks.youtube && (
-                <TouchableOpacity style={styles.socialLink}>
+                <TouchableOpacity accessibilityRole="button" style={styles.socialLink}>
                   <Text style={styles.socialIcon}>📺</Text>
                   <Text style={styles.socialText}>YouTube</Text>
                 </TouchableOpacity>
               )}
               {profile.socialLinks.tiktok && (
-                <TouchableOpacity style={styles.socialLink}>
+                <TouchableOpacity accessibilityRole="button" style={styles.socialLink}>
                   <Text style={styles.socialIcon}>🎵</Text>
                   <Text style={styles.socialText}>TikTok</Text>
                 </TouchableOpacity>
@@ -249,7 +251,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   errorContainer: {
@@ -258,12 +260,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 18,
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -286,13 +288,13 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   profileSection: {
     alignItems: 'center',
@@ -307,17 +309,17 @@ const styles = StyleSheet.create({
   displayName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   username: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 12,
   },
   bio: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     textAlign: 'center',
     marginBottom: 24,
     paddingHorizontal: 16,
@@ -334,18 +336,18 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   actionRow: {
     width: '100%',
   },
   followButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -359,7 +361,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   followingButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   section: {
     paddingHorizontal: 24,
@@ -368,11 +370,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   socialCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
   },
@@ -389,11 +391,11 @@ const styles = StyleSheet.create({
   },
   socialText: {
     fontSize: 16,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   contentCard: {
     flexDirection: 'row',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
@@ -409,7 +411,7 @@ const styles = StyleSheet.create({
   contentTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
   },
   contentMeta: {
@@ -422,6 +424,6 @@ const styles = StyleSheet.create({
   },
   contentViews: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
 });

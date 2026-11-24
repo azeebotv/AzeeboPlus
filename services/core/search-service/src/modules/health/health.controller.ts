@@ -2,18 +2,27 @@ import { Inject, Controller, Get, HttpCode, HttpStatus, HttpException } from '@n
 import { Public } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PrismaService } from '../database/prisma.service.js';
+import { SearchService, FuzzyStatus } from '../search/search.service.js';
 
 @ApiTags('Health')
 @Public()
 @Controller('health')
 export class HealthController {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(SearchService) private readonly searchService: SearchService
+  ) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Health check endpoint' })
   @ApiResponse({ status: 200, description: 'Service is healthy' })
-  async check(): Promise<{ status: string; timestamp: string; database: string }> {
+  async check(): Promise<{
+    status: string;
+    timestamp: string;
+    database: string;
+    search: FuzzyStatus;
+  }> {
     let database = 'ok';
     try {
       await this.prisma.$queryRaw`SELECT 1`;
@@ -27,6 +36,9 @@ export class HealthController {
       status: 'ok',
       timestamp: new Date().toISOString(),
       database,
+      // Ops visibility into the pg_trgm guard: whether fuzzy search is
+      // degraded and why (see SearchService.getFuzzyStatus).
+      search: await this.searchService.getFuzzyStatus(),
     };
   }
 

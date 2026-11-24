@@ -10,6 +10,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MIGRATION="$SCRIPT_DIR/migrations/001_create_all_tables.sql"
 SEED="$SCRIPT_DIR/migrations/002_seed_demo_data.sql"
+# Universe-level additions (city guide, music, movies, genres, sports, ...).
+# Idempotent: every statement is ON CONFLICT DO NOTHING or guarded.
+ADDITIONS="$SCRIPT_DIR/migrations/003_seed_additions.sql"
 PSQL="/Users/deprof/Library/FlyEnv/env/postgresql/bin/psql -U postgres"
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
@@ -73,6 +76,11 @@ log "=== Step 3: Seed demo data ==="
 for db in "${DBS[@]}"; do
   log "  Seeding $db..."
   $PSQL -d "$db" -f "$SEED" 2>&1 | grep -E "INSERT|ERROR" | head -5 || true
+  # Universe additions (city guide, genres, music, ...). Guarded DO blocks and
+  # ON CONFLICT clauses make this safe on any DB subset.
+  if [ -f "$ADDITIONS" ]; then
+    $PSQL -d "$db" -f "$ADDITIONS" 2>&1 | grep -E "INSERT|ERROR" | head -5 || true
+  fi
   log "  $db: done"
 done
 

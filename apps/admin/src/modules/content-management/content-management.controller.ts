@@ -111,8 +111,10 @@ export class ContentManagementController {
   @Post()
   async createContent(@Req() req: AuthRequest, @Body() body: CreateContentDto) {
     this.logger.log(`Creating content: ${body.title}`);
+    const actorId = resolveActorId(req);
     const result = await this.contentService.createContent(
-      body as unknown as Record<string, unknown>
+      body as unknown as Record<string, unknown>,
+      actorId
     );
     await this.auditLogService.log({
       actorId: resolveActorId(req),
@@ -124,6 +126,7 @@ export class ContentManagementController {
     return result;
   }
 
+  @Put(':id')
   @Patch(':id')
   async updateContent(
     @Param('id') id: string,
@@ -204,6 +207,7 @@ export class ContentManagementController {
   }
 
   @Post('bulk/delete')
+  @Roles('superadmin')
   async bulkDelete(@Req() req: AuthRequest, @Body() body: { ids: string[] }) {
     this.logger.log(`Bulk soft-deleting ${body.ids.length} items`);
     const result = await this.contentService.bulkDelete(body.ids);

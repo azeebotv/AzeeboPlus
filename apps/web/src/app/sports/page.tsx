@@ -1,12 +1,18 @@
 'use client';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { Trophy } from 'lucide-react';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { useUniversesQuery } from '@/hooks/useUniverses';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { StaggerGrid } from '@/components/motion/StaggerGrid';
+import { GlowCard } from '@/components/motion/GlowCard';
 import analytics from '@/lib/analytics';
 
 function SportsPageContent(): React.JSX.Element {
@@ -14,15 +20,7 @@ function SportsPageContent(): React.JSX.Element {
     analytics.pageView('sports');
   }, []);
 
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
-      return res.data;
-    },
-    staleTime: 300000,
-  });
+  const universesQuery = useUniversesQuery();
 
   const sportsUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'sports');
 
@@ -34,164 +32,132 @@ function SportsPageContent(): React.JSX.Element {
   } = useQuery<ContentItem[], Error>({
     queryKey: ['sports-content', sportsUniverse?.id],
     queryFn: async () => {
-      if (!sportsUniverse?.id) throw new Error('Sports universe not found');
+      if (!sportsUniverse?.id) return [];
       const result = await api.content.getContentByUniverse(sportsUniverse.id, 1, 20);
       if (result.success && result.data) {
         return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
-      throw new Error(result.message || 'Failed to load sports content.');
+      return [];
     },
     staleTime: 60000,
     enabled: !!sportsUniverse?.id,
   });
 
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Sports" />
+  const featured = matches[0] ?? null;
 
-      {/* Hero Section */}
-      <section className="relative">
-        {isLoading ? (
-          <Skeleton height="500px" borderRadius="0px" />
-        ) : error ? (
-          <div className="h-[500px] flex items-center justify-center">
-            <ErrorState
-              title="Failed to load sports content"
-              description={error.message}
-              onButtonPress={() => refetch()}
-            />
-          </div>
-        ) : matches.length > 0 ? (
-          <div
-            className="relative h-[500px]"
-            style={{ background: 'linear-gradient(135deg, #0D3B2E, #E8420A)' }}
-          >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center px-4">
-                <div
-                  className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+  return (
+    <PageShell activeNav="Sports" maxWidth="7xl">
+      <PageHero
+        eyebrow="Live & Upcoming Sports"
+        title={featured?.title ?? 'Sports'}
+        subtitle={
+          featured?.description ?? 'Live matches, classic replays and everything in between'
+        }
+        accentColor="var(--color-az-success-500)"
+        glowColor="color-mix(in srgb, var(--color-az-category-emerald) 14%, transparent)"
+        actions={
+          featured && (
+            <>
+              <span
+                aria-hidden="true"
+                className="az-chip hidden items-center justify-center px-4 py-3 text-az-flame sm:inline-flex"
+              >
+                <Trophy size={24} />
+              </span>
+              <Link href={`/watch/${featured.id}`}>
+                <motion.button
+                  type="button"
+                  aria-label="Watch live sports content"
+                  className="az-btn-primary az-btn-primary--inline"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <span className="text-white text-3xl font-bold">⚽</span>
-                </div>
-                <h2 className="text-4xl font-bold text-white mb-2">{matches[0].title}</h2>
-                <p className="text-white/80 text-lg mb-6 max-w-2xl">{matches[0].description}</p>
-                <div className="flex items-center justify-center gap-4">
-                  <Link href={`/watch/${matches[0].id}`}>
-                    <button
-                      type="button"
-                      aria-label="Watch live sports content"
-                      className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                      style={{
-                        backgroundColor: 'rgba(255,255,255,0.2)',
-                        border: '1px solid rgba(255,255,255,0.3)',
-                      }}
-                    >
-                      Watch Live
-                    </button>
-                  </Link>
-                  <Link
-                    href={`/sports/predictions`}
-                    className="px-6 py-3 rounded-full text-sm font-semibold transition-all inline-block"
-                    style={{ backgroundColor: '#fff', color: 'var(--brand-forest)' }}
-                  >
-                    Make Prediction
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="h-[500px] flex items-center justify-center">
-            <p className="text-lg text-white/60">No sports content available</p>
-          </div>
-        )}
-      </section>
+                  Watch Live
+                </motion.button>
+              </Link>
+              <Link
+                href={`/sports/predictions`}
+                className="az-body-strong inline-block rounded-az-pill border border-az-glass-border bg-az-glass-fill px-6 py-3 text-az-ink transition-all hover:border-az-glass-border-hover hover:bg-az-glass-fill-hover"
+              >
+                Make Prediction
+              </Link>
+            </>
+          )
+        }
+      />
 
       {/* Content Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Featured Sports Content</h2>
-            <p className="text-base mt-1 text-white/50">Don&apos;t miss the action</p>
+      <section className="pb-4">
+        <ScrollReveal>
+          <div className="mb-6 sm:mb-8">
+            <h2 className="az-section-title text-az-ink">Featured Sports Content</h2>
+            <p className="az-body mt-1 text-az-ink-muted">Don&apos;t miss the action</p>
           </div>
-        </div>
+        </ScrollReveal>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
-                <Skeleton height="240px" borderRadius="0px" />
-                <div className="p-4 space-y-3">
+                <Skeleton height="192px" borderRadius="0px" />
+                <div className="space-y-3 p-4">
                   <Skeleton height="20px" width="75%" />
                   <Skeleton height="16px" width="50%" />
                 </div>
               </div>
             ))}
           </div>
+        ) : error ? (
+          <ErrorState
+            title="Failed to load sports content"
+            description={error.message}
+            onButtonPress={() => refetch()}
+          />
         ) : matches.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StaggerGrid className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {matches.map((match) => (
               <Link key={match.id} href={`/watch/${match.id}`}>
-                <article
-                  className="az-glass overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
-                  style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
-                >
+                <GlowCard universe="sports" className="overflow-hidden">
                   <div className="relative">
                     <OptimizedImage
                       src={match.thumbnail}
                       alt={match.title}
                       width={400}
                       height={192}
-                      className="w-full h-48 object-cover"
+                      className="h-48 w-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 az-scrim" aria-hidden="true" />
                     <div className="absolute bottom-4 left-4 right-4">
-                      <span
-                        className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{
-                          backgroundColor: 'rgba(13,59,46,0.4)',
-                          color: 'var(--color-success-400)',
-                        }}
-                      >
+                      <span className="az-overline mb-2 inline-block rounded-az-pill bg-az-success-500/15 px-2.5 py-0.5 text-az-success-400">
                         {match.contentType || 'Sport'}
                       </span>
-                      <h3 className="text-xl font-bold text-white">{match.title}</h3>
+                      <h3 className="az-title text-az-ink">{match.title}</h3>
                     </div>
                   </div>
                   <div className="p-4">
-                    <p className="text-sm text-white/50 mb-3 line-clamp-2">{match.description}</p>
+                    <p className="az-body mb-3 line-clamp-2 text-az-ink-muted">
+                      {match.description}
+                    </p>
                     <button
                       type="button"
                       aria-label={`Watch ${match.title}`}
-                      className="az-btn-primary w-full"
+                      className="az-btn-primary"
                     >
                       Watch Now
                     </button>
                   </div>
-                </article>
+                </GlowCard>
               </Link>
             ))}
-          </div>
+          </StaggerGrid>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">No sports content available yet</p>
+          <div className="py-12 text-center">
+            <p className="az-lead text-az-ink-muted">No sports content available yet</p>
           </div>
         )}
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
-
-export const metadata = {
-  title: 'Sports | Azeebo',
-  description: 'Watch live sports, make predictions, and follow your favorite teams and leagues.',
-  openGraph: {
-    title: 'Sports | Azeebo',
-    description: 'Watch live sports, make predictions, and follow your favorite teams and leagues.',
-  },
-};
 
 export default SportsPageContent;

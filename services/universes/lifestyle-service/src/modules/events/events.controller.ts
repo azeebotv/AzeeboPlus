@@ -15,12 +15,15 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { EventsService } from './events.service';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { RsvpDto } from './dto/rsvp.dto';
 
 @ApiTags('Events')
 @UseGuards(ServiceAuthGuard)
+@FeatureFlag(lifestyleFlags.eventsTicketing)
+@UseGuards(FeatureFlagGuard)
 @Controller('lifestyle/events')
 export class EventsController {
   constructor(@Inject(EventsService) private readonly eventsService: EventsService) {}
@@ -107,5 +110,16 @@ export class EventsController {
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.eventsService.cancelRsvp(id, req.user.id);
+  }
+
+  @Get(':id/attendees')
+  @ApiOperation({ summary: 'Get event attendees' })
+  @ApiResponse({ status: 200, description: 'List of attendees' })
+  async getAttendees(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<unknown> {
+    return this.eventsService.getAttendees(id, Number(page), Number(limit));
   }
 }

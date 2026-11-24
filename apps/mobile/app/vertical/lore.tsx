@@ -5,9 +5,9 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { ApiResponse } from '../../src/types/api';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
 
 interface LoreCategory {
@@ -57,9 +57,7 @@ export default function LoreExplorerScreen() {
 
   useEffect(() => {
     if (loreQuery.isSuccess && !loreQuery.isFetching) {
-      try {
-        analytics.verticalLoreExplored(activeCategory || 'all');
-      } catch {}
+      analytics.verticalLoreExplored(activeCategory || 'all');
     }
   }, [loreQuery.isSuccess, loreQuery.isFetching, activeCategory]);
 
@@ -141,7 +139,7 @@ export default function LoreExplorerScreen() {
       style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Lore Explorer</Text>

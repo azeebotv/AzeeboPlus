@@ -10,12 +10,14 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { realityApi } from '../../src/api';
-import { apiClient } from '../../src/api/client';
-import { useWallet } from '../../src/contexts/WalletContext';
+import { realityApi } from '@azeebo/react-data';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { useWallet } from '@azeebo/react-data/contexts/WalletContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { votePackages as defaultVotePackages } from '../../src/config/prices';
-import type { Contestant, RealityShow } from '../../src/types/api';
+import type { Contestant, RealityShow } from '@azeebo/react-data/types/api';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const VOTE_PACKAGES = defaultVotePackages.reality;
 
@@ -124,9 +126,9 @@ export default function RealityShowPage() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+    <View accessibilityLabel="Show Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
@@ -136,7 +138,7 @@ export default function RealityShowPage() {
             <Text style={styles.liveText}>LIVE</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.shareButton}>
+        <TouchableOpacity accessibilityRole="button" style={styles.shareButton}>
           <Text style={styles.shareIcon}>📤</Text>
         </TouchableOpacity>
       </View>
@@ -249,7 +251,7 @@ export default function RealityShowPage() {
               value={chatMessage}
               onChangeText={setChatMessage}
             />
-            <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
+            <TouchableOpacity accessibilityRole="button" style={styles.sendButton} onPress={handleSendMessage}>
               <Text style={styles.sendIcon}>➤</Text>
             </TouchableOpacity>
           </View>
@@ -263,7 +265,7 @@ export default function RealityShowPage() {
               <Text style={[styles.votingTitle, { color: isDark ? '#fff' : '#000' }]}>
                 Vote for {selectedContestant?.name}
               </Text>
-              <TouchableOpacity onPress={() => setShowVoting(false)}>
+              <TouchableOpacity accessibilityRole="button" onPress={() => setShowVoting(false)}>
                 <Text style={styles.closeButton}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -355,7 +357,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -391,7 +393,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -444,14 +446,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   quickVoteLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 13,
     fontWeight: '600',
   },
   quickVoteButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -461,7 +463,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     color: '#fff',
     fontSize: 12,
     fontWeight: '700',
@@ -498,7 +500,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -538,7 +540,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 12,
     borderRadius: 10,
     gap: 8,
@@ -590,7 +592,7 @@ const styles = StyleSheet.create({
   },
   chatText: {
     fontSize: 13,
-    color: '#ccc',
+    color: colors.neutral[300],
     flex: 1,
   },
   chatInput: {
@@ -609,7 +611,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -644,7 +646,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeButton: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 20,
   },
   walletBalanceText: {
@@ -662,13 +664,13 @@ const styles = StyleSheet.create({
   packageCard: {
     width: '48%',
     padding: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 10,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   packageCardSelected: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
   },
   packageVotes: {
     color: '#fff',
@@ -676,7 +678,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   packagePrice: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -704,7 +706,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -725,7 +727,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   summaryLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 14,
   },
   summaryValue: {
@@ -734,7 +736,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   voteNowButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',

@@ -8,6 +8,8 @@ import { HealthModule } from './modules/health/health.module.js';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CacheModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, rewardFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 
 @Module({
   imports: [
@@ -21,6 +23,21 @@ import { CacheModule } from '@azeebo/shared-services';
     AdminModule,
     HealthModule,
     CacheModule,
+    // Reward feature gates: points, streaks, badges and missions ON for the
+    // dev environment (previously Redis dev-enables — now baked into the
+    // module defaults); double-points stays OFF until launched.
+    FlagMetricsModule.register({ service: 'reward-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('reward-service'),
+      defaultFlags: {
+        [rewardFlags.pointsEnabled]: true,
+        [rewardFlags.streaks]: true,
+        [rewardFlags.badges]: true,
+        [rewardFlags.missions]: true,
+        [rewardFlags.doublePoints]: false,
+      },
+    }),
   ],
   providers: [
     {

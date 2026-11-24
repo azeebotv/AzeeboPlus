@@ -1,42 +1,80 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import type { SubscriptionPlan, SubscriptionStats } from '@/lib/admin-types';
-
-const TIER_COLORS: Record<string, string> = {
-  free: '#9A8A7A',
-  basic: '#E8420A',
-  standard: '#F59E0B',
-  premium: '#CC1C1C',
-  enterprise: '#0D3B2E',
-};
-
-const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
-  active: { bg: 'rgba(13,59,46,0.3)', color: '#34D399' },
-  inactive: { bg: 'rgba(154,138,122,0.15)', color: '#9A8A7A' },
-  archived: { bg: 'rgba(204,28,28,0.15)', color: '#CC1C1C' },
-};
-
-function formatCurrency(amount: number, currency = 'USD') {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
-}
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
+import { requireData, unwrapList } from '@/lib/payload';
+import type { SubscriptionPlan, SubscriptionStats, PromoCode } from '@/lib/admin-types';
+import { Icon } from '@/components/Icons';
+import { formatCurrency } from './subscriptions/format';
+import { PlansPanel } from './subscriptions/plans-panel';
+import { PromosPanel } from './subscriptions/promos-panel';
+import { PlanModal } from './subscriptions/plan-modal';
+import { PromoModal } from './subscriptions/promo-modal';
 
 export default function SubscriptionsPage() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'plans' | 'promos'>('plans');
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [tierFilter, setTierFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Promo Code State
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [promoForm, setPromoForm] = useState({
+    code: '',
+    discountType: 'percent' as 'percent' | 'flat',
+    discountValue: '20',
+    maxUses: '',
+    expiresAt: '',
+  });
+  const [promoFormError, setPromoFormError] = useState<string | null>(null);
+
+  const {
+    data: promoData,
+    isLoading: loadingPromos,
+    isError: promoError,
+    refetch: refetchPromos,
+  } = useQuery({
+    queryKey: ['admin', 'promo-codes'],
+    queryFn: async () => {
+      const data = requireData(await adminApi.getPromoCodes(), []);
+      return unwrapList<PromoCode>(data).items;
+    },
+  });
+
+  const createPromoMutation = useMutation({
+    mutationFn: (data: Omit<PromoCode, 'id' | 'usedCount' | 'status' | 'createdAt'>) =>
+      adminApi.createPromoCode(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'promo-codes'] });
+      setShowPromoModal(false);
+      setPromoForm({
+        code: '',
+        discountType: 'percent',
+        discountValue: '20',
+        maxUses: '',
+        expiresAt: '',
+      });
+      setPromoFormError(null);
+    },
+  });
+
+  const expirePromoMutation = useMutation({
+    mutationFn: (id: string) => adminApi.expirePromoCode(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'promo-codes'] });
+    },
+  });
+
+  const deletePromoMutation = useMutation({
+    mutationFn: (id: string) => adminApi.deletePromoCode(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'promo-codes'] });
+    },
+  });
 
   const [form, setForm] = useState({
     name: '',
@@ -51,26 +89,44 @@ export default function SubscriptionsPage() {
     maxUsers: '',
   });
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    isError: statsError,
+    refetch: refetchStats,
+  } = useQuery({
     queryKey: ['admin', 'subscription-stats'],
     queryFn: async () => {
       const res = await adminApi.getSubscriptionStats();
-      return res.success ? (res.data as SubscriptionStats) : null;
+      // Defensive spread: a partial/undefined payload can never crash the
+      // stat cards (this page crashed twice on unguarded field access).
+      const base = res.success && res.data ? (res.data as SubscriptionStats) : {};
+      return { ...base } as SubscriptionStats;
     },
   });
 
-  const { data: plansData, isLoading } = useQuery({
+  const {
+    data: plansData,
+    isLoading,
+    isError: plansError,
+    refetch: refetchPlans,
+  } = useQuery({
     queryKey: ['admin', 'subscriptions', page, statusFilter, tierFilter],
     queryFn: async () => {
-      const res = await adminApi.getSubscriptionPlans({
-        page,
-        limit: 15,
-        status: statusFilter || undefined,
-        tier: tierFilter || undefined,
-      });
-      return res.success
-        ? (res.data as { items: SubscriptionPlan[]; total: number })
-        : { items: [], total: 0 };
+      const data = requireData(
+        await adminApi.getSubscriptionPlans({
+          page,
+          limit: 15,
+          status: statusFilter || undefined,
+          tier: tierFilter || undefined,
+        }),
+        []
+      );
+      // Upstream returns { items, total, page, limit, totalPages } — unwrap
+      // through the shared guard so an envelope drift renders an empty list
+      // instead of crashing (this page crashed twice on payload shape).
+      const { items, total } = unwrapList<SubscriptionPlan>(data);
+      return { items, total: total ?? items.length };
     },
   });
 
@@ -112,6 +168,7 @@ export default function SubscriptionsPage() {
   });
 
   function resetForm() {
+    setFormError(null);
     setForm({
       name: '',
       description: '',
@@ -150,12 +207,27 @@ export default function SubscriptionsPage() {
   }
 
   function handleSubmit() {
+    const price = Number(form.price);
+    const durationDays = Number(form.durationDays);
+    if (!form.name.trim()) {
+      setFormError('Plan name is required.');
+      return;
+    }
+    if (!Number.isFinite(price) || price < 0) {
+      setFormError('Price must be a non-negative number.');
+      return;
+    }
+    if (!Number.isInteger(durationDays) || durationDays < 1) {
+      setFormError('Duration must be at least 1 day.');
+      return;
+    }
+    setFormError(null);
     const payload: Record<string, unknown> = {
       name: form.name,
       description: form.description || undefined,
-      price: parseFloat(form.price) || 0,
+      price,
       currency: form.currency,
-      durationDays: parseInt(form.durationDays) || 30,
+      durationDays,
       tier: form.tier,
       status: form.status,
       features: form.features
@@ -177,27 +249,83 @@ export default function SubscriptionsPage() {
 
   const plans = plansData?.items || [];
   const total = plansData?.total || 0;
+  const hasSubscriptionData = Boolean(
+    stats &&
+    ((stats.totalActiveSubscriptions ?? 0) > 0 ||
+      (stats.totalRevenue ?? 0) > 0 ||
+      (stats.monthlyRecurringRevenue ?? 0) > 0 ||
+      (stats.activePlans ?? 0) > 0)
+  );
+  const refreshAll = () => {
+    void Promise.all([refetchStats(), refetchPlans(), refetchPromos()]);
+  };
+
+  function handleCreatePromo() {
+    const code = promoForm.code.trim().toUpperCase();
+    const discountValue = Number(promoForm.discountValue);
+    const maxUses = promoForm.maxUses ? Number(promoForm.maxUses) : null;
+    if (!code) return setPromoFormError('Promo code is required.');
+    if (!/^[A-Z0-9_-]{3,32}$/.test(code)) {
+      return setPromoFormError('Use 3–32 letters, numbers, hyphens, or underscores.');
+    }
+    if (!Number.isFinite(discountValue) || discountValue <= 0) {
+      return setPromoFormError('Discount must be greater than zero.');
+    }
+    if (promoForm.discountType === 'percent' && discountValue > 100) {
+      return setPromoFormError('Percentage discount cannot exceed 100%.');
+    }
+    if (maxUses !== null && (!Number.isInteger(maxUses) || maxUses < 1)) {
+      return setPromoFormError('Maximum redemptions must be a positive whole number.');
+    }
+    if (
+      promoForm.expiresAt &&
+      new Date(`${promoForm.expiresAt}T23:59:59`).getTime() <= Date.now()
+    ) {
+      return setPromoFormError('Expiry date must be in the future.');
+    }
+    setPromoFormError(null);
+    createPromoMutation.mutate({
+      code,
+      discountType: promoForm.discountType,
+      discountValue,
+      maxUses,
+      expiresAt: promoForm.expiresAt || null,
+      applicablePlanIds: [],
+    });
+  }
 
   const statCards = stats
     ? [
         {
           label: 'Active Subscriptions',
-          value: stats.totalActiveSubscriptions.toLocaleString(),
-          color: '#E8420A',
+          value: (stats.totalActiveSubscriptions ?? 0).toLocaleString(),
+          color: 'var(--admin-orange)',
         },
         {
           label: 'Monthly Revenue',
-          value: formatCurrency(stats.monthlyRecurringRevenue),
-          color: '#0D3B2E',
+          value: formatCurrency(stats.monthlyRecurringRevenue ?? 0),
+          color: 'var(--admin-green)',
         },
-        { label: 'Total Revenue', value: formatCurrency(stats.totalRevenue), color: '#F59E0B' },
-        { label: 'Churn Rate', value: `${stats.churnRate.toFixed(1)}%`, color: '#CC1C1C' },
+        {
+          label: 'Total Revenue',
+          value: formatCurrency(stats.totalRevenue ?? 0),
+          color: 'var(--admin-amber)',
+        },
+        {
+          label: 'Churn Rate',
+          value: hasSubscriptionData ? `${(stats.churnRate ?? 0).toFixed(1)}%` : '—',
+          color: 'var(--admin-red)',
+        },
         {
           label: 'Avg Revenue / User',
-          value: formatCurrency(stats.averageRevenuePerUser),
-          color: '#9A8A7A',
+          value: hasSubscriptionData ? formatCurrency(stats.averageRevenuePerUser ?? 0) : '—',
+          color: 'var(--admin-text-muted)',
         },
-        { label: 'Active Plans', value: String(stats.activePlans), color: '#E8420A' },
+        {
+          label: 'Active Plans',
+          value: String(stats.activePlans ?? 0),
+          color: 'var(--admin-orange)',
+        },
       ]
     : [];
 
@@ -211,33 +339,182 @@ export default function SubscriptionsPage() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
+          gap: 20,
           marginBottom: 24,
+          flexWrap: 'wrap',
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Subscriptions</h1>
-          <p style={{ color: '#9A8A7A' }}>Manage subscription plans, pricing, and tiers</p>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <Icon name="repeat" size={26} color="var(--admin-orange)" />
+            Subscriptions
+          </h1>
+          <p style={{ color: 'var(--admin-text-muted)', maxWidth: 680, lineHeight: 1.5 }}>
+            Manage subscription plans, pricing, and promotional discount codes. Changes here affect
+            what customers can purchase.
+          </p>
         </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {activeTab === 'plans' ? (
+            <button
+              onClick={openCreate}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 20px',
+                borderRadius: 10,
+                border: 'none',
+                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Icon name="plus" size={16} color="#FFFFFF" />
+              New Plan
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowPromoModal(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 20px',
+                borderRadius: 10,
+                border: 'none',
+                background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Icon name="plus" size={16} color="#FFFFFF" />
+              New Promo Code
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Main Tab Navigation */}
+      <div
+        role="tablist"
+        aria-label="Subscription management"
+        style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: 24,
+          borderBottom: '1px solid var(--admin-card)',
+          paddingBottom: 12,
+          overflowX: 'auto',
+        }}
+      >
         <button
-          onClick={openCreate}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'plans'}
+          aria-controls="subscription-plans-panel"
+          onClick={() => setActiveTab('plans')}
           style={{
-            padding: '10px 20px',
-            borderRadius: 10,
+            padding: '8px 18px',
+            borderRadius: 8,
             border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            backgroundColor: activeTab === 'plans' ? 'var(--admin-orange)' : 'transparent',
+            color: activeTab === 'plans' ? 'white' : 'var(--admin-text-muted)',
             fontWeight: 600,
-            fontSize: 14,
+            fontSize: 13,
             cursor: 'pointer',
           }}
         >
-          + New Plan
+          Subscription Plans ({total})
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'promos'}
+          aria-controls="promo-codes-panel"
+          onClick={() => setActiveTab('promos')}
+          style={{
+            padding: '8px 18px',
+            borderRadius: 8,
+            border: 'none',
+            backgroundColor: activeTab === 'promos' ? 'var(--admin-orange)' : 'transparent',
+            color: activeTab === 'promos' ? 'white' : 'var(--admin-text-muted)',
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: 'pointer',
+          }}
+        >
+          Promo Codes ({promoData?.length ?? 0})
         </button>
       </div>
 
       {/* Stats Cards */}
       {statsLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 20 }}>Loading stats...</p>
+        <div
+          aria-label="Loading subscription metrics"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 12,
+            marginBottom: 32,
+          }}
+        >
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={index}
+              style={{
+                height: 82,
+                borderRadius: 12,
+                background:
+                  'linear-gradient(90deg, var(--admin-surface), var(--admin-card), var(--admin-surface))',
+                opacity: 0.65,
+              }}
+            />
+          ))}
+        </div>
+      ) : statsError ? (
+        <div
+          role="alert"
+          style={{
+            padding: 16,
+            marginBottom: 24,
+            borderRadius: 12,
+            border: '1px solid rgba(204,28,28,0.35)',
+            background: 'rgba(204,28,28,0.08)',
+            color: 'var(--admin-text-muted)',
+          }}
+        >
+          <strong style={{ color: 'var(--admin-red)' }}>Metrics unavailable.</strong> Subscription
+          plans are still usable while the metrics service recovers.{' '}
+          <button
+            type="button"
+            onClick={() => void refetchStats()}
+            style={{
+              border: 0,
+              background: 'transparent',
+              color: 'var(--admin-orange)',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+          >
+            Retry
+          </button>
+        </div>
       ) : (
         <div
           style={{
@@ -253,14 +530,14 @@ export default function SubscriptionsPage() {
               style={{
                 padding: 16,
                 borderRadius: 12,
-                border: '1px solid #2A1A1A',
-                backgroundColor: 'rgba(26,10,10,0.5)',
+                border: '1px solid var(--admin-card)',
+                backgroundColor: 'var(--admin-surface)',
               }}
             >
               <p
                 style={{
                   fontSize: 11,
-                  color: '#9A8A7A',
+                  color: 'var(--admin-text-muted)',
                   marginBottom: 6,
                   textTransform: 'uppercase',
                   letterSpacing: 0.5,
@@ -274,699 +551,67 @@ export default function SubscriptionsPage() {
         </div>
       )}
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
-          style={{
-            padding: '8px 12px',
-            borderRadius: 8,
-            border: '1px solid #2A1A1A',
-            backgroundColor: '#0D0505',
-            color: '#F5F0EB',
-            fontSize: 13,
-          }}
-        >
-          <option value="">All Statuses</option>
-          {statuses.map((s) => (
-            <option key={s} value={s}>
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </option>
-          ))}
-        </select>
-        <select
-          value={tierFilter}
-          onChange={(e) => {
-            setTierFilter(e.target.value);
-            setPage(1);
-          }}
-          style={{
-            padding: '8px 12px',
-            borderRadius: 8,
-            border: '1px solid #2A1A1A',
-            backgroundColor: '#0D0505',
-            color: '#F5F0EB',
-            fontSize: 13,
-          }}
-        >
-          <option value="">All Tiers</option>
-          {tiers.map((t) => (
-            <option key={t} value={t}>
-              {t.charAt(0).toUpperCase() + t.slice(1)}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Plans Table */}
-      {isLoading ? (
-        <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 40 }}>Loading plans...</p>
-      ) : plans.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: 60,
-            border: '1px dashed #2A1A1A',
-            borderRadius: 16,
-          }}
-        >
-          <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 12 }}>
-            No subscription plans found
-          </p>
-          <button
-            onClick={openCreate}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 8,
-              border: '1px solid #E8420A',
-              background: 'transparent',
-              color: '#E8420A',
-              fontSize: 13,
-              cursor: 'pointer',
-            }}
-          >
-            Create your first plan
-          </button>
-        </div>
+      {activeTab === 'plans' ? (
+        <PlansPanel
+          plans={plans}
+          total={total}
+          page={page}
+          setPage={setPage}
+          isLoading={isLoading}
+          plansError={plansError}
+          refetchPlans={refetchPlans}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          tierFilter={tierFilter}
+          setTierFilter={setTierFilter}
+          statuses={statuses}
+          tiers={tiers}
+          refreshAll={refreshAll}
+          openCreate={openCreate}
+          openEdit={openEdit}
+          deleteConfirm={deleteConfirm}
+          setDeleteConfirm={setDeleteConfirm}
+          toggleStatusMutation={toggleStatusMutation}
+          deleteMutation={deleteMutation}
+        />
       ) : (
-        <>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: '#9A8A7A',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Plan
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: '#9A8A7A',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Price
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: '#9A8A7A',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Duration
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: '#9A8A7A',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Tier
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: '#9A8A7A',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Status
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: '#9A8A7A',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Subscribers
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      color: '#9A8A7A',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Created
-                  </th>
-                  <th
-                    style={{
-                      textAlign: 'right',
-                      padding: '12px 16px',
-                      color: '#9A8A7A',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {plans.map((plan) => {
-                  const statusStyle = (STATUS_STYLES[plan.status] ?? STATUS_STYLES['inactive']) as {
-                    bg: string;
-                    color: string;
-                  };
-                  return (
-                    <tr key={plan.id} style={{ borderBottom: '1px solid #1A0F0F' }}>
-                      <td style={{ padding: '12px 16px' }}>
-                        <p style={{ fontWeight: 600, marginBottom: 2 }}>{plan.name}</p>
-                        {plan.description && (
-                          <p
-                            style={{
-                              color: '#9A8A7A',
-                              fontSize: 11,
-                              maxWidth: 200,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {plan.description}
-                          </p>
-                        )}
-                      </td>
-                      <td style={{ padding: '12px 16px', fontWeight: 600, color: '#E8420A' }}>
-                        {formatCurrency(plan.price, plan.currency)}
-                      </td>
-                      <td style={{ padding: '12px 16px', color: '#9A8A7A' }}>
-                        {plan.durationDays}d
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span
-                          style={{
-                            padding: '3px 10px',
-                            borderRadius: 6,
-                            fontSize: 11,
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            color: TIER_COLORS[plan.tier] || '#9A8A7A',
-                            backgroundColor: `${TIER_COLORS[plan.tier] || '#9A8A7A'}20`,
-                          }}
-                        >
-                          {plan.tier}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span
-                          style={{
-                            padding: '3px 10px',
-                            borderRadius: 6,
-                            fontSize: 11,
-                            fontWeight: 500,
-                            color: statusStyle.color,
-                            backgroundColor: statusStyle.bg,
-                          }}
-                        >
-                          {plan.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', color: '#9A8A7A' }}>
-                        {plan.subscriberCount.toLocaleString()}
-                      </td>
-                      <td style={{ padding: '12px 16px', color: '#9A8A7A', fontSize: 12 }}>
-                        {formatDate(plan.createdAt)}
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                          <button
-                            onClick={() =>
-                              toggleStatusMutation.mutate({
-                                id: plan.id,
-                                status: plan.status === 'active' ? 'inactive' : 'active',
-                              })
-                            }
-                            style={{
-                              padding: '4px 10px',
-                              borderRadius: 6,
-                              border: '1px solid #2A1A1A',
-                              background: 'transparent',
-                              color: '#9A8A7A',
-                              fontSize: 11,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {plan.status === 'active' ? 'Deactivate' : 'Activate'}
-                          </button>
-                          <button
-                            onClick={() => openEdit(plan)}
-                            style={{
-                              padding: '4px 10px',
-                              borderRadius: 6,
-                              border: '1px solid #2A1A1A',
-                              background: 'transparent',
-                              color: '#E8420A',
-                              fontSize: 11,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Edit
-                          </button>
-                          {deleteConfirm === plan.id ? (
-                            <>
-                              <button
-                                onClick={() => deleteMutation.mutate(plan.id)}
-                                style={{
-                                  padding: '4px 10px',
-                                  borderRadius: 6,
-                                  border: 'none',
-                                  background: '#CC1C1C',
-                                  color: '#fff',
-                                  fontSize: 11,
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                Confirm
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirm(null)}
-                                style={{
-                                  padding: '4px 10px',
-                                  borderRadius: 6,
-                                  border: '1px solid #2A1A1A',
-                                  background: 'transparent',
-                                  color: '#9A8A7A',
-                                  fontSize: 11,
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              onClick={() => setDeleteConfirm(plan.id)}
-                              style={{
-                                padding: '4px 10px',
-                                borderRadius: 6,
-                                border: '1px solid #CC1C1C',
-                                background: 'transparent',
-                                color: '#CC1C1C',
-                                fontSize: 11,
-                                cursor: 'pointer',
-                              }}
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {total > 15 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 20 }}>
-              <button
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  background: page <= 1 ? 'transparent' : 'rgba(232,66,10,0.1)',
-                  color: page <= 1 ? '#4A3A3A' : '#E8420A',
-                  fontSize: 13,
-                  cursor: page <= 1 ? 'default' : 'pointer',
-                }}
-              >
-                Prev
-              </button>
-              <span style={{ padding: '6px 14px', color: '#9A8A7A', fontSize: 13 }}>
-                Page {page} of {Math.ceil(total / 15)}
-              </span>
-              <button
-                disabled={page >= Math.ceil(total / 15)}
-                onClick={() => setPage(page + 1)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  background: page >= Math.ceil(total / 15) ? 'transparent' : 'rgba(232,66,10,0.1)',
-                  color: page >= Math.ceil(total / 15) ? '#4A3A3A' : '#E8420A',
-                  fontSize: 13,
-                  cursor: page >= Math.ceil(total / 15) ? 'default' : 'pointer',
-                }}
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </>
+        <PromosPanel
+          promoData={promoData}
+          loadingPromos={loadingPromos}
+          promoError={promoError}
+          refetchPromos={refetchPromos}
+          onNewPromo={() => setShowPromoModal(true)}
+          expirePromoMutation={expirePromoMutation}
+          deletePromoMutation={deletePromoMutation}
+        />
       )}
 
-      {/* Create/Edit Modal */}
+      {showPromoModal && (
+        <PromoModal
+          form={promoForm}
+          setForm={setPromoForm}
+          error={promoFormError}
+          onClose={() => setShowPromoModal(false)}
+          onSubmit={handleCreatePromo}
+          creating={createPromoMutation.isPending}
+        />
+      )}
+
       {showModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 100,
-            padding: 20,
-          }}
-          onClick={() => {
+        <PlanModal
+          form={form}
+          setForm={setForm}
+          formError={formError}
+          editingPlan={editingPlan}
+          onClose={() => {
             setShowModal(false);
             setEditingPlan(null);
           }}
-        >
-          <div
-            style={{
-              backgroundColor: '#1A0A0A',
-              border: '1px solid #2A1A1A',
-              borderRadius: 16,
-              padding: 28,
-              width: '100%',
-              maxWidth: 520,
-              maxHeight: '90vh',
-              overflowY: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>
-              {editingPlan ? 'Edit Plan' : 'Create New Plan'}
-            </h2>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label
-                  style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
-                >
-                  Name *
-                </label>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Premium Monthly"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
-                    fontSize: 13,
-                  }}
-                />
-              </div>
-
-              <div>
-                <label
-                  style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
-                >
-                  Description
-                </label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Brief description of this plan"
-                  rows={2}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
-                    fontSize: 13,
-                    resize: 'vertical',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
-                  >
-                    Price *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={form.price}
-                    onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    placeholder="0.00"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
-                      fontSize: 13,
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
-                  >
-                    Currency
-                  </label>
-                  <select
-                    value={form.currency}
-                    onChange={(e) => setForm({ ...form, currency: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
-                      fontSize: 13,
-                    }}
-                  >
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="NGN">NGN</option>
-                    <option value="KES">KES</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
-                  >
-                    Duration (days) *
-                  </label>
-                  <input
-                    type="number"
-                    value={form.durationDays}
-                    onChange={(e) => setForm({ ...form, durationDays: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
-                      fontSize: 13,
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
-                  >
-                    Tier
-                  </label>
-                  <select
-                    value={form.tier}
-                    onChange={(e) =>
-                      setForm({ ...form, tier: e.target.value as SubscriptionPlan['tier'] })
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
-                      fontSize: 13,
-                    }}
-                  >
-                    {tiers.map((t) => (
-                      <option key={t} value={t}>
-                        {t.charAt(0).toUpperCase() + t.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
-                >
-                  Features (comma-separated)
-                </label>
-                <input
-                  value={form.features}
-                  onChange={(e) => setForm({ ...form, features: e.target.value })}
-                  placeholder="e.g. HD Streaming, No Ads, Exclusive Content"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
-                    fontSize: 13,
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
-                  >
-                    Max Content Access
-                  </label>
-                  <input
-                    type="number"
-                    value={form.maxContentAccess}
-                    onChange={(e) => setForm({ ...form, maxContentAccess: e.target.value })}
-                    placeholder="Unlimited"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
-                      fontSize: 13,
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
-                  >
-                    Max Users
-                  </label>
-                  <input
-                    type="number"
-                    value={form.maxUsers}
-                    onChange={(e) => setForm({ ...form, maxUsers: e.target.value })}
-                    placeholder="Unlimited"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #2A1A1A',
-                      backgroundColor: '#0D0505',
-                      color: '#F5F0EB',
-                      fontSize: 13,
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  style={{ display: 'block', fontSize: 12, color: '#9A8A7A', marginBottom: 4 }}
-                >
-                  Status
-                </label>
-                <select
-                  value={form.status}
-                  onChange={(e) =>
-                    setForm({ ...form, status: e.target.value as SubscriptionPlan['status'] })
-                  }
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: 8,
-                    border: '1px solid #2A1A1A',
-                    backgroundColor: '#0D0505',
-                    color: '#F5F0EB',
-                    fontSize: 13,
-                  }}
-                >
-                  {statuses.map((s) => (
-                    <option key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 24 }}>
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setEditingPlan(null);
-                }}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: 8,
-                  border: '1px solid #2A1A1A',
-                  background: 'transparent',
-                  color: '#9A8A7A',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={
-                  !form.name || !form.price || createMutation.isPending || updateMutation.isPending
-                }
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                  color: '#fff',
-                  fontWeight: 600,
-                  fontSize: 13,
-                  cursor: !form.name || !form.price ? 'not-allowed' : 'pointer',
-                  opacity: !form.name || !form.price ? 0.5 : 1,
-                }}
-              >
-                {createMutation.isPending || updateMutation.isPending
-                  ? 'Saving...'
-                  : editingPlan
-                    ? 'Update Plan'
-                    : 'Create Plan'}
-              </button>
-            </div>
-          </div>
-        </div>
+          onSubmit={handleSubmit}
+          saving={createMutation.isPending || updateMutation.isPending}
+          tiers={tiers}
+          statuses={statuses}
+        />
       )}
     </div>
   );

@@ -3,8 +3,10 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  ServiceUnavailableException,
   Logger,
 } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -14,6 +16,8 @@ import axios from 'axios';
 import { AuthRepository } from '../auth.repository.js';
 import { AuthService } from '../auth.service.js';
 import { RedisService } from '@azeebo/shared-services';
+import { AppleClientSecretService } from './apple-client-secret.service.js';
+import { assertIssuedFor, assertOidcClaims } from './oidc-claims.js';
 
 interface SocialUser {
   email: string;
@@ -50,6 +54,9 @@ interface GoogleTokenInfo {
   name: string;
   picture: string;
   sub: string;
+  aud: string;
+  /** Present on ID-token responses only; tokeninfo omits it for access tokens. */
+  iss?: string;
 }
 
 interface AppleUserInfo {
@@ -58,8 +65,47 @@ interface AppleUserInfo {
   name?: string;
 }
 
+/**
+ * What a native client presents to the legacy `POST /auth/social/login` route:
+ * the credential the provider itself handed it.
+ */
+export interface SocialCredential {
+  provider: 'google' | 'apple';
+  accessToken?: string;
+  idToken?: string;
+}
+
+/**
+ * Wire shape of that legacy route. It predates the `/callback` contract, which
+ * returns the wrapped `{ success, data: { user, access_token, refresh_token } }`
+ * body, so the adapter keeps the camelCase fields older clients read.
+ */
+export interface SocialCredentialLoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: { id: string; email: string; displayName: string; avatar: string | null };
+}
+
+/**
+ * Server-side OAuth state record (Redis, 10 min TTL, single use).
+ *
+ * The post-login return target lives here rather than in a provider-visible
+ * query parameter, so a tampered `redirect` can never reach the callback: the
+ * provider echoes only the opaque `state`, and the value it maps to is ours.
+ */
+export interface SocialState {
+  provider: 'google' | 'apple';
+  redirect?: string;
+}
+
 const STATE_TTL_SECONDS = 600; // 10 minutes
 const STATE_PREFIX = 'social_state:';
+
+/** Apple's `iss` claim on every ID token it issues. */
+const APPLE_ISSUER = 'https://appleid.apple.com';
+
+/** Google's `iss` on ID tokens; it has been issued in both forms. */
+const GOOGLE_ISSUERS = ['https://accounts.google.com', 'accounts.google.com'] as const;
 
 @Injectable()
 export class SocialAuthService {
@@ -71,17 +117,44 @@ export class SocialAuthService {
     @Inject(AuthService) private readonly authService: AuthService,
     @Inject(JwtService) private readonly jwtService: JwtService,
     @Inject(ConfigService) private readonly configService: ConfigService,
-    @Inject(RedisService) private readonly redisService: RedisService
+    @Inject(RedisService) private readonly redisService: RedisService,
+    @Inject(AppleClientSecretService)
+    private readonly appleClientSecret: AppleClientSecretService
   ) {
-    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
+    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 12);
   }
 
   // ─── OAuth token verification ──────────────────────────────────────
 
   async verifyGoogleToken(idToken: string): Promise<GoogleTokenInfo> {
+    return this.fetchGoogleTokenInfo({ id_token: idToken }, 'Google token');
+  }
+
+  /**
+   * The Google credential a native client holds is an OAuth **access** token,
+   * not an ID token; tokeninfo accepts either. Reading it through the same
+   * endpoint keeps one verification path: a token Google will not vouch for is
+   * rejected here, never decoded locally.
+   */
+  async verifyGoogleAccessToken(accessToken: string): Promise<GoogleTokenInfo> {
+    return this.fetchGoogleTokenInfo({ access_token: accessToken }, 'Google access token');
+  }
+
+  private async fetchGoogleTokenInfo(
+    params: { id_token?: string; access_token?: string },
+    label: string
+  ): Promise<GoogleTokenInfo> {
+    // Our own client id, read before calling Google so an unconfigured
+    // deployment fails closed with 503 instead of skipping the audience check.
+    const expectedAudience = this.configService.get<string>('GOOGLE_CLIENT_ID')?.trim();
+    if (!expectedAudience) {
+      this.logger.error('Social auth misconfigured: google client ID is not set');
+      throw new ServiceUnavailableException('google sign-in is not configured on this deployment');
+    }
+
     try {
       const response = await axios.get<GoogleTokenInfo>('https://oauth2.googleapis.com/tokeninfo', {
-        params: { id_token: idToken },
+        params,
         timeout: 10000,
       });
 
@@ -90,11 +163,26 @@ export class SocialAuthService {
         throw new UnauthorizedException('Google token invalid or email not verified');
       }
 
+      // Tokeninfo vouches that Google issued the token, not that it was issued
+      // to us. Without these checks, a token minted for another app's client id
+      // signs its holder in as the email it carries. Access tokens carry no `iss`
+      // in tokeninfo, so they are checked for audience only.
+      const googleProvider = {
+        name: 'Google',
+        issuers: GOOGLE_ISSUERS,
+        clientId: expectedAudience,
+      };
+      if (params.id_token) {
+        assertOidcClaims(tokenInfo, googleProvider);
+      } else {
+        assertIssuedFor(tokenInfo, googleProvider);
+      }
+
       return tokenInfo;
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
-      this.logger.error(`Google token verification failed: ${(error as Error).message}`);
-      throw new UnauthorizedException('Failed to verify Google token');
+      this.logger.error(`${label} verification failed: ${(error as Error).message}`);
+      mapAndThrow(error, 'verifying Google token');
     }
   }
 
@@ -106,7 +194,16 @@ export class SocialAuthService {
         throw new UnauthorizedException('Invalid Apple token format');
       }
 
-      const header = JSON.parse(Buffer.from(headerParts[0], 'base64url').toString());
+      let header: { kid?: string };
+      try {
+        header = JSON.parse(Buffer.from(headerParts[0], 'base64url').toString());
+      } catch {
+        // allowed-fabricated-4xx: the header is caller-supplied input. An
+        // unreadable one is a malformed token, not a server fault — without
+        // this the 500 path was reachable from the public legacy login route
+        // with any string of the form `a.b.c`.
+        throw new UnauthorizedException('Invalid Apple token format');
+      }
       const kid = header.kid;
 
       // Fetch Apple's public keys
@@ -121,12 +218,24 @@ export class SocialAuthService {
         throw new UnauthorizedException('Apple signing key not found');
       }
 
-      // Verify the token signature using the public key
-      // For simplicity, we'll use jwt.verify with the Apple public key
+      // Apple's own client id — read before verifying so an unconfigured
+      // deployment fails closed with 503 instead of skipping the check.
+      const expectedAudience = this.appleClientSecret.getClientId();
+
       const applePublicKey = this.convertAppleKeyToPem(key);
       const payload = this.jwtService.verify(identityToken, {
         publicKey: applePublicKey,
         algorithms: ['RS256'],
+      });
+
+      // A valid signature only proves Apple signed *some* token: the same JWKS
+      // signs ID tokens for every Apple client in the world. Without the issuer
+      // and audience checks, a token minted for another developer's Services ID
+      // verifies here and signs its holder into whatever account its `email` names.
+      assertOidcClaims(payload, {
+        name: 'Apple',
+        issuers: [APPLE_ISSUER],
+        clientId: expectedAudience,
       });
 
       if (!payload.email) {
@@ -140,8 +249,23 @@ export class SocialAuthService {
       };
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
+
+      // A token that fails jwt verification is the caller's fault: bad
+      // signature, expired, wrong algorithm. `mapAndThrow` would turn each of
+      // those into a 500, so every forged token would look like a server fault.
+      const jwtFailure = (error as { name?: string } | null)?.name;
+      if (
+        jwtFailure === 'JsonWebTokenError' ||
+        jwtFailure === 'TokenExpiredError' ||
+        jwtFailure === 'NotBeforeError'
+      ) {
+        // allowed-fabricated-4xx: jwt.verify fails only in these three ways for
+        // a presented token, all caused by the token itself.
+        throw new UnauthorizedException('Apple token could not be verified');
+      }
+
       this.logger.error(`Apple token verification failed: ${(error as Error).message}`);
-      throw new UnauthorizedException('Failed to verify Apple token');
+      mapAndThrow(error, 'verifying Apple token');
     }
   }
 
@@ -162,25 +286,56 @@ export class SocialAuthService {
 
   // ─── State management for CSRF protection ──────────────────────────
 
-  async generateState(provider: 'google' | 'apple'): Promise<string> {
+  async generateState(provider: 'google' | 'apple', redirect?: string): Promise<string> {
     const state = randomUUID();
-    await this.redisService.set(`${STATE_PREFIX}${state}`, provider, STATE_TTL_SECONDS);
+    const record: SocialState = { provider };
+    if (redirect) {
+      // Bounded: this is attacker-influenced input being held in Redis.
+      record.redirect = redirect.slice(0, 2048);
+    }
+    await this.redisService.set(
+      `${STATE_PREFIX}${state}`,
+      JSON.stringify(record),
+      STATE_TTL_SECONDS
+    );
     return state;
   }
 
-  async validateState(state: string): Promise<'google' | 'apple'> {
-    const provider = (await this.redisService.get(`${STATE_PREFIX}${state}`)) as
-      | 'google'
-      | 'apple'
-      | null;
+  /**
+   * Consumes the state record (single use) and returns what it carried.
+   *
+   * Legacy records written before the redirect was folded in are a bare
+   * provider string, so those are still accepted — an in-flight login from a
+   * rolling deploy must not fail validation.
+   */
+  async validateState(state: string): Promise<SocialState> {
+    const raw = await this.redisService.get(`${STATE_PREFIX}${state}`);
 
-    if (!provider) {
+    if (!raw) {
       this.logger.warn('Social auth state validation failed: state not found or expired');
       throw new BadRequestException('Invalid or expired state parameter');
     }
 
     await this.redisService.del(`${STATE_PREFIX}${state}`);
-    return provider;
+
+    try {
+      const parsed = JSON.parse(raw) as Partial<SocialState>;
+      if (parsed?.provider === 'google' || parsed?.provider === 'apple') {
+        return {
+          provider: parsed.provider,
+          redirect: typeof parsed.redirect === 'string' ? parsed.redirect : undefined,
+        };
+      }
+    } catch {
+      // Not JSON — fall through to the legacy bare-provider form.
+    }
+
+    if (raw === 'google' || raw === 'apple') {
+      return { provider: raw };
+    }
+
+    this.logger.warn('Social auth state validation failed: unreadable record');
+    throw new BadRequestException('Invalid or expired state parameter');
   }
 
   // ─── OAuth code exchange ──────────────────────────────────────────
@@ -188,10 +343,8 @@ export class SocialAuthService {
   async exchangeGoogleCode(code: string): Promise<{ id_token: string; access_token: string }> {
     const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
     const clientSecret = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
-    const redirectUri = this.configService.get<string>(
-      'GOOGLE_REDIRECT_URI',
-      `${this.configService.get<string>('BASE_URL', 'http://localhost:3000')}/auth/social/callback?provider=google`
-    );
+    // Must be byte-identical to the value used at authorize time.
+    const redirectUri = this.resolveRedirectUri('google');
 
     if (!clientId || !clientSecret) {
       throw new BadRequestException('Google OAuth credentials not configured');
@@ -219,19 +372,22 @@ export class SocialAuthService {
       };
     } catch (error) {
       this.logger.error(`Google code exchange failed: ${error}`);
-      throw new UnauthorizedException('Failed to exchange Google authorization code');
+      mapAndThrow(error, 'exchanging Google authorization code');
     }
   }
 
   async exchangeAppleCode(code: string): Promise<{ id_token: string; access_token: string }> {
     const clientId = this.configService.get<string>('APPLE_CLIENT_ID');
-    const clientSecret = this.configService.get<string>('APPLE_CLIENT_SECRET');
-    const redirectUri = this.configService.get<string>(
-      'APPLE_REDIRECT_URI',
-      `${this.configService.get<string>('BASE_URL', 'http://localhost:3000')}/auth/social/callback?provider=apple`
-    );
+    // Apple has no static client secret — it is an ES256 JWT this service signs
+    // with the .p8 key on demand (cached in-process). A static string here was
+    // rejected by Apple as invalid_client every time.
+    const clientSecret = this.appleClientSecret.getClientSecret();
+    // Must be byte-identical to the value used at authorize time.
+    const redirectUri = this.resolveRedirectUri('apple');
 
-    if (!clientId || !clientSecret) {
+    // `clientSecret` needs no check: getClientSecret() either returns a signed
+    // JWT or throws 503.
+    if (!clientId) {
       throw new BadRequestException('Apple OAuth credentials not configured');
     }
 
@@ -257,7 +413,7 @@ export class SocialAuthService {
       };
     } catch (error) {
       this.logger.error(`Apple code exchange failed: ${error}`);
-      throw new UnauthorizedException('Failed to exchange Apple authorization code');
+      mapAndThrow(error, 'exchanging Apple authorization code');
     }
   }
 
@@ -266,17 +422,51 @@ export class SocialAuthService {
    * The state parameter is embedded in the URL and will be returned
    * to the client's callback endpoint.
    */
-  buildAuthorizeUrl(provider: 'google' | 'apple', state: string, _redirectUri?: string): string {
-    const googleClientId = this.configService.get<string>('GOOGLE_CLIENT_ID', '');
-    const appleClientId = this.configService.get<string>('APPLE_CLIENT_ID', '');
+  /**
+   * The provider-facing redirect URI. Must equal the value registered in the
+   * provider's console or the code exchange is rejected — so it is required
+   * configuration, never derived from BASE_URL. There is deliberately no
+   * default: a wrong-but-plausible URI fails at the provider with an opaque
+   * error, which is worse than failing here with a deploy-shaped message.
+   */
+  private resolveRedirectUri(provider: 'google' | 'apple'): string {
+    const value =
+      provider === 'google'
+        ? this.configService.get<string>('GOOGLE_REDIRECT_URI')?.trim()
+        : this.configService.get<string>('APPLE_REDIRECT_URI')?.trim();
+    if (!value) {
+      this.logger.error(`Social auth misconfigured: ${provider} redirect URI is not set`);
+      throw new ServiceUnavailableException(
+        `${provider} sign-in is not configured on this deployment`
+      );
+    }
+    return value;
+  }
 
-    const callbackBase = `${this.configService.get<string>('BASE_URL', 'http://localhost:3000')}/auth/social/callback`;
-    const callbackUrl = `${callbackBase}?provider=${provider}`;
+  private resolveClientId(provider: 'google' | 'apple'): string {
+    // Previously an empty client_id was minted into the URL, which the provider
+    // answers with an unhelpful invalid_client page.
+    const value =
+      provider === 'google'
+        ? this.configService.get<string>('GOOGLE_CLIENT_ID')?.trim()
+        : this.configService.get<string>('APPLE_CLIENT_ID')?.trim();
+    if (!value) {
+      this.logger.error(`Social auth misconfigured: ${provider} client ID is not set`);
+      throw new ServiceUnavailableException(
+        `${provider} sign-in is not configured on this deployment`
+      );
+    }
+    return value;
+  }
+
+  buildAuthorizeUrl(provider: 'google' | 'apple', state: string): string {
+    const callbackUrl = this.resolveRedirectUri(provider);
+    const clientId = this.resolveClientId(provider);
 
     switch (provider) {
       case 'google': {
         const params = new URLSearchParams({
-          client_id: googleClientId,
+          client_id: clientId,
           redirect_uri: callbackUrl,
           response_type: 'code',
           scope: 'openid email profile',
@@ -288,7 +478,7 @@ export class SocialAuthService {
       }
       case 'apple': {
         const params = new URLSearchParams({
-          client_id: appleClientId,
+          client_id: clientId,
           redirect_uri: callbackUrl,
           response_type: 'code id_token',
           scope: 'name email',
@@ -322,7 +512,7 @@ export class SocialAuthService {
           throw new UnauthorizedException('Social account already linked to another user');
         }
 
-        const password = await bcrypt.hash(randomUUID(), 10);
+        const password = await bcrypt.hash(randomUUID(), this.saltRounds);
         user = await this.authRepository.create({
           email: socialUser.email,
           password,
@@ -375,7 +565,7 @@ export class SocialAuthService {
         throw error;
       }
       this.logger.error(`Social login error: ${(error as Error).message}`, (error as Error).stack);
-      throw new UnauthorizedException('Social login failed');
+      mapAndThrow(error, 'social login');
     }
   }
 
@@ -385,5 +575,66 @@ export class SocialAuthService {
   ): Promise<{ success: boolean }> {
     await this.authRepository.unlinkSocialAccount(userId, provider);
     return { success: true };
+  }
+
+  async getConnectedAccounts(
+    userId: string
+  ): Promise<Array<{ id: string; provider: string; createdAt: Date }>> {
+    return this.authRepository.listSocialAccounts(userId);
+  }
+
+  /**
+   * Legacy `POST /auth/social/login` adapter.
+   *
+   * The route used to be served by a second controller whose Apple branch
+   * decoded the identity token's payload and trusted it, so a hand-built JWT
+   * signed anyone in as any email (AUD-85). It now runs through the verifiers
+   * above — Google at tokeninfo, Apple against Apple's JWKS including the
+   * `iss`/`aud` claims — and through the same account-linking flow as the
+   * browser callback, so there is one sign-in implementation.
+   */
+  async loginWithCredential(credential: SocialCredential): Promise<SocialCredentialLoginResponse> {
+    let info: { email: string; sub: string; name?: string };
+
+    if (credential.provider === 'google') {
+      if (!credential.accessToken) {
+        throw new UnauthorizedException('A Google access token is required');
+      }
+      info = await this.verifyGoogleAccessToken(credential.accessToken);
+    } else if (credential.provider === 'apple') {
+      const token = credential.idToken ?? credential.accessToken;
+      if (!token) {
+        throw new UnauthorizedException('An Apple identity token is required');
+      }
+      info = await this.verifyAppleToken(token);
+    } else {
+      throw new BadRequestException('Unsupported provider');
+    }
+
+    const result = await this.socialLogin({
+      email: info.email,
+      displayName: info.name ?? `${credential.provider === 'google' ? 'Google' : 'Apple'} User`,
+      socialId: info.sub,
+      provider: credential.provider,
+      accessToken: credential.provider === 'google' ? (credential.accessToken ?? '') : '',
+      refreshToken: '',
+    });
+
+    if (!result.data) {
+      // Unreachable for a successful login, but the response type keeps `data`
+      // optional; a missing body must not be read as a signed-in user.
+      throw new UnauthorizedException('Social login did not return a session');
+    }
+
+    return {
+      accessToken: result.data.access_token,
+      refreshToken: result.data.refresh_token,
+      user: {
+        id: result.data.user.id,
+        email: result.data.user.email,
+        displayName: result.data.user.displayName,
+        avatar: result.data.user.avatar ?? null,
+      },
+    };
   }
 }

@@ -73,9 +73,6 @@
       "@azeebo/shared-services/*": [
         "./packages/shared-services/dist/*"
       ],
-      "@azeebo/shared-queue": [
-        "./packages/shared-queue/dist"
-      ],
       "@azeebo/auth": [
         "./packages/auth/dist"
       ],
@@ -85,6 +82,9 @@
       "@azeebo/security": [
         "./packages/security/dist"
       ],
+      "@azeebo/security/log-redaction": [
+        "./packages/security/dist/log-redaction"
+      ],
       "@azeebo/observability": [
         "./packages/observability/dist"
       ],
@@ -93,6 +93,9 @@
       ],
       "@azeebo/feature-flags": [
         "./packages/feature-flags/dist"
+      ],
+      "@azeebo/feature-flags/registries": [
+        "./packages/feature-flags/dist/registries"
       ],
       "@azeebo/http-client": [
         "./packages/http-client/dist"
@@ -117,6 +120,12 @@
       ],
       "@azeebo/test-utils": [
         "./packages/test-utils/dist"
+      ],
+      "@azeebo/react-data": [
+        "./packages/react-data/src/index.ts"
+      ],
+      "@azeebo/react-data/*": [
+        "./packages/react-data/src/*"
       ]
     }
   },

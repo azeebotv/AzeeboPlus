@@ -1,23 +1,15 @@
 'use client';
 import { useEffect } from 'react';
 
-export const metadata = {
-  title: 'Movies | Azeebo',
-  description: 'Stream premium movies, Nollywood films, and exclusive content on Azeebo.',
-  openGraph: {
-    title: 'Movies | Azeebo',
-    description: 'Stream premium movies, Nollywood films, and exclusive content on Azeebo.',
-  },
-};
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api, ContentItem, Category } from '@/lib/api';
+import { useUniversesQuery } from '@/hooks/useUniverses';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -28,27 +20,19 @@ function MoviesPageContent(): React.JSX.Element {
     analytics.pageView('movies');
   }, []);
 
-  const universesQuery = useQuery({
-    queryKey: ['universes'],
-    queryFn: async () => {
-      const res = await api.universe.getUniverses();
-      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
-      return res.data;
-    },
-    staleTime: 300000,
-  });
+  const universesQuery = useUniversesQuery();
 
-  const moviesUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'movie');
+  const moviesUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'movies');
 
   const moviesQuery = useQuery({
     queryKey: ['movies', moviesUniverse?.id],
     queryFn: async () => {
-      if (!moviesUniverse?.id) throw new Error('Movies universe not found');
+      if (!moviesUniverse?.id) return [];
       const res = await api.content.getContentByUniverse(moviesUniverse.id, 1, 20);
       if (res.success && res.data) {
         return Array.isArray(res.data) ? res.data : res.data.items || [];
       }
-      throw new Error(res.message || 'Failed to load movies');
+      return [];
     },
     staleTime: 60000,
     enabled: !!moviesUniverse?.id,
@@ -68,116 +52,63 @@ function MoviesPageContent(): React.JSX.Element {
 
   const movies: ContentItem[] = moviesQuery.data ?? [];
   const categories: Category[] = categoriesQuery.data ?? [];
-  const isLoading = moviesQuery.isLoading;
+  const isLoading = universesQuery.isLoading || (!!moviesUniverse?.id && moviesQuery.isLoading);
   const error = moviesQuery.error?.message || null;
 
   return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Movies" />
-
-      {/* Hero Section */}
-      <section className="relative">
-        {isLoading ? (
-          <Skeleton height="400px" className="sm:h-[500px] rounded-none" />
-        ) : error ? (
-          <div className="h-[400px] sm:h-[500px] flex items-center justify-center">
-            <ErrorState
-              title="Failed to load movies"
-              description={error}
-              buttonText="Retry"
-              onButtonPress={() => moviesQuery.refetch()}
-            />
-          </div>
-        ) : movies.length > 0 ? (
-          <div className="relative h-[400px] sm:h-[500px]">
-            <OptimizedImage
-              src={movies[0].thumbnail}
-              alt={movies[0].title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
-            <AmbientGlow color="rgba(245,158,11,0.25)" size={500} className="bottom-0 right-0" />
-
-            <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
-              <motion.div
-                className="flex items-center gap-2 mb-3 sm:mb-4"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.4 }}
-              >
-                <span
-                  className="px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: 'var(--brand-orange)', color: 'var(--brand-white)' }}
+    <PageShell maxWidth="7xl" activeNav="Movies">
+      {/* Hero */}
+      {error ? (
+        <div className="flex items-center justify-center py-10 sm:py-12">
+          <ErrorState
+            title="Failed to load movies"
+            description={error}
+            buttonText="Retry"
+            onButtonPress={() => moviesQuery.refetch()}
+          />
+        </div>
+      ) : isLoading ? (
+        <Skeleton height="160px" borderRadius="16px" className="mb-8" />
+      ) : movies.length > 0 ? (
+        <PageHero
+          eyebrow={movies[0].contentType || 'Movie'}
+          badge="Premium"
+          title={movies[0].title}
+          description={movies[0].description}
+          actions={
+            <>
+              <Link href={`/watch/${movies[0].id}`}>
+                <motion.button
+                  type="button"
+                  className="az-btn-primary az-btn-primary--inline"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  Premium
-                </span>
-                <span
-                  className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
+                  Play Now
+                </motion.button>
+              </Link>
+              <Link href={`/watch/${movies[0].id}`}>
+                <motion.button
+                  type="button"
+                  className="az-chip px-6 py-3 text-sm font-semibold text-az-ink transition-all"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  {movies[0].contentType || 'Movie'}
-                </span>
-              </motion.div>
-              <motion.h2
-                className="text-3xl sm:text-4xl font-bold text-white mb-2"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25, duration: 0.5 }}
-              >
-                {movies[0].title}
-              </motion.h2>
-              <motion.p
-                className="text-white/60 text-base sm:text-lg mb-5 sm:mb-6 max-w-2xl"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35, duration: 0.5 }}
-              >
-                {movies[0].description}
-              </motion.p>
-              <motion.div
-                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45, duration: 0.5 }}
-              >
-                <Link href={`/watch/${movies[0].id}`}>
-                  <motion.button
-                    type="button"
-                    className="az-btn-primary"
-                    style={{ width: 'auto', paddingInline: '2rem' }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Play Now
-                  </motion.button>
-                </Link>
-                <Link href={`/watch/${movies[0].id}`}>
-                  <motion.button
-                    type="button"
-                    className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                    style={{
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      backgroundColor: 'rgba(255,255,255,0.08)',
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Add to Library
-                  </motion.button>
-                </Link>
-              </motion.div>
-            </div>
-          </div>
-        ) : (
-          <div className="h-[400px] sm:h-[500px] flex items-center justify-center">
-            <p className="text-base sm:text-lg text-white/60">No movies available</p>
-          </div>
-        )}
-      </section>
+                  Add to Library
+                </motion.button>
+              </Link>
+            </>
+          }
+        />
+      ) : (
+        <div className="flex items-center justify-center py-10 sm:py-12">
+          <p className="az-lead text-az-ink-muted">No movies available</p>
+        </div>
+      )}
 
       {/* Categories */}
       {categories.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <section className="py-6 sm:py-8">
           <motion.div
             className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-hide"
             role="group"
@@ -193,11 +124,7 @@ function MoviesPageContent(): React.JSX.Element {
               <motion.button
                 key={category.id}
                 type="button"
-                className="whitespace-nowrap px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium text-white/70 hover:text-white transition-colors flex-shrink-0"
-                style={{
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                }}
+                className="az-chip whitespace-nowrap px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-az-ink/70 hover:text-az-ink transition-colors flex-shrink-0"
                 variants={{
                   hidden: { opacity: 0, scale: 0.9 },
                   visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } },
@@ -214,12 +141,12 @@ function MoviesPageContent(): React.JSX.Element {
       )}
 
       {/* Movies Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <section className="py-6 sm:py-8">
         <ScrollReveal>
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">Featured Movies</h2>
-              <p className="text-sm sm:text-base mt-1 text-white/50">Handpicked for you</p>
+              <h2 className="az-section-title text-az-ink">Featured Movies</h2>
+              <p className="az-caption text-az-ink-muted mt-1">Handpicked for you</p>
             </div>
           </div>
         </ScrollReveal>
@@ -247,34 +174,24 @@ function MoviesPageContent(): React.JSX.Element {
                       alt={movie.title}
                       className="w-full h-44 sm:h-48 object-cover"
                     />
-                    <span
-                      className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={{
-                        backgroundColor: 'var(--brand-orange)',
-                        color: 'var(--brand-white)',
-                      }}
-                    >
+                    <span className="absolute top-2 right-2 px-2.5 py-0.5 rounded-az-pill text-xs font-semibold bg-az-flame text-az-surface-root">
                       Premium
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
+                    <div className="absolute inset-0 az-scrim" />
                     <div className="absolute bottom-4 left-4 right-4">
-                      <span
-                        className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{
-                          backgroundColor: 'rgba(232,66,10,0.2)',
-                          color: 'var(--brand-orange)',
-                        }}
-                      >
+                      <span className="inline-block px-2.5 py-0.5 rounded-az-pill text-xs font-medium mb-2 bg-az-scarlet/20 text-az-flame">
                         {movie.contentType || 'Movie'}
                       </span>
-                      <h3 className="text-lg sm:text-xl font-bold text-white">{movie.title}</h3>
+                      <h3 className="az-title text-az-ink">{movie.title}</h3>
                     </div>
                   </div>
                   <div className="p-4">
-                    <p className="text-sm text-white/50 mb-3 line-clamp-2">{movie.description}</p>
+                    <p className="az-caption text-az-ink-muted mb-3 line-clamp-2">
+                      {movie.description}
+                    </p>
                     <motion.button
                       type="button"
-                      className="az-btn-primary w-full"
+                      className="az-btn-primary"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -287,13 +204,11 @@ function MoviesPageContent(): React.JSX.Element {
           </StaggerGrid>
         ) : (
           <div className="text-center py-10 sm:py-12">
-            <p className="text-base sm:text-lg text-white/50">No movies available yet</p>
+            <p className="az-lead text-az-ink-muted">No movies available yet</p>
           </div>
         )}
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 

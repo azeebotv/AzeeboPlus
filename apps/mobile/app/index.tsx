@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -12,10 +12,11 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { AccessibilityInfo } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { colors, typography, spacing, shadows } from '../src/theme';
 import { BrandButton } from '../src/components/ui';
 import { AmbientGlow, FadeIn, ScrollReveal } from '../src/components/motion';
-import { useAuth } from '../src/contexts/AuthContext';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -25,10 +26,10 @@ export default function SplashScreen() {
   const { isAuthenticated, isLoading } = useAuth();
   const [progress, setProgress] = useState(0);
   const [showContent, setShowContent] = useState(false);
+  const routeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const logoScale = useSharedValue(0.6);
   const logoOpacity = useSharedValue(0);
-  const ringRotation = useSharedValue(0);
   const featuresOpacity = useSharedValue(0);
   const featuresTranslate = useSharedValue(20);
 
@@ -40,7 +41,6 @@ export default function SplashScreen() {
       if (reduceMotion) {
         logoScale.value = 1;
         logoOpacity.value = 1;
-        ringRotation.value = 0;
         featuresOpacity.value = 1;
         featuresTranslate.value = 0;
         setShowContent(true);
@@ -50,7 +50,6 @@ export default function SplashScreen() {
       const timer = setTimeout(() => {
         logoScale.value = withSpring(1, { damping: 12, stiffness: 100 });
         logoOpacity.value = withTiming(1, { duration: 600 });
-        ringRotation.value = withTiming(360, { duration: 1200 });
         featuresOpacity.value = withDelay(400, withTiming(1, { duration: 500 }));
         featuresTranslate.value = withDelay(400, withTiming(0, { duration: 500 }));
         setShowContent(true);
@@ -62,29 +61,47 @@ export default function SplashScreen() {
     return () => {
       cancelled = true;
     };
-  }, [featuresOpacity, featuresTranslate, logoOpacity, logoScale, ringRotation]);
+  }, [featuresOpacity, featuresTranslate, logoOpacity, logoScale]);
 
   useEffect(() => {
-    if (!showContent || isLoading) return;
+    if (!showContent) return;
+    // M12: the bar is display-only, but it must not *claim* completion while
+    // auth is still restoring — it holds at 90% until isLoading resolves,
+    // then finishes and routes. Route scheduling lives in this effect so a
+    // pending route is always cancelled if auth state changes underneath it
+    // (the old version scheduled a fire-and-forget timeout that survived
+    // effect re-runs and could route with stale auth state).
+    const cap = isLoading ? 90 : 100;
+    let scheduled = false;
     const interval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            // Route based on actual auth state instead of always going to login
-            if (isAuthenticated) {
-              router.replace('/(tabs)');
-            } else {
-              router.replace('/(auth)/login');
+        if (prev >= cap) {
+          if (!scheduled) {
+            scheduled = true;
+            clearInterval(interval);
+            if (cap === 100) {
+              routeTimerRef.current = setTimeout(() => {
+                if (isAuthenticated) {
+                  router.replace('/(tabs)');
+                } else {
+                  router.replace('/(auth)/login');
+                }
+              }, 400);
             }
-          }, 400);
-          return 100;
+          }
+          return cap;
         }
         return prev + 2;
       });
     }, 30);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (routeTimerRef.current) {
+        clearTimeout(routeTimerRef.current);
+        routeTimerRef.current = null;
+      }
+    };
   }, [showContent, isLoading, isAuthenticated, router]);
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({
@@ -92,20 +109,20 @@ export default function SplashScreen() {
     transform: [{ scale: logoScale.value }],
   }));
 
-  const ringAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${ringRotation.value}deg` }],
-  }));
-
   const featuresAnimatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(featuresOpacity.value, [0, 1], [0, 1], Extrapolation.CLAMP),
     transform: [{ translateY: featuresTranslate.value }],
   }));
 
-  const featureItems = [
-    { icon: '🎬', label: 'Movies' },
-    { icon: '🎵', label: 'Music' },
-    { icon: '🎮', label: 'Games' },
-    { icon: '⚽', label: 'Sports' },
+  const featureItems: Array<{
+    icon: keyof typeof Feather.glyphMap;
+    label: string;
+    href: Href;
+  }> = [
+    { icon: 'film', label: 'Movies', href: '/(tabs)/watch' },
+    { icon: 'music', label: 'Music', href: '/music' },
+    { icon: 'play-circle', label: 'Games', href: '/vertical' },
+    { icon: 'award', label: 'Rewards', href: '/(tabs)/rewards' },
   ];
 
   return (
@@ -119,19 +136,11 @@ export default function SplashScreen() {
 
       <Animated.View style={logoAnimatedStyle}>
         <View style={styles.logoContainer}>
-          <Animated.View style={[styles.logoRing, ringAnimatedStyle]}>
-            <Text style={styles.logoText}>A</Text>
-            <Text style={styles.logoPlus}>+</Text>
-          </Animated.View>
-          <Text
-            style={[
-              styles.appName,
-              { color: colorScheme === 'dark' ? colors.text.primary : '#1A0A0A' },
-            ]}
-          >
-            Azeebo
-            <Text style={styles.appNamePlus}>+</Text>
-          </Text>
+          <Image
+            source={require('../assets/logo-white.png')}
+            style={{ width: 180, height: 46, marginBottom: 16 }}
+            resizeMode="contain"
+          />
           <Text style={styles.appTagline}>Experience the Future of Entertainment</Text>
         </View>
 
@@ -142,11 +151,11 @@ export default function SplashScreen() {
               <ScrollReveal key={index} direction="up" delay={500 + itemDelay}>
                 <AnimatedTouchable
                   style={styles.featureIcon}
-                  onPress={() => {}}
+                  onPress={() => router.push(item.href)}
                   accessibilityLabel={item.label}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.featureIconText}>{item.icon}</Text>
+                  <Feather name={item.icon} size={22} color={colors.primary[500]} />
                 </AnimatedTouchable>
               </ScrollReveal>
             );
@@ -160,24 +169,45 @@ export default function SplashScreen() {
         </View>
 
         <FadeIn delay={800}>
-          <BrandButton
-            title="Get Started"
-            onPress={() => router.replace('/(auth)/login')}
-            variant="primary"
-          />
+          {/* Auth-aware CTAs: a signed-in user landing here (deep link, stale
+              route, back-swipe from tabs) goes home instead of losing their
+              session context by being pushed into the auth stack. */}
+          {isAuthenticated ? (
+            <BrandButton
+              title="Continue to Azeebo+"
+              onPress={() => router.replace('/(tabs)')}
+              variant="primary"
+            />
+          ) : (
+            <BrandButton
+              title="Get Started"
+              onPress={() => router.replace('/(auth)/login')}
+              variant="primary"
+            />
+          )}
 
           <View style={styles.bottomLinks}>
-            <BrandButton
-              title="Sign In"
-              onPress={() => router.replace('/(auth)/login')}
-              variant="ghost"
-            />
-            <Text style={styles.divider}>|</Text>
-            <BrandButton
-              title="Sign Up"
-              onPress={() => router.replace('/(auth)/register')}
-              variant="ghost"
-            />
+            {isAuthenticated ? (
+              <BrandButton
+                title="Go to Home"
+                onPress={() => router.replace('/(tabs)')}
+                variant="ghost"
+              />
+            ) : (
+              <>
+                <BrandButton
+                  title="Sign In"
+                  onPress={() => router.replace('/(auth)/login')}
+                  variant="ghost"
+                />
+                <Text style={styles.divider}>|</Text>
+                <BrandButton
+                  title="Sign Up"
+                  onPress={() => router.replace('/(auth)/register')}
+                  variant="ghost"
+                />
+              </>
+            )}
           </View>
         </FadeIn>
       </Animated.View>

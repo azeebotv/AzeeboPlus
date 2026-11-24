@@ -1,10 +1,13 @@
 import { Inject, Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, verticalFlags } from '@azeebo/feature-flags';
 import { CrossoversService } from './crossovers.service';
 import { CreateCrossoverData, CreateRecapData } from './crossovers.service';
 
 @ApiTags('Crossovers')
+@FeatureFlag(verticalFlags.crossoversEnabled)
+@UseGuards(FeatureFlagGuard)
 @Controller('vertical/crossovers')
 export class CrossoversController {
   constructor(@Inject(CrossoversService) private readonly crossoversService: CrossoversService) {}

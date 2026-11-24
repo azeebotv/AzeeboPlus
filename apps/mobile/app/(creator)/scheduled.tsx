@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 interface ScheduledPost {
   id: string;
@@ -119,7 +120,7 @@ export default function ScheduledPostsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Scheduled Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading scheduled posts..." />
       </SafeAreaView>
     );
@@ -136,7 +137,7 @@ export default function ScheduledPostsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Scheduled Posts</Text>
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -189,13 +190,13 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   emptyState: {
     flex: 1,
@@ -210,12 +211,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 8,
   },
   emptyDescription: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     textAlign: 'center',
   },
   listContainer: {
@@ -223,7 +224,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginRight: 8,
   },
   type: {
@@ -257,12 +258,12 @@ const styles = StyleSheet.create({
   },
   scheduleLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 2,
   },
   scheduleDate: {
     fontSize: 14,
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontWeight: '500',
   },
   statusContainer: {

@@ -10,8 +10,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { creatorApi } from '../api/creator';
+import { creatorApi } from '@azeebo/react-data/api/creator';
 import { colors } from '../theme';
+import { brand } from '@azeebo/design-tokens';
 
 const PRESET_AMOUNTS = [100, 500, 1000, 5000, 10000];
 
@@ -19,7 +20,7 @@ const TIER_COLORS: Record<string, string> = {
   bronze: colors.accent.bronze,
   silver: colors.accent.silver,
   gold: colors.accent.gold,
-  platinum: colors.accent.platinum,
+  platinum: '#E5E4E2',
 };
 
 interface TippingModalProps {
@@ -99,7 +100,9 @@ export default function TippingModal({
                       },
                     ]}
                   >
-                    <Text style={[styles.tierText, { color: unlocked ? color : colors.text.tertiary }]}>
+                    <Text
+                      style={[styles.tierText, { color: unlocked ? color : colors.text.tertiary }]}
+                    >
                       {unlocked ? '✓ ' : ''}
                       {key.charAt(0).toUpperCase() + key.slice(1)}
                     </Text>
@@ -145,7 +148,7 @@ export default function TippingModal({
             <TextInput
               style={styles.input}
               placeholder="Enter amount (min ₦50)"
-placeholderTextColor={colors.text.tertiary}
+              placeholderTextColor={colors.text.tertiary}
               keyboardType="numeric"
               value={customAmount}
               onChangeText={setCustomAmount}
@@ -179,7 +182,7 @@ placeholderTextColor={colors.text.tertiary}
           <View style={styles.tierLegend}>
             <Text style={styles.legendTitle}>Tier Badges</Text>
             <View style={styles.legendItem}>
-               <Text style={[styles.legendBullet, { color: colors.accent.bronze }]}>●</Text>
+              <Text style={[styles.legendBullet, { color: colors.accent.bronze }]}>●</Text>
               <Text style={styles.legendText}>Bronze — ₦1,000+</Text>
             </View>
             <View style={styles.legendItem}>
@@ -220,8 +223,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-title: { color: colors.text.primary, fontSize: 20, fontWeight: '700' },
-   closeButton: { color: colors.text.secondary, fontSize: 20, padding: 4 },
+  title: { color: colors.text.primary, fontSize: 20, fontWeight: '700' },
+  closeButton: { color: colors.text.secondary, fontSize: 20, padding: 4 },
   tierRow: {
     flexDirection: 'row',
     gap: 6,
@@ -248,7 +251,7 @@ title: { color: colors.text.primary, fontSize: 20, fontWeight: '700' },
     backgroundColor: 'rgba(232,66,10,0.15)',
   },
   amountText: { color: '#F5F0EB', fontSize: 13, fontWeight: '600' },
-  amountTextActive: { color: '#E8420A' },
+  amountTextActive: { color: brand.flame },
   input: {
     backgroundColor: '#1a1a1a',
     borderRadius: 8,
@@ -258,13 +261,13 @@ title: { color: colors.text.primary, fontSize: 20, fontWeight: '700' },
     marginBottom: 12,
   },
   sendButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
     marginBottom: 20,
   },
-  sendButtonDisabled: { backgroundColor: '#444' },
+  sendButtonDisabled: { backgroundColor: colors.bg.surface },
   sendButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   tierLegend: {
     backgroundColor: '#1a1a1a',
@@ -274,5 +277,5 @@ title: { color: colors.text.primary, fontSize: 20, fontWeight: '700' },
   legendTitle: { color: '#9A8A7A', fontSize: 12, fontWeight: '600', marginBottom: 8 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
   legendBullet: { fontSize: 10 },
-  legendText: { color: '#888', fontSize: 12 },
+  legendText: { color: colors.text.tertiary, fontSize: 12 },
 });

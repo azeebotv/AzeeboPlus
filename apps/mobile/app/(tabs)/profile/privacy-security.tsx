@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiClient } from '../../../src/api/client';
-import { logger } from '../../../src/utils/logger';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface SecurityOption {
   id: string;
@@ -149,10 +151,10 @@ export default function PrivacySecurityScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView accessibilityLabel="Privacy Security Screen" style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Privacy & Security</Text>
@@ -179,7 +181,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={twoFactorEnabled}
                     onValueChange={() => handleSecurityOption(option)}
-                    trackColor={{ false: '#333', true: '#E8420A' }}
+                    trackColor={{ false: '#333', true: brand.flame }}
                     thumbColor={twoFactorEnabled ? '#fff' : '#666'}
                   />
                 )}
@@ -187,7 +189,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={loginAlertsEnabled}
                     onValueChange={() => handleSecurityOption(option)}
-                    trackColor={{ false: '#333', true: '#E8420A' }}
+                    trackColor={{ false: '#333', true: brand.flame }}
                     thumbColor={loginAlertsEnabled ? '#fff' : '#666'}
                   />
                 )}
@@ -225,7 +227,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={activityStatusEnabled}
                     onValueChange={() => handlePrivacyOption(option)}
-                    trackColor={{ false: '#333', true: '#E8420A' }}
+                    trackColor={{ false: '#333', true: brand.flame }}
                     thumbColor={activityStatusEnabled ? '#fff' : '#666'}
                   />
                 )}
@@ -233,7 +235,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={dataSharingEnabled}
                     onValueChange={() => handlePrivacyOption(option)}
-                    trackColor={{ false: '#333', true: '#E8420A' }}
+                    trackColor={{ false: '#333', true: brand.flame }}
                     thumbColor={dataSharingEnabled ? '#fff' : '#666'}
                   />
                 )}
@@ -307,12 +309,12 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   section: {
     marginBottom: 32,
@@ -320,7 +322,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   optionCard: {
@@ -339,7 +341,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -353,12 +355,12 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   optionDescription: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   optionAction: {
     alignItems: 'center',
@@ -366,11 +368,11 @@ const styles = StyleSheet.create({
   },
   arrowText: {
     fontSize: 24,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   valueText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   dangerText: {
     color: '#EF4444',

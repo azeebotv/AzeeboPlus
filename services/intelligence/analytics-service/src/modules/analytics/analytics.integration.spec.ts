@@ -11,9 +11,11 @@ jest.mock('../database/prisma.service');
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service.js';
+import { PIIMinimizationService } from './pii-minimization.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { BadRequestException } from '@nestjs/common';
 
 describe('AnalyticsService Integration', () => {
@@ -38,6 +40,7 @@ describe('AnalyticsService Integration', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AnalyticsService,
+        PIIMinimizationService,
         {
           provide: PrismaService,
           useValue: {
@@ -76,6 +79,13 @@ describe('AnalyticsService Integration', () => {
             get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
           },
         },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn().mockResolvedValue(false),
+            getValue: jest.fn().mockResolvedValue(100),
+          },
+        },
       ],
     }).compile();
 
@@ -104,7 +114,7 @@ describe('AnalyticsService Integration', () => {
         },
       ];
 
-      const result = await service.ingestEvents(events);
+      const result = await service.ingestEvents(events, { analytics: true, marketing: false });
 
       expect(result.success).toBe(true);
     });

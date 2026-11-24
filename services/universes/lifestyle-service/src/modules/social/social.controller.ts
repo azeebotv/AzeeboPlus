@@ -1,10 +1,13 @@
 import { Inject, Controller, Get, Post, Delete, Body, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { SocialService } from './social.service';
 
 @ApiTags('Social')
 @UseGuards(ServiceAuthGuard)
+@FeatureFlag(lifestyleFlags.socialEnabled)
+@UseGuards(FeatureFlagGuard)
 @Controller('lifestyle/social')
 export class SocialController {
   constructor(@Inject(SocialService) private readonly socialService: SocialService) {}

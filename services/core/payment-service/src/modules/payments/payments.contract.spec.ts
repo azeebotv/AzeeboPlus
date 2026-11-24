@@ -6,9 +6,15 @@ import { PaymentsService } from './payments.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
 import { ExecutionContext } from '@nestjs/common';
+import { FeatureFlagService } from '@azeebo/feature-flags';
+
+// Unique per jest run: a live Redis (REDIS_URL set) keeps idempotency keys
+// for 24h, so fixed keys would 409 on the second run.
+const runId = Date.now();
 
 describe('Payments Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockPaymentsService = {
     initializePayment: jest.fn(),
@@ -36,7 +42,10 @@ describe('Payments Controller Contract Tests', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [PaymentsController],
-      providers: [{ provide: PaymentsService, useValue: mockPaymentsService }],
+      providers: [
+        { provide: PaymentsService, useValue: mockPaymentsService },
+        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true) } },
+      ],
     })
       .overrideGuard(AuthGuard('jwt'))
       .useValue(createMockAuthGuard(true))
@@ -54,6 +63,8 @@ describe('Payments Controller Contract Tests', () => {
       next();
     });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -76,9 +87,10 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `contract-init-${runId}-1`)
         .send({
           amount: 1000,
           currency: 'NGN',
@@ -98,9 +110,10 @@ describe('Payments Controller Contract Tests', () => {
         new (require('@nestjs/common').BadRequestException)('Amount must be greater than 0')
       );
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `contract-init-${runId}-2`)
         .send({ amount: 50, currency: 'NGN' })
         .expect(400);
     });
@@ -117,7 +130,7 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/verify')
         .set('Authorization', 'Bearer valid-token')
         .send({ transactionId: 'ref-123' })
@@ -144,7 +157,7 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/payments/history')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -169,7 +182,7 @@ describe('Payments Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/payments/pay-abc123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -181,9 +194,10 @@ describe('Payments Controller Contract Tests', () => {
 
   describe('error responses', () => {
     it('should return 400 for invalid request body', () => {
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `contract-init-${runId}-3`)
         .send({})
         .expect(400);
     });

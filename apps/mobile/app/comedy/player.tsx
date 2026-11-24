@@ -14,10 +14,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAzeeboVideoPlayer } from '../../src/hooks/useVideoPlayer';
-import { contentApi, type ContentItem } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi, type ContentItem } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const { width: _width } = Dimensions.get('window');
 
@@ -36,6 +38,9 @@ export default function ComedyClipPlayer() {
   const { isPlaying, isBuffering, currentTime, duration, player, togglePlay, formatTime } =
     useAzeeboVideoPlayer({
       contentId: clip?.id || '',
+      title: clip?.title,
+      ownerPath: '/comedy/player',
+      screenKey: '/comedy/player',
     });
 
   const fetchClip = useCallback(async () => {
@@ -46,9 +51,7 @@ export default function ComedyClipPlayer() {
       if (featured.success && featured.data?.[0]) {
         const clipData = featured.data[0];
         setClip(clipData);
-        try {
-          analytics.comedyClipViewed(clipData.id);
-        } catch {}
+        analytics.comedyClipViewed(clipData.id);
         const relatedRes = await contentApi.getTrendingContent(5);
         if (relatedRes.success && relatedRes.data) {
           setRelated(relatedRes.data.filter((item) => item.id !== clipData.id));
@@ -90,7 +93,7 @@ export default function ComedyClipPlayer() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Player Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading clip..." />
       </SafeAreaView>
     );
@@ -130,7 +133,7 @@ export default function ComedyClipPlayer() {
 
             {!isPlaying && !isBuffering && (
               <View style={styles.playOverlay}>
-                <TouchableOpacity style={styles.playButton} onPress={togglePlay}>
+                <TouchableOpacity accessibilityRole="button" style={styles.playButton} onPress={togglePlay}>
                   <Text style={styles.playIcon}>▶️</Text>
                 </TouchableOpacity>
               </View>
@@ -152,7 +155,7 @@ export default function ComedyClipPlayer() {
               </Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
         </View>
@@ -215,23 +218,23 @@ export default function ComedyClipPlayer() {
             )}
 
             <View style={styles.actionsRow}>
-              <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
+              <TouchableOpacity accessibilityRole="button" style={styles.actionButton} onPress={handleLike}>
                 <Text style={styles.actionIcon}>{isLiked ? '❤️' : '🤍'}</Text>
                 <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>
                   {isLiked ? 'Liked' : 'Like'}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={handleComment}>
+              <TouchableOpacity accessibilityRole="button" style={styles.actionButton} onPress={handleComment}>
                 <Text style={styles.actionIcon}>💬</Text>
                 <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>
                   Comment
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+              <TouchableOpacity accessibilityRole="button" style={styles.actionButton} onPress={handleShare}>
                 <Text style={styles.actionIcon}>↗️</Text>
                 <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>Share</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity accessibilityRole="button" style={styles.actionButton}>
                 <Text style={styles.actionIcon}>🔖</Text>
                 <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>Save</Text>
               </TouchableOpacity>
@@ -253,7 +256,7 @@ export default function ComedyClipPlayer() {
                     placeholder="Add a comment..."
                     placeholderTextColor="#888"
                   />
-                  <TouchableOpacity style={styles.postButton}>
+                  <TouchableOpacity accessibilityRole="button" style={styles.postButton}>
                     <Text style={styles.postButtonText}>Post</Text>
                   </TouchableOpacity>
                 </View>
@@ -343,7 +346,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.2)',
-    borderTopColor: '#E8420A',
+    borderTopColor: brand.flame,
   },
   commentEmpty: {
     textAlign: 'center',
@@ -364,7 +367,7 @@ const styles = StyleSheet.create({
   },
   relatedThumbnail: {
     height: 100,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -447,7 +450,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   statText: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 13,
   },
   creatorRow: {
@@ -463,7 +466,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -475,12 +478,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   creatorMeta: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
     marginTop: 2,
   },
   followButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -488,7 +491,7 @@ const styles = StyleSheet.create({
   followButtonActive: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#888',
+    borderColor: colors.neutral[500],
   },
   followButtonText: {
     color: '#fff',
@@ -496,7 +499,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   followButtonTextActive: {
-    color: '#888',
+    color: colors.text.secondary,
   },
   description: {
     fontSize: 14,
@@ -510,13 +513,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   tag: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   tagText: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   actionsRow: {
@@ -526,7 +529,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: colors.bg.tertiary,
   },
   actionButton: {
     alignItems: 'center',
@@ -536,7 +539,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   actionText: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 11,
   },
   commentsSection: {
@@ -555,7 +558,7 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     flex: 1,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -563,7 +566,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   postButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,

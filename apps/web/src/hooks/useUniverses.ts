@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import { useFlags } from '../context/FlagsContext';
+import { UNIVERSE_SLUGS } from '../lib/flags';
+import type { Universe } from '../lib/api/base';
 
 const STORAGE_KEY = 'azeebo:selected_universe';
 const CACHE_KEY = 'azeebo:universes_cache';
@@ -64,6 +68,31 @@ function writeCache(data: UniverseOption[]): void {
   }
 }
 
+/**
+ * React Query wrapper for the enabled-universes list, shared by universe
+ * landing pages (`/sports`, `/comedy`, `/reality`, …).
+ *
+ * Guards against non-array payloads so a malformed API response surfaces as
+ * a query error instead of crashing `.find()` callers.
+ *
+ * Uses a distinct cache key from the legacy `['universes']` key, which older
+ * builds may have poisoned with a non-array payload (staleTime of 5 minutes
+ * kept the bad value cached across navigations).
+ */
+export function useUniversesQuery(staleTime = 5 * 60 * 1000) {
+  return useQuery<Universe[]>({
+    queryKey: ['universes', 'enabled'],
+    queryFn: async () => {
+      const res = await api.universe.getUniverses();
+      if (!res.success || !Array.isArray(res.data)) {
+        throw new Error(res.message || 'Failed to load universes');
+      }
+      return res.data;
+    },
+    staleTime,
+  });
+}
+
 export interface UseUniversesReturn {
   /** All available universes */
   universes: UniverseOption[];
@@ -87,10 +116,25 @@ export interface UseUniversesReturn {
 
 export function useUniverses(): UseUniversesReturn {
   const router = useRouter();
-  const [universes, setUniverses] = useState<UniverseOption[]>([]);
+  const { ready, universeEnabled } = useFlags();
+  const [rawUniverses, setUniverses] = useState<UniverseOption[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Single-point visibility filter: the admin `universe.<slug>.enabled`
+  // sentinels (bootstrap) hide universes here, so nav, dropdowns and every
+  // consumer of this hook get gating for free. Semantics match the services:
+  // a universe is hidden ONLY when its sentinel is loaded and disabled —
+  // before bootstrap is ready (empty flag map) everything stays visible.
+  const universes = useMemo(() => {
+    if (!ready) return rawUniverses;
+    return rawUniverses.filter((u) => {
+      const slug = universeSlugOf(u);
+      if (!slug) return true;
+      return universeEnabled(slug);
+    });
+  }, [rawUniverses, ready, universeEnabled]);
 
   const applySelection = useCallback((list: UniverseOption[], id: string | null) => {
     if (id) {
@@ -242,6 +286,22 @@ function getUniverseRoute(id: string): string | undefined {
     games: '/games',
   };
   return routeMap[id.toLowerCase()];
+}
+
+/**
+ * Resolve the canonical universe slug (`UNIVERSE_SLUGS`) for an option so the
+ * `universe.<slug>.enabled` sentinel can be looked up. The API serves slug
+ * ids (`movie`, `comedy`, …); fallback entries carry display names. Returns
+ * undefined for non-slug universes (knowledge, live-events), which are never
+ * sentinel-gated.
+ */
+export function universeSlugOf(u: UniverseOption): string | undefined {
+  const candidates = [u.id, u.name].filter(Boolean) as string[];
+  for (const c of candidates) {
+    const norm = c.toLowerCase().replace(/[^a-z]/g, '');
+    if ((UNIVERSE_SLUGS as readonly string[]).includes(norm)) return norm;
+  }
+  return undefined;
 }
 
 /**

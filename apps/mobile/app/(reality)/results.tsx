@@ -10,9 +10,11 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { contentApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface ContestantResult {
   id: string;
@@ -47,9 +49,7 @@ export default function ResultsScreen() {
 
   useEffect(() => {
     loadResults();
-    try {
-      analytics.realityLeaderboardViewed(contentId);
-    } catch {}
+    analytics.realityLeaderboardViewed(contentId);
   }, [contentId]);
 
   const loadResults = async () => {
@@ -95,9 +95,9 @@ export default function ResultsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Results Screen" style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
           <Text style={styles.loadingText}>Loading results...</Text>
         </View>
       </SafeAreaView>
@@ -107,7 +107,7 @@ export default function ResultsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
   header: {
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   headerContent: {
     flex: 1,
@@ -256,11 +256,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   episodeSelector: {
     paddingHorizontal: 24,
@@ -272,14 +272,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     marginRight: 8,
   },
   episodeButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   episodeButtonText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: '500',
   },
@@ -295,15 +295,15 @@ const styles = StyleSheet.create({
   episodeTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   episodeDate: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   winnerCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -332,15 +332,15 @@ const styles = StyleSheet.create({
   winnerName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   winnerVotes: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   evictedCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -370,12 +370,12 @@ const styles = StyleSheet.create({
   evictedName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 4,
   },
   evictedVotes: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   rankingsSection: {
     marginTop: 8,
@@ -383,13 +383,13 @@ const styles = StyleSheet.create({
   rankingsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 16,
   },
   contestantRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   rankText: {
-    color: '#F3F4F6',
+    color: colors.light[100],
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -429,12 +429,12 @@ const styles = StyleSheet.create({
   contestantName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: colors.light[100],
     marginBottom: 2,
   },
   contestantVotes: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   badge: {
     fontSize: 24,

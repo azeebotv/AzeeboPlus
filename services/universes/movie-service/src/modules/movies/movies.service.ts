@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { MovieResponse } from './interfaces/movie-response.interface.js';
@@ -22,7 +23,7 @@ export class MoviesService {
     this.rentalFee = this.configService.get<number>('MOVIE_RENTAL_FEE', 500);
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 
@@ -184,9 +185,7 @@ export class MoviesService {
         { timeout: 10000 }
       );
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to process payment';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(error, 'charging movie rental');
     }
 
     try {
@@ -230,8 +229,7 @@ export class MoviesService {
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet after rental failure:', compensateError);
         });
-      const errorMessage = dbError instanceof Error ? dbError.message : 'Failed to create rental';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(dbError, 'creating movie rental');
     }
   }
 

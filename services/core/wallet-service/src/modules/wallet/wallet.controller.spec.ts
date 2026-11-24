@@ -11,16 +11,35 @@ jest.mock('@azeebo/security', () => ({
   RateLimitGuard: jest.fn().mockImplementation(() => ({
     canActivate: jest.fn().mockReturnValue(true),
   })),
+  // WalletController lists it in @UseGuards(); a missing export makes the whole
+  // suite fail to load ("Invalid guard passed to @UseGuards()"), not just one test.
+  IdempotencyGuard: jest.fn().mockImplementation(() => ({
+    canActivate: jest.fn().mockReturnValue(true),
+  })),
   RateLimit: () => () => {},
 }));
 
 jest.mock('../../cache/index.js', () => ({
   CacheInterceptor: jest.fn().mockImplementation(() => ({
-    intercept: jest.fn().mockImplementation(
-      (_context: unknown, next: { handle: () => unknown }) => next.handle()
-    ),
+    intercept: jest
+      .fn()
+      .mockImplementation((_context: unknown, next: { handle: () => unknown }) => next.handle()),
   })),
   Cache: () => () => {},
+}));
+
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagGuard: jest.fn().mockImplementation(() => ({
+    canActivate: jest.fn().mockReturnValue(true),
+  })),
+  FeatureFlag: () => () => {},
+  walletFlags: {
+    withdrawalsEnabled: 'wallet_withdrawals_enabled',
+    redeemRewards: 'wallet_redeem_rewards',
+    transfersEnabled: 'wallet_transfers_enabled',
+    bonusCredit: 'wallet_bonus_credit',
+    promoCredit: 'wallet_promo_credit',
+  },
 }));
 
 describe('WalletController', () => {
@@ -262,9 +281,7 @@ describe('WalletController', () => {
     });
 
     it('should throw BadRequestException on insufficient balance', async () => {
-      walletService.debitBalance.mockRejectedValue(
-        new BadRequestException('Insufficient balance')
-      );
+      walletService.debitBalance.mockRejectedValue(new BadRequestException('Insufficient balance'));
 
       const body = {
         walletId: mockWalletId,
@@ -388,7 +405,7 @@ describe('WalletController', () => {
       };
       walletService.getBalance.mockResolvedValue(balanceResult as never);
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
       const result = await controller.getBalance(req);
 
       expect(result.success).toBe(true);
@@ -413,7 +430,7 @@ describe('WalletController', () => {
       };
       walletService.initializeFunding.mockResolvedValue(fundResult as never);
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
       const fundDto = { amount: 500, reference: 'paystack-ref-1' };
       const result = await controller.fundWallet(req, fundDto);
 
@@ -437,7 +454,7 @@ describe('WalletController', () => {
       };
       walletService.redeemReward.mockResolvedValue(redeemResult as never);
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
       const result = await controller.redeemReward(req, { points: 1000 });
 
       expect(result.success).toBe(true);
@@ -461,19 +478,23 @@ describe('WalletController', () => {
       };
       walletService.withdraw.mockResolvedValue(withdrawResult as never);
 
-      const req = { user: { id: mockUserId } };
-      const withdrawDto = { amount: 500, bankAccountId: 'bank-123' };
+      const req = { user: { id: mockUserId }, headers: {} };
+      const withdrawDto = { idempotencyKey: 'wd-ctrl-key', amount: 500, bankAccountId: 'bank-123' };
       const result = await controller.withdraw(req, withdrawDto);
 
       expect(result.success).toBe(true);
-      expect(walletService.withdraw).toHaveBeenCalledWith(mockUserId, withdrawDto);
+      expect(walletService.withdraw).toHaveBeenCalledWith(mockUserId, withdrawDto, undefined);
     });
 
     it('should throw BadRequestException on insufficient balance', async () => {
       walletService.withdraw.mockRejectedValue(new BadRequestException('Insufficient balance'));
 
-      const req = { user: { id: mockUserId } };
-      const withdrawDto = { amount: 99999, bankAccountId: 'bank-123' };
+      const req = { user: { id: mockUserId }, headers: {} };
+      const withdrawDto = {
+        idempotencyKey: 'wd-ctrl-key',
+        amount: 99999,
+        bankAccountId: 'bank-123',
+      };
 
       await expect(controller.withdraw(req, withdrawDto)).rejects.toThrow(BadRequestException);
     });
@@ -496,19 +517,29 @@ describe('WalletController', () => {
       };
       walletService.transfer.mockResolvedValue(transferResult as never);
 
-      const req = { user: { id: mockUserId } };
-      const transferDto = { recipientId: 'user-456', amount: 200, note: 'Payment' };
+      const req = { user: { id: mockUserId }, headers: {} };
+      const transferDto = {
+        idempotencyKey: 'trf-ctrl-key',
+        recipientId: 'user-456',
+        amount: 200,
+        note: 'Payment',
+      };
       const result = await controller.transfer(req, transferDto);
 
       expect(result.success).toBe(true);
-      expect(walletService.transfer).toHaveBeenCalledWith(mockUserId, transferDto);
+      expect(walletService.transfer).toHaveBeenCalledWith(mockUserId, transferDto, undefined);
     });
 
     it('should throw BadRequestException on insufficient balance', async () => {
       walletService.transfer.mockRejectedValue(new BadRequestException('Insufficient balance'));
 
-      const req = { user: { id: mockUserId } };
-      const transferDto = { recipientId: 'user-456', amount: 99999, note: 'Payment' };
+      const req = { user: { id: mockUserId }, headers: {} };
+      const transferDto = {
+        recipientId: 'user-456',
+        amount: 99999,
+        note: 'Payment',
+        idempotencyKey: 'tr-ctrl-insufficient-balance',
+      };
 
       await expect(controller.transfer(req, transferDto)).rejects.toThrow(BadRequestException);
     });
@@ -520,12 +551,21 @@ describe('WalletController', () => {
         success: true,
         data: {
           transactions: [mockTransaction],
-          pagination: { page: 1, limit: 20, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false, nextCursor: null, prevCursor: null },
+          pagination: {
+            page: 1,
+            limit: 20,
+            total: 1,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
+            nextCursor: null,
+            prevCursor: null,
+          },
         },
       };
       walletService.getTransactions.mockResolvedValue(txResult as never);
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
       const result = await controller.getTransactions(req, 1, 20);
 
       expect(result.success).toBe(true);
@@ -535,10 +575,22 @@ describe('WalletController', () => {
     it('should clamp limit between 1 and 100', async () => {
       walletService.getTransactions.mockResolvedValue({
         success: true,
-        data: { transactions: [], pagination: { page: 1, limit: 100, total: 0, totalPages: 0, hasNextPage: false, hasPrevPage: false, nextCursor: null, prevCursor: null } },
+        data: {
+          transactions: [],
+          pagination: {
+            page: 1,
+            limit: 100,
+            total: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
+            nextCursor: null,
+            prevCursor: null,
+          },
+        },
       } as never);
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
       await controller.getTransactions(req, 1, 500);
 
       expect(walletService.getTransactions).toHaveBeenCalledWith(mockUserId, 1, 100, undefined);
@@ -560,7 +612,7 @@ describe('WalletController', () => {
       };
       walletService.getSummary.mockResolvedValue(summaryResult as never);
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
       const result = await controller.getSummary(req);
 
       expect(result.success).toBe(true);
@@ -576,7 +628,7 @@ describe('WalletController', () => {
       };
       walletService.getTransaction.mockResolvedValue(txnResult as never);
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
       const result = await controller.getTransaction(req, 'txn-123');
 
       expect(result.success).toBe(true);
@@ -588,7 +640,7 @@ describe('WalletController', () => {
         new NotFoundException('Transaction not found')
       );
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
 
       await expect(controller.getTransaction(req, 'nonexistent')).rejects.toThrow(
         NotFoundException
@@ -610,7 +662,7 @@ describe('WalletController', () => {
       };
       walletService.getBalance.mockResolvedValue(balanceResult as never);
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
       const result = await controller.getBalance(req);
 
       expect(result.success).toBe(true);
@@ -622,7 +674,7 @@ describe('WalletController', () => {
         new NotFoundException(`Wallet not found for user ${mockUserId}`)
       );
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
 
       await expect(controller.getBalance(req)).rejects.toThrow(NotFoundException);
     });
@@ -633,17 +685,27 @@ describe('WalletController', () => {
       walletService.getWalletIdByUserId.mockResolvedValue(mockWalletId);
       const bonusResult = {
         success: true,
-        data: { amount: 500, reason: 'Referral bonus', balance: 1000, bonusBalance: 550, promoBalance: 25 },
+        data: {
+          amount: 500,
+          reason: 'Referral bonus',
+          balance: 1000,
+          bonusBalance: 550,
+          promoBalance: 25,
+        },
       };
       walletService.addBonusCredit.mockResolvedValue(bonusResult as never);
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
       const body = { amount: 500, reason: 'Referral bonus' };
       const result = await controller.addBonusCredit(req, body);
 
       expect(result.success).toBe(true);
       expect(walletService.getWalletIdByUserId).toHaveBeenCalledWith(mockUserId);
-      expect(walletService.addBonusCredit).toHaveBeenCalledWith(mockWalletId, 500, 'Referral bonus');
+      expect(walletService.addBonusCredit).toHaveBeenCalledWith(
+        mockWalletId,
+        500,
+        'Referral bonus'
+      );
     });
   });
 
@@ -652,11 +714,18 @@ describe('WalletController', () => {
       walletService.getWalletIdByUserId.mockResolvedValue(mockWalletId);
       const promoResult = {
         success: true,
-        data: { amount: 100, promoCode: 'SUMMER2024', expiresAt: new Date().toISOString(), balance: 1000, bonusBalance: 50, promoBalance: 125 },
+        data: {
+          amount: 100,
+          promoCode: 'SUMMER2024',
+          expiresAt: new Date().toISOString(),
+          balance: 1000,
+          bonusBalance: 50,
+          promoBalance: 125,
+        },
       };
       walletService.addPromoCredit.mockResolvedValue(promoResult as never);
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
       const body = { amount: 100, promoCode: 'SUMMER2024', expiresAt: '2024-12-31' };
       const result = await controller.addPromoCredit(req, body);
 
@@ -685,7 +754,7 @@ describe('WalletController', () => {
       };
       walletService.getTransactionAuditTrail.mockResolvedValue(auditResult as never);
 
-      const req = { user: { id: mockUserId } };
+      const req = { user: { id: mockUserId }, headers: {} };
       const result = await controller.getAuditTrail(req, '2024-01-01', '2024-12-31');
 
       expect(result.success).toBe(true);

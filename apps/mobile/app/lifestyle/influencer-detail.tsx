@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi } from '../../src/api/lifestyle';
+import { lifestyleApi } from '@azeebo/react-data/api/lifestyle';
 
 export default function InfluencerDetailScreen() {
   const router = useRouter();
@@ -40,7 +40,9 @@ export default function InfluencerDetailScreen() {
         message: `Check out ${influencer.name} on Azeebo+`,
         title: influencer.name,
       });
-    } catch {}
+    } catch {
+      /* User cancelled share */
+    }
   }, [influencer]);
 
   const handleOpenSocial = useCallback((url: string) => {
@@ -49,7 +51,7 @@ export default function InfluencerDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Influencer Detail Screen" style={styles.container}>
         <LoadingState text="Loading profile..." />
       </SafeAreaView>
     );
@@ -72,16 +74,18 @@ export default function InfluencerDetailScreen() {
         <View style={styles.heroContainer}>
           <Image
             source={{
-              uri: influencer.photo || 'https://placehold.co/800x400/1a1a1a/ffffff?text=★',
+              uri:
+                influencer.photo ||
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&h=400&q=80',
             }}
             style={styles.heroImage}
             resizeMode="cover"
           />
           <View style={styles.heroOverlay} />
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+          <TouchableOpacity accessibilityRole="button" style={styles.shareButton} onPress={handleShare}>
             <Text style={styles.shareIcon}>↗</Text>
           </TouchableOpacity>
         </View>
@@ -90,7 +94,9 @@ export default function InfluencerDetailScreen() {
           <View style={styles.avatarContainer}>
             <Image
               source={{
-                uri: influencer.photo || 'https://placehold.co/120x120/1a1a1a/ffffff?text=★',
+                uri:
+                  influencer.photo ||
+                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80',
               }}
               style={styles.avatar}
               resizeMode="cover"

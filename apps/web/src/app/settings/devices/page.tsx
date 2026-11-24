@@ -1,11 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Smartphone, Tablet, Tv, Laptop, ArrowLeft, Trash2, ShieldCheck } from 'lucide-react';
 
 interface Device {
   id: string;
@@ -63,8 +66,9 @@ export default function DevicesPage(): React.JSX.Element {
   const handleRemove = (deviceId: string) => {
     setConfirmDialog({
       open: true,
-      title: 'Remove Device',
-      message: 'Are you sure you want to remove this device?',
+      title: 'Remove Device Session',
+      message:
+        'Are you sure you want to sign out and disconnect this device? It will require re-authentication to stream again.',
       destructive: true,
       onConfirm: async () => {
         setConfirmDialog((prev) => ({ ...prev, open: false }));
@@ -84,151 +88,116 @@ export default function DevicesPage(): React.JSX.Element {
   const getDeviceIcon = (type: string) => {
     switch (type?.toLowerCase()) {
       case 'mobile':
-        return '📱';
+        return <Smartphone size={22} />;
       case 'tablet':
-        return '📱';
+        return <Tablet size={22} />;
       case 'tv':
-        return '📺';
+        return <Tv size={22} />;
       default:
-        return '💻';
+        return <Laptop size={22} />;
     }
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 700,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ marginBottom: 32 }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: 14,
-              marginBottom: 16,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span>←</span> Back
-          </button>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Manage Devices</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-            View and manage devices connected to your account
-          </p>
+    <PageShell activeNav="Profile">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
+        <Link
+          href="/settings"
+          className="inline-flex items-center gap-2 text-xs font-bold text-az-ink/50 hover:text-az-ink transition-colors mb-6 group"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          <span>Back to Settings</span>
+        </Link>
+      </div>
+
+      <PageHero
+        badge="Session Security"
+        title="Registered Devices"
+        subtitle="Manage authorized streaming devices and revoke active sessions on lost or shared hardware."
+        accentColor="var(--color-az-flame)"
+      />
+
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-20">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs font-bold text-az-ink/60 uppercase tracking-wider">
+            Connected Screens ({devices.length})
+          </span>
+          <div className="flex items-center gap-1.5 text-xs text-az-success-400 font-medium">
+            <ShieldCheck size={14} />
+            <span>End-to-End Encrypted Session Tokens</span>
+          </div>
         </div>
 
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                border: '3px solid #2A1A1A',
-                borderTopColor: 'var(--brand-orange)',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }}
-            />
+          <div className="az-glass p-12 text-center border border-az-glass-border">
+            <div className="w-10 h-10 rounded-full border-2 border-az-flame/20 border-t-az-flame animate-spin mx-auto mb-3" />
+            <p className="text-az-ink/60 text-sm">Querying active sessions...</p>
           </div>
         ) : devices.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📱</div>
-            <h3 style={{ fontSize: 18 }}>No devices found</h3>
+          <div className="az-glass p-10 border border-az-glass-border text-center">
+            <EmptyState
+              icon="Smartphone"
+              title="No devices found"
+              description="No authorized devices are currently connected to your Azeebo account."
+              dark
+            />
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="space-y-3">
             {devices.map((device) => (
               <div
                 key={device.id}
-                className="az-glass"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: 16,
-                  borderRadius: 16,
-                  border: device.isCurrent ? '1px solid #0D3B2E' : undefined,
-                }}
+                className={`az-glass p-5 flex items-center justify-between gap-4 transition-all border ${
+                  device.isCurrent ? '' : 'border-az-glass-border'
+                }`}
               >
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 12,
-                    backgroundColor: 'var(--bg-secondary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 24,
-                    flexShrink: 0,
-                  }}
-                >
-                  {getDeviceIcon(device.type)}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <p style={{ fontWeight: 600, fontSize: 15 }}>{device.name}</p>
-                    {device.isCurrent && (
-                      <span
-                        style={{
-                          padding: '2px 8px',
-                          borderRadius: 999,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          backgroundColor: 'rgba(13,59,46,0.2)',
-                          color: 'var(--brand-forest)',
-                        }}
-                      >
-                        Current
-                      </span>
-                    )}
+                <div className="flex items-center gap-4 min-w-0">
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 border ${
+                      device.isCurrent
+                        ? 'bg-az-flame/20 text-az-flame border-az-flame/30'
+                        : 'bg-az-glass-fill text-az-ink/60 border-az-glass-border'
+                    }`}
+                  >
+                    {getDeviceIcon(device.type)}
                   </div>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                    {device.location ? `${device.location} · ` : ''}Last active{' '}
-                    {new Date(device.lastActive).toLocaleDateString()}
-                  </p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-az-ink text-sm truncate">{device.name}</p>
+                      {device.isCurrent && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-az-flame/15 text-az-flame border border-az-flame/30">
+                          Current Device
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-az-ink/40 mt-0.5 truncate">
+                      {device.location ? `${device.location} • ` : ''}Last active{' '}
+                      {new Date(device.lastActive).toLocaleDateString('en-NG', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
                 </div>
+
                 {!device.isCurrent && (
                   <button
+                    type="button"
                     onClick={() => handleRemove(device.id)}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: 999,
-                      border: '1px solid var(--brand-red)',
-                      background: 'transparent',
-                      color: 'var(--brand-red)',
-                      fontWeight: 500,
-                      fontSize: 13,
-                      cursor: 'pointer',
-                    }}
+                    className="p-2.5 rounded-xl text-az-ink/40 hover:text-az-error-400 hover:bg-az-error-500/10 border border-transparent hover:border-az-error-500/20 transition-all flex items-center gap-1.5 text-xs font-semibold"
+                    title="Sign out device"
                   >
-                    Remove
+                    <Trash2 size={15} />
+                    <span className="hidden sm:inline">Revoke</span>
                   </button>
                 )}
               </div>
             ))}
           </div>
         )}
-      </main>
-      <AppFooter />
+      </div>
+
       <ConfirmDialog
         open={confirmDialog.open}
         title={confirmDialog.title}
@@ -237,6 +206,6 @@ export default function DevicesPage(): React.JSX.Element {
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
       />
-    </div>
+    </PageShell>
   );
 }

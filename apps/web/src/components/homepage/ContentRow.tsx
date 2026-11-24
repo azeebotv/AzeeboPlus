@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ContentCard from './ContentCard';
 import { Skeleton } from '@/components/Skeleton';
 import { useTranslation } from 'react-i18next';
@@ -139,49 +140,36 @@ export default function ContentRow({
   const skeletons = Array.from({ length: 6 });
 
   return (
-    <section ref={sectionRef} className="py-4 sm:py-6" aria-labelledby={`row-${sectionId}`}>
+    <section ref={sectionRef} className="py-5 sm:py-7" aria-labelledby={`row-${sectionId}`}>
       {/* Section header */}
-      <div className="flex items-baseline justify-between mb-3 px-4 sm:px-6 lg:px-8">
-        <div>
-          <h2 id={`row-${sectionId}`} className="text-lg sm:text-xl font-bold text-white">
-            {title}
-          </h2>
-          {subtitle && <p className="text-sm text-white/50 mt-0.5">{subtitle}</p>}
+      <div className="flex items-center justify-between mb-3.5 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2.5">
+          <span className="w-1.5 h-6 rounded-full bg-az-flame flex-shrink-0" aria-hidden="true" />
+          <div>
+            <h2 id={`row-${sectionId}`} className="az-title text-white font-bold tracking-tight">
+              {title}
+            </h2>
+            {subtitle && <p className="az-caption mt-0.5 text-az-ink-muted">{subtitle}</p>}
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={(): void => scroll('left')}
             disabled={!canScrollLeft}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border border-white/10 bg-white/5 hover:bg-white/15 disabled:opacity-20 disabled:cursor-not-allowed transition-all text-white focus:outline-none focus:ring-2 focus:ring-az-flame"
             aria-label={t('content.scrollLeft', { title })}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path
-                d="M10 3L5 8L10 13"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ChevronLeft size={18} />
           </button>
           <button
             type="button"
             onClick={(): void => scroll('right')}
             disabled={!canScrollRight}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border border-white/10 bg-white/5 hover:bg-white/15 disabled:opacity-20 disabled:cursor-not-allowed transition-all text-white focus:outline-none focus:ring-2 focus:ring-az-flame"
             aria-label={t('content.scrollRight', { title })}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path
-                d="M6 3L11 8L6 13"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ChevronRight size={18} />
           </button>
         </div>
       </div>
@@ -189,12 +177,7 @@ export default function ContentRow({
       {/* Scrollable row */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto overflow-y-hidden scroll-smooth px-4 sm:px-6 lg:px-8 pb-2"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-        }}
+        className="content-row-scroll flex gap-4 overflow-x-auto overflow-y-hidden scroll-smooth px-4 sm:px-6 lg:px-8 pb-2"
         onScroll={trackScroll}
         role="region"
         aria-label={t('content.contentList', { title })}
@@ -205,7 +188,7 @@ export default function ContentRow({
                 key={i}
                 width={`${cardWidth}px`}
                 height={`${cardSize === 'sm' ? 224 : cardSize === 'lg' ? 400 : 310}px`}
-                borderRadius="12px"
+                borderRadius="var(--radius-az-card)"
                 className="flex-shrink-0"
               />
             ))
@@ -223,12 +206,7 @@ export default function ContentRow({
 
         {/* Infinite scroll sentinel */}
         {hasMore && onLoadMore && (
-          <div
-            ref={sentinelRef}
-            className="flex-shrink-0"
-            style={{ width: 1, height: 1 }}
-            aria-hidden="true"
-          />
+          <div ref={sentinelRef} className="flex-shrink-0 h-px w-px" aria-hidden="true" />
         )}
 
         {/* Loading more indicator */}
@@ -240,7 +218,7 @@ export default function ContentRow({
               height: cardSize === 'sm' ? 224 : cardSize === 'lg' ? 400 : 310,
             }}
           >
-            <div className="w-6 h-6 border-2 border-white/30 border-t-[var(--brand-orange)] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-az-ink/30 border-t-az-flame rounded-full animate-spin" />
           </div>
         )}
       </div>

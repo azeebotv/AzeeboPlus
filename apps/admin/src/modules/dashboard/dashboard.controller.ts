@@ -44,4 +44,9 @@ export class DashboardController {
   async getPlatformOverview(): Promise<unknown> {
     return this.dashboardService.getPlatformOverview();
   }
+
+  @Get('governance-summary')
+  async getGovernanceSummary(): Promise<unknown> {
+    return this.dashboardService.getGovernanceSummary();
+  }
 }

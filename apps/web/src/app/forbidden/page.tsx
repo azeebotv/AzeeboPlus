@@ -1,84 +1,56 @@
-'use client';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { ShieldAlert, Home, HelpCircle } from 'lucide-react';
+import { PageShell } from '@/components/layout/PageShell';
+
+export const metadata: Metadata = {
+  title: 'Access Restricted - Azeebo+',
+  description: 'You do not have authorization to view this resource.',
+};
 
 export default function ForbiddenPage(): React.JSX.Element {
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: 'calc(100vh - 200px)',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ textAlign: 'center', maxWidth: 400 }}>
-          <div
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: '50%',
-              background:
-                'linear-gradient(135deg, rgba(204,28,28,0.15) 0%, rgba(204,28,28,0.1) 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 24px',
-              fontSize: 36,
-            }}
-          >
-            🚫
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
+      <main className="min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-16">
+        <div className="az-glass p-8 sm:p-12 max-w-lg w-full text-center border border-az-glass-border relative overflow-hidden">
+          {/* Ambient Top Glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-az-error-600/15 blur-3xl pointer-events-none" />
+
+          {/* Icon Badge */}
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-az-error-600 to-az-flame flex items-center justify-center text-az-ink mx-auto mb-6 shadow-az-glow-primary">
+            <ShieldAlert className="w-10 h-10" />
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 12 }}>Access Denied</h1>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: 32, lineHeight: 1.6 }}>
-            You don&apos;t have permission to access this page. Contact support if you believe this
-            is an error.
+
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-az-error-500/10 border border-az-error-500/20 text-az-error-400 text-xs font-semibold mb-4">
+            Error 403 • Restricted Area
+          </div>
+
+          <h1 className="az-headline text-2xl sm:text-3xl font-extrabold text-az-ink mb-3">
+            Access Denied
+          </h1>
+          <p className="text-az-ink/60 text-sm mb-8 leading-relaxed max-w-sm mx-auto">
+            You do not have permission to view this resource or universe pass. If you believe this
+            is an error, please check your subscription status or reach out to support.
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href="/"
-              style={{
-                padding: '14px 32px',
-                borderRadius: 999,
-                background:
-                  'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-                color: 'var(--brand-white)',
-                fontWeight: 700,
-                fontSize: 16,
-                textDecoration: 'none',
-              }}
+              href="/home"
+              className="flex-1 flex items-center justify-center gap-2 az-btn-primary tracking-wide shadow-lg hover:shadow-az-flame/20"
             >
-              Go Home
+              <Home className="w-4 h-4" />
+              Return Home
             </Link>
             <Link
               href="/support"
-              style={{
-                padding: '14px 32px',
-                borderRadius: 999,
-                border: '1px solid var(--border-default)',
-                background: 'transparent',
-                color: 'var(--text-secondary)',
-                fontWeight: 600,
-                fontSize: 16,
-                textDecoration: 'none',
-              }}
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl font-semibold text-sm text-az-ink/70 hover:text-az-ink bg-az-glass-card hover:bg-az-ink/15 border border-az-glass-border transition-colors"
             >
-              Contact Support
+              <HelpCircle className="w-4 h-4" />
+              Get Support
             </Link>
           </div>
         </div>
       </main>
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

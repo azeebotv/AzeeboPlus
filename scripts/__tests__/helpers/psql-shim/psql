@@ -1,0 +1,49 @@
+#!/bin/sh
+# Test shim for psql — used by scripts/__tests__/sweep-drift-tracker.integration.test.mjs
+#
+# The sweep's shared probe (scripts/lib/live-db-probe.mjs databaseExists)
+# shells out to `psql <admin-url> -tAc "SELECT 1 FROM pg_database WHERE
+# datname='<name>'"`. This shim answers those probes without a real server:
+#
+#   SWEEP_TEST_EXISTING  file of newline-separated database names that "exist"
+#   SWEEP_TEST_FAILS     file of names whose probe FAILS (exit 2 + stderr,
+#                        indistinguishable from a real connection failure)
+#   SWEEP_TEST_FAIL_ALL  when set, every probe fails (host unreachable)
+#   SWEEP_TEST_LOG       appended with each queried database name, one per
+#                        line — lets tests assert exactly what was probed
+#
+# Anything not listed (and not failing) does not exist — matching the real
+# probe, where only an explicit row means "exists".
+
+sql=""
+prev=""
+for arg in "$@"; do
+  if [ "$prev" = "-tAc" ]; then
+    sql="$arg"
+  fi
+  prev="$arg"
+done
+
+name=$(printf '%s' "$sql" | sed -n "s/.*datname='\([^']*\)'.*/\1/p")
+
+if [ -n "$SWEEP_TEST_LOG" ]; then
+  printf '%s\n' "$name" >> "$SWEEP_TEST_LOG"
+fi
+
+if [ -n "$SWEEP_TEST_FAIL_ALL" ]; then
+  echo "psql: error: could not connect to server: Connection refused" >&2
+  exit 2
+fi
+
+if [ -n "$SWEEP_TEST_FAILS" ] && [ -f "$SWEEP_TEST_FAILS" ] && grep -Fxq "$name" "$SWEEP_TEST_FAILS"; then
+  echo "psql: error: could not connect to server: probe failure for $name" >&2
+  exit 2
+fi
+
+if [ -n "$SWEEP_TEST_EXISTING" ] && [ -f "$SWEEP_TEST_EXISTING" ] && grep -Fxq "$name" "$SWEEP_TEST_EXISTING"; then
+  echo "1"
+  exit 0
+fi
+
+# Not in the existing list → database absent (exit 0, no rows).
+exit 0

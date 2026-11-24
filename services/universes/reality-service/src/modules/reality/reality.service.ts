@@ -6,6 +6,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
@@ -13,6 +14,7 @@ import { RealityResponse } from './interfaces/reality-response.interface.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { sanitizeInput } from '@azeebo/validation';
 
 interface VoteWithQuantity {
   contestantId: string;
@@ -217,12 +219,49 @@ export class RealityService {
       orderBy: { name: 'asc' },
     });
 
-    const result = { contestants: contestants as unknown };
+    // Vote rows are quantity-weighted (multi-vote packs): surface the summed
+    // quantity as `votes` instead of the raw row count, which undercounts
+    // heavily for contestants with bulk votes.
+    const voteTotals = await this.prisma.vote.groupBy({
+      by: ['contestantId'],
+      where: { showId },
+      _sum: { quantity: true },
+    });
+    const totalByContestant = new Map(
+      voteTotals.map((row) => [row.contestantId, row._sum.quantity ?? 0])
+    );
+
+    const enriched = contestants.map((c) => ({
+      ...c,
+      votes: totalByContestant.get(c.id) ?? 0,
+    }));
+
+    const result = { contestants: enriched as unknown };
     await this.cache.set(cacheK, result, 30);
 
     return {
       success: true,
       data: result,
+    };
+  }
+
+  async listAllContestants(): Promise<RealityResponse> {
+    const contestants = await this.prisma.contestant.findMany({
+      include: {
+        show: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    return {
+      success: true,
+      data: { contestants: contestants as unknown },
     };
   }
 
@@ -404,9 +443,7 @@ export class RealityService {
             compensateError
           );
         });
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to submit supervote';
-      throw new ConflictException(errorMessage);
+      mapAndThrow(error, 'submitting supervote');
     }
   }
 
@@ -643,9 +680,7 @@ export class RealityService {
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet after votes failure:', compensateError);
         });
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to submit votes';
-      throw new ConflictException(errorMessage);
+      mapAndThrow(error, 'submitting votes');
     }
   }
 
@@ -760,9 +795,7 @@ export class RealityService {
         },
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to purchase premium extra';
-      throw new ConflictException(errorMessage);
+      mapAndThrow(error, 'purchasing premium extra');
     }
   }
 
@@ -1454,8 +1487,9 @@ export class RealityService {
       throw new NotFoundException('Show not found');
     }
 
+    const sanitizedContent = sanitizeInput(content) as string;
     const comment = await this.prisma.showComment.create({
-      data: { userId, showId, content },
+      data: { userId, showId, content: sanitizedContent },
     });
 
     await this.trackEvent('comment_added', userId, {

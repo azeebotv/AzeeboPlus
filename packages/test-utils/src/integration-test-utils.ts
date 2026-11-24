@@ -31,10 +31,12 @@ export class IntegrationTestEnvironment {
   private containers: TestContainer[] = [];
 
   async startPostgres(): Promise<void> {
+    // eslint-disable-next-line azeebo-custom/no-console-log, no-console -- test harness progress output
     console.log('Starting PostgreSQL test container...');
   }
 
   async startRedis(): Promise<void> {
+    // eslint-disable-next-line azeebo-custom/no-console-log, no-console -- test harness progress output
     console.log('Starting Redis test container...');
     this.redis = new Redis();
   }

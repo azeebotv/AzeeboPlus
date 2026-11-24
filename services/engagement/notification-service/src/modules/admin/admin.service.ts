@@ -115,21 +115,18 @@ export class AdminService {
       const { title, message, type, userIds } = body;
 
       if (userIds && userIds.length > 0) {
-        const notifications = await this.prisma.$transaction(
-          userIds.map((userId) =>
-            this.prisma.notification.create({
-              data: {
-                userId,
-                title,
-                message,
-                type: type || 'system',
-              },
-            })
-          )
-        );
+        // Batch create all notifications in one query (fixes N+1)
+        const result = await this.prisma.notification.createMany({
+          data: userIds.map((userId) => ({
+            userId,
+            title,
+            message,
+            type: type || 'system',
+          })),
+        });
 
-        this.logger.log(`Sent system notification to ${notifications.length} users`);
-        return { sentCount: notifications.length, userIds };
+        this.logger.log(`Sent system notification to ${result.count} users`);
+        return { sentCount: result.count, userIds };
       }
 
       // Fetch user IDs from user-service for broadcast
@@ -148,21 +145,18 @@ export class AdminService {
           return { sentCount: 0, userIds: [] };
         }
 
-        const notifications = await this.prisma.$transaction(
-          allUserIds.map((userId) =>
-            this.prisma.notification.create({
-              data: {
-                userId,
-                title,
-                message,
-                type: type || 'system',
-              },
-            })
-          )
-        );
+        // Batch create all notifications in one query (fixes N+1)
+        const result = await this.prisma.notification.createMany({
+          data: allUserIds.map((userId) => ({
+            userId,
+            title,
+            message,
+            type: type || 'system',
+          })),
+        });
 
-        this.logger.log(`Sent broadcast notification to ${notifications.length} users`);
-        return { sentCount: notifications.length, userIds: allUserIds };
+        this.logger.log(`Sent broadcast notification to ${result.count} users`);
+        return { sentCount: result.count, userIds: allUserIds };
       } catch (fetchError) {
         this.logger.error(`Failed to fetch users for broadcast: ${(fetchError as Error).message}`);
         return { sentCount: 0, userIds: [], error: 'Failed to fetch user list for broadcast' };
@@ -303,19 +297,15 @@ export class AdminService {
       const title = template?.subject || campaign.name;
       const message = template?.body || `Campaign: ${campaign.name}`;
 
-      // Create notifications for all target users
-      await this.prisma.$transaction(
-        targetUserIds.map((userId) =>
-          this.prisma.notification.create({
-            data: {
-              userId,
-              title,
-              message,
-              type: `campaign_${campaign.channel}`,
-            },
-          })
-        )
-      );
+      // Batch create all notifications in one query (fixes N+1)
+      await this.prisma.notification.createMany({
+        data: targetUserIds.map((userId) => ({
+          userId,
+          title,
+          message,
+          type: `campaign_${campaign.channel}`,
+        })),
+      });
 
       // Mark campaign as sent
       await this.prisma.campaign.update({

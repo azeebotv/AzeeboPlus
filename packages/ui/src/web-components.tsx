@@ -32,27 +32,30 @@ export function Button({
   const baseStyles = `
     inline-flex items-center justify-center font-semibold transition-all duration-200
     focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed
-    disabled:hover:transform-none active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2
+    disabled:hover:transform-none active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-az-primary-500 focus-visible:ring-offset-2
   `;
 
   const sizeStyles = {
     sm: 'px-3 py-1.5 text-sm gap-1.5',
     md: 'px-4 py-2.5 text-sm gap-2',
     lg: 'px-6 py-3 text-base gap-2',
-    icon: 'p-2.5',
+    icon: 'p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center',
   };
 
   const variantStyles = {
-    primary: 'bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500 rounded-lg',
+    primary:
+      'bg-az-primary-500 text-white hover:bg-az-primary-600 focus:ring-az-primary-500 rounded-lg',
     secondary:
-      'bg-bg-tertiary text-text-primary hover:bg-bg-hover focus:ring-bg-tertiary rounded-lg',
+      'bg-az-surface-panel text-az-ink hover:bg-az-glass-fill focus:ring-az-glass-border rounded-lg',
     ghost:
-      'bg-transparent text-text-secondary hover:text-text-primary hover:bg-bg-tertiary focus:ring-bg-tertiary rounded-lg',
+      'bg-transparent text-az-ink-dim hover:text-az-ink hover:bg-az-surface-panel focus:ring-az-glass-border rounded-lg',
     outline:
-      'border-2 border-border-default text-text-primary hover:border-primary-500 hover:text-primary-400 focus:ring-primary-500 rounded-lg',
-    danger: 'bg-error-500 text-white hover:bg-error-600 focus:ring-error-500 rounded-lg',
-    success: 'bg-success-500 text-white hover:bg-success-600 focus:ring-success-500 rounded-lg',
-    warning: 'bg-warning-500 text-dark-900 hover:bg-warning-600 focus:ring-warning-500 rounded-lg',
+      'border-2 border-az-glass-border text-az-ink hover:border-az-primary-500 hover:text-az-primary-400 focus:ring-az-primary-500 rounded-lg',
+    danger: 'bg-az-error-600 text-white hover:bg-az-error-700 focus:ring-az-error-500 rounded-lg',
+    success:
+      'bg-az-success-500 text-az-surface-root hover:bg-az-success-600 focus:ring-az-success-500 rounded-lg',
+    warning:
+      'bg-az-warning-500 text-az-surface-root hover:bg-az-warning-600 focus:ring-az-warning-500 rounded-lg',
   };
 
   const getIcon = (icon: IconName | React.ReactNode) => {
@@ -135,20 +138,29 @@ export function Card({
   };
 
   const variantStyles = {
-    default: 'bg-bg-secondary border border-border-default shadow-md',
-    elevated: 'bg-bg-secondary border border-border-default shadow-xl hover:shadow-2xl',
-    outlined: 'bg-transparent border border-border-default',
+    default: 'bg-az-surface-raised border border-az-glass-border shadow-md',
+    elevated: 'bg-az-surface-raised border border-az-glass-border shadow-xl hover:shadow-2xl',
+    outlined: 'bg-transparent border border-az-glass-border',
   };
 
   return (
     <Component
-      className={`rounded-xl overflow-hidden transition-all duration-200 ${paddingStyles[padding]} ${variantStyles[variant]} ${className} ${onClick ? 'cursor-pointer' : ''}`}
+      className={`rounded-xl overflow-hidden transition-all duration-200 ${paddingStyles[padding]} ${variantStyles[variant]} ${className} ${onClick ? 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-az-primary-500 focus-visible:ring-offset-2' : ''}`}
       onClick={onClick}
-      role={role}
+      role={role || (onClick ? 'button' : undefined)}
       aria-label={ariaLabel}
       aria-describedby={ariaDescribedby}
       tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e: React.KeyboardEvent) => e.key === 'Enter' && onClick() : undefined}
+      onKeyDown={
+        onClick
+          ? (e: React.KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
     >
       {children}
     </Component>
@@ -175,7 +187,7 @@ export function ContentCard({
 }: ContentCardProps): React.ReactElement {
   return (
     <Card padding="none" onClick={onClick} role="article" aria-label={title}>
-      <div className="relative aspect-video bg-dark-800 overflow-hidden">
+      <div className="relative aspect-video bg-az-surface-raised overflow-hidden">
         <img
           src={thumbnail}
           alt={title}
@@ -190,10 +202,8 @@ export function ContentCard({
         )}
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-text-primary truncate">{title}</h3>
-        {description && (
-          <p className="text-text-secondary text-sm mt-1 line-clamp-2">{description}</p>
-        )}
+        <h3 className="font-semibold text-az-ink truncate">{title}</h3>
+        {description && <p className="text-az-ink-dim text-sm mt-1 line-clamp-2">{description}</p>}
         <Badge variant="outline" className="mt-2">
           {universe.charAt(0).toUpperCase() + universe.slice(1)}
         </Badge>
@@ -232,7 +242,7 @@ export function HeroCard({
         <div className="absolute inset-0 flex items-center justify-center">
           <button
             onClick={onPlay}
-            className="w-20 h-20 rounded-full bg-primary-500/90 flex items-center justify-center hover:scale-110 transition-transform duration-200 group"
+            className="w-20 h-20 rounded-full bg-az-primary-500/90 flex items-center justify-center hover:scale-110 transition-transform duration-200 group"
             aria-label={`Play ${title}`}
           >
             <svg
@@ -250,7 +260,7 @@ export function HeroCard({
           {isLive && (
             <Badge variant="error">
               <span
-                className="w-2 h-2 rounded-full bg-error-400 mr-1.5 animate-pulse"
+                className="w-2 h-2 rounded-full bg-az-error-400 mr-1.5 animate-pulse"
                 role="status"
                 aria-label="Live"
               />
@@ -265,9 +275,9 @@ export function HeroCard({
           )}
           <Badge variant="outline">{universe.charAt(0).toUpperCase() + universe.slice(1)}</Badge>
         </div>
-        <p className="text-text-secondary text-sm mb-1">{subtitle}</p>
-        <h2 className="text-3xl font-bold text-text-primary mb-2">{title}</h2>
-        <p className="text-text-secondary text-sm line-clamp-2">{description}</p>
+        <p className="text-az-ink-dim text-sm mb-1">{subtitle}</p>
+        <h2 className="text-3xl font-bold text-az-ink mb-2">{title}</h2>
+        <p className="text-az-ink-dim text-sm line-clamp-2">{description}</p>
       </div>
     </div>
   );
@@ -293,7 +303,7 @@ export function Skeleton({
 }: SkeletonProps): React.ReactElement {
   return (
     <div
-      className={`animate-pulse bg-dark-600 ${inline ? 'inline-block' : ''} ${className}`}
+      className={`animate-pulse bg-az-surface-panel ${inline ? 'inline-block' : ''} ${className}`}
       style={{ width, height, borderRadius }}
       role={role}
       aria-busy={true}
@@ -318,7 +328,7 @@ export function Divider({
 }: DividerProps): React.ReactElement {
   return (
     <div
-      className={`border-0 ${orientation === 'horizontal' ? 'h-px w-full' : 'w-px h-full'} bg-border-default ${className}`}
+      className={`border-0 ${orientation === 'horizontal' ? 'h-px w-full' : 'w-px h-full'} bg-az-glass-border ${className}`}
       role={role}
       aria-orientation={ariaOrientation || orientation}
     />
@@ -346,19 +356,19 @@ export function Badge({
   const baseStyles = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
 
   const variantStyles = {
-    primary: 'bg-primary-500/20 text-primary-400',
-    secondary: 'bg-secondary-500/20 text-secondary-400',
-    success: 'bg-success-500/20 text-success-400',
-    error: 'bg-error-500/20 text-error-400',
-    warning: 'bg-warning-500/20 text-warning-400',
-    outline: 'border border-border-default text-text-secondary',
+    primary: 'bg-az-primary-500/20 text-az-primary-400',
+    secondary: 'bg-az-secondary-500/20 text-az-secondary-400',
+    success: 'bg-az-success-500/20 text-az-success-400',
+    error: 'bg-az-error-500/20 text-az-error-400',
+    warning: 'bg-az-warning-500/20 text-az-warning-400',
+    outline: 'border border-az-glass-border text-az-ink-dim',
   };
 
   if (onClick) {
     return (
       <button
         onClick={onClick}
-        className={`${baseStyles} ${variantStyles[variant]} ${className} cursor-pointer hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
+        className={`${baseStyles} ${variantStyles[variant]} ${className} cursor-pointer hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-az-primary-500 focus:ring-offset-2`}
         role={role}
         aria-label={ariaLabel}
       >
@@ -420,9 +430,9 @@ export function Avatar({
             : 'w-4 h-4';
 
   const statusStyles = {
-    online: 'bg-success-500',
-    offline: 'bg-dark-300',
-    away: 'bg-warning-500',
+    online: 'bg-az-success-500',
+    offline: 'bg-az-ink-muted',
+    away: 'bg-az-warning-500',
   };
 
   const positionStyles = {
@@ -442,7 +452,7 @@ export function Avatar({
 
   return (
     <div
-      className={`relative ${sizeStyles[size]} rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center font-semibold text-white ${className}`}
+      className={`relative ${sizeStyles[size]} rounded-full bg-gradient-to-br from-az-primary-500 to-az-secondary-500 flex items-center justify-center font-semibold text-white ${className}`}
       role="img"
       aria-label={alt || fallback}
     >
@@ -459,7 +469,7 @@ export function Avatar({
       )}
       {status && (
         <span
-          className={`absolute ${positionStyles[statusPosition]} ${statusSize} rounded-full border-2 border-bg-secondary ${statusStyles[status]}`}
+          className={`absolute ${positionStyles[statusPosition]} ${statusSize} rounded-full border-2 border-az-glass-border ${statusStyles[status]}`}
           role="status"
           aria-label={status}
         />
@@ -506,11 +516,12 @@ export function Tooltip({
   };
 
   const arrowStyles = {
-    top: 'top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-bg-tertiary',
+    top: 'top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-az-glass-border',
     bottom:
-      'bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-bg-tertiary',
-    left: 'right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-l-bg-tertiary',
-    right: 'left-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-bg-tertiary',
+      'bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-az-glass-border',
+    left: 'right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-l-az-glass-border',
+    right:
+      'left-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-az-glass-border',
   };
 
   const child = React.Children.only(children) as React.ReactElement<Record<string, unknown>>;
@@ -532,7 +543,7 @@ export function Tooltip({
         aria-hidden={!isVisible}
       >
         <div
-          className={`px-3 py-2 bg-bg-tertiary text-text-primary text-sm rounded-lg shadow-lg ${className}`}
+          className={`px-3 py-2 bg-az-surface-panel text-az-ink text-sm rounded-lg shadow-lg ${className}`}
         >
           {content}
         </div>
@@ -571,19 +582,17 @@ export function ProgressBar({
   };
 
   const variantStyles = {
-    default: 'bg-primary-500',
-    success: 'bg-success-500',
-    error: 'bg-error-500',
-    warning: 'bg-warning-500',
+    default: 'bg-az-primary-500',
+    success: 'bg-az-success-500',
+    error: 'bg-az-error-500',
+    warning: 'bg-az-warning-500',
   };
 
   return (
     <div className="w-full">
-      {label && (
-        <label className="text-sm font-medium text-text-secondary mb-1.5 block">{label}</label>
-      )}
+      {label && <label className="text-sm font-medium text-az-ink-dim mb-1.5 block">{label}</label>}
       <div
-        className={`w-full ${sizeStyles[size]} bg-dark-600 rounded-full overflow-hidden ${className}`}
+        className={`w-full ${sizeStyles[size]} bg-az-surface-panel rounded-full overflow-hidden ${className}`}
         role="progressbar"
         aria-label={label}
         aria-valuenow={value}
@@ -596,7 +605,7 @@ export function ProgressBar({
         />
       </div>
       {showLabel && (
-        <span className="text-xs text-text-tertiary mt-1 block" aria-hidden="true">
+        <span className="text-xs text-az-ink-muted mt-1 block" aria-hidden="true">
           {Math.round(percentage)}%
         </span>
       )}
@@ -620,9 +629,9 @@ export function ErrorState({
 }: ErrorStateProps): React.ReactElement {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="w-16 h-16 rounded-full bg-error-500/20 flex items-center justify-center mb-4">
+      <div className="w-16 h-16 rounded-full bg-az-error-500/20 flex items-center justify-center mb-4">
         <svg
-          className="w-8 h-8 text-error-500"
+          className="w-8 h-8 text-az-error-500"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -635,12 +644,12 @@ export function ErrorState({
           />
         </svg>
       </div>
-      <h3 className="text-lg font-semibold text-text-primary mb-2">{title}</h3>
-      <p className="text-text-secondary mb-6 max-w-sm">{description}</p>
+      <h3 className="text-lg font-semibold text-az-ink mb-2">{title}</h3>
+      <p className="text-az-ink-dim mb-6 max-w-sm">{description}</p>
       {onButtonPress && (
         <button
           onClick={onButtonPress}
-          className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-800"
+          className="px-4 py-2 bg-az-primary-500 text-white rounded-lg hover:bg-az-primary-600 transition-colors focus:outline-none focus:ring-2 focus:ring-az-primary-500 focus:ring-offset-2 focus:ring-offset-az-surface-root"
         >
           {buttonText}
         </button>
@@ -666,11 +675,11 @@ export function Chip({
   className = '',
 }: ChipProps): React.ReactElement {
   const variantClasses: Record<string, string> = {
-    default: 'bg-neutral-100 text-neutral-800',
-    primary: 'bg-primary-100 text-primary-800',
-    success: 'bg-success-100 text-success-800',
-    warning: 'bg-warning-100 text-warning-800',
-    danger: 'bg-error-100 text-error-800',
+    default: 'bg-az-glass-fill text-az-ink',
+    primary: 'bg-az-primary-100 text-az-primary-800',
+    success: 'bg-az-success-100 text-az-success-800',
+    warning: 'bg-az-warning-100 text-az-warning-800',
+    danger: 'bg-az-error-100 text-az-error-800',
   };
   const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
   return (
@@ -713,6 +722,30 @@ export function Spinner({ size = 'md', color, className = '' }: SpinnerProps): R
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
       />
     </svg>
+  );
+}
+
+// Loading State Component
+export interface LoadingStateProps {
+  title?: string;
+  accessibilityLabel?: string;
+  className?: string;
+}
+
+export function LoadingState({
+  title = 'Loading...',
+  accessibilityLabel,
+  className = '',
+}: LoadingStateProps): React.ReactElement {
+  return (
+    <div
+      className={`flex flex-col items-center justify-center p-8 gap-3 text-center ${className}`}
+      role="status"
+      aria-label={accessibilityLabel || 'Loading'}
+    >
+      <Spinner size="lg" />
+      {title && <p className="text-sm font-medium text-az-ink-dim">{title}</p>}
+    </div>
   );
 }
 

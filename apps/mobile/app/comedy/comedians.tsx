@@ -5,8 +5,9 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -50,7 +51,7 @@ export default function ComediansScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Comedians Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading comedians..." />
       </SafeAreaView>
     );
@@ -74,7 +75,7 @@ export default function ComediansScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -162,8 +163,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#1a1a1a',
   },
-  sortChipActive: { backgroundColor: '#F39C12' },
-  sortText: { color: '#888', fontSize: 13, fontWeight: '600' },
+  sortChipActive: { backgroundColor: colors.category.amber },
+  sortText: { color: colors.text.secondary, fontSize: 13, fontWeight: '600' },
   sortTextActive: { color: '#000' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
   comedianCard: {
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
   avatarEmoji: { fontSize: 28 },
   comedianInfo: { flex: 1 },
   comedianName: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
-  comedianBio: { color: '#888', fontSize: 12, marginBottom: 6 },
+  comedianBio: { color: colors.text.secondary, fontSize: 12, marginBottom: 6 },
   comedianMeta: { flexDirection: 'row', gap: 12 },
-  metaText: { color: '#888', fontSize: 12 },
+  metaText: { color: colors.text.secondary, fontSize: 12 },
 });

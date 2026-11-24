@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api, ContentItem } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -50,11 +49,9 @@ function LoreDetailContent(): React.JSX.Element {
   const error = loreQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Vertical" />
-
+    <PageShell activeNav="Vertical" maxWidth="2xl">
       {isLoading ? (
-        <Skeleton height="500px" borderRadius="0" />
+        <Skeleton height="500px" borderRadius="16px" />
       ) : error ? (
         <div className="h-[500px] flex items-center justify-center">
           <ErrorState
@@ -65,7 +62,7 @@ function LoreDetailContent(): React.JSX.Element {
         </div>
       ) : lore ? (
         <section className="relative">
-          <div className="relative h-[500px]">
+          <div className="relative mb-6 h-[400px] overflow-hidden rounded-az-panel border border-az-glass-border sm:h-[500px]">
             <OptimizedImage
               src={lore.thumbnail}
               alt={lore.title}
@@ -73,26 +70,26 @@ function LoreDetailContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/60 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
+            <div className="absolute inset-0 az-scrim--hero" aria-hidden="true" />
+            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="flex items-center gap-2 mb-4">
-                  <Link href="/vertical/lore" className="text-sm text-[#E8420A] hover:underline">
+                <div className="mb-4 flex items-center gap-2">
+                  <Link href="/vertical/lore" className="az-caption text-az-flame hover:underline">
                     Lore Explorer
                   </Link>
                   {lore.category && (
                     <>
-                      <span className="text-white/30">/</span>
-                      <span className="text-sm text-white/60">{lore.category}</span>
+                      <span className="az-caption text-az-ink/30">/</span>
+                      <span className="az-caption text-az-ink/60">{lore.category}</span>
                     </>
                   )}
                 </div>
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{lore.title}</h1>
-                {lore.universe && <p className="text-white/60 text-lg">{lore.universe}</p>}
+                <h1 className="az-heading mb-3 text-az-ink sm:az-display">{lore.title}</h1>
+                {lore.universe && <p className="az-lead text-az-ink/60">{lore.universe}</p>}
               </motion.div>
             </div>
           </div>
@@ -100,11 +97,11 @@ function LoreDetailContent(): React.JSX.Element {
       ) : null}
 
       {lore && (
-        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+        <section className="mx-auto max-w-4xl py-2 sm:py-4">
           <ScrollReveal>
-            <div className="prose prose-invert max-w-none">
-              <p className="text-white/70 text-lg leading-relaxed">{lore.description}</p>
-              <div className="mt-8 text-white/60 leading-relaxed whitespace-pre-wrap">
+            <div className="max-w-none">
+              <p className="az-lead leading-relaxed text-az-ink/70">{lore.description}</p>
+              <div className="az-lead mt-8 leading-relaxed whitespace-pre-wrap text-az-ink/60">
                 {lore.content}
               </div>
             </div>
@@ -113,9 +110,9 @@ function LoreDetailContent(): React.JSX.Element {
           {lore.relatedContent && lore.relatedContent.length > 0 && (
             <div className="mt-12">
               <ScrollReveal>
-                <h2 className="text-2xl font-bold text-white mb-6">Related Content</h2>
+                <h2 className="az-section-title mb-6 text-az-ink">Related Content</h2>
               </ScrollReveal>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {lore.relatedContent.map((item) => (
                   <Link key={item.id} href={`/watch/${item.id}`}>
                     <GlowCard universe="vertical" className="overflow-hidden">
@@ -124,10 +121,10 @@ function LoreDetailContent(): React.JSX.Element {
                         alt={item.title}
                         width={400}
                         height={120}
-                        className="w-full h-32 object-cover"
+                        className="h-32 w-full object-cover"
                       />
                       <div className="p-3">
-                        <h3 className="font-semibold text-white text-sm truncate">{item.title}</h3>
+                        <h3 className="az-body-strong truncate text-az-ink">{item.title}</h3>
                       </div>
                     </GlowCard>
                   </Link>
@@ -137,9 +134,7 @@ function LoreDetailContent(): React.JSX.Element {
           )}
         </section>
       )}
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -149,8 +144,8 @@ export default function LoreDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

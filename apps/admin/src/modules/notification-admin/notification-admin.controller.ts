@@ -1,4 +1,15 @@
-import { Inject, Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { NotificationAdminService } from './notification-admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -29,5 +40,23 @@ export class NotificationAdminController {
   @Get('notification-templates')
   async getTemplates() {
     return this.notificationService.getTemplates();
+  }
+
+  @Post('notification-templates')
+  async createTemplate(@Body() body: { name: string; type: string; body: string }) {
+    return this.notificationService.createTemplate(body);
+  }
+
+  @Put('notification-templates/:id')
+  async updateTemplate(
+    @Param('id') id: string,
+    @Body() body: { name?: string; type?: string; body?: string }
+  ) {
+    return this.notificationService.updateTemplate(id, body);
+  }
+
+  @Delete('notification-templates/:id')
+  async deleteTemplate(@Param('id') id: string) {
+    return this.notificationService.deleteTemplate(id);
   }
 }

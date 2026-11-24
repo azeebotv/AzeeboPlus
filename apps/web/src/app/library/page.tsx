@@ -2,12 +2,15 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import { Film, Heart } from 'lucide-react';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
-import AppHeader from '../../components/layout/AppHeader';
-import AppFooter from '../../components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import { OptimizedImage } from '../../components/OptimizedImage';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface ContentItem {
   id: string;
@@ -153,43 +156,35 @@ export default function LibraryPage(): React.JSX.Element {
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen az-nollywood-bg">
-        <AppHeader />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
+        <div className="mx-auto max-w-md py-12">
           <motion.div
-            className="az-glass p-8 sm:p-10 text-center"
+            className="az-glass p-10 text-center"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4">
-              Sign in to access your library
-            </h2>
-            <p className="text-white/50 text-sm sm:text-base">
-              Save content to watch later, track your progress, and more
+            <h2 className="az-section-title mb-3 text-az-ink">Sign in to access your library</h2>
+            <p className="az-body text-az-ink-muted">
+              Save Nollywood blockbusters, resume streaming history, and manage your favorites.
             </p>
           </motion.div>
-        </main>
-        <AppFooter />
-      </div>
+        </div>
+      </PageShell>
     );
   }
 
   const currentSection = sections.find((s) => s.id === activeSection);
 
   return (
-    <div className="min-h-screen az-nollywood-bg">
-      <AppHeader active="Library" />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <motion.h1
-          className="az-headline text-white text-3xl sm:text-4xl mb-6 sm:mb-8"
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          My Library
-        </motion.h1>
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 12%, transparent)">
+      <PageHero
+        badge="Media Hub"
+        title="My Library"
+        description="Your personal cinema vault: curated watchlists, streaming playback history, and favorited Nollywood titles."
+      />
 
+      <div className="-mt-4 py-4">
         {/* Section Tabs */}
         <motion.div
           className="flex gap-3 sm:gap-4 mb-6 sm:mb-8 overflow-x-auto pb-2 scrollbar-hide"
@@ -202,17 +197,17 @@ export default function LibraryPage(): React.JSX.Element {
           {sections.map((section) => (
             <motion.button
               key={section.id}
+              type="button"
               role="tab"
               aria-selected={activeSection === section.id}
               onClick={() => setActiveSection(section.id as typeof activeSection)}
-              className={`px-5 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
-                activeSection === section.id ? 'text-white' : 'text-white/60 hover:text-white'
-              }`}
-              style={
+              className={`az-body-strong whitespace-nowrap rounded-az-pill px-5 py-2 transition-colors sm:px-6 sm:py-2.5 ${
+                // 14px label: white on the gradient's flame stop is 3.18:1, deep
+                // ink on scarlet 4.09:1 — solid flame with deep ink is 6.03:1.
                 activeSection === section.id
-                  ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
-                  : { border: '1px solid rgba(255,255,255,0.15)' }
-              }
+                  ? 'bg-az-flame text-az-surface-root shadow-az-glow'
+                  : 'border border-az-ink/15 text-az-ink/60 hover:text-az-ink'
+              }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -259,33 +254,36 @@ export default function LibraryPage(): React.JSX.Element {
           ) : currentSection?.items.length === 0 ? (
             <motion.div
               key="empty"
-              className="az-glass p-10 sm:p-12 text-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4 }}
             >
-              <span className="text-4xl sm:text-5xl mb-4 block">
-                {activeSection === 'watchlist'
-                  ? '\u{1F4E6}'
-                  : activeSection === 'history'
-                    ? '\u{1F552}'
-                    : '\u2764\uFE0F'}
-              </span>
-              <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
-                {activeSection === 'watchlist'
-                  ? 'Your watchlist is empty'
-                  : activeSection === 'history'
-                    ? 'No watch history'
-                    : 'No favorites yet'}
-              </h3>
-              <p className="text-white/50 text-xs sm:text-sm">
-                {activeSection === 'watchlist'
-                  ? 'Add content to watch later'
-                  : activeSection === 'history'
-                    ? 'Start watching content to build your history'
-                    : 'Save your favorite content here'}
-              </p>
+              <EmptyState
+                icon={
+                  activeSection === 'watchlist'
+                    ? 'Package'
+                    : activeSection === 'history'
+                      ? 'Clock'
+                      : 'Heart'
+                }
+                title={
+                  activeSection === 'watchlist'
+                    ? 'Your watchlist is empty'
+                    : activeSection === 'history'
+                      ? 'No watch history'
+                      : 'No favorites yet'
+                }
+                description={
+                  activeSection === 'watchlist'
+                    ? 'Add content to watch later'
+                    : activeSection === 'history'
+                      ? 'Start watching content to build your history'
+                      : 'Save your favorite content here'
+                }
+                dark
+                className="az-glass p-10 sm:p-12"
+              />
             </motion.div>
           ) : (
             <motion.div
@@ -307,88 +305,76 @@ export default function LibraryPage(): React.JSX.Element {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04, duration: 0.4 }}
                 >
-                  <a href={`/watch/${item.id}`} className="block relative h-44">
+                  <Link href={`/watch/${item.id}`} className="relative block h-44">
                     {item.thumbnail ? (
                       <OptimizedImage
                         src={item.thumbnail}
                         alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center"
-                        style={{
-                          background:
-                            'linear-gradient(135deg, rgba(232,66,10,0.3), rgba(13,59,46,0.4))',
-                        }}
-                      >
-                        <span style={{ fontSize: 48 }}>&#x1F3AC;</span>
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-az-scarlet/15 to-az-ink/80 text-az-ink/40">
+                        <Film className="size-12" aria-hidden="true" />
                       </div>
                     )}
                     {item.progress != null && item.progress > 0 && (
-                      <div
-                        className="absolute bottom-0 left-0 right-0 h-1"
-                        style={{ background: 'rgba(255,255,255,0.2)' }}
-                      >
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-az-ink/20">
                         <div
-                          className="h-full"
-                          style={{
-                            width: `${Math.min(item.progress, 100)}%`,
-                            background: 'var(--brand-orange)',
-                          }}
+                          className="h-full bg-az-flame"
+                          style={{ width: `${Math.min(item.progress, 100)}%` }}
                         />
                       </div>
                     )}
                     {item.duration && (
-                      <span
-                        className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold"
-                        style={{ background: 'rgba(0,0,0,0.7)', color: 'var(--brand-white)' }}
-                      >
+                      <span className="az-micro-label absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-white">
                         {Math.floor(item.duration / 60)}m
                       </span>
                     )}
-                  </a>
+                  </Link>
                   <div className="p-4">
-                    <a href={`/watch/${item.id}`}>
-                      <h3 className="font-bold text-white text-sm mb-1 group-hover:text-[#E8420A] transition-colors line-clamp-1">
+                    <Link href={`/watch/${item.id}`}>
+                      <h3 className="az-body-strong mb-1 line-clamp-1 text-az-ink transition-colors group-hover:text-az-flame">
                         {item.title}
                       </h3>
-                    </a>
-                    <p className="text-xs text-white/40 mb-3 line-clamp-1">
+                    </Link>
+                    <p className="az-caption mb-3 line-clamp-1 text-az-ink/40">
                       {item.universe?.name || item.creator?.name}
                     </p>
                     <div className="flex items-center gap-2">
                       {activeSection === 'watchlist' && (
                         <button
+                          type="button"
                           aria-label={`Remove ${item.title} from watchlist`}
                           onClick={() => removeFromWatchlist(item.id)}
-                          className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white transition-colors"
-                          style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                          className="flex-1 rounded-az-control border border-az-ink/15 px-3 py-1.5 text-xs font-medium text-az-ink/60 transition-colors hover:text-az-ink"
                         >
                           Remove
                         </button>
                       )}
                       {activeSection === 'history' && (
                         <button
+                          type="button"
                           aria-label={`Clear ${item.title} from history`}
                           onClick={() => removeFromHistory(item.id)}
-                          className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white transition-colors"
-                          style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                          className="flex-1 rounded-az-control border border-az-ink/15 px-3 py-1.5 text-xs font-medium text-az-ink/60 transition-colors hover:text-az-ink"
                         >
                           Clear
                         </button>
                       )}
                       <button
+                        type="button"
                         aria-label={
                           favorites.some((f) => f.id === item.id)
                             ? `Remove ${item.title} from favorites`
                             : `Add ${item.title} to favorites`
                         }
                         onClick={() => toggleFavorite(item.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${favorites.some((f) => f.id === item.id) ? 'text-[#E8420A]' : 'text-white/60 hover:text-white'}`}
-                        style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                        className={`flex items-center justify-center rounded-az-control border border-az-ink/15 px-3 py-1.5 text-xs font-medium transition-colors ${favorites.some((f) => f.id === item.id) ? 'text-az-flame' : 'text-az-ink/60 hover:text-az-ink'}`}
                       >
-                        {favorites.some((f) => f.id === item.id) ? '\u2764\uFE0F' : '\u2661'}
+                        <Heart
+                          className={`size-4 ${favorites.some((f) => f.id === item.id) ? 'fill-current' : ''}`}
+                          aria-hidden="true"
+                        />
                       </button>
                     </div>
                   </div>
@@ -397,8 +383,7 @@ export default function LibraryPage(): React.JSX.Element {
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }

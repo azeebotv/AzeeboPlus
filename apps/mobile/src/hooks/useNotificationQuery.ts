@@ -1,5 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { notificationApi, type Notification, type NotificationPreferences } from '../api';
+import {
+  notificationApi,
+  type Notification,
+  type NotificationPreferences,
+} from '@azeebo/react-data';
 
 export const notificationKeys = {
   all: ['notifications'] as const,

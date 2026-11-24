@@ -1,4 +1,5 @@
 import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -93,7 +94,7 @@ export class TranscodingService {
       };
     } catch (error) {
       this.logger.error('Error starting transcoding job:', error);
-      throw new BadRequestException('Failed to start transcoding job');
+      mapAndThrow(error, 'starting transcoding job');
     }
   }
 
@@ -142,7 +143,7 @@ export class TranscodingService {
       return signedUrl;
     } catch (error) {
       this.logger.error('Error generating signed URL for transcoded media:', error);
-      throw new BadRequestException('Failed to generate signed URL');
+      mapAndThrow(error, 'generating transcoded media URL');
     }
   }
 }

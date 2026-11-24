@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from '
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
 import { analytics } from '../../src/utils/analytics';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -69,9 +70,7 @@ export default function GamesUniverseHome() {
       setTournaments(Array.isArray(tournamentsRes) ? tournamentsRes : (tournamentsRes?.data ?? []));
       setCategories(Array.isArray(catsRes) ? catsRes : (catsRes?.data ?? []));
       setTopPlayers(Array.isArray(playersRes) ? playersRes : (playersRes?.data ?? []));
-      try {
-        analytics.gameStarted(featured?.id ?? '', Date.now().toString());
-      } catch {}
+      analytics.gameStarted(featured?.id ?? '', Date.now().toString());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -87,7 +86,9 @@ export default function GamesUniverseHome() {
   if (error) return <ErrorState description={error} onRetry={fetchData} />;
   if (!featuredGame && !trendingGames.length) {
     return (
-      <EmptyState icon="🎮" title="No games available" description="Check back later for games" />
+      <View accessibilityLabel="Games Screen" style={styles.container}>
+        <EmptyState icon="🎮" title="No games available" description="Check back later for games" />
+      </View>
     );
   }
 
@@ -105,7 +106,7 @@ export default function GamesUniverseHome() {
       </View>
       <Text style={[styles.gameTitle, { color: isDark ? '#fff' : '#000' }]}>{item.title}</Text>
       <Text style={styles.gameGenre}>{item.genre}</Text>
-      <TouchableOpacity style={styles.playButton}>
+      <TouchableOpacity accessibilityRole="button" style={styles.playButton}>
         <Text style={styles.playButtonText}>Play</Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -132,7 +133,7 @@ export default function GamesUniverseHome() {
       </View>
 
       <View style={styles.featuredSection}>
-        <TouchableOpacity style={styles.featuredGame} onPress={() => router.push('/games/1')}>
+        <TouchableOpacity accessibilityRole="button" style={styles.featuredGame} onPress={() => router.push('/games/1')}>
           <View style={styles.featuredImagePlaceholder}>
             <Text style={styles.featuredEmoji}>{featuredGame?.emoji ?? '🎮'}</Text>
             <View style={styles.featuredBadge}>
@@ -144,7 +145,7 @@ export default function GamesUniverseHome() {
                 {featuredGame?.genre ?? ''}
                 {featuredGame ? ` • ${featuredGame.players} players` : ''}
               </Text>
-              <TouchableOpacity style={styles.featuredPlayButton}>
+              <TouchableOpacity accessibilityRole="button" style={styles.featuredPlayButton}>
                 <Text style={styles.featuredPlayIcon}>▶</Text>
                 <Text style={styles.featuredPlayText}>Play Now</Text>
               </TouchableOpacity>
@@ -160,7 +161,7 @@ export default function GamesUniverseHome() {
           contentContainerStyle={styles.categoriesList}
         >
           {categories.map((cat) => (
-            <TouchableOpacity key={cat.id} style={styles.categoryChip}>
+            <TouchableOpacity accessibilityRole="button" key={cat.id} style={styles.categoryChip}>
               <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
               <Text style={styles.categoryName}>{cat.name}</Text>
               <View style={styles.categoryBadge}>
@@ -176,7 +177,7 @@ export default function GamesUniverseHome() {
           <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Trending Games
           </Text>
-          <TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button">
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -198,7 +199,7 @@ export default function GamesUniverseHome() {
         </View>
         <View style={styles.tournamentsList}>
           {tournaments.map((tournament) => (
-            <TouchableOpacity key={tournament.id} style={styles.tournamentCard}>
+            <TouchableOpacity accessibilityRole="button" key={tournament.id} style={styles.tournamentCard}>
               <View style={styles.tournamentLeft}>
                 <Text style={styles.tournamentEmoji}>{tournament.emoji}</Text>
               </View>
@@ -257,7 +258,7 @@ const styles = StyleSheet.create({
   },
   universeLabel: {
     fontSize: 14,
-    color: '#DDA0DD',
+    color: colors.category.purple,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -275,18 +276,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    color: '#DDA0DD',
+    color: colors.category.purple,
     fontSize: 20,
     fontWeight: '700',
   },
   statLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   statDivider: {
     width: 1,
     height: 30,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
   },
   featuredSection: {
     paddingHorizontal: 16,
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
   },
   featuredImagePlaceholder: {
     height: 200,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -310,7 +311,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     left: 12,
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.category.purple,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -335,14 +336,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   featuredGenre: {
-    color: '#ccc',
+    color: colors.neutral[300],
     fontSize: 14,
     marginBottom: 12,
   },
   featuredPlayButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.category.purple,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -382,13 +383,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   categoryBadge: {
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
   },
   categoryCount: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 11,
   },
   section: {
@@ -406,7 +407,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   seeAllText: {
-    color: '#DDA0DD',
+    color: colors.category.purple,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -421,7 +422,7 @@ const styles = StyleSheet.create({
   },
   gameThumbnail: {
     height: 100,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -451,11 +452,11 @@ const styles = StyleSheet.create({
   },
   gameGenre: {
     fontSize: 12,
-    color: '#888',
+    color: colors.text.secondary,
     marginBottom: 10,
   },
   playButton: {
-    backgroundColor: '#DDA0DD',
+    backgroundColor: colors.category.purple,
     paddingVertical: 8,
     borderRadius: 6,
     alignItems: 'center',
@@ -481,7 +482,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -497,26 +498,26 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   tournamentPrize: {
-    color: '#DDA0DD',
+    color: colors.category.purple,
     fontSize: 13,
     fontWeight: '600',
     marginBottom: 2,
   },
   tournamentEntrants: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   tournamentStatus: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
   },
   statusLive: {
     backgroundColor: '#EF4444',
   },
   statusText: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -540,7 +541,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -556,7 +557,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   playerScore: {
-    color: '#DDA0DD',
+    color: colors.category.purple,
     fontSize: 14,
     fontWeight: '600',
   },

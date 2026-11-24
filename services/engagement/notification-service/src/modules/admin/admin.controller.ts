@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { AdminGuard } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
@@ -19,7 +20,10 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 @Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
-  constructor(@Inject(AdminService) private readonly adminService: AdminService) {}
+  constructor(
+    @Inject(AdminService) private readonly adminService: AdminService,
+    @Inject(NotificationsService) private readonly notificationsService: NotificationsService
+  ) {}
 
   @Get('stats')
   @ApiOperation({ summary: 'Get notification service stats (admin)' })
@@ -45,6 +49,15 @@ export class AdminController {
     @Query('status') status?: string
   ) {
     return this.adminService.getNotifications({ page, limit, type, status });
+  }
+
+  @Post('digest/send')
+  @ApiOperation({ summary: 'Send daily digests (admin; notification_digest flag)' })
+  @ApiResponse({ status: 200, description: 'Digest run completed' })
+  @ApiResponse({ status: 403, description: 'Digest flag off, or forbidden' })
+  async sendDigest(@Query('userId') userId?: string) {
+    const result = await this.notificationsService.sendDailyDigest(userId);
+    return ApiResponseWrapper.success(result);
   }
 
   @Post('notifications')

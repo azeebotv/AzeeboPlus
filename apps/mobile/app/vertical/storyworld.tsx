@@ -4,7 +4,7 @@ import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../../src/theme';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
 
@@ -49,9 +49,7 @@ export default function StoryworldScreen() {
     try {
       const res = await apiClient.get<StoryworldDetail>(`/v1/vertical/storyworlds/${id}`);
       setData(res);
-      try {
-        analytics.verticalTitleViewed(res.id);
-      } catch {}
+      analytics.verticalTitleViewed(res.id);
     } catch {
       setError('Failed to load storyworld');
     } finally {
@@ -71,9 +69,7 @@ export default function StoryworldScreen() {
         title: theoryTitle.trim(),
         description: theoryDesc.trim(),
       });
-      try {
-        analytics.verticalTheorySubmitted(id);
-      } catch {}
+      analytics.verticalTheorySubmitted(id);
       setTheoryTitle('');
       setTheoryDesc('');
       fetchData();
@@ -110,7 +106,7 @@ export default function StoryworldScreen() {
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]} numberOfLines={1}>

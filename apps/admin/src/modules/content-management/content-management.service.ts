@@ -90,7 +90,13 @@ export class ContentManagementService {
     ]);
 
     return {
-      items,
+      items: items.map((c) => ({
+        ...c,
+        views: c.viewCount,
+        creator: c.creator
+          ? { id: c.creator.id, name: c.creator.displayName, email: c.creator.email }
+          : null,
+      })),
       total,
       page,
       limit,
@@ -133,7 +139,7 @@ export class ContentManagementService {
 
   // ─── Create Content ──────────────────────────────────────────────────────
 
-  async createContent(data: Record<string, unknown>) {
+  async createContent(data: Record<string, unknown>, adminActorId?: string) {
     const {
       title,
       description,
@@ -158,7 +164,7 @@ export class ContentManagementService {
       thumbnail?: string;
       mediaUrl?: string;
       universeId: string;
-      creatorId: string;
+      creatorId?: string;
       status?: string;
       metadata?: Record<string, unknown>;
       releaseDate?: string;
@@ -172,18 +178,44 @@ export class ContentManagementService {
       tagIds?: string[];
     };
 
-    if (!title || !universeId || !creatorId) {
-      throw new BadRequestException('title, universeId, and creatorId are required');
+    if (!title || !universeId) {
+      throw new BadRequestException('title and universeId are required');
     }
+
+    const universe = await this.prisma.universe.findUnique({
+      where: { id: universeId },
+    });
+    if (!universe) {
+      throw new BadRequestException(`Universe with id "${universeId}" not found`);
+    }
+
+    if (universe.name.toLowerCase() === 'creator') {
+      throw new BadRequestException(
+        'Creator Content is creator-exclusive. Only creators can upload to the Creator Content universe via Creator Studio.'
+      );
+    }
+
+    let finalCreatorId = (creatorId && String(creatorId).trim()) || adminActorId;
+    if (!finalCreatorId) {
+      const adminUser = await this.prisma.user.findFirst({
+        where: { role: { in: ['admin', 'super_admin'] } },
+      });
+      finalCreatorId = adminUser?.id;
+    }
+    if (!finalCreatorId) {
+      throw new BadRequestException('Creator ID is required (no admin user found as default)');
+    }
+
+    const finalThumbnail = thumbnail?.trim() || '/images/placeholders/thumbnails/16x9_01.png';
 
     const content = await this.prisma.contentItem.create({
       data: {
-        title,
+        title: title.trim(),
         description: description ?? null,
-        thumbnail: thumbnail ?? '',
+        thumbnail: finalThumbnail,
         mediaUrl: mediaUrl ?? null,
         universeId,
-        creatorId,
+        creatorId: finalCreatorId,
         status: status ?? 'draft',
         metadata: (metadata as Prisma.InputJsonValue) ?? Prisma.JsonNull,
         releaseDate: releaseDate ? new Date(releaseDate) : null,
@@ -207,7 +239,7 @@ export class ContentManagementService {
     });
 
     await this.auditService.log({
-      actorId: creatorId,
+      actorId: finalCreatorId,
       action: 'create_content',
       targetType: 'content',
       targetId: content.id,

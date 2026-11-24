@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { MessagingService } from './messaging.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 
 describe('MessagingService Integration', () => {
   let service: MessagingService;
@@ -22,6 +23,7 @@ describe('MessagingService Integration', () => {
       groupBy: jest.fn(),
     },
     conversationParticipant: {
+      findUnique: jest.fn(),
       findFirst: jest.fn(),
       updateMany: jest.fn(),
       delete: jest.fn(),
@@ -37,11 +39,15 @@ describe('MessagingService Integration', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
-              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3040';
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3008';
               if (key === 'USER_SERVICE_URL') return 'http://user-service:3001';
               return defaultValue;
             }),
           },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
       ],
     }).compile();
@@ -329,7 +335,7 @@ describe('MessagingService Integration', () => {
 
   describe('markAsRead', () => {
     it('should mark a message as read', async () => {
-      mockPrismaService.conversationParticipant.findFirst.mockResolvedValue({
+      mockPrismaService.conversationParticipant.findUnique.mockResolvedValue({
         conversationId: 'conv-1',
         userId: 'user-2',
       });
@@ -351,7 +357,7 @@ describe('MessagingService Integration', () => {
     });
 
     it('should throw NotFoundException when participant not found', async () => {
-      mockPrismaService.conversationParticipant.findFirst.mockResolvedValue(null);
+      mockPrismaService.conversationParticipant.findUnique.mockResolvedValue(null);
 
       await expect(service.markAsRead('user-unknown', 'conv-1', 'msg-1')).rejects.toThrow(
         NotFoundException
@@ -359,7 +365,7 @@ describe('MessagingService Integration', () => {
     });
 
     it('should throw NotFoundException when message not found', async () => {
-      mockPrismaService.conversationParticipant.findFirst.mockResolvedValue({
+      mockPrismaService.conversationParticipant.findUnique.mockResolvedValue({
         conversationId: 'conv-1',
         userId: 'user-2',
       });
@@ -371,7 +377,7 @@ describe('MessagingService Integration', () => {
     });
 
     it('should update participant lastReadAt', async () => {
-      mockPrismaService.conversationParticipant.findFirst.mockResolvedValue({
+      mockPrismaService.conversationParticipant.findUnique.mockResolvedValue({
         conversationId: 'conv-1',
         userId: 'user-2',
       });

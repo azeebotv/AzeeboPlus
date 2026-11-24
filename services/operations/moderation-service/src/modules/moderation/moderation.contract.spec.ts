@@ -49,6 +49,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
+import { FeatureFlagGuard } from '@azeebo/feature-flags';
 import { ModerationController } from './moderation.controller.js';
 import { ModerationService } from './moderation.service.js';
 
@@ -62,6 +63,7 @@ class MockAuthGuard implements CanActivate {
 
 describe('Moderation Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockModerationService = {
     reportContent: jest.fn(),
@@ -87,11 +89,15 @@ describe('Moderation Controller Contract Tests', () => {
     })
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)
+      .overrideGuard(FeatureFlagGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('v1');
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -111,7 +117,7 @@ describe('Moderation Controller Contract Tests', () => {
         data: { reportId: 'report-1', status: 'pending' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/moderation/report')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -137,7 +143,7 @@ describe('Moderation Controller Contract Tests', () => {
         ],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/moderation/report-types')
         .expect(200)
         .expect((res) => {
@@ -154,7 +160,7 @@ describe('Moderation Controller Contract Tests', () => {
         data: { appealId: 'appeal-1', status: 'pending' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/moderation/appeal')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -180,7 +186,7 @@ describe('Moderation Controller Contract Tests', () => {
         },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/moderation/queue')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -194,7 +200,7 @@ describe('Moderation Controller Contract Tests', () => {
     it('should return user trust score', () => {
       mockModerationService.getTrustScore.mockResolvedValue(85);
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/moderation/trust-score/user-123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -212,7 +218,7 @@ describe('Moderation Controller Contract Tests', () => {
         data: { actionId: 'action-1', type: 'warning' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/moderation/safety-action')
         .set('Authorization', 'Bearer valid-token')
         .send({
@@ -235,7 +241,7 @@ describe('Moderation Controller Contract Tests', () => {
         data: [],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/moderation/report-types')
         .expect((res) => {
           expect(res.body).toHaveProperty('success');
@@ -248,7 +254,7 @@ describe('Moderation Controller Contract Tests', () => {
     it('should return 404 for non-existent trust score', () => {
       mockModerationService.getTrustScore.mockRejectedValue(new Error('User not found'));
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/moderation/trust-score/nonexistent')
         .set('Authorization', 'Bearer valid-token')
         .expect(500);

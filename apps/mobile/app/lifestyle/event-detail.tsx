@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi } from '../../src/api/lifestyle';
+import { lifestyleApi } from '@azeebo/react-data/api/lifestyle';
 
 export default function EventDetailScreen() {
   const router = useRouter();
@@ -57,7 +57,9 @@ export default function EventDetailScreen() {
         message: `Check out ${event.title} at ${event.venue} on ${event.date}!`,
         title: event.title,
       });
-    } catch {}
+    } catch {
+      /* User cancelled share */
+    }
   }, [event]);
 
   const handleOpenMap = useCallback(() => {
@@ -79,7 +81,7 @@ export default function EventDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Event Detail Screen" style={styles.container}>
         <LoadingState text="Loading event..." />
       </SafeAreaView>
     );
@@ -99,16 +101,18 @@ export default function EventDetailScreen() {
         <View style={styles.heroContainer}>
           <Image
             source={{
-              uri: event.image || 'https://placehold.co/800x400/1a1a1a/ffffff?text=Event',
+              uri:
+                event.image ||
+                'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&h=400&q=80',
             }}
             style={styles.heroImage}
             resizeMode="cover"
           />
           <View style={styles.heroOverlay} />
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+          <TouchableOpacity accessibilityRole="button" style={styles.shareButton} onPress={handleShare}>
             <Text style={styles.shareIcon}>↗</Text>
           </TouchableOpacity>
         </View>
@@ -146,7 +150,7 @@ export default function EventDetailScreen() {
                 </Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.mapButton} onPress={handleOpenMap}>
+            <TouchableOpacity accessibilityRole="button" style={styles.mapButton} onPress={handleOpenMap}>
               <Text style={styles.mapButtonText}>View on Map</Text>
             </TouchableOpacity>
           </View>

@@ -35,17 +35,13 @@ export default function LoginPrompt({
         >
           {/* Icon */}
           <motion.div
-            className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(135deg, #E8420A, #CC1C1C)',
-              boxShadow: '0 8px 32px rgba(232,66,10,0.35)',
-            }}
+            className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center bg-gradient-to-br from-az-flame to-az-scarlet shadow-az-glow"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
           >
             <svg
-              className="w-10 h-10 text-white"
+              className="w-10 h-10 text-az-ink"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -61,10 +57,10 @@ export default function LoginPrompt({
           </motion.div>
 
           {/* Heading */}
-          <h1 className="az-headline text-white text-2xl sm:text-3xl mb-3">
+          <h1 className="az-headline text-az-ink text-2xl sm:text-3xl mb-3">
             {t('home.loginWelcome', { siteName })}
           </h1>
-          <p className="text-white/60 text-sm sm:text-base mb-8 leading-relaxed">
+          <p className="mb-8 text-sm leading-relaxed text-az-ink-dim sm:text-base">
             {t('home.loginDescription')}
           </p>
 
@@ -72,8 +68,7 @@ export default function LoginPrompt({
           <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
             <motion.button
               type="button"
-              className="az-btn-primary w-full sm:w-auto"
-              style={{ paddingInline: '2rem' }}
+              className="az-btn-primary az-btn-primary--inline"
               onClick={onLogin}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -83,8 +78,7 @@ export default function LoginPrompt({
 
             <Link href="/auth/register">
               <motion.span
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold text-white/70 hover:text-white transition-colors cursor-pointer"
-                style={{ border: '1px solid rgba(255,255,255,0.2)' }}
+                className="az-body-strong inline-flex cursor-pointer items-center gap-2 rounded-az-pill border border-az-glass-border-hover px-6 py-3 text-az-ink/70 transition-colors hover:text-az-ink"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
               >
@@ -96,7 +90,7 @@ export default function LoginPrompt({
           {/* Go back link */}
           <motion.button
             type="button"
-            className="mt-6 text-white/40 hover:text-white/60 text-xs transition-colors"
+            className="az-caption mt-6 text-az-ink-muted transition-colors hover:text-az-ink-dim"
             onClick={onGoHome}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -107,7 +101,7 @@ export default function LoginPrompt({
 
           {/* Auto-redirect notice */}
           <motion.p
-            className="mt-4 text-white/30 text-xs"
+            className="az-caption mt-4 text-az-ink-muted"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}

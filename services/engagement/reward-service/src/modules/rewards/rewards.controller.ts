@@ -9,19 +9,27 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  Param,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, rewardFlags } from '@azeebo/feature-flags';
 
 import { RewardsService } from './rewards.service.js';
+import { RewardAbuseControlsService } from '../reward/reward-abuse-controls.service.js';
 import { RedeemRewardDto } from './dto/redeem-reward.dto.js';
 import { RewardResponse } from './interfaces/reward-response.interface.js';
 
 @ApiTags('Rewards')
 @UseGuards(RateLimitGuard, ServiceAuthGuard)
+@UseGuards(FeatureFlagGuard)
+@FeatureFlag(rewardFlags.pointsEnabled)
 @Controller('rewards')
 export class RewardsController {
-  constructor(@Inject(RewardsService) private readonly rewardsService: RewardsService) {}
+  constructor(
+    @Inject(RewardsService) private readonly rewardsService: RewardsService,
+    @Inject(RewardAbuseControlsService) private readonly abuseControls: RewardAbuseControlsService
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get reward account overview' })
@@ -32,6 +40,8 @@ export class RewardsController {
   }
 
   @Get('missions')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(rewardFlags.missions)
   @ApiOperation({ summary: 'List active missions' })
   @ApiResponse({ status: 200, description: 'Active missions' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -39,7 +49,24 @@ export class RewardsController {
     return this.rewardsService.getMissions(req.user.id);
   }
 
+  @Post('missions/:id/claim')
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(rewardFlags.missions)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Complete and claim reward for a mission' })
+  @ApiResponse({ status: 200, description: 'Mission claimed and points awarded' })
+  @ApiResponse({ status: 400, description: 'Mission already completed or inactive' })
+  @ApiResponse({ status: 404, description: 'Mission not found' })
+  async claimMission(
+    @Request() req: { user: { id: string } },
+    @Param('id') missionId: string
+  ): Promise<RewardResponse> {
+    return this.rewardsService.completeMission(req.user.id, missionId);
+  }
+
   @Get('badges')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(rewardFlags.badges)
   @ApiOperation({ summary: 'List badges' })
   @ApiResponse({ status: 200, description: 'User badges' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -48,11 +75,21 @@ export class RewardsController {
   }
 
   @Get('streak')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(rewardFlags.streaks)
   @ApiOperation({ summary: 'Get current streak' })
   @ApiResponse({ status: 200, description: 'Streak info' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getStreak(@Request() req: { user: { id: string } }): Promise<RewardResponse> {
     return this.rewardsService.getStreak(req.user.id);
+  }
+
+  @Get('redeem-options')
+  @ApiOperation({ summary: 'List active rewards available for redemption' })
+  @ApiResponse({ status: 200, description: 'Redeem options catalog' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getRedeemOptions(): Promise<RewardResponse> {
+    return this.rewardsService.getRedeemOptions();
   }
 
   @Post('redeem')
@@ -109,5 +146,37 @@ export class RewardsController {
     @Query('limit') limit?: number
   ): Promise<RewardResponse> {
     return this.rewardsService.getHistory(req.user.id, Number(page) || 1, Number(limit) || 20);
+  }
+
+  // ========================
+  // Abuse control endpoints
+  // ========================
+
+  @Get('abuse-check')
+  @UseGuards(ServiceAuthGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Check for reward abuse' })
+  @ApiResponse({ status: 200, description: 'Abuse check result' })
+  async checkAbuse(@Request() req: { user: { id: string } }) {
+    const result = await this.abuseControls.checkAbuse(req.user.id);
+    return { success: true, data: result };
+  }
+
+  @Post('admin/adjust')
+  @UseGuards(ServiceAuthGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Admin reward adjustment' })
+  @ApiResponse({ status: 200, description: 'Adjustment recorded' })
+  async adminAdjust(
+    @Request() req: { user: { id: string } },
+    @Body() body: { userId: string; amount: number; reason: string }
+  ) {
+    const result = await this.abuseControls.recordAdminAdjustment(
+      body.userId,
+      body.amount,
+      body.reason,
+      req.user.id
+    );
+    return { success: true, data: result };
   }
 }

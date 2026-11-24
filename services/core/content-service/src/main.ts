@@ -17,7 +17,7 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-    app.use(createHelmetConfig());
+  app.use(createHelmetConfig());
 
   app.useGlobalPipes(
     new ValidationPipe({

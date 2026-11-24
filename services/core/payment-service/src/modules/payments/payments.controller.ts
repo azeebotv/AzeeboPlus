@@ -32,7 +32,8 @@ import {
   VerifyPaymentResponse,
   TransactionHistoryResponse,
 } from './interfaces/payment-response.interface.js';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, IdempotencyGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlag, paymentFlags } from '@azeebo/feature-flags';
 
 @ApiTags('Payments')
 @ApiBearerAuth()
@@ -41,7 +42,7 @@ export class PaymentsController {
   constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
 
   @Post('initialize')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(IdempotencyGuard, RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({
     summary: 'Initialize a payment',
@@ -116,10 +117,54 @@ export class PaymentsController {
     },
   })
   async initializePayment(
-    @Request() req: { user: { sub: string; id: string } },
+    @Request() req: { user: { sub: string; id: string; kycVerified?: boolean } },
     @Body() initializePaymentDto: InitializePaymentDto
   ): Promise<InitializePaymentResponse> {
-    return this.paymentsService.initializePayment(req.user.id, initializePaymentDto);
+    return this.paymentsService.initializePayment(
+      req.user.id,
+      initializePaymentDto,
+      req.user.kycVerified === true
+    );
+  }
+
+  @Post('intent')
+  @UseGuards(FeatureFlagGuard, IdempotencyGuard, RateLimitGuard)
+  @FeatureFlag(paymentFlags.intentsApi)
+  @RateLimit(10, 60000)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Create a payment intent (deferred authorization)',
+    description:
+      'Creates a payment intent without calling the payment provider. Confirm the intent to obtain the checkout URL.',
+  })
+  @ApiCreatedResponse({ description: 'Payment intent created' })
+  @ApiBadRequestResponse({ description: 'Invalid input - validation failed' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized - invalid or missing JWT token' })
+  async createIntent(
+    @Request() req: { user: { sub: string; id: string } },
+    @Body() initializePaymentDto: InitializePaymentDto
+  ): Promise<PaymentResponse> {
+    return this.paymentsService.createIntent(req.user.id, initializePaymentDto);
+  }
+
+  @Post('intent/:id/confirm')
+  @UseGuards(FeatureFlagGuard, IdempotencyGuard, RateLimitGuard)
+  @FeatureFlag(paymentFlags.intentsApi)
+  @RateLimit(10, 60000)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Confirm a payment intent',
+    description:
+      'Calls the active payment provider to obtain the checkout URL for a created intent.',
+  })
+  @ApiOkResponse({ description: 'Payment intent confirmed' })
+  @ApiBadRequestResponse({ description: 'Invalid intent or provider failure' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized - invalid or missing JWT token' })
+  async confirmIntent(
+    @Request() req: { user: { sub: string; id: string } },
+    @Param('id') id: string
+  ): Promise<PaymentResponse> {
+    return this.paymentsService.confirmIntent(req.user.id, id);
   }
 
   @Post('verify')
@@ -181,7 +226,10 @@ export class PaymentsController {
     @Request() req: { user: { sub: string; id: string } },
     @Body() verifyPaymentDto: VerifyPaymentDto
   ): Promise<VerifyPaymentResponse> {
-    return this.paymentsService.verifyPayment(req.user.id, verifyPaymentDto.transactionId);
+    // The intent id and the provider reference are both valid handles; the
+    // lookup accepts either so a checkout return URL can verify directly.
+    const handle = verifyPaymentDto.transactionId ?? verifyPaymentDto.reference!;
+    return this.paymentsService.verifyPayment(req.user.id, handle);
   }
 
   @Get('history')
@@ -276,7 +324,8 @@ export class PaymentsController {
   }
 
   @Post('refund-request')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, IdempotencyGuard, RateLimitGuard)
+  @FeatureFlag(paymentFlags.selfServiceRefund)
   @RateLimit(5, 3600000)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Request a refund' })
@@ -289,7 +338,8 @@ export class PaymentsController {
     return this.paymentsService.requestRefund(
       req.user.id,
       requestRefundDto.transactionId,
-      requestRefundDto.reason
+      requestRefundDto.reason,
+      requestRefundDto.idempotencyKey
     );
   }
 }

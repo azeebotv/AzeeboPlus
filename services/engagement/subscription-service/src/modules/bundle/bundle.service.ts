@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -7,12 +8,36 @@ import { SubscribeBundleDto } from './dto/subscribe-bundle.dto.js';
 import type { BundlePass, BundleSubscription } from '../../prisma/client/index.js';
 import { randomUUID } from 'crypto';
 import axios from 'axios';
+import {
+  walletLookupUrl,
+  walletDebitUrl,
+  walletDebitPayload,
+  walletInternalHeaders as buildWalletInternalHeaders,
+} from '../../wallet-payloads.js';
+
+export interface BundleUpgradeQuote {
+  bundleId: string;
+  bundleName: string;
+  bundlePrice: number;
+  proratedCredit: number;
+  effectivePrice: number;
+  activeSubscriptions: Array<{
+    subscriptionId: string;
+    planName: string;
+    daysRemaining: number;
+    totalDays: number;
+    credit: number;
+  }>;
+}
 
 @Injectable()
 export class BundleService {
   private readonly logger = new Logger(BundleService.name);
   private readonly walletServiceBaseUrl: string;
   private readonly analyticsServiceBaseUrl: string;
+  // Secret for internal wallet-service calls — same resolution order the
+  // wallet-service InternalSecretGuard uses to validate it.
+  private readonly internalApiKey: string;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -25,8 +50,22 @@ export class BundleService {
     );
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
+    // Secret for internal wallet-service calls — same resolution order the
+    // wallet-service InternalSecretGuard uses to validate it.
+    this.internalApiKey =
+      this.configService.get<string>('GATEWAY_SECRET') ??
+      this.configService.getOrThrow<string>('INTERNAL_API_KEY');
+  }
+
+  /**
+   * Headers for internal wallet-service calls (bundle purchase debits).
+   * Those routes carry no user identity — the shared secret authenticates
+   * the service itself (wallet-service InternalSecretGuard).
+   */
+  private walletInternalHeaders(): Record<string, string> {
+    return buildWalletInternalHeaders(this.internalApiKey);
   }
 
   async getBundles(): Promise<BundlePass[]> {
@@ -59,6 +98,86 @@ export class BundleService {
     const individualTotal = bundles.reduce((sum, b) => sum + Number(b.originalPrice), 0);
     const bundleSavings = individualTotal - bundles.reduce((sum, b) => sum + Number(b.price), 0);
     return { bundles, individualTotal, bundleSavings };
+  }
+
+  async calculateProratedCredit(
+    userId: string,
+    bundlePrice: number
+  ): Promise<{
+    proratedCredit: number;
+    effectivePrice: number;
+    activeSubscriptions: Array<{
+      subscriptionId: string;
+      planName: string;
+      daysRemaining: number;
+      totalDays: number;
+      credit: number;
+    }>;
+  }> {
+    const now = new Date();
+    const activeSubs = await this.prisma.subscription.findMany({
+      where: {
+        userId,
+        status: 'active',
+        endDate: { gt: now },
+      },
+      include: { plan: true },
+    });
+
+    const activeSubscriptions: Array<{
+      subscriptionId: string;
+      planName: string;
+      daysRemaining: number;
+      totalDays: number;
+      credit: number;
+    }> = [];
+
+    let totalCredit = 0;
+    for (const sub of activeSubs) {
+      const startMs = sub.startDate.getTime();
+      const endMs = sub.endDate.getTime();
+      const nowMs = now.getTime();
+      const totalMs = Math.max(1000 * 60 * 60 * 24, endMs - startMs);
+      const remainingMs = Math.max(0, endMs - nowMs);
+
+      const daysRemaining = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+      const totalDays = Math.max(1, Math.ceil(totalMs / (1000 * 60 * 60 * 24)));
+      const planPrice = Number(sub.plan.price);
+      const credit = Math.round((remainingMs / totalMs) * planPrice * 100) / 100;
+
+      if (credit > 0) {
+        totalCredit += credit;
+        activeSubscriptions.push({
+          subscriptionId: sub.id,
+          planName: sub.plan.name,
+          daysRemaining,
+          totalDays,
+          credit,
+        });
+      }
+    }
+
+    const proratedCredit = Math.min(bundlePrice, Math.round(totalCredit * 100) / 100);
+    const effectivePrice = Math.max(0, Math.round((bundlePrice - proratedCredit) * 100) / 100);
+
+    return {
+      proratedCredit,
+      effectivePrice,
+      activeSubscriptions,
+    };
+  }
+
+  async getUpgradeQuote(userId: string, bundleId: string): Promise<BundleUpgradeQuote> {
+    const bundle = await this.getBundleById(bundleId);
+    const quote = await this.calculateProratedCredit(userId, Number(bundle.price));
+    return {
+      bundleId: bundle.id,
+      bundleName: bundle.name,
+      bundlePrice: Number(bundle.price),
+      proratedCredit: quote.proratedCredit,
+      effectivePrice: quote.effectivePrice,
+      activeSubscriptions: quote.activeSubscriptions,
+    };
   }
 
   async createBundle(dto: CreateBundleDto): Promise<BundlePass> {
@@ -109,10 +228,28 @@ export class BundleService {
       );
     }
 
+    const applyProration = dto.applyProration ?? true;
+    let effectivePrice = Number(bundle.price);
+    let proratedCredit = 0;
+    let creditedSubIds: string[] = [];
+
+    if (applyProration) {
+      const calculation = await this.calculateProratedCredit(userId, effectivePrice);
+      proratedCredit = calculation.proratedCredit;
+      effectivePrice = calculation.effectivePrice;
+      creditedSubIds = calculation.activeSubscriptions.map((s) => s.subscriptionId);
+    }
+
     if (paymentMethod === 'wallet') {
-      await this.debitWallet(userId, Number(bundle.price), `Bundle: ${bundle.name}`);
+      if (effectivePrice > 0) {
+        await this.debitWallet(
+          userId,
+          effectivePrice,
+          `Bundle: ${bundle.name}${proratedCredit > 0 ? ` (Prorated credit ₦${proratedCredit})` : ''}`
+        );
+      }
     } else {
-      await this.verifyExternalPayment(dto.paymentReference!, bundle);
+      await this.verifyExternalPayment(dto.paymentReference!, effectivePrice);
     }
 
     const subscription = await this.prisma.$transaction(async (tx) => {
@@ -128,6 +265,13 @@ export class BundleService {
         await tx.bundleSubscription.update({
           where: { id: existing.id },
           data: { status: 'cancelled' },
+        });
+      }
+
+      if (creditedSubIds.length > 0) {
+        await tx.subscription.updateMany({
+          where: { id: { in: creditedSubIds } },
+          data: { status: 'cancelled', autoRenew: false },
         });
       }
 
@@ -150,7 +294,13 @@ export class BundleService {
     await this.cache.invalidate(`bundle:user:${userId}`);
     await this.cache.invalidate('bundle:passes');
 
-    this.trackAnalyticsEvent('bundle_subscribed', userId, { bundleId, paymentMethod });
+    this.trackAnalyticsEvent('bundle_subscribed', userId, {
+      bundleId,
+      paymentMethod,
+      originalPrice: Number(bundle.price),
+      proratedCredit,
+      effectivePrice,
+    });
     return subscription;
   }
 
@@ -186,11 +336,12 @@ export class BundleService {
 
   private async debitWallet(userId: string, amount: number, description: string): Promise<void> {
     try {
-      const walletResponse = await axios.get(
-        `${this.walletServiceBaseUrl}/wallets/user/${userId}`,
-        { timeout: 10000 }
-      );
-      const wallet = walletResponse.data?.wallet || walletResponse.data;
+      const walletResponse = await axios.get(walletLookupUrl(this.walletServiceBaseUrl, userId), {
+        headers: this.walletInternalHeaders(),
+        timeout: 10000,
+      });
+      // Internal lookup responds enveloped: { success, data: { balance, … } }.
+      const wallet = walletResponse.data?.data;
       if (!wallet) {
         throw new BadRequestException('Wallet not found. Please fund your wallet first.');
       }
@@ -200,18 +351,20 @@ export class BundleService {
 
       const idempotencyKey = randomUUID();
       await axios.post(
-        `${this.walletServiceBaseUrl}/wallet/debit`,
-        { walletId: wallet.id, amount, description, idempotencyKey },
-        { timeout: 10000 }
+        walletDebitUrl(this.walletServiceBaseUrl, userId),
+        walletDebitPayload(amount, description, idempotencyKey),
+        { headers: this.walletInternalHeaders(), timeout: 10000 }
       );
     } catch (error) {
-      if (error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to debit wallet: ${(error as Error).message}`);
-      throw new BadRequestException('Unable to process wallet payment. Please try again.');
+      mapAndThrow(error, 'debiting wallet');
     }
   }
 
-  private async verifyExternalPayment(paymentReference: string, bundle: BundlePass): Promise<void> {
+  private async verifyExternalPayment(
+    paymentReference: string,
+    expectedAmount: number
+  ): Promise<void> {
     try {
       const paymentVerification = await axios.get(
         `${this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL')}/v1/payments/${paymentReference}`,
@@ -221,13 +374,14 @@ export class BundleService {
       if (paymentVerification.data?.status !== 'completed') {
         throw new BadRequestException('Payment has not been completed.');
       }
-      if (Number(paymentVerification.data?.amount).toFixed(2) !== Number(bundle.price).toFixed(2)) {
-        throw new BadRequestException('Payment amount does not match bundle price.');
+      if (Math.abs(Number(paymentVerification.data?.amount) - expectedAmount) > 0.01) {
+        throw new BadRequestException(
+          `Payment amount (${paymentVerification.data?.amount}) does not match expected bundle price (${expectedAmount}).`
+        );
       }
     } catch (error) {
-      if (error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to verify payment: ${(error as Error).message}`);
-      throw new BadRequestException('Unable to verify payment. Please try again.');
+      mapAndThrow(error, 'verifying payment');
     }
   }
 

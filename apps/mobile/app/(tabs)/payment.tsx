@@ -13,10 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { paymentApi } from '../../src/api/payment';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { paymentApi } from '@azeebo/react-data/api/payment';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { paymentPresetAmounts } from '../../src/config/prices';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const PAYMENT_AMOUNTS = paymentPresetAmounts.map((value) => ({
   value,
@@ -72,6 +74,36 @@ export default function PaymentScreen() {
     setCustomAmount('');
   };
 
+  // Poll verify until the provider settles (or attempts run out). Redirect
+  // payments can take a few seconds to confirm.
+  const verifyPaymentWithRetry = async (reference: string, attempts = 5) => {
+    for (let i = 0; i < attempts; i++) {
+      try {
+        const res = await paymentApi.verify(reference);
+        if (res.success && res.data) {
+          if (res.data.status === 'success') {
+            Alert.alert('Success', `Payment of ₦${res.data.amount.toLocaleString()} confirmed`);
+            return;
+          }
+          if (res.data.status === 'failed') {
+            Alert.alert('Payment Failed', 'Your payment was not completed. No money was taken.');
+            return;
+          }
+          // pending → wait and retry
+        }
+      } catch {
+        // network blip — fall through to retry
+      }
+      if (i < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    }
+    Alert.alert(
+      'Payment Pending',
+      'Your payment is still processing. Check Transactions in a moment to confirm.'
+    );
+  };
+
   const handleCustomAmountChange = (text: string) => {
     const numericValue = text.replace(/[^0-9]/g, '');
     setCustomAmount(numericValue);
@@ -109,7 +141,7 @@ export default function PaymentScreen() {
         if (response.data.authorizationUrl) {
           Alert.alert(
             'Redirect to Payment',
-            `You will be redirected to Paystack to complete your payment of ₦${amount.toLocaleString()}.`,
+            `You will be redirected to complete your payment of ₦${amount.toLocaleString()}.`,
             [
               {
                 text: 'Cancel',
@@ -118,9 +150,15 @@ export default function PaymentScreen() {
               {
                 text: 'Continue',
                 onPress: async () => {
-                  const supported = await Linking.canOpenURL(response.data!.authorizationUrl);
+                  const url = response.data!.authorizationUrl;
+                  const supported = await Linking.canOpenURL(url);
                   if (supported) {
-                    await Linking.openURL(response.data!.authorizationUrl);
+                    await Linking.openURL(url);
+                    // Redirect flows are asynchronous — verify with the
+                    // backend before claiming success. Previously the app
+                    // showed "processed successfully" the moment the
+                    // initialize call returned, before any money moved.
+                    await verifyPaymentWithRetry(response.data!.reference);
                   } else {
                     Alert.alert('Error', 'Could not open payment URL');
                   }
@@ -129,7 +167,8 @@ export default function PaymentScreen() {
             ]
           );
         } else {
-          Alert.alert('Success', `Payment of ₦${amount.toLocaleString()} processed successfully`);
+          // No redirect: verify immediately (provider completed inline).
+          await verifyPaymentWithRetry(response.data.reference);
         }
       } else {
         Alert.alert('Error', response.message || 'Failed to initialize payment');
@@ -151,7 +190,7 @@ export default function PaymentScreen() {
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
         </View>
       </SafeAreaView>
     );
@@ -168,7 +207,7 @@ export default function PaymentScreen() {
           <Text style={[styles.lockText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
             Please log in to make payments
           </Text>
-          <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/(auth)/login')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.loginButton} onPress={() => router.push('/(auth)/login')}>
             <Text style={styles.loginButtonText}>Log In</Text>
           </TouchableOpacity>
         </View>
@@ -220,7 +259,7 @@ export default function PaymentScreen() {
                   {
                     backgroundColor:
                       !showCustomAmount && selectedAmount === item.value
-                        ? '#E8420A'
+                        ? brand.flame
                         : colorScheme === 'dark'
                           ? '#1a1a1a'
                           : '#f5f5f5',
@@ -290,7 +329,7 @@ export default function PaymentScreen() {
                   styles.providerOption,
                   {
                     backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                    borderColor: isSelected ? '#E8420A' : 'transparent',
+                    borderColor: isSelected ? brand.flame : 'transparent',
                   },
                 ]}
               >
@@ -305,7 +344,9 @@ export default function PaymentScreen() {
                   </Text>
                   <Text style={styles.providerDescription}>{meta.description || ''}</Text>
                 </View>
-                <View style={[styles.radioOuter, { borderColor: isSelected ? '#E8420A' : '#666' }]}>
+                <View
+                  style={[styles.radioOuter, { borderColor: isSelected ? brand.flame : '#666' }]}
+                >
                   {isSelected && <View style={styles.radioInner} />}
                 </View>
               </TouchableOpacity>
@@ -344,7 +385,7 @@ export default function PaymentScreen() {
               <Text
                 style={[styles.summaryValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
               >
-                Paystack
+                {providers.find((p) => p.provider === selectedProvider)?.name || selectedProvider}
               </Text>
             </View>
             <View style={styles.summaryDivider} />
@@ -358,7 +399,10 @@ export default function PaymentScreen() {
                 Total
               </Text>
               <Text
-                style={[styles.summaryValue, { color: '#E8420A', fontWeight: '700', fontSize: 18 }]}
+                style={[
+                  styles.summaryValue,
+                  { color: brand.flame, fontWeight: '700', fontSize: 18 },
+                ]}
               >
                 ₦{displayAmount}
               </Text>
@@ -380,7 +424,10 @@ export default function PaymentScreen() {
 
         <View style={styles.secureNote}>
           <Text style={styles.secureIcon}>🔒</Text>
-          <Text style={styles.secureText}>Your payment is secured by Paystack</Text>
+          <Text style={styles.secureText}>
+            Secured by{' '}
+            {providers.find((p) => p.provider === selectedProvider)?.name || 'our payment provider'}
+          </Text>
         </View>
 
         <View style={styles.bottomPadding} />
@@ -408,7 +455,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   loginButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 24,
@@ -497,7 +544,7 @@ const styles = StyleSheet.create({
   },
   providerDescription: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   radioOuter: {
     width: 24,
@@ -511,7 +558,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   summarySection: {
     paddingHorizontal: 16,
@@ -535,11 +582,11 @@ const styles = StyleSheet.create({
   },
   summaryDivider: {
     height: 1,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     marginVertical: 8,
   },
   payButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     marginHorizontal: 16,
     padding: 16,
     borderRadius: 12,
@@ -565,7 +612,7 @@ const styles = StyleSheet.create({
   },
   secureText: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   bottomPadding: {
     height: 24,

@@ -1,9 +1,11 @@
 'use client';
 import { useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Check, Eye, EyeOff, Lock } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import AuthShell from '@/components/auth/AuthShell';
-import { Alert, Spinner } from '@/components/auth/FormBits';
+import { Alert, AuthField, SubmitButton } from '@/components/auth/FormBits';
 
 export default function ResetPasswordPage(): React.JSX.Element {
   const router = useRouter();
@@ -78,14 +80,15 @@ export default function ResetPasswordPage(): React.JSX.Element {
   };
 
   const strengthBars = [1, 2, 3, 4];
-  const strengthColor =
-    passwordStrength <= 1
-      ? 'var(--color-error-500)'
-      : passwordStrength === 2
-        ? 'var(--color-warning-500)'
-        : passwordStrength === 3
-          ? 'var(--color-success-400)'
-          : 'var(--color-success-500)';
+  /* Strength scores 0–5 but the meter has four segments, so the top tier
+     absorbs both 4 and 5. */
+  const STRENGTH_TIERS = [
+    { fill: 'bg-az-error-500', label: 'text-az-error-500' },
+    { fill: 'bg-az-warning-500', label: 'text-az-warning-500' },
+    { fill: 'bg-az-success-400', label: 'text-az-success-400' },
+    { fill: 'bg-az-success-500', label: 'text-az-success-500' },
+  ];
+  const tier = STRENGTH_TIERS[Math.min(Math.max(passwordStrength, 1), 4) - 1];
   const strengthLabel =
     passwordStrength <= 1
       ? 'Weak'
@@ -97,47 +100,27 @@ export default function ResetPasswordPage(): React.JSX.Element {
 
   if (success) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center p-6"
-        style={{ backgroundColor: 'var(--brand-near-black)' }}
-      >
-        <div className="text-center max-w-md">
-          <div
-            className="mx-auto mb-6 rounded-full flex items-center justify-center"
-            style={{
-              width: 72,
-              height: 72,
-              background: 'linear-gradient(135deg, #E8420A, #CC1C1C)',
-              boxShadow: '0 0 30px rgba(204,28,28,0.5)',
-            }}
-          >
-            <svg
-              className="h-9 w-9 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-az-surface-root)] p-6">
+        <div className="max-w-md text-center">
+          <div className="mx-auto mb-6 grid size-18 place-items-center rounded-full bg-gradient-to-br from-az-flame to-az-scarlet shadow-az-glow">
+            <Check className="size-9 text-az-ink" strokeWidth={2.5} aria-hidden="true" />
           </div>
-          <h2 className="az-headline text-white text-2xl mb-2">Password Reset Successful!</h2>
-          <p className="text-white/55">Redirecting you to login...</p>
+          <h2 className="az-headline mb-2 text-2xl text-az-ink">Password Reset Successful!</h2>
+          <p className="az-body text-az-ink-muted">Redirecting you to login...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <AuthShell headlineLines={['Password', 'Reset']} backgroundFallback="#1A0A0A">
+    <AuthShell
+      headlineLines={['Password', 'Reset']}
+      tagline="Choose something you'll actually remember."
+    >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
-          <h2 className="az-headline text-white text-3xl">Reset your password</h2>
-          <p className="text-white/55 text-sm mt-1">
+          <h2 className="az-headline text-3xl text-az-ink">Reset your password</h2>
+          <p className="az-body mt-1 text-az-ink-muted">
             Enter a strong new password to secure your account
           </p>
         </div>
@@ -145,126 +128,92 @@ export default function ResetPasswordPage(): React.JSX.Element {
         {error && <Alert>{error}</Alert>}
 
         <div>
-          <label htmlFor="new-password" className="az-label">
-            New password
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-            </span>
-            <input
-              id="new-password"
-              type={showNew ? 'text' : 'password'}
-              className="az-input"
-              style={{ paddingLeft: '2.5rem', paddingRight: '3.5rem' }}
-              value={newPassword}
-              onChange={handlePasswordChange}
-              placeholder="Enter new password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowNew((s) => !s)}
-              className="absolute inset-y-0 right-0 px-3 flex items-center text-white/50 hover:text-white"
-              aria-label={showNew ? 'Hide password' : 'Show password'}
-            >
-              {showNew ? 'Hide' : 'Show'}
-            </button>
-          </div>
+          <AuthField
+            id="new-password"
+            name="new-password"
+            type={showNew ? 'text' : 'password'}
+            autoComplete="new-password"
+            label="New password"
+            icon={Lock}
+            required
+            value={newPassword}
+            onChange={handlePasswordChange}
+            trailing={
+              <button
+                type="button"
+                onClick={() => setShowNew((s) => !s)}
+                className="px-3 py-1 text-az-ink/80 hover:text-az-ink"
+                aria-label={showNew ? 'Hide password' : 'Show password'}
+              >
+                {showNew ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+              </button>
+            }
+          />
 
           {/* Password strength bar — 4 segments */}
           {newPassword && (
             <div className="mt-3">
-              <div className="flex gap-1.5 mb-1.5">
+              <div className="mb-1.5 flex gap-1.5">
                 {strengthBars.map((level) => (
                   <div
                     key={level}
-                    className="h-1.5 flex-1 rounded-full transition-colors"
-                    style={{
-                      background:
-                        level <= passwordStrength ? strengthColor : 'rgba(255,255,255,0.12)',
-                    }}
+                    className={`h-1.5 flex-1 rounded-full transition-colors ${
+                      level <= passwordStrength ? tier.fill : 'bg-az-ink/12'
+                    }`}
                   />
                 ))}
               </div>
-              <div className="flex justify-between text-[10px] text-white/40 uppercase tracking-wider">
+              <div className="az-micro-label flex justify-between text-az-ink/40">
                 <span>Weak</span>
                 <span>Fair</span>
                 <span>Good</span>
-                <span style={{ color: newPassword ? strengthColor : undefined }}>
-                  {strengthLabel}
-                </span>
+                <span className={tier.label}>{strengthLabel}</span>
               </div>
             </div>
           )}
         </div>
 
         <div>
-          <label htmlFor="confirm-password" className="az-label">
-            Confirm password
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-            </span>
-            <input
-              id="confirm-password"
-              type={showConfirm ? 'text' : 'password'}
-              className="az-input"
-              style={{ paddingLeft: '2.5rem', paddingRight: '3.5rem' }}
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                if (error) setError(null);
-              }}
-              placeholder="Confirm new password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirm((s) => !s)}
-              className="absolute inset-y-0 right-0 px-3 flex items-center text-white/50 hover:text-white"
-              aria-label={showConfirm ? 'Hide password' : 'Show password'}
-            >
-              {showConfirm ? 'Hide' : 'Show'}
-            </button>
-          </div>
+          <AuthField
+            id="confirm-password"
+            name="confirm-password"
+            type={showConfirm ? 'text' : 'password'}
+            autoComplete="new-password"
+            label="Confirm password"
+            icon={Lock}
+            required
+            value={confirmPassword}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              if (error) setError(null);
+            }}
+            trailing={
+              <button
+                type="button"
+                onClick={() => setShowConfirm((s) => !s)}
+                className="px-3 py-1 text-az-ink/80 hover:text-az-ink"
+                aria-label={showConfirm ? 'Hide password' : 'Show password'}
+              >
+                {showConfirm ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+              </button>
+            }
+          />
           {confirmPassword && newPassword !== confirmPassword && (
-            <p className="mt-1 text-xs" style={{ color: 'var(--brand-red)' }}>
-              Passwords do not match
-            </p>
+            <p className="az-caption mt-1 text-az-error-500">Passwords do not match</p>
           )}
         </div>
 
-        <button type="submit" className="az-btn-primary" disabled={isLoading}>
-          {isLoading ? (
-            <span className="inline-flex items-center gap-2">
-              <Spinner /> Resetting...
-            </span>
-          ) : (
-            'Reset Password'
-          )}
-        </button>
+        <SubmitButton isLoading={isLoading} loadingLabel="Resetting...">
+          Reset Password
+        </SubmitButton>
 
         <div className="text-center">
-          <a
+          <Link
             href="/auth/login"
-            className="text-white/50 hover:text-white text-sm transition-colors"
+            className="az-body text-az-ink-muted transition-colors hover:text-az-ink"
           >
             Cancel
-          </a>
+          </Link>
         </div>
       </form>
     </AuthShell>

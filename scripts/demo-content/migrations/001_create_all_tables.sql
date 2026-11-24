@@ -262,6 +262,7 @@ CREATE TABLE IF NOT EXISTS "content_items" (
   title TEXT NOT NULL,
   description TEXT,
   thumbnail TEXT NOT NULL,
+  duration INTEGER,
   "mediaUrl" TEXT,
   "universeId" TEXT NOT NULL,
   "creatorId" TEXT NOT NULL,
@@ -1218,7 +1219,7 @@ CREATE TABLE IF NOT EXISTS "appeal" (
   resolvedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
-  case TEXT
+  "case" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "artifact" (
@@ -1228,10 +1229,10 @@ CREATE TABLE IF NOT EXISTS "artifact" (
   description TEXT,
   imageUrl TEXT,
   universeId TEXT,
-  type TEXT DEFAULT "physical",
+  type TEXT DEFAULT 'physical',
   power TEXT,
   origin TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   data TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
@@ -1296,7 +1297,7 @@ CREATE TABLE IF NOT EXISTS "balance_snapshot" (
   balance NUMERIC,
   bonusBalance NUMERIC,
   promoBalance NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   capturedAt TIMESTAMPTZ DEFAULT now(),
   createdAt TIMESTAMPTZ DEFAULT now(),
   wallet TEXT
@@ -1308,7 +1309,7 @@ CREATE TABLE IF NOT EXISTS "campaign" (
   templateKey TEXT,
   channel TEXT,
   audience JSONB,
-  status TEXT DEFAULT "draft",
+  status TEXT DEFAULT 'draft',
   scheduledAt TEXT,
   startedAt TEXT,
   completedAt TEXT,
@@ -1322,7 +1323,7 @@ CREATE TABLE IF NOT EXISTS "campaign_trigger" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   campaignId TEXT,
   userId TEXT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   sentAt TEXT,
   error TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -1353,7 +1354,7 @@ CREATE TABLE IF NOT EXISTS "celebrity_entry" (
   socialLinks TEXT,
   isFeatured BOOLEAN DEFAULT false,
   viewCount INTEGER DEFAULT 0,
-  status TEXT DEFAULT "draft",
+  status TEXT DEFAULT 'draft',
   createdById TEXT,
   publishedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -1369,7 +1370,7 @@ CREATE TABLE IF NOT EXISTS "celebrity_news" (
   excerpt TEXT,
   coverImage TEXT,
   celebrityId TEXT,
-  status TEXT DEFAULT "draft",
+  status TEXT DEFAULT 'draft',
   publishedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
@@ -1387,7 +1388,7 @@ CREATE TABLE IF NOT EXISTS "challenge" (
   endDate TIMESTAMPTZ,
   prize TEXT,
   rules TEXT,
-  status TEXT DEFAULT "draft",
+  status TEXT DEFAULT 'draft',
   participantCount INTEGER DEFAULT 0,
   createdById TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -1419,7 +1420,7 @@ CREATE TABLE IF NOT EXISTS "challenge_submission" (
   userId TEXT,
   content TEXT,
   mediaUrl TEXT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   votes INTEGER DEFAULT 0,
   submittedAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
@@ -1455,7 +1456,7 @@ CREATE TABLE IF NOT EXISTS "chapter" (
   coverImage TEXT,
   content TEXT,
   wordCount TEXT,
-  status TEXT DEFAULT "published",
+  status TEXT DEFAULT 'published',
   publishedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   title TEXT
@@ -1468,7 +1469,7 @@ CREATE TABLE IF NOT EXISTS "character" (
   description TEXT,
   avatarUrl TEXT,
   role TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   universeId TEXT,
   birthDate TEXT,
   data TEXT,
@@ -1505,8 +1506,8 @@ CREATE TABLE IF NOT EXISTS "character_relationship" (
   isOfficial BOOLEAN DEFAULT false,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
-  from TEXT,
-  to TEXT
+  "from" TEXT,
+  "to" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "chargeback" (
@@ -1515,9 +1516,9 @@ CREATE TABLE IF NOT EXISTS "chargeback" (
   paymentId TEXT,
   userId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   reason TEXT,
-  status TEXT DEFAULT "PENDING",
+  status TEXT DEFAULT 'PENDING',
   disputeDeadline TIMESTAMPTZ,
   evidenceDue TIMESTAMPTZ,
   chargebackRef TEXT,
@@ -1548,7 +1549,7 @@ CREATE TABLE IF NOT EXISTS "cinema_pass" (
   description TEXT,
   type TEXT,
   price NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   features TEXT,
   isActive BOOLEAN DEFAULT true,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -1560,7 +1561,7 @@ CREATE TABLE IF NOT EXISTS "cinema_pass_subscription" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   passId TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   startDate TIMESTAMPTZ,
   endDate TIMESTAMPTZ,
   autoRenew BOOLEAN DEFAULT true,
@@ -1571,37 +1572,35 @@ CREATE TABLE IF NOT EXISTS "cinema_pass_subscription" (
 );
 
 CREATE TABLE IF NOT EXISTS "city_guide_entry" (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  name TEXT,
-  slug TEXT,
-  type TEXT,
-  description TEXT,
-  coverImage TEXT,
-  address TEXT,
-  city TEXT,
-  country TEXT,
-  latitude TEXT,
-  longitude TEXT,
-  rating TEXT,
-  priceLevel TEXT,
-  hours TEXT,
-  phone TEXT,
-  website TEXT,
-  amenities TEXT,
-  status TEXT DEFAULT "draft",
-  viewCount INTEGER DEFAULT 0,
-  createdById TEXT,
-  publishedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(),
-  updatedAt TIMESTAMPTZ,
-  tags TEXT
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "name" TEXT,
+  "slug" TEXT UNIQUE,
+  "type" TEXT,
+  "description" TEXT,
+  "coverImage" TEXT,
+  "address" TEXT,
+  "city" TEXT,
+  "country" TEXT,
+  "latitude" DOUBLE PRECISION,
+  "longitude" DOUBLE PRECISION,
+  "rating" DOUBLE PRECISION,
+  "priceLevel" INTEGER,
+  "hours" TEXT,
+  "phone" TEXT,
+  "website" TEXT,
+  "amenities" TEXT[],
+  "status" TEXT DEFAULT 'draft',
+  "viewCount" INTEGER DEFAULT 0,
+  "createdById" TEXT,
+  "publishedAt" TIMESTAMPTZ,
+  "createdAt" TIMESTAMPTZ DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS "city_guide_tag" (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  name TEXT,
-  slug TEXT,
-  entries TEXT
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "name" TEXT,
+  "slug" TEXT UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS "clip_comment" (
@@ -1666,7 +1665,7 @@ CREATE TABLE IF NOT EXISTS "comedy_challenge" (
   description TEXT,
   startsAt TIMESTAMPTZ,
   endsAt TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   metadata TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
@@ -1712,7 +1711,7 @@ CREATE TABLE IF NOT EXISTS "comedy_episode" (
   mediaUrl TEXT,
   duration TEXT,
   viewCount INTEGER DEFAULT 0,
-  order INTEGER DEFAULT 0,
+  "order" INTEGER DEFAULT 0,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   series TEXT
@@ -1725,7 +1724,7 @@ CREATE TABLE IF NOT EXISTS "comedy_series" (
   thumbnail TEXT,
   banner TEXT,
   creatorId TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   episodes TEXT
@@ -1742,7 +1741,7 @@ CREATE TABLE IF NOT EXISTS "comedy_special" (
   genre TEXT,
   isPremium BOOLEAN DEFAULT true,
   price NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   viewCount INTEGER DEFAULT 0,
   likeCount INTEGER DEFAULT 0,
   releaseDate TEXT,
@@ -1757,7 +1756,7 @@ CREATE TABLE IF NOT EXISTS "comedy_trend" (
   clipId TEXT,
   score DOUBLE PRECISION DEFAULT 0,
   rank INTEGER,
-  period TEXT DEFAULT "daily",
+  period TEXT DEFAULT 'daily',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   clip TEXT
@@ -1780,7 +1779,7 @@ CREATE TABLE IF NOT EXISTS "content" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   title TEXT,
   type TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   reports TEXT
@@ -1794,7 +1793,7 @@ CREATE TABLE IF NOT EXISTS "content_item" (
   mediaUrl TEXT,
   universeId TEXT,
   creatorId TEXT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   metadata TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
@@ -1818,7 +1817,7 @@ CREATE TABLE IF NOT EXISTS "content_takedown" (
   reportedBy TEXT,
   reason TEXT,
   evidence TEXT,
-  status TEXT DEFAULT "PENDING",
+  status TEXT DEFAULT 'PENDING',
   decision TEXT,
   decidedAt TEXT,
   decidedBy TEXT,
@@ -1835,7 +1834,7 @@ CREATE TABLE IF NOT EXISTS "contest" (
   description TEXT,
   entryFee NUMERIC DEFAULT 0,
   prizePool NUMERIC,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   startsAt TIMESTAMPTZ,
   endsAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -1883,7 +1882,7 @@ CREATE TABLE IF NOT EXISTS "contestant" (
 
 CREATE TABLE IF NOT EXISTS "conversation" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  type TEXT DEFAULT "direct",
+  type TEXT DEFAULT 'direct',
   name TEXT,
   avatar TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -1896,7 +1895,7 @@ CREATE TABLE IF NOT EXISTS "conversation_participant" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   conversationId TEXT,
   userId TEXT,
-  role TEXT DEFAULT "member",
+  role TEXT DEFAULT 'member',
   joinedAt TIMESTAMPTZ DEFAULT now(),
   lastReadAt TIMESTAMPTZ DEFAULT now(),
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -1925,7 +1924,7 @@ CREATE TABLE IF NOT EXISTS "creator_challenge" (
   prize TEXT,
   startDate TIMESTAMPTZ,
   endDate TIMESTAMPTZ,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   createdAt TIMESTAMPTZ DEFAULT now(),
   creator TEXT,
   entries TEXT
@@ -1937,7 +1936,7 @@ CREATE TABLE IF NOT EXISTS "creator_earning" (
   amount NUMERIC,
   type TEXT,
   referenceId TEXT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   paidAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now()
 );
@@ -1979,7 +1978,7 @@ CREATE TABLE IF NOT EXISTS "crossover" (
   coverImage TEXT,
   startDate TEXT,
   endDate TEXT,
-  status TEXT DEFAULT "announced",
+  status TEXT DEFAULT 'announced',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   titles TEXT
@@ -2002,7 +2001,7 @@ CREATE TABLE IF NOT EXISTS "culture_story" (
   coverImage TEXT,
   categoryId TEXT,
   authorId TEXT,
-  status TEXT DEFAULT "draft",
+  status TEXT DEFAULT 'draft',
   viewCount INTEGER DEFAULT 0,
   readTime TEXT,
   publishedAt TEXT,
@@ -2016,13 +2015,13 @@ CREATE TABLE IF NOT EXISTS "custom_report" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   name TEXT,
   description TEXT,
-  category TEXT DEFAULT "general",
+  category TEXT DEFAULT 'general',
   createdBy TEXT,
   metrics JSONB,
   dimensions JSONB,
-  filters JSONB DEFAULT "[]",
-  dateField TEXT DEFAULT "createdAt",
-  dateRange TEXT DEFAULT "30d",
+  filters JSONB DEFAULT '[]',
+  dateField TEXT DEFAULT 'createdAt',
+  dateRange TEXT DEFAULT '30d',
   startDate TEXT,
   endDate TEXT,
   isPublic BOOLEAN DEFAULT false,
@@ -2033,7 +2032,7 @@ CREATE TABLE IF NOT EXISTS "data_deletion_request" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   reason TEXT,
-  status TEXT DEFAULT "scheduled",
+  status TEXT DEFAULT 'scheduled',
   scheduledAt TIMESTAMPTZ DEFAULT now(),
   completedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -2115,7 +2114,7 @@ CREATE TABLE IF NOT EXISTS "event" (
   isOnline BOOLEAN DEFAULT false,
   onlineLink TEXT,
   maxAttendees TEXT,
-  status TEXT DEFAULT "draft",
+  status TEXT DEFAULT 'draft',
   categoryId TEXT,
   creatorId TEXT,
   viewCount INTEGER DEFAULT 0,
@@ -2140,7 +2139,7 @@ CREATE TABLE IF NOT EXISTS "event_rsvp" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   eventId TEXT,
-  status TEXT DEFAULT "attending",
+  status TEXT DEFAULT 'attending',
   guests INTEGER DEFAULT 0,
   note TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -2166,7 +2165,7 @@ CREATE TABLE IF NOT EXISTS "event_team" (
   name TEXT,
   logo TEXT,
   score INTEGER DEFAULT 0,
-  order INTEGER DEFAULT 0,
+  "order" INTEGER DEFAULT 0,
   event TEXT
 );
 
@@ -2208,7 +2207,7 @@ CREATE TABLE IF NOT EXISTS "filmmaker_backer" (
   projectId TEXT,
   userId TEXT,
   amount NUMERIC,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   createdAt TIMESTAMPTZ DEFAULT now(),
   project TEXT
 );
@@ -2219,7 +2218,7 @@ CREATE TABLE IF NOT EXISTS "filmmaker_project" (
   title TEXT,
   description TEXT,
   thumbnail TEXT,
-  status TEXT DEFAULT "development",
+  status TEXT DEFAULT 'development',
   fundingGoal TEXT,
   fundingRaised NUMERIC DEFAULT 0,
   targetDate TEXT,
@@ -2259,7 +2258,7 @@ CREATE TABLE IF NOT EXISTS "fraud_detection" (
   eventType TEXT,
   severity TEXT,
   details JSONB,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   reviewedBy TEXT,
   reviewedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now()
@@ -2302,7 +2301,7 @@ CREATE TABLE IF NOT EXISTS "game" (
   description TEXT,
   thumbnail TEXT,
   category TEXT,
-  difficulty TEXT DEFAULT "medium",
+  difficulty TEXT DEFAULT 'medium',
   playCount INTEGER DEFAULT 0,
   isActive BOOLEAN DEFAULT true,
   metadata TEXT,
@@ -2327,7 +2326,7 @@ CREATE TABLE IF NOT EXISTS "game_play_session" (
   gameId TEXT,
   score INTEGER DEFAULT 0,
   correctCount INTEGER DEFAULT 0,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   startedAt TIMESTAMPTZ DEFAULT now(),
   completedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now()
@@ -2340,7 +2339,7 @@ CREATE TABLE IF NOT EXISTS "game_question" (
   answer TEXT,
   options TEXT,
   points INTEGER DEFAULT 10,
-  order INTEGER DEFAULT 0,
+  "order" INTEGER DEFAULT 0,
   timeLimit INTEGER DEFAULT 30,
   createdAt TIMESTAMPTZ DEFAULT now()
 );
@@ -2381,7 +2380,7 @@ CREATE TABLE IF NOT EXISTS "influencer_collaboration" (
   coverImage TEXT,
   startDate TEXT,
   endDate TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   createdAt TIMESTAMPTZ DEFAULT now(),
   influencer TEXT
 );
@@ -2401,7 +2400,7 @@ CREATE TABLE IF NOT EXISTS "influencer_entry" (
   isVerified BOOLEAN DEFAULT false,
   socialLinks TEXT,
   collaborationCount INTEGER DEFAULT 0,
-  status TEXT DEFAULT "draft",
+  status TEXT DEFAULT 'draft',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   collaborations TEXT
@@ -2411,7 +2410,7 @@ CREATE TABLE IF NOT EXISTS "job" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   type TEXT,
   payload JSONB,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   priority INTEGER DEFAULT 0,
   attempts INTEGER DEFAULT 0,
   maxAttempts INTEGER DEFAULT 3,
@@ -2456,8 +2455,8 @@ CREATE TABLE IF NOT EXISTS "leaderboard_entry" (
   avatar TEXT,
   score INTEGER DEFAULT 0,
   rank INTEGER DEFAULT 0,
-  category TEXT DEFAULT "all",
-  timePeriod TEXT DEFAULT "weekly",
+  category TEXT DEFAULT 'all',
+  timePeriod TEXT DEFAULT 'weekly',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
@@ -2503,8 +2502,8 @@ CREATE TABLE IF NOT EXISTS "locked_extra" (
   thumbnail TEXT,
   mediaUrl TEXT,
   price TEXT,
-  currency TEXT DEFAULT "NGN",
-  unlockType TEXT DEFAULT "purchase",
+  currency TEXT DEFAULT 'NGN',
+  unlockType TEXT DEFAULT 'purchase',
   isUnlocked BOOLEAN DEFAULT false,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
@@ -2519,10 +2518,10 @@ CREATE TABLE IF NOT EXISTS "lore_entry" (
   content TEXT,
   excerpt TEXT,
   coverImage TEXT,
-  importance TEXT DEFAULT "normal",
+  importance TEXT DEFAULT 'normal',
   universeId TEXT,
   viewCount INTEGER DEFAULT 0,
-  status TEXT DEFAULT "published",
+  status TEXT DEFAULT 'published',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT
@@ -2548,7 +2547,7 @@ CREATE TABLE IF NOT EXISTS "media_upload" (
   fileName TEXT,
   mimeType TEXT,
   size BIGINT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   uploadId TEXT,
   assetId TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -2560,7 +2559,7 @@ CREATE TABLE IF NOT EXISTS "message" (
   conversationId TEXT,
   senderId TEXT,
   content TEXT,
-  type TEXT DEFAULT "text",
+  type TEXT DEFAULT 'text',
   isRead BOOLEAN DEFAULT false,
   readAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -2614,7 +2613,7 @@ CREATE TABLE IF NOT EXISTS "moderation_case" (
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   report TEXT,
-  user TEXT,
+  "user" TEXT,
   resolvedByUser TEXT,
   Appeal TEXT,
   reviewerAssignments TEXT
@@ -2654,7 +2653,7 @@ CREATE TABLE IF NOT EXISTS "music_entry" (
   trackUrl TEXT,
   isPremium BOOLEAN DEFAULT false,
   playCount INTEGER DEFAULT 0,
-  status TEXT DEFAULT "draft",
+  status TEXT DEFAULT 'draft',
   createdById TEXT,
   publishedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -2677,7 +2676,7 @@ CREATE TABLE IF NOT EXISTS "nightlife_entry" (
   dressCode TEXT,
   coverCharge TEXT,
   rating TEXT,
-  status TEXT DEFAULT "draft",
+  status TEXT DEFAULT 'draft',
   viewCount INTEGER DEFAULT 0,
   createdById TEXT,
   publishedAt TEXT,
@@ -2728,7 +2727,7 @@ CREATE TABLE IF NOT EXISTS "orisa_file" (
   universeId TEXT,
   domain TEXT,
   symbols TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   data TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
@@ -2742,7 +2741,7 @@ CREATE TABLE IF NOT EXISTS "otp" (
   expiresAt TIMESTAMPTZ,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
-  user TEXT
+  "user" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "pass" (
@@ -2750,11 +2749,11 @@ CREATE TABLE IF NOT EXISTS "pass" (
   userId TEXT,
   passType TEXT,
   universeId TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   startTime TIMESTAMPTZ DEFAULT now(),
   endTime TIMESTAMPTZ,
   price NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   transactionId TEXT,
   autoRenew BOOLEAN DEFAULT false,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -2766,9 +2765,9 @@ CREATE TABLE IF NOT EXISTS "payment" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
-  status TEXT DEFAULT "pending",
-  type TEXT DEFAULT "payment",
+  currency TEXT DEFAULT 'NGN',
+  status TEXT DEFAULT 'pending',
+  type TEXT DEFAULT 'payment',
   provider TEXT,
   providerRef TEXT,
   failureReason TEXT,
@@ -2783,7 +2782,7 @@ CREATE TABLE IF NOT EXISTS "payment_intent" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   status TEXT,
   provider TEXT,
   reference TEXT,
@@ -2814,10 +2813,10 @@ CREATE TABLE IF NOT EXISTS "payout_dispute" (
   creatorId TEXT,
   payoutId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   reason TEXT,
   evidence TEXT,
-  status TEXT DEFAULT "PENDING",
+  status TEXT DEFAULT 'PENDING',
   resolution TEXT,
   resolvedAt TEXT,
   resolvedBy TEXT,
@@ -2834,7 +2833,7 @@ CREATE TABLE IF NOT EXISTS "payout_request" (
   amount NUMERIC,
   method TEXT,
   accountDetails JSONB,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   processedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
@@ -2858,7 +2857,7 @@ CREATE TABLE IF NOT EXISTS "poll" (
   slug TEXT,
   description TEXT,
   coverImage TEXT,
-  status TEXT DEFAULT "draft",
+  status TEXT DEFAULT 'draft',
   totalVotes INTEGER DEFAULT 0,
   createdById TEXT,
   expiresAt TEXT,
@@ -2921,7 +2920,7 @@ CREATE TABLE IF NOT EXISTS "prediction_market" (
   options JSONB,
   odds TEXT,
   totalPool NUMERIC DEFAULT 0,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   settlementType TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
@@ -2944,7 +2943,7 @@ CREATE TABLE IF NOT EXISTS "premiere" (
   movieId TEXT,
   startsAt TIMESTAMPTZ,
   endsAt TEXT,
-  status TEXT DEFAULT "scheduled",
+  status TEXT DEFAULT 'scheduled',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   movie TEXT
@@ -2961,7 +2960,7 @@ CREATE TABLE IF NOT EXISTS "premium_purchase" (
   purchaseId TEXT,
   purchasedAt TIMESTAMPTZ DEFAULT now(),
   expiresAt TEXT,
-  status TEXT DEFAULT "active"
+  status TEXT DEFAULT 'active'
 );
 
 CREATE TABLE IF NOT EXISTS "product_event" (
@@ -2988,7 +2987,7 @@ CREATE TABLE IF NOT EXISTS "prophecy" (
   imageUrl TEXT,
   universeId TEXT,
   source TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   fulfilledAt TEXT,
   data TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -3012,7 +3011,7 @@ CREATE TABLE IF NOT EXISTS "question" (
   answer TEXT,
   options TEXT,
   points INTEGER DEFAULT 10,
-  order INTEGER DEFAULT 0,
+  "order" INTEGER DEFAULT 0,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
@@ -3024,9 +3023,9 @@ CREATE TABLE IF NOT EXISTS "quiz" (
   description TEXT,
   coverImage TEXT,
   category TEXT,
-  difficulty TEXT DEFAULT "easy",
+  difficulty TEXT DEFAULT 'easy',
   timeLimit TEXT,
-  status TEXT DEFAULT "draft",
+  status TEXT DEFAULT 'draft',
   playCount INTEGER DEFAULT 0,
   createdById TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -3056,7 +3055,7 @@ CREATE TABLE IF NOT EXISTS "quiz_question" (
   correctAnswer INTEGER,
   explanation TEXT,
   points INTEGER DEFAULT 10,
-  order INTEGER,
+  "order" INTEGER,
   quiz TEXT
 );
 
@@ -3068,7 +3067,7 @@ CREATE TABLE IF NOT EXISTS "ranking" (
   category TEXT,
   score INTEGER DEFAULT 0,
   rank INTEGER DEFAULT 0,
-  period TEXT DEFAULT "all",
+  period TEXT DEFAULT 'all',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
@@ -3123,7 +3122,7 @@ CREATE TABLE IF NOT EXISTS "realm" (
   description TEXT,
   imageUrl TEXT,
   universeId TEXT,
-  type TEXT DEFAULT "physical",
+  type TEXT DEFAULT 'physical',
   parentId TEXT,
   data TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -3143,7 +3142,7 @@ CREATE TABLE IF NOT EXISTS "recap" (
   coverImage TEXT,
   isSpoiler BOOLEAN DEFAULT false,
   viewCount INTEGER DEFAULT 0,
-  status TEXT DEFAULT "published",
+  status TEXT DEFAULT 'published',
   publishedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   title TEXT
@@ -3163,9 +3162,9 @@ CREATE TABLE IF NOT EXISTS "referral" (
   referrerId TEXT,
   referredId TEXT,
   referralCodeId TEXT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   rewardAmount TEXT DEFAULT 0,
-  rewardStatus TEXT DEFAULT "pending",
+  rewardStatus TEXT DEFAULT 'pending',
   completedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
@@ -3201,7 +3200,7 @@ CREATE TABLE IF NOT EXISTS "referral_reward" (
   userId TEXT,
   amount NUMERIC,
   type TEXT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   creditedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
@@ -3213,9 +3212,9 @@ CREATE TABLE IF NOT EXISTS "refund" (
   paymentId TEXT,
   userId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   reason TEXT,
-  status TEXT DEFAULT "PENDING",
+  status TEXT DEFAULT 'PENDING',
   refundReference TEXT,
   processedAt TEXT,
   processedBy TEXT,
@@ -3229,7 +3228,7 @@ CREATE TABLE IF NOT EXISTS "rental" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   movieId TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   expiresAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   movie TEXT
@@ -3275,7 +3274,7 @@ CREATE TABLE IF NOT EXISTS "reviewer_assignment" (
   assignedAt TIMESTAMPTZ DEFAULT now(),
   completedAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
-  case TEXT
+  "case" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "reward" (
@@ -3340,7 +3339,7 @@ CREATE TABLE IF NOT EXISTS "room" (
   description TEXT,
   imageUrl TEXT,
   universeId TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT,
@@ -3354,8 +3353,8 @@ CREATE TABLE IF NOT EXISTS "room_post" (
   authorId TEXT,
   authorName TEXT,
   authorAvatar TEXT,
-  spoilerLevel TEXT DEFAULT "none",
-  status TEXT DEFAULT "active",
+  spoilerLevel TEXT DEFAULT 'none',
+  status TEXT DEFAULT 'active',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   room TEXT
@@ -3413,11 +3412,11 @@ CREATE TABLE IF NOT EXISTS "screening" (
   endTime TIMESTAMPTZ,
   location TEXT,
   streamUrl TEXT,
-  status TEXT DEFAULT "scheduled",
+  status TEXT DEFAULT 'scheduled',
   maxViewers TEXT,
   currentViewers INTEGER DEFAULT 0,
   price TEXT,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   content TEXT
@@ -3460,7 +3459,7 @@ CREATE TABLE IF NOT EXISTS "session" (
   lastActiveAt TIMESTAMPTZ DEFAULT now(),
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
-  user TEXT
+  "user" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "session_summary" (
@@ -3498,7 +3497,7 @@ CREATE TABLE IF NOT EXISTS "social_account" (
   refreshToken TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
-  user TEXT
+  "user" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "special_like" (
@@ -3516,7 +3515,7 @@ CREATE TABLE IF NOT EXISTS "sports_event" (
   sport TEXT,
   startsAt TIMESTAMPTZ,
   endsAt TEXT,
-  status TEXT DEFAULT "upcoming",
+  status TEXT DEFAULT 'upcoming',
   metadata TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
@@ -3556,8 +3555,8 @@ CREATE TABLE IF NOT EXISTS "subscription" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   creatorId TEXT,
-  tier TEXT DEFAULT "free",
-  status TEXT DEFAULT "active",
+  tier TEXT DEFAULT 'free',
+  status TEXT DEFAULT 'active',
   startDate TIMESTAMPTZ DEFAULT now(),
   endDate TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -3569,7 +3568,7 @@ CREATE TABLE IF NOT EXISTS "subscription_plan" (
   name TEXT,
   description TEXT,
   price NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   duration INTEGER,
   features TEXT,
   isActive BOOLEAN DEFAULT true,
@@ -3583,8 +3582,8 @@ CREATE TABLE IF NOT EXISTS "subscription_transaction" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   subscriptionId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
-  status TEXT DEFAULT "completed",
+  currency TEXT DEFAULT 'NGN',
+  status TEXT DEFAULT 'completed',
   paymentProvider TEXT,
   providerTxId TEXT,
   description TEXT,
@@ -3638,10 +3637,10 @@ CREATE TABLE IF NOT EXISTS "support_ticket" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   orderId TEXT,
-  ticketId TEXT DEFAULT uuid(,
+  ticketRef TEXT,
   category TEXT,
-  priority TEXT DEFAULT MEDIUM,
-  status TEXT DEFAULT OPEN,
+  priority TEXT DEFAULT 'MEDIUM',
+  status TEXT DEFAULT 'OPEN',
   subject TEXT,
   description TEXT,
   metadata TEXT,
@@ -3674,9 +3673,9 @@ CREATE TABLE IF NOT EXISTS "theory" (
   content TEXT,
   authorId TEXT,
   authorName TEXT,
-  spoilerLevel TEXT DEFAULT "none",
-  accessLevel TEXT DEFAULT "public",
-  status TEXT DEFAULT "published",
+  spoilerLevel TEXT DEFAULT 'none',
+  accessLevel TEXT DEFAULT 'public',
+  status TEXT DEFAULT 'published',
   viewCount INTEGER DEFAULT 0,
   likeCount INTEGER DEFAULT 0,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -3690,7 +3689,7 @@ CREATE TABLE IF NOT EXISTS "timeline_event" (
   date TIMESTAMPTZ,
   endDate TEXT,
   type TEXT,
-  importance TEXT DEFAULT "normal",
+  importance TEXT DEFAULT 'normal',
   universeId TEXT,
   characterId TEXT,
   locationId TEXT,
@@ -3719,7 +3718,7 @@ CREATE TABLE IF NOT EXISTS "title" (
   coverImage TEXT,
   releaseYear TEXT,
   endYear TEXT,
-  status TEXT DEFAULT "ongoing",
+  status TEXT DEFAULT 'ongoing',
   rating TEXT,
   universeId TEXT,
   viewCount INTEGER DEFAULT 0,
@@ -3739,7 +3738,7 @@ CREATE TABLE IF NOT EXISTS "tournament" (
   endsAt TEXT,
   entryFee NUMERIC DEFAULT 0,
   prizePool NUMERIC,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   metadata TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
@@ -3761,7 +3760,7 @@ CREATE TABLE IF NOT EXISTS "tournament_match" (
   player1Score INTEGER DEFAULT 0,
   player2Score INTEGER DEFAULT 0,
   round INTEGER,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   winnerId TEXT,
   scheduledAt TEXT,
   completedAt TEXT,
@@ -3783,7 +3782,7 @@ CREATE TABLE IF NOT EXISTS "transcoding_job" (
   sourceUrl TEXT,
   outputUrl TEXT,
   format TEXT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   progress INTEGER DEFAULT 0,
   profiles JSONB
 );
@@ -3825,7 +3824,7 @@ CREATE TABLE IF NOT EXISTS "universe_map" (
   description TEXT,
   imageUrl TEXT,
   data TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   characters TEXT,
@@ -3857,7 +3856,7 @@ CREATE TABLE IF NOT EXISTS "user" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   email TEXT,
   displayName TEXT,
-  role TEXT DEFAULT "user",
+  role TEXT DEFAULT 'user',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
@@ -3907,7 +3906,7 @@ CREATE TABLE IF NOT EXISTS "user_suspension" (
   userId TEXT,
   reason TEXT,
   suspendedBy TEXT,
-  status TEXT DEFAULT "ACTIVE",
+  status TEXT DEFAULT 'ACTIVE',
   suspendedAt TIMESTAMPTZ DEFAULT now(),
   expiresAt TEXT,
   reinstatedAt TEXT,
@@ -3926,7 +3925,7 @@ CREATE TABLE IF NOT EXISTS "user_unlock" (
   resourceId TEXT,
   transactionId TEXT,
   price TEXT,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   unlockedAt TIMESTAMPTZ DEFAULT now(),
   expiresAt TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
@@ -3938,7 +3937,7 @@ CREATE TABLE IF NOT EXISTS "verification_document" (
   userId TEXT,
   documentType TEXT,
   documentUrl TEXT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   reviewedBy TEXT,
   reviewedAt TEXT,
   metadata TEXT,
@@ -3976,7 +3975,7 @@ CREATE TABLE IF NOT EXISTS "wallet" (
   balance NUMERIC DEFAULT 0,
   bonusBalance NUMERIC DEFAULT 0,
   promoBalance NUMERIC DEFAULT 0,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   version INTEGER DEFAULT 0,
@@ -3988,7 +3987,7 @@ CREATE TABLE IF NOT EXISTS "wallet_snapshot" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   balance NUMERIC DEFAULT 0,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
@@ -4047,7 +4046,7 @@ CREATE TABLE IF NOT EXISTS "webhook_retry" (
   retryCount INTEGER DEFAULT 0,
   maxRetries INTEGER DEFAULT 5,
   nextRetryAt TIMESTAMPTZ,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   lastError TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
@@ -4060,7 +4059,7 @@ CREATE TABLE IF NOT EXISTS "world_map" (
   description TEXT,
   imageUrl TEXT,
   universeId TEXT,
-  type TEXT DEFAULT "geographic",
+  type TEXT DEFAULT 'geographic',
   data TEXT,
   createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
@@ -4082,9 +4081,9 @@ CREATE TABLE IF NOT EXISTS "appeals" (
   resolvedBy TEXT,
   resolutionReason TEXT,
   resolvedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
-  case TEXT
+  "case" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "artifacts" (
@@ -4094,12 +4093,12 @@ CREATE TABLE IF NOT EXISTS "artifacts" (
   description TEXT,
   imageUrl TEXT,
   universeId TEXT,
-  type TEXT DEFAULT "physical",
+  type TEXT DEFAULT 'physical',
   power TEXT,
   origin TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   data TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT
 );
@@ -4111,7 +4110,7 @@ CREATE TABLE IF NOT EXISTS "audience_segments" (
   segmentType TEXT,
   criteria JSONB,
   size INTEGER DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4127,7 +4126,7 @@ CREATE TABLE IF NOT EXISTS "audit_events" (
   newState TEXT,
   ipAddress TEXT,
   userAgent TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "challenge_prizes" (
@@ -4135,7 +4134,7 @@ CREATE TABLE IF NOT EXISTS "challenge_prizes" (
   challengeId TEXT,
   rank INTEGER,
   amount NUMERIC,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   challenge TEXT
 );
 
@@ -4145,9 +4144,9 @@ CREATE TABLE IF NOT EXISTS "challenges" (
   description TEXT,
   type TEXT,
   points INTEGER DEFAULT 10,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4157,7 +4156,7 @@ CREATE TABLE IF NOT EXISTS "channels" (
   name TEXT,
   description TEXT,
   category TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   creator TEXT
 );
@@ -4171,9 +4170,9 @@ CREATE TABLE IF NOT EXISTS "chapters" (
   coverImage TEXT,
   content TEXT,
   wordCount TEXT,
-  status TEXT DEFAULT "published",
+  status TEXT DEFAULT 'published',
   publishedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   title TEXT
 );
 
@@ -4185,7 +4184,7 @@ CREATE TABLE IF NOT EXISTS "character_locations" (
   description TEXT,
   firstSeenAt TEXT,
   lastSeenAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   character TEXT,
   location TEXT
 );
@@ -4199,10 +4198,10 @@ CREATE TABLE IF NOT EXISTS "character_relationships" (
   startDate TEXT,
   endDate TEXT,
   isOfficial BOOLEAN DEFAULT false,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
-  from TEXT,
-  to TEXT
+  "from" TEXT,
+  "to" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "characters" (
@@ -4212,11 +4211,11 @@ CREATE TABLE IF NOT EXISTS "characters" (
   description TEXT,
   avatarUrl TEXT,
   role TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   universeId TEXT,
   birthDate TEXT,
   data TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT,
   locations TEXT,
@@ -4231,9 +4230,9 @@ CREATE TABLE IF NOT EXISTS "chargebacks" (
   paymentId TEXT,
   userId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   reason TEXT,
-  status TEXT DEFAULT "PENDING",
+  status TEXT DEFAULT 'PENDING',
   disputeDeadline TIMESTAMPTZ,
   evidenceDue TIMESTAMPTZ,
   chargebackRef TEXT,
@@ -4241,7 +4240,7 @@ CREATE TABLE IF NOT EXISTS "chargebacks" (
   resolvedAt TEXT,
   resolvedBy TEXT,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   ticket TEXT
 );
@@ -4254,7 +4253,7 @@ CREATE TABLE IF NOT EXISTS "churn_risks" (
   factors JSONB,
   lastActivityAt TEXT,
   predictedChurnAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4262,12 +4261,12 @@ CREATE TABLE IF NOT EXISTS "cinema_pass_subscriptions" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   passId TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   startDate TIMESTAMPTZ,
   endDate TIMESTAMPTZ,
   autoRenew BOOLEAN DEFAULT true,
   paymentIntentId TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   pass TEXT
 );
@@ -4278,10 +4277,10 @@ CREATE TABLE IF NOT EXISTS "cinema_passes" (
   description TEXT,
   type TEXT,
   price NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   features TEXT,
   isActive BOOLEAN DEFAULT true,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   subscriptions TEXT
 );
@@ -4291,7 +4290,7 @@ CREATE TABLE IF NOT EXISTS "clip_comments" (
   userId TEXT,
   clipId TEXT,
   text TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   clip TEXT
 );
 
@@ -4299,7 +4298,7 @@ CREATE TABLE IF NOT EXISTS "clip_likes" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   clipId TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   clip TEXT
 );
 
@@ -4308,7 +4307,7 @@ CREATE TABLE IF NOT EXISTS "clip_shares" (
   userId TEXT,
   clipId TEXT,
   platform TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   clip TEXT
 );
 
@@ -4316,7 +4315,7 @@ CREATE TABLE IF NOT EXISTS "cohort_members" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   cohortId TEXT,
   userId TEXT,
-  joinedAt TIMESTAMPTZ DEFAULT now(
+  joinedAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "cohorts" (
@@ -4325,7 +4324,7 @@ CREATE TABLE IF NOT EXISTS "cohorts" (
   description TEXT,
   criteria JSONB,
   size INTEGER DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4334,7 +4333,7 @@ CREATE TABLE IF NOT EXISTS "comedy_challenge_entries" (
   userId TEXT,
   challengeId TEXT,
   clipUrl TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   challenge TEXT
 );
 
@@ -4344,9 +4343,9 @@ CREATE TABLE IF NOT EXISTS "comedy_challenges" (
   description TEXT,
   startsAt TIMESTAMPTZ,
   endsAt TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   prizes TEXT,
   entries TEXT
@@ -4361,8 +4360,8 @@ CREATE TABLE IF NOT EXISTS "comedy_episodes" (
   mediaUrl TEXT,
   duration TEXT,
   viewCount INTEGER DEFAULT 0,
-  order INTEGER DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  "order" INTEGER DEFAULT 0,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   series TEXT
 );
@@ -4378,11 +4377,11 @@ CREATE TABLE IF NOT EXISTS "comedy_specials" (
   genre TEXT,
   isPremium BOOLEAN DEFAULT true,
   price NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   viewCount INTEGER DEFAULT 0,
   likeCount INTEGER DEFAULT 0,
   releaseDate TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   comedian TEXT,
   likes TEXT
@@ -4393,8 +4392,8 @@ CREATE TABLE IF NOT EXISTS "comedy_trends" (
   clipId TEXT,
   score DOUBLE PRECISION DEFAULT 0,
   rank INTEGER,
-  period TEXT DEFAULT "daily",
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  period TEXT DEFAULT 'daily',
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   clip TEXT
 );
@@ -4406,12 +4405,12 @@ CREATE TABLE IF NOT EXISTS "content_takedowns" (
   reportedBy TEXT,
   reason TEXT,
   evidence TEXT,
-  status TEXT DEFAULT "PENDING",
+  status TEXT DEFAULT 'PENDING',
   decision TEXT,
   decidedAt TEXT,
   decidedBy TEXT,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   ticket TEXT
 );
@@ -4420,8 +4419,8 @@ CREATE TABLE IF NOT EXISTS "contents" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   title TEXT,
   type TEXT,
-  status TEXT DEFAULT "active",
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  status TEXT DEFAULT 'active',
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   reports TEXT
 );
@@ -4432,7 +4431,7 @@ CREATE TABLE IF NOT EXISTS "contest_entries" (
   userId TEXT,
   entryData JSONB,
   score INTEGER DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   contest TEXT,
   SportsEvent TEXT,
   sportsEventId TEXT
@@ -4443,7 +4442,7 @@ CREATE TABLE IF NOT EXISTS "contest_prizes" (
   contestId TEXT,
   rank INTEGER,
   amount NUMERIC,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   contest TEXT
 );
 
@@ -4454,10 +4453,10 @@ CREATE TABLE IF NOT EXISTS "contests" (
   description TEXT,
   entryFee NUMERIC DEFAULT 0,
   prizePool NUMERIC,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   startsAt TIMESTAMPTZ,
   endsAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   event TEXT,
   prizes TEXT,
@@ -4468,20 +4467,20 @@ CREATE TABLE IF NOT EXISTS "conversation_participants" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   conversationId TEXT,
   userId TEXT,
-  role TEXT DEFAULT "member",
-  joinedAt TIMESTAMPTZ DEFAULT now(,
-  lastReadAt TIMESTAMPTZ DEFAULT now(,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  role TEXT DEFAULT 'member',
+  joinedAt TIMESTAMPTZ DEFAULT now(),
+  lastReadAt TIMESTAMPTZ DEFAULT now(),
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   conversation TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "conversations" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  type TEXT DEFAULT "direct",
+  type TEXT DEFAULT 'direct',
   name TEXT,
   avatar TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   participants TEXT,
   messages TEXT
@@ -4496,7 +4495,7 @@ CREATE TABLE IF NOT EXISTS "conversion_metrics" (
   conditions JSONB,
   windowMinutes TEXT,
   isActive BOOLEAN DEFAULT true,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4507,7 +4506,7 @@ CREATE TABLE IF NOT EXISTS "creator_scores" (
   growthScore DOUBLE PRECISION DEFAULT 0,
   monetizationScore DOUBLE PRECISION DEFAULT 0,
   overallScore DOUBLE PRECISION DEFAULT 0,
-  lastUpdated TIMESTAMPTZ DEFAULT now(
+  lastUpdated TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "crossover_titles" (
@@ -4526,8 +4525,8 @@ CREATE TABLE IF NOT EXISTS "crossovers" (
   coverImage TEXT,
   startDate TEXT,
   endDate TEXT,
-  status TEXT DEFAULT "announced",
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  status TEXT DEFAULT 'announced',
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   titles TEXT
 );
@@ -4536,10 +4535,10 @@ CREATE TABLE IF NOT EXISTS "data_deletion_requests" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   reason TEXT,
-  status TEXT DEFAULT "scheduled",
-  scheduledAt TIMESTAMPTZ DEFAULT now(,
+  status TEXT DEFAULT 'scheduled',
+  scheduledAt TIMESTAMPTZ DEFAULT now(),
   completedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4550,8 +4549,8 @@ CREATE TABLE IF NOT EXISTS "dead_letter_entries" (
   payload JSONB,
   error TEXT,
   attempts INTEGER,
-  movedAt TIMESTAMPTZ DEFAULT now(,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  movedAt TIMESTAMPTZ DEFAULT now(),
+  createdAt TIMESTAMPTZ DEFAULT now(),
   job TEXT
 );
 
@@ -4563,7 +4562,7 @@ CREATE TABLE IF NOT EXISTS "event_schemas" (
   required JSONB,
   version INTEGER DEFAULT 1,
   isActive BOOLEAN DEFAULT true,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4572,11 +4571,11 @@ CREATE TABLE IF NOT EXISTS "experiment_events" (
   experimentKey TEXT,
   userId TEXT,
   variant TEXT,
-  assignmentAt TIMESTAMPTZ DEFAULT now(,
+  assignmentAt TIMESTAMPTZ DEFAULT now(),
   outcome TEXT,
   outcomeAt TEXT,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "fan_board_comments" (
@@ -4584,7 +4583,7 @@ CREATE TABLE IF NOT EXISTS "fan_board_comments" (
   fanBoardId TEXT,
   userId TEXT,
   text TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   fanBoard TEXT
 );
 
@@ -4594,7 +4593,7 @@ CREATE TABLE IF NOT EXISTS "fan_boards" (
   userId TEXT,
   text TEXT,
   likes INTEGER DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   event TEXT,
   comments TEXT
@@ -4605,8 +4604,8 @@ CREATE TABLE IF NOT EXISTS "filmmaker_backers" (
   projectId TEXT,
   userId TEXT,
   amount NUMERIC,
-  status TEXT DEFAULT "active",
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  status TEXT DEFAULT 'active',
+  createdAt TIMESTAMPTZ DEFAULT now(),
   project TEXT
 );
 
@@ -4616,11 +4615,11 @@ CREATE TABLE IF NOT EXISTS "filmmaker_projects" (
   title TEXT,
   description TEXT,
   thumbnail TEXT,
-  status TEXT DEFAULT "development",
+  status TEXT DEFAULT 'development',
   fundingGoal TEXT,
   fundingRaised NUMERIC DEFAULT 0,
   targetDate TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   updates TEXT,
   backers TEXT
@@ -4631,7 +4630,7 @@ CREATE TABLE IF NOT EXISTS "filmmaker_updates" (
   projectId TEXT,
   title TEXT,
   content TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   project TEXT
 );
 
@@ -4641,10 +4640,10 @@ CREATE TABLE IF NOT EXISTS "fraud_detections" (
   eventType TEXT,
   severity TEXT,
   details JSONB,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   reviewedBy TEXT,
   reviewedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "funnel_completions" (
@@ -4654,7 +4653,7 @@ CREATE TABLE IF NOT EXISTS "funnel_completions" (
   completedSteps INTEGER DEFAULT 0,
   completedAt TEXT,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "funnel_steps" (
@@ -4662,7 +4661,7 @@ CREATE TABLE IF NOT EXISTS "funnel_steps" (
   funnelId TEXT,
   stepOrder INTEGER,
   eventName TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   funnel TEXT
 );
 
@@ -4672,7 +4671,7 @@ CREATE TABLE IF NOT EXISTS "funnels" (
   description TEXT,
   steps JSONB,
   isActive BOOLEAN DEFAULT true,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   funnelSteps TEXT
 );
@@ -4685,7 +4684,7 @@ CREATE TABLE IF NOT EXISTS "game_answers" (
   isCorrect BOOLEAN,
   timeTaken INTEGER,
   pointsEarned INTEGER DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "game_play_sessions" (
@@ -4694,10 +4693,10 @@ CREATE TABLE IF NOT EXISTS "game_play_sessions" (
   gameId TEXT,
   score INTEGER DEFAULT 0,
   correctCount INTEGER DEFAULT 0,
-  status TEXT DEFAULT "active",
-  startedAt TIMESTAMPTZ DEFAULT now(,
+  status TEXT DEFAULT 'active',
+  startedAt TIMESTAMPTZ DEFAULT now(),
   completedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "game_sessions" (
@@ -4707,9 +4706,9 @@ CREATE TABLE IF NOT EXISTS "game_sessions" (
   questionId TEXT,
   status TEXT,
   score INTEGER DEFAULT 0,
-  startedAt TIMESTAMPTZ DEFAULT now(,
+  startedAt TIMESTAMPTZ DEFAULT now(),
   completedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4722,7 +4721,7 @@ CREATE TABLE IF NOT EXISTS "highlights" (
   thumbnail TEXT,
   mediaUrl TEXT,
   viewCount INTEGER DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   event TEXT
 );
@@ -4733,8 +4732,8 @@ CREATE TABLE IF NOT EXISTS "job_retries" (
   attempt INTEGER,
   error TEXT,
   stackTrace TEXT,
-  retriedAt TIMESTAMPTZ DEFAULT now(,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  retriedAt TIMESTAMPTZ DEFAULT now(),
+  createdAt TIMESTAMPTZ DEFAULT now(),
   job TEXT
 );
 
@@ -4746,7 +4745,7 @@ CREATE TABLE IF NOT EXISTS "job_schedules" (
   isActive BOOLEAN DEFAULT true,
   lastRunAt TEXT,
   nextRunAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4754,7 +4753,7 @@ CREATE TABLE IF NOT EXISTS "jobs" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   type TEXT,
   payload JSONB,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   priority INTEGER DEFAULT 0,
   attempts INTEGER DEFAULT 0,
   maxAttempts INTEGER DEFAULT 3,
@@ -4763,7 +4762,7 @@ CREATE TABLE IF NOT EXISTS "jobs" (
   lockedBy TEXT,
   result TEXT,
   error TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   retries TEXT,
   deadLetterEntry TEXT
@@ -4780,7 +4779,7 @@ CREATE TABLE IF NOT EXISTS "locations" (
   universeId TEXT,
   parentId TEXT,
   data TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT,
   parent TEXT,
@@ -4797,11 +4796,11 @@ CREATE TABLE IF NOT EXISTS "lore_entries" (
   content TEXT,
   excerpt TEXT,
   coverImage TEXT,
-  importance TEXT DEFAULT "normal",
+  importance TEXT DEFAULT 'normal',
   universeId TEXT,
   viewCount INTEGER DEFAULT 0,
-  status TEXT DEFAULT "published",
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  status TEXT DEFAULT 'published',
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT
 );
@@ -4812,10 +4811,10 @@ CREATE TABLE IF NOT EXISTS "media_uploads" (
   fileName TEXT,
   mimeType TEXT,
   size BIGINT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   uploadId TEXT,
   assetId TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4824,10 +4823,10 @@ CREATE TABLE IF NOT EXISTS "messages" (
   conversationId TEXT,
   senderId TEXT,
   content TEXT,
-  type TEXT DEFAULT "text",
+  type TEXT DEFAULT 'text',
   isRead BOOLEAN DEFAULT false,
   readAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   conversation TEXT
 );
@@ -4843,34 +4842,56 @@ CREATE TABLE IF NOT EXISTS "moderation_cases" (
   resolution TEXT,
   notes TEXT,
   resolvedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   report TEXT,
-  user TEXT,
+  "user" TEXT,
   resolvedByUser TEXT,
   Appeal TEXT,
   reviewerAssignments TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "movies" (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  title TEXT,
-  description TEXT,
-  thumbnail TEXT,
-  banner TEXT,
-  mediaUrl TEXT,
-  universeId TEXT,
-  creatorId TEXT,
-  status TEXT,
-  viewCount INTEGER DEFAULT 0,
-  metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
-  updatedAt TIMESTAMPTZ,
-  rentals TEXT,
-  watchlistItems TEXT,
-  viewingWindows TEXT,
-  Premiere TEXT
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "title" TEXT,
+  "description" TEXT,
+  "thumbnail" TEXT,
+  "banner" TEXT,
+  "mediaUrl" TEXT,
+  "universeId" TEXT,
+  "creatorId" TEXT,
+  "status" TEXT,
+  "viewCount" INTEGER DEFAULT 0,
+  "metadata" TEXT,
+  "genreId" TEXT,
+  "createdAt" TIMESTAMPTZ DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ
 );
+
+CREATE TABLE IF NOT EXISTS "genres" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE,
+  description TEXT,
+  icon TEXT,
+  "sortOrder" INTEGER DEFAULT 0,
+  "isActive" BOOLEAN DEFAULT true,
+  "createdAt" TIMESTAMPTZ DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ
+);
+
+-- movies.genreId → genres.id (genre catalog added with the
+-- 20260925000000_add_genres migration; see movie-service prisma/migrations)
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'movies_genreId_fkey'
+  ) THEN
+    ALTER TABLE "movies" ADD CONSTRAINT "movies_genreId_fkey"
+      FOREIGN KEY ("genreId") REFERENCES "genres"(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS "movies_genreId_idx" ON "movies"("genreId");
 
 CREATE TABLE IF NOT EXISTS "orisa_files" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
@@ -4882,9 +4903,9 @@ CREATE TABLE IF NOT EXISTS "orisa_files" (
   universeId TEXT,
   domain TEXT,
   symbols TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   data TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT
 );
@@ -4893,11 +4914,11 @@ CREATE TABLE IF NOT EXISTS "payment_intents" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   status TEXT,
   provider TEXT,
   reference TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4914,7 +4935,7 @@ CREATE TABLE IF NOT EXISTS "payment_methods" (
   isDefault BOOLEAN DEFAULT false,
   isActive BOOLEAN DEFAULT true,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4922,16 +4943,16 @@ CREATE TABLE IF NOT EXISTS "payments" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
-  status TEXT DEFAULT "pending",
-  type TEXT DEFAULT "payment",
+  currency TEXT DEFAULT 'NGN',
+  status TEXT DEFAULT 'pending',
+  type TEXT DEFAULT 'payment',
   provider TEXT,
   providerRef TEXT,
   failureReason TEXT,
   refundAmount TEXT,
   metadata TEXT,
   completedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4941,16 +4962,16 @@ CREATE TABLE IF NOT EXISTS "payout_disputes" (
   creatorId TEXT,
   payoutId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   reason TEXT,
   evidence TEXT,
-  status TEXT DEFAULT "PENDING",
+  status TEXT DEFAULT 'PENDING',
   resolution TEXT,
   resolvedAt TEXT,
   resolvedBy TEXT,
   compensation TEXT,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   ticket TEXT
 );
@@ -4961,7 +4982,7 @@ CREATE TABLE IF NOT EXISTS "prediction_rewards" (
   correctPredictions INTEGER DEFAULT 0,
   rewardPoints INTEGER DEFAULT 0,
   bonusPool NUMERIC DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   event TEXT
 );
 
@@ -4973,7 +4994,7 @@ CREATE TABLE IF NOT EXISTS "predictions" (
   points INTEGER DEFAULT 0,
   isCorrect TEXT,
   result TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -4982,8 +5003,8 @@ CREATE TABLE IF NOT EXISTS "premieres" (
   movieId TEXT,
   startsAt TIMESTAMPTZ,
   endsAt TEXT,
-  status TEXT DEFAULT "scheduled",
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  status TEXT DEFAULT 'scheduled',
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   movie TEXT
 );
@@ -4997,10 +5018,10 @@ CREATE TABLE IF NOT EXISTS "prophecies" (
   imageUrl TEXT,
   universeId TEXT,
   source TEXT,
-  status TEXT DEFAULT "active",
+  status TEXT DEFAULT 'active',
   fulfilledAt TEXT,
   data TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT
 );
@@ -5010,7 +5031,7 @@ CREATE TABLE IF NOT EXISTS "push_tokens" (
   userId TEXT,
   token TEXT,
   deviceType TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5021,8 +5042,8 @@ CREATE TABLE IF NOT EXISTS "questions" (
   answer TEXT,
   options TEXT,
   points INTEGER DEFAULT 10,
-  order INTEGER DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  "order" INTEGER DEFAULT 0,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5034,8 +5055,8 @@ CREATE TABLE IF NOT EXISTS "rankings" (
   category TEXT,
   score INTEGER DEFAULT 0,
   rank INTEGER DEFAULT 0,
-  period TEXT DEFAULT "all",
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  period TEXT DEFAULT 'all',
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5048,7 +5069,7 @@ CREATE TABLE IF NOT EXISTS "reality_clips" (
   thumbnail TEXT,
   mediaUrl TEXT,
   viewCount INTEGER DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   show TEXT
 );
@@ -5062,9 +5083,9 @@ CREATE TABLE IF NOT EXISTS "reality_premium_purchases" (
   price NUMERIC,
   duration TEXT,
   purchaseId TEXT,
-  purchasedAt TIMESTAMPTZ DEFAULT now(,
+  purchasedAt TIMESTAMPTZ DEFAULT now(),
   expiresAt TEXT,
-  status TEXT DEFAULT "active"
+  status TEXT DEFAULT 'active'
 );
 
 CREATE TABLE IF NOT EXISTS "realms" (
@@ -5074,10 +5095,10 @@ CREATE TABLE IF NOT EXISTS "realms" (
   description TEXT,
   imageUrl TEXT,
   universeId TEXT,
-  type TEXT DEFAULT "physical",
+  type TEXT DEFAULT 'physical',
   parentId TEXT,
   data TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT,
   parent TEXT,
@@ -5094,9 +5115,9 @@ CREATE TABLE IF NOT EXISTS "recaps" (
   coverImage TEXT,
   isSpoiler BOOLEAN DEFAULT false,
   viewCount INTEGER DEFAULT 0,
-  status TEXT DEFAULT "published",
+  status TEXT DEFAULT 'published',
   publishedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   title TEXT
 );
 
@@ -5108,7 +5129,7 @@ CREATE TABLE IF NOT EXISTS "referral_codes" (
   maxUses TEXT,
   currentUses INTEGER DEFAULT 0,
   expiresAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   referrals TEXT
 );
@@ -5119,7 +5140,7 @@ CREATE TABLE IF NOT EXISTS "referral_configs" (
   value NUMERIC,
   description TEXT,
   isActive BOOLEAN DEFAULT true,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5129,9 +5150,9 @@ CREATE TABLE IF NOT EXISTS "referral_rewards" (
   userId TEXT,
   amount NUMERIC,
   type TEXT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   creditedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5141,14 +5162,14 @@ CREATE TABLE IF NOT EXISTS "refunds" (
   paymentId TEXT,
   userId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   reason TEXT,
-  status TEXT DEFAULT "PENDING",
+  status TEXT DEFAULT 'PENDING',
   refundReference TEXT,
   processedAt TEXT,
   processedBy TEXT,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   ticket TEXT
 );
@@ -5160,7 +5181,7 @@ CREATE TABLE IF NOT EXISTS "report_executions" (
   executionTime INTEGER,
   rowCount INTEGER,
   parameters JSONB,
-  executedAt TIMESTAMPTZ DEFAULT now(,
+  executedAt TIMESTAMPTZ DEFAULT now(),
   report TEXT
 );
 
@@ -5176,7 +5197,7 @@ CREATE TABLE IF NOT EXISTS "reports" (
   resolutionAction TEXT,
   resolutionReason TEXT,
   resolvedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   ModerationCase TEXT,
   reportingUser TEXT,
@@ -5190,10 +5211,10 @@ CREATE TABLE IF NOT EXISTS "reviewer_assignments" (
   reviewerId TEXT,
   assignedBy TEXT,
   status TEXT,
-  assignedAt TIMESTAMPTZ DEFAULT now(,
+  assignedAt TIMESTAMPTZ DEFAULT now(),
   completedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
-  case TEXT
+  createdAt TIMESTAMPTZ DEFAULT now(),
+  "case" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "room_posts" (
@@ -5203,9 +5224,9 @@ CREATE TABLE IF NOT EXISTS "room_posts" (
   authorId TEXT,
   authorName TEXT,
   authorAvatar TEXT,
-  spoilerLevel TEXT DEFAULT "none",
-  status TEXT DEFAULT "active",
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  spoilerLevel TEXT DEFAULT 'none',
+  status TEXT DEFAULT 'active',
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   room TEXT
 );
@@ -5217,8 +5238,8 @@ CREATE TABLE IF NOT EXISTS "rooms" (
   description TEXT,
   imageUrl TEXT,
   universeId TEXT,
-  status TEXT DEFAULT "active",
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  status TEXT DEFAULT 'active',
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT,
   posts TEXT
@@ -5233,7 +5254,7 @@ CREATE TABLE IF NOT EXISTS "safety_actions" (
   moderatorId TEXT,
   duration TEXT,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "safety_scans" (
@@ -5246,7 +5267,7 @@ CREATE TABLE IF NOT EXISTS "safety_scans" (
   details TEXT,
   threatLevel TEXT,
   categories TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   completedAt TEXT,
   scanDurationMs TEXT
 );
@@ -5256,7 +5277,7 @@ CREATE TABLE IF NOT EXISTS "score_entries" (
   userId TEXT,
   score INTEGER DEFAULT 0,
   level INTEGER DEFAULT 1,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5273,7 +5294,7 @@ CREATE TABLE IF NOT EXISTS "session_summaries" (
   eventsCount INTEGER DEFAULT 0,
   conversions INTEGER DEFAULT 0,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5281,7 +5302,7 @@ CREATE TABLE IF NOT EXISTS "special_likes" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   specialId TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   special TEXT
 );
 
@@ -5290,12 +5311,12 @@ CREATE TABLE IF NOT EXISTS "subscription_plans" (
   name TEXT,
   description TEXT,
   price NUMERIC,
-  currency TEXT DEFAULT "NGN",
+  currency TEXT DEFAULT 'NGN',
   duration INTEGER,
   features TEXT,
   isActive BOOLEAN DEFAULT true,
   tier TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   subscriptions TEXT
 );
@@ -5304,12 +5325,12 @@ CREATE TABLE IF NOT EXISTS "subscription_transactions" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   subscriptionId TEXT,
   amount NUMERIC,
-  currency TEXT DEFAULT "NGN",
-  status TEXT DEFAULT "completed",
+  currency TEXT DEFAULT 'NGN',
+  status TEXT DEFAULT 'completed',
   paymentProvider TEXT,
   providerTxId TEXT,
   description TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "suggestions" (
@@ -5322,7 +5343,7 @@ CREATE TABLE IF NOT EXISTS "suggestions" (
   startsAt TEXT,
   endsAt TEXT,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5330,7 +5351,7 @@ CREATE TABLE IF NOT EXISTS "support_analytics_events" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   event TEXT,
   data JSONB,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "support_messages" (
@@ -5340,7 +5361,7 @@ CREATE TABLE IF NOT EXISTS "support_messages" (
   senderType TEXT,
   message TEXT,
   isInternal BOOLEAN DEFAULT false,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   ticket TEXT
 );
 
@@ -5351,12 +5372,12 @@ CREATE TABLE IF NOT EXISTS "theories" (
   content TEXT,
   authorId TEXT,
   authorName TEXT,
-  spoilerLevel TEXT DEFAULT "none",
-  accessLevel TEXT DEFAULT "public",
-  status TEXT DEFAULT "published",
+  spoilerLevel TEXT DEFAULT 'none',
+  accessLevel TEXT DEFAULT 'public',
+  status TEXT DEFAULT 'published',
   viewCount INTEGER DEFAULT 0,
   likeCount INTEGER DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5367,12 +5388,12 @@ CREATE TABLE IF NOT EXISTS "timeline_events" (
   date TIMESTAMPTZ,
   endDate TEXT,
   type TEXT,
-  importance TEXT DEFAULT "normal",
+  importance TEXT DEFAULT 'normal',
   universeId TEXT,
   characterId TEXT,
   locationId TEXT,
   data TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT,
   character TEXT,
@@ -5384,7 +5405,7 @@ CREATE TABLE IF NOT EXISTS "tips" (
   fromUserId TEXT,
   toUserId TEXT,
   amount NUMERIC,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "titles" (
@@ -5396,11 +5417,11 @@ CREATE TABLE IF NOT EXISTS "titles" (
   coverImage TEXT,
   releaseYear TEXT,
   endYear TEXT,
-  status TEXT DEFAULT "ongoing",
+  status TEXT DEFAULT 'ongoing',
   rating TEXT,
   universeId TEXT,
   viewCount INTEGER DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT,
   recaps TEXT,
@@ -5416,11 +5437,11 @@ CREATE TABLE IF NOT EXISTS "tournament_matches" (
   player1Score INTEGER DEFAULT 0,
   player2Score INTEGER DEFAULT 0,
   round INTEGER,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   winnerId TEXT,
   scheduledAt TEXT,
   completedAt TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "tournament_prizes" (
@@ -5428,18 +5449,18 @@ CREATE TABLE IF NOT EXISTS "tournament_prizes" (
   tournamentId TEXT,
   rank INTEGER,
   amount NUMERIC,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "transcoding_jobs" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   uploadId TEXT,
   sourceKey TEXT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   progress INTEGER DEFAULT 0,
   outputKeys TEXT,
   error TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5450,8 +5471,8 @@ CREATE TABLE IF NOT EXISTS "universe_maps" (
   description TEXT,
   imageUrl TEXT,
   data TEXT,
-  status TEXT DEFAULT "active",
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  status TEXT DEFAULT 'active',
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   characters TEXT,
   locations TEXT,
@@ -5471,7 +5492,7 @@ CREATE TABLE IF NOT EXISTS "user_segments" (
   userId TEXT,
   segmentId TEXT,
   score DOUBLE PRECISION DEFAULT 0,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "user_suspensions" (
@@ -5480,14 +5501,14 @@ CREATE TABLE IF NOT EXISTS "user_suspensions" (
   userId TEXT,
   reason TEXT,
   suspendedBy TEXT,
-  status TEXT DEFAULT "ACTIVE",
-  suspendedAt TIMESTAMPTZ DEFAULT now(,
+  status TEXT DEFAULT 'ACTIVE',
+  suspendedAt TIMESTAMPTZ DEFAULT now(),
   expiresAt TEXT,
   reinstatedAt TEXT,
   reinstatedBy TEXT,
   evidence TEXT,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   ticket TEXT
 );
@@ -5497,11 +5518,11 @@ CREATE TABLE IF NOT EXISTS "verification_documents" (
   userId TEXT,
   documentType TEXT,
   documentUrl TEXT,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   reviewedBy TEXT,
   reviewedAt TEXT,
   metadata TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5512,7 +5533,7 @@ CREATE TABLE IF NOT EXISTS "viewing_windows" (
   endsAt TEXT,
   type TEXT,
   isActive BOOLEAN DEFAULT true,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   movie TEXT
 );
@@ -5521,8 +5542,8 @@ CREATE TABLE IF NOT EXISTS "wallet_snapshots" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   balance NUMERIC DEFAULT 0,
-  currency TEXT DEFAULT "NGN",
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  currency TEXT DEFAULT 'NGN',
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5533,14 +5554,14 @@ CREATE TABLE IF NOT EXISTS "wallet_transaction_snapshots" (
   amount NUMERIC,
   description TEXT,
   reference TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(
+  createdAt TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "watchlist_items" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   userId TEXT,
   movieId TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   movie TEXT
 );
 
@@ -5550,7 +5571,7 @@ CREATE TABLE IF NOT EXISTS "webhook_events" (
   payload JSONB,
   provider TEXT,
   processedAt TIMESTAMPTZ,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5563,9 +5584,9 @@ CREATE TABLE IF NOT EXISTS "webhook_retries" (
   retryCount INTEGER DEFAULT 0,
   maxRetries INTEGER DEFAULT 5,
   nextRetryAt TIMESTAMPTZ,
-  status TEXT DEFAULT "pending",
+  status TEXT DEFAULT 'pending',
   lastError TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ
 );
 
@@ -5576,9 +5597,9 @@ CREATE TABLE IF NOT EXISTS "world_maps" (
   description TEXT,
   imageUrl TEXT,
   universeId TEXT,
-  type TEXT DEFAULT "geographic",
+  type TEXT DEFAULT 'geographic',
   data TEXT,
-  createdAt TIMESTAMPTZ DEFAULT now(,
+  createdAt TIMESTAMPTZ DEFAULT now(),
   updatedAt TIMESTAMPTZ,
   universe TEXT
 );

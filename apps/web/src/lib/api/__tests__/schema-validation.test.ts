@@ -201,18 +201,6 @@ describe('Response Schema — Wallet', () => {
     expect(['credit', 'debit']).toContain(result.data!.items[0].type);
     expect(['pending', 'completed', 'failed']).toContain(result.data!.items[0].status);
   });
-
-  it('getEarnings returns earnings summary', async () => {
-    const data = { totalEarnings: 10000, pendingEarnings: 2000, withdrawableBalance: 8000 };
-    client.request.mockResolvedValue({ success: true, data });
-
-    const result = await wallet.getEarnings({ range: '30d' });
-
-    expect(result.data).toHaveProperty('totalEarnings');
-    expect(result.data).toHaveProperty('pendingEarnings');
-    expect(result.data).toHaveProperty('withdrawableBalance');
-    expect(typeof result.data!.totalEarnings).toBe('number');
-  });
 });
 
 describe('Response Schema — Payment', () => {
@@ -263,7 +251,7 @@ describe('Response Schema — Universe', () => {
         id: 'u1',
         name: 'nollywood',
         description: 'Nigerian cinema',
-        icon: '🎬',
+        icon: 'Film',
         contentCount: 150,
       },
     ];

@@ -39,7 +39,7 @@ jest.mock('lucide-react', () => {
         }
         return undefined;
       },
-    },
+    }
   );
 });
 
@@ -78,7 +78,11 @@ describe('Button', () => {
   });
 
   it('shows loading text when isLoading', () => {
-    render(<Button isLoading loadingText="Please wait">Submit</Button>);
+    render(
+      <Button isLoading loadingText="Please wait">
+        Submit
+      </Button>
+    );
     expect(screen.getByText('Please wait')).toBeInTheDocument();
   });
 
@@ -105,7 +109,11 @@ describe('Button', () => {
   it('does not call onClick when disabled', async () => {
     const user = userEvent.setup();
     const onClick = jest.fn();
-    render(<Button disabled onClick={onClick}>Click</Button>);
+    render(
+      <Button disabled onClick={onClick}>
+        Click
+      </Button>
+    );
     await user.click(screen.getByRole('button'));
     expect(onClick).not.toHaveBeenCalled();
   });
@@ -145,13 +153,17 @@ describe('Card', () => {
       <>
         <Card aria-describedby="desc">Described content</Card>
         <div id="desc">Description</div>
-      </>,
+      </>
     );
     expect(screen.getByText('Described content')).toHaveAttribute('aria-describedby', 'desc');
   });
 
   it('supports custom component via as prop', () => {
-    render(<Card as="section" role="region" aria-label="Test">Content</Card>);
+    render(
+      <Card as="section" role="region" aria-label="Test">
+        Content
+      </Card>
+    );
     expect(screen.getByRole('region', { name: 'Test' })).toBeInTheDocument();
   });
 });
@@ -288,13 +300,7 @@ describe('Skeleton', () => {
 
 describe('ContentCard', () => {
   it('renders title', () => {
-    render(
-      <ContentCard
-        title="My Show"
-        thumbnail="/thumb.jpg"
-        universe="reality"
-      />,
-    );
+    render(<ContentCard title="My Show" thumbnail="/thumb.jpg" universe="reality" />);
     expect(screen.getByText('My Show')).toBeInTheDocument();
   });
 
@@ -305,19 +311,13 @@ describe('ContentCard', () => {
         description="A great show"
         thumbnail="/thumb.jpg"
         universe="reality"
-      />,
+      />
     );
     expect(screen.getByText('A great show')).toBeInTheDocument();
   });
 
   it('renders universe badge', () => {
-    render(
-      <ContentCard
-        title="My Show"
-        thumbnail="/thumb.jpg"
-        universe="reality"
-      />,
-    );
+    render(<ContentCard title="My Show" thumbnail="/thumb.jpg" universe="reality" />);
     expect(screen.getByText('Reality')).toBeInTheDocument();
   });
 
@@ -325,37 +325,19 @@ describe('ContentCard', () => {
     const user = userEvent.setup();
     const onClick = jest.fn();
     render(
-      <ContentCard
-        title="My Show"
-        thumbnail="/thumb.jpg"
-        universe="reality"
-        onClick={onClick}
-      />,
+      <ContentCard title="My Show" thumbnail="/thumb.jpg" universe="reality" onClick={onClick} />
     );
     await user.click(screen.getByRole('article', { name: 'My Show' }));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it('renders premium badge when isPremium', () => {
-    render(
-      <ContentCard
-        title="My Show"
-        thumbnail="/thumb.jpg"
-        universe="reality"
-        isPremium
-      />,
-    );
+    render(<ContentCard title="My Show" thumbnail="/thumb.jpg" universe="reality" isPremium />);
     expect(screen.getByText('Premium')).toBeInTheDocument();
   });
 
   it('does not render premium badge by default', () => {
-    render(
-      <ContentCard
-        title="My Show"
-        thumbnail="/thumb.jpg"
-        universe="reality"
-      />,
-    );
+    render(<ContentCard title="My Show" thumbnail="/thumb.jpg" universe="reality" />);
     expect(screen.queryByText('Premium')).not.toBeInTheDocument();
   });
 });
@@ -369,7 +351,7 @@ describe('HeroCard', () => {
         description="Epic content"
         thumbnail="/thumb.jpg"
         universe="reality"
-      />,
+      />
     );
     expect(screen.getByText('Big Show')).toBeInTheDocument();
   });
@@ -382,7 +364,7 @@ describe('HeroCard', () => {
         description="Epic content"
         thumbnail="/thumb.jpg"
         universe="reality"
-      />,
+      />
     );
     expect(screen.getByText('Season 2')).toBeInTheDocument();
   });
@@ -395,7 +377,7 @@ describe('HeroCard', () => {
         description="Epic content"
         thumbnail="/thumb.jpg"
         universe="reality"
-      />,
+      />
     );
     expect(screen.getByText('Epic content')).toBeInTheDocument();
   });
@@ -408,7 +390,7 @@ describe('HeroCard', () => {
         description="Epic content"
         thumbnail="/thumb.jpg"
         universe="reality"
-      />,
+      />
     );
     expect(screen.getByText('Reality')).toBeInTheDocument();
   });
@@ -421,7 +403,7 @@ describe('HeroCard', () => {
         description="Epic content"
         thumbnail="/thumb.jpg"
         universe="reality"
-      />,
+      />
     );
     expect(screen.getByRole('button', { name: 'Play Big Show' })).toBeInTheDocument();
   });
@@ -437,7 +419,7 @@ describe('HeroCard', () => {
         thumbnail="/thumb.jpg"
         universe="reality"
         onPlay={onPlay}
-      />,
+      />
     );
     await user.click(screen.getByRole('button', { name: 'Play Big Show' }));
     expect(onPlay).toHaveBeenCalledTimes(1);
@@ -452,7 +434,7 @@ describe('HeroCard', () => {
         thumbnail="/thumb.jpg"
         universe="reality"
         isLive
-      />,
+      />
     );
     expect(screen.getByText('Live')).toBeInTheDocument();
   });
@@ -466,7 +448,7 @@ describe('HeroCard', () => {
         thumbnail="/thumb.jpg"
         universe="reality"
         isPremium
-      />,
+      />
     );
     expect(screen.getByText('Premium')).toBeInTheDocument();
   });

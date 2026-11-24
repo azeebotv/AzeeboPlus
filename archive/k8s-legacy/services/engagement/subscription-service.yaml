@@ -1,0 +1,88 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscription-service
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/name: subscription-service
+    app.kubernetes.io/part-of: azeebo
+    app.kubernetes.io/component: engagement
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: subscription-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: subscription-service
+        app.kubernetes.io/part-of: azeebo
+        app.kubernetes.io/component: engagement
+    spec:
+      containers:
+        - name: subscription-service
+          image: ghcr.io/vmnl/subscription-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3026
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: azeebo-config
+            - secretRef:
+                name: azeebo-secrets
+                optional: true
+          env:
+            - name: PORT
+              value: "3026"
+            - name: SERVICE_NAME
+              value: "subscription-service"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3026
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3026
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 3026
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: subscription-service
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/name: subscription-service
+    app.kubernetes.io/part-of: azeebo
+spec:
+  selector:
+    app.kubernetes.io/name: subscription-service
+  ports:
+    - port: 3026
+      targetPort: 3026
+      protocol: TCP
+      name: http
+  type: ClusterIP

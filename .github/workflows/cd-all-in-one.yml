@@ -1,12 +1,17 @@
 name: Build & Push All-in-One Image
 
+# This workflow builds and pushes the all-in-one Docker image.
+# It triggers on Dev-Branch which is the integration branch used for
+# building the consolidated all-in-one image used in smoke tests and
+# staging pre-validation. This is intentional — it does NOT replace
+# the main CI/CD pipeline triggered from main/develop branches.
 on:
   push:
-    branches: [Dev-Branch]
+    branches: [Dev-Branch, Major-Upgrade]
   workflow_dispatch:
     inputs:
       no_cache:
-        description: "Force full rebuild (skip all cache)"
+        description: 'Force full rebuild (skip all cache)'
         required: false
         type: boolean
         default: true
@@ -37,7 +42,12 @@ jobs:
           df -h
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Load platform domains from registry
+        run: |
+          node scripts/generate-domain-env.mjs --check
+          grep -v '^#' deploy/domains.env >> "$GITHUB_ENV"
 
       - name: Print build info
         run: |
@@ -46,10 +56,10 @@ jobs:
           echo "No-cache: ${{ inputs.no_cache || false }}"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -57,7 +67,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -66,7 +76,7 @@ jobs:
 
       - name: Build and push (cached)
         if: ${{ !inputs.no_cache }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: ./Dockerfile.all-in-one
@@ -76,11 +86,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://staging.azeeboplus.com' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || format('https://{0}', env.STAGING_HOST) }}
 
       - name: Build and push (no cache)
         if: ${{ inputs.no_cache }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: ./Dockerfile.all-in-one
@@ -91,7 +101,7 @@ jobs:
           cache-to: ''
           no-cache: true
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://staging.azeeboplus.com' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || format('https://{0}', env.STAGING_HOST) }}
 
       - name: Print image info
         run: |
@@ -111,13 +121,14 @@ jobs:
           docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev
 
           echo "==> Starting container..."
-          JWT_ACCESS=$(openssl rand -base64 64)
-          JWT_REFRESH=$(openssl rand -base64 64)
-          GATEWAY_SEC=$(openssl rand -base64 64)
-          INTERNAL_KEY=$(openssl rand -base64 32)
+          JWT_ACCESS=$(openssl rand -hex 32)
+          JWT_REFRESH=$(openssl rand -hex 32)
+          GATEWAY_SEC=$(openssl rand -hex 32)
+          INTERNAL_KEY=$(openssl rand -hex 16)
           docker run -d --name smoke-test \
             -e NODE_ENV=production \
             -e ALL_IN_ONE=true \
+            -e DEMO_MODE=true \
             -e POSTGRES_PASSWORD=smoke_test_password \
             -e REDIS_PASSWORD=smoke_test_password \
             -e "JWT_ACCESS_SECRET=${JWT_ACCESS}" \
@@ -127,24 +138,81 @@ jobs:
             -p 3013:3013 \
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev"
 
-          echo "==> Waiting for container to initialize (300s — migrations for 26+ services)..."
-          sleep 300
-
-          echo "==> Testing health endpoint..."
+          echo "==> Waiting for container to initialize (polling up to 300s)..."
+          HEALTH_OK=""
           for i in $(seq 1 30); do
             if curl -sf http://localhost:3013/health > /dev/null 2>&1; then
-              echo "✅ Health endpoint OK"
-              docker logs smoke-test 2>&1 | tail -20
-              docker stop smoke-test
-              docker rm smoke-test
-              exit 0
+              echo "✅ Health endpoint OK after ~$((i * 10))s"
+              HEALTH_OK=1
+              break
             fi
-            echo "⏳ Attempt $i/30 — retrying in 10s..."
+            echo "⏳ Attempt $i/30 — waiting for migrations + service startup... (${i}0s elapsed)"
             sleep 10
           done
+          if [ -z "$HEALTH_OK" ]; then
+            echo "❌ Health check failed after 300s"
+            docker logs smoke-test 2>&1 | tail -50
+            docker stop smoke-test
+            docker rm smoke-test
+            exit 1
+          fi
 
-          echo "❌ Health check failed after 30 attempts"
-          docker logs smoke-test 2>&1 | tail -50
+      - name: Test API traffic through gateway
+        run: |
+          BASE="http://localhost:3013"
+          EMAIL="smoke.$(date +%s)@azeebotv.dev"
+          PASS="SmokeTest!2026"
+          fail() {
+            echo "❌ $1"
+            cat /tmp/smoke.out 2>/dev/null || true
+            echo "--- container logs (tail) ---"
+            docker logs smoke-test 2>&1 | tail -30
+            docker stop smoke-test > /dev/null
+            docker rm smoke-test > /dev/null
+            exit 1
+          }
+
+          echo "==> Bootstrapping CSRF cookie (GET /api/v1/content/home)..."
+          CODE=$(curl -s -c /tmp/cookies.txt -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/content/home")
+          [ "$CODE" = "200" ] || fail "content/home returned $CODE (expected 200)"
+          echo "✅ content/home 200"
+          CSRF=$(awk '$6=="_csrf" {print $7}' /tmp/cookies.txt)
+          [ -n "$CSRF" ] || fail "CSRF cookie not set by gateway"
+          echo "✅ CSRF cookie acquired"
+
+          echo "==> Testing public signup (POST /api/v1/auth/signup)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/api/v1/auth/signup" \
+            -H 'Content-Type: application/json' \
+            -H "X-CSRF-Token: $CSRF" \
+            -b /tmp/cookies.txt -c /tmp/cookies.txt \
+            -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\",\"displayName\":\"Smoke Test\"}")
+          [ "$CODE" = "201" ] || fail "signup returned $CODE (expected 201)"
+          echo "✅ signup 201"
+
+          echo "==> Testing login (POST /api/v1/auth/login)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" -X POST "$BASE/api/v1/auth/login" \
+            -H 'Content-Type: application/json' \
+            -H "X-CSRF-Token: $CSRF" \
+            -b /tmp/cookies.txt -c /tmp/cookies.txt \
+            -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\"}")
+          [ "$CODE" = "200" ] || fail "login returned $CODE (expected 200)"
+          TOKEN=$(jq -r '.data.access_token' /tmp/smoke.out)
+          [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] || fail "login response missing access_token"
+          echo "✅ login 200 + token"
+
+          echo "==> Testing authenticated profile (GET /api/v1/auth/me)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/auth/me" \
+            -H "Authorization: Bearer $TOKEN")
+          [ "$CODE" = "200" ] || fail "auth/me returned $CODE (expected 200)"
+          echo "✅ auth/me 200"
+
+          echo "==> Testing cross-service user profile (GET /api/v1/users/me)..."
+          CODE=$(curl -s -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/users/me" \
+            -H "Authorization: Bearer $TOKEN")
+          [ "$CODE" = "200" ] || fail "users/me returned $CODE (expected 200)"
+          echo "✅ users/me 200"
+
+          echo "✅ All API traffic checks passed"
+          docker logs smoke-test 2>&1 | tail -20
           docker stop smoke-test
           docker rm smoke-test
-          exit 1

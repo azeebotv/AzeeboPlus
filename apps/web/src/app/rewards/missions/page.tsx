@@ -1,21 +1,16 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
 
-export const metadata = {
-  title: 'Missions | Azeebo',
-  description: 'Complete missions to earn points and level up your Azeebo rewards.',
-  openGraph: {
-    title: 'Missions | Azeebo',
-    description: 'Complete missions to earn points and level up your Azeebo rewards.',
-  },
-};
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
 import { ErrorState, Skeleton } from '@azeebo/ui/web';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ArrowLeft, CheckCircle2, Target, Sparkles, Trophy } from 'lucide-react';
 
 interface Mission {
   id: string;
@@ -66,227 +61,211 @@ export default function MissionsPage(): React.JSX.Element {
   const isLoading = authLoading || missionsQuery.isLoading;
   const error = missionsQuery.error?.message || null;
 
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [claimSuccessMessage, setClaimSuccessMessage] = useState<string | null>(null);
+
+  const claimMissionMutation = useMutation({
+    mutationFn: async (missionId: string) => {
+      setClaimingId(missionId);
+      const res = await apiFetch<{ message: string; pointsEarned: number; newBalance: number }>(
+        `/rewards/missions/${missionId}/claim`,
+        { method: 'POST' }
+      );
+      if (!res.success) throw new Error(res.message || 'Failed to claim mission reward');
+      return res.data;
+    },
+    onSuccess: (data) => {
+      setClaimSuccessMessage(`Claimed! +${data?.pointsEarned ?? 0} points added to your balance.`);
+      missionsQuery.refetch();
+      setTimeout(() => setClaimSuccessMessage(null), 4000);
+    },
+    onSettled: () => {
+      setClaimingId(null);
+    },
+  });
+
   if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          maxWidth: 900,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ marginBottom: 24 }}>
-          <Link
-            href="/rewards"
-            style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}
-          >
-            &larr; Back to Rewards
-          </Link>
-        </div>
+    <PageShell activeNav="Rewards" glowColor="rgba(227, 30, 36, 0.2)">
+      <div className="mb-6">
+        <Link
+          href="/rewards"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-az-ink/60 hover:text-az-ink transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Rewards Center
+        </Link>
+      </div>
 
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Missions</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-            Complete missions to earn points
-          </p>
-        </div>
+      <PageHero
+        eyebrow="QUESTS & REPUTATION"
+        eyebrowColor="var(--color-az-flame)"
+        badge={`${activeMissions.length} ACTIVE`}
+        title="Streaming Missions"
+        subtitle="Complete viewing goals, rate shows, vote on reality stars, and level up your loyalty points."
+        glowColor="color-mix(in srgb, var(--color-az-scarlet) 25%, transparent)"
+      />
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="az-glass h-48">
-                <Skeleton height="100%" borderRadius="0" />
-              </div>
-            ))}
-          </div>
-        ) : error ? (
-          <ErrorState
-            title="Failed to load missions"
-            description={error}
-            buttonText="Retry"
-            onButtonPress={() => missionsQuery.refetch()}
-          />
-        ) : (
-          <>
-            {/* Active missions */}
-            <section style={{ marginBottom: 40 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>
+      {claimSuccessMessage && (
+        <div className="mb-6 p-4 rounded-2xl bg-az-success-500/15 border border-az-success-500/30 text-az-success-400 text-sm font-bold flex items-center gap-2">
+          <CheckCircle2 className="w-5 h-5" />
+          <span>{claimSuccessMessage}</span>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="az-glass h-56 p-5">
+              <Skeleton className="h-full w-full rounded-2xl" />
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <ErrorState
+          title="Failed to load missions"
+          description={error}
+          buttonText="Retry"
+          onButtonPress={() => missionsQuery.refetch()}
+        />
+      ) : (
+        <div className="space-y-12">
+          {/* Active Missions */}
+          <section>
+            <div className="flex items-center gap-2 mb-6">
+              <Target className="w-5 h-5 text-[var(--color-az-flame)]" />
+              <h2 className="az-headline text-xl sm:text-2xl text-az-ink">
                 Active Missions ({activeMissions.length})
               </h2>
-              {activeMissions.length === 0 ? (
-                <div
-                  className="az-glass"
-                  style={{ padding: 48, borderRadius: 20, textAlign: 'center' }}
-                >
-                  <p style={{ fontSize: 32, marginBottom: 12 }}>🎯</p>
-                  <p style={{ color: 'var(--text-secondary)' }}>No active missions right now</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {activeMissions.map((mission) => (
-                    <div
-                      key={mission.id}
-                      className="az-glass overflow-hidden"
-                      style={{ transition: 'transform 0.2s', cursor: 'pointer' }}
-                    >
-                      {mission.image && (
+            </div>
+
+            {activeMissions.length === 0 ? (
+              <div className="az-glass p-12 text-center border border-az-glass-border">
+                <Trophy className="w-12 h-12 text-az-warning-400 mx-auto mb-4 opacity-80" />
+                <h3 className="text-lg font-bold text-az-ink mb-1">All Quests Completed!</h3>
+                <p className="text-az-ink/50 text-sm">New missions arrive daily at 00:00 WAT.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {activeMissions.map((mission, idx) => (
+                  <motion.div
+                    key={mission.id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="az-glass overflow-hidden border border-az-glass-border transition-all flex flex-col justify-between group"
+                  >
+                    {mission.image && (
+                      <div className="w-full h-40 overflow-hidden relative">
                         <OptimizedImage
                           src={mission.image}
                           alt={mission.title}
-                          className="w-full h-36 object-cover"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
-                      )}
-                      <div style={{ padding: 20 }}>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            padding: '3px 10px',
-                            borderRadius: 999,
-                            backgroundColor: 'rgba(232,66,10,0.15)',
-                            color: 'var(--brand-orange)',
-                            textTransform: 'capitalize',
-                          }}
-                        >
+                        <div className="absolute inset-0 az-scrim--hero" />
+                      </div>
+                    )}
+
+                    <div className="p-6">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[var(--color-az-flame)]/15 text-[var(--color-az-flame)] border border-[var(--color-az-flame)]/25">
                           {mission.category}
                         </span>
-                        <h3
-                          style={{ fontSize: 16, fontWeight: 700, marginTop: 8, marginBottom: 6 }}
-                        >
+                        <span className="text-sm font-extrabold text-[var(--color-az-flame)] flex items-center gap-1">
+                          <Sparkles className="w-3.5 h-3.5" />+{mission.points.toLocaleString()} pts
+                        </span>
+                      </div>
+
+                      <h3 className="text-base sm:text-lg font-bold text-az-ink mb-1.5 group-hover:text-az-ink transition-colors">
+                        {mission.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-az-ink/60 mb-5 leading-relaxed">
+                        {mission.description}
+                      </p>
+
+                      {/* Progress Bar & Claim */}
+                      <div className="space-y-3 pt-3 border-t border-az-ink/5">
+                        <div className="flex justify-between text-xs text-az-ink/50 font-medium">
+                          <span>Mission Progress</span>
+                          <span className="text-az-ink font-bold">
+                            {mission.progress} / {mission.total}
+                          </span>
+                        </div>
+                        <div className="w-full bg-az-glass-card rounded-full h-2 overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{
+                              width: `${Math.min(((mission.progress ?? 0) / (mission.total || 1)) * 100, 100)}%`,
+                            }}
+                            transition={{ duration: 0.6 }}
+                            className="h-full rounded-full bg-gradient-to-r from-az-scarlet to-az-flame"
+                          />
+                        </div>
+
+                        {(mission.progress ?? 0) >= (mission.total ?? 100) && (
+                          <button
+                            type="button"
+                            disabled={claimingId === mission.id}
+                            onClick={() => claimMissionMutation.mutate(mission.id)}
+                            className="az-btn-primary w-full flex items-center justify-center gap-1.5 shadow-lg"
+                          >
+                            {claimingId === mission.id ? (
+                              'Claiming Bounty...'
+                            ) : (
+                              <>
+                                <Sparkles className="w-4 h-4" /> Claim +
+                                {mission.points.toLocaleString()} Points
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Completed Missions */}
+          {completedMissions.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-6">
+                <CheckCircle2 className="w-5 h-5 text-az-success-400" />
+                <h2 className="az-headline text-xl sm:text-2xl text-az-ink">
+                  Completed Missions ({completedMissions.length})
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {completedMissions.map((mission) => (
+                  <div
+                    key={mission.id}
+                    className="az-glass p-5 border opacity-70 flex items-center justify-between gap-4"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] uppercase font-bold text-az-success-400 bg-az-success-500/10 px-2 py-0.5 rounded-full border border-az-success-500/20">
+                          Complete
+                        </span>
+                        <h3 className="font-bold text-az-ink text-sm sm:text-base">
                           {mission.title}
                         </h3>
-                        <p
-                          style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}
-                        >
-                          {mission.description}
-                        </p>
-
-                        {/* Progress bar */}
-                        <div style={{ marginBottom: 12 }}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              fontSize: 12,
-                              color: 'var(--text-secondary)',
-                              marginBottom: 6,
-                            }}
-                          >
-                            <span>Progress</span>
-                            <span>
-                              {mission.progress}/{mission.total}
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              height: 6,
-                              borderRadius: 3,
-                              backgroundColor: 'rgba(255,255,255,0.08)',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <div
-                              style={{
-                                height: '100%',
-                                borderRadius: 3,
-                                background: 'linear-gradient(90deg, #E8420A, #CC1C1C)',
-                                width: `${Math.min((mission.progress / mission.total) * 100, 100)}%`,
-                                transition: 'width 0.3s ease',
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <span
-                            style={{ fontSize: 16, fontWeight: 700, color: 'var(--brand-orange)' }}
-                          >
-                            {mission.points.toLocaleString()} pts
-                          </span>
-                        </div>
                       </div>
+                      <p className="text-xs text-az-ink/50 line-clamp-1">{mission.description}</p>
                     </div>
-                  ))}
-                </div>
-              )}
+
+                    <span className="text-sm font-bold text-az-success-400 shrink-0">
+                      +{mission.points.toLocaleString()} pts
+                    </span>
+                  </div>
+                ))}
+              </div>
             </section>
-
-            {/* Completed missions */}
-            {completedMissions.length > 0 && (
-              <section>
-                <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>
-                  Completed ({completedMissions.length})
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {completedMissions.map((mission) => (
-                    <div
-                      key={mission.id}
-                      className="az-glass"
-                      style={{ padding: 16, borderRadius: 16, opacity: 0.7 }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div>
-                          <h3 style={{ fontSize: 14, fontWeight: 600 }}>{mission.title}</h3>
-                          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                            {mission.description}
-                          </p>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <span
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              padding: '2px 8px',
-                              borderRadius: 999,
-                              backgroundColor: 'rgba(34,197,94,0.15)',
-                              color: 'var(--color-success-500)',
-                            }}
-                          >
-                            ✓ Done
-                          </span>
-                          <p
-                            style={{
-                              fontSize: 14,
-                              fontWeight: 700,
-                              color: 'var(--color-success-500)',
-                              marginTop: 4,
-                            }}
-                          >
-                            +{mission.points.toLocaleString()} pts
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-          </>
-        )}
-      </main>
-      <AppFooter />
-    </div>
+          )}
+        </div>
+      )}
+    </PageShell>
   );
 }

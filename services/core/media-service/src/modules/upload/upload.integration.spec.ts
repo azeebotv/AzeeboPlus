@@ -4,6 +4,10 @@ import { S3Service } from './s3.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from '@azeebo/shared-services';
 import { FileValidationService } from '../../common/services/file-validation.service';
+import { CdnPurgeService } from './cdn-purge.service';
+import { PrismaService } from '../database/prisma.service';
+import { CdnInvalidationQueueService } from './cdn-invalidation-queue.service';
+import { FeatureFlagService, mediaFlags } from '@azeebo/feature-flags';
 
 describe('UploadService Integration', () => {
   let service: UploadService;
@@ -50,6 +54,28 @@ describe('UploadService Integration', () => {
         },
         { provide: RedisService, useValue: mockRedisService },
         { provide: FileValidationService, useValue: mockFileValidationService },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest
+              .fn()
+              .mockImplementation((key: string) =>
+                Promise.resolve(key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked)
+              ),
+          },
+        },
+        { provide: CdnPurgeService, useValue: { purgeKeys: jest.fn(), purgePrefix: jest.fn() } },
+        {
+          provide: PrismaService,
+          useValue: {
+            mediaUpload: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn() },
+            $transaction: jest.fn(),
+          },
+        },
+        {
+          provide: CdnInvalidationQueueService,
+          useValue: { enqueue: jest.fn().mockResolvedValue({ queued: true }) },
+        },
       ],
     }).compile();
 
@@ -155,6 +181,28 @@ describe('UploadService Integration', () => {
           },
           { provide: RedisService, useValue: mockRedisService },
           { provide: FileValidationService, useValue: mockFileValidationService },
+          {
+            provide: FeatureFlagService,
+            useValue: {
+              isEnabled: jest
+                .fn()
+                .mockImplementation((key: string) =>
+                  Promise.resolve(key !== mediaFlags.virusScan && key !== mediaFlags.uploadChunked)
+                ),
+            },
+          },
+          { provide: CdnPurgeService, useValue: { purgeKeys: jest.fn(), purgePrefix: jest.fn() } },
+          {
+            provide: PrismaService,
+            useValue: {
+              mediaUpload: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn() },
+              $transaction: jest.fn(),
+            },
+          },
+          {
+            provide: CdnInvalidationQueueService,
+            useValue: { enqueue: jest.fn().mockResolvedValue({ queued: true }) },
+          },
         ],
       }).compile();
 

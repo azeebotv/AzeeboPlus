@@ -1,6 +1,6 @@
 import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, Reflector } from '@nestjs/core';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthCookieController } from './modules/auth/auth-cookie.controller';
@@ -11,6 +11,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { UniverseManagementModule } from './modules/universe-management/universe-management.module';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
+import { MenusModule } from './modules/menus/menus.module';
 import { WalletManagementModule } from './modules/wallet-management/wallet-management.module';
 import { ContentReviewModule } from './modules/content-review/content-review.module';
 import { EngagementAdminModule } from './modules/engagement-admin/engagement-admin.module';
@@ -19,10 +20,26 @@ import { ReportsAdminModule } from './modules/reports-admin/reports-admin.module
 import { PlatformOverviewModule } from './modules/platform-overview/platform-overview.module';
 import { AgbalaModule } from './modules/vertical/agbala/agbala.module';
 import { HealthModule } from './modules/health/health.module';
+import { OpsModule } from './modules/ops/ops.module';
 import { WebModule } from './web/web.module';
-import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
+import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
+import { PaymentGatewaysModule } from './modules/payment-gateways/payment-gateways.module';
+import { RealityShowsModule } from './modules/reality-shows/reality-shows.module';
+import { SubscriptionAdminModule } from './modules/subscription-admin/subscription-admin.module';
+import { AnalyticsProxyModule } from './modules/analytics-proxy/analytics-proxy.module';
+import { SearchProxyModule } from './modules/search-proxy/search-proxy.module';
+import { CreatorsProxyModule } from './modules/creators-proxy/creators-proxy.module';
+import { LiveEventsProxyModule } from './modules/live-events-proxy/live-events-proxy.module';
+import { SupportAdminModule } from './modules/support-admin/support-admin.module';
+import { AiProvenanceModule } from './modules/ai-provenance/ai-provenance.module';
+import { DualControlModule } from './modules/dual-control/dual-control.module';
+import { RightsClearancesModule } from './modules/rights-clearances/rights-clearances.module';
+import { ServiceAuthGuard, RateLimiterModule, SecurityModule } from '@azeebo/security';
+import { FeatureFlagModule, queueFlags, adminFlags, authFlags } from '@azeebo/feature-flags';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CsrfMiddleware } from './common/csrf.middleware';
+import { AdminAuditInterceptor } from './common/interceptors/admin-audit.interceptor';
+import { DualControlInterceptor } from './modules/dual-control/dual-control.interceptor';
 
 @Module({
   imports: [
@@ -31,6 +48,39 @@ import { CsrfMiddleware } from './common/csrf.middleware';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
+    SecurityModule,
+    // Global flag registry for the admin UI: the DLQ tuning knobs are numeric
+    // flags owned by the queue-service — registering their defaults here makes
+    // them visible/tunable in the admin feature-flags page. The admin flags
+    // themselves (new dashboard, report builder, bulk actions) are off until
+    // launched. auth_device_link is cross-service too (owned by auth-service,
+    // gated TV sign-in) — registered here so ops sees and stages it in the
+    // Global Flags page before the first Redis write exists.
+    FeatureFlagModule.register({
+      global: true,
+      defaultValues: {
+        [queueFlags.dlqRetryMaxPasses]: 3,
+        [queueFlags.dlqRetryBaseDelayMs]: 30000,
+      },
+      defaultFlags: {
+        [adminFlags.newDashboard]: false,
+        [adminFlags.featureFlagEditorV2]: false,
+        [adminFlags.reportBuilder]: false,
+        [adminFlags.bulkActions]: false,
+        [adminFlags.governanceDashboard]: false,
+        [authFlags.deviceLink]: false,
+      },
+    }),
+    FeatureFlagsModule,
+    OpsModule,
+    PaymentGatewaysModule,
+    RealityShowsModule,
+    SubscriptionAdminModule,
+    AnalyticsProxyModule,
+    SearchProxyModule,
+    CreatorsProxyModule,
+    LiveEventsProxyModule,
+    SupportAdminModule,
     AuthModule,
     DatabaseModule,
     UserManagementModule,
@@ -40,11 +90,15 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     AuditModule,
     UniverseManagementModule,
     SystemSettingsModule,
+    MenusModule,
     WalletManagementModule,
     ContentReviewModule,
     EngagementAdminModule,
     NotificationAdminModule,
     ReportsAdminModule,
+    AiProvenanceModule,
+    DualControlModule,
+    RightsClearancesModule,
     PlatformOverviewModule,
     AgbalaModule,
     HealthModule,
@@ -52,9 +106,18 @@ import { CsrfMiddleware } from './common/csrf.middleware';
   ],
   controllers: [AuthCookieController],
   providers: [
+    Reflector,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AdminAuditInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: DualControlInterceptor,
     },
     {
       provide: APP_GUARD,
@@ -69,10 +132,7 @@ export class AppModule implements NestModule {
       .exclude(
         { path: 'api/v1/auth/*path', method: RequestMethod.ALL },
         { path: 'api/auth/*path', method: RequestMethod.ALL },
-        { path: 'api/health', method: RequestMethod.ALL },
-        { path: '*path', method: RequestMethod.GET },
-        { path: '*path', method: RequestMethod.HEAD },
-        { path: '*path', method: RequestMethod.OPTIONS }
+        { path: 'api/health', method: RequestMethod.ALL }
       )
       .forRoutes('api');
   }

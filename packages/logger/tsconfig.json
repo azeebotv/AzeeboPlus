@@ -10,7 +10,8 @@
     "outDir": "./dist",
     "paths": {
       "@azeebo/shared-types": ["../shared-types/dist"],
-      "@azeebo/shared-types/*": ["../shared-types/dist/*"]
+      "@azeebo/shared-types/*": ["../shared-types/dist/*"],
+      "@azeebo/security/log-redaction": ["../security/dist/log-redaction/index.d.ts"]
     },
     "types": [
       "node",

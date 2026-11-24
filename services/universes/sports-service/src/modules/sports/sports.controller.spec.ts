@@ -4,6 +4,7 @@ jest.mock('libphonenumber-js/max', () => ({
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { SportsController } from './sports.controller.js';
 import { SportsService } from './sports.service.js';
 import { RateLimitService } from '@azeebo/security';
@@ -54,6 +55,10 @@ describe('SportsController', () => {
         {
           provide: RateLimitService,
           useValue: mockRateLimitService,
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
         },
         Reflector,
       ],

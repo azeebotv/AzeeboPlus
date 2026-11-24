@@ -1,0 +1,148 @@
+/**
+ * Azeebo+ Vanta Black Design System CSS Tokens
+ * Generated from Brand Logo Palette & Ultra-Dark OLED Architecture
+ */
+
+:root,
+[data-theme='dark'],
+.theme-vanta {
+  /* ==========================================================================
+     1. Brand Logo Extracted Colors
+     ========================================================================== */
+  --brand-crimson: #e5251c; /* Stop 1: Deep Flame Red */
+  --brand-scarlet: #f3501a; /* Stop 2: Core Azeebo Brand Red-Orange */
+  --brand-flame: #ff6b00; /* Stop 3: Electric Tangerine Orange */
+  --brand-amber: #ffa02e; /* Stop 4: Sunset Gold */
+  --brand-coral: #fa8128; /* Accent Glow */
+
+  /* Brand Primary Aliases */
+  --brand-primary: #f3501a;
+  --brand-primary-hover: #ff6b00;
+  --brand-primary-active: #e5251c;
+  --brand-primary-glow: rgba(243, 80, 26, 0.4);
+
+  /* Gradients */
+  --gradient-brand-flame: linear-gradient(
+    135deg,
+    #e5251c 0%,
+    #f3501a 38%,
+    #ff6b00 72%,
+    #ffa02e 100%
+  );
+  --gradient-brand-subtle: linear-gradient(
+    135deg,
+    rgba(229, 37, 28, 0.15) 0%,
+    rgba(243, 80, 26, 0.05) 100%
+  );
+  --gradient-vanta-glow: radial-gradient(
+    circle at top center,
+    rgba(243, 80, 26, 0.16) 0%,
+    rgba(5, 5, 5, 0) 70%
+  );
+  --gradient-cinema-scrim: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(5, 5, 5, 0.6) 60%,
+    #050505 100%
+  );
+
+  /* ==========================================================================
+     2. Vanta Black True Dark Mode Surfaces (OLED Ready)
+     ========================================================================== */
+  --vanta-black: #050505; /* 0% Lightness Canvas */
+  --vanta-surface-0: #09090c; /* Deep layer */
+  --vanta-surface-1: #0f0f14; /* Standard card container */
+  --vanta-surface-2: #15151c; /* Elevated cards & dialogs */
+  --vanta-surface-3: #1c1c26; /* Active / hover state */
+  --vanta-surface-input: #111116; /* Form input background */
+
+  /* Glassmorphism Specs */
+  --glass-vanta-bg: rgba(15, 15, 20, 0.72);
+  --glass-vanta-border: rgba(255, 255, 255, 0.08);
+  --glass-vanta-border-hover: rgba(255, 255, 255, 0.18);
+  --glass-vanta-border-active: rgba(243, 80, 26, 0.45);
+  --glass-vanta-blur: blur(20px);
+
+  /* Shadows & Illuminations */
+  --shadow-vanta-card: 0 10px 30px -5px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+  --shadow-vanta-elevated:
+    0 20px 45px -10px rgba(0, 0, 0, 0.9), 0 0 1px 1px rgba(255, 255, 255, 0.08);
+  --shadow-brand-glow: 0 0 35px rgba(243, 80, 26, 0.35);
+  --shadow-brand-glow-subtle: 0 0 18px rgba(243, 80, 26, 0.2);
+
+  /* ==========================================================================
+     3. High-Contrast Dark Mode Typography
+     ========================================================================== */
+  --text-vanta-primary: #ffffff; /* 100% white */
+  --text-vanta-secondary: #cbd5e1; /* Slate-300: High readable secondary */
+  --text-vanta-tertiary: #94a3b8; /* Slate-400: Metadata */
+  --text-vanta-muted: #6a778e; /* Slate-500 lifted to 4.5:1 AA on #050505 (was #64748b at 4.28:1) */
+  --text-vanta-accent: #ff6b00; /* Orange highlight */
+  --text-vanta-inverse: #050505; /* Dark text for gradient buttons */
+
+  /* ==========================================================================
+     4. Universe Dynamic Themes
+     ========================================================================== */
+  --universe-reality: #ff3366;
+  --universe-creators: #00e5ff;
+  --universe-movies: #ffa02e;
+  --universe-comedy: #ffd600;
+  --universe-sports: #00e676;
+  --universe-games: #b388ff;
+  --universe-lifestyle: #45b7d1;
+  --universe-vertical: #ff007a;
+
+  /* ==========================================================================
+     5. Semantics
+     ========================================================================== */
+  --status-success: #10b981;
+  --status-warning: #f59e0b;
+  --status-error: #ef4444;
+  --status-info: #3b82f6;
+}
+
+/* Base Body Application */
+body {
+  background-color: var(--vanta-black);
+  color: var(--text-vanta-primary);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Glassmorphism Card Utility */
+.vanta-glass-card {
+  background: var(--glass-vanta-bg);
+  backdrop-filter: var(--glass-vanta-blur);
+  -webkit-backdrop-filter: var(--glass-vanta-blur);
+  border: 1px solid var(--glass-vanta-border);
+  box-shadow: var(--shadow-vanta-card);
+  border-radius: 16px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vanta-glass-card:hover {
+  border-color: var(--glass-vanta-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-vanta-elevated);
+}
+
+/* Brand Button CTA Utility */
+.btn-azeebo-primary {
+  background: var(--gradient-brand-flame);
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: 9999px;
+  padding: 12px 28px;
+  box-shadow: var(--shadow-brand-glow-subtle);
+  transition: all 0.2s ease;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-azeebo-primary:hover {
+  box-shadow: var(--shadow-brand-glow);
+  transform: scale(1.02);
+  filter: brightness(1.08);
+}

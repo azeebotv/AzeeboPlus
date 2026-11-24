@@ -7,8 +7,10 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
+import { FeatureFlagService, liveEventFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 @Injectable()
@@ -18,7 +20,8 @@ export class LiveEventService {
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(ConfigService) private readonly config: ConfigService
+    @Inject(ConfigService) private readonly config: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
     this.walletServiceUrl =
       this.config.get<string>('WALLET_SERVICE_URL') || 'http://wallet-service:3002';
@@ -68,6 +71,11 @@ export class LiveEventService {
     maxViewers?: number;
     chatEnabled?: boolean;
   }) {
+    // live_event_chat: when off, chat is disabled on new events regardless of
+    // the organizer's request (moderation kill-switch).
+    const chatEnabled =
+      (data.chatEnabled ?? true) && (await this.featureFlagService.isEnabled(liveEventFlags.chat));
+
     return this.prisma.liveEvent.create({
       data: {
         title: data.title,
@@ -79,7 +87,7 @@ export class LiveEventService {
         ticketPrice: data.ticketPrice,
         currency: data.currency || 'NGN',
         maxViewers: data.maxViewers,
-        chatEnabled: data.chatEnabled ?? true,
+        chatEnabled,
         status: 'scheduled',
       },
     });
@@ -123,6 +131,11 @@ export class LiveEventService {
   }
 
   async purchaseTicket(eventId: string, userId: string) {
+    // live_event_tickets: when off, ticket sales are disabled entirely.
+    if (!(await this.featureFlagService.isEnabled(liveEventFlags.tickets, userId))) {
+      throw new ForbiddenException('Ticket sales are currently disabled');
+    }
+
     const event = await this.prisma.liveEvent.findUnique({
       where: { id: eventId },
       include: { _count: { select: { tickets: true } } },
@@ -159,9 +172,7 @@ export class LiveEventService {
         });
       } catch (error) {
         this.logger.error('Wallet debit failed', error);
-        throw new BadRequestException(
-          'Insufficient balance. Please fund your wallet and try again.'
-        );
+        mapAndThrow(error, 'debiting wallet for event ticket');
       }
     }
 
@@ -176,6 +187,89 @@ export class LiveEventService {
     });
   }
 
+  async purchaseGroupTickets(eventId: string, buyerUserId: string, recipientUserIds: string[]) {
+    if (!(await this.featureFlagService.isEnabled(liveEventFlags.tickets, buyerUserId))) {
+      throw new ForbiddenException('Ticket sales are currently disabled');
+    }
+
+    const uniqueRecipients = [...new Set(recipientUserIds.filter(Boolean))];
+    if (uniqueRecipients.length === 0) {
+      throw new BadRequestException('At least one recipient user ID is required');
+    }
+
+    const event = await this.prisma.liveEvent.findUnique({
+      where: { id: eventId },
+      include: { _count: { select: { tickets: true } } },
+    });
+    if (!event) throw new NotFoundException('Event not found');
+
+    if (event.status === 'cancelled') {
+      throw new BadRequestException('Event has been cancelled');
+    }
+
+    if (event.status === 'ended') {
+      throw new BadRequestException('Event has already ended');
+    }
+
+    if (event.maxViewers && event._count.tickets + uniqueRecipients.length > event.maxViewers) {
+      throw new ConflictException('Not enough tickets remaining for this group purchase');
+    }
+
+    const existingTickets = await this.prisma.liveEventTicket.findMany({
+      where: {
+        eventId,
+        userId: { in: uniqueRecipients },
+        status: 'purchased',
+      },
+      select: { userId: true },
+    });
+
+    if (existingTickets.length > 0) {
+      const alreadyClaimed = existingTickets.map((t) => t.userId).join(', ');
+      throw new ConflictException(`Users already hold tickets for this event: ${alreadyClaimed}`);
+    }
+
+    const totalAmount = Number(event.ticketPrice) * uniqueRecipients.length;
+
+    if (totalAmount > 0) {
+      try {
+        await axios.post(`${this.walletServiceUrl}/wallet/debit`, {
+          userId: buyerUserId,
+          amount: totalAmount,
+          currency: event.currency,
+          description: `Group purchase of ${uniqueRecipients.length} tickets for ${event.title}`,
+          reference: `group-tickets-${eventId}-${buyerUserId}-${Date.now()}`,
+        });
+      } catch (error) {
+        this.logger.error('Wallet debit for group tickets failed', error);
+        mapAndThrow(error, 'debiting wallet for group event tickets');
+      }
+    }
+
+    const createdTickets = await this.prisma.$transaction(
+      uniqueRecipients.map((recipientId) =>
+        this.prisma.liveEventTicket.create({
+          data: {
+            eventId,
+            userId: recipientId,
+            amount: event.ticketPrice,
+            currency: event.currency,
+            status: 'purchased',
+          },
+        })
+      )
+    );
+
+    return {
+      success: true,
+      eventId,
+      buyerUserId,
+      ticketsIssued: createdTickets.length,
+      recipients: uniqueRecipients,
+      totalAmount,
+    };
+  }
+
   async getUserTickets(userId: string) {
     return this.prisma.liveEventTicket.findMany({
       where: { userId },
@@ -185,6 +279,11 @@ export class LiveEventService {
   }
 
   async getStreamUrl(eventId: string, userId: string) {
+    // live_event_streaming: when off, the streaming backend is switched off.
+    if (!(await this.featureFlagService.isEnabled(liveEventFlags.streaming, userId))) {
+      throw new ForbiddenException('Live streaming is currently disabled');
+    }
+
     const event = await this.prisma.liveEvent.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Event not found');
 
@@ -192,17 +291,29 @@ export class LiveEventService {
       throw new ForbiddenException('Event has not started yet');
     }
 
-    const ticket = await this.prisma.liveEventTicket.findFirst({
-      where: { eventId, userId, status: 'purchased' },
-    });
-    if (!ticket) {
-      throw new ForbiddenException('You must purchase a ticket to watch this event');
+    // live_event_ppv: when on, paid events enforce ticket purchase (PPV gate);
+    // when off, the ticket requirement is lifted for all events.
+    const ppvEnabled = await this.featureFlagService.isEnabled(liveEventFlags.ppv, userId);
+    const requiresTicket = ppvEnabled && Number(event.ticketPrice) > 0;
+    if (requiresTicket) {
+      const ticket = await this.prisma.liveEventTicket.findFirst({
+        where: { eventId, userId, status: 'purchased' },
+      });
+      if (!ticket) {
+        throw new ForbiddenException('You must purchase a ticket to watch this event');
+      }
     }
 
-    if (event.streamUrl) return { streamUrl: event.streamUrl, event };
+    if (event.status === 'ended') {
+      const replayStreamUrl = event.replayUrl || event.streamUrl;
+      if (replayStreamUrl) {
+        return { streamUrl: replayStreamUrl, isReplay: true, event };
+      }
+      throw new NotFoundException('Replay recording not available yet for this event');
+    }
 
-    if (event.replayUrl && event.status === 'ended') {
-      return { streamUrl: event.replayUrl, event };
+    if (event.streamUrl) {
+      return { streamUrl: event.streamUrl, isReplay: false, event };
     }
 
     throw new NotFoundException('Stream not available yet');

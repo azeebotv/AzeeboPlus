@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
 import { Skeleton } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { Swords, BookOpen, Drama, Sparkles } from 'lucide-react';
 import analytics from '@/lib/analytics';
 
 interface Character {
@@ -22,42 +22,46 @@ interface PathData {
   id: string;
   name: string;
   description: string;
-  color: string;
-  icon: string;
   characters: Character[];
 }
 
+/** Each path keeps its own hue, expressed as a token rather than a loose hex. */
 const PATH_CONFIG: Record<
   string,
-  { name: string; description: string; color: string; icon: string }
+  {
+    name: string;
+    description: string;
+    tone: 'primary-500' | 'secondary-400' | 'warning-400' | 'success-400';
+    Icon: typeof Swords;
+  }
 > = {
   warrior: {
     name: 'Warrior',
     description:
       'Strength, honor, and combat mastery. Warriors are the backbone of any storyworld, wielding strength and strategy to overcome challenges.',
-    color: '#C41E3A',
-    icon: '⚔️',
+    tone: 'primary-500',
+    Icon: Swords,
   },
   sage: {
     name: 'Sage',
     description:
       'Wisdom, knowledge, and ancient truths. Sages hold the secrets of the past and guide others through understanding.',
-    color: '#1E90FF',
-    icon: '📚',
+    tone: 'secondary-400',
+    Icon: BookOpen,
   },
   trickster: {
     name: 'Trickster',
     description:
       'Cunning, deception, and survival. Tricksters navigate the world through wit and cleverness, finding unconventional solutions.',
-    color: '#FFD700',
-    icon: '🎭',
+    tone: 'warning-400',
+    Icon: Drama,
   },
   healer: {
     name: 'Healer',
     description:
       'Compassion, restoration, and balance. Healers mend what is broken and restore harmony to those around them.',
-    color: '#32CD32',
-    icon: '✨',
+    tone: 'success-400',
+    Icon: Sparkles,
   },
 };
 
@@ -79,8 +83,6 @@ export default function AgbalaPathPage() {
         id: pathId,
         name: pathConfig.name,
         description: pathConfig.description,
-        color: pathConfig.color,
-        icon: pathConfig.icon,
         characters: [],
       };
     },
@@ -88,132 +90,63 @@ export default function AgbalaPathPage() {
   });
 
   const characters = pathData?.characters || [];
+  const tone = `var(--color-az-${pathConfig.tone})`;
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Vertical" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: 20,
-              background: `linear-gradient(135deg, ${pathConfig.color}, ${pathConfig.color}CC)`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px',
-              fontSize: 32,
-            }}
-          >
-            {pathConfig.icon}
+    <PageShell activeNav="Vertical" maxWidth="md">
+      <header className="mb-8 text-center">
+        <span
+          className="mx-auto mb-4 flex size-18 items-center justify-center rounded-az-feature"
+          style={{
+            background: `linear-gradient(135deg, ${tone}, color-mix(in srgb, ${tone} 80%, transparent))`,
+          }}
+        >
+          <pathConfig.Icon className="size-8 text-az-ink" />
+        </span>
+        <h1 className="az-headline text-az-heading text-az-ink mb-2">{pathConfig.name}</h1>
+        <p className="az-body text-az-ink-muted mx-auto max-w-lg">{pathConfig.description}</p>
+      </header>
+
+      <section className="mb-8">
+        <h2 className="az-title text-az-ink mb-4">Characters on this Path</h2>
+        {isLoading ? (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} height="16rem" borderRadius="16px" />
+            ))}
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>{pathConfig.name}</h1>
-          <p style={{ color: 'var(--text-secondary)', maxWidth: 500, margin: '0 auto' }}>
-            {pathConfig.description}
+        ) : characters.length === 0 ? (
+          <p className="az-body text-az-ink-dim py-10 text-center">
+            No characters on this path yet.
           </p>
-        </div>
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
+            {characters.map((char) => (
+              <Link
+                key={char.id}
+                href={`/vertical/characters/${char.id}`}
+                className="az-glass block p-5"
+              >
+                {char.imageUrl && (
+                  <div className="relative mb-3 aspect-square overflow-hidden rounded-az-control bg-az-glass-fill">
+                    <OptimizedImage src={char.imageUrl} alt={char.name} className="object-cover" />
+                  </div>
+                )}
+                <h3 className="az-body-strong text-az-ink mb-1">{char.name}</h3>
+                {char.description && (
+                  <p className="az-caption text-az-ink-muted">{char.description}</p>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
 
-        <section style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>
-            Characters on this Path
-          </h2>
-          {isLoading ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                gap: 16,
-              }}
-            >
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} height="16rem" borderRadius="16px" />
-              ))}
-            </div>
-          ) : characters.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-              No characters on this path yet.
-            </p>
-          ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                gap: 16,
-              }}
-            >
-              {characters.map((char) => (
-                <Link
-                  key={char.id}
-                  href={`/vertical/characters/${char.id}`}
-                  style={{
-                    display: 'block',
-                    padding: 20,
-                    borderRadius: 16,
-                    border: '1px solid var(--border-default)',
-                    textDecoration: 'none',
-                    color: 'var(--text-primary)',
-                    transition: 'border-color 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = pathConfig.color;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--bg-secondary)';
-                  }}
-                >
-                  {char.imageUrl && (
-                    <div
-                      style={{
-                        position: 'relative',
-                        aspectRatio: '1',
-                        backgroundColor: 'var(--bg-tertiary)',
-                        marginBottom: 12,
-                      }}
-                    >
-                      <OptimizedImage
-                        src={char.imageUrl}
-                        alt={char.name}
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{char.name}</h3>
-                  {char.description && (
-                    <p style={{ color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.4 }}>
-                      {char.description}
-                    </p>
-                  )}
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <div style={{ textAlign: 'center' }}>
-          <Link
-            href="/vertical/agbala"
-            style={{
-              display: 'inline-block',
-              padding: '10px 20px',
-              background: 'rgba(232,66,10,0.15)',
-              border: '1px solid #E8420A',
-              color: 'var(--brand-orange)',
-              borderRadius: 8,
-              textDecoration: 'none',
-              fontSize: 14,
-              fontWeight: 600,
-            }}
-          >
-            ← Back to All Paths
-          </Link>
-        </div>
-      </main>
-      <AppFooter />
-    </div>
+      <div className="mx-auto max-w-[220px]">
+        <Link href="/vertical/agbala" className="az-btn-social">
+          Back to all paths
+        </Link>
+      </div>
+    </PageShell>
   );
 }

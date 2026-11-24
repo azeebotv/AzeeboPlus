@@ -11,7 +11,8 @@ import {
   Delete,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard, Public } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, movieFlags } from '@azeebo/feature-flags';
 
 import { MoviesService } from './movies.service.js';
 import { MovieResponse } from './interfaces/movie-response.interface.js';
@@ -26,7 +27,17 @@ import { RateMovieDto } from './dto/rate-movie.dto.js';
 export class MoviesController {
   constructor(@Inject(MoviesService) private readonly moviesService: MoviesService) {}
 
+  @Public()
   @Get()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'List movies' })
+  @ApiResponse({ status: 200, description: 'List of movies' })
+  async listMovies(): Promise<MovieResponse> {
+    return this.moviesService.listMovies();
+  }
+
+  @Public()
   @Get('featured')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -36,6 +47,7 @@ export class MoviesController {
     return this.moviesService.listMovies();
   }
 
+  @Public()
   @Get('trending')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -45,6 +57,7 @@ export class MoviesController {
     return this.moviesService.listMovies();
   }
 
+  @Public()
   @Get('african')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -54,6 +67,7 @@ export class MoviesController {
     return this.moviesService.getMoviesByGenreSlug('african');
   }
 
+  @Public()
   @Get('hollywood')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -63,6 +77,7 @@ export class MoviesController {
     return this.moviesService.getMoviesByGenreSlug('hollywood');
   }
 
+  @Public()
   @Get('genre/:slug')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -72,6 +87,7 @@ export class MoviesController {
     return this.moviesService.getMoviesByGenreSlug(slug);
   }
 
+  @Public()
   @Get('genre/:slug/:page')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -84,6 +100,7 @@ export class MoviesController {
     return this.moviesService.getMoviesByGenreSlug(slug, parseInt(page, 10));
   }
 
+  @Public()
   @Get('passes')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -93,31 +110,38 @@ export class MoviesController {
     return this.moviesService.listMovies();
   }
 
+  @Public()
   @Get('premieres')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(movieFlags.premieresEnabled)
   @RateLimit(30, 60000)
-  @ApiOperation({ summary: 'Premieres list' })
+  @ApiOperation({ summary: 'Premieres list (movie_premieres_enabled)' })
   @ApiResponse({ status: 200, description: 'Premieres list' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async listPremieres(): Promise<MovieResponse> {
     return this.moviesService.listPremieres();
   }
 
   @Get('watchlist')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(movieFlags.watchlistSync)
   @RateLimit(30, 60000)
-  @ApiOperation({ summary: 'User watchlist' })
+  @ApiOperation({ summary: 'User watchlist (movie_watchlist_sync)' })
   @ApiResponse({ status: 200, description: 'Watchlist' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async getWatchlist(@Request() req: { user: { id: string } }): Promise<MovieResponse> {
     return this.moviesService.getWatchlist(req.user.id);
   }
 
   @Post('watchlist')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(movieFlags.watchlistSync)
   @RateLimit(10, 60000)
-  @ApiOperation({ summary: 'Add to watchlist' })
+  @ApiOperation({ summary: 'Add to watchlist (movie_watchlist_sync)' })
   @ApiResponse({ status: 201, description: 'Added to watchlist' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async addToWatchlist(
     @Request() req: { user: { id: string } },
     @Body() body: AddToWatchlistDto
@@ -126,11 +150,13 @@ export class MoviesController {
   }
 
   @Delete('watchlist/:movieId')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(movieFlags.watchlistSync)
   @RateLimit(10, 60000)
-  @ApiOperation({ summary: 'Remove from watchlist' })
+  @ApiOperation({ summary: 'Remove from watchlist (movie_watchlist_sync)' })
   @ApiResponse({ status: 200, description: 'Removed from watchlist' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
   async removeFromWatchlist(
     @Request() req: { user: { id: string } },
     @Param('movieId') movieId: string
@@ -138,6 +164,27 @@ export class MoviesController {
     return this.moviesService.removeFromWatchlist(req.user.id, movieId);
   }
 
+  @Get('me/library')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'User purchased library' })
+  @ApiResponse({ status: 200, description: 'Library' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getLibrary(@Request() req: { user: { id: string } }): Promise<MovieResponse> {
+    return this.moviesService.getLibrary(req.user.id);
+  }
+
+  @Public()
+  @Get('viewing-windows/active')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get active viewing windows' })
+  @ApiResponse({ status: 200, description: 'Active viewing windows' })
+  async getActiveViewingWindows(): Promise<MovieResponse> {
+    return this.moviesService.getActiveViewingWindows();
+  }
+
+  @Public()
   @Get(':movieId')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
@@ -149,7 +196,8 @@ export class MoviesController {
   }
 
   @Post(':movieId/rent')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(movieFlags.rentalsEnabled)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Rent/unlock movie' })
   @ApiResponse({ status: 201, description: 'Rental created' })
@@ -159,16 +207,6 @@ export class MoviesController {
     @Param('movieId') movieId: string
   ): Promise<MovieResponse> {
     return this.moviesService.rentMovie(req.user.id, movieId);
-  }
-
-  @Get('me/library')
-  @UseGuards(RateLimitGuard)
-  @RateLimit(30, 60000)
-  @ApiOperation({ summary: 'User purchased library' })
-  @ApiResponse({ status: 200, description: 'Library' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getLibrary(@Request() req: { user: { id: string } }): Promise<MovieResponse> {
-    return this.moviesService.getLibrary(req.user.id);
   }
 
   @Post(':movieId/viewing-windows')
@@ -212,6 +250,7 @@ export class MoviesController {
     return this.moviesService.updateViewingWindow(windowId, body);
   }
 
+  @Public()
   @Get(':movieId/viewing-windows')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -221,15 +260,7 @@ export class MoviesController {
     return this.moviesService.getViewingWindows(movieId);
   }
 
-  @Get('viewing-windows/active')
-  @UseGuards(RateLimitGuard)
-  @RateLimit(30, 60000)
-  @ApiOperation({ summary: 'Get active viewing windows' })
-  @ApiResponse({ status: 200, description: 'Active viewing windows' })
-  async getActiveViewingWindows(): Promise<MovieResponse> {
-    return this.moviesService.getActiveViewingWindows();
-  }
-
+  @Public()
   @Get(':movieId/availability')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)

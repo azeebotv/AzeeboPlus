@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PaymentsController } from './payments.controller.js';
 import { PaymentsService } from './payments.service.js';
+import { FeatureFlagService, FeatureFlagGuard } from '@azeebo/feature-flags';
+import { RateLimitGuard } from '@azeebo/security';
 
 describe('PaymentsController', () => {
   let controller: PaymentsController;
@@ -22,8 +24,17 @@ describe('PaymentsController', () => {
           provide: PaymentsService,
           useValue: mockPaymentsService,
         },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+        },
       ],
-    }).compile();
+    })
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(FeatureFlagGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .compile();
 
     controller = module.get<PaymentsController>(PaymentsController);
   });
@@ -60,7 +71,7 @@ describe('PaymentsController', () => {
 
       expect(response.success).toBe(true);
       expect(response.data.paymentId).toBe('pay-abc123');
-      expect(mockPaymentsService.initializePayment).toHaveBeenCalledWith('user-123', dto);
+      expect(mockPaymentsService.initializePayment).toHaveBeenCalledWith('user-123', dto, false);
     });
 
     it('should throw BadRequestException for amount <= 0', async () => {
@@ -116,7 +127,7 @@ describe('PaymentsController', () => {
 
       await controller.initializePayment(req, dto);
 
-      expect(mockPaymentsService.initializePayment).toHaveBeenCalledWith('user-123', dto);
+      expect(mockPaymentsService.initializePayment).toHaveBeenCalledWith('user-123', dto, false);
     });
   });
 
@@ -297,9 +308,7 @@ describe('PaymentsController', () => {
     });
 
     it('should throw NotFoundException for non-existent payment', async () => {
-      mockPaymentsService.getPayment.mockRejectedValue(
-        new NotFoundException('Payment not found')
-      );
+      mockPaymentsService.getPayment.mockRejectedValue(new NotFoundException('Payment not found'));
 
       await expect(controller.getPayment(req, 'pay-nonexistent')).rejects.toThrow(
         NotFoundException
@@ -339,7 +348,34 @@ describe('PaymentsController', () => {
       expect(mockPaymentsService.requestRefund).toHaveBeenCalledWith(
         'user-123',
         'pay-abc123',
-        'Product not received as described'
+        'Product not received as described',
+        undefined
+      );
+    });
+
+    it('should forward the optional idempotencyKey to the service', async () => {
+      const dto = {
+        transactionId: 'pay-abc123',
+        reason: 'Product not received as described',
+        idempotencyKey: '9f1c2b3a-4d5e-4f60-8a9b-0c1d2e3f4a5b',
+      };
+      mockPaymentsService.requestRefund.mockResolvedValue({
+        success: true,
+        data: {
+          refundId: 'ref-abc123',
+          amount: 1000,
+          status: 'completed',
+          message: 'Refund processed successfully',
+        },
+      });
+
+      await controller.requestRefund(req, dto);
+
+      expect(mockPaymentsService.requestRefund).toHaveBeenCalledWith(
+        'user-123',
+        'pay-abc123',
+        'Product not received as described',
+        '9f1c2b3a-4d5e-4f60-8a9b-0c1d2e3f4a5b'
       );
     });
 
@@ -373,13 +409,16 @@ describe('PaymentsController', () => {
 
   describe('route ordering', () => {
     it('should have history route before wildcard :id route', () => {
-      const routes = Reflect.getMetadata('path', PaymentsController.prototype) || [];
-      const methodRoutes = Object.getOwnPropertyNames(
-        PaymentsController.prototype
-      ).filter((name) => {
-        const meta = Reflect.getMetadata('path', PaymentsController.prototype, name);
-        return meta !== undefined;
-      });
+      // Nest stores route-path metadata on the method function itself, not on
+      // the prototype keyed by method name.
+      const methodRoutes = Object.getOwnPropertyNames(PaymentsController.prototype).filter(
+        (name) => {
+          const fn = (PaymentsController.prototype as unknown as Record<string, unknown>)[name];
+          return (
+            typeof fn === 'function' && Reflect.getMetadata('path', fn as object) !== undefined
+          );
+        }
+      );
 
       expect(methodRoutes).toContain('getPaymentHistory');
       expect(methodRoutes).toContain('getPayment');

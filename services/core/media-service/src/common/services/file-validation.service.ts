@@ -124,9 +124,12 @@ export class FileValidationService {
         Buffer.from([0x47, 0x49, 0x46, 0x38]), // GIF
       ],
       video: [
-        Buffer.from([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70]), // MP4
-        Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), // WebM
-        Buffer.from([0x66, 0x74, 0x79, 0x70]), // QuickTime
+        // MP4/QuickTime: any ISO-BMFF file starts with a 4-byte big-endian box
+        // size followed by 'ftyp'. Matching the box length is fragile — real
+        // encoders emit varying sizes (32-byte ftyp from ffmpeg, 24-byte from
+        // some muxers), so validate the structure instead of one fixed header.
+        'isobmff' as unknown as Buffer,
+        Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), // WebM/Matroska
       ],
       audio: [
         Buffer.from([0x49, 0x44, 0x33]), // MP3
@@ -143,6 +146,12 @@ export class FileValidationService {
     if (!validSignatures) return;
 
     const isValid = validSignatures.some((signature) => {
+      // ISO-BMFF structural check (mp4/mov/m4a): first box = 4-byte BE size +
+      // 4-byte type; require the type to be 'ftyp'.
+      if ((signature as unknown as string) === 'isobmff') {
+        if (buffer.length < 8) return false;
+        return buffer.slice(4, 8).toString('latin1') === 'ftyp';
+      }
       if (buffer.length < signature.length) return false;
       return buffer.slice(0, signature.length).equals(signature);
     });

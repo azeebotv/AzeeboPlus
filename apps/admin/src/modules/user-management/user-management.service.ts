@@ -1,4 +1,6 @@
 import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import type { UserRole } from '../../generated/prisma';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -22,19 +24,53 @@ export interface UserWithStats {
 
 @Injectable()
 export class UserManagementService {
+  private async runInTx<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    const prismaClient = this.prisma as unknown as {
+      $transaction?: (cb: (tx: Prisma.TransactionClient) => Promise<T>) => Promise<T>;
+    };
+    if (typeof prismaClient.$transaction === 'function') {
+      return prismaClient.$transaction(fn);
+    }
+    return fn(this.prisma as unknown as Prisma.TransactionClient);
+  }
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AuditLogService) private readonly auditService: AuditLogService
   ) {}
 
   async getUsers(page = 1, limit = 20, role?: string, search?: string): Promise<unknown> {
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Math.min(100, Number(limit) || 20));
     const where: Prisma.UserWhereInput = {};
 
     if (role && role !== 'all') {
-      where.role = role;
-    }
-
-    if (search) {
+      if (role === 'creator') {
+        const creatorFilter: Prisma.UserWhereInput = {
+          OR: [{ role: 'creator' }, { creatorProfile: { isNot: null } }],
+        };
+        if (search) {
+          where.AND = [
+            creatorFilter,
+            {
+              OR: [
+                { email: { contains: search, mode: 'insensitive' } },
+                { displayName: { contains: search, mode: 'insensitive' } },
+              ],
+            },
+          ];
+        } else {
+          where.OR = creatorFilter.OR;
+        }
+      } else {
+        where.role = role as Prisma.EnumUserRoleFilter<'User'>;
+        if (search) {
+          where.OR = [
+            { email: { contains: search, mode: 'insensitive' } },
+            { displayName: { contains: search, mode: 'insensitive' } },
+          ];
+        }
+      }
+    } else if (search) {
       where.OR = [
         { email: { contains: search, mode: 'insensitive' } },
         { displayName: { contains: search, mode: 'insensitive' } },
@@ -44,31 +80,42 @@ export class UserManagementService {
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
-        take: limit,
-        skip: (page - 1) * limit,
+        take: limitNum,
+        skip: (pageNum - 1) * limitNum,
         orderBy: { createdAt: 'desc' },
         include: {
           wallet: true,
+          creatorProfile: true,
           _count: { select: { contentItems: true } },
         },
       }),
       this.prisma.user.count({ where }),
     ]);
 
+    const mappedUsers = users.map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.displayName,
+      displayName: u.displayName,
+      role: u.role,
+      createdAt: u.createdAt,
+      isActive: !u.isSuspended,
+      status: u.isSuspended ? 'suspended' : 'active',
+      suspensionStatus: u.isSuspended ? 'suspended' : 'active',
+      // Creator verification state (null for non-creators) so the directory
+      // can render a correct Verify/Unverify toggle without a detail fetch.
+      isVerified: u.creatorProfile?.verified ?? (u.role === 'creator' && u.isVerified) ?? false,
+      walletBalance: u.wallet?.balance || 0,
+      contentCount: u._count.contentItems,
+    }));
+
     return {
-      users: users.map((u) => ({
-        id: u.id,
-        email: u.email,
-        displayName: u.displayName,
-        role: u.role,
-        createdAt: u.createdAt,
-        walletBalance: u.wallet?.balance || 0,
-        contentCount: u._count.contentItems,
-      })),
+      users: mappedUsers,
+      items: mappedUsers,
       total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
     };
   }
 
@@ -93,6 +140,9 @@ export class UserManagementService {
       displayName: user.displayName,
       role: user.role,
       avatar: user.avatar,
+      isSuspended: user.isSuspended,
+      suspensionReason: user.suspensionReason,
+      isVerified: user.creatorProfile?.verified ?? false,
       createdAt: user.createdAt,
       wallet: user.wallet,
       creatorProfile: user.creatorProfile,
@@ -109,8 +159,8 @@ export class UserManagementService {
     ipAddress?: string,
     userAgent?: string
   ): Promise<unknown> {
-    const allowedRoles = ['user', 'creator', 'admin', 'superadmin'];
-    if (!allowedRoles.includes(newRole)) {
+    const allowedRoles: UserRole[] = ['user', 'creator', 'moderator', 'admin', 'super_admin'];
+    if (!allowedRoles.includes(newRole as UserRole)) {
       throw new BadRequestException('Invalid role');
     }
 
@@ -125,7 +175,7 @@ export class UserManagementService {
     const oldRole = user.role;
     const updated = await this.prisma.user.update({
       where: { id: userId },
-      data: { role: newRole },
+      data: { role: newRole as UserRole },
     });
 
     await this.auditService.log({
@@ -169,8 +219,8 @@ export class UserManagementService {
       ? new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000)
       : undefined;
 
-    const [updatedUser, suspension] = await Promise.all([
-      this.prisma.user.update({
+    const [updatedUser, suspension] = await this.runInTx(async (tx) => {
+      const u = await tx.user.update({
         where: { id: userId },
         data: {
           isSuspended: true,
@@ -180,16 +230,17 @@ export class UserManagementService {
           suspendedBy,
           updatedAt: new Date(),
         },
-      }),
-      this.prisma.userSuspension.create({
+      });
+      const s = await tx.userSuspension.create({
         data: {
           userId,
           reason,
           suspendedBy,
           expiresAt,
         },
-      }),
-    ]);
+      });
+      return [u, s];
+    });
 
     await this.auditService.log({
       actorId: suspendedBy,
@@ -216,6 +267,28 @@ export class UserManagementService {
         suspensionId: suspension.id,
       },
     };
+  }
+
+  async bulkSuspend(
+    userIds: string[],
+    reason: string,
+    suspendedBy: string,
+    durationDays?: number,
+    ipAddress?: string
+  ): Promise<{ suspended: number; failed: number }> {
+    let suspended = 0;
+    let failed = 0;
+
+    for (const id of userIds) {
+      try {
+        await this.suspendUser(id, reason, suspendedBy, durationDays, ipAddress);
+        suspended++;
+      } catch (err) {
+        failed++;
+      }
+    }
+
+    return { suspended, failed };
   }
 
   async revokeSuspension(
@@ -297,6 +370,63 @@ export class UserManagementService {
     };
   }
 
+  /** Verify/unverify a creator (the Creators page's verify buttons). */
+  async setCreatorVerified(
+    userId: string,
+    verified: boolean,
+    actorId?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<unknown> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { creatorProfile: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.role !== 'creator' && !user.creatorProfile) {
+      throw new BadRequestException('User is not a creator');
+    }
+
+    // creator_profiles is a postgres_fdw FOREIGN table here — ON CONFLICT
+    // (Prisma upsert) is not supported through FDW, so find-then-write.
+    const existing = user.creatorProfile;
+    const profile = existing
+      ? await this.prisma.creatorProfile.update({ where: { userId }, data: { verified } })
+      : await this.prisma.creatorProfile.create({ data: { userId, verified } });
+
+    if (user.role !== 'creator' && verified) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { role: 'creator', isVerified: true },
+      });
+    }
+
+    await this.auditService.log({
+      actorId,
+      action: verified ? 'verify_creator' : 'unverify_creator',
+      targetType: 'user',
+      targetId: userId,
+      details: { email: user.email, displayName: user.displayName },
+      ipAddress,
+      userAgent,
+    });
+
+    return {
+      success: true,
+      data: {
+        id: user.id,
+        email: user.email,
+        name: user.displayName,
+        displayName: user.displayName,
+        role: verified ? 'creator' : user.role,
+        isVerified: profile.verified,
+      },
+    };
+  }
+
   async getUserStats(): Promise<UserStats> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -310,7 +440,9 @@ export class UserManagementService {
         where: { role: 'user' },
       }),
       this.prisma.user.count({
-        where: { role: 'creator' },
+        where: {
+          OR: [{ role: 'creator' }, { creatorProfile: { isNot: null } }],
+        },
       }),
     ]);
 
@@ -354,5 +486,115 @@ export class UserManagementService {
       success: true,
       message: 'User deleted successfully',
     };
+  }
+
+  async createUser(data: {
+    email: string;
+    displayName: string;
+    password?: string;
+    role?: UserRole;
+    isVerified?: boolean;
+  }) {
+    if (!data.email?.trim() || !data.displayName?.trim()) {
+      throw new BadRequestException('Email and display name are required');
+    }
+
+    const email = data.email.toLowerCase().trim();
+    const existing = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (existing) {
+      throw new BadRequestException(`User with email "${email}" already exists`);
+    }
+
+    const rawPassword = data.password?.trim() || 'AzeeboPass123!';
+    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+    const role = (data.role || 'user') as UserRole;
+    const isVerified = Boolean(data.isVerified);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        displayName: data.displayName.trim(),
+        password: hashedPassword,
+        role,
+        isVerified,
+        wallet: {
+          create: {
+            balance: 0,
+            currency: 'NGN',
+          },
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+      },
+    });
+
+    if (role === 'creator') {
+      await this.prisma.creatorProfile.create({
+        data: {
+          userId: user.id,
+          verified: isVerified,
+        },
+      });
+    }
+
+    return user;
+  }
+
+  async updateUser(
+    id: string,
+    data: {
+      displayName?: string;
+      email?: string;
+      role?: UserRole;
+      isVerified?: boolean;
+    }
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException(`User ${id} not found`);
+
+    const updateData: Prisma.UserUpdateInput = {};
+    if (data.displayName !== undefined) updateData.displayName = data.displayName.trim();
+    if (data.email !== undefined) updateData.email = data.email.toLowerCase().trim();
+    if (data.role !== undefined) updateData.role = data.role as UserRole;
+    if (data.isVerified !== undefined) updateData.isVerified = Boolean(data.isVerified);
+
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        role: true,
+        isVerified: true,
+        updatedAt: true,
+      },
+    });
+
+    if (data.isVerified !== undefined || data.role === 'creator') {
+      const existing = await this.prisma.creatorProfile.findUnique({
+        where: { userId: id },
+      });
+      if (existing) {
+        await this.prisma.creatorProfile.update({
+          where: { id: existing.id },
+          data: { verified: Boolean(data.isVerified) },
+        });
+      } else {
+        await this.prisma.creatorProfile.create({
+          data: { userId: id, verified: Boolean(data.isVerified) },
+        });
+      }
+    }
+
+    return updated;
   }
 }

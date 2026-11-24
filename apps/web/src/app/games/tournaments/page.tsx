@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
 import analytics from '@/lib/analytics';
@@ -25,19 +25,36 @@ interface Tournament {
   gameTitle?: string;
 }
 
-const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+/* Lifecycle statuses ride the semantic ramp; `completed` is the absence of a
+   status rather than one, so it reads from the ink layer. */
+const STATUS_STYLES: Record<
+  string,
+  { chipBg: string; chipText: string; bannerFrom: string; label: string }
+> = {
   registration: {
-    bg: 'rgba(59,130,246,0.2)',
-    text: 'var(--color-secondary-400)',
+    chipBg: 'bg-az-secondary-500/20',
+    chipText: 'text-az-secondary-400',
+    bannerFrom: 'from-az-secondary-500/20',
     label: 'Registration Open',
   },
   in_progress: {
-    bg: 'rgba(74,222,128,0.2)',
-    text: 'var(--color-success-400)',
+    chipBg: 'bg-az-success-400/20',
+    chipText: 'text-az-success-400',
+    bannerFrom: 'from-az-success-400/20',
     label: 'In Progress',
   },
-  completed: { bg: 'rgba(156,163,175,0.2)', text: '#9CA3AF', label: 'Completed' },
-  upcoming: { bg: 'rgba(245,158,11,0.2)', text: 'var(--color-warning-500)', label: 'Upcoming' },
+  completed: {
+    chipBg: 'bg-az-ink-muted/20',
+    chipText: 'text-az-ink-muted',
+    bannerFrom: 'from-az-ink-muted/20',
+    label: 'Completed',
+  },
+  upcoming: {
+    chipBg: 'bg-az-warning-500/20',
+    chipText: 'text-az-warning-400',
+    bannerFrom: 'from-az-warning-500/20',
+    label: 'Upcoming',
+  },
 };
 
 function TournamentsPageContent(): React.JSX.Element {
@@ -60,50 +77,31 @@ function TournamentsPageContent(): React.JSX.Element {
   const error = tournamentsQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Games" />
-
-      {/* Hero */}
-      <section
-        className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #1A0A0A 100%)' }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Tournaments
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto mb-6"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Compete in gaming tournaments for prizes and glory
-          </motion.p>
-          <motion.div
-            className="flex items-center justify-center gap-6 text-sm text-white/60"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <span>
+    <PageShell
+      activeNav="Games"
+      maxWidth="7xl"
+      glowColor="color-mix(in srgb, var(--color-az-secondary-500) 22%, transparent)"
+    >
+      <PageHero
+        eyebrow="Games Universe"
+        title="Tournaments"
+        subtitle="Compete in gaming tournaments for prizes and glory"
+        actions={
+          <div className="flex items-center gap-6">
+            <span className="az-body text-az-ink/60">
               {tournaments.filter((t) => t.status === 'registration').length} open for registration
             </span>
-            <span>{tournaments.filter((t) => t.status === 'in_progress').length} in progress</span>
-          </motion.div>
-        </div>
-      </section>
+            <span className="az-body text-az-ink/60">
+              {tournaments.filter((t) => t.status === 'in_progress').length} in progress
+            </span>
+          </div>
+        }
+      />
 
       {/* Tournaments Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section className="py-2 sm:py-4">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-            All Tournaments
-          </h2>
+          <h2 className="az-section-title mb-6 text-az-ink sm:mb-8">All Tournaments</h2>
         </ScrollReveal>
 
         {isLoading ? (
@@ -140,41 +138,37 @@ function TournamentsPageContent(): React.JSX.Element {
                 >
                   <GlowCard universe="games" className="overflow-hidden">
                     <div
-                      className="h-44 relative"
-                      style={{
-                        background: `linear-gradient(135deg, ${statusStyle.bg}, #1A0A0A)`,
-                      }}
+                      className={`relative h-44 bg-gradient-to-br to-[var(--bg-primary)] ${statusStyle.bannerFrom}`}
                     >
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-6xl opacity-20">🏆</span>
+                        <span className="text-6xl opacity-20"></span>
                       </div>
                       <div className="absolute top-3 right-3">
                         <span
-                          className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                          style={{ backgroundColor: statusStyle.bg, color: statusStyle.text }}
+                          className={`az-overline rounded-az-pill px-2.5 py-1 ${statusStyle.chipBg} ${statusStyle.chipText}`}
                         >
                           {statusStyle.label}
                         </span>
                       </div>
                       <div className="absolute bottom-3 left-3">
-                        <p className="text-white text-xl font-bold">
+                        <p className="az-title text-az-ink">
                           {tournament.prizePool.toLocaleString()}{' '}
                           {tournament.prizeCurrency || 'pts'}
                         </p>
-                        <p className="text-white/60 text-xs">Prize Pool</p>
+                        <p className="az-caption text-az-ink/60">Prize Pool</p>
                       </div>
                     </div>
 
                     <div className="p-5">
-                      <h3 className="font-bold text-white text-lg mb-1">{tournament.name}</h3>
+                      <h3 className="az-subtitle mb-1 text-az-ink">{tournament.name}</h3>
                       {tournament.gameTitle && (
-                        <p className="text-xs text-white/40 mb-2">{tournament.gameTitle}</p>
+                        <p className="az-caption mb-2 text-az-ink/40">{tournament.gameTitle}</p>
                       )}
-                      <p className="text-sm text-white/50 mb-4 line-clamp-2">
+                      <p className="az-body mb-4 line-clamp-2 text-az-ink/50">
                         {tournament.description}
                       </p>
 
-                      <div className="flex items-center justify-between text-xs text-white/40 mb-4">
+                      <div className="az-caption mb-4 flex items-center justify-between text-az-ink/40">
                         <span>
                           {new Date(tournament.startDate).toLocaleDateString('en-NG', {
                             month: 'short',
@@ -200,7 +194,7 @@ function TournamentsPageContent(): React.JSX.Element {
                       <Link href={`/games/tournaments/${tournament.id}`}>
                         <motion.button
                           type="button"
-                          className="az-btn-primary w-full"
+                          className="az-btn-primary"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           disabled={tournament.status === 'completed'}
@@ -221,14 +215,12 @@ function TournamentsPageContent(): React.JSX.Element {
             })}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">No tournaments available</p>
+          <div className="py-12 text-center">
+            <p className="az-lead text-az-ink-muted">No tournaments available</p>
           </div>
         )}
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -238,8 +230,8 @@ export default function TournamentsPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

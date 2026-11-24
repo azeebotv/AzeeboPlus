@@ -3,11 +3,14 @@ import { INestApplication, ValidationPipe, ExecutionContext } from '@nestjs/comm
 import request from 'supertest';
 import { TicketController } from './ticket.controller';
 import { TicketService } from './ticket.service';
+import { SupportAccessControlService } from '../support/support-access-control.service';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
+import { FeatureFlagGuard, FeatureFlagService } from '@azeebo/feature-flags';
 // Ticket DTO types used implicitly by mock data in tests
 
 describe('Support Service Pagination Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
 
   const mockTicketService = {
     getTickets: jest.fn().mockResolvedValue({
@@ -44,8 +47,25 @@ describe('Support Service Pagination Tests', () => {
       controllers: [TicketController],
       providers: [
         {
+          provide: SupportAccessControlService,
+          useValue: {
+            getScope: jest.fn(),
+            canAccessTicket: jest.fn().mockReturnValue(true),
+            enforceAccess: jest.fn(),
+            maskPII: jest.fn((data: unknown) => data),
+          },
+        },
+        {
           provide: TicketService,
           useValue: mockTicketService,
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(true) },
+        },
+        {
+          provide: FeatureFlagGuard,
+          useValue: { canActivate: jest.fn().mockReturnValue(true) },
         },
       ],
     })
@@ -65,6 +85,8 @@ describe('Support Service Pagination Tests', () => {
       next();
     });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -85,7 +107,7 @@ describe('Support Service Pagination Tests', () => {
         meta: { page: 1, limit: 20, total: 50, totalPages: 3 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/support/tickets')
         .set('Authorization', 'Bearer test-token');
 
@@ -105,7 +127,7 @@ describe('Support Service Pagination Tests', () => {
         meta: { page: 3, limit: 20, total: 50, totalPages: 3 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/support/tickets?page=3')
         .set('Authorization', 'Bearer test-token');
 
@@ -122,7 +144,7 @@ describe('Support Service Pagination Tests', () => {
         meta: { page: 1, limit: 10, total: 50, totalPages: 5 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/support/tickets?limit=10')
         .set('Authorization', 'Bearer test-token');
 
@@ -139,7 +161,7 @@ describe('Support Service Pagination Tests', () => {
         meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/support/tickets?status=OPEN')
         .set('Authorization', 'Bearer test-token');
 
@@ -155,7 +177,7 @@ describe('Support Service Pagination Tests', () => {
         meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/support/tickets?category=REFUND')
         .set('Authorization', 'Bearer test-token');
 
@@ -171,7 +193,7 @@ describe('Support Service Pagination Tests', () => {
         meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/support/tickets?status=OPEN&category=REFUND&page=2&limit=10')
         .set('Authorization', 'Bearer test-token');
 
@@ -192,7 +214,7 @@ describe('Support Service Pagination Tests', () => {
         meta: { page: 2, limit: 20, total: 50, totalPages: 3 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/support/tickets?page=2')
         .set('Authorization', 'Bearer test-token');
 
@@ -208,7 +230,7 @@ describe('Support Service Pagination Tests', () => {
         meta: { page: 3, limit: 20, total: 50, totalPages: 3 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/support/tickets?page=3')
         .set('Authorization', 'Bearer test-token');
 
@@ -227,7 +249,7 @@ describe('Support Service Pagination Tests', () => {
         meta: { page: 1, limit: 20, total: 25, totalPages: 2 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/support/tickets/my')
         .set('Authorization', 'Bearer test-token');
 
@@ -243,7 +265,7 @@ describe('Support Service Pagination Tests', () => {
         meta: { page: 2, limit: 10, total: 25, totalPages: 3 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/support/tickets/my?page=2&limit=10')
         .set('Authorization', 'Bearer test-token');
 
@@ -258,7 +280,7 @@ describe('Support Service Pagination Tests', () => {
         meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request(baseUrl)
         .get('/support/tickets/my?status=RESOLVED')
         .set('Authorization', 'Bearer test-token');
 

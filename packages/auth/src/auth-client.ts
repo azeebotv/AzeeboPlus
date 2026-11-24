@@ -396,6 +396,7 @@ export class AuthClient {
         });
       }
     } else {
+      // eslint-disable-next-line no-console -- debug fallback when analytics is disabled
       console.debug('[Auth]', event);
     }
   }

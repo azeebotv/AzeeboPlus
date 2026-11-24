@@ -59,13 +59,13 @@ describe('ComedyService Integration - Cross-Service Communication', () => {
           useValue: {
             get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
               const config: Record<string, unknown> = {
-                ANALYTICS_SERVICE_URL: 'http://analytics-service:3040',
+                ANALYTICS_SERVICE_URL: 'http://analytics-service:3008',
               };
               return config[key] ?? defaultValue;
             }),
             getOrThrow: jest.fn().mockImplementation((key: string) => {
               const config: Record<string, string> = {
-                ANALYTICS_SERVICE_URL: 'http://analytics-service:3040',
+                ANALYTICS_SERVICE_URL: 'http://analytics-service:3008',
               };
               return config[key];
             }),
@@ -175,9 +175,9 @@ describe('ComedyService Integration - Cross-Service Communication', () => {
       expect(result.success).toBe(true);
       expect(mockPrismaService.comedyChallengeEntry.create).toHaveBeenCalled();
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/analytics/track'),
+        expect.stringContaining('/v1/analytics/events'),
         expect.objectContaining({
-          eventName: 'challenge_participated',
+          type: 'challenge_participated',
           userId: 'user-1',
           universe: 'comedy',
         })

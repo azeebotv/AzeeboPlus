@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client/index.js';
@@ -160,7 +161,7 @@ export class RefundService {
       );
     } catch (error) {
       this.logger.error(`Failed to process refund ${id}: ${(error as Error).message}`);
-      throw new BadRequestException('Failed to process refund');
+      mapAndThrow(error, 'processing refund');
     }
 
     const updatedRefund = await this.prisma.refund.update({

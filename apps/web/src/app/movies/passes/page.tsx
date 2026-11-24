@@ -1,23 +1,17 @@
 'use client';
 import { Suspense, lazy, useEffect, useState } from 'react';
 
-export const metadata = {
-  title: 'Cinema Passes | Azeebo',
-  description: 'Get unlimited access to premium movies with affordable cinema passes on Azeebo.',
-  openGraph: {
-    title: 'Cinema Passes | Azeebo',
-    description: 'Get unlimited access to premium movies with affordable cinema passes on Azeebo.',
-  },
-};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
+import { Ticket, Check, Clock, Play } from 'lucide-react';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
 
 interface CinemaPass {
@@ -41,6 +35,15 @@ interface UserPass {
   moviesUsed: number;
   moviesLimit: number;
   isActive: boolean;
+}
+
+/* `.az-btn-primary` is unlayered, so it always beats a utility on the same
+   element: the filled and outlined CTA variants therefore live in two separate
+   class strings instead of one conditional `className`. */
+function passCtaClass(isPopular: boolean): string {
+  return isPopular
+    ? 'az-btn-primary transition-all'
+    : 'az-chip az-body-strong w-full px-6 py-2 text-az-ink transition-all';
 }
 
 function PassesPageContent(): React.JSX.Element {
@@ -80,7 +83,7 @@ function PassesPageContent(): React.JSX.Element {
 
   const purchaseMutation = useMutation({
     mutationFn: async (passId: string) => {
-      const res = await apiFetch('/api/v1/movies/passes/purchase', {
+      const res = await apiFetch('/api/v1/movies/passes/subscribe', {
         method: 'POST',
         body: JSON.stringify({ passId }),
       });
@@ -104,221 +107,262 @@ function PassesPageContent(): React.JSX.Element {
   const error = passesQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Movies" />
+    <PageShell activeNav="Movies" maxWidth="7xl">
+      <PageHero
+        title="FilmCinema Passes"
+        subtitle="Unlimited access to premium movies"
+        glowColor="color-mix(in srgb, var(--color-az-warning-500) 18%, transparent)"
+      />
 
-      {/* Hero */}
-      <section
-        className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #1A0A0A 100%)' }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            🎬 Cinema Passes
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Unlimited access to premium movies
-          </motion.p>
-        </div>
+      {/* Active Pass */}
+      {userPass?.isActive && (
+        <ScrollReveal>
+          <div className="mb-10 rounded-az-panel border-2 border-az-warning-500/50 bg-az-glass-card p-6 shadow-az-lifted backdrop-blur-[var(--blur-az-glass)]">
+            <div className="mb-4 flex items-center gap-4">
+              <div className="flex size-14 flex-shrink-0 items-center justify-center rounded-az-panel border border-az-warning-500/30 bg-az-warning-500/15 text-az-warning-400 shadow-lg shadow-az-warning-500/10">
+                <Ticket size={28} strokeWidth={1.75} aria-hidden="true" />
+              </div>
+              <div>
+                <h2 className="az-title text-az-warning-400">{userPass.passName}</h2>
+                <p className="az-caption text-az-ink-muted">Active Cinema Pass</p>
+              </div>
+            </div>
+            <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div>
+                <p className="az-micro-label mb-1 text-az-ink/40">Start Date</p>
+                <p className="az-body-strong text-az-ink">
+                  {new Date(userPass.startDate).toLocaleDateString('en-NG', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+              <div>
+                <p className="az-micro-label mb-1 text-az-ink/40">End Date</p>
+                <p className="az-body-strong text-az-ink">
+                  {new Date(userPass.endDate).toLocaleDateString('en-NG', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+              <div>
+                <p className="az-micro-label mb-1 text-az-ink/40">Movies Used</p>
+                <p className="az-body-strong text-az-ink">
+                  {userPass.moviesUsed} / {userPass.moviesLimit === -1 ? '∞' : userPass.moviesLimit}
+                </p>
+              </div>
+              <div>
+                <p className="az-micro-label mb-1 text-az-ink/40">Status</p>
+                <p className="az-body-strong text-az-success-500">Active</p>
+              </div>
+            </div>
+            <Link href="/movies">
+              <motion.button
+                type="button"
+                className="az-chip az-body-strong px-6 py-2 text-az-ink transition-all"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Browse Movies
+              </motion.button>
+            </Link>
+          </div>
+        </ScrollReveal>
+      )}
+
+      {/* Active Movie Rentals & Tickets Tracker (Figma Passes & Tickets) */}
+      <section className="mb-10">
+        <ScrollReveal>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 className="az-subtitle text-az-ink font-bold">Active Rentals & Access Passes</h2>
+              <p className="az-caption text-az-ink-muted">
+                48-hour rental window countdown with instant resume
+              </p>
+            </div>
+            <Link href="/movies" className="text-xs font-semibold text-az-flame hover:underline">
+              Browse Cinemaxis Catalog →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              {
+                id: 'rent-001',
+                contentId: 'cnt-movies-001',
+                title: 'The Wedding Party 3',
+                genre: 'Comedy / Romance',
+                duration: '1h 55m',
+                quality: '4K UHD • Dolby Atmos',
+                poster: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300',
+                remainingTime: '18h 42m Remaining',
+                progress: 65,
+              },
+              {
+                id: 'rent-002',
+                contentId: 'cnt-movies-002',
+                title: 'Lagos Heist: Operation Ikeja',
+                genre: 'Action / Crime',
+                duration: '2h 10m',
+                quality: 'HD 1080p • 5.1 Surround',
+                poster: 'https://images.unsplash.com/photo-1518173946687-a4c8a383392e?w=300',
+                remainingTime: '34h 10m Remaining',
+                progress: 25,
+              },
+            ].map((rental) => (
+              <div
+                key={rental.id}
+                className="flex gap-4 rounded-az-card border border-az-glass-border bg-az-glass-card p-4 items-center shadow-sm"
+              >
+                <div className="relative h-28 w-20 shrink-0 overflow-hidden rounded-az-control">
+                  <OptimizedImage
+                    src={rental.poster}
+                    alt={rental.title}
+                    width={90}
+                    height={130}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent" />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="rounded-az-pill border border-az-warning-500/40 bg-az-warning-500/10 px-2 py-0.5 text-[10px] font-bold text-az-warning-300 flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {rental.remainingTime}
+                    </span>
+                    <span className="text-[10px] font-bold text-az-ink-muted uppercase">
+                      {rental.quality}
+                    </span>
+                  </div>
+
+                  <h3 className="az-subtitle text-az-ink font-bold truncate">{rental.title}</h3>
+                  <p className="az-caption text-az-ink-muted truncate mb-3">
+                    {rental.genre} • {rental.duration}
+                  </p>
+
+                  <div className="flex items-center gap-3">
+                    <Link href={`/watch/${rental.contentId}`}>
+                      <button
+                        type="button"
+                        className="rounded-az-pill bg-az-flame px-4 py-1.5 text-xs font-bold text-az-surface-root shadow hover:scale-[1.02] transition-transform flex items-center gap-1.5"
+                      >
+                        <Play className="h-3 w-3 fill-current" />
+                        Resume Playback
+                      </button>
+                    </Link>
+                    <span className="text-[10px] text-az-ink-muted">
+                      Progress: {rental.progress}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollReveal>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        {/* Active Pass */}
-        {userPass?.isActive && (
-          <ScrollReveal>
-            <div
-              className="az-glass p-6 rounded-xl mb-10"
-              style={{ border: '2px solid rgba(234,179,8,0.5)' }}
+      {/* Pass Plans */}
+      <ScrollReveal>
+        <h2 className="az-section-title mb-6 text-az-ink sm:mb-8">Choose Your Pass</h2>
+      </ScrollReveal>
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="az-glass p-6">
+              <Skeleton height="24px" width="120px" className="mb-4" />
+              <Skeleton height="32px" width="80px" className="mb-4" />
+              <Skeleton height="16px" width="100%" className="mb-2" />
+              <Skeleton height="16px" width="80%" className="mb-6" />
+              <div className="mb-6 space-y-3">
+                {Array.from({ length: 4 }).map((_, j) => (
+                  <Skeleton key={j} height="14px" width="90%" />
+                ))}
+              </div>
+              <Skeleton height="40px" borderRadius="999px" />
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <ErrorState
+          title="Failed to load cinema passes"
+          description={error}
+          onButtonPress={() => passesQuery.refetch()}
+        />
+      ) : passes.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {passes.map((pass, index) => (
+            <motion.div
+              key={pass.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
             >
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-4xl">🎫</span>
-                <div>
-                  <h2 className="text-xl font-bold" style={{ color: 'var(--color-warning-400)' }}>
-                    {userPass.passName}
-                  </h2>
-                  <p className="text-white/50 text-sm">Active Cinema Pass</p>
+              <GlowCard universe="movies" className="relative flex h-full flex-col p-6">
+                {pass.isPopular && (
+                  <span className="az-body absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-az-pill bg-az-flame px-4 py-1 text-az-surface-root">
+                    Most Popular
+                  </span>
+                )}
+                <h3 className="az-title mb-2 text-az-ink">{pass.name}</h3>
+                <div className="mb-4 flex items-baseline gap-1">
+                  <span className="az-heading text-az-flame">₦{pass.price.toLocaleString()}</span>
+                  <span className="az-body text-az-ink/50">/{pass.durationLabel}</span>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                <div>
-                  <p className="text-xs text-white/40 mb-1">Start Date</p>
-                  <p className="text-white font-medium">
-                    {new Date(userPass.startDate).toLocaleDateString('en-NG', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/40 mb-1">End Date</p>
-                  <p className="text-white font-medium">
-                    {new Date(userPass.endDate).toLocaleDateString('en-NG', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/40 mb-1">Movies Used</p>
-                  <p className="text-white font-medium">
-                    {userPass.moviesUsed} /{' '}
-                    {userPass.moviesLimit === -1 ? '∞' : userPass.moviesLimit}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/40 mb-1">Status</p>
-                  <p className="font-medium" style={{ color: 'var(--color-success-500)' }}>
-                    Active
-                  </p>
-                </div>
-              </div>
-              <Link href="/movies">
+                <p className="az-body mb-6 text-az-ink-muted">{pass.description}</p>
+                <ul className="mb-6 flex-1 space-y-3">
+                  {pass.features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Check size={16} className="flex-shrink-0 text-az-success-400" />
+                      <span className="az-body text-az-ink">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
                 <motion.button
                   type="button"
-                  className="px-6 py-2 rounded-full text-sm font-semibold"
-                  style={{
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    backgroundColor: 'rgba(255,255,255,0.08)',
-                    color: 'var(--brand-white)',
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setConfirmPass(pass)}
+                  disabled={purchaseMutation.isPending}
+                  className={passCtaClass(!!pass.isPopular)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  Browse Movies
+                  Get Pass
                 </motion.button>
-              </Link>
-            </div>
-          </ScrollReveal>
-        )}
-
-        {/* Pass Plans */}
-        <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-            Choose Your Pass
-          </h2>
-        </ScrollReveal>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="az-glass p-6 rounded-xl">
-                <Skeleton height="24px" width="120px" className="mb-4" />
-                <Skeleton height="32px" width="80px" className="mb-4" />
-                <Skeleton height="16px" width="100%" className="mb-2" />
-                <Skeleton height="16px" width="80%" className="mb-6" />
-                <div className="space-y-3 mb-6">
-                  {Array.from({ length: 4 }).map((_, j) => (
-                    <Skeleton key={j} height="14px" width="90%" />
-                  ))}
-                </div>
-                <Skeleton height="40px" borderRadius="999px" />
-              </div>
-            ))}
-          </div>
-        ) : error ? (
-          <ErrorState
-            title="Failed to load cinema passes"
-            description={error}
-            onButtonPress={() => passesQuery.refetch()}
-          />
-        ) : passes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {passes.map((pass, index) => (
-              <motion.div
-                key={pass.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <GlowCard universe="movies" className="p-6 relative h-full flex flex-col">
-                  {pass.isPopular && (
-                    <span
-                      className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-4 py-1 rounded-full text-sm font-medium text-white"
-                      style={{ backgroundColor: 'var(--brand-orange)' }}
-                    >
-                      Most Popular
-                    </span>
-                  )}
-                  <h3 className="text-xl font-bold text-white mb-2">{pass.name}</h3>
-                  <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-3xl font-bold" style={{ color: 'var(--brand-orange)' }}>
-                      ₦{pass.price.toLocaleString()}
-                    </span>
-                    <span className="text-white/50">/{pass.durationLabel}</span>
-                  </div>
-                  <p className="text-white/50 mb-6">{pass.description}</p>
-                  <ul className="space-y-3 mb-6 flex-1">
-                    {pass.features.map((feature, i) => (
-                      <li key={i} className="flex items-center gap-2">
-                        <span style={{ color: 'var(--color-success-500)' }}>✓</span>
-                        <span className="text-white text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <motion.button
-                    type="button"
-                    onClick={() => setConfirmPass(pass)}
-                    disabled={purchaseMutation.isPending}
-                    className={`w-full py-3 rounded-full font-semibold transition-all ${
-                      pass.isPopular ? 'az-btn-primary' : ''
-                    }`}
-                    style={
-                      pass.isPopular
-                        ? undefined
-                        : {
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            backgroundColor: 'rgba(255,255,255,0.08)',
-                            color: 'var(--brand-white)',
-                          }
-                    }
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Get Pass
-                  </motion.button>
-                </GlowCard>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">No cinema passes available yet</p>
-          </div>
-        )}
-      </div>
+              </GlowCard>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="py-12 text-center">
+          <p className="az-lead text-az-ink/50">No cinema passes available yet</p>
+        </div>
+      )}
 
       {/* Confirm Modal */}
       {confirmPass && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
           onClick={() => setConfirmPass(null)}
         >
           <div
-            className="az-glass p-8 rounded-2xl max-w-sm w-full"
+            className="az-glass w-full max-w-sm p-8"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Confirm Purchase"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-xl font-bold text-white mb-2">Confirm Purchase</h3>
-            <p className="text-white/50 mb-1">{confirmPass.name}</p>
-            <p className="text-2xl font-bold mb-6" style={{ color: 'var(--brand-orange)' }}>
-              ₦{confirmPass.price.toLocaleString()}
-            </p>
-            <div className="flex flex-col gap-3 mb-4">
+            <h3 className="az-subtitle mb-2 text-az-ink">Confirm Purchase</h3>
+            <p className="az-body mb-1 text-az-ink-muted">{confirmPass.name}</p>
+            <p className="az-title mb-6 text-az-flame">₦{confirmPass.price.toLocaleString()}</p>
+            <div className="mb-4 flex flex-col gap-3">
               <motion.button
                 type="button"
                 onClick={() => purchaseMutation.mutate(confirmPass.id)}
                 disabled={purchaseMutation.isPending}
-                className="w-full py-3 rounded-full font-semibold transition-all az-btn-primary"
+                className="az-btn-primary transition-all"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -327,7 +371,7 @@ function PassesPageContent(): React.JSX.Element {
               <button
                 type="button"
                 onClick={() => setConfirmPass(null)}
-                className="w-full py-2 rounded-full text-white/50 border border-white/10 hover:bg-white/5 transition-colors text-sm"
+                className="az-body w-full rounded-az-pill border border-az-glass-border px-4 py-2 text-az-ink-muted transition-colors hover:bg-az-glass-fill"
               >
                 Cancel
               </button>
@@ -336,22 +380,19 @@ function PassesPageContent(): React.JSX.Element {
         </div>
       )}
 
-      <AppFooter />
-
       {toast && (
         <div
-          className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
-          style={{
-            backgroundColor:
-              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-            border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
-          }}
+          className={`fixed bottom-6 right-6 z-50 rounded-az-panel border px-6 py-3 shadow-az-lifted ${
+            toast.type === 'success'
+              ? 'border-az-success-500/30 bg-az-success-500/15 text-az-success-500'
+              : 'border-az-error-500/30 bg-az-error-500/15 text-az-error-500'
+          }`}
+          role="alert"
         >
           {toast.message}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 
@@ -361,8 +402,8 @@ export default function PassesPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

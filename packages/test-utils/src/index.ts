@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 
 export * from './integration-test-utils';
+export * from './supertest-utils';
 
 /** Test database wrapper providing setup, teardown, and seed helpers for integration tests. */
 export class TestDatabase {

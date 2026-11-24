@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { MoviesService } from './movies.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
@@ -77,7 +81,7 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
             get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
               const config: Record<string, unknown> = {
                 MOVIE_RENTAL_FEE: 500,
-                ANALYTICS_SERVICE_URL: 'http://analytics-service:3040',
+                ANALYTICS_SERVICE_URL: 'http://analytics-service:3008',
               };
               return config[key] ?? defaultValue;
             }),
@@ -272,7 +276,11 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
 
       mockPrismaService.rental.create.mockRejectedValue(new Error('Database error'));
 
-      await expect(service.rentMovie('user-1', 'movie-1')).rejects.toThrow(BadRequestException);
+      // A Prisma failure after the wallet debit is a server fault (the saga
+      // compensates either way) — mapAndThrow maps it honestly to 500.
+      await expect(service.rentMovie('user-1', 'movie-1')).rejects.toThrow(
+        InternalServerErrorException
+      );
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
         expect.stringContaining('/wallet/credit'),
@@ -298,9 +306,9 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
       expect(result.success).toBe(true);
       expect(mockPrismaService.watchlistItem.create).toHaveBeenCalled();
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/analytics/track'),
+        expect.stringContaining('/v1/analytics/events'),
         expect.objectContaining({
-          eventName: 'movie_watchlisted',
+          type: 'movie_watchlisted',
           userId: 'user-1',
         }),
         expect.objectContaining({ timeout: 10000 })
@@ -333,9 +341,9 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
       expect(result.success).toBe(true);
       expect(mockPrismaService.watchlistItem.delete).toHaveBeenCalled();
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/analytics/track'),
+        expect.stringContaining('/v1/analytics/events'),
         expect.objectContaining({
-          eventName: 'movie_watchlist_removed',
+          type: 'movie_watchlist_removed',
           userId: 'user-1',
         }),
         expect.objectContaining({ timeout: 10000 })
@@ -380,7 +388,10 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
 
       mockedAxios.post.mockRejectedValue(new Error('Wallet service unavailable'));
 
-      await expect(service.rentMovie('user-1', 'movie-1')).rejects.toThrow(BadRequestException);
+      // An internal wallet-service outage is a server error, not a client error.
+      await expect(service.rentMovie('user-1', 'movie-1')).rejects.toThrow(
+        InternalServerErrorException
+      );
     });
   });
 });

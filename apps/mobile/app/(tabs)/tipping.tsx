@@ -1,9 +1,15 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { creatorApi } from '../../src/api/creator';
-import { universeColors, colors as dtColors } from '../../src/theme/design-tokens';
+import { creatorApi } from '@azeebo/react-data/api/creator';
 import { colors, spacing, typography, radius } from '../../src/theme';
 
 const TIER_COLORS: Record<string, string> = {
@@ -31,9 +37,7 @@ export default function TipsHistoryScreen() {
   const creatorsQuery = useQuery({
     queryKey: ['tip-creator-profiles', creatorIds],
     queryFn: async () => {
-      const profiles = await Promise.all(
-        creatorIds.map((id) => creatorApi.getCreatorProfile(id))
-      );
+      const profiles = await Promise.all(creatorIds.map((id) => creatorApi.getCreatorProfile(id)));
       const map: Record<string, string> = {};
       profiles.forEach((res, idx) => {
         const id = creatorIds[idx];
@@ -48,11 +52,14 @@ export default function TipsHistoryScreen() {
 
   const creatorNames = creatorsQuery.data ?? {};
 
-  const renderItem = ({ item }: { item: typeof tips[0] }) => (
+  const renderItem = ({ item }: { item: (typeof tips)[0] }) => (
     <TouchableOpacity
       style={styles.tipItem}
       onPress={() => router.push(`/creators/${item.creatorId}`)}
       activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={`Tip to ${creatorNames[item.creatorId] || 'Creator'}, ₦${item.amount.toLocaleString()}`}
+      accessibilityHint="Opens creator profile"
     >
       <View style={styles.row}>
         <Text style={styles.creatorName}>{creatorNames[item.creatorId] || 'Creator'}</Text>
@@ -64,20 +71,15 @@ export default function TipsHistoryScreen() {
             style={[
               styles.tierBadge,
               {
-                backgroundColor: `${
-                  TIER_COLORS[item.tier.toLowerCase()] ??
-                  dtColors.text.muted
-                }20`,
-              }
+                backgroundColor: `${TIER_COLORS[item.tier.toLowerCase()] ?? colors.text.muted}20`,
+              },
             ]}
           >
             <Text
               style={[
                 styles.tierText,
                 {
-                  color:
-                    TIER_COLORS[item.tier.toLowerCase()] ??
-                    dtColors.text.muted,
+                  color: TIER_COLORS[item.tier.toLowerCase()] ?? colors.text.muted,
                 },
               ]}
             >
@@ -94,7 +96,7 @@ export default function TipsHistoryScreen() {
   const isLoading = tipsQuery.isLoading || (tipsQuery.isFetching && tipsQuery.isPending);
 
   return (
-    <View style={styles.container}>
+    <View accessibilityLabel="Tipping Screen" style={styles.container}>
       <Text style={styles.title}>My Tips</Text>
       <Text style={styles.subtitle}>{totalTips} tips sent</Text>
 
@@ -111,7 +113,9 @@ export default function TipsHistoryScreen() {
           !isLoading ? (
             <View style={styles.empty}>
               <Text style={styles.emptyText}>No tips sent yet.</Text>
-              <Text style={styles.emptySubtext}>Support your favorite creators to see them here.</Text>
+              <Text style={styles.emptySubtext}>
+                Support your favorite creators to see them here.
+              </Text>
             </View>
           ) : null
         }
@@ -122,7 +126,12 @@ export default function TipsHistoryScreen() {
       ) : null}
 
       {page < totalPages && !tipsQuery.isFetching ? (
-        <TouchableOpacity style={styles.loadMore} onPress={() => setPage((p) => p + 1)}>
+        <TouchableOpacity
+          style={styles.loadMore}
+          onPress={() => setPage((p) => p + 1)}
+          accessibilityRole="button"
+          accessibilityLabel="Load more tips"
+        >
           <Text style={styles.loadMoreText}>Load More</Text>
         </TouchableOpacity>
       ) : null}
@@ -139,7 +148,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text.primary,
-    fontSize: typography.fontSize['2xl'],
+    fontSize: typography.fontSize.xxl,
     fontWeight: typography.fontWeight.bold,
   },
   subtitle: {
@@ -217,6 +226,8 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
   },
   loadMore: {
+    minHeight: 44,
+    justifyContent: 'center',
     padding: spacing.md,
     alignItems: 'center',
     backgroundColor: colors.bg.secondary,

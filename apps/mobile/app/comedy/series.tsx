@@ -5,8 +5,9 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -45,7 +46,7 @@ export default function SeriesScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Series Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading series..." />
       </SafeAreaView>
     );
@@ -65,7 +66,7 @@ export default function SeriesScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Series</Text>
@@ -115,7 +116,7 @@ export default function SeriesScreen() {
                 <Text style={styles.nextTime}>{item.nextEpisode}</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.watchButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.watchButton}>
               <Text style={styles.watchButtonText}>▶ Watch</Text>
             </TouchableOpacity>
           </TouchableOpacity>
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -146,8 +147,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     marginRight: 10,
   },
-  genreChipActive: { backgroundColor: '#F39C12' },
-  genreText: { color: '#888', fontSize: 13, fontWeight: '600' },
+  genreChipActive: { backgroundColor: colors.category.amber },
+  genreText: { color: colors.text.secondary, fontSize: 13, fontWeight: '600' },
   genreTextActive: { color: '#000' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
   seriesCard: {
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -179,12 +180,12 @@ const styles = StyleSheet.create({
   episodeText: { color: '#fff', fontSize: 9 },
   seriesInfo: { flex: 1 },
   seriesTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  seriesGenre: { color: '#888', fontSize: 12, marginBottom: 6 },
+  seriesGenre: { color: colors.text.secondary, fontSize: 12, marginBottom: 6 },
   nextEpisodeRow: { flexDirection: 'row', gap: 6 },
-  nextLabel: { color: '#888', fontSize: 12 },
-  nextTime: { color: '#F39C12', fontSize: 12, fontWeight: '600' },
+  nextLabel: { color: colors.text.secondary, fontSize: 12 },
+  nextTime: { color: colors.category.amber, fontSize: 12, fontWeight: '600' },
   watchButton: {
-    backgroundColor: '#F39C12',
+    backgroundColor: colors.category.amber,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 6,

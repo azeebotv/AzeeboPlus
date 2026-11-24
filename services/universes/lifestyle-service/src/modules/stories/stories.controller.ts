@@ -13,6 +13,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { StoriesService } from './stories.service';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { FeatureFlag, FeatureFlagGuard, lifestyleFlags } from '@azeebo/feature-flags';
 
 interface CreateStoryDto {
   title: string;
@@ -31,6 +32,8 @@ interface UpdateStoryDto {
 }
 
 @ApiTags('Stories')
+@FeatureFlag(lifestyleFlags.storiesEnabled)
+@UseGuards(FeatureFlagGuard)
 @Controller('lifestyle/stories')
 export class StoriesController {
   constructor(@Inject(StoriesService) private readonly storiesService: StoriesService) {}

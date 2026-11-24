@@ -1,13 +1,25 @@
+import { getPublicBaseUrl } from '@azeebo/shared-types';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
+import { FlagsProvider } from '../context/FlagsContext';
 import { WalletProvider } from '../context/WalletContext';
+import { MaintenanceGate } from '../components/layout/MaintenanceGate';
+import { UniverseGate } from '../components/layout/UniverseGate';
+import AnnouncementBanner from '../components/layout/AnnouncementBanner';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { QueryProvider } from '../providers/QueryProvider';
 import { ToastProvider } from '@/components/ToastProvider';
 import I18nProvider from '@/components/I18nProvider';
 import { KeyboardNavigationProvider } from '../components/KeyboardNavigationProvider';
+import { CookieConsent } from '../components/privacy/CookieConsent';
+import { OfflineBanner, NetworkProvider } from '../components/ui/OfflineIndicator';
+import { OfflineProvider } from '../context/OfflineContext';
+import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration';
+import { WebVitalsInit } from '../components/WebVitalsInit';
+import { PageViewTracker } from '../components/PageViewTracker';
+import { Suspense } from 'react';
 
 import { Inter, Montserrat } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -17,15 +29,22 @@ const montserrat = Montserrat({
   variable: '--font-display-base',
 });
 
+// AUD-06: the middleware CSP is nonce-based, and nonces only work when HTML
+// is rendered per request — prerendered (SSG/ISR) HTML is baked at build time
+// without nonce attributes, so `script-src` would block every script on it.
+// Cascades to all routes under this root layout (override per segment only if
+// a route is later proven to need no scripts).
+export const dynamic = 'force-dynamic';
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#09090F',
+  themeColor: 'var(--color-az-surface-root)',
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com'),
+  metadataBase: new URL(getPublicBaseUrl()),
   title: {
     default: 'Azeebo+ - Premium Content Streaming',
     template: '%s | Azeebo+',
@@ -84,27 +103,48 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
-      <body className={`${inter.variable} ${montserrat.variable}`}>
+      <body
+        className={`${inter.variable} ${montserrat.variable} min-h-screen`}
+        style={{ backgroundColor: 'var(--color-az-surface-root)', color: 'var(--text-primary)' }}
+      >
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
         <ErrorBoundary>
           <QueryProvider>
-            <ThemeProvider>
-              <AuthProvider>
-                <WalletProvider>
-                  <I18nProvider>
-                    <ToastProvider>
-                      <KeyboardNavigationProvider>
-                        <main id="main-content" role="main">
-                          {children}
-                        </main>
-                      </KeyboardNavigationProvider>
-                    </ToastProvider>
-                  </I18nProvider>
-                </WalletProvider>
-              </AuthProvider>
-            </ThemeProvider>
+            <AuthProvider>
+              <FlagsProvider>
+                <ThemeProvider>
+                  <WalletProvider>
+                    <I18nProvider>
+                      <NetworkProvider>
+                        <OfflineProvider>
+                          <ToastProvider>
+                            <KeyboardNavigationProvider>
+                              <ServiceWorkerRegistration />
+                              <WebVitalsInit />
+                              <Suspense fallback={null}>
+                                <PageViewTracker />
+                              </Suspense>
+                              <OfflineBanner />
+                              <AnnouncementBanner />
+                              <CookieConsent />
+                              <MaintenanceGate>
+                                <UniverseGate>
+                                  <main id="main-content" role="main">
+                                    {children}
+                                  </main>
+                                </UniverseGate>
+                              </MaintenanceGate>
+                            </KeyboardNavigationProvider>
+                          </ToastProvider>
+                        </OfflineProvider>
+                      </NetworkProvider>
+                    </I18nProvider>
+                  </WalletProvider>
+                </ThemeProvider>
+              </FlagsProvider>
+            </AuthProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>

@@ -8,11 +8,22 @@ import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { CreatorsController } from './creators.controller.js';
 import { CreatorsService } from './creators.service.js';
+import { CreatorPayoutService } from '../creator/creator-payout.service.js';
+import { CreatorTrustSafetyService } from '../creator/creator-trust-safety.service.js';
 import { RateLimitGuard } from '@azeebo/security';
 import { JwtStrategy } from '@azeebo/shared-services';
 
 jest.mock('@azeebo/security', () => ({
-  RateLimitGuard: class MockRateLimitGuard {},
+  RateLimitGuard: class MockRateLimitGuard {
+    canActivate() {
+      return true;
+    }
+  },
+  ServiceAuthGuard: class MockServiceAuthGuard {
+    canActivate() {
+      return true;
+    }
+  },
   RateLimit: () => () => {},
   Public: () => () => {},
 }));
@@ -23,11 +34,29 @@ jest.mock('@azeebo/shared-services', () => ({
   Roles: () => () => {},
 }));
 
+jest.mock('@azeebo/feature-flags', () => ({
+  FeatureFlagGuard: jest.fn().mockImplementation(() => ({
+    canActivate: jest.fn().mockReturnValue(true),
+  })),
+  FeatureFlag: () => () => {},
+  creatorFlags: {
+    payoutsEnabled: 'creator_payouts_enabled',
+    tipsEnabled: 'creator_tips_enabled',
+    subscriptionsEnabled: 'creator_subscriptions_enabled',
+    monetizationInsights: 'creator_monetization_insights',
+  },
+}));
+
 jest.mock('libphonenumber-js', () => ({}));
 jest.mock('libphonenumber-js/max', () => ({}));
 
 describe('Creators Controller Contract Tests', () => {
   let app: INestApplication;
+  let baseUrl: string;
+
+  // Mutable auth state read at request time by the shared JWT guard —
+  // every test runs against ONE bound app (no per-test listen/close churn).
+  let authEnabled: boolean;
 
   const mockCreatorsService = {
     onboard: jest.fn(),
@@ -56,6 +85,7 @@ describe('Creators Controller Contract Tests', () => {
   };
 
   beforeAll(async () => {
+    authEnabled = true;
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleBuilder: TestingModuleBuilder = Test.createTestingModule({
@@ -81,6 +111,22 @@ describe('Creators Controller Contract Tests', () => {
           provide: CreatorsService,
           useValue: mockCreatorsService,
         },
+        {
+          provide: CreatorPayoutService,
+          useValue: {
+            getCreatorEarnings: jest.fn(),
+            requestPayout: jest.fn(),
+            getPayoutHistory: jest.fn(),
+          },
+        },
+        {
+          provide: CreatorTrustSafetyService,
+          useValue: {
+            getTrustScore: jest.fn(),
+            recordViolation: jest.fn(),
+            checkMonetizationEligibility: jest.fn(),
+          },
+        },
         Reflector,
         JwtStrategy,
       ],
@@ -89,6 +135,9 @@ describe('Creators Controller Contract Tests', () => {
     moduleBuilder.overrideGuard(AuthGuard('jwt')).useValue({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       canActivate: (context: any) => {
+        if (!authEnabled) {
+          return false;
+        }
         const req = context.switchToHttp().getRequest();
         req.user = {
           sub: 'user-123',
@@ -108,7 +157,7 @@ describe('Creators Controller Contract Tests', () => {
     app = compiledModule.createNestApplication();
     app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     app.use((req: { user?: unknown }, _res: unknown, next: () => void) => {
-      if (!req.user) {
+      if (authEnabled && !req.user) {
         req.user = {
           sub: 'user-123',
           userId: 'user-123',
@@ -120,6 +169,8 @@ describe('Creators Controller Contract Tests', () => {
       next();
     });
     await app.init();
+    await app.listen(0);
+    baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   });
 
   afterAll(async () => {
@@ -129,6 +180,7 @@ describe('Creators Controller Contract Tests', () => {
   });
 
   beforeEach(() => {
+    authEnabled = true;
     jest.clearAllMocks();
   });
 
@@ -139,7 +191,7 @@ describe('Creators Controller Contract Tests', () => {
         data: { id: 'profile-1', userId: 'user-123' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/creators/onboard')
         .set('Authorization', 'Bearer valid-token')
         .expect(201)
@@ -150,29 +202,9 @@ describe('Creators Controller Contract Tests', () => {
     });
 
     it('should reject requests without authorization', async () => {
-      const rejectModule = await Test.createTestingModule({
-        imports: [
-          PassportModule.register({ defaultStrategy: 'jwt' }),
-          JwtModule.register({ secret: 'test-jwt-secret', signOptions: { expiresIn: '30m' } }),
-        ],
-        controllers: [CreatorsController],
-        providers: [
-          { provide: CreatorsService, useValue: mockCreatorsService },
-          { provide: ConfigService, useValue: { get: jest.fn((_k: string, d?: string) => d) } },
-          Reflector,
-        ],
-      })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue({ canActivate: jest.fn().mockReturnValue(false) })
-        .overrideGuard(RateLimitGuard)
-        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
-        .compile();
-      const rejectApp = rejectModule.createNestApplication();
-      rejectApp.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
-      await rejectApp.init();
-      const res = await request(rejectApp.getHttpServer()).post('/v1/creators/onboard');
+      authEnabled = false;
+      const res = await request(baseUrl).post('/v1/creators/onboard');
       expect([403, 500]).toContain(res.status);
-      await rejectApp.close();
     });
   });
 
@@ -183,7 +215,7 @@ describe('Creators Controller Contract Tests', () => {
         data: { id: 'profile-1', userId: 'user-123', bio: 'Test bio' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/creators/me')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -201,7 +233,7 @@ describe('Creators Controller Contract Tests', () => {
         data: { id: 'profile-1', userId: 'user-456', verified: true },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/creators/user-456')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -219,7 +251,7 @@ describe('Creators Controller Contract Tests', () => {
         data: { id: 'profile-1', displayName: 'Updated Name' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .patch('/v1/creators/me')
         .set('Authorization', 'Bearer valid-token')
         .send({ displayName: 'Updated Name' })
@@ -238,7 +270,7 @@ describe('Creators Controller Contract Tests', () => {
         data: { id: 'channel-1', name: 'Test Channel' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/creators/channels')
         .set('Authorization', 'Bearer valid-token')
         .send({ name: 'Test Channel', description: 'Test description' })
@@ -257,7 +289,7 @@ describe('Creators Controller Contract Tests', () => {
         data: { channels: [{ id: 'channel-1', name: 'Test Channel' }] },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/creators/channels')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -275,7 +307,7 @@ describe('Creators Controller Contract Tests', () => {
         data: [{ id: 'content-1', title: 'Test Content' }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/creators/uploads')
         .set('Authorization', 'Bearer valid-token')
         .expect(200)
@@ -292,7 +324,7 @@ describe('Creators Controller Contract Tests', () => {
         data: [{ id: 'profile-1', verified: true }],
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/creators/discover')
         .expect(200)
         .expect((res) => {
@@ -308,7 +340,7 @@ describe('Creators Controller Contract Tests', () => {
         data: { subscriptionId: 'sub-1', tier: 'free' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .post('/v1/creators/subscribe/user-456')
         .set('Authorization', 'Bearer valid-token')
         .send({ tier: 'free' })
@@ -327,7 +359,7 @@ describe('Creators Controller Contract Tests', () => {
         data: { id: 'profile-1' },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/creators/me')
         .set('Authorization', 'Bearer valid-token')
         .expect((res) => {
@@ -344,7 +376,7 @@ describe('Creators Controller Contract Tests', () => {
         data: { channels: [], meta: { page: 1, limit: 20, total: 0 } },
       });
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/creators/channels')
         .set('Authorization', 'Bearer valid-token')
         .expect((res) => {
@@ -358,7 +390,7 @@ describe('Creators Controller Contract Tests', () => {
     it('should return 404 for non-existent creator', () => {
       mockCreatorsService.getProfile.mockRejectedValue(new Error('Creator not found'));
 
-      return request(app.getHttpServer())
+      return request(baseUrl)
         .get('/v1/creators/nonexistent')
         .set('Authorization', 'Bearer valid-token')
         .expect(500);

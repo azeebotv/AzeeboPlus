@@ -1,3 +1,5 @@
+const { sharedModuleNameMapper } = require('../../../jest.shared.config.js');
+
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'src',
@@ -6,11 +8,13 @@ module.exports = {
     '^.+\\.(t|j)s$': ['ts-jest', { diagnostics: false }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!uuid|zod|sanitize-html|htmlparser2|domhandler|domutils|dom-serializer|entities|css-select|boolbase|css-what|nth-check)',
+    // pnpm layout is node_modules/.pnpm/<pkg>@<ver>/node_modules/<pkg>/..., so a
+    // bare lookahead after the first node_modules/ never sees the package name.
+    // Match the whitelisted package name anywhere in the remainder of the path.
+    'node_modules/(?!.*(?:uuid|zod|sanitize-html|htmlparser2|domhandler|domutils|dom-serializer|entities|domelementtype|css-select|boolbase|css-what|nth-check))',
   ],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^@azeebo/(.*)$': '<rootDir>/../../../../packages/$1/src',
+    ...sharedModuleNameMapper,
   },
   collectCoverageFrom: [
     '**/*.(t|j)s',

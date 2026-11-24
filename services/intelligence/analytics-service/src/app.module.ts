@@ -7,9 +7,16 @@ import { IntelligenceModule } from './modules/intelligence/intelligence.module.j
 import { HealthModule } from './modules/health/health.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { ReportBuilderModule } from './modules/report-builder/report-builder.module.js';
+import { AgentRegistryModule } from './modules/agent-registry/agent-registry.module.js';
+import { ModelCostTrackerModule } from './modules/model-cost-tracker/model-cost-tracker.module.js';
+import { RiskEngineModule } from './modules/risk-engine/risk-engine.module.js';
+import { TaskRouterModule } from './modules/task-router/task-router.module.js';
+import { CapacityLedgerModule } from './modules/capacity-ledger/capacity-ledger.module.js';
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CacheModule, JwtConfigModule } from '@azeebo/shared-services';
+import { FeatureFlagModule, analyticsFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -20,6 +27,27 @@ import { ConfigModule } from '@nestjs/config';
     }),
     JwtConfigModule,
     RateLimiterModule.forRoot(),
+    FlagMetricsModule.register({ service: 'analytics-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('analytics-service'),
+      // Analytics pipeline flags: sampling + ingest mode are runtime-tunable
+      // (numeric sampling rate via defaultValues); the rest are kill-switches.
+      defaultFlags: {
+        [analyticsFlags.batchIngest]: false,
+        [analyticsFlags.reportBuilderV2]: false,
+        [analyticsFlags.clientSampling]: false,
+      },
+      defaultValues: {
+        [analyticsFlags.samplingRate]: 100,
+      },
+      publicFlagKeys: [
+        analyticsFlags.samplingRate,
+        analyticsFlags.batchIngest,
+        analyticsFlags.reportBuilderV2,
+        analyticsFlags.clientSampling,
+      ],
+    }),
     CacheModule,
     AnalyticsModule,
     AnalyticsInstrumentationModule,
@@ -28,6 +56,12 @@ import { ConfigModule } from '@nestjs/config';
     HealthModule,
     MetricsModule,
     ReportBuilderModule,
+    // AOS-MA-001 — Enterprise Agentic Operating System
+    AgentRegistryModule,
+    ModelCostTrackerModule,
+    RiskEngineModule,
+    TaskRouterModule,
+    CapacityLedgerModule,
   ],
   providers: [
     {

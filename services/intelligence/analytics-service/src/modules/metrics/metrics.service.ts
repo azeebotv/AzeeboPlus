@@ -3,7 +3,7 @@ import * as client from 'prom-client';
 
 @Injectable()
 export class MetricsService implements OnModuleInit, OnModuleDestroy {
-    private register: client.Registry;
+  private register: client.Registry;
 
   // Counter metrics
   private eventCounter: client.Counter<string>;

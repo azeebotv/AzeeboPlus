@@ -15,7 +15,7 @@ import { DisputeService } from './dispute.service';
 import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './dto/dispute.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { Prisma } from '../../prisma/client/index.js';
-import { AuthGuard } from '../../common/guards/auth.guard';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { AdminGuard } from '@azeebo/security';
 
 interface AuthenticatedRequest {
@@ -27,7 +27,7 @@ interface AuthenticatedRequest {
 
 @ApiTags('Payout Disputes')
 @Controller('support/disputes')
-@UseGuards(AuthGuard)
+@UseGuards(ServiceAuthGuard)
 @ApiBearerAuth()
 export class DisputeController {
   constructor(@Inject(DisputeService) private disputeService: DisputeService) {}

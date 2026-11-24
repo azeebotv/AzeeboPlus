@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '../src/theme';
-import { apiClient } from '../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { analytics } from '../src/utils/analytics';
 
@@ -51,9 +51,7 @@ export default function CharacterLoreScreen() {
         apiClient.get<LoreChapter[]>(`/vertical/characters/${id}/lore`),
       ]);
       setCharacter(charRes);
-      try {
-        analytics.verticalCharacterViewed(charRes.id);
-      } catch {}
+      analytics.verticalCharacterViewed(charRes.id);
       setLoreChapters(loreRes);
     } catch {
       setError('Failed to load character data');
@@ -75,12 +73,12 @@ export default function CharacterLoreScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Character Lore Screen" style={styles.container}>
       <ScrollView
         style={[styles.scrollView, { backgroundColor: isDark ? colors.bg.primary : '#FFFFFF' }]}
       >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Character Lore</Text>
@@ -173,7 +171,7 @@ export default function CharacterLoreScreen() {
               </Text>
               <View style={styles.relationshipsList}>
                 {character.relationships.map((rel, index) => (
-                  <TouchableOpacity key={index} style={styles.relationshipItem}>
+                  <TouchableOpacity accessibilityRole="button" key={index} style={styles.relationshipItem}>
                     <View style={styles.relAvatar}>
                       <Text style={styles.relAvatarText}>{rel.avatar}</Text>
                     </View>

@@ -1,7 +1,8 @@
-import { Inject, Controller, Get, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Inject, Controller, Get, Post, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminService } from './admin.service.js';
 import { AdminGuard } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, realityFlags } from '@azeebo/feature-flags';
 
 @ApiTags('Admin - Reality Service')
 @Controller('admin')
@@ -40,5 +41,18 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async getRealityShowById(@Param('showId') showId: string) {
     return this.adminService.getRealityShowById(showId);
+  }
+
+  @Post('reality-shows/:showId/auto-eliminate')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(realityFlags.autoElimination)
+  @ApiOperation({
+    summary: 'Eliminate the lowest-voted contestant (admin; reality_auto_elimination)',
+  })
+  @ApiResponse({ status: 201, description: 'Contestant eliminated' })
+  @ApiResponse({ status: 400, description: 'Show has fewer than 2 contestants' })
+  @ApiResponse({ status: 403, description: 'Flag off, or forbidden' })
+  async autoEliminate(@Param('showId') showId: string) {
+    return this.adminService.autoEliminate(showId);
   }
 }

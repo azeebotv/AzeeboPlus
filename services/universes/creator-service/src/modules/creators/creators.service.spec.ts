@@ -100,6 +100,7 @@ describe('CreatorsService', () => {
           useValue: {
             creatorProfile: {
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
               findMany: jest.fn(),
@@ -155,6 +156,11 @@ describe('CreatorsService', () => {
               findUnique: jest.fn(),
               create: jest.fn(),
               findMany: jest.fn(),
+              update: jest.fn(),
+            },
+            user: {
+              findMany: jest.fn(),
+              findUnique: jest.fn(),
             },
             notification: {
               create: jest.fn(),
@@ -168,7 +174,9 @@ describe('CreatorsService', () => {
             },
             exclusiveContent: {
               findMany: jest.fn(),
+              findUnique: jest.fn(),
               create: jest.fn(),
+              delete: jest.fn(),
             },
             $transaction: jest.fn(async (callback) => callback(module.get(PrismaService))),
           },
@@ -900,21 +908,373 @@ describe('CreatorsService', () => {
   describe('getChallengeLeaderboard', () => {
     const challengeId = 'challenge-1';
 
-    it('should return challenge leaderboard', async () => {
-      const mockEntries = [{ id: 'entry-1', userId: 'user-1' }];
+    it('should return ranked leaderboard with participant names', async () => {
+      const mockEntries = [
+        {
+          id: 'entry-1',
+          userId: 'user-1',
+          status: 'pending',
+          contentUrl: '/submissions/c1',
+          createdAt: new Date('2026-09-17T02:00:00Z'),
+        },
+      ];
       (prismaService.creatorChallenge.findUnique as jest.Mock).mockResolvedValue(mockChallenge);
       (prismaService.challengeEntry.findMany as jest.Mock).mockResolvedValue(mockEntries);
+      (prismaService.user.findMany as jest.Mock).mockResolvedValue([
+        { id: 'user-1', displayName: 'Tunde Creates' },
+      ]);
 
       const result = await service.getChallengeLeaderboard(challengeId);
 
       expect(result.success).toBe(true);
       expect(result.data!.entries).toHaveLength(1);
+      expect(result.data!.entries[0]).toMatchObject({
+        position: 1,
+        entryId: 'entry-1',
+        displayName: 'Tunde Creates',
+        status: 'pending',
+      });
+      expect(result.data!.totalEntries).toBe(1);
+    });
+
+    it('should rank winners first and mask unknown users', async () => {
+      const now = Date.now();
+      const mockEntries = [
+        {
+          id: 'entry-pending',
+          userId: 'user-new',
+          status: 'pending',
+          contentUrl: '/s/a',
+          createdAt: new Date(now),
+        },
+        {
+          id: 'entry-winner',
+          userId: 'user-gone',
+          status: 'winner',
+          contentUrl: '/s/b',
+          createdAt: new Date(now - 1000),
+        },
+      ];
+      (prismaService.creatorChallenge.findUnique as jest.Mock).mockResolvedValue(mockChallenge);
+      (prismaService.challengeEntry.findMany as jest.Mock).mockResolvedValue(mockEntries);
+      // user-gone no longer exists in the user table → masked fallback.
+      (prismaService.user.findMany as jest.Mock).mockResolvedValue([
+        { id: 'user-new', displayName: 'Ngozi Vibes' },
+      ]);
+
+      const result = await service.getChallengeLeaderboard(challengeId);
+
+      const entries = result.data!.entries as {
+        position: number;
+        entryId: string;
+        displayName: string;
+      }[];
+      expect(entries[0].entryId).toBe('entry-winner');
+      expect(entries[0].position).toBe(1);
+      expect(entries[0].displayName).toMatch(/^Participant user-go/);
+      expect(entries[1].displayName).toBe('Ngozi Vibes');
     });
 
     it('should throw NotFoundException if challenge not found', async () => {
       (prismaService.creatorChallenge.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.getChallengeLeaderboard(challengeId)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('listChallengeEntriesForReview', () => {
+    const baseEntry = {
+      id: 'entry-1',
+      userId: 'user-1',
+      challengeId: 'challenge-1',
+      contentUrl: 'videos/a.mp4',
+      status: 'pending',
+      reviewedAt: null,
+      reviewedBy: null,
+      createdAt: new Date('2026-09-01T00:00:00Z'),
+      challenge: { id: 'challenge-1', title: 'Dance Off', prize: '₦500' },
+    };
+
+    it('lists entries with challenge titles and resolved participant names', async () => {
+      (prismaService.challengeEntry.findMany as jest.Mock).mockResolvedValue([baseEntry]);
+      (prismaService.user.findMany as jest.Mock).mockResolvedValue([
+        { id: 'user-1', displayName: 'Kemi', email: 'kemi@x.dev' },
+      ]);
+
+      const result = await service.listChallengeEntriesForReview();
+
+      expect(result.success).toBe(true);
+      const item = (result.data!.items as Array<Record<string, unknown>>)[0];
+      expect(item.challengeTitle).toBe('Dance Off');
+      expect(item.participantName).toBe('Kemi');
+      expect(prismaService.challengeEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: { createdAt: 'desc' } })
+      );
+    });
+
+    it('masks participant names for deleted accounts instead of dropping rows', async () => {
+      (prismaService.challengeEntry.findMany as jest.Mock).mockResolvedValue([baseEntry]);
+      (prismaService.user.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.listChallengeEntriesForReview();
+      const item = (result.data!.items as Array<Record<string, unknown>>)[0];
+      expect(item.participantName).toBe('Participant user-1'.slice(0, 'Participant '.length + 8));
+    });
+
+    it('applies the status filter and rejects unknown statuses', async () => {
+      (prismaService.challengeEntry.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.user.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.listChallengeEntriesForReview('pending');
+      expect(prismaService.challengeEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { status: 'pending' } })
+      );
+
+      await expect(service.listChallengeEntriesForReview('bogus')).rejects.toThrow(
+        BadRequestException
+      );
+    });
+  });
+
+  describe('reviewChallengeEntry', () => {
+    const reviewerId = 'admin-1';
+    const entryId = 'entry-9';
+
+    const mockEntry = (overrides: Record<string, unknown> = {}) => ({
+      id: entryId,
+      userId: 'user-1',
+      challengeId: 'challenge-1',
+      status: 'pending',
+      challenge: { title: 'Dance Marathon', prize: '₦250,000' },
+      ...overrides,
+    });
+
+    const mockNotificationPrisma = () => {
+      (prismaService.notification.create as jest.Mock).mockResolvedValue({});
+      (prismaService.user.findUnique as jest.Mock).mockResolvedValue({
+        email: 'user-1@example.com',
+        displayName: 'Demo Creator',
+      });
+    };
+
+    it('should reject invalid or missing review actions with a 400', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
+
+      await expect(
+        service.reviewChallengeEntry(reviewerId, entryId, 'approved' as 'winner')
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.reviewChallengeEntry(reviewerId, entryId, undefined as unknown as 'winner')
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaService.challengeEntry.update).not.toHaveBeenCalled();
+    });
+
+    it('should set the entry status and stamp the reviewer', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
+      (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
+      mockNotificationPrisma();
+      mockedAxios.post.mockResolvedValue({ data: {} });
+
+      const result = await service.reviewChallengeEntry(reviewerId, entryId, 'winner');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.status).toBe('winner');
+      expect(prismaService.challengeEntry.update).toHaveBeenCalledWith({
+        where: { id: entryId },
+        data: expect.objectContaining({ status: 'winner', reviewedBy: reviewerId }),
+      });
+    });
+
+    it('should persist a reviewer note with the review', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
+      (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
+      mockNotificationPrisma();
+      mockedAxios.post.mockResolvedValue({ data: {} });
+
+      const result = await service.reviewChallengeEntry(
+        reviewerId,
+        entryId,
+        'rejected',
+        'Audio quality does not meet contest standards'
+      );
+
+      expect(result.data!.reviewNote).toBe('Audio quality does not meet contest standards');
+      expect(prismaService.challengeEntry.update).toHaveBeenCalledWith({
+        where: { id: entryId },
+        data: expect.objectContaining({
+          status: 'rejected',
+          reviewNote: 'Audio quality does not meet contest standards',
+        }),
+      });
+    });
+
+    it('should strip markup from a reviewer note', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
+      (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
+      mockNotificationPrisma();
+      mockedAxios.post.mockResolvedValue({ data: {} });
+
+      const result = await service.reviewChallengeEntry(
+        reviewerId,
+        entryId,
+        'rejected',
+        '<b>Weak hook</b>, re-record the intro'
+      );
+
+      expect(result.data!.reviewNote).toBe('Weak hook, re-record the intro');
+    });
+
+    it('should reject reviewer notes over 1000 characters with a 400', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
+
+      await expect(
+        service.reviewChallengeEntry(reviewerId, entryId, 'rejected', 'x'.repeat(1001))
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaService.challengeEntry.update).not.toHaveBeenCalled();
+    });
+
+    it('should clear a stale note when a re-review carries no note', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(
+        mockEntry({ status: 'rejected', reviewNote: 'old reason' })
+      );
+      (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
+      mockNotificationPrisma();
+      mockedAxios.post.mockResolvedValue({ data: {} });
+
+      await service.reviewChallengeEntry(reviewerId, entryId, 'winner');
+
+      expect(prismaService.challengeEntry.update).toHaveBeenCalledWith({
+        where: { id: entryId },
+        data: expect.objectContaining({ status: 'winner', reviewNote: null }),
+      });
+    });
+
+    it('should create an in-app notification with action-specific copy', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
+      (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
+      mockNotificationPrisma();
+      mockedAxios.post.mockResolvedValue({ data: {} });
+
+      await service.reviewChallengeEntry(reviewerId, entryId, 'winner');
+
+      expect(prismaService.notification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: 'user-1',
+          type: 'system',
+          title: 'Congratulations — You Won!',
+          metadata: expect.objectContaining({ challengeId: 'challenge-1', status: 'winner' }),
+        }),
+      });
+
+      await service.reviewChallengeEntry(reviewerId, entryId, 'under_review');
+      expect(prismaService.notification.create).toHaveBeenLastCalledWith({
+        data: expect.objectContaining({ title: 'Entry Under Review' }),
+      });
+
+      await service.reviewChallengeEntry(reviewerId, entryId, 'rejected');
+      expect(prismaService.notification.create).toHaveBeenLastCalledWith({
+        data: expect.objectContaining({ title: 'Entry Not Selected' }),
+      });
+    });
+
+    it('should send a templated email through notification-service with identity headers', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
+      (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
+      mockNotificationPrisma();
+      mockedAxios.post.mockResolvedValue({ data: { success: true } });
+
+      await service.reviewChallengeEntry(reviewerId, entryId, 'winner');
+
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/v1/notifications/email'),
+        expect.objectContaining({
+          to: 'user-1@example.com',
+          template: 'challenge-review',
+          data: expect.objectContaining({
+            displayName: 'Demo Creator',
+            challengeTitle: 'Dance Marathon',
+            prize: '₦250,000',
+          }),
+        }),
+        expect.objectContaining({
+          headers: expect.objectContaining({ 'x-user-id': 'user-1' }),
+        })
+      );
+    });
+
+    it('should not fail the review when the email send throws', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
+      (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
+      mockNotificationPrisma();
+      mockedAxios.post.mockRejectedValue(new Error('email service down'));
+
+      const result = await service.reviewChallengeEntry(reviewerId, entryId, 'winner');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.status).toBe('winner');
+    });
+
+    it('should not fail the review when the notification row cannot be created', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
+      (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
+      (prismaService.notification.create as jest.Mock).mockRejectedValue(
+        new Error('notification write failed')
+      );
+      (prismaService.user.findUnique as jest.Mock).mockResolvedValue({
+        email: 'user-1@example.com',
+        displayName: 'Demo Creator',
+      });
+      mockedAxios.post.mockResolvedValue({ data: {} });
+
+      const result = await service.reviewChallengeEntry(reviewerId, entryId, 'winner');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.status).toBe('winner');
+      // Email still attempted even though the in-app row failed.
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/v1/notifications/email'),
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    it('should skip the email when the participant has no address', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
+      (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
+      (prismaService.notification.create as jest.Mock).mockResolvedValue({});
+      (prismaService.user.findUnique as jest.Mock).mockResolvedValue({
+        email: null,
+        displayName: 'X',
+      });
+      mockedAxios.post.mockClear();
+
+      await service.reviewChallengeEntry(reviewerId, entryId, 'winner');
+
+      const emailCalls = (mockedAxios.post as jest.Mock).mock.calls.filter((call) =>
+        String(call[0]).includes('/v1/notifications/email')
+      );
+      expect(emailCalls).toHaveLength(0);
+    });
+
+    it('should accept under_review and rejected actions', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
+      (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
+      mockNotificationPrisma();
+      mockedAxios.post.mockResolvedValue({ data: {} });
+
+      const underReview = await service.reviewChallengeEntry(reviewerId, entryId, 'under_review');
+      expect(underReview.data!.status).toBe('under_review');
+
+      const rejected = await service.reviewChallengeEntry(reviewerId, entryId, 'rejected');
+      expect(rejected.data!.status).toBe('rejected');
+    });
+
+    it('should throw NotFoundException if entry not found', async () => {
+      (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.reviewChallengeEntry(reviewerId, entryId, 'winner')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -953,6 +1313,72 @@ describe('CreatorsService', () => {
       (prismaService.creatorProfile.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.sendTip(userId, creatorId, amount)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('exclusiveContent', () => {
+    const mockContent = {
+      id: 'ex-1',
+      creatorId: 'creator-uuid',
+      title: 'Behind the Scenes VIP',
+      description: 'Exclusive rehearsal clip',
+      mediaUrl: 'https://cdn.azeeboplus.com/exclusive/bts.mp4',
+      minTier: 'gold',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it('should create exclusive content for creator', async () => {
+      (prismaService.creatorProfile.findUnique as jest.Mock).mockResolvedValue({
+        id: 'creator-uuid',
+        userId: 'creator-user-1',
+      });
+      (prismaService.exclusiveContent.create as jest.Mock).mockResolvedValue(mockContent);
+
+      const result = await service.createExclusiveContent('creator-user-1', {
+        title: 'Behind the Scenes VIP',
+        mediaUrl: 'https://cdn.azeeboplus.com/exclusive/bts.mp4',
+        minTier: 'gold',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockContent);
+    });
+
+    it('should gate mediaUrl for non-Gold supporters', async () => {
+      (prismaService.creatorProfile.findFirst as jest.Mock).mockResolvedValue({
+        id: 'creator-uuid',
+        userId: 'creator-user-1',
+      });
+      (prismaService.exclusiveContent.findMany as jest.Mock).mockResolvedValue([mockContent]);
+      (prismaService.tipLeaderboard.findUnique as jest.Mock).mockResolvedValue({
+        tier: 'silver',
+      });
+
+      const result = await service.getExclusiveContent('creator-uuid', 'fan-user-silver');
+
+      expect(result.success).toBe(true);
+      const data = result.data as { items: Array<{ locked: boolean; mediaUrl: string | null }> };
+      expect(data.items[0].locked).toBe(true);
+      expect(data.items[0].mediaUrl).toBeNull();
+    });
+
+    it('should ungate mediaUrl for Gold+ supporters', async () => {
+      (prismaService.creatorProfile.findFirst as jest.Mock).mockResolvedValue({
+        id: 'creator-uuid',
+        userId: 'creator-user-1',
+      });
+      (prismaService.exclusiveContent.findMany as jest.Mock).mockResolvedValue([mockContent]);
+      (prismaService.tipLeaderboard.findUnique as jest.Mock).mockResolvedValue({
+        tier: 'gold',
+      });
+
+      const result = await service.getExclusiveContent('creator-uuid', 'fan-user-gold');
+
+      expect(result.success).toBe(true);
+      const data = result.data as { items: Array<{ locked: boolean; mediaUrl: string | null }> };
+      expect(data.items[0].locked).toBe(false);
+      expect(data.items[0].mediaUrl).toBe(mockContent.mediaUrl);
     });
   });
 });

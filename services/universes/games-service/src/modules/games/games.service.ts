@@ -35,20 +35,25 @@ export class GamesService {
   }
 
   async getHome(): Promise<GameResponse> {
-    const dailyChallenge = await this.prisma.challenge.findFirst({
-      where: { type: 'daily' },
-    });
-
-    const tournaments = await this.prisma.tournament.findMany({
-      where: { status: 'active' },
-      orderBy: { startsAt: 'asc' },
-      take: 5,
-    });
-
-    const topPlayers = await this.prisma.scoreEntry.findMany({
-      orderBy: { score: 'desc' },
-      take: 10,
-    });
+    // Parallel fetch all independent data (fixes sequential queries)
+    const [dailyChallenge, tournaments, topPlayers] = await Promise.all([
+      this.prisma.challenge.findFirst({
+        where: { type: 'daily' },
+        include: { questions: { select: { id: true } } },
+      }),
+      this.prisma.tournament.findMany({
+        where: { status: 'active' },
+        include: {
+          _count: { select: { entries: true, prizes: true } },
+        },
+        orderBy: { startsAt: 'asc' },
+        take: 5,
+      }),
+      this.prisma.scoreEntry.findMany({
+        orderBy: { score: 'desc' },
+        take: 10,
+      }),
+    ]);
 
     return {
       success: true,
@@ -255,6 +260,10 @@ export class GamesService {
   async listTournaments(): Promise<GameResponse> {
     const tournaments = await this.prisma.tournament.findMany({
       where: { status: 'active' },
+      include: {
+        prizes: true,
+        _count: { select: { entries: true, matches: true } },
+      },
       orderBy: { startsAt: 'asc' },
     });
 

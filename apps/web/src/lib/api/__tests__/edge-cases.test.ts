@@ -376,18 +376,6 @@ describe('Wallet — Edge Cases & Error Scenarios', () => {
     expect(result.success).toBe(true);
     expect(result.data!.items).toHaveLength(0);
   });
-
-  it('should handle getEarnings with no earnings', async () => {
-    client.request.mockResolvedValue({
-      success: true,
-      data: { totalEarnings: 0, pendingEarnings: 0, withdrawableBalance: 0 },
-    });
-
-    const result = await wallet.getEarnings({ range: '7d' });
-
-    expect(result.success).toBe(true);
-    expect(result.data!.totalEarnings).toBe(0);
-  });
 });
 
 // ── User Edge Cases ────────────────────────────────────────────────────────

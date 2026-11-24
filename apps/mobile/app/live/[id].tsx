@@ -10,8 +10,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface LiveEventDetail {
   id: string;
@@ -105,7 +107,7 @@ export default function LiveEventDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#fff' }]}>
+      <SafeAreaView accessibilityLabel="Screen Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#fff' }]}>
         <LoadingState text="Loading event..." />
       </SafeAreaView>
     );
@@ -127,7 +129,7 @@ export default function LiveEventDetailScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>{'\u2190'}</Text>
           </TouchableOpacity>
         </View>
@@ -141,7 +143,7 @@ export default function LiveEventDetailScreen() {
           <Text style={styles.statusText}>{getTimeStatus(event.scheduledAt, event.status)}</Text>
 
           <View style={[styles.priceCard, { backgroundColor: cardBg }]}>
-            <Text style={[styles.price, { color: '#E8420A' }]}>
+            <Text style={[styles.price, { color: brand.flame }]}>
               {formatPrice(event.ticketPrice, event.currency)}
             </Text>
             <Text style={styles.priceLabel}>
@@ -185,7 +187,7 @@ export default function LiveEventDetailScreen() {
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                purchaseMutation.isPending && { backgroundColor: '#666' },
+                purchaseMutation.isPending && { backgroundColor: colors.neutral[600] },
               ]}
               onPress={() => purchaseMutation.mutate()}
               disabled={purchaseMutation.isPending}
@@ -221,7 +223,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -230,7 +232,7 @@ const styles = StyleSheet.create({
     width: '90%',
     height: 200,
     borderRadius: 16,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
@@ -239,7 +241,7 @@ const styles = StyleSheet.create({
   imageEmoji: { fontSize: 60 },
   contentSection: { paddingHorizontal: 16 },
   title: { fontSize: 24, fontWeight: '700', marginBottom: 4 },
-  statusText: { fontSize: 14, color: '#E8420A', fontWeight: '600', marginBottom: 16 },
+  statusText: { fontSize: 14, color: brand.flame, fontWeight: '600', marginBottom: 16 },
   priceCard: {
     borderRadius: 12,
     padding: 16,
@@ -247,13 +249,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   price: { fontSize: 28, fontWeight: '700' },
-  priceLabel: { fontSize: 12, color: '#888', marginTop: 2 },
+  priceLabel: { fontSize: 12, color: colors.text.secondary, marginTop: 2 },
   infoGrid: { marginBottom: 20, gap: 12 },
   infoItem: {},
-  infoLabel: { fontSize: 12, color: '#888', marginBottom: 2 },
+  infoLabel: { fontSize: 12, color: colors.text.secondary, marginBottom: 2 },
   infoValue: { fontSize: 14, fontWeight: '600' },
   sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
-  description: { fontSize: 14, color: '#888', lineHeight: 22, marginBottom: 24 },
+  description: { fontSize: 14, color: colors.text.secondary, lineHeight: 22, marginBottom: 24 },
   cancelledBanner: {
     backgroundColor: 'rgba(239,68,68,0.15)',
     borderRadius: 12,
@@ -271,7 +273,7 @@ const styles = StyleSheet.create({
   },
   endedText: { color: '#6b7280', fontWeight: '600' },
   purchaseButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -279,5 +281,5 @@ const styles = StyleSheet.create({
   },
   purchaseButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   terms: { gap: 6 },
-  termText: { fontSize: 12, color: '#666' },
+  termText: { fontSize: 12, color: colors.text.tertiary },
 });

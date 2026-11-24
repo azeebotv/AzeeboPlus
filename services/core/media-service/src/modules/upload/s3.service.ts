@@ -1,4 +1,10 @@
-import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  BadRequestException,
+  ServiceUnavailableException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -16,7 +22,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
 
-interface FileMetadata {
+export interface FileMetadata {
   contentType: string | undefined;
   contentLength: number | undefined;
   lastModified: Date | undefined;
@@ -68,8 +74,14 @@ export class S3Service {
 
     this.s3Client = new S3Client({
       region: this.region,
-      ...(accessKeyId && secretAccessKey
-        ? { credentials: { accessKeyId, secretAccessKey } }
+      ...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
+      // S3_ENDPOINT targets S3-compatible blob stores (MinIO, R2, LocalStack);
+      // forcePathStyle is required for bucket-in-path addressing outside AWS.
+      ...(this.configService.get<string>('S3_ENDPOINT')
+        ? {
+            endpoint: this.configService.get<string>('S3_ENDPOINT'),
+            forcePathStyle: true,
+          }
         : {}),
     });
 
@@ -141,7 +153,10 @@ export class S3Service {
       if (error instanceof CircuitBreakerOpenError) {
         const err = error as CircuitBreakerOpenError;
         this.logger.warn(`S3 circuit breaker open: ${err.message}`);
-        throw new BadRequestException(
+        // Circuit-open is S3 unreachability, not a bad request — the honest
+        // 503 preserves the retry signal the message describes. (An honest 5xx
+        // in a catch is legitimate; no mapAndThrow/marker needed here.)
+        throw new ServiceUnavailableException(
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
@@ -257,8 +272,40 @@ export class S3Service {
       );
       return 0;
     } finally {
-      await unlink(tmpFile).catch(() => {});
+      await unlink(tmpFile).catch(() => {
+        /* temp file may already be deleted */
+      });
     }
+  }
+
+  /**
+   * Writes a raw buffer to an arbitrary key (chunk staging). No sniffing or
+   * extension validation — callers stage untrusted bytes here and validate at
+   * assembly time via uploadFile().
+   */
+  async putBuffer(key: string, buffer: Buffer, contentType?: string): Promise<void> {
+    await this.circuitBreaker.execute(async () => {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType || 'application/octet-stream',
+        })
+      );
+    });
+  }
+
+  /** Downloads an object's bytes (used to reassemble staged chunks). */
+  async getObjectBuffer(key: string): Promise<Buffer> {
+    const response = await this.s3Client.send(
+      new GetObjectCommand({ Bucket: this.bucketName, Key: key })
+    );
+    if (!response.Body) {
+      throw new Error(`Object ${key} has no body`);
+    }
+    const bytes = await response.Body.transformToByteArray();
+    return Buffer.from(bytes);
   }
 
   async getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
@@ -277,7 +324,8 @@ export class S3Service {
       if (error instanceof CircuitBreakerOpenError) {
         const err = error as CircuitBreakerOpenError;
         this.logger.warn(`S3 circuit breaker open: ${err.message}`);
-        throw new BadRequestException(
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File download service temporarily unavailable. Please try again later.'
         );
       }
@@ -313,7 +361,8 @@ export class S3Service {
       if (error instanceof CircuitBreakerOpenError) {
         const err = error as CircuitBreakerOpenError;
         this.logger.warn(`S3 circuit breaker open: ${err.message}`);
-        throw new BadRequestException(
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
@@ -338,7 +387,8 @@ export class S3Service {
       if (error instanceof CircuitBreakerOpenError) {
         const err = error as CircuitBreakerOpenError;
         this.logger.warn(`S3 circuit breaker open: ${err.message}`);
-        throw new BadRequestException(
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File deletion service temporarily unavailable. Please try again later.'
         );
       }
@@ -370,7 +420,8 @@ export class S3Service {
       if (error instanceof CircuitBreakerOpenError) {
         const err = error as CircuitBreakerOpenError;
         this.logger.warn(`S3 circuit breaker open: ${err.message}`);
-        throw new BadRequestException(
+        // Circuit-open = dependency unreachable → honest 503, not a 400.
+        throw new ServiceUnavailableException(
           'File metadata service temporarily unavailable. Please try again later.'
         );
       }
@@ -379,6 +430,36 @@ export class S3Service {
       );
       throw error;
     }
+  }
+
+  /**
+   * List every object in the bucket (paginated). Used by the reconcile pass
+   * to inventory the bucket before matching against media_uploads rows.
+   * Objects carry Key, Size and LastModified — everything reconcile needs to
+   * backfill rows without a second HEAD per object.
+   */
+  async listAllObjects(
+    prefix?: string
+  ): Promise<{ Key?: string; Size?: number; LastModified?: Date }[]> {
+    const objects: { Key?: string; Size?: number; LastModified?: Date }[] = [];
+    let continuationToken: string | undefined;
+
+    do {
+      const response = await this.circuitBreaker.execute(async () => {
+        return this.s3Client.send(
+          new ListObjectsV2Command({
+            Bucket: this.bucketName,
+            ...(prefix ? { Prefix: prefix } : {}),
+            ContinuationToken: continuationToken,
+          })
+        );
+      });
+
+      objects.push(...(response.Contents ?? []));
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
+
+    return objects;
   }
 
   async cleanupOrphanedFiles(prefix: string, olderThanDays: number): Promise<number> {

@@ -1,11 +1,25 @@
 'use client';
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import {
+  Eye,
+  Heart,
+  Users,
+  DollarSign,
+  Clock,
+  CheckCircle2,
+  Share2,
+  MessageSquare,
+  Sparkles,
+  BarChart2,
+} from 'lucide-react';
 
 interface AnalyticsData {
   totalViews: number;
@@ -36,6 +50,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
     data: analytics,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['creator', 'analytics', timeRange],
     queryFn: async () => {
@@ -47,334 +62,242 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
 
   if (error) {
     return (
-      <div
-        style={{
-          backgroundColor: 'var(--bg-primary, #1A0A0A)',
-          minHeight: '100vh',
-          color: 'var(--text-primary, #F5F0EB)',
-        }}
-      >
-        <AppHeader active="Creator" />
-        <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-          <ErrorState title="Failed to load analytics" />
-        </main>
-        <AppFooter />
-      </div>
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 12%, transparent)">
+        <div className="max-w-xl mx-auto py-20 px-4">
+          <ErrorState
+            title="Failed to load analytics"
+            description="Unable to sync streaming telemetry for your studio."
+            onButtonPress={() => refetch()}
+          />
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-primary, #1A0A0A)',
-        minHeight: '100vh',
-        color: 'var(--text-primary, #F5F0EB)',
-      }}
-    >
-      <AppHeader active="Creator" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Analytics</h1>
-        <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 24 }}>
-          Track your content performance and growth
-        </p>
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
+      <PageHero
+        badge="Audience Telemetry"
+        title="Studio Analytics"
+        description="Granular performance insights, audience demographics, and playback retention metrics."
+      />
 
-        <div style={{ marginBottom: 24 }}>
-          <label
-            style={{
-              color: 'var(--text-muted, #9A8A7A)',
-              fontSize: 13,
-              marginBottom: 8,
-              display: 'block',
-            }}
-          >
-            Time Range
-          </label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {(['7d', '30d', '90d', 'all'] as const).map((range) => (
-              <button
-                key={range}
-                onClick={() => setTimeRange(range)}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border-default)',
-                  background: timeRange === range ? 'rgba(232,66,10,0.2)' : 'transparent',
-                  color:
-                    timeRange === range
-                      ? 'var(--brand-orange, #E8420A)'
-                      : 'var(--text-muted, #9A8A7A)',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                }}
-              >
-                {range.toUpperCase()}
-              </button>
-            ))}
+      <div className="max-w-5xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Time Horizon Selector */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-mono uppercase tracking-wider text-az-ink/50">
+            Observation Interval
+          </span>
+          <div className="flex items-center gap-1.5 p-1 az-glass border border-az-glass-border">
+            {(['7d', '30d', '90d', 'all'] as const).map((range) => {
+              const isActive = timeRange === range;
+              return (
+                <button
+                  key={range}
+                  type="button"
+                  onClick={() => setTimeRange(range)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-[var(--color-az-flame)] text-az-surface-root shadow-lg'
+                      : 'text-az-ink/60 hover:text-az-ink'
+                  }`}
+                >
+                  {range.toUpperCase()}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {isLoading ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
-            ))}
-          </div>
-        ) : analytics ? (
-          <>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-                gap: 16,
-                marginBottom: 32,
-              }}
-            >
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                }}
-              >
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
-                  Total Views
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
-                  {analytics.totalViews.toLocaleString()}
-                </p>
-              </div>
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                }}
-              >
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
-                  Likes
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
-                  {analytics.totalLikes.toLocaleString()}
-                </p>
-              </div>
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                }}
-              >
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
-                  Followers
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
-                  {analytics.totalFollowers.toLocaleString()}
-                </p>
-              </div>
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                }}
-              >
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
-                  Earnings
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary, #F5F0EB)' }}>
-                  ₦{analytics.totalEarnings.toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Top Content</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {analytics.topContent.map((item) => (
-                  <div
-                    key={item.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: 16,
-                      borderRadius: 16,
-                      border: '1px solid var(--border-default)',
-                      backgroundColor: 'rgba(26,10,10,0.5)',
-                    }}
-                  >
-                    {item.thumbnail && (
-                      <OptimizedImage
-                        src={item.thumbnail}
-                        alt={item.title}
-                        width={48}
-                        height={48}
-                        className="rounded-lg object-cover"
-                      />
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 style={{ fontWeight: 600, fontSize: 14, margin: 0 }}>{item.title}</h3>
-                      <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12 }}>
-                        {item.views.toLocaleString()} views
-                      </p>
+        {/* Primary Metrics Grid */}
+        <ScrollReveal>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              {
+                label: 'Total Views',
+                value: analytics?.totalViews.toLocaleString() || '0',
+                icon: Eye,
+                color: 'text-[var(--color-az-flame)]',
+              },
+              {
+                label: 'Reactions / Likes',
+                value: analytics?.totalLikes.toLocaleString() || '0',
+                icon: Heart,
+                color: 'text-az-category-pink',
+              },
+              {
+                label: 'Audience Reach',
+                value: analytics?.totalFollowers.toLocaleString() || '0',
+                icon: Users,
+                color: 'text-az-category-violet-light',
+              },
+              {
+                label: 'Revenue Accrued',
+                value: `₦${analytics?.totalEarnings.toLocaleString() || '0'}`,
+                icon: DollarSign,
+                color: 'text-az-success-400',
+              },
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className="az-glass p-5 sm:p-6 border border-az-glass-border transition-all"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-az-ink/40">
+                      {stat.label}
+                    </span>
+                    <div className="w-8 h-8 rounded-lg bg-az-glass-fill border border-az-glass-border flex items-center justify-center">
+                      <Icon className={`w-4 h-4 ${stat.color}`} />
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <p className="az-headline text-2xl sm:text-3xl font-extrabold text-az-ink">
+                      {stat.value}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </ScrollReveal>
 
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>
-                Engagement Metrics
-              </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-                <div
-                  style={{
-                    padding: 20,
-                    borderRadius: 16,
-                    border: '1px solid var(--border-default)',
-                    backgroundColor: 'rgba(26,10,10,0.5)',
-                  }}
-                >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
-                    Avg Watch Time
-                  </p>
-                  <p
-                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
-                  >
-                    {analytics.engagementMetrics.avgWatchTime.toFixed(1)}s
-                  </p>
-                </div>
-                <div
-                  style={{
-                    padding: 20,
-                    borderRadius: 16,
-                    border: '1px solid var(--border-default)',
-                    backgroundColor: 'rgba(26,10,10,0.5)',
-                  }}
-                >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
-                    Completion Rate
-                  </p>
-                  <p
-                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
-                  >
-                    {analytics.engagementMetrics.completionRate.toFixed(1)}%
-                  </p>
-                </div>
-                <div
-                  style={{
-                    padding: 20,
-                    borderRadius: 16,
-                    border: '1px solid var(--border-default)',
-                    backgroundColor: 'rgba(26,10,10,0.5)',
-                  }}
-                >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
-                    Share Rate
-                  </p>
-                  <p
-                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
-                  >
-                    {analytics.engagementMetrics.shareRate.toFixed(1)}%
-                  </p>
-                </div>
-                <div
-                  style={{
-                    padding: 20,
-                    borderRadius: 16,
-                    border: '1px solid var(--border-default)',
-                    backgroundColor: 'rgba(26,10,10,0.5)',
-                  }}
-                >
-                  <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 12, marginBottom: 4 }}>
-                    Comment Rate
-                  </p>
-                  <p
-                    style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #F5F0EB)' }}
-                  >
-                    {analytics.engagementMetrics.commentRate.toFixed(1)}%
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>
-                Audience Demographics
-              </h2>
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 16,
-                  border: '1px solid var(--border-default)',
-                  backgroundColor: 'rgba(26,10,10,0.5)',
-                }}
-              >
-                <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 14, marginBottom: 12 }}>
-                  Age Groups
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {analytics.demographics.ageGroups.map((group) => (
+        {analytics ? (
+          <>
+            {/* Top Performing Releases */}
+            <ScrollReveal delay={0.1}>
+              <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+                <h2 className="text-lg font-bold text-az-ink mb-6 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[var(--color-az-flame)]" />
+                  Top Performing Releases
+                </h2>
+                <div className="space-y-3">
+                  {analytics.topContent.map((item) => (
                     <div
-                      key={group.range}
-                      style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+                      key={item.id}
+                      className="p-4 rounded-xl bg-az-ink/[0.03] border border-az-ink/5 hover:border-az-glass-border flex items-center gap-4 transition-all"
                     >
-                      <span
-                        style={{ width: 80, color: 'var(--text-muted, #9A8A7A)', fontSize: 12 }}
-                      >
-                        {group.range}
-                      </span>
-                      <div
-                        style={{
-                          flex: 1,
-                          height: 8,
-                          backgroundColor: 'var(--bg-surface, #2A1A1A)',
-                          borderRadius: 4,
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: `${group.percentage}%`,
-                            height: '100%',
-                            backgroundColor: 'var(--brand-orange, #E8420A)',
-                          }}
-                        />
+                      {item.thumbnail && (
+                        <div className="w-14 h-14 rounded-lg overflow-hidden relative flex-shrink-0 bg-az-glass-fill border border-az-glass-border">
+                          <OptimizedImage
+                            src={item.thumbnail}
+                            alt={item.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-az-ink truncate">{item.title}</h3>
+                        <p className="text-xs text-az-ink/50 mt-0.5">
+                          {item.views.toLocaleString()} verified streams
+                        </p>
                       </div>
-                      <span
-                        style={{
-                          width: 50,
-                          textAlign: 'right',
-                          color: 'var(--text-muted, #9A8A7A)',
-                          fontSize: 12,
-                        }}
-                      >
-                        {group.percentage}%
-                      </span>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
+            </ScrollReveal>
+
+            {/* Engagement Metrics & Demographics */}
+            <ScrollReveal delay={0.2}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Engagement Breakdown */}
+                <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+                  <h2 className="text-lg font-bold text-az-ink mb-6 flex items-center gap-2">
+                    <BarChart2 className="w-5 h-5 text-az-secondary-400" />
+                    Playback Dynamics
+                  </h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-az-ink/[0.03] border border-az-ink/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-az-ink/40">
+                          Watch Time
+                        </span>
+                        <Clock className="w-3.5 h-3.5 text-az-ink/40" />
+                      </div>
+                      <p className="text-xl font-bold text-az-ink">
+                        {analytics.engagementMetrics.avgWatchTime.toFixed(1)}s
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-az-ink/[0.03] border border-az-ink/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-az-ink/40">
+                          Completion
+                        </span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-az-success-400" />
+                      </div>
+                      <p className="text-xl font-bold text-az-ink">
+                        {analytics.engagementMetrics.completionRate.toFixed(1)}%
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-az-ink/[0.03] border border-az-ink/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-az-ink/40">
+                          Virality / Share
+                        </span>
+                        <Share2 className="w-3.5 h-3.5 text-az-secondary-400" />
+                      </div>
+                      <p className="text-xl font-bold text-az-ink">
+                        {analytics.engagementMetrics.shareRate.toFixed(1)}%
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-az-ink/[0.03] border border-az-ink/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-mono uppercase text-az-ink/40">
+                          Comments
+                        </span>
+                        <MessageSquare className="w-3.5 h-3.5 text-az-category-violet-light" />
+                      </div>
+                      <p className="text-xl font-bold text-az-ink">
+                        {analytics.engagementMetrics.commentRate.toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Audience Age Groups */}
+                <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+                  <h2 className="text-lg font-bold text-az-ink mb-6">Audience Demographics</h2>
+                  <div className="space-y-4">
+                    {analytics.demographics.ageGroups.map((group) => (
+                      <div key={group.range} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-az-ink/60 font-medium">{group.range} years</span>
+                          <span className="text-az-ink font-mono font-bold">
+                            {group.percentage}%
+                          </span>
+                        </div>
+                        <div className="h-2 rounded-full bg-az-glass-fill overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[var(--color-az-flame)] to-az-warning-500 rounded-full"
+                            style={{ width: `${group.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
           </>
         ) : (
-          <p style={{ color: 'var(--text-muted, #9A8A7A)', textAlign: 'center', padding: 40 }}>
-            No analytics data available yet.
-          </p>
+          <div className="az-glass p-12 text-center border border-az-glass-border">
+            <BarChart2 className="w-12 h-12 text-az-ink/30 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-az-ink mb-2">No Analytics Collected</h3>
+            <p className="text-xs text-az-ink/50 max-w-sm mx-auto">
+              Audience streams and playback engagement data will populate once your content
+              premieres.
+            </p>
+          </div>
         )}
-      </main>
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }

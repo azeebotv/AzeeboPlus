@@ -29,7 +29,7 @@ const mockItem = {
   description: 'Test description',
   thumbnail: '/test-thumbnail.jpg',
   duration: 120,
-  universe: { id: 'u1', name: 'Reality', icon: '📺' },
+  universe: { id: 'u1', name: 'Reality', icon: 'Tv' },
   universeId: 'u1',
   status: 'published',
   createdAt: '2024-01-01T00:00:00.000Z',
@@ -62,7 +62,7 @@ describe('ContentCard', () => {
 
   it('renders universe icon', () => {
     render(<ContentCard item={mockItem} sectionId="trending" position={0} />);
-    expect(screen.getByText('📺')).toBeInTheDocument();
+    expect(screen.getByText('Tv')).toBeInTheDocument();
   });
 
   it('links to watch page', () => {

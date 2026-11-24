@@ -10,15 +10,16 @@ import {
   Request,
   Body,
   Param,
-  ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard, AdminGuard } from '@azeebo/security';
 
 import { NotificationsService } from './notifications.service.js';
+import { NotificationSLOService } from '../notification/notification-slo.service.js';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
 import { SavePushTokenDto } from './dto/save-push-token.dto.js';
+import { SendEmailDto } from './dto/send-email.dto.js';
 import { NotificationResponse } from './interfaces/notification-response.interface.js';
 
 @ApiTags('Notifications')
@@ -26,7 +27,8 @@ import { NotificationResponse } from './interfaces/notification-response.interfa
 @Controller('notifications')
 export class NotificationsController {
   constructor(
-    @Inject(NotificationsService) private readonly notificationsService: NotificationsService
+    @Inject(NotificationsService) private readonly notificationsService: NotificationsService,
+    @Inject(NotificationSLOService) private readonly sloService: NotificationSLOService
   ) {}
 
   @Get()
@@ -68,7 +70,7 @@ export class NotificationsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async markAsRead(
     @Request() req: { user: { sub: string; id: string } },
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id') id: string
   ): Promise<NotificationResponse> {
     return this.notificationsService.markAsRead(req.user.id, id);
   }
@@ -116,6 +118,21 @@ export class NotificationsController {
     return this.notificationsService.getUnreadCount(req.user.id);
   }
 
+  // Internal transactional email endpoint: other services (e.g. auth-service
+  // verification links) send first-class templates through here. Guarded by
+  // the class-level ServiceAuthGuard; RateLimitGuard is belt-and-braces.
+  @Post('email')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Send a templated transactional email (internal)' })
+  @ApiResponse({ status: 200, description: 'Email queued for delivery' })
+  @ApiResponse({ status: 400, description: 'Unknown template or invalid payload' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async sendEmail(@Body() sendEmailDto: SendEmailDto): Promise<{ success: boolean }> {
+    const sent = await this.notificationsService.sendTemplatedEmail(sendEmailDto);
+    return { success: sent };
+  }
+
   // Push token endpoints
   @Post('push-tokens')
   @UseGuards(RateLimitGuard)
@@ -156,8 +173,34 @@ export class NotificationsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deletePushToken(
     @Request() req: { user: { sub: string; id: string } },
-    @Param('tokenId', ParseUUIDPipe) tokenId: string
+    @Param('tokenId') tokenId: string
   ): Promise<NotificationResponse> {
     return this.notificationsService.deletePushTokenById(req.user.id, tokenId);
+  }
+
+  // ========================
+  // SLO monitoring endpoints
+  // ========================
+
+  @Get('slo/status')
+  @UseGuards(AdminGuard)
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get notification delivery SLO status' })
+  @ApiResponse({ status: 200, description: 'SLO status' })
+  async getSLOStatus() {
+    const status = await this.sloService.getCurrentSLOStatus();
+    return { success: true, data: status };
+  }
+
+  @Get('slo/measure')
+  @UseGuards(AdminGuard)
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Measure SLO for a time range' })
+  @ApiResponse({ status: 200, description: 'SLO measurement' })
+  async measureSLO(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    const measurement = await this.sloService.measureSLO(new Date(startDate), new Date(endDate));
+    return { success: true, data: measurement };
   }
 }

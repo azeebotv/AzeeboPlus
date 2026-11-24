@@ -1,23 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-export const metadata = {
-  title: 'Premium Access | Azeebo',
-  description: 'Unlock exclusive content, movies, and features with Azeebo Premium subscriptions.',
-  openGraph: {
-    title: 'Premium Access | Azeebo',
-    description:
-      'Unlock exclusive content, movies, and features with Azeebo Premium subscriptions.',
-  },
-};
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { Check, Star } from 'lucide-react';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
-
 export default function PremiumAccessPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -97,9 +88,15 @@ export default function PremiumAccessPage(): React.JSX.Element {
   const walletQuery = useQuery({
     queryKey: ['wallet', 'balance'],
     queryFn: async () => {
-      const res = await apiFetch<{ balance: number }>('/wallet');
+      const res = await apiFetch<{
+        balance: number;
+        bonusBalance?: number;
+        promoBalance?: number;
+        totalBalance?: number;
+        currency?: string;
+      }>('/wallet');
       if (res.success && res.data) {
-        return res.data.balance;
+        return res.data.balance ?? 0;
       }
       return 0;
     },
@@ -174,29 +171,21 @@ export default function PremiumAccessPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
-        <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
+      <PageShell maxWidth="xl">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <Spinner size="lg" color="#E8420A" />
-            <p className="mt-4 text-white/60">Loading premium plans...</p>
+            <Spinner size="lg" color="var(--color-az-flame)" />
+            <p className="az-body mt-4 text-az-ink-muted">Loading premium plans...</p>
           </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
-        <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
+      <PageShell maxWidth="xl">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <ErrorState
             title="Failed to load premium plans"
             description={error}
@@ -207,177 +196,153 @@ export default function PremiumAccessPage(): React.JSX.Element {
             }}
           />
         </div>
-        <AppFooter />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
-      <AppHeader />
+    <PageShell maxWidth="xl">
+      <PageHero
+        eyebrow="Premium"
+        title="Premium Access"
+        description="Unlock exclusive content and features"
+        className="text-center"
+      />
 
-      <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">Premium Access</h1>
-          <p className="text-white/50">Unlock exclusive content and features</p>
-        </div>
-
-        {status?.isPremium && (
-          <div className="az-glass p-6 mb-8" style={{ border: '2px solid rgba(234,179,8,0.5)' }}>
-            <div className="flex items-center gap-4 mb-4">
-              <span className="text-4xl">👑</span>
-              <div>
-                <h2 className="text-xl font-bold" style={{ color: 'var(--color-warning-400)' }}>
-                  Premium Active
-                </h2>
-                <p className="text-white/50">{status.planName}</p>
-              </div>
+      {status?.isPremium && (
+        <div className="mb-8 rounded-az-panel border border-az-warning-400/40 bg-az-glass-fill p-6 backdrop-blur-az-glass">
+          <div className="mb-4 flex items-center gap-4">
+            <div className="flex size-12 items-center justify-center rounded-az-panel bg-az-warning-400/20 text-az-warning-400">
+              <Star size={28} fill="currentColor" />
             </div>
-            <p className="text-white mb-2">
-              Expires: {status.expiresAt ? new Date(status.expiresAt).toLocaleDateString() : 'N/A'}
-            </p>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-white/50">Auto-renew</span>
-              <span
-                className="font-semibold"
-                style={{
-                  color: status.autoRenew ? 'var(--color-success-500)' : 'var(--color-error-500)',
-                }}
-              >
-                {status.autoRenew ? 'On' : 'Off'}
+            <div>
+              <h2 className="az-subtitle text-az-warning-400">Premium Active</h2>
+              <p className="az-body text-az-ink-muted">{status.planName}</p>
+            </div>
+          </div>
+          <p className="az-body mb-2 text-az-ink">
+            Expires: {status.expiresAt ? new Date(status.expiresAt).toLocaleDateString() : 'N/A'}
+          </p>
+          <div className="mb-4 flex items-center justify-between">
+            <span className="az-body text-az-ink-muted">Auto-renew</span>
+            <span
+              className={`az-body-strong ${
+                status.autoRenew ? 'text-az-success-500' : 'text-az-error-500'
+              }`}
+            >
+              {status.autoRenew ? 'On' : 'Off'}
+            </span>
+          </div>
+          {status.autoRenew && (
+            <button
+              type="button"
+              aria-label="Cancel subscription"
+              onClick={handleCancel}
+              className="w-full cursor-pointer rounded-az-pill border-none bg-az-error-500/20 px-4 py-3 az-body-strong text-az-error-500 transition-colors hover:bg-az-error-500/30"
+            >
+              Cancel Subscription
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="az-glass mb-8 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <span className="az-overline mb-1 block text-az-flame">Value Pack</span>
+          <h3 className="az-subtitle text-az-ink">Bundle Passes</h3>
+          <p className="az-caption text-az-ink-muted">Save up to 40% with multi-universe bundles</p>
+        </div>
+        <Link
+          href="/bundles"
+          className="az-body-strong rounded-az-pill bg-az-flame px-6 py-2.5 text-center text-az-surface-root transition-transform hover:scale-105 active:scale-95"
+        >
+          View Bundles
+        </Link>
+      </div>
+
+      <h2 className="az-subtitle mb-6 text-az-ink">Choose Your Plan</h2>
+
+      <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+        {plans.map((plan) => (
+          <div key={plan.id} className="az-glass relative p-6">
+            {plan.isPopular && (
+              <span className="az-body absolute -top-3 left-1/2 -translate-x-1/2 rounded-az-pill bg-az-flame px-4 py-1 text-az-surface-root">
+                Most Popular
+              </span>
+            )}
+            <h3 className="az-subtitle mb-2 text-az-ink">{plan.name}</h3>
+            <div className="mb-4 flex items-baseline gap-1">
+              <span className="az-heading text-az-flame">₦{plan.price.toLocaleString()}</span>
+              <span className="az-caption text-az-ink-muted">
+                {getDurationLabel(plan.duration)}
               </span>
             </div>
-            {status.autoRenew && (
-              <button
-                type="button"
-                aria-label="Cancel subscription"
-                onClick={handleCancel}
-                className="w-full px-4 py-3 rounded-full font-semibold transition-colors"
-                style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: 'var(--color-error-500)' }}
-              >
-                Cancel Subscription
-              </button>
-            )}
-          </div>
-        )}
-
-        <div className="mb-6 p-4 rounded-xl border border-cyan-500/30 bg-cyan-500/5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-white">Bundle Passes</h3>
-              <p className="text-white/50 text-sm">Save up to 40% with multi-universe bundles</p>
-            </div>
-            <Link
-              href="/bundles"
-              className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-lg text-sm transition-colors"
-            >
-              View Bundles
-            </Link>
-          </div>
-        </div>
-
-        <h2 className="text-xl font-bold text-white mb-6">Choose Your Plan</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className={`az-glass p-6 relative ${plan.isPopular ? 'ring-2 ring-[#E8420A]' : ''}`}
-              style={plan.isPopular ? { boxShadow: '0 0 30px rgba(232,66,10,0.2)' } : undefined}
-            >
-              {plan.isPopular && (
-                <span
-                  className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-4 py-1 rounded-full text-sm font-medium text-white"
-                  style={{ backgroundColor: 'var(--brand-orange, #E8420A)' }}
-                >
-                  Most Popular
-                </span>
-              )}
-              <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-              <div className="flex items-baseline gap-1 mb-4">
-                <span
-                  className="text-3xl font-bold"
-                  style={{ color: 'var(--brand-orange, #E8420A)' }}
-                >
-                  ₦{plan.price.toLocaleString()}
-                </span>
-                <span className="text-white/50">{getDurationLabel(plan.duration)}</span>
-              </div>
-              <p className="text-white/50 mb-6">{plan.description}</p>
-              <ul className="space-y-3 mb-6">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2">
-                    <span className="font-bold" style={{ color: 'var(--color-success-500)' }}>
-                      ✓
-                    </span>
-                    <span className="text-white text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+            <p className="az-body mb-6 text-az-ink-muted">{plan.description}</p>
+            <ul className="mb-6 space-y-3">
+              {plan.features.map((feature) => (
+                <li key={feature} className="flex items-center gap-2">
+                  <Check size={16} className="shrink-0 text-az-success-500" />
+                  <span className="az-body text-az-ink">{feature}</span>
+                </li>
+              ))}
+            </ul>
+            {plan.isPopular ? (
               <button
                 type="button"
                 aria-label={`Subscribe to ${plan.name}`}
                 onClick={() => setConfirmPlan({ id: plan.id, name: plan.name, price: plan.price })}
                 disabled={isPurchasing}
-                className={`w-full py-3 rounded-full font-semibold transition-all ${
-                  plan.isPopular ? 'az-btn-primary' : ''
-                }`}
-                style={
-                  plan.isPopular
-                    ? undefined
-                    : {
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: 'var(--brand-white)',
-                      }
-                }
+                className="az-btn-primary"
               >
                 {isPurchasing ? 'Processing...' : 'Subscribe Now'}
               </button>
-            </div>
-          ))}
-        </div>
+            ) : (
+              <button
+                type="button"
+                aria-label={`Subscribe to ${plan.name}`}
+                onClick={() => setConfirmPlan({ id: plan.id, name: plan.name, price: plan.price })}
+                disabled={isPurchasing}
+                className="az-body-strong w-full cursor-pointer rounded-az-pill border border-az-glass-border-hover bg-az-glass-card px-4 py-3 text-az-ink transition-colors hover:bg-az-glass-fill-hover disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isPurchasing ? 'Processing...' : 'Subscribe Now'}
+              </button>
+            )}
+          </div>
+        ))}
       </div>
-
-      <AppFooter />
 
       {confirmPlan && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
           onClick={() => setConfirmPlan(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm subscription"
         >
-          <div
-            className="az-glass p-8 rounded-2xl max-w-sm w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-xl font-bold text-white mb-2">Confirm Subscription</h3>
-            <p className="text-white/50 mb-1">
+          <div className="az-glass w-full max-w-sm p-8" onClick={(e) => e.stopPropagation()}>
+            <h3 className="az-subtitle mb-2 text-az-ink">Confirm Subscription</h3>
+            <p className="az-body mb-1 text-az-ink-muted">
               {confirmPlan.name} — ₦{confirmPlan.price.toLocaleString()}
             </p>
-            <p className="text-white/50 mb-6 text-sm">
+            <p className="az-caption mb-6 text-az-ink-muted">
               Wallet balance: ₦{walletBalance.toLocaleString()}
             </p>
 
-            <div className="flex flex-col gap-3 mb-4">
+            <div className="mb-4 flex flex-col gap-3">
               <button
                 type="button"
                 aria-label="Pay from wallet"
                 onClick={() => handleSubscribe(confirmPlan.id, 'wallet')}
                 disabled={isPurchasing || walletBalance < confirmPlan.price}
-                className="w-full py-3 rounded-full font-semibold transition-all"
-                style={{
-                  background:
-                    walletBalance >= confirmPlan?.price
-                      ? 'linear-gradient(135deg, #0D3B2E 0%, #0A5C36 100%)'
-                      : 'var(--bg-surface, #2A1A1A)',
-                  color: walletBalance >= confirmPlan?.price ? '#fff' : '#666',
-                  cursor: walletBalance >= confirmPlan?.price ? 'pointer' : 'not-allowed',
-                }}
+                className={`w-full rounded-az-pill py-3 az-body-strong transition-colors ${
+                  walletBalance >= confirmPlan.price
+                    ? 'cursor-pointer border-none bg-az-success-500 text-az-surface-root hover:bg-az-success-600'
+                    : 'cursor-not-allowed border-none bg-az-surface-raised text-az-ink-muted'
+                }`}
               >
                 {isPurchasing
                   ? 'Processing...'
-                  : walletBalance >= confirmPlan?.price
+                  : walletBalance >= confirmPlan.price
                     ? 'Pay from Wallet'
                     : 'Insufficient Balance'}
               </button>
@@ -386,7 +351,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
                 aria-label="Pay with card or transfer"
                 onClick={() => handleSubscribe(confirmPlan.id, 'external')}
                 disabled={isPurchasing}
-                className="w-full py-3 rounded-full font-semibold transition-all az-btn-primary"
+                className="az-btn-primary"
               >
                 {isPurchasing ? 'Processing...' : 'Pay with Card / Transfer'}
               </button>
@@ -396,7 +361,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
               type="button"
               aria-label="Cancel subscription confirmation"
               onClick={() => setConfirmPlan(null)}
-              className="w-full py-2 rounded-full text-white/50 border border-white/10 hover:bg-white/5 transition-colors text-sm"
+              className="az-body w-full cursor-pointer rounded-az-pill border border-az-glass-border bg-transparent px-4 py-2 text-az-ink-muted transition-colors hover:bg-az-glass-fill"
             >
               Cancel
             </button>
@@ -406,18 +371,16 @@ export default function PremiumAccessPage(): React.JSX.Element {
 
       {toast && (
         <div
-          className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
-          style={{
-            backgroundColor:
-              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-            border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
-          }}
+          className={`fixed bottom-6 right-6 z-50 rounded-az-panel border px-6 py-3 shadow-az-lifted ${
+            toast.type === 'success'
+              ? 'border-az-success-500/30 bg-az-success-500/15 text-az-success-500'
+              : 'border-az-error-500/30 bg-az-error-500/15 text-az-error-500'
+          }`}
           role="alert"
         >
           {toast.message}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

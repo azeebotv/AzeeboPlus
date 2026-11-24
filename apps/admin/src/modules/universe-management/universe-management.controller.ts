@@ -15,13 +15,17 @@ import {
   Req,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UniverseManagementService } from './universe-management.service';
 import { AuditLogService } from '../audit/audit.service';
 import { CreateUniverseDto } from './dto/create-universe.dto';
 import { UpdateUniverseDto } from './dto/update-universe.dto';
 import { UniverseFeatureFlagDto } from './dto/universe-feature-flag.dto';
+import { PruneStaleUniverseFlagsDto } from './dto/prune-stale-universe-flags.dto';
+import { RestoreUniverseFlagsDto } from './dto/restore-universe-flags.dto';
 import { QueryUniverseDto } from './dto/query-universe.dto';
 import { BulkToggleUniverseDto } from './dto/bulk-toggle-universe.dto';
+import { ToggleUniverseDto } from './dto/toggle-universe.dto';
 import { CloneUniverseDto } from './dto/clone-universe.dto';
 import { ImportUniversesBodyDto } from './dto/import-universe.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -32,6 +36,7 @@ interface AdminRequest extends Request {
   user?: { id?: string; sub?: string };
 }
 
+@ApiTags('Admin - Universe Management')
 @Controller('admin/universes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
@@ -62,6 +67,32 @@ export class UniverseManagementController {
   @Get('feature-flags')
   async getAllFeatureFlags() {
     return this.universeManagementService.getAllFeatureFlags();
+  }
+
+  @Get('feature-flags/deleted')
+  @ApiOperation({
+    summary: 'Recently deleted universe flags (restorable from archived audit snapshots)',
+  })
+  @ApiResponse({ status: 200, description: 'Deleted universe flags with archive availability' })
+  async getRecentlyDeletedUniverseFlags(@Query('limit') limit?: string) {
+    const n = limit ? Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100) : 20;
+    return this.universeManagementService.getRecentlyDeletedUniverseFlags(n);
+  }
+
+  @Post('feature-flags/prune-stale')
+  async pruneStaleFeatureFlags(@Body() dto: PruneStaleUniverseFlagsDto, @Req() req: AdminRequest) {
+    return this.universeManagementService.pruneStaleFeatureFlags(
+      req.user?.id ?? req.user?.sub,
+      dto.keys
+    );
+  }
+
+  @Post('feature-flags/restore')
+  async restoreFeatureFlags(@Body() dto: RestoreUniverseFlagsDto, @Req() req: AdminRequest) {
+    return this.universeManagementService.restoreManyUniverseFlags(
+      dto.keys,
+      req.user?.id ?? req.user?.sub
+    );
   }
 
   @Get('relationships')
@@ -99,7 +130,10 @@ export class UniverseManagementController {
   @Post()
   async createUniverse(@Body() data: CreateUniverseDto, @Req() req: AdminRequest) {
     this.logger.log(`Creating universe: ${data.name}`);
-    const result = await this.universeManagementService.createUniverse(data);
+    const result = await this.universeManagementService.createUniverse(
+      data,
+      req.user?.id ?? req.user?.sub
+    );
     await this.auditLogService.log({
       actorId: req.user?.id || req.user?.sub,
       action: 'universe.created',
@@ -117,7 +151,10 @@ export class UniverseManagementController {
     this.logger.log(
       `Bulk toggling ${data.ids.length} universes to ${data.isEnabled ? 'enabled' : 'disabled'}`
     );
-    const result = await this.universeManagementService.bulkToggle(data);
+    const result = await this.universeManagementService.bulkToggle(
+      data,
+      req.user?.id ?? req.user?.sub
+    );
     await this.auditLogService.log({
       actorId: req.user?.id || req.user?.sub,
       action: 'universe.bulk_toggled',
@@ -171,7 +208,11 @@ export class UniverseManagementController {
     @Req() req: AdminRequest
   ) {
     this.logger.log(`Updating universe: ${id}`);
-    const result = await this.universeManagementService.updateUniverse(id, data);
+    const result = await this.universeManagementService.updateUniverse(
+      id,
+      data,
+      req.user?.id ?? req.user?.sub
+    );
     await this.auditLogService.log({
       actorId: req.user?.id || req.user?.sub,
       action: 'universe.updated',
@@ -186,17 +227,47 @@ export class UniverseManagementController {
   @Put(':id/toggle')
   async toggleUniverse(
     @Param('id') id: string,
-    @Body('isEnabled') isEnabled: boolean,
+    @Body() dto: ToggleUniverseDto,
     @Req() req: AdminRequest
   ) {
+    const isEnabled = dto?.isEnabled === true;
     this.logger.log(`Toggling universe ${id} to ${isEnabled ? 'enabled' : 'disabled'}`);
-    const result = await this.universeManagementService.toggleUniverse(id, isEnabled);
+    const result = await this.universeManagementService.toggleUniverse(
+      id,
+      isEnabled,
+      req.user?.id ?? req.user?.sub
+    );
     await this.auditLogService.log({
       actorId: req.user?.id || req.user?.sub,
       action: 'universe.toggled',
       targetType: 'universe',
       targetId: id,
       details: { isEnabled },
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
+  @Post(':id/resync')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Republish the universe enabled sentinel to Redis from Postgres truth',
+    description:
+      'Heals a flagSync.ok === false result (Redis publish failed after retries) so the runtime store matches the DB.',
+  })
+  @ApiResponse({ status: 200, description: 'Resync attempt outcome with flagSync summary' })
+  async resyncUniverse(@Param('id') id: string, @Req() req: AdminRequest) {
+    this.logger.log(`Resyncing enabled sentinel for universe ${id}`);
+    const result = await this.universeManagementService.resyncUniverse(
+      id,
+      req.user?.id ?? req.user?.sub
+    );
+    await this.auditLogService.log({
+      actorId: req.user?.id || req.user?.sub,
+      action: 'universe.resynced',
+      targetType: 'universe',
+      targetId: id,
+      details: { name: result.name, isEnabled: result.isEnabled, flagSync: result.flagSync },
       ipAddress: req.ip,
     });
     return result;

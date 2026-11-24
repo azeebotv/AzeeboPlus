@@ -4,7 +4,7 @@ import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../../src/theme';
-import { apiClient } from '../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
 
@@ -39,9 +39,7 @@ export default function CrossoverDetailScreen() {
     try {
       const res = await apiClient.get<CrossoverDetail>(`/v1/vertical/crossovers/${id}`);
       setData(res);
-      try {
-        analytics.verticalTitleViewed(res.id);
-      } catch {}
+      analytics.verticalTitleViewed(res.id);
     } catch {
       setError('Failed to load crossover');
     } finally {
@@ -79,7 +77,7 @@ export default function CrossoverDetailScreen() {
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]} numberOfLines={1}>

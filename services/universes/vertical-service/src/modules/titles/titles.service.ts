@@ -370,4 +370,81 @@ export class TitlesService {
       throw error;
     }
   }
+
+  /**
+   * Episodes (chapters) for a title, in play order. Serves the title detail
+   * screens (web + mobile) which render an episode list with thumbnails.
+   */
+  async getTitleEpisodes(slug: string): Promise<{ success: boolean; data: unknown[] }> {
+    const title = await this.prisma.title.findUnique({
+      where: { slug },
+      include: { chapters: { where: { status: 'published' }, orderBy: { number: 'asc' } } },
+    });
+    if (!title) throw new NotFoundException(`Title not found: ${slug}`);
+
+    return {
+      success: true,
+      data: title.chapters.map((c) => ({
+        id: c.id,
+        title: c.name ?? `Episode ${c.number}`,
+        episodeNumber: c.number,
+        thumbnail: c.coverImage ?? '',
+        duration: 0,
+        description: c.description ?? '',
+        releaseDate: (c.publishedAt ?? c.createdAt).toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * Characters of the universe a title belongs to (Character is
+   * universe-scoped in this service, not title-scoped).
+   */
+  async getTitleCharacters(slug: string): Promise<{ success: boolean; data: unknown[] }> {
+    const title = await this.prisma.title.findUnique({ where: { slug } });
+    if (!title) throw new NotFoundException(`Title not found: ${slug}`);
+
+    const characters = await this.prisma.character.findMany({
+      where: { universeId: title.universeId },
+      orderBy: { name: 'asc' },
+      take: 50,
+    });
+
+    return {
+      success: true,
+      data: characters.map((c) => ({
+        id: c.id,
+        name: c.name,
+        avatar: c.avatarUrl ?? '',
+        description: c.description ?? '',
+        role: (c.data as { mainRole?: string } | null)?.mainRole ?? c.role ?? undefined,
+      })),
+    };
+  }
+
+  /** Related titles: other titles from the same universe. */
+  async getRelatedTitles(slug: string): Promise<{ success: boolean; data: unknown[] }> {
+    const title = await this.prisma.title.findUnique({ where: { slug } });
+    if (!title) throw new NotFoundException(`Title not found: ${slug}`);
+
+    const related = await this.prisma.title.findMany({
+      where: { universeId: title.universeId, id: { not: title.id } },
+      orderBy: { viewCount: 'desc' },
+      take: 12,
+    });
+
+    return {
+      success: true,
+      data: related.map((t) => ({
+        id: t.id,
+        name: t.name,
+        slug: t.slug,
+        thumbnail: t.coverImage ?? '',
+        description: t.description ?? '',
+        rating: t.rating ?? 0,
+        type: t.type,
+        status: t.status,
+      })),
+    };
+  }
 }

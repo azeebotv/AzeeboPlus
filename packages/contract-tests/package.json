@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "bash ../../scripts/build-package.sh",
     "clean": "rm -rf dist",
     "test": "jest",
     "test:watch": "jest --watch",

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 
 interface PulseButtonProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'socialLight' | 'socialDark';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'social';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   loadingText?: string;
@@ -36,10 +36,9 @@ export function PulseButton({
 
   const variantStyles = {
     primary: 'az-btn-primary',
-    secondary: 'rounded-full text-white/80 hover:text-white',
-    ghost: 'rounded-full text-white/70 hover:text-white',
-    socialLight: 'az-btn-social az-btn-social--light',
-    socialDark: 'az-btn-social az-btn-social--dark',
+    secondary: 'rounded-full text-az-ink/80 hover:text-az-ink',
+    ghost: 'rounded-full text-az-ink/70 hover:text-az-ink',
+    social: 'az-btn-social',
   };
 
   return (

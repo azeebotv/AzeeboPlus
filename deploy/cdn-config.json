@@ -24,7 +24,7 @@
       },
       {
         "id": "api-origin",
-        "domainName": "api.staging.azeebo.ng",
+        "domainName": "staging-api.azeeboplus.com",
         "customOriginConfig": {
           "httpPort": 80,
           "httpsPort": 443,
@@ -298,10 +298,7 @@
     },
     "aliases": {
       "quantity": 2,
-      "items": [
-        "cdn.staging.azeebo.ng",
-        "media.staging.azeebo.ng"
-      ]
+      "items": ["cdn.staging.azeeboplus.com", "media.staging.azeeboplus.com"]
     }
   },
   "cacheHeaders": {
@@ -410,20 +407,12 @@
   "cors": {
     "enabled": true,
     "allowOrigins": [
-      "https://staging.azeebo.ng",
-      "https://www.staging.azeebo.ng",
-      "https://admin.staging.azeebo.ng",
-      "https://api.staging.azeebo.ng"
+      "https://staging.azeeboplus.com",
+      "https://www.staging.azeeboplus.com",
+      "https://admin.staging.azeeboplus.com",
+      "https://staging-api.azeeboplus.com"
     ],
-    "allowMethods": [
-      "GET",
-      "HEAD",
-      "OPTIONS",
-      "PUT",
-      "POST",
-      "PATCH",
-      "DELETE"
-    ],
+    "allowMethods": ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"],
     "allowHeaders": [
       "Authorization",
       "Content-Type",
@@ -460,7 +449,7 @@
       },
       "contentSecurityPolicy": {
         "enabled": true,
-        "policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https://api.staging.azeebo.ng wss://api.staging.azeebo.ng; frame-src 'self' https://www.youtube.com https://player.vimeo.com;"
+        "policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https://staging-api.azeeboplus.com wss://staging-api.azeeboplus.com; frame-src 'self' https://www.youtube.com https://player.vimeo.com;"
       },
       "xContentTypeOptions": {
         "enabled": true,

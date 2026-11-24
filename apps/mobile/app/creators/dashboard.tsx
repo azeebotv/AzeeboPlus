@@ -3,8 +3,13 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { creatorApi, CreatorDashboard, CreatorAnalytics } from '../../src/api/creator';
+import {
+  creatorApi,
+  type CreatorDashboard,
+  type CreatorAnalytics,
+} from '@azeebo/react-data/api/creator';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -14,7 +19,7 @@ function formatNumber(num: number): string {
   return String(num);
 }
 
-export default function CreatorDashboard() {
+export default function CreatorDashboardScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
@@ -46,7 +51,7 @@ export default function CreatorDashboard() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Dashboard Screen" style={styles.container}>
         <LoadingState text="Loading dashboard..." />
       </SafeAreaView>
     );
@@ -123,13 +128,13 @@ export default function CreatorDashboard() {
       <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backIcon}>←</Text>
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Creator Dashboard
             </Text>
-            <TouchableOpacity style={styles.settingsButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.settingsButton}>
               <Text style={styles.settingsIcon}>⚙️</Text>
             </TouchableOpacity>
           </View>
@@ -143,7 +148,7 @@ export default function CreatorDashboard() {
               </Text>
               <Text style={styles.creatorCategory}>Creator</Text>
             </View>
-            <TouchableOpacity style={styles.editButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.editButton}>
               <Text style={styles.editIcon}>✏️</Text>
             </TouchableOpacity>
           </View>
@@ -172,7 +177,7 @@ export default function CreatorDashboard() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Weekly Views
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See Details</Text>
             </TouchableOpacity>
           </View>
@@ -186,7 +191,7 @@ export default function CreatorDashboard() {
                   </View>
                 ))
               ) : (
-                <Text style={{ color: '#888', textAlign: 'center', width: '100%' }}>
+                <Text style={{ color: colors.text.secondary, textAlign: 'center', width: '100%' }}>
                   No data available
                 </Text>
               )}
@@ -199,7 +204,7 @@ export default function CreatorDashboard() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Recent Content
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -227,13 +232,13 @@ export default function CreatorDashboard() {
                     </View>
                     <Text style={styles.timeText}>{item.time}</Text>
                   </View>
-                  <TouchableOpacity style={styles.moreButton}>
+                  <TouchableOpacity accessibilityRole="button" style={styles.moreButton}>
                     <Text style={styles.moreIcon}>⋮</Text>
                   </TouchableOpacity>
                 </TouchableOpacity>
               ))
             ) : (
-              <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>
+              <Text style={{ color: colors.text.secondary, textAlign: 'center', padding: 20 }}>
                 No content yet
               </Text>
             )}
@@ -273,7 +278,7 @@ export default function CreatorDashboard() {
                 </View>
               ))
             ) : (
-              <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>
+              <Text style={{ color: colors.text.secondary, textAlign: 'center', padding: 20 }}>
                 No recent activity
               </Text>
             )}
@@ -281,34 +286,34 @@ export default function CreatorDashboard() {
         </View>
 
         <View style={styles.actionsSection}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity accessibilityRole="button" style={styles.actionButton}>
             <Text style={styles.actionIcon}>📤</Text>
             <Text style={styles.actionText}>Upload New Content</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionButton, styles.secondaryAction]}>
+          <TouchableOpacity accessibilityRole="button" style={[styles.actionButton, styles.secondaryAction]}>
             <Text style={styles.actionIcon}>📊</Text>
             <Text style={styles.actionText}>View Full Analytics</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
             <Text style={styles.navIcon}>🏠</Text>
             <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
             <Text style={styles.navIcon}>📺</Text>
             <Text style={styles.navLabel}>Watch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
             <Text style={styles.navIcon}>✨</Text>
-            <Text style={[styles.navLabel, { color: '#4ECDC4' }]}>Create</Text>
+            <Text style={[styles.navLabel, { color: colors.category.teal }]}>Create</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
             <Text style={styles.navIcon}>⭐</Text>
             <Text style={styles.navLabel}>Rewards</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
             <Text style={styles.navIcon}>👤</Text>
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>
@@ -336,7 +341,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -353,7 +358,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -369,7 +374,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.category.teal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -384,14 +389,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   creatorCategory: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 13,
   },
   editButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -420,7 +425,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
     marginBottom: 6,
   },
@@ -449,7 +454,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   seeAllText: {
-    color: '#4ECDC4',
+    color: colors.category.teal,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -470,12 +475,12 @@ const styles = StyleSheet.create({
   },
   bar: {
     width: 24,
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.category.teal,
     borderRadius: 4,
     marginBottom: 8,
   },
   chartLabel: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 10,
   },
   section: {
@@ -496,7 +501,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -517,11 +522,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   metaText: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 12,
   },
   timeText: {
-    color: '#666',
+    color: colors.text.tertiary,
     fontSize: 11,
   },
   moreButton: {
@@ -531,7 +536,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   moreIcon: {
-    color: '#888',
+    color: colors.text.secondary,
     fontSize: 18,
   },
   notificationsList: {
@@ -567,7 +572,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   notificationTime: {
-    color: '#666',
+    color: colors.text.tertiary,
     fontSize: 11,
   },
   actionsSection: {
@@ -581,13 +586,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.category.teal,
     paddingVertical: 14,
     borderRadius: 10,
     gap: 8,
   },
   secondaryAction: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.bg.tertiary,
   },
   actionIcon: {
     fontSize: 18,
@@ -604,7 +609,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     backgroundColor: '#1a1a1a',
     borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
+    borderTopColor: colors.bg.tertiary,
   },
   navItem: {
     alignItems: 'center',
@@ -615,6 +620,6 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 11,
-    color: '#888',
+    color: colors.text.secondary,
   },
 });

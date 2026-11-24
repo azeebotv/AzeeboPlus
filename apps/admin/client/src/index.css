@@ -1,0 +1,240 @@
+/* Design tokens for admin app (synchronized with Azeebo+ Figma luxury dark design system) */
+:root {
+  /* Canvas & Surfaces (Obsidian & Elevated Cards) */
+  --admin-bg: #08090e;
+  --admin-bg-alt: #0e0f1a;
+  --admin-dark: #06070a;
+  --admin-darker: #0c0d16;
+  --admin-sidebar-bg: #0e0f1a;
+  --admin-card: #131420;
+  --admin-card-hover: #171825;
+  --admin-surface: #171825;
+  --admin-surface-hover: #222436;
+  --admin-surface-active: #2a2c42;
+  --admin-surface-light: #f5f0eb;
+
+  /* Borders & Hairlines */
+  --admin-border: rgba(255, 255, 255, 0.08);
+  --admin-border-subtle: rgba(255, 255, 255, 0.04);
+  --admin-border-hover: rgba(255, 255, 255, 0.16);
+  --admin-border-focus: rgba(255, 91, 0, 0.5);
+
+  /* Brand Accents & Gradients */
+  --admin-orange: #ff5b00;
+  --admin-orange-hover: #ff7324;
+  --admin-orange-active: #e04f00;
+  --admin-orange-gradient: linear-gradient(90deg, #ff5b00 0%, #ff7a00 100%);
+  --admin-orange-glow: rgba(255, 91, 0, 0.25);
+  --admin-red: #e50914;
+  --admin-red-light: #ff6b6b;
+  --admin-gold: #ffb800;
+  --admin-green: #00d26a;
+  --admin-emerald: #00c9a7;
+  --admin-amber: #ffae00;
+  --admin-blue: #2d7ff9;
+  --admin-purple: #8b5cf6;
+  --admin-grey: #6c7089;
+  --admin-silver: #c0c0c0;
+
+  /* Typography / Text Colors */
+  --admin-text: #ffffff;
+  --admin-text-muted: #a0a3bd;
+  --admin-text-dim: #6c7089;
+
+  /* Border Radii */
+  --admin-radius-sm: 8px;
+  --admin-radius-card: 16px;
+  --admin-radius-large: 20px;
+  --admin-radius-pill: 9999px;
+
+  /* Aliases for modern component styling */
+  --text-primary: var(--admin-text);
+  --text-secondary: var(--admin-text-muted);
+  --border-default: var(--admin-border);
+  --bg-secondary: var(--admin-surface);
+  --bg-primary: var(--admin-bg);
+}
+
+/* Global reset — ensures dark background even if React crashes */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  background-color: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+:focus-visible {
+  outline: 2px solid var(--admin-orange);
+  outline-offset: 2px;
+}
+
+/* Reusable Figma-style pill buttons & components */
+.admin-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 9999px;
+  background: var(--admin-orange-gradient);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(255, 91, 0, 0.25);
+  transition: all 0.2s ease;
+}
+.admin-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(255, 91, 0, 0.4);
+  transform: translateY(-1px);
+}
+.admin-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.admin-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text);
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.admin-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--admin-border-hover);
+}
+
+.admin-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: transparent;
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.admin-btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--admin-border-hover);
+  color: var(--admin-text);
+}
+
+.admin-pill-tab {
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+.admin-pill-tab.active {
+  background: var(--admin-orange-gradient);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(255, 91, 0, 0.3);
+}
+.admin-pill-tab:not(.active) {
+  background: var(--admin-card);
+  border-color: var(--admin-border);
+  color: var(--admin-text-muted);
+}
+.admin-pill-tab:not(.active):hover {
+  border-color: var(--admin-border-hover);
+  color: var(--admin-text);
+}
+
+/* Sleek custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

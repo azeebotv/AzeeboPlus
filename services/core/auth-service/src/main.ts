@@ -3,6 +3,7 @@
 
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -11,7 +12,6 @@ import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { createHelmetConfig, configureCors } from '@azeebo/security';
 
 import { validateEnvironment } from '@azeebo/shared-types';
-
 
 async function bootstrap(): Promise<void> {
   // Validate JWT secrets before starting
@@ -43,6 +43,11 @@ async function bootstrap(): Promise<void> {
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Cookie parsing — required by the SPA cookie-handoff flow (the refresh
+  // endpoint falls back to the httpOnly refresh_token cookie) and by the
+  // /auth/csrf bootstrap, which reuses an existing _csrf cookie when present.
+  app.use(cookieParser());
 
   // Payload size limits (10MB max) — use Nest's built-in body parser (no body-parser dep)
   app.useBodyParser('json', { limit: '1mb' });

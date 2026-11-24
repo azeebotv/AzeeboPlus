@@ -2,6 +2,7 @@ import {
   Inject,
   Controller,
   Get,
+  Post,
   Put,
   Delete,
   Param,
@@ -17,6 +18,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { resolveActorId } from '../../common/resolve-actor-id';
+import { RequireDualControl } from '../dual-control/require-dual-control.decorator';
+import type { UserRole } from '../../generated/prisma';
 
 interface AuthRequest extends Request {
   user: { id?: string; sub?: string; email: string; role: string };
@@ -51,6 +54,56 @@ export class UserManagementController {
     return this.userService.getUserById(id);
   }
 
+  @Post()
+  async createUser(
+    @Req() req: AuthRequest,
+    @Body()
+    body: {
+      email: string;
+      displayName: string;
+      password?: string;
+      role?: UserRole;
+      isVerified?: boolean;
+    }
+  ): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.createUser(body);
+    await this.auditLogService.log({
+      actorId,
+      action: 'user.created',
+      targetType: 'user',
+      targetId: result.id,
+      details: { email: body.email, role: body.role },
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
+  @Put(':id')
+  async updateUser(
+    @Param('id') id: string,
+    @Req() req: AuthRequest,
+    @Body()
+    body: {
+      displayName?: string;
+      email?: string;
+      role?: UserRole;
+      isVerified?: boolean;
+    }
+  ): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.updateUser(id, body);
+    await this.auditLogService.log({
+      actorId,
+      action: 'user.updated',
+      targetType: 'user',
+      targetId: id,
+      details: body,
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
   @Put(':id/role')
   async updateUserRole(
     @Param('id') id: string,
@@ -64,6 +117,33 @@ export class UserManagementController {
       targetType: 'user',
       targetId: id,
       details: { role: body.role },
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
+  @Post('bulk/suspend')
+  @RequireDualControl({
+    actionType: 'bulk_operation',
+    description: 'Bulk suspension of user accounts',
+  })
+  async bulkSuspendUsers(
+    @Req() req: AuthRequest,
+    @Body() body: { ids: string[]; reason: string; durationDays?: number }
+  ): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.bulkSuspend(
+      body.ids || [],
+      body.reason || 'Bulk suspended by admin',
+      actorId,
+      body.durationDays,
+      req.ip
+    );
+    await this.auditLogService.log({
+      actorId,
+      action: 'user.bulk_suspended',
+      targetType: 'user',
+      details: { count: body.ids?.length, reason: body.reason, durationDays: body.durationDays },
       ipAddress: req.ip,
     });
     return result;
@@ -107,12 +187,45 @@ export class UserManagementController {
     return result;
   }
 
+  @Post(':id/verify')
+  async verifyCreator(@Param('id') id: string, @Req() req: AuthRequest): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.setCreatorVerified(id, true, actorId, req.ip);
+    await this.auditLogService.log({
+      actorId,
+      action: 'creator.verified',
+      targetType: 'user',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
+  @Post(':id/unverify')
+  async unverifyCreator(@Param('id') id: string, @Req() req: AuthRequest): Promise<unknown> {
+    const actorId = resolveActorId(req);
+    const result = await this.userService.setCreatorVerified(id, false, actorId, req.ip);
+    await this.auditLogService.log({
+      actorId,
+      action: 'creator.unverified',
+      targetType: 'user',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
   @Get(':id/suspensions')
   async getUserSuspensions(@Param('id') id: string): Promise<unknown> {
     return this.userService.getUserSuspensions(id);
   }
 
   @Delete(':id')
+  @Roles('superadmin')
+  @RequireDualControl({
+    actionType: 'account_modification',
+    description: 'Permanent deletion of user account',
+  })
   async deleteUser(@Param('id') id: string, @Req() req: AuthRequest): Promise<unknown> {
     const actorId = resolveActorId(req);
     const result = await this.userService.deleteUser(id, actorId);

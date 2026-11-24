@@ -15,13 +15,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { notificationApi, type NotificationPreferences } from '../../src/api';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
+import { notificationApi, type NotificationPreferences } from '@azeebo/react-data';
 import { useBiometric } from '../../src/hooks/useBiometric';
 import Constants from 'expo-constants';
 import { colors } from '../../src/theme';
 import * as Linking from 'expo-linking';
 import { changeLanguage, LANGUAGES, type SupportedLanguage } from '../../src/i18n';
+import { brand } from '@azeebo/design-tokens';
 
 // Type declaration for expo-constants
 const safeConstants = Constants as unknown as { expoConfig?: { version?: string; name?: string } };
@@ -29,6 +31,10 @@ const safeConstants = Constants as unknown as { expoConfig?: { version?: string;
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isEnabled: isFlagEnabled } = useFlags();
+  // mobile_biometric_auth (off by default): the security section (biometric
+  // sign-in) is hidden until ops enables the flag.
+  const biometricAuthEnabled = isFlagEnabled('mobile_biometric_auth');
   const { t, i18n } = useTranslation();
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>(
@@ -199,7 +205,7 @@ export default function SettingsScreen() {
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
         </View>
       </SafeAreaView>
     );
@@ -248,7 +254,7 @@ export default function SettingsScreen() {
 
         {updatePreferencesMutation.isPending && (
           <View style={styles.savingIndicator}>
-            <ActivityIndicator size="small" color="#E8420A" />
+            <ActivityIndicator size="small" color={brand.flame} />
             <Text style={styles.savingText}>Saving...</Text>
           </View>
         )}
@@ -281,7 +287,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.push}
               onValueChange={(value) => handleTogglePreference('push', value)}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -309,7 +315,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.email}
               onValueChange={(value) => handleTogglePreference('email', value)}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -337,7 +343,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.sms}
               onValueChange={(value) => handleTogglePreference('sms', value)}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -384,10 +390,7 @@ export default function SettingsScreen() {
           visible={languageModalVisible}
           onRequestClose={() => setLanguageModalVisible(false)}
         >
-          <Pressable
-            style={styles.modalOverlay}
-            onPress={() => setLanguageModalVisible(false)}
-          >
+          <Pressable accessibilityRole="button" style={styles.modalOverlay} onPress={() => setLanguageModalVisible(false)}>
             <Pressable
               style={[
                 styles.modalContent,
@@ -442,9 +445,7 @@ export default function SettingsScreen() {
                     </Text>
                     <Text style={styles.languageNative}>{lang.nativeName}</Text>
                   </View>
-                  {currentLanguage === lang.code && (
-                    <Text style={styles.languageCheck}>✓</Text>
-                  )}
+                  {currentLanguage === lang.code && <Text style={styles.languageCheck}>✓</Text>}
                 </TouchableOpacity>
               ))}
 
@@ -458,50 +459,54 @@ export default function SettingsScreen() {
           </Pressable>
         </Modal>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
-            Security
-          </Text>
+        {biometricAuthEnabled ? (
+          <View style={styles.section}>
+            <Text
+              style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}
+            >
+              Security
+            </Text>
 
-          <View
-            style={[
-              styles.settingItem,
-              { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
-            ]}
-          >
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>
-                {biometricType === 'face' ? '👤' : biometricType === 'fingerprint' ? '👆' : '🔐'}
-              </Text>
-              <View>
-                <Text
-                  style={[
-                    styles.settingLabel,
-                    { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
-                  ]}
-                >
-                  {getBiometricLabel()}
+            <View
+              style={[
+                styles.settingItem,
+                { backgroundColor: colorScheme === 'dark' ? colors.bg.tertiary : '#f5f5f5' },
+              ]}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingIcon}>
+                  {biometricType === 'face' ? '👤' : biometricType === 'fingerprint' ? '👆' : '🔐'}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {isAvailable
-                    ? `Use ${getBiometricLabel().toLowerCase()} to sign in quickly`
-                    : 'Not available on this device'}
-                </Text>
+                <View>
+                  <Text
+                    style={[
+                      styles.settingLabel,
+                      { color: colorScheme === 'dark' ? colors.text.primary : '#000' },
+                    ]}
+                  >
+                    {getBiometricLabel()}
+                  </Text>
+                  <Text style={styles.settingDescription}>
+                    {isAvailable
+                      ? `Use ${getBiometricLabel().toLowerCase()} to sign in quickly`
+                      : 'Not available on this device'}
+                  </Text>
+                </View>
               </View>
+              {isBiometricToggling ? (
+                <ActivityIndicator size="small" color={brand.flame} />
+              ) : (
+                <Switch
+                  value={isEnabled}
+                  onValueChange={handleBiometricToggle}
+                  trackColor={{ false: '#333', true: brand.flame }}
+                  thumbColor="#fff"
+                  disabled={!isAvailable || isBiometricToggling}
+                />
+              )}
             </View>
-            {isBiometricToggling ? (
-              <ActivityIndicator size="small" color="#E8420A" />
-            ) : (
-              <Switch
-                value={isEnabled}
-                onValueChange={handleBiometricToggle}
-                trackColor={{ false: '#333', true: '#E8420A' }}
-                thumbColor="#fff"
-                disabled={!isAvailable || isBiometricToggling}
-              />
-            )}
           </View>
-        </View>
+        ) : null}
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
@@ -528,7 +533,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.newContent}
               onValueChange={() => handleToggleTypePreference('newContent')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -553,7 +558,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.comments}
               onValueChange={() => handleToggleTypePreference('comments')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -578,7 +583,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.likes}
               onValueChange={() => handleToggleTypePreference('likes')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -603,7 +608,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.followers}
               onValueChange={() => handleToggleTypePreference('followers')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -628,7 +633,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.system}
               onValueChange={() => handleToggleTypePreference('system')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -653,7 +658,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.payments}
               onValueChange={() => handleToggleTypePreference('payments')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -774,7 +779,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   savingText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 14,
   },
   section: {
@@ -809,15 +814,15 @@ const styles = StyleSheet.create({
   },
   settingDescription: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.tertiary,
     marginTop: 2,
   },
   settingValue: {
     fontSize: 16,
-    color: '#666',
+    color: colors.text.tertiary,
   },
   menuArrow: {
-    color: '#666',
+    color: colors.text.tertiary,
     fontSize: 24,
   },
   bottomPadding: {
@@ -863,12 +868,12 @@ const styles = StyleSheet.create({
   },
   languageNative: {
     fontSize: 13,
-    color: '#888',
+    color: colors.text.secondary,
     marginTop: 2,
   },
   languageCheck: {
     fontSize: 20,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '700',
   },
   modalCloseButton: {
@@ -879,7 +884,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   modalCloseText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 16,
     fontWeight: '600',
   },

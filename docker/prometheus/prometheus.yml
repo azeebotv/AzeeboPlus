@@ -1,0 +1,178 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# AUD-11: rules are evaluated below but delivery requires an Alertmanager —
+# this must match the alertmanager service in docker/docker-compose.monitoring.yml.
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  # Port map below mirrors the PORT environment each service receives in
+  # docker-compose.prod.yml (and the all-in-one SERVICE table). When adding a
+  # service, update both compose and this list in the same change.
+
+  # API Gateway
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:3013']
+    metrics_path: '/metrics'
+
+  # Core Services
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:3000']
+    metrics_path: '/metrics'
+
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['user-service:3001']
+    metrics_path: '/metrics'
+
+  - job_name: 'content-service'
+    static_configs:
+      - targets: ['content-service:3004']
+    metrics_path: '/metrics'
+
+  - job_name: 'payment-service'
+    static_configs:
+      - targets: ['payment-service:3003']
+    metrics_path: '/metrics'
+
+  - job_name: 'wallet-service'
+    static_configs:
+      - targets: ['wallet-service:3002']
+    metrics_path: '/metrics'
+
+  - job_name: 'media-service'
+    static_configs:
+      - targets: ['media-service:3019']
+    metrics_path: '/metrics'
+
+  - job_name: 'search-service'
+    static_configs:
+      - targets: ['search-service:3005']
+    metrics_path: '/metrics'
+
+  - job_name: 'knowledge-service'
+    static_configs:
+      - targets: ['knowledge-service:3020']
+    metrics_path: '/metrics'
+
+  # Engagement Services
+  - job_name: 'messaging-service'
+    static_configs:
+      - targets: ['messaging-service:3024']
+    metrics_path: '/metrics'
+
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service:3006']
+    metrics_path: '/metrics'
+
+  - job_name: 'subscription-service'
+    static_configs:
+      - targets: ['subscription-service:3026']
+    metrics_path: '/metrics'
+
+  - job_name: 'reward-service'
+    static_configs:
+      - targets: ['reward-service:3007']
+    metrics_path: '/metrics'
+
+  - job_name: 'referral-service'
+    static_configs:
+      - targets: ['referral-service:3025']
+    metrics_path: '/metrics'
+
+  - job_name: 'engagement-service'
+    static_configs:
+      - targets: ['engagement-service:3023']
+    metrics_path: '/metrics'
+
+  # Intelligence Services
+  - job_name: 'analytics-service'
+    static_configs:
+      - targets: ['analytics-service:3008']
+    metrics_path: '/metrics'
+
+  - job_name: 'recommendation-service'
+    static_configs:
+      - targets: ['recommendation-service:3009']
+    metrics_path: '/metrics'
+
+  # Operations Services
+  - job_name: 'moderation-service'
+    static_configs:
+      - targets: ['moderation-service:3022']
+    metrics_path: '/metrics'
+
+  - job_name: 'support-service'
+    static_configs:
+      - targets: ['support-service:3028']
+    metrics_path: '/metrics'
+
+  - job_name: 'queue-service'
+    static_configs:
+      - targets: ['queue-service:3015']
+    metrics_path: '/metrics'
+
+  # Universe Services
+  - job_name: 'creator-service'
+    static_configs:
+      - targets: ['creator-service:3018']
+    metrics_path: '/metrics'
+
+  - job_name: 'comedy-service'
+    static_configs:
+      - targets: ['comedy-service:3012']
+    metrics_path: '/metrics'
+
+  - job_name: 'movie-service'
+    static_configs:
+      - targets: ['movie-service:3011']
+    metrics_path: '/metrics'
+
+  - job_name: 'reality-service'
+    static_configs:
+      - targets: ['reality-service:3010']
+    metrics_path: '/metrics'
+
+  - job_name: 'sports-service'
+    static_configs:
+      - targets: ['sports-service:3021']
+    metrics_path: '/metrics'
+
+  - job_name: 'games-service'
+    static_configs:
+      - targets: ['games-service:3014']
+    metrics_path: '/metrics'
+
+  - job_name: 'lifestyle-service'
+    static_configs:
+      - targets: ['lifestyle-service:3016']
+    metrics_path: '/metrics'
+
+  - job_name: 'vertical-service'
+    static_configs:
+      - targets: ['vertical-service:3017']
+    metrics_path: '/metrics'
+
+  - job_name: 'live-event-service'
+    static_configs:
+      - targets: ['live-event-service:3027']
+    metrics_path: '/metrics'
+
+  # Infrastructure
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres:5432']

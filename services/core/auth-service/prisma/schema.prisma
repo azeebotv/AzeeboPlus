@@ -8,13 +8,22 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 
+  directUrl   = env("DIRECT_DATABASE_URL")
 }
 
 enum UserRole {
   user
   creator
+  moderator
   admin
   super_admin
+}
+
+enum LinkStatus {
+  pending
+  confirmed
+  denied
+  expired
 }
 
 model User {
@@ -29,6 +38,14 @@ model User {
   mfaEnabled      Boolean  @default(false)
   mfaSecret       String?
   mfaBackupCodes  String?
+  // Admin-owned fields: written by apps/admin through the federated
+  // azeebo_admin.users foreign table; auth-service never reads them.
+  isSuspended           Boolean   @default(false)
+  suspendedAt           DateTime?
+  suspendedBy           String?
+  suspendedUntil        DateTime?
+  suspensionReason      String?
+  notificationPreferences Json?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -36,6 +53,7 @@ model User {
   otps     Otp[]
   socialAccounts SocialAccount[]
   devices  RegisteredDevice[]
+  deviceLinkCodes DeviceLinkCode[]
 
   @@index([role])
   @@index([createdAt])
@@ -60,6 +78,29 @@ model RegisteredDevice {
   @@index([userId])
   @@index([userId, isTrusted])
   @@map("registered_devices")
+}
+
+model DeviceLinkCode {
+  id            String     @id @default(uuid())
+  deviceCode    String     @unique // HMAC-SHA256 of the high-entropy device credential — only the TV holds it
+  code          String     @unique // HMAC-SHA256 of the short on-screen code — never store plaintext
+  status        LinkStatus @default(pending)
+  userId        String?
+  deviceName    String?
+  deviceType    String     @default("tv")
+  intervalSec   Int        @default(5) // RFC 8628 device_authorization_endpoint style polling hint
+  attempts      Int        @default(0) // Failed confirmation attempts (wrong code on /link)
+  tokenIssued   Boolean    @default(false) // Set once the TV has claimed the tokens (poll-once semantics)
+  expiresAt     DateTime
+  lastPolledAt  DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status, expiresAt])
+  @@index([userId])
+  @@map("device_link_codes")
 }
 
 model SocialAccount {

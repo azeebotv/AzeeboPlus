@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "currency": "NGN",
+  "subscriptions": [
+    { "id": "free", "name": "Free", "priceMonthly": 0, "priceAnnual": 0 },
+    { "id": "basic", "name": "Basic", "priceMonthly": 999, "priceAnnual": 9990 },
+    { "id": "premium", "name": "Premium", "priceMonthly": 2999, "priceAnnual": 29990 },
+    { "id": "family", "name": "Family", "priceMonthly": 4999, "priceAnnual": 49990 }
+  ],
+  "bundles": [
+    { "id": "entertainment", "name": "Entertainment Bundle", "priceMonthly": 2100 },
+    { "id": "creator-pack", "name": "Creator Pack", "priceMonthly": 1500 },
+    { "id": "sports-games", "name": "Sports & Games", "priceMonthly": 1400 },
+    { "id": "all-access", "name": "All-Access Azeebo+", "priceMonthly": 4800 }
+  ],
+  "ppv": [
+    { "tier": "standard", "price": 1500 },
+    { "tier": "vip", "price": 3500 },
+    { "tier": "backstage", "price": 7500 }
+  ],
+  "superVotes": [
+    { "votes": 1, "price": 500 },
+    { "votes": 5, "price": 2000 },
+    { "votes": 10, "price": 3500 },
+    { "votes": 25, "price": 8000 }
+  ],
+  "wallet": {
+    "minDeposit": 100,
+    "maxDeposit": 1000000,
+    "minWithdrawal": 500,
+    "maxWithdrawal": 500000
+  }
+}

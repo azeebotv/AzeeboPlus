@@ -3,6 +3,7 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Delete,
   Param,
   Query,
@@ -10,16 +11,33 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  ForbiddenException,
   UseGuards,
   Request,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UploadService } from './upload.service';
+import { FileAccessPolicyService } from './file-access-policy.service';
 import { PremiumContentService } from './premium-content.service';
+import {
+  CdnInvalidationQueueService,
+  CdnInvalidationReason,
+} from './cdn-invalidation-queue.service';
+import { MediaLifecycleService } from '../media/media-lifecycle.service';
+import { BlobReconcileService } from '../media/blob-reconcile.service';
+import { UploadTtlSweeperService } from '../media/upload-ttl-sweeper.service';
+import { InitChunkedUploadDto } from './dto/chunked-upload.dto.js';
+import {
+  GeneratePremiumUrlDto,
+  ValidatePremiumUrlDto,
+  CdnPurgeDto,
+  LifecycleCdnPurgeDto,
+} from './dto/premium-url.dto.js';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { FeatureFlag, FeatureFlagGuard, mediaFlags } from '@azeebo/feature-flags';
 
 @ApiTags('Media Upload')
 @Controller('media')
@@ -27,7 +45,12 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 export class UploadController {
   constructor(
     @Inject(UploadService) private readonly uploadService: UploadService,
-    @Inject(PremiumContentService) private readonly premiumContentService: PremiumContentService
+    @Inject(FileAccessPolicyService) private readonly fileAccessPolicy: FileAccessPolicyService,
+    @Inject(PremiumContentService) private readonly premiumContentService: PremiumContentService,
+    private readonly invalidationQueue: CdnInvalidationQueueService,
+    @Inject(MediaLifecycleService) private readonly mediaLifecycle: MediaLifecycleService,
+    private readonly blobReconcileService: BlobReconcileService,
+    private readonly ttlSweeperService: UploadTtlSweeperService
   ) {}
 
   @Post('upload/image')
@@ -38,11 +61,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Image uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadImage(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadImage(file);
+    const result = await this.uploadService.uploadImage(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/video')
@@ -53,11 +82,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Video uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadVideo(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadVideo(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadVideo(file);
+    const result = await this.uploadService.uploadVideo(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/audio')
@@ -68,11 +103,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Audio uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadAudio(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadAudio(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadAudio(file);
+    const result = await this.uploadService.uploadAudio(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/document')
@@ -83,11 +124,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Document uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadDocument(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadDocument(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadDocument(file);
+    const result = await this.uploadService.uploadDocument(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/thumbnail')
@@ -98,11 +145,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Thumbnail uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadThumbnail(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadThumbnail(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadThumbnail(file);
+    const result = await this.uploadService.uploadThumbnail(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/avatar')
@@ -113,11 +166,17 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Avatar uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadAvatar(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadAvatar(file);
+    const result = await this.uploadService.uploadAvatar(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
   }
 
   @Post('upload/banner')
@@ -128,15 +187,69 @@ export class UploadController {
   @ApiResponse({ status: 201, description: 'Banner uploaded successfully' })
   @ApiResponse({ status: 400, description: 'No file provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async uploadBanner(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
+  async uploadBanner(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user?: { id?: string } },
+    @Res({ passthrough: true }) res: Response
+  ): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.uploadService.uploadBanner(file);
+    const result = await this.uploadService.uploadBanner(file, req.user?.id);
+    res.setHeader('Cache-Control', result.cacheControl);
+    return result;
+  }
+
+  @Post('upload/chunked/init')
+  @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.uploadChunked)
+  @ApiOperation({ summary: 'Start a chunked/resumable upload session (media_upload_chunked)' })
+  @ApiResponse({ status: 201, description: 'Upload session created' })
+  @ApiResponse({ status: 403, description: 'Chunked uploads disabled' })
+  async initChunkedUpload(
+    @Request() req: { user?: { id?: string } },
+    @Body() dto: InitChunkedUploadDto
+  ): Promise<unknown> {
+    const result = await this.uploadService.initChunkedUpload(dto, req.user?.id);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Put('upload/chunked/:uploadId/:index')
+  @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.uploadChunked)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload one chunk of a chunked upload session' })
+  @ApiResponse({ status: 200, description: 'Chunk stored' })
+  @ApiResponse({ status: 400, description: 'Invalid chunk index or size' })
+  @ApiResponse({ status: 403, description: 'Chunked uploads disabled' })
+  async uploadChunk(
+    @Param('uploadId') uploadId: string,
+    @Param('index') index: string,
+    @UploadedFile() file: Express.Multer.File
+  ): Promise<unknown> {
+    const result = await this.uploadService.uploadChunk(uploadId, Number.parseInt(index, 10), file);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Post('upload/chunked/:uploadId/complete')
+  @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.uploadChunked)
+  @ApiOperation({ summary: 'Assemble a chunked upload and process it like a normal upload' })
+  @ApiResponse({ status: 201, description: 'Upload completed' })
+  @ApiResponse({ status: 400, description: 'Incomplete session or assembly failure' })
+  @ApiResponse({ status: 403, description: 'Chunked uploads disabled' })
+  async completeChunkedUpload(@Param('uploadId') uploadId: string): Promise<unknown> {
+    const result = await this.uploadService.completeChunkedUpload(uploadId);
+    return ApiResponseWrapper.success(result);
   }
 
   @Get('presigned/upload')
   @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.presignedUrls)
   @ApiOperation({ summary: 'Get a presigned upload URL' })
   @ApiResponse({ status: 200, description: 'Presigned URL generated' })
   @ApiResponse({ status: 400, description: 'Missing required parameters' })
@@ -164,6 +277,8 @@ export class UploadController {
 
   @Get('presigned/download')
   @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.presignedUrls)
   @ApiOperation({ summary: 'Get a presigned download URL' })
   @ApiResponse({ status: 200, description: 'Presigned URL generated' })
   @ApiResponse({ status: 400, description: 'Missing or invalid key' })
@@ -209,14 +324,22 @@ export class UploadController {
   @ApiResponse({ status: 200, description: 'File metadata retrieved' })
   @ApiResponse({ status: 400, description: 'Missing required parameter: key' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getFileMetadata(@Query('key') key: string): Promise<unknown> {
+  @ApiResponse({ status: 403, description: 'Not the file owner' })
+  async getFileMetadata(
+    @Request() req: { user: { id: string; role?: string } },
+    @Query('key') key: string
+  ): Promise<unknown> {
     if (!key) {
       throw new BadRequestException('Missing required parameter: key');
     }
     if (key.includes('..') || key.startsWith('/')) {
       throw new BadRequestException('Invalid key format');
     }
-    return this.uploadService.getFileMetadata(key);
+    const metadata = await this.uploadService.getFileMetadata(key);
+    // Same ownership rules as delete — reading another user's object
+    // metadata leaks uploader identity and storage layout otherwise.
+    this.fileAccessPolicy.assertCanAccess(req.user, metadata, 'read metadata');
+    return metadata;
   }
 
   @Delete(':key')
@@ -232,17 +355,31 @@ export class UploadController {
     if (decodedKey.includes('..') || decodedKey.startsWith('/')) {
       throw new BadRequestException('Invalid key format');
     }
-    const metadata = await this.uploadService.getFileMetadata(decodedKey);
-    const ownerId = metadata?.metadata?.userId;
-    if (ownerId && ownerId !== req.user.id && req.user.role !== 'admin') {
-      throw new ForbiddenException('You can only delete your own files');
+    // HeadObject on a missing key throws. Deleting something already gone is
+    // still a success (idempotent, same semantics as S3 DELETE) — but only
+    // NotFound is absorbed; outages must keep surfacing as 503s so callers
+    // never mistake an unreachable store for a completed delete.
+    let metadata: Awaited<ReturnType<typeof this.uploadService.getFileMetadata>>;
+    try {
+      metadata = await this.uploadService.getFileMetadata(decodedKey);
+    } catch (err) {
+      if ((err as { name?: string })?.name === 'NotFound') {
+        return ApiResponseWrapper.success({
+          message: 'File deleted successfully',
+          alreadyGone: true,
+        });
+      }
+      throw err;
     }
+    this.fileAccessPolicy.assertCanAccess(req.user, metadata, 'delete');
     await this.uploadService.deleteFile(decodedKey);
     return ApiResponseWrapper.success({ message: 'File deleted successfully' });
   }
 
   @Get('transcoding/:jobId/status')
   @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.transcodeAv1)
   @ApiOperation({ summary: 'Get transcoding job status' })
   @ApiResponse({ status: 200, description: 'Job status retrieved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -256,6 +393,8 @@ export class UploadController {
 
   @Get('transcoding/jobs')
   @ApiBearerAuth()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(mediaFlags.transcodeAv1)
   @ApiOperation({ summary: 'List transcoding jobs' })
   @ApiResponse({ status: 200, description: 'Jobs retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -267,7 +406,8 @@ export class UploadController {
   }
 
   @Post('transcoding/retry-failed')
-  @UseGuards(AdminGuard)
+  @UseGuards(FeatureFlagGuard, AdminGuard)
+  @FeatureFlag(mediaFlags.transcodeAv1)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Retry failed transcoding jobs' })
   @ApiResponse({ status: 200, description: 'Failed jobs retried' })
@@ -309,17 +449,16 @@ export class UploadController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generatePremiumUrl(
     @Request() req: { user: { sub: string; id: string } },
-    @Body() body: { contentId: string; expiresInSeconds?: number }
+    @Body() dto: GeneratePremiumUrlDto
   ): Promise<unknown> {
-    const { contentId, expiresInSeconds } = body;
-    if (!contentId) {
+    if (!dto.contentId) {
       throw new BadRequestException('contentId is required');
     }
 
     const result = await this.premiumContentService.generatePremiumUrl(
-      contentId,
+      dto.contentId,
       req.user.id,
-      expiresInSeconds
+      dto.expiresInSeconds
     );
 
     return ApiResponseWrapper.success(result);
@@ -333,17 +472,16 @@ export class UploadController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generateCdnPremiumUrl(
     @Request() req: { user: { sub: string; id: string } },
-    @Body() body: { contentId: string; expiresInSeconds?: number }
+    @Body() dto: GeneratePremiumUrlDto
   ): Promise<unknown> {
-    const { contentId, expiresInSeconds } = body;
-    if (!contentId) {
+    if (!dto.contentId) {
       throw new BadRequestException('contentId is required');
     }
 
     const result = await this.premiumContentService.generateCdnPremiumUrl(
-      contentId,
+      dto.contentId,
       req.user.id,
-      expiresInSeconds
+      dto.expiresInSeconds
     );
 
     return ApiResponseWrapper.success(result);
@@ -355,13 +493,12 @@ export class UploadController {
   @ApiResponse({ status: 200, description: 'Token validation result' })
   @ApiResponse({ status: 400, description: 'token is required' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async validatePremiumUrl(@Body() body: { token: string }): Promise<unknown> {
-    const { token } = body;
-    if (!token) {
+  async validatePremiumUrl(@Body() dto: ValidatePremiumUrlDto): Promise<unknown> {
+    if (!dto.token) {
       throw new BadRequestException('token is required');
     }
 
-    const result = await this.premiumContentService.validatePremiumUrl(token);
+    const result = await this.premiumContentService.validatePremiumUrl(dto.token);
     if (result.valid) {
       return ApiResponseWrapper.success(result);
     }
@@ -397,6 +534,129 @@ export class UploadController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getUrlAnalytics(@Param('token') token: string): Promise<unknown> {
     const result = await this.premiumContentService.getUrlAnalytics(token);
+    return ApiResponseWrapper.success(result);
+  }
+
+  // ── Admin endpoints ──────────────────────────────────────────────
+  @Post('admin/cdn/purge')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Purge cached media from the CDN (admin)' })
+  @ApiResponse({ status: 200, description: 'CDN purge initiated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async purgeCdn(@Body() dto: CdnPurgeDto): Promise<unknown> {
+    const keys = (dto.keys ?? []).filter((k) => k && k.trim());
+    const prefix = dto.prefix?.trim();
+    if (keys.length === 0 && !prefix) {
+      return ApiResponseWrapper.success({
+        queued: 0,
+        message: 'Provide keys or prefix to purge',
+      });
+    }
+
+    // Everything routes through the durable invalidation queue: exact keys
+    // coalesce into one batched CloudFront call at drain time, and a prefix
+    // becomes one wildcard invalidation — burst-safe against the quota.
+    let queued = 0;
+    try {
+      if (keys.length > 0) {
+        const results = await Promise.all(
+          keys.map((k) => this.invalidationQueue.enqueue(k, 'admin' as CdnInvalidationReason))
+        );
+        queued += results.filter((r) => r.queued).length;
+      }
+      if (prefix) {
+        const result = await this.invalidationQueue.enqueue(
+          `${prefix.replace(/\/+$/, '')}/*`,
+          'admin' as CdnInvalidationReason
+        );
+        if (result.queued) queued += 1;
+      }
+    } catch (error) {
+      // Enqueue is durable but can still fail (DB down) — surface it rather
+      // than pretending the purge was accepted.
+      return ApiResponseWrapper.success({
+        queued,
+        error: (error as Error).message,
+        message: 'Purge partially accepted — check the invalidation queue',
+      });
+    }
+    return ApiResponseWrapper.success({
+      queued,
+      message: 'Purge accepted into the invalidation queue',
+    });
+  }
+
+  // ========================
+  // Media lifecycle endpoints
+  // ========================
+
+  @Post('lifecycle/cdn-purge')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @RateLimit(5, 60000)
+  @ApiOperation({ summary: 'Purge CDN by URLs and patterns' })
+  @ApiResponse({ status: 200, description: 'CDN purge completed' })
+  async lifecycleCDNPurge(@Body() dto: LifecycleCdnPurgeDto) {
+    const result = await this.mediaLifecycle.purgeCDN(dto);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get('lifecycle/transcoding/:jobId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get transcoding job status via lifecycle service' })
+  @ApiResponse({ status: 200, description: 'Transcoding status' })
+  async getTranscodingLifecycleStatus(@Param('jobId') jobId: string) {
+    const status = await this.mediaLifecycle.getTranscodingStatus(jobId);
+    return ApiResponseWrapper.success(status);
+  }
+
+  @Post('lifecycle/cleanup/orphaned')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @RateLimit(5, 60000)
+  @ApiOperation({ summary: 'Cleanup orphaned media files' })
+  @ApiResponse({ status: 200, description: 'Cleanup completed' })
+  async cleanupOrphaned() {
+    const result = await this.mediaLifecycle.cleanupOrphanedMedia();
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get('lifecycle/premium/:mediaUploadId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate premium media URL' })
+  @ApiResponse({ status: 200, description: 'Premium URL' })
+  async generatePremiumMediaUrl(
+    @Param('mediaUploadId') mediaUploadId: string,
+    @Query('expiresIn') expiresIn?: number
+  ) {
+    const result = await this.mediaLifecycle.generatePremiumUrl(mediaUploadId, { expiresIn });
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Post('lifecycle/reconcile')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @RateLimit(5, 60000)
+  @ApiOperation({
+    summary: 'Reconcile bucket-only objects into media_uploads (report-adjacent backfill)',
+  })
+  @ApiResponse({ status: 200, description: 'Reconcile pass completed' })
+  async reconcileOrphans(@Query('prefix') prefix?: string) {
+    const result = await this.blobReconcileService.reconcile(prefix);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Post('lifecycle/sweep-expired')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @RateLimit(5, 60000)
+  @ApiOperation({
+    summary: 'Delete unreferenced, uuid-keyed uploads older than the TTL (default 24h)',
+  })
+  @ApiResponse({ status: 200, description: 'Sweep pass completed' })
+  async sweepExpiredUploads() {
+    const result = await this.ttlSweeperService.sweep();
     return ApiResponseWrapper.success(result);
   }
 }

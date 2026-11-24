@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { SportsResponse } from './interfaces/sports-response.interface.js';
@@ -268,9 +269,7 @@ export class SportsService {
             compensateError
           );
         });
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to submit prediction';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(error, 'submitting prediction');
     }
   }
 
@@ -352,10 +351,12 @@ export class SportsService {
       throw new BadRequestException('Contest has already ended');
     }
 
-    const existingEntry = await this.prisma.contestEntry.findFirst({
+    const existingEntry = await this.prisma.contestEntry.findUnique({
       where: {
-        userId,
-        contestId,
+        contestId_userId: {
+          userId,
+          contestId,
+        },
       },
     });
 
@@ -438,9 +439,7 @@ export class SportsService {
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet:', compensateError);
         });
-      const errorMessage =
-        error instanceof Error ? (error as Error).message : 'Failed to enter contest';
-      throw new BadRequestException(errorMessage);
+      mapAndThrow(error, 'entering fan contest');
     }
   }
 
@@ -518,32 +517,37 @@ export class SportsService {
       );
     }
 
-    await Promise.all(
-      correctPredictions.map(async (prediction) => {
-        const wallet = walletMap.get(prediction.userId);
-        if (wallet && rewardPerUser > 0) {
-          await axios
-            .post(
-              `${this.walletServiceBaseUrl}/wallet/credit`,
-              {
-                walletId: wallet.id,
-                amount: rewardPerUser,
-                description: `Correct prediction reward for event ${eventId}`,
-              },
-              { timeout: 10000 }
-            )
-            .catch((error: unknown) => {
-              this.logger.error(`Failed to credit reward to user ${prediction.userId}:`, error);
-            });
-        }
+    // Chunked concurrency: a large winner roster must not open hundreds of
+    // simultaneous wallet-service sockets.
+    const CREDIT_CHUNK_SIZE = 10;
+    for (let i = 0; i < correctPredictions.length; i += CREDIT_CHUNK_SIZE) {
+      await Promise.all(
+        correctPredictions.slice(i, i + CREDIT_CHUNK_SIZE).map(async (prediction) => {
+          const wallet = walletMap.get(prediction.userId);
+          if (wallet && rewardPerUser > 0) {
+            await axios
+              .post(
+                `${this.walletServiceBaseUrl}/wallet/credit`,
+                {
+                  walletId: wallet.id,
+                  amount: rewardPerUser,
+                  description: `Correct prediction reward for event ${eventId}`,
+                },
+                { timeout: 10000 }
+              )
+              .catch((error: unknown) => {
+                this.logger.error(`Failed to credit reward to user ${prediction.userId}:`, error);
+              });
+          }
 
-        await this.trackEvent('prediction_correct', prediction.userId, {
-          predictionId: prediction.id,
-          eventId,
-          reward: rewardPerUser,
-        });
-      })
-    );
+          await this.trackEvent('prediction_correct', prediction.userId, {
+            predictionId: prediction.id,
+            eventId,
+            reward: rewardPerUser,
+          });
+        })
+      );
+    }
 
     return {
       success: true,

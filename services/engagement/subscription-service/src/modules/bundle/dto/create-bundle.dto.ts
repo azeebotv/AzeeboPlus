@@ -10,7 +10,7 @@ export class CreateBundleDto {
   @IsString()
   description!: string;
 
-  @ApiProperty({ example: ['reality', 'comedy', 'movies'] })
+  @ApiProperty({ example: ['reality', 'comedy', 'movie'] })
   @IsArray()
   @IsString({ each: true })
   universeIds!: string[];

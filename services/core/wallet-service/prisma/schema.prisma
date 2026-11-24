@@ -8,6 +8,7 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 
+  directUrl   = env("DIRECT_DATABASE_URL")
 }
 
 model Wallet {
@@ -23,6 +24,7 @@ model Wallet {
 
   transactions     WalletTransaction[]
   balanceSnapshots BalanceSnapshot[]
+  ledgerEntries    WalletLedger[]
 
   @@map("wallets")
 }
@@ -74,4 +76,75 @@ model BalanceSnapshot {
   @@index([walletId])
   @@index([capturedAt])
   @@map("balance_snapshots")
+}
+
+// Append-only audit ledger (wallet_ledger_v2 flag). Every completed money
+// movement writes an immutable entry with the balance after the operation, so
+// auditors can reconcile without trusting wallet_transactions (which can be
+// reversed). Written by WalletService.writeLedgerEntry when the flag is on.
+model WalletLedger {
+  id            String   @id @default(uuid())
+  walletId      String
+  userId        String
+  operationType String // credit, debit, withdraw, transfer_out, transfer_in, bonus, promo, refund, charge, reverse
+  amount        Decimal  @db.Decimal(18, 2)
+  balanceAfter  Decimal  @db.Decimal(18, 2)
+  reference     String?
+  // Reconciliation-grade uniqueness: in Postgres a UNIQUE constraint on a
+  // nullable column still allows any number of NULLs, so unspecified keys
+  // never collide while specified keys dedupe ledger replays.
+  idempotencyKey String? @unique
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([operationType])
+  @@index([createdAt])
+  @@map("wallet_ledger")
+}
+
+// Lending partners surfaced on the public Borrow page. Azeebo+ is not the
+// lender and never takes an application: this table carries the partner's own
+// licence identity and offer terms so every disclosure the page shows is the
+// partner's data, not marketing copy. Rows seeded with isSample are dev
+// placeholders and must be labelled as such wherever they render.
+model PartnerBank {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String
+  productName String?
+  logoUrl     String?
+  // Regulator licence / CBN approval reference and company registration
+  // number; rendered next to the offer so users can verify the lender.
+  licenceRef  String?
+  registrationNumber String?
+
+  minAmount   Decimal  @db.Decimal(18, 2)
+  maxAmount   Decimal  @db.Decimal(18, 2)
+  minTenorMonths Int
+  maxTenorMonths Int
+  // Annual percentage, as a range — a single headline rate is not a
+  // disclosure, since the approved rate depends on the borrower.
+  interestRateMin Decimal @db.Decimal(6, 3)
+  interestRateMax Decimal @db.Decimal(6, 3)
+  feeDisclosure  String?
+  totalCostExample String?
+  eligibility    String?
+
+  // The only outbound call-to-action: the partner-hosted application page.
+  applyUrl    String
+  termsUrl    String?
+  privacyUrl  String?
+
+  displayOrder Int     @default(0)
+  isActive     Boolean @default(true)
+  isSample     Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive, displayOrder])
+  @@map("partner_banks")
 }

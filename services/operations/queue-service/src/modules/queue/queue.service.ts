@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, Job, JobType } from 'bullmq';
 
@@ -82,7 +82,10 @@ export class QueueService {
       const queue = this.getQueue(queueName);
       return (await queue.getJob(jobId)) ?? null;
     } catch (error) {
-      this.logger.error(`Failed to get job ${jobId} from queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get job ${jobId} from queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -98,7 +101,53 @@ export class QueueService {
       this.logger.log(`Retried job ${jobId} in queue ${queueName}`);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Failed to retry job ${jobId} in queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to retry job ${jobId} in queue ${queueName}`,
+        (error as Error).stack
+      );
+      throw error;
+    }
+  }
+
+  /** Re-queue a permanently dead-lettered job with a fresh attempts budget.
+   * Plain `retryJob` keeps `attemptsMade`, so a job whose attempts are
+   * exhausted (the dead-letter condition) would immediately fail again — this
+   * instead resets `attemptsMade` (via `resetAttemptsMade`) and clears the
+   * DLQ pass counter in the job data, giving the job a full new lifecycle:
+   * a fresh attempts budget AND a fresh dead-letter retry budget, so the next
+   * failure flows through the DLQ machinery again instead of instantly
+   * re-dead-lettering. Only failed jobs are accepted. */
+  async retryDeadLettered(queueName: QueueName, jobId: string): Promise<void> {
+    try {
+      const queue = this.getQueue(queueName);
+      const job = await queue.getJob(jobId);
+      if (!job) {
+        throw new NotFoundException(`Job ${jobId} not found in queue ${queueName}`);
+      }
+      if ((await job.getState()) !== 'failed') {
+        throw new BadRequestException(
+          `Job ${jobId} in queue ${queueName} is not in the failed state — retry-now is for dead-lettered jobs`
+        );
+      }
+
+      // Persist the DLQ budget reset before re-queueing so an interruption
+      // mid-retry never leaves a stale pass counter on a fresh job.
+      const data = job.data as { dlqRetryCount?: number };
+      if (data && data.dlqRetryCount !== undefined && data.dlqRetryCount !== 0) {
+        await job.updateData({ ...data, dlqRetryCount: 0 });
+      }
+      await job.retry('failed', { resetAttemptsMade: true });
+      this.logger.log(
+        `Retried dead-lettered job ${jobId} in queue ${queueName} with a fresh attempts budget`
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      this.logger.error(
+        `Failed to retry-now job ${jobId} in queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -115,7 +164,10 @@ export class QueueService {
       this.logger.log(`Retried ${retried} failed jobs in queue ${queueName}`);
       return retried;
     } catch (error) {
-      this.logger.error(`Failed to retry all failed jobs in queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to retry all failed jobs in queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -131,7 +183,10 @@ export class QueueService {
       this.logger.log(`Removed job ${jobId} from queue ${queueName}`);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Failed to remove job ${jobId} from queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to remove job ${jobId} from queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -163,7 +218,10 @@ export class QueueService {
       const queue = this.getQueue(queueName);
       return await queue.getFailed(start, end);
     } catch (error) {
-      this.logger.error(`Failed to get failed jobs from queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get failed jobs from queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -173,7 +231,10 @@ export class QueueService {
       const queue = this.getQueue(queueName);
       return await queue.getDelayed(start, end);
     } catch (error) {
-      this.logger.error(`Failed to get delayed jobs from queue ${queueName}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get delayed jobs from queue ${queueName}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }

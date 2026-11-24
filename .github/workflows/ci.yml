@@ -12,16 +12,127 @@ jobs:
   # Fast PR gate jobs are in pr-checks.yml (lint, typecheck, test, integration-test)
   # This workflow runs the FULL merge pipeline: build, e2e, security
 
+  prisma-migrations:
+    name: Prisma Migrations Drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: azeebo
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      # installs each service's own pinned prisma CLI; the checker resolves
+      # the binary from each service's node_modules so diffs are made with
+      # the exact prisma version that service ships with
+      - run: pnpm install --frozen-lockfile
+      # The checker replays each service's prisma/migrations into a throwaway
+      # shadow database and diffs the result against schema.prisma. It fails
+      # when migrations were hand-edited, can't replay from empty, or were
+      # never written for schema changes — the exact failures that break
+      # `prisma migrate deploy` on a fresh environment.
+      - name: Replay migrations into shadow DB and diff against schema
+        run: node scripts/check-prisma-migrations.mjs
+        env:
+          SHADOW_DB_URL: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432/postgres
+      # Fails when .env.example omits a boot-required key (getOrThrow or a
+      # required validator rule) — onboarding with .env.example would crash.
+      - name: Env example / code / validator consistency
+        run: node scripts/check-env-consistency.mjs
+      # Schema lock: migrate deploy into a throwaway DB per service, then diff
+      # the DEPLOYED database against schema.prisma. Fails on ANY diff —
+      # catches resolve-marked/rolled-back ledger rows and edited migrations
+      # that the folder-shape replay above cannot see.
+      - name: Deploy migrations and diff deployed DB against schema (schema lock)
+        run: node scripts/check-deployed-schema.mjs
+        env:
+          SHADOW_DB_URL: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432/postgres
+      - name: Upload drift artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: prisma-drift-diffs
+          path: |
+            .check-prisma-drift-out/
+            .check-prisma-deploy-diff-out/
+          retention-days: 7
+
+  # The other direction: provision each service's database from its own
+  # migrations (CREATE DATABASE + prisma migrate deploy), then diff the
+  # provisioned database against schema.prisma — the same check the local
+  # scripts/drift-live-db.mjs sweep runs against dev databases. Advisory:
+  # reports drift without failing the build; diffs are uploaded as artifacts
+  # for review. The blocking form (--seed --strict) is still available for
+  # manual/local use when a gate is wanted.
+  prisma-live-drift:
+    name: Prisma Live Drift (provision + diff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: azeebo
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # --seed provisions azeebo_<service> databases by deploying each
+      # service's prisma/migrations; the diff then should be EMPTY. Any drift
+      # is reported (non-blocking, --advisory) and written to .drift-live-out/.
+      - name: Provision DBs from migrations and diff against schema (advisory)
+        run: node scripts/drift-live-db.mjs --seed --advisory
+        env:
+          LIVE_DB_URL_BASE: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432
+      - name: Upload drift report artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: prisma-live-drift-diffs
+          path: .drift-live-out/
+          retention-days: 7
+
   build:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -36,10 +147,10 @@ jobs:
     timeout-minutes: 30
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: azeebo
-          POSTGRES_PASSWORD: azeebo_test_2024
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
           POSTGRES_DB: azeebo_test
         ports:
           - 5432:5432
@@ -58,41 +169,82 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run prisma:generate --if-present
+      - name: Install Playwright Chromium for admin and creator
+        run: pnpm exec playwright install chromium --with-deps
       - name: Build admin client
         run: pnpm --filter @azeebo/admin run build:client
       - name: Run admin E2E tests
-        run: pnpm --filter @azeebo/admin run test:e2e
+        run: pnpm --filter @azeebo/admin test:e2e -- --project=chromium
       - name: Build creator client
         run: pnpm --filter @azeebo/creator run build:client
       - name: Run creator E2E tests
-        run: pnpm --filter @azeebo/creator run test:e2e
+        run: pnpm --filter @azeebo/creator test:e2e -- --project=chromium
+
+  web-e2e:
+    name: E2E Tests (Web App — Playwright)
+    runs-on: ubuntu-latest
+    needs: [build]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browsers
+        run: pnpm --filter @azeebo/web exec playwright install chromium --with-deps
+      - name: Run web E2E tests (Chromium only on CI)
+        run: pnpm --filter @azeebo/web test:e2e -- --project=chromium
+        env:
+          CI: true
+          BASE_URL: 'http://localhost:4000'
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-web-report
+          path: apps/web/playwright-report/
+          retention-days: 7
 
   security:
     name: Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # checkout of a private repo; a permissions block with
+                     # only security-events: write strips the default contents grant
+      security-events: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - name: Audit dependencies
-        run: pnpm audit --audit-level=high
-      - name: Run CodeQL
-        uses: github/codeql-action/analyze@v3
+        # Blocking gate: fails on severity >= high outside the expiry-dated
+        # allowlist in scripts/audit-gate.mjs (AUD-03).
+        run: node scripts/audit-gate.mjs --severity=high
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@87ef0dc97def48aa960fbf026a2563ee9dbdb470 # v3
         with:
           languages: javascript-typescript
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@87ef0dc97def48aa960fbf026a2563ee9dbdb470 # v3
+

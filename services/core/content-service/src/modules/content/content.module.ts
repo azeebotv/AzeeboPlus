@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtConfigModule } from '@azeebo/shared-services';
-import { FeatureFlagModule } from '@azeebo/feature-flags';
 
 import { ContentController } from './content.controller.js';
 import { ContentService } from './content.service.js';
@@ -12,19 +11,15 @@ import { ContentCategoryService } from './content-category.service.js';
 import { ContentIngestionService } from './content-ingestion.service.js';
 import { ContentRepository } from './content.repository.js';
 import { AccessControlService } from './access-control.service.js';
+import { ContentReleaseSchedulerService } from './content-release-scheduler.service.js';
+import { ContentVersioningService } from './content-versioning.service.js';
+import { ACDPValidationService } from './content-acdp-validation.service.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { MediaModule } from '../media/media.module.js';
 import { CacheModule } from '../../cache/cache.module.js';
 
 @Module({
-  imports: [
-    ConfigModule,
-    DatabaseModule,
-    MediaModule,
-    CacheModule,
-    JwtConfigModule,
-    FeatureFlagModule.register({}),
-  ],
+  imports: [ConfigModule, DatabaseModule, MediaModule, CacheModule, JwtConfigModule],
   controllers: [ContentController],
   providers: [
     ContentService,
@@ -35,6 +30,9 @@ import { CacheModule } from '../../cache/cache.module.js';
     ContentIngestionService,
     ContentRepository,
     AccessControlService,
+    ContentReleaseSchedulerService,
+    ContentVersioningService,
+    ACDPValidationService,
   ],
   exports: [
     ContentService,
@@ -45,6 +43,9 @@ import { CacheModule } from '../../cache/cache.module.js';
     ContentIngestionService,
     ContentRepository,
     AccessControlService,
+    ContentReleaseSchedulerService,
+    ContentVersioningService,
+    ACDPValidationService,
     DatabaseModule,
   ],
 })

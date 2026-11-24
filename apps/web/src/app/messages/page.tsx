@@ -1,19 +1,12 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-export const metadata = {
-  title: 'Messages | Azeebo',
-  description: 'Connect with creators and other users through direct messages on Azeebo.',
-  openGraph: {
-    title: 'Messages | Azeebo',
-    description: 'Connect with creators and other users through direct messages on Azeebo.',
-  },
-};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
-import AppHeader from '../../components/layout/AppHeader';
-import AppFooter from '../../components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { Send, MessageCircle, MessageSquare, Pin } from 'lucide-react';
 import { Skeleton } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
 
@@ -51,13 +44,18 @@ interface Conversation {
 
 interface RawConversation {
   id: string;
-  user: User;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount: number;
+  /** The messaging API actually returns { name, avatar, participants[] }
+   *  without a nested `user` object; normalize to a synthetic user below. */
+  user?: Partial<User>;
+  name?: string | null;
+  avatar?: string | null;
+  participants?: { id: string; displayName?: string | null; avatar?: string | null }[];
+  lastMessage?: string;
+  lastMessageAt?: string;
+  timestamp?: string;
+  unreadCount?: number;
   isMuted?: boolean;
   isArchived?: boolean;
-  name?: string;
 }
 
 interface RawMessage {
@@ -89,16 +87,24 @@ export default function MessagesPage(): React.JSX.Element {
   const conversationsQuery = useQuery({
     queryKey: ['messages', 'conversations'],
     queryFn: async () => {
-      const response = await apiFetch<RawConversation[]>('/messages/conversations');
+      const response = await apiFetch<RawConversation[]>('/messaging/conversations');
       if (response.success && response.data) {
         const data = Array.isArray(response.data) ? response.data : [];
-        return data.map((conv: RawConversation) => ({
-          id: conv.id,
-          user: conv.user,
-          lastMessage: conv.lastMessage,
-          timestamp: new Date(conv.timestamp),
-          unreadCount: conv.unreadCount,
-        }));
+        return data.map((conv: RawConversation) => {
+          const other = conv.participants?.find(Boolean);
+          const displayName = conv.name || other?.displayName || 'Conversation';
+          return {
+            id: conv.id,
+            user: {
+              id: other?.id ?? conv.id,
+              name: displayName,
+              avatar: conv.avatar ?? other?.avatar ?? undefined,
+            } as User,
+            lastMessage: conv.lastMessage ?? '',
+            timestamp: new Date(conv.lastMessageAt ?? conv.timestamp ?? Date.now()),
+            unreadCount: conv.unreadCount ?? 0,
+          };
+        });
       }
       return [];
     },
@@ -111,7 +117,7 @@ export default function MessagesPage(): React.JSX.Element {
     queryFn: async () => {
       if (!selectedConversation) return [];
       const response = await apiFetch<RawMessage[]>(
-        `/messages/conversations/${selectedConversation.id}/messages`
+        `/messaging/conversations/${selectedConversation.id}/messages`
       );
       if (response.success && response.data) {
         const data = Array.isArray(response.data) ? response.data : [];
@@ -167,7 +173,7 @@ export default function MessagesPage(): React.JSX.Element {
 
     try {
       const response = await apiFetch<RawMessage>(
-        `/messages/conversations/${selectedConversation.id}/messages`,
+        `/messaging/conversations/${selectedConversation.id}/messages`,
         { method: 'POST', body: JSON.stringify({ content: newMessage }) }
       );
       if (response.success && response.data) {
@@ -253,7 +259,7 @@ export default function MessagesPage(): React.JSX.Element {
 
   const editMessageMutation = useMutation({
     mutationFn: async ({ messageId, content }: { messageId: string; content: string }) => {
-      return apiFetch(`/messages/messages/${messageId}`, {
+      return apiFetch(`/messaging/messages/${messageId}`, {
         method: 'PUT',
         body: JSON.stringify({ content }),
       });
@@ -269,7 +275,7 @@ export default function MessagesPage(): React.JSX.Element {
 
   const deleteMessageMutation = useMutation({
     mutationFn: async (messageId: string) => {
-      return apiFetch(`/messages/messages/${messageId}`, { method: 'DELETE' });
+      return apiFetch(`/messaging/messages/${messageId}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -280,7 +286,9 @@ export default function MessagesPage(): React.JSX.Element {
 
   const reactMutation = useMutation({
     mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
-      return apiFetch(`/messages/messages/${messageId}/react`, {
+      const convId = selectedConversation?.id;
+      if (!convId) return;
+      return apiFetch(`/messaging/conversations/${convId}/messages/${messageId}/react`, {
         method: 'POST',
         body: JSON.stringify({ emoji }),
       });
@@ -294,7 +302,7 @@ export default function MessagesPage(): React.JSX.Element {
 
   const pinMutation = useMutation({
     mutationFn: async ({ messageId, pinned }: { messageId: string; pinned: boolean }) => {
-      return apiFetch(`/messages/messages/${messageId}/pin`, {
+      return apiFetch(`/messaging/messages/${messageId}/pin`, {
         method: 'PUT',
         body: JSON.stringify({ pinned }),
       });
@@ -308,7 +316,7 @@ export default function MessagesPage(): React.JSX.Element {
 
   const muteMutation = useMutation({
     mutationFn: async ({ conversationId, muted }: { conversationId: string; muted: boolean }) => {
-      return apiFetch(`/messages/conversations/${conversationId}/mute`, {
+      return apiFetch(`/messaging/conversations/${conversationId}/mute`, {
         method: 'PUT',
         body: JSON.stringify({ muted }),
       });
@@ -326,7 +334,7 @@ export default function MessagesPage(): React.JSX.Element {
       conversationId: string;
       archived: boolean;
     }) => {
-      return apiFetch(`/messages/conversations/${conversationId}/archive`, {
+      return apiFetch(`/messaging/conversations/${conversationId}/archive`, {
         method: 'PUT',
         body: JSON.stringify({ archived }),
       });
@@ -340,41 +348,33 @@ export default function MessagesPage(): React.JSX.Element {
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
-        <AppHeader />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="az-glass p-8 text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Sign in to access messages</h2>
-            <p className="text-white/50">Connect with creators and other users</p>
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="az-glass p-10 text-center max-w-md mx-auto">
+            <h2 className="text-2xl font-extrabold text-az-ink mb-3 tracking-tight">
+              Sign in to access messages
+            </h2>
+            <p className="text-az-ink/50 text-sm">
+              Connect with African creators and community members
+            </p>
           </div>
         </main>
-        <AppFooter />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary, #1A0A0A)' }}>
-      <AppHeader />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="az-glass overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 12%, transparent)">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="az-glass overflow-hidden h-[calc(100vh-180px)]">
           <div className="grid grid-cols-1 md:grid-cols-3 h-full">
             {/* Conversations Sidebar */}
-            <div
-              className="border-r flex flex-col h-full"
-              style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-            >
-              <div className="p-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+            <div className="border-r border-az-ink/10 flex flex-col h-full">
+              <div className="p-4 border-b border-az-ink/10">
                 <div className="flex items-center justify-between mb-4">
-                  <h1 className="text-xl font-bold text-white">Messages</h1>
+                  <h1 className="az-headline text-xl text-az-ink">Messages</h1>
                   {unreadCount > 0 && (
-                    <span
-                      className="px-2 py-1 text-[10px] font-bold rounded-full"
-                      style={{
-                        background: 'var(--brand-orange, #E8420A)',
-                        color: 'var(--brand-white)',
-                      }}
-                    >
+                    <span className="px-2 py-1 text-[10px] font-bold rounded-full bg-az-flame text-az-surface-root">
                       {unreadCount}
                     </span>
                   )}
@@ -384,7 +384,7 @@ export default function MessagesPage(): React.JSX.Element {
                   placeholder="Search conversations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="az-input w-full text-sm"
+                  className="az-input w-full"
                   aria-label="Search conversations"
                 />
               </div>
@@ -408,9 +408,12 @@ export default function MessagesPage(): React.JSX.Element {
                     ))}
                   </div>
                 ) : filteredConversations.length === 0 ? (
-                  <div className="p-6 text-center">
-                    <p className="text-white/50 text-sm">No conversations found</p>
-                  </div>
+                  <EmptyState
+                    icon="MessageCircle"
+                    title="No conversations found"
+                    description="Start a conversation with a creator or friend"
+                    dark
+                  />
                 ) : (
                   filteredConversations.map((conversation, index) => (
                     <div
@@ -420,22 +423,14 @@ export default function MessagesPage(): React.JSX.Element {
                       tabIndex={-1}
                       onClick={() => handleConversationSelect(conversation)}
                       onKeyDown={(e) => handleConversationKeyDown(e, index)}
-                      className={`flex items-center gap-3 p-4 cursor-pointer transition-colors border-b ${
+                      className={`flex items-center gap-3 p-4 cursor-pointer transition-colors border-b border-az-ink/5 ${
                         selectedConversation?.id === conversation.id
-                          ? 'text-white'
-                          : 'text-white/70 hover:text-white hover:bg-white/5'
+                          ? 'text-az-ink bg-az-scarlet/15'
+                          : 'text-az-ink/70 hover:text-az-ink hover:bg-az-glass-fill'
                       }`}
-                      style={
-                        selectedConversation?.id === conversation.id
-                          ? { background: 'rgba(232,66,10,0.15)' }
-                          : { borderColor: 'rgba(255,255,255,0.05)' }
-                      }
                     >
                       <div className="relative">
-                        <div
-                          className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white"
-                          style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                        >
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-az-ink bg-gradient-to-br from-az-flame to-az-scarlet">
                           {conversation.user.avatar ? (
                             <OptimizedImage
                               src={conversation.user.avatar}
@@ -447,13 +442,7 @@ export default function MessagesPage(): React.JSX.Element {
                           )}
                         </div>
                         {conversation.unreadCount > 0 && (
-                          <div
-                            className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                            style={{
-                              background: 'var(--brand-orange, #E8420A)',
-                              color: 'var(--brand-white)',
-                            }}
-                          >
+                          <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold bg-az-flame text-az-surface-root">
                             {conversation.unreadCount}
                           </div>
                         )}
@@ -461,11 +450,11 @@ export default function MessagesPage(): React.JSX.Element {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <h3
-                            className={`font-medium text-sm truncate ${conversation.unreadCount > 0 ? 'text-white' : 'text-white/70'}`}
+                            className={`font-medium text-sm truncate ${conversation.unreadCount > 0 ? 'text-az-ink' : 'text-az-ink/70'}`}
                           >
                             {conversation.user.name}
                           </h3>
-                          <span className="text-xs text-white/40 flex-shrink-0">
+                          <span className="text-xs text-az-ink/40 flex-shrink-0">
                             {conversation.timestamp.toLocaleTimeString([], {
                               hour: '2-digit',
                               minute: '2-digit',
@@ -473,7 +462,7 @@ export default function MessagesPage(): React.JSX.Element {
                           </span>
                         </div>
                         <p
-                          className={`text-xs truncate mt-0.5 ${conversation.unreadCount > 0 ? 'text-white/70' : 'text-white/40'}`}
+                          className={`text-xs truncate mt-0.5 ${conversation.unreadCount > 0 ? 'text-az-ink/70' : 'text-az-ink/40'}`}
                         >
                           {conversation.lastMessage}
                         </p>
@@ -489,26 +478,21 @@ export default function MessagesPage(): React.JSX.Element {
               {selectedConversation ? (
                 <>
                   {/* Chat Header */}
-                  <div
-                    className="p-4 border-b flex items-center gap-3"
-                    style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-                  >
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
-                      style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                    >
+                  <div className="p-4 border-b border-az-ink/10 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-az-ink bg-gradient-to-br from-az-flame to-az-scarlet">
                       {selectedConversation.user.name.charAt(0)}
                     </div>
                     <div className="flex-1">
-                      <h2 className="font-bold text-white text-sm">
+                      <h2 className="font-bold text-az-ink text-sm">
                         {selectedConversation.name || selectedConversation.user.name}
                       </h2>
-                      <p className="text-xs text-white/50">
+                      <p className="text-xs text-az-ink/50">
                         {selectedConversation.user.role || 'User'}
                       </p>
                     </div>
                     <div className="flex gap-2">
                       <button
+                        type="button"
                         aria-label={
                           selectedConversation.isMuted ? 'Unmute conversation' : 'Mute conversation'
                         }
@@ -518,17 +502,14 @@ export default function MessagesPage(): React.JSX.Element {
                             muted: !selectedConversation.isMuted,
                           })
                         }
-                        className="text-xs px-2 py-1 rounded border"
-                        style={{
-                          borderColor: 'rgba(255,255,255,0.2)',
-                          color: selectedConversation.isMuted
-                            ? 'var(--color-warning-500)'
-                            : 'var(--text-muted, #9A8A7A)',
-                        }}
+                        className={`text-xs px-2 py-1 rounded border border-az-ink/20 ${
+                          selectedConversation.isMuted ? 'text-az-warning-500' : 'text-az-ink-muted'
+                        }`}
                       >
                         {selectedConversation.isMuted ? 'Unmute' : 'Mute'}
                       </button>
                       <button
+                        type="button"
                         aria-label="Archive conversation"
                         onClick={() => {
                           archiveMutation.mutate({
@@ -536,11 +517,7 @@ export default function MessagesPage(): React.JSX.Element {
                             archived: true,
                           });
                         }}
-                        className="text-xs px-2 py-1 rounded border"
-                        style={{
-                          borderColor: 'rgba(255,255,255,0.2)',
-                          color: 'var(--text-muted, #9A8A7A)',
-                        }}
+                        className="text-xs px-2 py-1 rounded border border-az-ink/20 text-az-ink-muted"
                       >
                         Archive
                       </button>
@@ -570,10 +547,12 @@ export default function MessagesPage(): React.JSX.Element {
                         ))}
                       </div>
                     ) : messages.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-full text-center">
-                        <span className="text-4xl mb-4 block">&#x1F4AC;</span>
-                        <h3 className="text-lg font-bold text-white mb-2">Start a conversation</h3>
-                        <p className="text-white/50 text-sm">
+                      <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-az-glass-fill border border-az-glass-border flex items-center justify-center text-az-ink/40">
+                          <MessageCircle className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-lg font-bold text-az-ink mb-2">Start a conversation</h3>
+                        <p className="text-az-ink/50 text-sm">
                           Send a message to {selectedConversation.user.name}
                         </p>
                       </div>
@@ -584,15 +563,14 @@ export default function MessagesPage(): React.JSX.Element {
                           className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
-                            className={`max-w-[70%] rounded-2xl px-4 py-2 ${message.senderId === user?.id ? 'rounded-br-sm' : 'rounded-bl-sm'} ${message.isPinned ? 'ring-2 ring-yellow-400/50' : ''}`}
-                            style={
+                            className={`max-w-[70%] rounded-2xl px-4 py-2 ${
                               message.senderId === user?.id
-                                ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
-                                : { background: 'rgba(255,255,255,0.08)' }
-                            }
+                                ? 'rounded-br-sm bg-gradient-to-br from-az-flame to-az-scarlet'
+                                : 'rounded-bl-sm bg-az-ink/10'
+                            } ${message.isPinned ? 'ring-2 ring-az-warning-400/50' : ''}`}
                           >
                             {message.replyToId && (
-                              <p className="text-[10px] text-white/40 mb-1 italic">
+                              <p className="text-[10px] text-az-ink/40 mb-1 italic">
                                 Replying to a message
                               </p>
                             )}
@@ -601,7 +579,7 @@ export default function MessagesPage(): React.JSX.Element {
                                 <input
                                   value={editContent}
                                   onChange={(e) => setEditContent(e.target.value)}
-                                  className="flex-1 bg-white/10 text-white rounded px-2 py-1 text-sm"
+                                  className="flex-1 bg-az-glass-card text-az-ink rounded px-2 py-1 text-sm"
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter')
                                       editMessageMutation.mutate({
@@ -620,29 +598,31 @@ export default function MessagesPage(): React.JSX.Element {
                                       content: editContent,
                                     })
                                   }
-                                  className="text-xs text-green-400"
+                                  className="text-xs text-az-success-400"
                                 >
                                   Save
                                 </button>
                                 <button
                                   aria-label="Cancel editing"
                                   onClick={() => setEditingMessageId(null)}
-                                  className="text-xs text-red-400"
+                                  className="text-xs text-az-error-400"
                                 >
                                   Cancel
                                 </button>
                               </div>
                             ) : (
-                              <p className="text-sm text-white">{message.content}</p>
+                              <p className="text-sm text-az-ink">{message.content}</p>
                             )}
                             <div className="flex items-center justify-between mt-1">
-                              <p className="text-[10px] text-white/50">
+                              <p className="text-[10px] text-az-ink/50">
                                 {new Date(message.timestamp).toLocaleTimeString([], {
                                   hour: '2-digit',
                                   minute: '2-digit',
                                 })}
                                 {message.isEdited && <span className="ml-1">(edited)</span>}
-                                {message.isPinned && <span className="ml-1">&#x1F4CC;</span>}
+                                {message.isPinned && (
+                                  <Pin className="w-3 h-3 ml-1 inline text-az-warning-400" />
+                                )}
                               </p>
                               <div className="flex gap-1 ml-2">
                                 <button
@@ -653,7 +633,7 @@ export default function MessagesPage(): React.JSX.Element {
                                       pinned: !message.isPinned,
                                     })
                                   }
-                                  className="text-[10px] text-white/40 hover:text-yellow-400"
+                                  className="text-[10px] text-az-ink/40 hover:text-az-warning-400"
                                 >
                                   {message.isPinned ? 'Unpin' : 'Pin'}
                                 </button>
@@ -666,14 +646,14 @@ export default function MessagesPage(): React.JSX.Element {
                                           setEditingMessageId(message.id);
                                           setEditContent(message.content);
                                         }}
-                                        className="text-[10px] text-white/40 hover:text-white"
+                                        className="text-[10px] text-az-ink/40 hover:text-az-ink"
                                       >
                                         Edit
                                       </button>
                                       <button
                                         aria-label="Delete message"
                                         onClick={() => deleteMessageMutation.mutate(message.id)}
-                                        className="text-[10px] text-white/40 hover:text-red-400"
+                                        className="text-[10px] text-az-ink/40 hover:text-az-error-400"
                                       >
                                         Del
                                       </button>
@@ -683,9 +663,9 @@ export default function MessagesPage(): React.JSX.Element {
                             </div>
                             <div className="flex gap-1 mt-1">
                               {[
-                                { emoji: '👍', label: 'Thumbs up' },
-                                { emoji: '❤️', label: 'Heart' },
-                                { emoji: '😂', label: 'Laughing face' },
+                                { emoji: 'ThumbsUp', label: 'Thumbs up' },
+                                { emoji: 'Heart', label: 'Heart' },
+                                { emoji: 'Laugh', label: 'Laughing face' },
                               ].map((reaction) => (
                                 <button
                                   key={reaction.emoji}
@@ -710,7 +690,7 @@ export default function MessagesPage(): React.JSX.Element {
                   </div>
 
                   {/* Message Input */}
-                  <div className="p-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                  <div className="p-4 border-t border-az-ink/10">
                     <div className="flex items-end gap-2">
                       <textarea
                         ref={messageInputRef}
@@ -718,46 +698,30 @@ export default function MessagesPage(): React.JSX.Element {
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyPress}
                         placeholder="Type a message..."
-                        className="flex-1 bg-white/5 text-white placeholder-white/30 rounded-xl px-4 py-3 text-sm resize-none border outline-none focus:border-[#E8420A]"
-                        style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+                        className="flex-1 bg-az-glass-fill text-az-ink placeholder-az-ink/30 rounded-xl px-4 py-3 text-sm resize-none border border-az-ink/10 outline-none focus:border-az-flame focus-visible:outline-2 focus-visible:outline-az-flame"
                         rows={1}
                         aria-label="Type a message"
                       />
                       <button
+                        type="button"
                         onClick={handleSendMessage}
                         disabled={!newMessage.trim()}
-                        className="az-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{
-                          width: 'auto',
-                          paddingInline: '1.25rem',
-                          padding: '0.75rem 1.25rem',
-                          borderRadius: '12px',
-                        }}
+                        className="az-btn-primary az-btn-primary--inline az-btn-primary--sm"
                         aria-label="Send message"
                       >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                          />
-                        </svg>
+                        <Send className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="flex-1 flex items-center justify-center">
+                <div className="flex-1 flex items-center justify-center p-8">
                   <div className="text-center">
-                    <span className="text-5xl mb-4 block">&#x1F4AC;</span>
-                    <h3 className="text-xl font-bold text-white mb-2">Select a conversation</h3>
-                    <p className="text-white/50 text-sm">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-az-glass-fill border border-az-glass-border flex items-center justify-center text-az-ink/40">
+                      <MessageSquare className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-bold text-az-ink mb-2">Select a conversation</h3>
+                    <p className="text-az-ink/50 text-sm">
                       Choose a conversation from the left to start messaging
                     </p>
                   </div>
@@ -767,7 +731,6 @@ export default function MessagesPage(): React.JSX.Element {
           </div>
         </div>
       </main>
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }

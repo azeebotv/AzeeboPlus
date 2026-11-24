@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { FeatureFlagService, recommendationFlags } from '@azeebo/feature-flags';
 import axios from 'axios';
 
 interface RecommendationInput {
@@ -25,7 +26,10 @@ interface RecommendationOutput {
     reason: string;
   };
   freshnessScore: number;
+  algorithm: RecommendationAlgorithm;
 }
+
+type RecommendationAlgorithm = 'hybrid' | 'collaborative' | 'content_based';
 
 interface UserSegment {
   segmentId: string;
@@ -75,11 +79,12 @@ export class RecommendationService {
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
-    @Inject(ConfigService) private readonly configService: ConfigService
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
     this.realityServiceBaseUrl = this.configService.get<string>(
       'REALITY_SERVICE_URL',
@@ -145,22 +150,59 @@ export class RecommendationService {
     }
   }
 
+  /**
+   * Resolves the active recommendation algorithm for a user.
+   *
+   * A/B bucketing: when multiple algorithm flags are enabled, the user is
+   * deterministically bucketed (stable hash of userId) so the same user always
+   * sees the same algorithm within a rollout. When exactly one is enabled that
+   * one wins; when none are enabled we fall back to hybrid.
+   */
+  private async resolveAlgorithm(userId?: string): Promise<RecommendationAlgorithm> {
+    const enabled: RecommendationAlgorithm[] = [];
+    if (await this.featureFlagService.isEnabled(recommendationFlags.collaborative)) {
+      enabled.push('collaborative');
+    }
+    if (await this.featureFlagService.isEnabled(recommendationFlags.contentBased)) {
+      enabled.push('content_based');
+    }
+    if (await this.featureFlagService.isEnabled(recommendationFlags.hybrid)) {
+      enabled.push('hybrid');
+    }
+    if (enabled.length === 0) return 'hybrid';
+    if (enabled.length === 1) return enabled[0];
+
+    const seed = userId ?? 'anonymous';
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+    }
+    return enabled[hash % enabled.length];
+  }
+
   async getContentRecommendations(
     input: RecommendationInput
   ): Promise<{ success: boolean; data?: RecommendationOutput[] }> {
     try {
       const { userId, limit = 20, universe, freshnessDays = 7 } = input;
+      const algorithm = await this.resolveAlgorithm(userId);
+      const cachingEnabled = await this.featureFlagService.isEnabled(recommendationFlags.caching);
+      const crossUniverseEnabled = await this.featureFlagService.isEnabled(
+        recommendationFlags.crossUniverse
+      );
+
+      const skipCache = !cachingEnabled;
 
       if (!userId) {
         const cacheK = cacheKey('recommendation', `popular:${universe || 'all'}`);
-        const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(
-          cacheK
-        );
+        const cached = !skipCache
+          ? await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(cacheK)
+          : null;
         if (cached) return cached;
 
         const result = await this.getFallbackRecommendations(limit, universe, freshnessDays);
         if (result.success && result.data) {
-          await this.cache.set(cacheK, result, 3600);
+          if (!skipCache) await this.cache.set(cacheK, result, 3600);
         }
         return result;
       }
@@ -169,9 +211,9 @@ export class RecommendationService {
         'recommendation',
         `user:${userId}:${limit}:${universe || 'all'}:${freshnessDays}`
       );
-      const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(
-        cacheK
-      );
+      const cached = !skipCache
+        ? await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(cacheK)
+        : null;
       if (cached) return cached;
 
       const [watchHistory, rewardAccount] = await Promise.all([
@@ -249,7 +291,21 @@ export class RecommendationService {
         const factors: { name: string; weight: number }[] = [];
         let reason = '';
 
-        let baseScore = content.viewCount * 0.3;
+        let baseScore = 0;
+
+        // Algorithm A/B: collaborative weights popularity + co-watch affinity;
+        // content_based drops the popularity term (pure content signals);
+        // hybrid blends popularity + content signals (the legacy default).
+        if (algorithm === 'collaborative') {
+          baseScore += content.viewCount * 0.3;
+          factors.push({ name: 'collaborative_popularity', weight: content.viewCount * 0.3 });
+          reason = 'What the community is watching';
+        } else if (algorithm === 'hybrid') {
+          baseScore += content.viewCount * 0.3;
+          factors.push({ name: 'popularity', weight: content.viewCount * 0.3 });
+        } else {
+          reason = 'Matched to your interests';
+        }
 
         if (content.universe === topUniverse) {
           baseScore += 30;
@@ -297,20 +353,26 @@ export class RecommendationService {
             reason,
           },
           freshnessScore,
+          algorithm,
         };
       });
 
       const sorted = scored.sort((a, b) => b.score - a.score);
-      const crossUniverseDiversity = await this.ensureCrossUniverseDiversity(
-        sorted,
-        limit,
-        watchedContentIds
-      );
+      const crossUniverseDiversity = crossUniverseEnabled
+        ? await this.ensureCrossUniverseDiversity(sorted, limit, watchedContentIds)
+        : sorted;
 
-      const result = { success: true, data: crossUniverseDiversity.slice(0, limit) };
-      await this.cache.set(cacheK, result, 1800);
+      const result = {
+        success: true,
+        data: crossUniverseDiversity.slice(0, limit).map((item) => ({
+          ...item,
+          algorithm,
+        })),
+      };
+      if (!skipCache) await this.cache.set(cacheK, result, 1800);
       this.trackAnalyticsEvent('recommendations_served', userId || 'anonymous', {
         count: result.data.length,
+        algorithm,
       });
       return result;
     } catch (error) {
@@ -397,6 +459,7 @@ export class RecommendationService {
                     5
               )
             : 0,
+          algorithm: 'hybrid' as const,
         })),
       };
     } catch (error) {
@@ -480,6 +543,10 @@ export class RecommendationService {
     userId: string,
     limit = 10
   ): Promise<{ success: boolean; data?: RecommendationOutput[] }> {
+    // Kill-switch: cross-universe discovery defaults OFF until the signal is tuned.
+    if (!(await this.featureFlagService.isEnabled(recommendationFlags.crossUniverse))) {
+      return { success: true, data: [] };
+    }
     try {
       const cacheK = cacheKey('recommendation', `cross:${userId}:${limit}`);
       const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(
@@ -558,6 +625,7 @@ export class RecommendationService {
                     5
               )
             : 0,
+          algorithm: 'hybrid' as const,
         })),
       };
 
@@ -670,6 +738,13 @@ export class RecommendationService {
   }
 
   async getCreatorScore(creatorId: string): Promise<{ success: boolean; data?: CreatorScore }> {
+    // Kill-switch: creator score defaults OFF until calibrated.
+    if (!(await this.featureFlagService.isEnabled(recommendationFlags.creatorScore))) {
+      return {
+        success: true,
+        data: { creatorId, score: 0, factors: [], tier: 'new' },
+      };
+    }
     try {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -726,6 +801,19 @@ export class RecommendationService {
   }
 
   async getChurnRisk(userId: string): Promise<{ success: boolean; data?: ChurnRisk }> {
+    // Kill-switch: churn model defaults OFF until calibrated.
+    if (!(await this.featureFlagService.isEnabled(recommendationFlags.churnModel))) {
+      return {
+        success: true,
+        data: {
+          userId,
+          riskScore: 0,
+          riskLevel: 'low',
+          contributingFactors: [],
+          recommendations: [],
+        },
+      };
+    }
     try {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -915,6 +1003,13 @@ export class RecommendationService {
     transactionId?: string;
     voteActivity?: unknown;
   }): Promise<{ success: boolean; data?: FraudRisk }> {
+    // Kill-switch: fraud model defaults OFF until calibrated.
+    if (!(await this.featureFlagService.isEnabled(recommendationFlags.fraudModel))) {
+      return {
+        success: true,
+        data: { ...data, riskScore: 0, riskLevel: 'low', indicators: [] },
+      };
+    }
     try {
       const { userId, contentId, transactionId } = data;
 
@@ -1047,6 +1142,10 @@ export class RecommendationService {
     userId: string,
     limit = 20
   ): Promise<{ success: boolean; data?: RecommendationOutput[] }> {
+    // Kill-switch: personalized feed defaults OFF — fall back to plain content recs.
+    if (!(await this.featureFlagService.isEnabled(recommendationFlags.personalizedFeed))) {
+      return this.getContentRecommendations({ userId, limit });
+    }
     try {
       const [segmentResult, churnResult] = await Promise.all([
         this.getUserSegment(userId),

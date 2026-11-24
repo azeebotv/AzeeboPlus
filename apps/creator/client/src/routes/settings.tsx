@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
+import type { CreatorSettings } from '@/lib/creator-types';
+import { errorTextStyle } from '@/lib/ui';
 
 type NotificationPrefs = {
   email: boolean;
@@ -32,14 +34,36 @@ export default function SettingsPage() {
     allowMessages: true,
   });
 
+  // Hydrate the form from the saved settings (backend returns defaults when
+  // nothing was persisted yet).
+  const { data: saved, isLoading: loadingSettings, isError: settingsError, refetch: refetchSettings } = useQuery({
+    queryKey: ['creator', 'settings'],
+    queryFn: async () => {
+      const res = await creatorApi.getSettings();
+      if (!res.success) throw new Error(res.message || 'Failed to load settings');
+      return res.data as CreatorSettings;
+    },
+  });
+
+  useEffect(() => {
+    if (saved) {
+      if (saved.payoutMethod) setPayoutMethod(saved.payoutMethod);
+      if (saved.minimumPayout != null) setMinimumPayout(String(saved.minimumPayout));
+      if (saved.notifications) setNotifications((prev) => ({ ...prev, ...saved.notifications }));
+      if (saved.privacy) setPrivacy((prev) => ({ ...prev, ...saved.privacy }));
+    }
+  }, [saved]);
+
   const settingsMutation = useMutation({
-    mutationFn: () =>
-      creatorApi.updateSettings({
+    mutationFn: async () => {
+      const res = await creatorApi.updateSettings({
         payoutMethod,
         minimumPayout: Number(minimumPayout),
         notifications,
         privacy,
-      }),
+      });
+      return creatorApi.assertSuccess<{ success: boolean }>(res);
+    },
   });
 
   const toggleNotification = (key: keyof NotificationPrefs) => {
@@ -50,10 +74,70 @@ export default function SettingsPage() {
     setPrivacy((prev) => ({ ...prev, [key]: value ?? (!prev[key] as never) }));
   };
 
+  if (loadingSettings) {
+    return (
+      <div>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Settings</h1>
+        <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>Loading your settings…</p>
+        <div
+          style={{
+            padding: 32,
+            borderRadius: 12,
+            border: '1px solid var(--creator-border)',
+            textAlign: 'center',
+            color: 'var(--creator-text-muted)',
+          }}
+        >
+          Loading…
+        </div>
+      </div>
+    );
+  }
+
+  if (settingsError) {
+    return (
+      <div>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Settings</h1>
+        <div
+          style={{
+            padding: 32,
+            borderRadius: 12,
+            border: '1px solid var(--creator-orange)',
+            backgroundColor: 'rgba(232,66,10,0.08)',
+            textAlign: 'center',
+          }}
+        >
+          <p style={{ fontWeight: 600, marginBottom: 8 }}>Failed to load your settings</p>
+          <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 16 }}>
+            Your previously saved settings could not be retrieved. Do not save until settings have loaded to avoid overwriting them with defaults.
+          </p>
+          <button
+            onClick={() => refetchSettings()}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 8,
+              border: '1px solid var(--creator-orange)',
+              backgroundColor: 'transparent',
+              color: 'var(--creator-orange)',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Settings are loaded (or confirmed first-time defaults). Safe to edit.
+  const settingsLoaded = !loadingSettings && !settingsError;
+
   return (
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Settings</h1>
-      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>Manage your creator settings</p>
+      <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>Manage your creator settings</p>
 
       <div style={{ maxWidth: 600 }}>
         {/* Payout Settings */}
@@ -61,7 +145,7 @@ export default function SettingsPage() {
           style={{
             padding: 20,
             borderRadius: 12,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--creator-border)',
             backgroundColor: 'rgba(26,10,10,0.5)',
             marginBottom: 16,
           }}
@@ -69,7 +153,7 @@ export default function SettingsPage() {
           <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Payout Settings</h3>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
               Payout Method
             </label>
             <select
@@ -79,9 +163,9 @@ export default function SettingsPage() {
                 width: '100%',
                 padding: '10px 14px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--creator-border)',
+                backgroundColor: 'var(--creator-dark)',
+                color: 'var(--creator-text)',
                 fontSize: 14,
               }}
             >
@@ -92,8 +176,8 @@ export default function SettingsPage() {
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
-              Minimum Payout ($)
+            <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
+              Minimum Payout (₦)
             </label>
             <input
               type="number"
@@ -104,9 +188,9 @@ export default function SettingsPage() {
                 width: '100%',
                 padding: '10px 14px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--creator-border)',
+                backgroundColor: 'var(--creator-dark)',
+                color: 'var(--creator-text)',
                 fontSize: 14,
               }}
             />
@@ -118,7 +202,7 @@ export default function SettingsPage() {
           style={{
             padding: 20,
             borderRadius: 12,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--creator-border)',
             backgroundColor: 'rgba(26,10,10,0.5)',
             marginBottom: 16,
           }}
@@ -154,14 +238,17 @@ export default function SettingsPage() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '12px 0',
-                borderBottom: '1px solid #2A1A1A',
+                borderBottom: '1px solid var(--creator-border)',
               }}
             >
               <div>
-                <div style={{ fontSize: 14, color: '#F5F0EB' }}>{item.label}</div>
-                <div style={{ fontSize: 12, color: '#9A8A7A' }}>{item.desc}</div>
+                <div style={{ fontSize: 14, color: 'var(--creator-text)' }}>{item.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--creator-text-muted)' }}>{item.desc}</div>
               </div>
               <button
+                role="switch"
+                aria-checked={notifications[item.key]}
+                aria-label={item.label}
                 onClick={() => toggleNotification(item.key)}
                 style={{
                   width: 44,
@@ -169,7 +256,7 @@ export default function SettingsPage() {
                   borderRadius: 12,
                   border: 'none',
                   cursor: 'pointer',
-                  backgroundColor: notifications[item.key] ? '#E8420A' : '#2A1A1A',
+                  backgroundColor: notifications[item.key] ? 'var(--creator-orange)' : 'var(--creator-surface)',
                   position: 'relative',
                   transition: 'background-color 0.2s',
                 }}
@@ -179,7 +266,7 @@ export default function SettingsPage() {
                     width: 18,
                     height: 18,
                     borderRadius: '50%',
-                    backgroundColor: '#F5F0EB',
+                    backgroundColor: 'var(--creator-surface-light)',
                     position: 'absolute',
                     top: 3,
                     left: notifications[item.key] ? 23 : 3,
@@ -196,7 +283,7 @@ export default function SettingsPage() {
           style={{
             padding: 20,
             borderRadius: 12,
-            border: '1px solid #2A1A1A',
+            border: '1px solid var(--creator-border)',
             backgroundColor: 'rgba(26,10,10,0.5)',
             marginBottom: 16,
           }}
@@ -204,7 +291,7 @@ export default function SettingsPage() {
           <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Privacy</h3>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 13, color: '#9A8A7A', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
               Profile Visibility
             </label>
             <select
@@ -219,9 +306,9 @@ export default function SettingsPage() {
                 width: '100%',
                 padding: '10px 14px',
                 borderRadius: 8,
-                border: '1px solid #2A1A1A',
-                backgroundColor: '#0D0505',
-                color: '#F5F0EB',
+                border: '1px solid var(--creator-border)',
+                backgroundColor: 'var(--creator-dark)',
+                color: 'var(--creator-text)',
                 fontSize: 14,
               }}
             >
@@ -250,14 +337,17 @@ export default function SettingsPage() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '12px 0',
-                borderBottom: '1px solid #2A1A1A',
+                borderBottom: '1px solid var(--creator-border)',
               }}
             >
               <div>
-                <div style={{ fontSize: 14, color: '#F5F0EB' }}>{item.label}</div>
-                <div style={{ fontSize: 12, color: '#9A8A7A' }}>{item.desc}</div>
+                <div style={{ fontSize: 14, color: 'var(--creator-text)' }}>{item.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--creator-text-muted)' }}>{item.desc}</div>
               </div>
               <button
+                role="switch"
+                aria-checked={privacy[item.key]}
+                aria-label={item.label}
                 onClick={() => togglePrivacy(item.key)}
                 style={{
                   width: 44,
@@ -265,7 +355,7 @@ export default function SettingsPage() {
                   borderRadius: 12,
                   border: 'none',
                   cursor: 'pointer',
-                  backgroundColor: privacy[item.key] ? '#E8420A' : '#2A1A1A',
+                  backgroundColor: privacy[item.key] ? 'var(--creator-orange)' : 'var(--creator-surface)',
                   position: 'relative',
                   transition: 'background-color 0.2s',
                 }}
@@ -275,7 +365,7 @@ export default function SettingsPage() {
                     width: 18,
                     height: 18,
                     borderRadius: '50%',
-                    backgroundColor: '#F5F0EB',
+                    backgroundColor: 'var(--creator-surface-light)',
                     position: 'absolute',
                     top: 3,
                     left: privacy[item.key] ? 23 : 3,
@@ -290,27 +380,28 @@ export default function SettingsPage() {
         {/* Save Button */}
         <button
           onClick={() => settingsMutation.mutate()}
-          disabled={settingsMutation.isPending}
+          disabled={!settingsLoaded || settingsMutation.isPending}
           style={{
             padding: '10px 20px',
             borderRadius: 8,
             border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff',
+            background: !settingsLoaded || settingsMutation.isPending ? 'var(--creator-surface)' : 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+            color: 'white',
             fontWeight: 600,
-            cursor: 'pointer',
+            cursor: !settingsLoaded || settingsMutation.isPending ? 'not-allowed' : 'pointer',
+            opacity: !settingsLoaded || settingsMutation.isPending ? 0.6 : 1,
           }}
         >
           {settingsMutation.isPending ? 'Saving...' : 'Save All Settings'}
         </button>
 
         {settingsMutation.isSuccess && (
-          <p style={{ color: '#0D3B2E', fontSize: 13, marginTop: 8 }}>
+          <p style={{ color: 'var(--creator-green)', fontSize: 13, marginTop: 8 }}>
             Settings saved successfully
           </p>
         )}
         {settingsMutation.isError && (
-          <p style={{ color: '#CC1C1C', fontSize: 13, marginTop: 8 }}>Failed to save settings</p>
+          <p style={errorTextStyle()}>{creatorApi.errorMessage(settingsMutation.error)}</p>
         )}
       </div>
     </div>

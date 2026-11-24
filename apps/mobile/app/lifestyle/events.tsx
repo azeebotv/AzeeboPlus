@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { colors } from '../../src/theme';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { lifestyleApi, LifestyleEvent } from '../../src/api/lifestyle';
+import { lifestyleApi, LifestyleEvent } from '@azeebo/react-data/api/lifestyle';
 
 const CATEGORIES = ['All', 'Concerts', 'Festivals', 'Nightlife', 'Food', 'Sports', 'Arts'];
 
@@ -71,7 +71,11 @@ export default function EventsScreen() {
       activeOpacity={0.7}
     >
       <Image
-        source={{ uri: item.image || 'https://placehold.co/400x200/1a1a1a/ffffff?text=Event' }}
+        source={{
+          uri:
+            item.image ||
+            'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=400&h=200&q=80',
+        }}
         style={styles.eventImage}
         resizeMode="cover"
       />
@@ -114,10 +118,10 @@ export default function EventsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Events Screen" style={styles.container}>
       <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Events</Text>

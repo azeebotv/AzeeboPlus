@@ -1,6 +1,7 @@
 import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, comedyFlags } from '@azeebo/feature-flags';
 
 import { ComedyService } from './comedy.service.js';
 import { ComedyResponse } from './interfaces/comedy-response.interface.js';
@@ -11,6 +12,7 @@ import { SubmitChallengeDto } from './dto/submit-challenge.dto.js';
 export class ComedyController {
   constructor(@Inject(ComedyService) private readonly comedyService: ComedyService) {}
 
+  @Public()
   @Get('clips')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -20,6 +22,7 @@ export class ComedyController {
     return this.comedyService.getClips();
   }
 
+  @Public()
   @Get('comedians')
   @ApiOperation({ summary: 'Comedian profiles' })
   @ApiResponse({ status: 200, description: 'Comedians' })
@@ -27,6 +30,16 @@ export class ComedyController {
     return this.comedyService.getComedians();
   }
 
+  @Public()
+  @Get('comedians/:id')
+  @ApiOperation({ summary: 'Comedian profile details' })
+  @ApiResponse({ status: 200, description: 'Comedian profile' })
+  @ApiResponse({ status: 404, description: 'Comedian not found' })
+  async getComedian(@Param('id') id: string): Promise<ComedyResponse> {
+    return this.comedyService.getComedian(id);
+  }
+
+  @Public()
   @Get('series')
   @ApiOperation({ summary: 'Comedy series' })
   @ApiResponse({ status: 200, description: 'Series' })
@@ -35,6 +48,8 @@ export class ComedyController {
   }
 
   @Post('challenges')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(comedyFlags.challengesEnabled)
   @ApiOperation({ summary: 'Submit comedy challenge entry' })
   @ApiResponse({ status: 201, description: 'Entry submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -45,7 +60,10 @@ export class ComedyController {
     return this.comedyService.submitChallenge(req.user.id, body);
   }
 
+  @Public()
   @Get('challenges')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(comedyFlags.challengesEnabled)
   @ApiOperation({ summary: 'Active comedy challenges' })
   @ApiResponse({ status: 200, description: 'Challenges' })
   async getChallenges(): Promise<ComedyResponse> {
@@ -63,6 +81,7 @@ export class ComedyController {
     return this.comedyService.shareClip(req.user.id, clipId);
   }
 
+  @Public()
   @Get('trending')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)

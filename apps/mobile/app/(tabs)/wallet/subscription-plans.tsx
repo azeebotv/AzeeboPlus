@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { colors } from '../../../src/theme';
 
 export default function SubscriptionPlansScreen() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function SubscriptionPlansScreen() {
   }, [router]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView accessibilityLabel="Subscription Plans Screen" style={styles.container} edges={['top']}>
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#E8400A" />
         <Text style={styles.text}>Redirecting to subscription plans...</Text>
@@ -32,7 +33,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   text: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontSize: 14,
   },
 });

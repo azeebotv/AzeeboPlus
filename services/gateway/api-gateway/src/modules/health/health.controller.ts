@@ -22,9 +22,19 @@ export class HealthController {
         apiGateway: {
           status: 'up',
           timestamp: new Date().toISOString(),
+          commitSha: process.env.COMMIT_SHA || process.env.GIT_SHA || 'dev',
         },
       }),
     ]);
+  }
+
+  @Get('version')
+  version() {
+    return {
+      commitSha: process.env.COMMIT_SHA || process.env.GIT_SHA || 'dev',
+      version: process.env.npm_package_version || '1.0.0',
+      timestamp: new Date().toISOString(),
+    };
   }
 
   @Get('ready')

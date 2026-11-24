@@ -5,8 +5,9 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { apiClient } from '../../src/api/client';
-import { ApiResponse } from '../../src/types/api';
+import { apiClient } from '@azeebo/react-data/api/client';
+import { ApiResponse } from '@azeebo/react-data/types/api';
+import { colors } from '../../src/theme';
 
 type ListResponse<T> = T[] | ApiResponse<T[]>;
 
@@ -50,19 +51,19 @@ export default function PassesScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Passes Screen" style={[styles.container, { backgroundColor: isDark ? '#0B090E' : '#ffffff' }]}>
         <LoadingState text="Loading passes..." />
       </SafeAreaView>
     );
   if (error)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0B090E' : '#ffffff' }]}>
         <ErrorState description={error} onRetry={() => passesQuery.refetch()} />
       </SafeAreaView>
     );
   if (!passes.length)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0B090E' : '#ffffff' }]}>
         <EmptyState
           icon="🎟️"
           title="No passes"
@@ -72,9 +73,15 @@ export default function PassesScreen() {
     );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0B090E' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          accessibilityHint="Navigates to previous screen"
+        >
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -94,11 +101,14 @@ export default function PassesScreen() {
             key={pass.id}
             style={[
               styles.planCard,
-              { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+              { backgroundColor: isDark ? '#140808' : '#f5f5f5' },
               selectedPlan === pass.id && styles.planCardSelected,
               pass.popular && styles.planCardPopular,
             ]}
             onPress={() => setSelectedPlan(pass.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`${pass.name}, ${pass.price} per ${pass.period}`}
+            accessibilityState={{ selected: selectedPlan === pass.id }}
           >
             {pass.popular && (
               <View style={styles.popularBadge}>
@@ -133,7 +143,12 @@ export default function PassesScreen() {
         ))}
 
         {selectedPlan && (
-          <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
+          <TouchableOpacity
+            style={styles.subscribeButton}
+            onPress={handleSubscribe}
+            accessibilityRole="button"
+            accessibilityLabel="Subscribe Now"
+          >
             <Text style={styles.subscribeText}>Subscribe Now</Text>
           </TouchableOpacity>
         )}
@@ -150,10 +165,10 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 50, gap: 12 },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -163,7 +178,7 @@ const styles = StyleSheet.create({
   heroBanner: { alignItems: 'center', padding: 24, marginBottom: 20 },
   heroEmoji: { fontSize: 60, marginBottom: 12 },
   heroTitle: { fontSize: 28, fontWeight: '700', marginBottom: 6 },
-  heroSubtitle: { color: '#888', fontSize: 14, textAlign: 'center' },
+  heroSubtitle: { color: colors.text.secondary, fontSize: 14, textAlign: 'center' },
   planCard: {
     padding: 20,
     borderRadius: 16,
@@ -171,13 +186,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  planCardSelected: { borderColor: '#FFEAA7' },
-  planCardPopular: { borderColor: '#FFEAA7' },
+  planCardSelected: { borderColor: colors.category.highlight },
+  planCardPopular: { borderColor: colors.category.highlight },
   popularBadge: {
     position: 'absolute',
     top: -10,
     alignSelf: 'center',
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 10,
@@ -188,26 +203,26 @@ const styles = StyleSheet.create({
   planInfo: { flex: 1 },
   planName: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
   priceRow: { flexDirection: 'row', alignItems: 'baseline' },
-  planPrice: { color: '#FFEAA7', fontSize: 24, fontWeight: '700' },
-  planPeriod: { color: '#888', fontSize: 14 },
+  planPrice: { color: colors.category.highlight, fontSize: 24, fontWeight: '700' },
+  planPeriod: { color: colors.text.secondary, fontSize: 14 },
   selectedCheck: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkmark: { color: '#000', fontWeight: '700', fontSize: 16 },
   featuresList: { gap: 6 },
-  featureText: { color: '#ccc', fontSize: 14 },
+  featureText: { color: colors.neutral[300], fontSize: 14 },
   subscribeButton: {
-    backgroundColor: '#FFEAA7',
+    backgroundColor: colors.category.highlight,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 12,
   },
   subscribeText: { color: '#000', fontSize: 16, fontWeight: '700' },
-  termsText: { color: '#888', fontSize: 12, textAlign: 'center' },
+  termsText: { color: colors.text.secondary, fontSize: 12, textAlign: 'center' },
 });

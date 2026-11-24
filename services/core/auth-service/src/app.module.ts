@@ -10,9 +10,14 @@ import { CacheModule, RedisModule } from '@azeebo/shared-services';
 import { CommonModule } from './common/common.module.js';
 import { MetricsModule } from './modules/metrics/metrics.module.js';
 import { HealthModule } from './modules/health/health.module.js';
-import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
+import { RateLimiterModule, ServiceAuthGuard, SecurityModule } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { ObservabilityModule } from '@azeebo/observability';
+import { FeatureFlagModule } from '@azeebo/feature-flags';
+import { authFlags, subscriptionFlags } from '@azeebo/feature-flags';
+import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { EventBusModule } from '@azeebo/event-bus';
+import { DeviceLinkModule } from './modules/device-link/device-link.module.js';
 
 @Module({
   imports: [
@@ -21,7 +26,14 @@ import { ObservabilityModule } from '@azeebo/observability';
       envFilePath: ['.env', '../../.env'],
     }),
     RedisModule,
+    EventBusModule.forRoot(
+      {
+        redisUrl: process.env.EVENT_BUS_REDIS_URL || 'redis://localhost:6379',
+      },
+      'auth-service'
+    ),
     RateLimiterModule.forRoot(),
+    SecurityModule,
     TerminusModule,
     AuditModule,
     AuthModule,
@@ -32,6 +44,37 @@ import { ObservabilityModule } from '@azeebo/observability';
     HealthModule,
     CacheModule,
     ObservabilityModule,
+    // Auth kill-switches: social providers + OTP channels default ON so ops can
+    // disable a provider/channel instantly; MFA + passwordless default OFF until
+    // rolled out; refresh-token rotation defaults ON.
+    FlagMetricsModule.register({ service: 'auth-service' }),
+    FeatureFlagModule.register({
+      global: true,
+      ...flagHooks('auth-service'),
+      defaultFlags: {
+        [authFlags.socialGoogle]: true,
+        [authFlags.socialApple]: true,
+        [authFlags.mfaTotp]: false,
+        [authFlags.mfaRequiredForAdmins]: false,
+        [authFlags.otpEmail]: true,
+        [authFlags.otpSms]: true,
+        [authFlags.passwordlessMagicLink]: false,
+        [authFlags.deviceLimits]: false,
+        // Device-link TV sign-in: default OFF until the /link activation page
+        // and TV sign-in screen ship to users.
+        [authFlags.deviceLink]: false,
+        [authFlags.refreshRotation]: true,
+        [authFlags.emailVerificationRequired]: false,
+        [authFlags.roleSelect]: true,
+        // subscription_device_limits: when on, the device cap comes from the
+        // user's subscription plan (maxDevices) instead of the env default.
+        [subscriptionFlags.deviceLimits]: false,
+      },
+    }),
+    // Social sign-in is registered by AuthModule alone: it owns the only
+    // SocialAuthController bound to `auth/social` (see
+    // modules/auth/social/social.route-table.spec.ts).
+    DeviceLinkModule,
   ],
   providers: [
     {

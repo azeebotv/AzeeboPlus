@@ -9,7 +9,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { colors } from '@/theme';
-import type { ContentItem } from '@/api';
+import { formatTime } from '@azeebo/react-data';
+import type { ContentItem } from '@azeebo/react-data';
 
 const CARD_SIZES = {
   sm: { width: 120, height: 168 },
@@ -58,14 +59,11 @@ export default function ContentCard({
   const thumbnailSrc =
     item.mediaAsset?.thumbnailUrl ||
     item.thumbnail ||
-    'https://placehold.co/400x560/0D3B2E/FFF?text=Azeebo%2B';
+    'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=400&h=560&q=80';
 
-  const formatDuration = (seconds?: number): string => {
-    if (!seconds) return '';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  // Duration badge uses the shared formatter; hide the badge entirely when
+  // duration is unknown (0/negative) instead of rendering "0:00".
+  const durationLabel = item.duration && item.duration > 0 ? formatTime(item.duration) : null;
 
   return (
     <Animated.View entering={FadeInDown.delay(position * 60).springify()}>
@@ -82,9 +80,9 @@ export default function ContentCard({
           <Image source={{ uri: thumbnailSrc }} style={styles.thumbnail} resizeMode="cover" />
 
           {/* Duration badge */}
-          {item.duration ? (
+          {durationLabel ? (
             <View style={styles.durationBadge}>
-              <Text style={styles.durationText}>{formatDuration(item.duration)}</Text>
+              <Text style={styles.durationText}>{durationLabel}</Text>
             </View>
           ) : null}
 

@@ -1,0 +1,108 @@
+# ============================================================
+# Azeebo+ Staging Nightly Maintenance Jobs
+# ============================================================
+# Scheduled one-shot jobs for the staging environment. Runs alongside the
+# staging stack (docker-compose.prod.yml against a staging .env):
+#
+#   docker network create azeebo-network          # once, shared with monitoring
+#   docker compose -f docker-compose.prod.yml -p azeebo-staging up -d
+#   docker compose -f docker-compose.staging-jobs.yml -p azeebo-staging up -d
+#
+# archive-cleanup joins `azeebo-internal` (reaches postgres) and
+# `azeebo-network` (pushes logs to Loki via promtail). Both files share the
+# same .env. Keep dry-run semantics: --apply only drops tables that are BOTH
+# past retention AND signed off (docs/DEPRECATION_POLICY.md).
+# ============================================================
+
+services:
+  archive-cleanup:
+    build:
+      context: .
+      dockerfile: docker/archive-cleanup.Dockerfile
+    container_name: azeebo-archive-cleanup
+    environment:
+      LIVE_DB_HOST: postgres
+      LIVE_DB_PORT: "5432"
+      LIVE_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      RETENTION_DAYS: ${RETENTION_DAYS:-90}
+      STATE_FILE_DIR: /var/lib/azeebo/archive-cleanup
+      # Staging runs with sign-off enforcement ON; overrides go in .env.
+      ARCHIVE_CLEANUP_ARGS: ${ARCHIVE_CLEANUP_ARGS:---apply}
+      ARCHIVE_CLEANUP_INTERVAL: ${ARCHIVE_CLEANUP_INTERVAL:-86400}
+      ARCHIVE_CLEANUP_OFFSET: ${ARCHIVE_CLEANUP_OFFSET:-7200}
+    volumes:
+      - archive-cleanup-state:/var/lib/azeebo/archive-cleanup
+    # No depends_on: postgres lives in docker-compose.prod.yml (not mergeable
+    # cross-file). The nightly loop simply fails-and-retries until the staging
+    # stack (same project) has postgres reachable.
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - azeebo-internal
+      - azeebo-network
+
+  data-retention:
+    build:
+      context: .
+      dockerfile: docker/data-retention.Dockerfile
+    container_name: azeebo-data-retention
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: azeebo
+      # No baked-in credentials — the shared .env MUST provide this.
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?data-retention requires POSTGRES_PASSWORD}
+      # Retention windows in days; defaults inside the script mirror
+      # @azeebo/shared-types DEFAULT_RETENTION_POLICIES.
+      PII_RETENTION_DAYS: ${PII_RETENTION_DAYS:-1095}
+      SENSITIVE_PII_RETENTION_DAYS: ${SENSITIVE_PII_RETENTION_DAYS:-730}
+      INTERNAL_RETENTION_DAYS: ${INTERNAL_RETENTION_DAYS:-365}
+      JOB_INTERVAL: ${DATA_RETENTION_INTERVAL:-86400}
+      JOB_OFFSET: ${DATA_RETENTION_OFFSET:-7200}
+    # No depends_on: postgres lives in docker-compose.prod.yml (not mergeable
+    # cross-file). The nightly loop simply fails-and-retries until the staging
+    # stack (same project) has postgres reachable.
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - azeebo-internal
+
+  # Ships ALL azeebo-* container logs on the shared network to Loki
+  # (monitoring stack: docker/docker-compose.monitoring.yml).
+  promtail:
+    image: grafana/promtail:3.1.1
+    container_name: azeebo-promtail
+    # --config.expand-env resolves ${LOKI_URL} in the config from env
+    command:
+      - -config.file=/etc/promtail/config.yml
+      - -config.expand-env=true
+    environment:
+      LOKI_URL: ${LOKI_URL:-http://loki:3100}
+    volumes:
+      - ./docker/promtail/promtail-staging.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    networks:
+      - azeebo-network
+
+volumes:
+  archive-cleanup-state:
+    driver: local
+
+networks:
+  azeebo-internal:
+    # Provided by docker-compose.prod.yml under the same project name
+    external: false
+  azeebo-network:
+    # Shared with the monitoring stack; create once:
+    #   docker network create azeebo-network
+    external: true

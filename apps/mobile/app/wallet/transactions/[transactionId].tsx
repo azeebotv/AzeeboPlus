@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { apiClient } from '../../../src/api/client';
+import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
-import type { TransactionDetail } from '../../../src/api/wallet';
+import type { TransactionDetail } from '@azeebo/react-data/api/wallet';
+import { colors } from '../../../src/theme';
 
 export default function TransactionDetailScreen() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function TransactionDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Screen Screen" style={styles.container}>
         <LoadingState text="Loading transaction..." />
       </SafeAreaView>
     );
@@ -82,7 +83,7 @@ export default function TransactionDetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Transaction Details</Text>
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },

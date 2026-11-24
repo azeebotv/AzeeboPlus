@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReferralService } from './referral.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { CacheService } from '@azeebo/shared-services';
 
 jest.mock('axios');
@@ -58,6 +59,10 @@ describe('ReferralService', () => {
         {
           provide: ConfigService,
           useValue: { get: jest.fn((_key: string, defaultValue: unknown) => defaultValue) },
+        },
+        {
+          provide: FeatureFlagService,
+          useValue: { isEnabled: jest.fn().mockResolvedValue(false) },
         },
       ],
     }).compile();

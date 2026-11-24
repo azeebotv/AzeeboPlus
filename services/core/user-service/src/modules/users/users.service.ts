@@ -1,13 +1,25 @@
-import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { createHmac } from 'crypto';
+import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { EventBusService, EventTypes, EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { FeatureFlagService, userFlags } from '@azeebo/feature-flags';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto.js';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto.js';
 import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto.js';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
 import { Prisma } from '../../prisma/client/index.js';
+import { sanitizeFields } from '@azeebo/validation';
 
 interface UniverseAffinityResponse {
   userId: string;
@@ -28,11 +40,13 @@ export class UsersService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
+    @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
+    @Inject(EVENT_BUS_SERVICE) private readonly eventBus: EventBusService,
     private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 
@@ -81,7 +95,7 @@ export class UsersService {
       return result;
     } catch (error: unknown) {
       this.logger.error(`Failed to get preferences for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve preferences');
+      throw new InternalServerErrorException('Failed to retrieve preferences');
     }
   }
 
@@ -135,7 +149,7 @@ export class UsersService {
       return response;
     } catch (error: unknown) {
       this.logger.error(`Failed to update preferences for user ${userId}`, error);
-      throw new BadRequestException('Failed to update preferences');
+      throw new InternalServerErrorException('Failed to update preferences');
     }
   }
 
@@ -159,7 +173,7 @@ export class UsersService {
       return { ...defaults, ...(prefs.privacySettings as Record<string, unknown>) };
     } catch (error: unknown) {
       this.logger.error(`Failed to get privacy settings for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve privacy settings');
+      mapAndThrow(error, 'Failed to retrieve privacy settings');
     }
   }
 
@@ -196,7 +210,7 @@ export class UsersService {
       return privacyData;
     } catch (error: unknown) {
       this.logger.error(`Failed to update privacy settings for user ${userId}`, error);
-      throw new BadRequestException('Failed to update privacy settings');
+      mapAndThrow(error, 'Failed to update privacy settings');
     }
   }
 
@@ -233,7 +247,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get watch history for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve watch history');
+      mapAndThrow(error, 'Failed to retrieve watch history');
     }
   }
 
@@ -270,7 +284,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get saved items for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve saved items');
+      mapAndThrow(error, 'Failed to retrieve saved items');
     }
   }
 
@@ -293,7 +307,7 @@ export class UsersService {
       return { message: 'Item saved successfully' };
     } catch (error: unknown) {
       this.logger.error(`Failed to save item for user ${userId}`, error);
-      throw new BadRequestException('Failed to save item');
+      mapAndThrow(error, 'Failed to save item');
     }
   }
 
@@ -314,8 +328,7 @@ export class UsersService {
       return { message: 'Item unsaved' };
     } catch (error: unknown) {
       this.logger.error(`Failed to unsave item for user ${userId}`, error);
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to unsave item');
+      mapAndThrow(error, 'Failed to unsave item');
     }
   }
 
@@ -345,8 +358,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get universe affinity for user ${userId}`, error);
-      if (error instanceof BadRequestException) throw error;
-      throw new BadRequestException('Failed to retrieve universe affinity');
+      mapAndThrow(error, 'Failed to retrieve universe affinity');
     }
   }
 
@@ -367,7 +379,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to update universe affinity for user ${userId}`, error);
-      throw new BadRequestException('Failed to update universe affinity');
+      mapAndThrow(error, 'Failed to update universe affinity');
     }
   }
 
@@ -402,8 +414,7 @@ export class UsersService {
       return result;
     } catch (error: unknown) {
       this.logger.error(`Failed to get profile for user ${userId}`, error);
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to retrieve profile');
+      mapAndThrow(error, 'Failed to retrieve profile');
     }
   }
 
@@ -417,11 +428,21 @@ export class UsersService {
         throw new NotFoundException(`User not found`);
       }
 
+      const sanitized = sanitizeFields(dto as unknown as Record<string, unknown>, [
+        'displayName',
+        'bio',
+      ]) as unknown as UpdateUserProfileDto;
+
+      // user_profile_v2: the richer profile surface (bio/location/isPublic on
+      // UserProfile) is only written while the flag is on; off keeps the
+      // legacy displayName/avatar-only behavior so the v2 fields are ignored.
+      const v2Enabled = await this.featureFlagService.isEnabled(userFlags.profileV2);
+
       const updatedUser = await this.prisma.user.update({
         where: { id: userId },
         data: {
-          ...(dto.displayName && { displayName: dto.displayName }),
-          ...(dto.avatar && { avatar: dto.avatar }),
+          ...(sanitized.displayName && { displayName: sanitized.displayName }),
+          ...(sanitized.avatar && { avatar: sanitized.avatar }),
         },
         select: {
           id: true,
@@ -434,21 +455,44 @@ export class UsersService {
         },
       });
 
+      let userProfile: Record<string, unknown> | null = null;
+      if (v2Enabled) {
+        userProfile = await this.prisma.userProfile.upsert({
+          where: { userId },
+          update: {
+            ...(sanitized.bio !== undefined && { bio: sanitized.bio }),
+            ...(dto.location !== undefined && { location: dto.location }),
+            ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
+          },
+          create: {
+            userId,
+            displayName: sanitized.displayName ?? null,
+            avatar: sanitized.avatar ?? null,
+            bio: sanitized.bio ?? null,
+            location: dto.location ?? null,
+            isPublic: dto.isPublic ?? true,
+          },
+        });
+      }
+
       // Invalidate profile cache
       await this.cache.delete(cacheKey('user', `profile:${userId}`));
 
       this.trackAnalyticsEvent('user_profile_updated', userId, {
         fields: Object.keys(dto).filter((k) => dto[k as keyof UpdateUserProfileDto] !== undefined),
+        v2: v2Enabled,
       });
 
       return {
         success: true,
-        data: updatedUser,
+        data: {
+          ...updatedUser,
+          ...(userProfile ? { profile: userProfile } : {}),
+        },
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to update profile for user ${userId}`, error);
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to update profile');
+      mapAndThrow(error, 'Failed to update profile');
     }
   }
 
@@ -475,8 +519,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get user by ID ${userId}`, error);
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to retrieve user');
+      mapAndThrow(error, 'Failed to retrieve user');
     }
   }
 
@@ -525,8 +568,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to follow user ${followingId} for user ${followerId}`, error);
-      if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to follow user');
+      mapAndThrow(error, 'Failed to follow user');
     }
   }
 
@@ -565,7 +607,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to unfollow user ${followingId} for user ${followerId}`, error);
-      throw new BadRequestException('Failed to unfollow user');
+      mapAndThrow(error, 'Failed to unfollow user');
     }
   }
 
@@ -613,7 +655,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get followers for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve followers');
+      mapAndThrow(error, 'Failed to retrieve followers');
     }
   }
 
@@ -661,7 +703,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get following for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve following');
+      mapAndThrow(error, 'Failed to retrieve following');
     }
   }
 
@@ -674,6 +716,10 @@ export class UsersService {
       let user = await this.prisma.user.findUnique({
         where: { id: userId },
       });
+
+      // `avatar` is the canonical field; `avatarUrl` is what the web setup
+      // screen posts, and both name the same uploaded image.
+      const avatar = dto.avatar ?? dto.avatarUrl;
 
       if (!user && email) {
         user = await this.prisma.user.create({
@@ -694,7 +740,7 @@ export class UsersService {
         where: { id: userId },
         data: {
           ...(dto.displayName && { displayName: dto.displayName }),
-          ...(dto.avatar && { avatar: dto.avatar }),
+          ...(avatar && { avatar }),
           ...(dto.role && { role: dto.role }),
         },
         select: {
@@ -728,8 +774,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to complete profile setup for user ${userId}`, error);
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to complete profile setup');
+      mapAndThrow(error, 'Failed to complete profile setup');
     }
   }
 
@@ -753,23 +798,17 @@ export class UsersService {
     const scheduledAt = new Date();
     scheduledAt.setDate(scheduledAt.getDate() + 30);
 
-    try {
-      // Try to create a deletion request record if the model exists
-      await this.prisma.dataDeletionRequest?.create({
-        data: {
-          userId,
-          reason: reason || 'User requested data deletion',
-          scheduledAt,
-          status: 'scheduled',
-        },
-      });
-    } catch {
-      // If DataDeletionRequest model doesn't exist, log and continue
-      // The deletion will be handled by the anonymizeUserData method
-      this.logger.warn(
-        'DataDeletionRequest model not found, deletion scheduled without persistence'
-      );
-    }
+    // The DataDeletionRequest table must record the schedule — the 30-day
+    // GDPR cleanup job reads it. A failed write must NOT be reported as
+    // "scheduled", so DB failures propagate (mapped to the right status).
+    await this.prisma.dataDeletionRequest.create({
+      data: {
+        userId,
+        reason: reason || 'User requested data deletion',
+        scheduledAt,
+        status: 'scheduled',
+      },
+    });
 
     return { userId, reason, scheduledAt, status: 'scheduled' };
   }
@@ -780,6 +819,23 @@ export class UsersService {
     const anonymizedName = 'Deleted User';
 
     try {
+      // Fan-out signal FIRST so the other service DBs (auth, payment,
+      // messaging, media) purge in parallel with this DB's local purge.
+      // A failed publish must not abort the local erasure — it is logged
+      // and the completion record lets ops detect a missed fan-out.
+      try {
+        await this.eventBus.publish(
+          EventTypes.USER_ERASURE_REQUESTED,
+          { userId, requestedAt: new Date().toISOString() },
+          { userId }
+        );
+      } catch (eventError: unknown) {
+        this.logger.error(
+          `Failed to publish ${EventTypes.USER_ERASURE_REQUESTED} for ${userId}`,
+          eventError
+        );
+      }
+
       // Update user record to anonymize PII
       await this.prisma.user.update({
         where: { id: userId },
@@ -807,16 +863,64 @@ export class UsersService {
       await this.prisma.following?.deleteMany({ where: { followerId: userId } });
       await this.prisma.following?.deleteMany({ where: { followingId: userId } });
 
-      // Update deletion request status if model exists
-      await this.prisma.dataDeletionRequest?.updateMany({
+      // PII-holding rows the purge previously missed
+      await this.prisma.userPreferences?.deleteMany({ where: { userId } });
+      await this.prisma.userUniverseAffinity?.deleteMany({ where: { userId } });
+      await this.prisma.auditLog?.deleteMany({ where: { actorId: userId } });
+
+      const deletedAt = new Date();
+      const deletedData = [
+        'user_profile',
+        'preferences',
+        'watch_history',
+        'saved_items',
+        'following',
+        'universe_affinities',
+        'audit_logs',
+      ];
+
+      // Mark any scheduled deletion request as completed
+      await this.prisma.dataDeletionRequest.updateMany({
         where: { userId, status: 'scheduled' },
-        data: { status: 'completed', completedAt: new Date() },
+        data: { status: 'completed', completedAt: deletedAt },
       });
 
-      return { userId, deletedAt: new Date(), status: 'deleted' };
+      // Signed completion record — verifiable proof of what was erased and
+      // when, so downstream consumers and auditors can validate the receipt.
+      const signingSecret = this.configService.get<string>('ERASURE_SIGNING_SECRET');
+      const signature = signingSecret
+        ? createHmac('sha256', signingSecret)
+            .update(`${userId}|${deletedAt.toISOString()}|${deletedData.join(',')}`)
+            .digest('hex')
+        : undefined;
+      if (!signingSecret) {
+        this.logger.warn(
+          `ERASURE_SIGNING_SECRET not set — erasure completion record for ${userId} will be unsigned`
+        );
+      }
+
+      try {
+        await this.eventBus.publish(
+          EventTypes.USER_ERASURE_COMPLETED,
+          {
+            userId,
+            deletedAt: deletedAt.toISOString(),
+            deletedData,
+            signature,
+          },
+          { userId }
+        );
+      } catch (eventError: unknown) {
+        this.logger.error(
+          `Failed to publish ${EventTypes.USER_ERASURE_COMPLETED} for ${userId}`,
+          eventError
+        );
+      }
+
+      return { userId, deletedAt, status: 'deleted', deletedData };
     } catch (error) {
       this.logger.error(`Failed to delete user data for ${userId}`, error);
-      throw new BadRequestException('Failed to delete user data');
+      mapAndThrow(error, 'deleting user data');
     }
   }
 
@@ -826,13 +930,13 @@ export class UsersService {
       return { userId, exportedAt: new Date(), data: user };
     } catch (error: unknown) {
       this.logger.error(`Failed to export user data for user ${userId}`, error);
-      throw new BadRequestException('Failed to export user data');
+      mapAndThrow(error, 'exporting user data');
     }
   }
 
   async getDeletionStatus(userId: string) {
     try {
-      const request = await this.prisma.dataDeletionRequest?.findFirst({
+      const request = await this.prisma.dataDeletionRequest.findFirst({
         where: { userId },
         orderBy: { createdAt: 'desc' },
       });
@@ -848,9 +952,10 @@ export class UsersService {
         scheduledAt: request.scheduledAt,
         completedAt: request.completedAt,
       };
-    } catch {
-      // If DataDeletionRequest model doesn't exist, return default
-      return { userId, status: 'none', requestedAt: null };
+    } catch (error) {
+      // A DB failure must not masquerade as "no deletion requested"
+      this.logger.error(`Failed to get deletion status for ${userId}`, error);
+      mapAndThrow(error, 'fetching deletion status');
     }
   }
 
@@ -883,7 +988,7 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get continue watching for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve continue watching');
+      mapAndThrow(error, 'Failed to retrieve continue watching');
     }
   }
 
@@ -908,7 +1013,34 @@ export class UsersService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get universe engagement for user ${userId}`, error);
-      throw new BadRequestException('Failed to retrieve universe engagement');
+      mapAndThrow(error, 'Failed to retrieve universe engagement');
+    }
+  }
+
+  /** Record (or refresh) a watch-history entry. Upserts on (userId, contentId). */
+  async addWatchHistoryEntry(
+    userId: string,
+    input: {
+      contentId: string;
+      contentType?: string;
+      universe?: string;
+    }
+  ): Promise<void> {
+    try {
+      await this.prisma.watchHistory.upsert({
+        where: { userId_contentId: { userId, contentId: input.contentId } },
+        create: {
+          userId,
+          contentId: input.contentId,
+          contentType: input.contentType ?? 'unknown',
+          universe: input.universe ?? 'unknown',
+        },
+        update: { watchedAt: new Date() },
+      });
+      this.logger.log(`Recorded watch history for user ${userId}, content ${input.contentId}`);
+    } catch (error: unknown) {
+      this.logger.error(`Failed to record watch history for user ${userId}`, error);
+      mapAndThrow(error, 'Failed to record watch history');
     }
   }
 
@@ -920,7 +1052,7 @@ export class UsersService {
       this.logger.log(`Removed content ${contentId} from watch history for user ${userId}`);
     } catch (error: unknown) {
       this.logger.error(`Failed to remove from watch history for user ${userId}`, error);
-      throw new BadRequestException('Failed to remove from watch history');
+      mapAndThrow(error, 'Failed to remove from watch history');
     }
   }
 

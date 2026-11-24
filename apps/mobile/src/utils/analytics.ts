@@ -1,6 +1,6 @@
 import { Analytics, ConsentCategory } from '@azeebo/analytics-sdk';
 import Constants from 'expo-constants';
-import { logger } from './logger';
+import { logger } from '@azeebo/react-data/utils/logger';
 
 const constantsExtra = (
   (Constants as Record<string, unknown>).expoConfig as Record<string, unknown>
@@ -219,6 +219,139 @@ class AnalyticsService {
 
   paymentFailed(amount: number, provider: string, error: string) {
     this.track('payment_failed', { amount, provider, error });
+  }
+
+  // --- 20 Canonical Revenue-Path Events (PMR Task 06.2 / R-11 / G-07) ---
+  authCompleted(method: string, userId?: string, referralCode?: string) {
+    this.track('auth_completed', { method, user_id: userId, referral_code: referralCode });
+  }
+
+  subscriptionStarted(planId: string, planName: string, amount: number, billingCycle?: string) {
+    this.track('subscription_started', {
+      plan_id: planId,
+      plan_name: planName,
+      amount,
+      billing_cycle: billingCycle || 'monthly',
+    });
+  }
+
+  subscriptionRenewed(planId: string, planName: string, amount: number) {
+    this.track('subscription_renewed', { plan_id: planId, plan_name: planName, amount });
+  }
+
+  subscriptionCancelled(planId: string, planName: string, reason?: string) {
+    this.track('subscription_cancelled', { plan_id: planId, plan_name: planName, reason });
+  }
+
+  voteSubmitted(showId: string, contestantId: string, votes: number, amount: number) {
+    this.track('vote_submitted', {
+      show_id: showId,
+      contestant_id: contestantId,
+      votes,
+      amount,
+    });
+  }
+
+  supervoteSubmitted(showId: string, contestantId: string, votes: number, amount: number) {
+    this.track('supervote_submitted', {
+      show_id: showId,
+      contestant_id: contestantId,
+      votes,
+      amount,
+    });
+  }
+
+  ppvTicketPurchased(ticketId: string, eventId: string, amount: number) {
+    this.track('ppv_ticket_purchased', { ticket_id: ticketId, event_id: eventId, amount });
+  }
+
+  cinemaPassPurchased(passId: string, passName: string, amount: number) {
+    this.track('cinema_pass_purchased', { pass_id: passId, pass_name: passName, amount });
+  }
+
+  creatorTipped(creatorId: string, amount: number, tier?: string) {
+    this.track('creator_tipped', { creator_id: creatorId, amount, tier });
+  }
+
+  merchandiseCheckoutStarted(cartId: string, itemCount: number, totalAmount: number) {
+    this.track('merchandise_checkout_started', {
+      cart_id: cartId,
+      item_count: itemCount,
+      total_amount: totalAmount,
+    });
+  }
+
+  merchandisePurchased(
+    orderId: string,
+    totalAmount: number,
+    items: Array<{ id: string; price: number }>
+  ) {
+    this.track('merchandise_purchased', {
+      order_id: orderId,
+      total_amount: totalAmount,
+      items,
+    });
+  }
+
+  predictionStaked(
+    predictionId: string,
+    universe: string,
+    stakeAmount: number,
+    potentialWin: number
+  ) {
+    this.track('prediction_staked', {
+      prediction_id: predictionId,
+      universe,
+      stake_amount: stakeAmount,
+      potential_win: potentialWin,
+    });
+  }
+
+  predictionWon(predictionId: string, winAmount: number) {
+    this.track('prediction_won', { prediction_id: predictionId, win_amount: winAmount });
+  }
+
+  predictionLost(predictionId: string, lostAmount: number) {
+    this.track('prediction_lost', { prediction_id: predictionId, lost_amount: lostAmount });
+  }
+
+  videoPlaybackStarted(contentId: string, title?: string, universe?: string, isPremium?: boolean) {
+    this.track('video_playback_started', {
+      content_id: contentId,
+      title,
+      universe,
+      is_premium: isPremium,
+    });
+  }
+
+  videoPlaybackCompleted(contentId: string, watchDuration: number, totalDuration?: number) {
+    this.track('video_playback_completed', {
+      content_id: contentId,
+      watch_duration: watchDuration,
+      total_duration: totalDuration,
+    });
+  }
+
+  checkoutAbandoned(itemType: string, itemId: string, amount: number, step?: string) {
+    this.track('checkout_abandoned', {
+      item_type: itemType,
+      item_id: itemId,
+      amount,
+      step,
+    });
+  }
+
+  checkoutFailed(itemType: string, itemId: string, amount: number, error: string) {
+    this.track('checkout_failed', {
+      item_type: itemType,
+      item_id: itemId,
+      amount,
+      error,
+    });
+  }
+
+  screenViewed(screenName: string, properties?: Record<string, unknown>) {
+    this.track('screen_viewed', { screen_name: screenName, ...properties });
   }
 
   setUser(userId: string) {

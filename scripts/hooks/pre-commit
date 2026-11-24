@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# ============================================================
+# Azeebo+ — git pre-commit hook (opt-in)
+# ============================================================
+# Install once per clone:
+#   git config core.hooksPath scripts/hooks
+# (or: ln -s ../../scripts/hooks/pre-commit .git/hooks/pre-commit)
+#
+# Blocks a commit when a generated Prisma client is STALE relative to its
+# committed prisma/schema.prisma. The full-tree scan is ~100ms, so it runs
+# on every commit without gating. This catches the failure mode CI
+# structurally cannot: a stale client in the working tree that everything
+# downstream — including CI's fresh regeneration — would trust.
+#
+# Fix when blocked:  pnpm run prisma:generate
+# Skip (not recommended): git commit --no-verify
+# ============================================================
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+CHANGED_SCHEMAS="$(git diff --cached --name-only --diff-filter=ACMR -- '*/prisma/schema.prisma' || true)"
+
+if [ -n "$CHANGED_SCHEMAS" ]; then
+  echo "prisma: schema change(s) staged — verifying generated clients are fresh"
+else
+  echo "prisma: verifying generated clients are fresh"
+fi
+
+if ! node "$ROOT/scripts/check-prisma-client-stale.mjs"; then
+  echo ""
+  echo "  Commit blocked: generated Prisma client is stale."
+  echo "  Fix:  pnpm run prisma:generate"
+  echo "  Skip: git commit --no-verify (not recommended)"
+  exit 1
+fi

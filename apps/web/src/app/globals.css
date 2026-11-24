@@ -1,29 +1,74 @@
 @import 'tailwindcss';
+@import '../styles/design-tokens.css';
+
+/* Tailwind v4 detects sources automatically, starting from this app's own
+   directory — a package outside it is never scanned. `@azeebo/ui` is imported by
+   148 sites here and carries its own class names, so every one of them compiled
+   to nothing: the shared library rendered unstyled inside otherwise fully themed
+   pages. Same failure mode as an undefined token, one layer further out. */
+@source '../../../../packages/ui/src';
 
 /* ============================================================
    Azeebo+ Brand Design System (v2 — Nigerian Entertainment)
    ============================================================ */
 :root {
-  /* Brand Core */
-  --brand-orange: #e8420a; /* Azeebo Orange — primary CTA, logo accent, highlights */
-  --brand-red: #cc1c1c; /* Deep Red — buttons, active states, glow */
-  --brand-near-black: #1a0a0a; /* Near-Black — auth/utility backgrounds */
-  --brand-forest: #0d3b2e; /* Forest Dark Green — marketing/hero background */
-  --brand-green: #22c55e; /* Green — success states */
-  --brand-white: #ffffff; /* White — primary text */
-  --brand-surface: #2a2a2a; /* Surface Dark — card backgrounds, inputs */
-  --brand-surface-input: #1e1e1e; /* Input field fill */
+  /* Brand Core — Luxury Cinema Dark Theme (Synchronized with Figma) */
+  --brand-orange: #FF5B00; /* Solar Orange — primary brand CTA, active states */
+  --brand-red: #E50914; /* Deep Flame / Crimson — Live streaming, urgent alerts */
+  --brand-near-black: #08090E; /* Near-Black — page root & auth surfaces (matching --hp-bg) */
+  --brand-forest: var(--color-az-category-forest); /* Forest Dark Green — legacy compatibility */
+  --brand-green: #00D26A; /* Green — success states */
+  --brand-white: var(--color-az-ink); /* White — primary text */
+  --brand-surface: #131420; /* Surface Dark — card backgrounds, inputs (--hp-card-bg) */
+  --brand-surface-input: #10111D; /* Input field fill */
+  --brand-mid-brown: #A0A3BD; /* Secondary text */
+  --brand-gold: #FFB800; /* Coin / reward gold */
+  --brand-purple: var(--color-az-category-violet); /* Purple — premium, highlights */
+  --brand-blue: #2D7FF9; /* Blue — links, info */
+  --brand-sky: var(--color-az-category-sky); /* Sky Blue — secondary links */
+  --brand-emerald: #00C9A7; /* Emerald — success, online */
+  --brand-amber: #FFAE00; /* Amber — warnings, ratings */
+  --brand-crimson: #E50914; /* Crimson — alerts, live */
+  --brand-silver: var(--color-az-accent-silver); /* Silver — inactive, disabled */
+  --brand-grey: #6C7089; /* Grey — muted text */
+  --brand-copper: var(--color-az-accent-bronze); /* Copper — metallic accents */
+  --brand-light-green: var(--color-az-success-400); /* Light Green — online, active */
 
-  /* Glass panel */
-  --glass-bg: rgba(15, 5, 5, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.2);
+  /* Categorical data hues (music genre badges, chart series, category pills):
+     registered in packages/design-tokens as `categoryColors` and emitted as
+     `--color-az-category-*`. They encode a subject, not a status, and stay
+     fixed rather than theme-aware. The aliases remain so markup already written
+     against them resolves; new markup should name the token. */
+  --brand-pink: var(--color-az-category-pink);
+  --brand-purple-light: var(--color-az-category-violet-light);
+  --brand-cyan: var(--color-az-category-cyan);
+  --brand-teal: var(--color-az-category-teal);
+  --brand-indigo: var(--color-az-category-indigo);
+
+  /* Vertical identity accents (fixed, not theme-aware — like the --hp- art
+     palette below): gradient endpoints for vertical landing headers. */
+  --music-purple: #4c0a5e; /* Music vertical — gradient headers */
+  --live-gradient: linear-gradient(
+    135deg,
+    var(--color-az-flame) 0%,
+    var(--color-az-scarlet) 100%
+  ); /* Live page header art */
+  --auth-warm-gradient: linear-gradient(
+    160deg,
+    var(--color-az-surface-auth-warm) 0%,
+    var(--color-az-surface-root) 100%
+  ); /* Auth pages decorative bg */
+
+  /* Glass panel — Frosted luxury dark panels */
+  --glass-bg: rgba(24, 21, 30, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: 18px;
-  --glass-glow: 0 0 30px rgba(255, 255, 255, 0.15), 0 0 60px rgba(200, 20, 20, 0.1);
-  --glass-glow-strong: 0 0 20px rgba(255, 255, 255, 0.3);
+  --glass-glow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --glass-glow-strong: 0 0 25px rgba(227, 30, 36, 0.25);
 
   /* Ambient glow */
-  --glow-red: 0 4px 20px rgba(204, 28, 28, 0.5);
-  --glow-red-ambient: radial-gradient(circle at 50% 100%, rgba(204, 28, 28, 0.35), transparent 70%);
+  --glow-red: 0 4px 20px rgba(227, 30, 36, 0.4);
+  --glow-red-ambient: radial-gradient(circle at 50% 100%, rgba(227, 30, 36, 0.25), transparent 70%);
 
   /* Typography */
   --font-display: var(--font-display-base), 'Montserrat', var(--font-sans), sans-serif;
@@ -34,7 +79,7 @@
   --color-primary-200: #fed7aa;
   --color-primary-300: #fdba74;
   --color-primary-400: #fb923c;
-  --color-primary-500: #e8420a;
+  --color-primary-500: var(--color-az-scarlet);
   --color-primary-600: #c2410c;
   --color-primary-700: #9a3412;
   --color-primary-800: #7c2d12;
@@ -116,22 +161,30 @@
   --color-light-800: #525252;
   --color-light-900: #262626;
 
+  /* Semantic Tokens for Tailwind v4 / standard utilities */
+  --color-primary: var(--brand-orange);
+  --color-primary-foreground: #ffffff;
+  --color-muted-foreground: var(--text-secondary);
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
+
   /* Text Colors */
   --text-primary: #f3f4f6;
   --text-secondary: #9ca3af;
-  --text-tertiary: #6b7280;
+  --text-muted: #9ca3af;
+  --text-tertiary: #9ca3af; /* Upgraded from #6b7280 for WCAG 2.2 AA (>= 4.5:1 on dark) */
   --text-inverse: #1a0a0a;
 
   /* Backgrounds */
-  --bg-primary: #1a0a0a;
-  --bg-secondary: #2a1a1a;
-  --bg-tertiary: #3a2a2a;
-  --bg-hover: #4b5563;
+  --bg-primary: #08090E;
+  --bg-secondary: #0E0F1A;
+  --bg-tertiary: #131420;
+  --bg-hover: #1A1B29;
 
   /* Borders & Dividers */
-  --border-default: #4b5563;
-  --border-light: #374151;
-  --border-focus: #e8420a;
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.04);
+  --border-focus: #FF5B00;
 
   /* Spacing Scale */
   --spacing-xs: 4px;
@@ -184,7 +237,7 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  --shadow-glow: 0 0 20px rgba(232, 66, 10, 0.4);
+  --shadow-glow: 0 0 20px rgba(227, 30, 36, 0.4);
   --shadow-gold-glow: 0 0 20px rgba(251, 191, 36, 0.4);
 
   /* Transitions */
@@ -206,11 +259,164 @@
   --z-tooltip: 800;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #e8420a 0%, #cc1c1c 100%);
-  --gradient-brand: linear-gradient(135deg, #e8420a 0%, #cc1c1c 100%);
-  --gradient-gold: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
-  --gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  --gradient-dark: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+  --gradient-primary: linear-gradient(90deg, #FF5B00 0%, #FF7A00 100%);
+  --gradient-brand: linear-gradient(90deg, #FF5B00 0%, #FF7A00 100%);
+  --gradient-secondary: linear-gradient(135deg, #FF5B00 0%, #E50914 100%);
+  --gradient-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  --gradient-success: linear-gradient(135deg, #00D26A 0%, #00BFA5 100%);
+  --gradient-dark: linear-gradient(180deg, #131420 0%, #08090E 100%);
+
+  /* ============================================================
+     Homepage (Guest Landing) — Section Design Tokens
+     Extracted from the Azeebo+ UI/UX mockup. All values are
+     derived from the visual design; no raw hex in components.
+     ============================================================ */
+
+  /* ── Backgrounds ── */
+  --hp-bg: #08090E; /* Page root: midnight obsidian */
+  --hp-bg-alt: #0E0F1A; /* Alternating section bg */
+  --hp-card-bg: #131420; /* Default card/panel background */
+  --hp-card-border: rgba(255, 255, 255, 0.08); /* Subtle card border */
+  --hp-divider: rgba(255, 255, 255, 0.05); /* Section divider lines */
+
+  /* ── Hero ── */
+  --hp-hero-bg-start: #0b0910; /* Hero gradient start (top-left) */
+  --hp-hero-bg-mid: #130a1a; /* Hero gradient mid */
+  --hp-hero-bg-end: #0e0c08; /* Hero gradient end (bottom-right, warm) */
+  --hp-hero-badge-bg: rgba(227, 30, 36, 0.15); /* Orange badge background */
+  --hp-hero-badge-text: var(--brand-orange);
+  --hp-hero-badge-border: rgba(227, 30, 36, 0.3);
+  --hp-hero-overlay: rgba(11, 9, 14, 0.55); /* Grid overlay fade */
+  --hp-stat-divider: rgba(255, 255, 255, 0.1);
+
+  /* ── Thumbnail grid — universe preview tiles ── */
+  --hp-tile-reality: linear-gradient(150deg, #5b21b6 0%, #1e1040 100%);
+  --hp-tile-comedy: linear-gradient(150deg, #c2410c 0%, #7c1d0a 100%);
+  --hp-tile-sports: linear-gradient(150deg, #166534 0%, #052e16 100%);
+  --hp-tile-movies: linear-gradient(150deg, #92400e 0%, #451a01 100%);
+  --hp-tile-lifestyle: linear-gradient(150deg, #9d174d 0%, #500727 100%);
+  /* GuestHomepage fixed art pieces (the homepage is hard-coded dark marketing
+     art — var(--hp-card-bg) classes and text-white — so its one-off surfaces
+     live here rather than in the themed --bg-* family). */
+  --hp-logo-gradient: linear-gradient(
+    145deg,
+    #e5251c 0%,
+    #f3501a 45%,
+    #ff6b00 100%
+  ); /* Hero logo card */
+  --hp-appwindow-bg: #0d0b12; /* Inset dark app window */
+  --hp-cta-bg: #120e17; /* Bottom CTA panel */
+  --hp-poster-bg: #1f2937; /* Poster image placeholder */
+  --hp-actionbar-bg: #ff6b00; /* Mock-UI highlighted action bar */
+  --hp-tile-creator: linear-gradient(150deg, #c2410c 0%, #7c1d0a 100%);
+  --hp-tile-vertical: linear-gradient(150deg, #1e40af 0%, #0f1f5c 100%);
+  --hp-tile-games: linear-gradient(150deg, #6d28d9 0%, #2e1065 100%);
+  --hp-tile-live: linear-gradient(150deg, #991b1b 0%, #450a0a 100%);
+  --hp-tile-music: linear-gradient(150deg, #854d0e 0%, #3b1f00 100%);
+  --hp-tile-drama: linear-gradient(150deg, #1e3a8a 0%, #0c1445 100%);
+  --hp-tile-culture: linear-gradient(150deg, #065f46 0%, #022c22 100%);
+
+  /* ── Devices section ── */
+  --hp-devices-icon-bg: rgba(227, 30, 36, 0.12);
+  --hp-devices-icon-border: rgba(227, 30, 36, 0.22);
+  --hp-devices-card-bg: rgba(255, 255, 255, 0.03);
+  --hp-devices-card-border: rgba(255, 255, 255, 0.06);
+
+  /* ── Why Azeebo+ — orange app mockup panel ── */
+  --hp-why-panel-bg: linear-gradient(160deg, var(--brand-orange) 0%, var(--brand-red) 100%);
+  --hp-why-panel-glow: 0 0 60px rgba(227, 30, 36, 0.35), 0 30px 60px rgba(0, 0, 0, 0.6);
+  --hp-why-bar-bg: rgba(255, 255, 255, 0.25);
+  --hp-why-bar-fill: rgba(255, 255, 255, 0.85);
+  --hp-why-row-bg: rgba(255, 255, 255, 0.1);
+  --hp-why-icon-bg: rgba(227, 30, 36, 0.15);
+  --hp-why-icon-border: rgba(227, 30, 36, 0.25);
+  --hp-why-badge-bg: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(227, 30, 36, 0.2));
+  --hp-why-badge-border: rgba(251, 191, 36, 0.3);
+
+  /* ── Categories / Universes grid ── */
+  --hp-cat-card-bg-alpha: 0.12; /* Opacity of category tile tint */
+  --hp-cat-hover-bg: rgba(255, 255, 255, 0.05);
+  --hp-cat-browse-btn: var(--brand-orange);
+
+  /* ── Featured carousel cards ── */
+  /* Card 1 — dark purple/blue (person under dramatic light) */
+  --hp-card1-start: #1a0e2e;
+  --hp-card1-end: #0b0918;
+  --hp-card1-accent: #6d28d9;
+  /* Card 2 — deep orange/red (car) */
+  --hp-card2-start: #2a0f00;
+  --hp-card2-end: #0d0600;
+  --hp-card2-accent: var(--brand-orange);
+  /* Card 3 — magenta/pink (woman portrait) */
+  --hp-card3-start: #35001e;
+  --hp-card3-end: #0d0008;
+  --hp-card3-accent: #be185d;
+  /* Card 4 — teal/cyan (sport) */
+  --hp-card4-start: #064e3b;
+  --hp-card4-end: #022c22;
+  --hp-card4-accent: #10b981;
+  /* Card 5 — amber/gold (lifestyle) */
+  --hp-card5-start: #451a00;
+  --hp-card5-end: #1c0a00;
+  --hp-card5-accent: #f59e0b;
+  --hp-card-badge-bg: rgba(0, 0, 0, 0.55);
+  --hp-card-scrim: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0) 55%);
+
+  /* ── FAQ ── */
+  --hp-faq-item-bg: rgba(255, 255, 255, 0.04);
+  --hp-faq-item-border: rgba(255, 255, 255, 0.08);
+  --hp-faq-open-icon: var(--brand-orange);
+  --hp-faq-closed-icon: rgba(255, 255, 255, 0.45);
+  --hp-faq-support-link: var(--brand-orange);
+  --hp-faq-stat-bg: rgba(255, 255, 255, 0.04);
+  --hp-faq-stat-border: rgba(255, 255, 255, 0.07);
+
+  /* ── Phone CTA ── */
+  --hp-cta-phone-body: linear-gradient(160deg, #1a0a0a 0%, #000000 100%);
+  --hp-cta-phone-border: rgba(255, 255, 255, 0.12);
+  --hp-cta-phone-glow: 0 0 60px rgba(109, 40, 217, 0.3), 0 40px 80px rgba(0, 0, 0, 0.7);
+  --hp-cta-screen-bg: linear-gradient(
+    160deg,
+    rgba(109, 40, 217, 0.45) 0%,
+    rgba(13, 59, 46, 0.4) 60%,
+    rgba(26, 10, 10, 0.95) 100%
+  );
+  --hp-cta-notch: #000000;
+  --hp-cta-nav-bg: rgba(0, 0, 0, 0.5);
+  --hp-cta-nav-border: rgba(255, 255, 255, 0.07);
+  --hp-cta-store-bg: rgba(255, 255, 255, 0.05);
+  --hp-cta-store-border: rgba(255, 255, 255, 0.11);
+  --hp-cta-badge-bg: var(--color-az-category-violet);
+  --hp-cta-badge-glow: 0 8px 24px rgba(139, 92, 246, 0.4);
+  --hp-ambient-purple: rgba(109, 40, 217, 0.18);
+  --hp-ambient-orange: rgba(227, 30, 36, 0.13);
+
+  /* ── Testimonials ── */
+  --hp-testi-card-bg: rgba(255, 255, 255, 0.04);
+  --hp-testi-card-border: rgba(255, 255, 255, 0.07);
+  --hp-testi-star-filled: #fbbf24;
+  --hp-testi-star-empty: #374151;
+  --hp-testi-avatar-bg: rgba(255, 255, 255, 0.07);
+  --hp-testi-partner-col: rgba(255, 255, 255, 0.3);
+
+  /* ── Newsletter ── */
+  --hp-nl-bg-start: #100e14; /* Section background */
+  --hp-nl-blob-color: rgba(227, 30, 36, 0.55); /* Red-orange blob */
+  --hp-nl-badge-bg: rgba(227, 30, 36, 0.18);
+  --hp-nl-badge-text: var(--brand-orange);
+  --hp-nl-input-bg: rgba(255, 255, 255, 0.07);
+  --hp-nl-input-border: rgba(255, 255, 255, 0.11);
+  --hp-nl-input-invalid: rgba(239, 68, 68, 0.7);
+  --hp-nl-success-bg: rgba(34, 197, 94, 0.14);
+  --hp-nl-success-border: rgba(34, 197, 94, 0.28);
+  --hp-nl-fine-print: rgba(255, 255, 255, 0.35);
+
+  /* ── PWA / Install Toast ── */
+  --hp-toast-later-col: rgba(255, 255, 255, 0.55);
+
+  /* ── Offline Banner ── */
+  --hp-offline-bg: var(--color-az-accent-gold);
+  --hp-offline-text: var(--brand-near-black);
 }
 
 /* Base Reset & Dark Theme */
@@ -230,10 +436,29 @@ body {
 
 /* Custom Utilities */
 .text-gradient-brand {
-  background: linear-gradient(135deg, #e8420a 0%, #cc1c1c 100%);
+  background: var(--gradient-az-cta);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.az-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 25s linear infinite;
+}
+
+.az-marquee:hover {
+  animation-play-state: paused;
 }
 
 /* Animations */
@@ -415,11 +640,11 @@ body {
 .az-nollywood-bg {
   background: linear-gradient(
     135deg,
-    #0a0a0a 0%,
-    #1a0a0a 25%,
-    #2a1a1a 50%,
-    #1a0a0a 75%,
-    #0a0a0a 100%
+    #0b090e 0%,
+    #100e14 25%,
+    #18151e 50%,
+    #100e14 75%,
+    #0b090e 100%
   );
   background-size: 400% 400%;
   animation: nollywoodShift 20s ease infinite;
@@ -575,7 +800,7 @@ body {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, #e8420a, #cc1c1c);
+  background: linear-gradient(90deg, var(--color-az-scarlet), var(--color-az-flame));
   border-radius: 1px;
   transform-origin: left;
   animation: tabSlide 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
@@ -620,9 +845,60 @@ body::after {
   }
 }
 
-/* Focus Visible - Accessibility */
+/* Focus Visible - Accessibility (WCAG 2.2 AA) */
 :focus-visible {
   outline: 2px solid var(--brand-orange);
+  outline-offset: 2px;
+}
+
+/* Enhanced focus states for interactive elements */
+button:focus-visible,
+a:focus-visible,
+[role='button']:focus-visible,
+[role='tab']:focus-visible,
+[role='menuitem']:focus-visible {
+  outline: 2px solid var(--brand-orange);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--brand-orange);
+  outline-offset: 0;
+  border-color: var(--brand-orange);
+  box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.25);
+}
+
+/* Ensure mouse clicks do not retain harsh outlines */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip link - Accessibility */
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 16px;
+  z-index: 10000;
+  background: var(--brand-orange);
+  /* Flame (#EC691F) is a light accent: white on it measures 3.18:1, under the
+     4.5:1 AA floor for 14px text. The deep surface ink measures 6.03:1. */
+  color: var(--color-az-surface-root);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(227, 30, 36, 0.5);
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 16px;
+  outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
 
@@ -630,40 +906,124 @@ body::after {
    Azeebo+ Brand UI Utilities
    ============================================================ */
 
-/* Frosted glass card panel — the signature unifying UI motif */
+/* Frosted glass card panel — the signature unifying UI motif.
+   Figma's card frost is lighter than plain `glass-fill` because it sits over imagery. */
 .az-glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  box-shadow: var(--glass-glow);
+  background: var(--color-az-glass-card);
+  backdrop-filter: blur(var(--blur-az-glass));
+  -webkit-backdrop-filter: blur(var(--blur-az-glass));
+  border: 1px solid var(--color-az-glass-border);
+  border-radius: var(--radius-az-feature);
+  box-shadow: var(--shadow-az-lifted);
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+/* Figma answers the pointer with a hairline lift rather than a deeper shadow. */
+.az-glass:hover {
+  border-color: var(--color-az-glass-border-hover);
 }
 
 /* Stronger luminous border glow variant */
 .az-glass--glow {
-  box-shadow: var(--glass-glow-strong), var(--glass-glow);
+  box-shadow: var(--shadow-az-glow), var(--shadow-az-lifted);
 }
 
-/* Brand primary button — pill, deep red, white bold, hover glow */
+/* Compact frosted tag — the eyebrow/status pill Figma floats above section
+   headers. Same frost and hairline as the card, collapsed to a pill. */
+.az-chip {
+  background: var(--color-az-glass-fill);
+  backdrop-filter: blur(var(--blur-az-glass));
+  -webkit-backdrop-filter: blur(var(--blur-az-glass));
+  border: 1px solid var(--color-az-glass-border);
+  border-radius: var(--radius-az-pill);
+}
+
+/* Brand gradient text — Figma's accent for display type.
+   Large text only (24px, or 18.66px bold): the scarlet stop is 4.23:1 on the
+   page root and the flame stop 6.24:1, so the gradient clears AA's 3:1 large-text
+   floor but not 4.5:1. Inline emphasis at body size uses `text-az-flame`
+   (6.24:1) instead — white-on-gradient's failure at 3.18:1 was the same trap on
+   the CTA side. */
+.az-text-gradient {
+  background: var(--gradient-az-cta);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Poster scrim — the Figma tactic for keeping copy legible over imagery: a
+   bottom-weighted fade into the page root instead of a flat black overlay.
+   `.az-scrim` is for card thumbnails, `.az-scrim--hero` for surfaces where the
+   title and CTAs sit directly on the fade. */
+.az-scrim {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--brand-near-black) 80%, transparent) 0%,
+    transparent 100%
+  );
+}
+
+.az-scrim--hero {
+  background: linear-gradient(
+    to top,
+    var(--brand-near-black) 0%,
+    color-mix(in srgb, var(--brand-near-black) 55%, transparent) 45%,
+    color-mix(in srgb, var(--brand-near-black) 15%, transparent) 100%
+  );
+}
+
+/* Chip rows scroll horizontally on touch, but a visible track breaks the hero
+   band. Buttons inside stay tabbable, so the row is still keyboard-scrollable. */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Brand primary button — Figma draws this as the scarlet->flame gradient
+   panel with 20px corners, not the earlier solid-red pill. */
+/* Small-label CTA. The scarlet → flame brand gradient cannot carry a 14px
+   label: white reaches only 3.18:1 against the flame stop, and the deep surface
+   ink is 4.48:1 against scarlet. Solid flame with the deep ink is 6.03:1, so
+   every CTA whose label is below WCAG large-text size (18.66px bold) uses this
+   instead of the gradient. The gradient stays on `.az-btn-primary`, whose
+   20px/700 label is large text. */
+.az-cta-small {
+  background: var(--color-az-flame);
+  color: var(--color-az-surface-root);
+}
+
+/* The brand CTA gradient (scarlet → flame) cannot carry body-size white text:
+   against the flame stop it measures 3.18:1, and dark ink against the scarlet
+   stop is 4.48:1 — neither reaches AA's 4.5:1. At 20px/700 the label is WCAG
+   "large text" (≥18.66px bold), where the floor is 3:1, and white clears both
+   stops (3.18 and 4.69). The 16px label this replaced failed on every CTA in
+   the app; scripts/visual-audit.mjs now measures gradient stops, so a future
+   size cut fails the gate instead of shipping. */
 .az-btn-primary {
-  background: var(--brand-red);
-  color: var(--brand-white);
+  background: linear-gradient(90deg, #FF5B00 0%, #FF7A00 100%);
+  color: #ffffff;
   font-weight: 700;
-  border-radius: 999px;
+  border-radius: 9999px;
   border: none;
   width: 100%;
-  padding: 1rem 1.25rem;
-  font-size: 0.95rem;
+  padding: 0.875rem 1.5rem;
+  font-size: var(--text-az-title);
   cursor: pointer;
+  box-shadow: 0 4px 14px rgba(255, 91, 0, 0.25);
   transition:
     box-shadow var(--transition-fast),
     transform var(--transition-fast),
-    background var(--transition-fast);
+    filter var(--transition-fast);
 }
 .az-btn-primary:hover:not(:disabled) {
-  box-shadow: var(--glow-red);
-  background: #b91818;
+  box-shadow: 0 6px 20px rgba(255, 91, 0, 0.45);
+  filter: brightness(1.08);
 }
 .az-btn-primary:active:not(:disabled) {
   transform: translateY(1px);
@@ -673,107 +1033,181 @@ body::after {
   cursor: not-allowed;
 }
 
-/* Brand social button — rounded rectangle */
+/* `.az-btn-primary` fills its column because most CTAs are stacked on mobile.
+   Centered or inline CTAs opt into hugging their label instead — a Tailwind
+   `w-auto` cannot do that, since the shared classes are unlayered and outrank
+   the utility layer. */
+.az-btn-primary--inline {
+  width: auto;
+}
+
+/* Secondary frosted glass button — Figma hero secondary action & pill controls */
+.az-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-az-ink);
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.875rem 1.5rem;
+  font-size: var(--text-az-title);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+.az-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+.az-btn-secondary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.az-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Compact CTA for tight spaces (a phone mockup screen, a chip-width toolbar). */
+/* The small variant drops to a 12px overline label, which is below WCAG large
+   text — so it takes the same treatment as `.az-cta-small`: solid flame, deep
+   ink (6.03:1). Left on the gradient, white measured 3.18:1 and every compact
+   CTA using this modifier failed AA. */
+.az-btn-primary--sm {
+  font-size: var(--text-az-overline);
+  letter-spacing: 0.06em;
+  padding: 0.7rem 1.75rem;
+  background: var(--color-az-flame);
+  color: var(--color-az-surface-root);
+}
+
+/* Brand social button — Figma draws both providers with the same frost fill the
+   inputs use, so the legacy light/dark split collapses onto one class. */
 .az-btn-social {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  border-radius: 10px;
+  border-radius: var(--radius-az-control);
   padding: 0.75rem 1rem;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  background: var(--color-az-glass-fill-hover);
+  border: 1px solid var(--color-az-glass-border);
+  color: var(--color-az-ink);
   transition:
     background var(--transition-fast),
     border-color var(--transition-fast);
 }
-.az-btn-social--light {
-  background: var(--brand-white);
-  color: #1a1a1a;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+.az-btn-social:hover {
+  background: var(--color-az-glass-fill-active);
 }
-.az-btn-social--light:hover {
-  background: #f3f3f3;
+.az-btn-social:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
-.az-btn-social--dark {
-  background: var(--brand-surface);
-  color: var(--brand-white);
-  border: 1px solid var(--glass-border);
-}
-.az-btn-social--dark:hover {
-  background: #383838;
+.az-btn-social:disabled:hover {
+  background: var(--color-az-glass-fill-hover);
 }
 
-/* Brand input field */
+/* Brand input field — frosted translucent panel, 16px corners */
 .az-input {
   width: 100%;
-  background: var(--brand-surface-input);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
+  background: var(--color-az-glass-fill-hover);
+  border: 1px solid var(--color-az-glass-border);
+  border-radius: var(--radius-az-panel);
   padding: 0.8rem 1rem;
-  color: var(--brand-white);
-  font-size: 0.95rem;
+  color: var(--color-az-ink);
+  font-size: var(--text-az-subtitle);
   transition:
     border-color var(--transition-fast),
     box-shadow var(--transition-fast);
 }
 .az-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--color-az-glass-placeholder);
 }
 .az-input:focus {
   outline: none;
-  border-color: var(--brand-red);
-  box-shadow: -3px 0 0 0 var(--brand-red);
+  border-color: var(--color-az-scarlet);
+  box-shadow: -3px 0 0 0 var(--color-az-scarlet);
 }
 
-/* Brand label — small caps, grey, letter-spaced */
+/* Icons sit inside .az-input's 1rem padding, so a glyph would otherwise draw
+   over the text. These companions widen the side they decorate. */
+.az-input--icon {
+  padding-left: 3rem;
+}
+.az-input--trailing {
+  padding-right: 3.25rem;
+}
+
+/* One-time-code boxes. `.az-input` fills its column, so a digit cell cannot be
+   sized with a Tailwind `w-12` — the unlayered base wins. The fixed square
+   lives here instead, and the flex row centres the run of cells. */
+.az-input--otp {
+  width: 3rem;
+  height: 3.5rem;
+  padding-inline: 0;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* Brand label — the overline role: 12px, bold, +0.1em, uppercase */
 .az-label {
   display: block;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-az-overline);
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: var(--tracking-az-label);
+  color: var(--color-az-ink-muted);
   margin-bottom: 0.4rem;
 }
 
-/* Brand divider */
+/* Brand divider — Figma renders this as a plain, non-uppercase "or" */
 .az-divider {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--text-az-lead);
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
 }
 .az-divider::before,
 .az-divider::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--color-az-glass-fill-hover);
 }
 
-/* Ambient red glow layer (atmospheric depth) */
+/* Ambient brand glow layer (atmospheric depth) */
 .az-ambient-red {
   position: absolute;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(204, 28, 28, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(227, 30, 36, 0.4) 0%, transparent 70%);
   filter: blur(40px);
   z-index: 0;
 }
 
 /* Brand wordmark */
 .az-wordmark {
-  font-family: var(--font-display);
+  font-family: var(--font-az-display);
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-az-heading);
 }
 .az-wordmark__plus {
-  color: var(--brand-orange);
+  color: var(--color-az-flame);
   font-size: 0.6em;
   vertical-align: super;
   margin-left: 1px;
@@ -781,26 +1215,23 @@ body::after {
 
 /* Marketing headline */
 .az-headline {
-  font-family: var(--font-display);
+  font-family: var(--font-az-display);
   font-weight: 800;
   line-height: 1.05;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-az-heading);
 }
 
-/* Skip Link - Accessibility */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: var(--color-primary-500);
-  color: white;
-  padding: 8px 16px;
-  z-index: var(--z-tooltip);
-  transition: top var(--transition-fast);
+/* PageHero's title size, paired with `.az-headline` above.
+   `text-2xl sm:az-display` cannot express this reliably: a custom `@utility` and
+   a built-in size utility write the same property, so which one wins is Tailwind's
+   sort order rather than a guarantee. Being unlayered, this rule always wins. */
+.az-hero-title {
+  font-size: 1.5rem;
 }
-
-.skip-link:focus {
-  top: 0;
+@media (min-width: 40rem) {
+  .az-hero-title {
+    font-size: var(--text-az-display);
+  }
 }
 
 /* Light Theme (overrides when .dark class is not present) */
@@ -828,6 +1259,7 @@ html:not(.dark) {
 
   --text-primary: #111827;
   --text-secondary: #4b5563;
+  --text-muted: #4b5563;
   --text-tertiary: #6b7280;
   --text-inverse: #f3f4f6;
 
@@ -838,7 +1270,7 @@ html:not(.dark) {
 
   --border-default: #d1d5db;
   --border-light: #e5e7eb;
-  --border-focus: #e8420a;
+  --border-focus: var(--color-az-flame);
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);

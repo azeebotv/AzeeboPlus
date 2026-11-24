@@ -11,8 +11,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { realityApi, chatApi } from '../../../src/api';
-import { logger } from '../../../src/utils/logger';
+import { realityApi, chatApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
+import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface ChatMessage {
   id: string;
@@ -123,8 +125,8 @@ export default function LiveChatScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E8420A" />
+      <View accessibilityLabel="Live Chat Screen" style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading live chat...</Text>
       </View>
     );
@@ -194,7 +196,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 12,
   },
   header: {
@@ -211,14 +213,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   viewersBadge: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
   viewersText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   chatList: {
     flex: 1,
@@ -237,7 +239,7 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#E8420A',
+    color: brand.flame,
     marginRight: 8,
   },
   badge: {
@@ -261,7 +263,7 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 14,
-    color: '#E5E7EB',
+    color: colors.light[200],
     lineHeight: 20,
   },
   reactionsContainer: {
@@ -272,7 +274,7 @@ const styles = StyleSheet.create({
   reaction: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -283,7 +285,7 @@ const styles = StyleSheet.create({
   },
   reactionCount: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   inputContainer: {
     flexDirection: 'row',
@@ -291,7 +293,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.tertiary,
   },
   input: {
     flex: 1,
@@ -304,7 +306,7 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,

@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api, ContentItem } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -50,11 +49,9 @@ function CharacterDetailContent(): React.JSX.Element {
   const error = characterQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Vertical" />
-
+    <PageShell activeNav="Vertical" maxWidth="2xl">
       {isLoading ? (
-        <Skeleton height="500px" borderRadius="0" />
+        <Skeleton height="500px" borderRadius="16px" />
       ) : error ? (
         <div className="h-[500px] flex items-center justify-center">
           <ErrorState
@@ -65,7 +62,7 @@ function CharacterDetailContent(): React.JSX.Element {
         </div>
       ) : character ? (
         <section className="relative">
-          <div className="relative h-[500px]">
+          <div className="relative mb-6 h-[400px] overflow-hidden rounded-az-panel border border-az-glass-border sm:h-[500px]">
             <OptimizedImage
               src={character.avatar}
               alt={character.name}
@@ -73,30 +70,27 @@ function CharacterDetailContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/60 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
+            <div className="absolute inset-0 az-scrim--hero" aria-hidden="true" />
+            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="flex items-center gap-2 mb-4">
-                  <Link href="/vertical" className="text-sm text-[#E8420A] hover:underline">
+                <div className="mb-4 flex items-center gap-2">
+                  <Link href="/vertical" className="az-caption text-az-flame hover:underline">
                     Vertical
                   </Link>
                   {character.storyworld && (
                     <>
-                      <span className="text-white/30">/</span>
-                      <span className="text-sm text-white/60">{character.storyworld}</span>
+                      <span className="az-caption text-az-ink/30">/</span>
+                      <span className="az-caption text-az-ink/60">{character.storyworld}</span>
                     </>
                   )}
                 </div>
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{character.name}</h1>
+                <h1 className="az-heading mb-3 text-az-ink sm:az-display">{character.name}</h1>
                 {character.universe && (
-                  <span
-                    className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
-                  >
+                  <span className="az-overline rounded-az-pill bg-az-scarlet/20 px-3 py-1 text-az-flame">
                     {character.universe}
                   </span>
                 )}
@@ -107,32 +101,30 @@ function CharacterDetailContent(): React.JSX.Element {
       ) : null}
 
       {character && (
-        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+        <section className="mx-auto max-w-4xl py-2 sm:py-4">
           <ScrollReveal>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
               <div className="md:col-span-2">
-                <h2 className="text-2xl font-bold text-white mb-4">About</h2>
-                <p className="text-white/70 leading-relaxed">{character.description}</p>
-                <div className="mt-6 text-white/60 leading-relaxed whitespace-pre-wrap">
+                <h2 className="az-section-title mb-4 text-az-ink">About</h2>
+                <p className="az-lead leading-relaxed text-az-ink/70">{character.description}</p>
+                <div className="az-lead mt-6 leading-relaxed whitespace-pre-wrap text-az-ink/60">
                   {character.bio}
                 </div>
               </div>
               <div>
                 <GlowCard universe="vertical">
-                  <div className="p-5 space-y-4">
-                    <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider">
-                      Details
-                    </h3>
+                  <div className="space-y-4 p-5">
+                    <h3 className="az-overline text-az-ink-muted">Details</h3>
                     {character.storyworld && (
                       <div>
-                        <p className="text-xs text-white/40">Storyworld</p>
-                        <p className="text-sm text-white">{character.storyworld}</p>
+                        <p className="az-micro-label text-az-ink/40">Storyworld</p>
+                        <p className="az-body text-az-ink">{character.storyworld}</p>
                       </div>
                     )}
                     {character.firstAppearance && (
                       <div>
-                        <p className="text-xs text-white/40">First Appearance</p>
-                        <p className="text-sm text-white">{character.firstAppearance}</p>
+                        <p className="az-micro-label text-az-ink/40">First Appearance</p>
+                        <p className="az-body text-az-ink">{character.firstAppearance}</p>
                       </div>
                     )}
                   </div>
@@ -144,9 +136,9 @@ function CharacterDetailContent(): React.JSX.Element {
           {character.appearances && character.appearances.length > 0 && (
             <div className="mt-12">
               <ScrollReveal>
-                <h2 className="text-2xl font-bold text-white mb-6">Appearances</h2>
+                <h2 className="az-section-title mb-6 text-az-ink">Appearances</h2>
               </ScrollReveal>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {character.appearances.map((item) => (
                   <Link key={item.id} href={`/watch/${item.id}`}>
                     <GlowCard universe="vertical" className="overflow-hidden">
@@ -155,10 +147,10 @@ function CharacterDetailContent(): React.JSX.Element {
                         alt={item.title}
                         width={400}
                         height={120}
-                        className="w-full h-32 object-cover"
+                        className="h-32 w-full object-cover"
                       />
                       <div className="p-3">
-                        <h3 className="font-semibold text-white text-sm truncate">{item.title}</h3>
+                        <h3 className="az-body-strong truncate text-az-ink">{item.title}</h3>
                       </div>
                     </GlowCard>
                   </Link>
@@ -168,9 +160,7 @@ function CharacterDetailContent(): React.JSX.Element {
           )}
         </section>
       )}
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -180,8 +170,8 @@ export default function CharacterDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#1A0A0A]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

@@ -111,13 +111,13 @@ describe('User API Methods', () => {
       expect(client.request).toHaveBeenCalledWith('/api/v1/users/me/preferences');
     });
 
-    it('should PATCH preferences', async () => {
+    it('should PUT preferences', async () => {
       client.request.mockResolvedValue({ success: true, data: { theme: 'light' } });
 
       await user.updatePreferences({ theme: 'light' });
 
       expect(client.request).toHaveBeenCalledWith('/api/v1/users/me/preferences', {
-        method: 'PATCH',
+        method: 'PUT',
         body: JSON.stringify({ theme: 'light' }),
       });
     });

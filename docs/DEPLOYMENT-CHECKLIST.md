@@ -18,8 +18,11 @@ ANALYTICS_SERVICE_URL=http://analytics-service:3008
 # WebSocket (needed by messaging-service and reality-service)
 WS_CORS_ORIGIN=https://app.azeeboplus.com
 
-# Feature Flags (needed by content-service)
+# Feature Flags (runtime store — needed by every service that registers FeatureFlagModule)
 FEATURE_FLAG_REDIS_URL=redis://localhost:6379
+# Optional per-flag default overrides when the store is empty (e.g. emergency dark-launch):
+# FEATURE_FLAG_DEFAULT_WEB_MAINTENANCE_MODE=true
+# FEATURE_FLAG_DEFAULT_QUEUE_PROCESS_PAYMENTS=false
 
 # Event Bus (needed by wallet-service)
 EVENT_BUS_REDIS_URL=redis://localhost:6379
@@ -38,8 +41,8 @@ Run migrations for services with schema changes:
 cd services/universes/reality-service
 npx prisma migrate deploy
 
-# Verify migration applied
-npx prisma db push --accept-data-loss 2>&1 | head -5
+# Verify migration applied safely
+npx prisma migrate status
 ```
 
 ### 3. Package Dependencies
@@ -229,6 +232,14 @@ health-check:
         curl -sf "http://localhost:3013/api/v1/auth/health" || exit 1
         curl -sf "http://localhost:3013/api/v1/users/health" || exit 1
         echo "✅ Smoke tests passed"
+
+    - name: Verify feature-flag store reachable + defaults loaded
+      run: |
+        # Bootstrap endpoint returns public flags with defaults when the store is up;
+        # empty store still resolves registered defaults (not an error). A 5xx or
+        # timeout means FEATURE_FLAG_REDIS_URL is unreachable.
+        curl -sf "http://localhost:3013/feature-flags/bootstrap" | grep -q '"success":true' || exit 1
+        echo "✅ Feature flag store reachable, defaults resolved"
 ```
 
 ---
@@ -266,7 +277,8 @@ docker push ghcr.io/azeebotv/azeebo-all-in-one:dev
 # - Create project in Coolify UI
 # - Select "Docker Compose" type
 # - Point to docker-compose.all-in-one.yml
-# - Add environment variables
+# - Add environment variables (including IMAGE_TAG=<tag>; the compose file
+#   deploys ghcr.io/azeebotv/azeebo-all-in-one:${IMAGE_TAG:-dev})
 # - Deploy
 ```
 
@@ -298,16 +310,21 @@ docker run -d \
 # Option 1: Use rollback workflow
 gh workflow run rollback.yml -f environment=production
 
-# Option 2: Manual rollback
-docker stop azeebo-all-in-one
+# Option 2: Manual rollback (pulls the tag, replaces the container,
+# restores the previous image if the health check fails)
+ENVIRONMENT=production ./scripts/rollback.sh <tag>
+
+# Option 3: By hand, on the deploy host — keep every port and the env file,
+# otherwise the services come up unreachable or without secrets
+docker stop azeebo && docker rm azeebo
 docker run -d \
-  --name azeebo-all-in-one \
+  --name azeebo \
   -p 3013:3013 \
   -p 4000:4000 \
   -p 4014:4014 \
   -p 4016:4016 \
-  --env-file .env \
-  ghcr.io/azeebotv/azeebo-all-in-one:previous-tag
+  --env-file /opt/azeebo/.env.production \
+  ghcr.io/azeebotv/azeebo-all-in-one:<tag>
 ```
 
 ---

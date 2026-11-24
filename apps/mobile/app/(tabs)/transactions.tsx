@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { walletApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { walletApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
 
@@ -200,7 +200,7 @@ export default function TransactionsScreen() {
 
   if (isLoading && transactions.length === 0) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <SafeAreaView accessibilityLabel="Transactions Screen" style={styles.loadingContainer}>
         <LoadingState text="Loading transactions..." />
       </SafeAreaView>
     );
@@ -248,6 +248,9 @@ export default function TransactionsScreen() {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>💳</Text>
             <Text style={styles.emptyText}>No transactions yet</Text>
+            <Text style={styles.emptySubtext}>
+              Your deposits, withdrawals, and purchase records will appear here.
+            </Text>
           </View>
         }
         ListFooterComponent={
@@ -389,6 +392,14 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: colors.light[400],
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: colors.light[500],
+    textAlign: 'center',
+    maxWidth: 280,
   },
   footerLoader: {
     paddingVertical: 16,

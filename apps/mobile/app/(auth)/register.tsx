@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,19 +6,22 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   TouchableOpacity,
   Linking,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
+import * as WebBrowser from 'expo-web-browser';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { authApi } from '@azeebo/react-data';
+import { logger } from '@azeebo/react-data/utils/logger';
 import { colors, typography, spacing, radius } from '../../src/theme';
 import { GlassCard, BrandButton, BrandInput } from '../../src/components/ui';
 import { PageTransition, ScrollReveal, AmbientGlow } from '../../src/components/motion';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register, isLoading } = useAuth();
+  const { register, socialLogin, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -61,12 +64,92 @@ export default function RegisterScreen() {
     }
   };
 
-  const handleSocialSignup = (provider: 'google' | 'apple') => {
-    Alert.alert(
-      'Coming Soon',
-      `${provider.charAt(0).toUpperCase() + provider.slice(1)} signup will be available soon`
-    );
-  };
+  const handleSocialSignup = useCallback(
+    async (provider: 'google' | 'apple') => {
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        // 1. Get the OAuth authorize URL and state from the backend
+        const redirectUri = 'azeebo://oauth-callback';
+        const authorizeResponse =
+          provider === 'google'
+            ? await authApi.getGoogleAuthorizeUrl(redirectUri)
+            : await authApi.getAppleAuthorizeUrl(redirectUri);
+
+        if (!authorizeResponse.success || !authorizeResponse.data) {
+          setError(`${provider} sign-up is temporarily unavailable. Please try again.`);
+          setIsSubmitting(false);
+          return;
+        }
+
+        const { state, authorizeUrl } = authorizeResponse.data;
+
+        // 2. Open the OAuth consent screen in-app browser
+        const result = await WebBrowser.openAuthSessionAsync(authorizeUrl, redirectUri);
+
+        if (result.type !== 'success') {
+          // User cancelled or error
+          if (result.type === 'cancel') {
+            setIsSubmitting(false);
+            return;
+          }
+          setError(`${provider} sign-up was cancelled or failed. Please try again.`);
+          setIsSubmitting(false);
+          return;
+        }
+
+        // 3. Parse the redirect URL to extract code and state
+        const url = new URL(result.url);
+        const code = url.searchParams.get('code');
+        const returnedState = url.searchParams.get('state');
+        const oauthError = url.searchParams.get('error');
+
+        if (oauthError) {
+          setError(`${provider} sign-up failed: ${oauthError}`);
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (!code || !returnedState) {
+          setError('Invalid OAuth response. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // 4. Validate state matches (CSRF protection)
+        if (returnedState !== state) {
+          setError('Security validation failed. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // 5. Exchange the code for auth tokens via the backend
+        const socialResult = await socialLogin({
+          code,
+          state: returnedState,
+          displayName: formData.name || undefined,
+        });
+
+        if (socialResult.success) {
+          router.replace('/(tabs)');
+        } else {
+          setError(
+            socialResult.message ||
+              `${provider} sign-up failed. Please try again or use email sign-up.`
+          );
+        }
+      } catch (error: unknown) {
+        logger.error(`${provider} OAuth error`, error);
+        const message =
+          error instanceof Error ? error.message : `${provider} sign-up failed. Please try again.`;
+        setError(message);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [formData.name, router]
+  );
 
   return (
     <KeyboardAvoidingView
@@ -83,9 +166,12 @@ export default function RegisterScreen() {
         <PageTransition>
           <ScrollReveal direction="up" delay={0}>
             <View style={styles.header}>
-              <Text style={styles.logo}>
-                AZEEBO<Text style={styles.logoPlus}>+</Text>
-              </Text>
+              <Image
+                source={require('../../assets/logo-white.png')}
+                style={{ width: 140, height: 34, marginBottom: 8 }}
+                resizeMode="contain"
+                accessibilityLabel="Azeebo+ Logo"
+              />
               <Text style={styles.tagline}>Empowering Nigeria{'\u2019'}s Creative Renaissance</Text>
               <Text style={styles.stepIndicator}>Step 1: Your Details</Text>
               <Text style={styles.subtitle}>Create Your Azeebo+ Account</Text>

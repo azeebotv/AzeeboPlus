@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/contexts/AuthContext';
-import { subscriptionApi, type Subscription } from '../../src/api/subscription';
+import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
+import { subscriptionApi, type Subscription } from '@azeebo/react-data/api/subscription';
 import { colors, typography, spacing, radius } from '../../src/theme';
-import { createLogger } from '../../src/utils/logger';
+import { createLogger } from '@azeebo/react-data/utils/logger';
 
 const logger = createLogger('CurrentSubscription');
 
@@ -113,7 +113,7 @@ export default function CurrentSubscriptionScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Current Screen" style={styles.container}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary[500]} />
         </View>
@@ -125,7 +125,7 @@ export default function CurrentSubscriptionScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>My Subscription</Text>
@@ -153,7 +153,7 @@ export default function CurrentSubscriptionScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>My Subscription</Text>

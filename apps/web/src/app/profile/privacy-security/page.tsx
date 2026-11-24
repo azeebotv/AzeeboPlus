@@ -1,19 +1,17 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 
-export const metadata = {
-  title: 'Privacy & Security | Azeebo',
-  description: 'Manage your privacy settings, direct messages, and two-factor authentication.',
-  openGraph: {
-    title: 'Privacy & Security | Azeebo',
-    description: 'Manage your privacy settings, direct messages, and two-factor authentication.',
-  },
-};
+interface DeletionRequestState {
+  status?: string;
+  requestedAt?: string | null;
+  scheduledAt?: string | null;
+  completedAt?: string | null;
+}
 
 export default function PrivacySecurityPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
@@ -26,6 +24,11 @@ export default function PrivacySecurityPage(): React.JSX.Element {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [deletionStatus, setDeletionStatus] = useState<DeletionRequestState | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -41,6 +44,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
       return;
     }
     loadSettings();
+    void loadDeletionStatus();
   }, [authLoading, isAuthenticated, user, router]);
 
   const loadSettings = async () => {
@@ -50,6 +54,57 @@ export default function PrivacySecurityPage(): React.JSX.Element {
     } catch {
       /* ignore */
     }
+  };
+
+  const loadDeletionStatus = async () => {
+    try {
+      const response = await api.user.getDeletionStatus();
+      if (response.success && response.data) {
+        setDeletionStatus(response.data as DeletionRequestState);
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    setExportError(false);
+    try {
+      const response = await api.user.exportUserData();
+      if (response.success && response.data) {
+        const blob = new Blob([JSON.stringify(response.data, null, 2)], {
+          type: 'application/json',
+        });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `azeebo-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+      } else {
+        setExportError(true);
+      }
+    } catch {
+      setExportError(true);
+    }
+    setIsExporting(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      await api.user.requestAccountDeletion();
+      await loadDeletionStatus();
+    } catch {
+      /* ignore */
+    }
+    setIsDeleting(false);
+    setConfirmingDelete(false);
   };
 
   const handleSave = async () => {
@@ -84,156 +139,123 @@ export default function PrivacySecurityPage(): React.JSX.Element {
   ];
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 600,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
+    <PageShell maxWidth="sm">
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="az-body mb-4 inline-flex items-center gap-2 text-az-ink-muted"
       >
-        <div style={{ marginBottom: 32 }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: 14,
-              marginBottom: 16,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span>←</span> Back
-          </button>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Privacy & Security</h1>
-        </div>
+        <ArrowLeft size={16} aria-hidden /> Back
+      </button>
+      <h1 className="az-headline text-az-heading mb-8 text-az-ink">Privacy &amp; Security</h1>
 
-        <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {toggleItems.map((item) => (
+      <div className="az-glass mb-5 p-6">
+        <div className="flex flex-col">
+          {toggleItems.map((item) => {
+            const key = item.key as keyof typeof settings;
+            const isOn = settings[key];
+            return (
               <div
                 key={item.key}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px 0',
-                  borderBottom: '1px solid #2A1A1A',
-                }}
+                className="flex items-center justify-between gap-4 border-b border-az-glass-border py-3 last:border-b-0"
               >
                 <div>
-                  <p style={{ fontWeight: 600, fontSize: 15 }}>{item.label}</p>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 2 }}>
-                    {item.desc}
-                  </p>
+                  <p className="az-body-strong text-az-ink">{item.label}</p>
+                  <p className="az-caption mt-0.5 text-az-ink-muted">{item.desc}</p>
                 </div>
                 <button
-                  onClick={() =>
-                    setSettings({
-                      ...settings,
-                      [item.key]: !settings[item.key as keyof typeof settings],
-                    })
-                  }
-                  style={{
-                    width: 48,
-                    height: 28,
-                    borderRadius: 14,
-                    border: 'none',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    backgroundColor: settings[item.key as keyof typeof settings]
-                      ? 'var(--brand-orange)'
-                      : 'var(--bg-secondary)',
-                    transition: 'background-color 0.2s',
-                    flexShrink: 0,
-                  }}
+                  type="button"
+                  role="switch"
+                  aria-checked={isOn}
+                  aria-label={item.label}
+                  onClick={() => setSettings({ ...settings, [key]: !isOn })}
+                  className={`relative h-7 w-12 shrink-0 cursor-pointer rounded-az-pill border-none transition-colors ${
+                    isOn ? 'bg-az-flame' : 'bg-az-surface-edge'
+                  }`}
                 >
                   <span
-                    style={{
-                      position: 'absolute',
-                      top: 3,
-                      left: settings[item.key as keyof typeof settings] ? 23 : 3,
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      backgroundColor: '#fff',
-                      transition: 'left 0.2s',
-                    }}
+                    className={`absolute top-[3px] size-[22px] rounded-full bg-az-ink transition-all ${
+                      isOn ? 'left-[23px]' : 'left-[3px]'
+                    }`}
                   />
                 </button>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
+      </div>
 
+      <button type="button" onClick={handleSave} disabled={isSaving} className="az-btn-primary">
+        {saved ? 'Check Saved!' : isSaving ? 'Saving...' : 'Save Settings'}
+      </button>
+
+      {/* Your data rights (AUD-72) */}
+      <div className="az-glass mt-6 p-6">
+        <h2 className="az-subtitle mb-3 text-az-ink">Your Data Rights</h2>
+        <p className="az-body mb-4 text-az-ink-muted">
+          Under the NDPA and GDPR you can download everything we hold about you at any time, and
+          request erasure of your account. See our{' '}
+          <a href="/cookies" className="text-az-flame">
+            Cookie Policy
+          </a>{' '}
+          and{' '}
+          <a href="/privacy" className="text-az-flame">
+            Privacy Policy
+          </a>
+          .
+        </p>
         <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="az-btn-primary"
-          style={{
-            width: '100%',
-            padding: '14px 0',
-            borderRadius: 999,
-            border: 'none',
-            background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-            color: 'var(--brand-white)',
-            fontWeight: 700,
-            fontSize: 16,
-            cursor: 'pointer',
-            opacity: isSaving ? 0.6 : 1,
-          }}
+          type="button"
+          onClick={handleExport}
+          disabled={isExporting}
+          className="az-btn-primary az-btn-primary--inline"
         >
-          {saved ? '✓ Saved!' : isSaving ? 'Saving...' : 'Save Settings'}
+          {isExporting
+            ? 'Preparing export...'
+            : exportError
+              ? 'Export failed — retry'
+              : 'Download My Data (JSON)'}
         </button>
+        <p className="az-caption mt-4 text-az-ink-muted">
+          Data deletion request:{' '}
+          <span className="az-body-strong text-az-ink">
+            {(() => {
+              if (!deletionStatus?.status || deletionStatus.status === 'none') {
+                return 'none on file';
+              }
+              if (deletionStatus.status === 'completed') return 'erasure completed';
+              if (deletionStatus.scheduledAt) {
+                return `scheduled for ${new Date(deletionStatus.scheduledAt).toLocaleDateString()}`;
+              }
+              return deletionStatus.status;
+            })()}
+          </span>
+        </p>
+      </div>
 
-        {/* Danger zone */}
-        <div
-          className="az-glass"
-          style={{
-            padding: 24,
-            borderRadius: 20,
-            marginTop: 24,
-            border: '1px solid rgba(204,28,28,0.3)',
-          }}
+      {/* Danger zone */}
+      <div className="mt-6 rounded-az-feature border border-az-error-500/30 bg-az-glass-fill p-6 backdrop-blur-az-glass">
+        <h2 className="az-subtitle mb-3 text-az-error-500">Danger Zone</h2>
+        <p className="az-body mb-4 text-az-ink-muted">
+          Once you delete your account, there is no going back.
+        </p>
+        <button
+          type="button"
+          onClick={handleDeleteAccount}
+          disabled={isDeleting}
+          className={`cursor-pointer rounded-az-pill border border-az-error-500 px-6 py-2.5 az-body-strong ${
+            confirmingDelete
+              ? 'bg-az-error-600 text-az-ink'
+              : 'bg-transparent text-az-error-500 hover:bg-az-error-500/10'
+          } disabled:cursor-wait disabled:opacity-60`}
         >
-          <h2
-            style={{ fontSize: 18, fontWeight: 700, color: 'var(--brand-red)', marginBottom: 12 }}
-          >
-            Danger Zone
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>
-            Once you delete your account, there is no going back.
-          </p>
-          <button
-            style={{
-              padding: '10px 24px',
-              borderRadius: 999,
-              border: '1px solid var(--brand-red)',
-              background: 'transparent',
-              color: 'var(--brand-red)',
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: 'pointer',
-            }}
-          >
-            Delete Account
-          </button>
-        </div>
-      </main>
-      <AppFooter />
-    </div>
+          {isDeleting
+            ? 'Submitting request...'
+            : confirmingDelete
+              ? 'Tap again to confirm erasure'
+              : 'Delete Account'}
+        </button>
+      </div>
+    </PageShell>
   );
 }

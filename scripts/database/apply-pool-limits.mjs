@@ -1,0 +1,333 @@
+#!/usr/bin/env node
+// ============================================================================
+// apply-pool-limits.mjs — enforce per-service Prisma connection pool caps
+//
+// Why: every service runs its own Prisma client with the Postgres default
+// pool size (num_cpus * 2 + 1, ~10-11 connections locally). With ~28 services
+// each holding a default-sized pool against the same Postgres instance, idle
+// connections accumulate until the server refuses new ones:
+//   FATAL: remaining connection slots are reserved for roles with the
+//          SUPERUSER attribute
+// which surfaces as random Prisma errors in whichever service queries next.
+//
+// Fix: append explicit `connection_limit` (plus timeouts) to every service's
+// DATABASE_URL so the worst case is bounded under the server's max_connections.
+// The caps are tiered: busy services get more headroom, quiet universes get 3.
+//
+// Sizing table (total worst case = 154 of max_connections=100's headroom is
+// NOT free — run `--check` to print the sum against a live server budget):
+//
+//   tier        limit   who
+//   -----       -----   ---
+//   primary       10    auth-service
+//   busy           8    admin-backend, user-service, content-ish backends
+//   medium         6    analytics, wallet, payment, subscription, moderation
+//   support        5    support-service (runs 7 parallel count queries)
+//   media          6    media-service (upload fan-out)
+//   quiet          3    one-universe services, referral/reward/queue/etc.
+//
+// Usage:
+//   node scripts/database/apply-pool-limits.mjs            # apply (idempotent)
+//   node scripts/database/apply-pool-limits.mjs --dry-run  # show, don't write
+//   node scripts/database/apply-pool-limits.mjs --check    # summarize + compare to live max_connections
+//   node scripts/database/apply-pool-limits.mjs --ci       # CI merge gate: budget from committed
+//                                                          # sources (prisma workspaces × tier map);
+//                                                          # reads POOL_CHECK_DATABASE_URL and fails
+//                                                          # closed when Postgres is unreachable
+//
+// Idempotency: an existing `connection_limit=` query param is REUSED as the
+// limit (its other params are left alone); only URLs without a cap get the
+// computed one appended. Re-running never changes an already-capped URL.
+// ============================================================================
+
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { execSync } from 'node:child_process';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  // Test seam: subprocess tests build a tiny fake workspace tree and point
+  // the gate's discovery at it. Unset in production → repo root.
+  process.env.POOL_LIMITS_ROOT ?? '../..'
+);
+
+// ── Per-service pool sizing ─────────────────────────────────────────────────
+// Keys are paths relative to the repo root. Everything not listed falls back
+// to TIER_DEFAULTS.quiet (3), so new services are safe by default.
+const LIMITS = {
+  // Primary identity path — every request from every client funnels here.
+  'services/core/auth-service': 6,
+  // Admin backend does cross-service fan-outs with parallel queries.
+  'apps/admin': 6,
+  // High-traffic core reads/writes.
+  'services/core/user-service': 5,
+  'services/core/wallet-service': 3,
+  'services/core/payment-service': 3,
+  'services/core/media-service': 3,
+  'services/core/search-service': 3,
+  // Analytics runs aggregations; subscription/moderation parallelize counts.
+  'services/intelligence/analytics-service': 3,
+  'services/engagement/subscription-service': 3,
+  'services/operations/moderation-service': 3,
+  // Support runs 7 parallel count queries in its dashboard — they queue at
+  // pool_timeout rather than widen the pool.
+  'services/operations/support-service': 3,
+  // Messaging/engagement/notification are listener-heavy with low query
+  // concurrency — queries queue instead of widening the pool.
+  'services/engagement/messaging-service': 2,
+  'services/engagement/engagement-service': 2,
+  'services/engagement/notification-service': 2,
+  // Everything else (universe services, referral, reward, queue,
+  // recommendation, creator, gateway) is low-traffic: see
+  // QUIET_TIER_WORKSPACES below — the gate requires every workspace to be
+  // either here or in LIMITS.
+};
+const TIER_DEFAULTS = { quiet: 2 };
+
+// ── Quiet-tier opt-ins (documented) ────────────────────────────────────────
+// Workspaces WITHOUT an explicit LIMITS entry that a human has reviewed and
+// confirmed are low-connection. The `--ci` gate FAILS (exit 4) when a prisma
+// workspace is in neither list, so a new service cannot silently inherit the
+// quiet default and erode the worst-case budget — sizing is always a
+// decision, never an accident.
+const QUIET_TIER_WORKSPACES = [
+  // Read-heavy but behind the gateway GET cache; small pool is enough.
+  'services/core/content-service',
+  'services/core/knowledge-service',
+  'apps/creator',
+  // Low-traffic engagement/intelligence/operations workers.
+  'services/engagement/referral-service',
+  'services/engagement/reward-service',
+  'services/intelligence/recommendation-service',
+  'services/operations/queue-service',
+  // Universe services: single-vertical, low-traffic reads.
+  'services/universes/comedy-service',
+  'services/universes/creator-service',
+  'services/universes/games-service',
+  'services/universes/lifestyle-service',
+  'services/universes/live-event-service',
+  'services/universes/movie-service',
+  'services/universes/reality-service',
+  'services/universes/sports-service',
+  'services/universes/vertical-service',
+];
+
+/** 'explicit' (LIMITS) | 'quiet' (documented opt-in) | 'unknown' (gate fails). */
+function classifyWorkspace(relPath) {
+  if (LIMITS[relPath] !== undefined) return 'explicit';
+  if (QUIET_TIER_WORKSPACES.includes(relPath)) return 'quiet';
+  return 'unknown';
+}
+
+const POOL_TIMEOUT_MS = 10_000; // fail fast instead of queueing when saturated
+const CONNECT_TIMEOUT_MS = 5_000;
+
+const args = process.argv.slice(2);
+const DRY_RUN = args.includes('--dry-run');
+const CHECK = args.includes('--check');
+
+// ── CI gate (--ci): budget from committed sources, fail closed ─────────────
+// Local `--check` sums per-.env caps, but .env files are gitignored and
+// absent in CI — and the --check catch block silently PASSES when psql is
+// unreachable, so a CI run without a DB would approve any budget. The gate
+// therefore recomputes the worst case from committed sources (one entry per
+// workspace with a prisma/schema.prisma, sized by the same tier map) and
+// reads max_connections from POOL_CHECK_DATABASE_URL. Exit codes:
+//   0 = within the 80% margin, 2 = over budget, 3 = could not verify,
+//   4 = a prisma workspace is neither in LIMITS nor QUIET_TIER_WORKSPACES
+//       (checked FIRST, before any DB access — classification is a code
+//       review problem, not a database problem).
+if (args.includes('--ci')) {
+  const schemaRel = execSync(
+    `find ${ROOT}/services ${ROOT}/apps -maxdepth 5 -path "*/prisma/schema.prisma" ` +
+      `-not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/generated/*" 2>/dev/null | sort`,
+    { encoding: 'utf8' }
+  )
+    .split('\n')
+    .filter(Boolean)
+    .map((p) => dirname(dirname(p)).slice(ROOT.length + 1));
+
+  if (schemaRel.length === 0) {
+    console.error(
+      'FAIL: no prisma/schema.prisma workspaces found — refusing to pass an unverifiable gate.'
+    );
+    process.exit(3);
+  }
+
+  // ── Classification gate: every workspace must be sized ON PURPOSE ──
+  // Explicit LIMITS entry or documented quiet-tier opt-in. Unknown
+  // workspaces fail the PR before any DB access, so the fix (add an entry
+  // with a one-line justification) is a code change reviewers can see.
+  const unknown = schemaRel.filter((rel) => classifyWorkspace(rel) === 'unknown');
+  if (unknown.length > 0) {
+    console.error(
+      `FAIL: ${unknown.length} prisma workspace(s) have no pool sizing decision:\n` +
+        unknown.map((rel) => `  - ${rel}`).join('\n')
+    );
+    console.error(
+      'Add an explicit entry to LIMITS (with a one-line why) or, for genuinely\n' +
+        'low-connection services, a documented line in QUIET_TIER_WORKSPACES —\n' +
+        'both in scripts/database/apply-pool-limits.mjs. New services must never\n' +
+        'inherit a pool size by accident.'
+    );
+    process.exit(4);
+  }
+
+  let budget = 0;
+  console.log('Worst-case pool budget by workspace (tier map × prisma schemas):');
+  for (const rel of schemaRel) {
+    const limit = limitFor(rel);
+    budget += limit;
+    const cls = classifyWorkspace(rel);
+    console.log(`  ${String(limit).padStart(2)}  ${rel}  [${cls}]`);
+  }
+  console.log(
+    `\nWorst-case pool budget across ${schemaRel.length} prisma workspaces: ${budget} connections`
+  );
+
+  const rawUrl =
+    process.env.POOL_CHECK_DATABASE_URL ||
+    'postgresql://azeebo:change-me-in-production@localhost:5432/postgres';
+  let maxConn;
+  try {
+    maxConn = execSync(`psql ${JSON.stringify(rawUrl)} -tAc "SHOW max_connections;"`, {
+      encoding: 'utf8',
+    }).trim();
+  } catch {
+    console.error(
+      'FAIL: cannot reach Postgres via POOL_CHECK_DATABASE_URL to read max_connections — failing closed.'
+    );
+    process.exit(3);
+  }
+  if (!/^\d+$/.test(maxConn)) {
+    console.error(
+      `FAIL: unexpected max_connections value ${JSON.stringify(maxConn)} — failing closed.`
+    );
+    process.exit(3);
+  }
+  console.log(`Live max_connections=${maxConn} -> budget uses ${budget}/${maxConn}`);
+  if (budget > Number(maxConn) * 0.8) {
+    console.error(
+      `FAIL: budget exceeds the 80% safety margin (${budget} > ${Math.floor(Number(maxConn) * 0.8)}).`
+    );
+    console.error(
+      "Lower the new service's connection_limit in apply-pool-limits.mjs (LIMITS/TIER_DEFAULTS) or raise max_connections."
+    );
+    process.exit(2);
+  }
+  console.log(
+    `Budget is within the 80% safety margin (${budget} <= ${Math.floor(Number(maxConn) * 0.8)}).`
+  );
+  process.exit(0);
+}
+
+function discoverEnvFiles() {
+  // Reuse the same discovery shape as the doc: services + apps .env with a
+  // DATABASE_URL, excluding client bundles and node_modules.
+  const out = execSync(
+    `find ${ROOT}/services ${ROOT}/apps -maxdepth 4 -name ".env" ` +
+      `-not -path "*/node_modules/*" -not -path "*/client/*" 2>/dev/null | sort`,
+    { encoding: 'utf8' }
+  )
+    .split('\n')
+    .filter((p) => p && existsSync(p));
+  return out.filter((p) => {
+    const content = readFileSync(p, 'utf8');
+    return /^DATABASE_URL=/m.test(content);
+  });
+}
+
+function limitFor(relPath) {
+  if (LIMITS[relPath] !== undefined) return LIMITS[relPath];
+  return TIER_DEFAULTS.quiet;
+}
+
+/** Append (or preserve) pool params on a postgres://(ql):// URL. */
+function applyParams(url, limit) {
+  const has = (key) => new RegExp(`[?&]${key}=`).test(url);
+  let next = url;
+  // An explicitly-set connection_limit is never overwritten (idempotency).
+  if (!has('connection_limit')) {
+    next += (next.includes('?') ? '&' : '?') + `connection_limit=${limit}`;
+  }
+  if (!has('pool_timeout')) {
+    next += `&pool_timeout=${POOL_TIMEOUT_MS}`;
+  }
+  if (!has('connect_timeout')) {
+    next += `&connect_timeout=${CONNECT_TIMEOUT_MS}`;
+  }
+  return next;
+}
+
+function redact(url) {
+  return url.replace(/(\/\/[^:/@]+:)[^@]+@/, '$1***@');
+}
+
+// ── Main ────────────────────────────────────────────────────────────────────
+
+const envFiles = discoverEnvFiles();
+if (envFiles.length === 0) {
+  console.error('No .env files with DATABASE_URL found — nothing to do.');
+  process.exit(1);
+}
+
+let changed = 0;
+let unchanged = 0;
+let totalBudget = 0;
+
+for (const file of envFiles) {
+  const relPath = file.slice(ROOT.length + 1).replace(/\/\.env$/, '');
+  const limit = limitFor(relPath);
+  const content = readFileSync(file, 'utf8');
+  const urlMatch = content.match(/^DATABASE_URL=(.+)$/m);
+  if (!urlMatch) {
+    console.log(`skip (no DATABASE_URL): ${relPath}`);
+    continue;
+  }
+  const url = urlMatch[1].trim();
+  const nextUrl = applyParams(url, limit);
+
+  if (nextUrl === url) {
+    unchanged += 1;
+    totalBudget += limit;
+    console.log(`unchanged  ${relPath}  (limit=${limit})`);
+    continue;
+  }
+
+  if (!DRY_RUN) {
+    writeFileSync(file, content.replace(/^DATABASE_URL=.+$/m, `DATABASE_URL=${nextUrl}`));
+  }
+  changed += 1;
+  totalBudget += limit;
+  console.log(`updated    ${relPath}  -> limit=${limit}  ${redact(nextUrl)}`);
+}
+
+console.log(
+  `\n${changed} updated, ${unchanged} already capped (${envFiles.length} env files)` +
+    (DRY_RUN ? ' [dry-run: nothing written]' : '')
+);
+console.log(`Worst-case pool budget across all services: ${totalBudget} connections`);
+
+if (CHECK) {
+  try {
+    const maxConn = execSync(
+      `PGPASSWORD='change-me-in-production' psql -h localhost -U postgres -d postgres -tAc "SHOW max_connections;"`,
+      { encoding: 'utf8' }
+    ).trim();
+    console.log(`Live max_connections=${maxConn} -> budget uses ${totalBudget}/${maxConn}`);
+    if (totalBudget > Number(maxConn) * 0.8) {
+      console.error(
+        'WARNING: budget exceeds 80% of max_connections. Lower per-service limits or raise max_connections.'
+      );
+      process.exitCode = 2;
+    } else {
+      console.log(
+        `Budget is within the 80% safety margin ` +
+          `(${totalBudget} <= ${Math.floor(Number(maxConn) * 0.8)}).`
+      );
+    }
+  } catch {
+    console.log('(could not read live max_connections — psql unavailable?)');
+  }
+}

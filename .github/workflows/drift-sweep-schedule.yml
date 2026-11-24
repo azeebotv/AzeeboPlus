@@ -1,0 +1,299 @@
+name: Drift Sweep (Weekly)
+
+# ── Purpose ────────────────────────────────────────────────────────────────
+# A weekly (and manually triggerable) run of the full drift sweep so
+# environment-level schema drift is reported even when no PR touches
+# migrations. Two legs:
+#
+#   1. Baseline (CI-direction): provision throwaway DBs from each service's
+#      migrations, then diff the provisioned DB against schema.prisma. This is
+#      the same check the prisma-live-drift job runs on every push to main —
+#      it catches missing/hand-edited migrations. Always runs.
+#
+#   2. Live-environment leg: diff the real staging (or production) database
+#      against schema.prisma. This is the check that currently only runs
+#      locally (scripts/drift-live-db.mjs against dev DBs) — it catches
+#      hand-run ALTERs / db push on the actual environment. Runs when the
+#      required DB credentials are configured; skips gracefully otherwise.
+#
+# Both legs are advisory (--advisory): the job reports drift but never fails
+# the build, so a weekly run can't block the repo. Drift diffs are uploaded as
+# artifacts scoped by leg + date so each weekly report is distinguishable.
+#
+#   3. Tracker staleness sweep: probe the production drift tracker's listed
+#      services against the live DB host and remove entries whose database no
+#      longer exists (decommissioned, not fixed), with an audit note in the
+#      issue. Runs under the azeebo-drift-bot App; independent of the live
+#      diff leg's credentials for the GITHUB side, but needs the production
+#      DB secrets to probe. Skips loudly when either is unconfigured.
+#
+# Usage:
+#   - Weekly: runs automatically on the schedule below (staging live-leg).
+#   - Manual: workflow_dispatch from Actions → "Run workflow" → pick a branch
+#     and environment (staging/production), or just run on main with defaults.
+#
+# Secrets / environments required for the live-environment leg:
+#   - A GitHub environment (e.g. "staging" or "production") with:
+#       DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME (or DB_NAME picked
+#       from the environment input). These are the same secrets database-backup
+#       and secret-rotation already use.
+#   - Without them, the live leg is skipped and the baseline leg still runs.
+# ===========================================================================
+
+on:
+  schedule:
+    # Weekly on Monday at 08:00 UTC. Runs after the 02:00 database backup and
+    # the 06:00 Monday security scan, so drift reports land before most of the
+    # week's work begins.
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch/tag/commit to run against (default: main)'
+        required: false
+        default: 'main'
+      environment:
+        description: 'Real database environment to diff against (staging/production). Leave empty to skip the live leg.'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      # The empty-string option previously here was rejected by GitHub's
+      # schema (actionlint: "string should not be empty"). Baseline-only
+      # dispatches now uncheck this boolean instead.
+      run_live:
+        description: 'Run the live-environment leg (uncheck for baseline only)'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  checks: write
+
+env:
+  NODE_VERSION: '22.16.0'
+  PNPM_VERSION: '10.33.2'
+
+jobs:
+  # ── Leg 1: Baseline — provision from migrations, diff against schema ─────
+  # Runs on every schedule / dispatch. Same as the prisma-live-drift job in
+  # ci.yml: provisions azeebo_<service> throwaway DBs by deploying each
+  # service's migrations, then diffs the provisioned DB against schema.prisma.
+  # Advisory (--advisory): reports drift, never fails the build.
+  #
+  # Output captured: the script's stdout is saved to
+  # .drift-live-out/baseline.log (also uploaded as an artifact) so the summary
+  # step can parse the canonical "Summary: ..." line plus the per-service status
+  # lines. Per-service drift SQL files are written by the script into the same
+  # dir and uploaded with the artifact.
+  drift-baseline:
+    name: Drift Baseline (provision + diff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: azeebo
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: ${{ github.event.inputs.ref || 'main' }}
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Provision DBs from migrations and diff against schema
+        run: node scripts/drift-live-db.mjs --seed --advisory > .drift-live-out/baseline.log 2>&1
+        env:
+          LIVE_DB_URL_BASE: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432
+      - name: Surface baseline summary
+        if: always()
+        run: |
+          set +e
+          echo '## Drift Baseline — provision + diff' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f .drift-live-out/baseline.log ]; then
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            sed -n '1,200p' .drift-live-out/baseline.log >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '_Log not produced (run may have been interrupted)._' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload baseline drift artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: drift-baseline-${{ github.run_id }}
+          path: .drift-live-out/
+          retention-days: 21
+
+  # ── Leg 2: Live-environment drift — diff real DB against schema.prisma ───
+  # Diffs the real staging/production database(s) against schema.prisma. This
+  # is the check that catches hand-run ALTERs / `db push` on the actual
+  # environment — the thing the local sweep does against dev DBs, now running
+  # weekly.
+  #
+  # How it works: LIVE_DB_URL_BASE points at the environment's DB host; the sweep
+  # discovers every service from schema.prisma + its .env, and resolveDbUrl()
+  # maps each to the azeebo_<service> DB on that host (repo .envs carry the
+  # change-me placeholder for 25 of 26 services, so they fall back to the
+  # convention). Services whose azeebo_<service> DB exists on the environment
+  # get a real diff; the rest become NO-DB in the report.
+  #
+  # Gated + graceful-skip: the DB creds are passed as step env vars (not a
+  # job-level environment), so the job never hard-fails when the staging
+  # environment / secrets aren't configured yet — the live leg is silently
+  # skipped and the baseline report above is still produced. When creds ARE
+  # present, the leg runs. Manual dispatch can target production by picking it
+  # in the environment input; in that case, protect the production DB secrets
+  # with a GitHub environment + required reviewers before enabling that option.
+  #
+  # Advisory (--advisory): reports drift, never fails the build.
+  drift-live:
+    name: Drift — Live (${{ github.event.inputs.environment || 'staging' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [drift-baseline]
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: ${{ github.event.inputs.ref || 'main' }}
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Check live-DB credentials
+        id: creds
+        run: |
+          missing=0
+          for v in DB_HOST DB_PORT DB_USER DB_PASSWORD; do
+            if [ -z "${!v+x}" ] || [ -z "${!v}" ]; then
+              echo "missing-cred: $v"
+              missing=1
+            fi
+          done
+          echo "have-creds=$([ $missing -eq 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Diff live environment against schema.prisma
+        if: steps.creds.outputs.have-creds == 'true'
+        env:
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+          LIVE_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          echo "Diffing live environment (${{ github.event.inputs.environment }}) against schema.prisma..."
+          node scripts/drift-live-db.mjs --advisory > .drift-live-out/live.log 2>&1
+      - name: Surface live-environment summary
+        if: always()
+        run: |
+          env_name=${{ github.event.inputs.environment }}
+          [ -z "$env_name" ] && env_name='staging'
+          echo "## Drift — Live Environment (\`$env_name\`)" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f .drift-live-out/live.log ]; then
+            echo '\`\`\`' >> "$GITHUB_STEP_SUMMARY"
+            sed -n '1,200p' .drift-live-out/live.log >> "$GITHUB_STEP_SUMMARY"
+            echo '\`\`\`' >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.creds.outputs.have-creds }}" = 'true' ]; then
+            echo '_Live leg ran but produced no log (interrupted)._' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '_Live leg skipped: DB credentials for $env_name are not configured in this repo. Configure DB_HOST / DB_PORT / DB_USER / DB_PASSWORD (and a GitHub environment if you want review gates) to enable live drift reporting._' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload live-environment drift artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: drift-live-${{ github.event.inputs.environment || 'staging' }}-${{ github.run_id }}
+          path: .drift-live-out/
+          retention-days: 21
+
+  # ── Leg 3: Tracker staleness sweep ─────────────────────────────────────
+  # The production drift tracking issue (schema-lock-nightly.yml) can keep a
+  # service listed forever if its database was decommissioned while it
+  # carried a blocking row. This weekly sweep (scripts/sweep-drift-tracker.mjs)
+  # probes each listed service against the live DB host using the SAME
+  # naming convention as the nightly, removes genuinely decommissioned
+  # entries (database gone) with an audit note, and aborts rather than
+  # guessing when the host is unverifiable. Read-only against databases.
+  #
+  # Identity: edits happen under the azeebo-drift-bot App token (workflow
+  # tokens retrigger workflows / look like CI activity). Unconfigured App or
+  # missing DB secrets → visible skip, never a fallback.
+  drift-tracker-sweep:
+    name: Sweep production drift tracker (staleness)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    steps:
+      - name: Check DB credentials for the probe
+        id: creds
+        run: |
+          missing=0
+          for v in DB_HOST DB_PORT DB_USER DB_PASSWORD; do
+            if [ -z "${!v+x}" ] || [ -z "${!v}" ]; then
+              echo "missing-cred: $v"
+              missing=1
+            fi
+          done
+          if [ "$missing" = "1" ]; then
+            echo "## Drift tracker sweep" >> "$GITHUB_STEP_SUMMARY"
+            echo "_Skipped: DB_HOST / DB_PORT / DB_USER / DB_PASSWORD are not configured for the production environment — nowhere to probe._" >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Tracker sweep skipped — production DB credentials not configured"
+          fi
+          echo "have-creds=$([ $missing -eq 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      # Same secret-in-conditional workaround as schema-lock-nightly.yml:
+      # secrets.* is forbidden in if:, so the guard evaluates into an env
+      # var here and the mint step branches on the output.
+      - name: Check drift bot configured
+        id: drift-bot-config
+        if: always() && steps.creds.outputs.have-creds == 'true' && vars.DRIFT_BOT_APP_ID != ''
+        env:
+          DRIFT_BOT_KEY_SET: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY != '' }}
+        run: echo "configured=${{ env.DRIFT_BOT_KEY_SET == 'true' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip notice (App unconfigured)
+        if: steps.drift-bot-config.outputs.configured != 'true'
+        run: |
+          echo "## Drift tracker sweep" >> "$GITHUB_STEP_SUMMARY"
+          echo "_Skipped: azeebo-drift-bot App is not configured (vars.DRIFT_BOT_APP_ID / secrets.DRIFT_BOT_APP_PRIVATE_KEY) — see docs/DRIFT_BOT_APP.md._" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Mint azeebo-drift-bot App token
+        id: app-token
+        if: ${{ always() && steps.drift-bot-config.outputs.configured == 'true' }}
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
+        with:
+          app-id: ${{ vars.DRIFT_BOT_APP_ID }}
+          private-key: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        if: steps.creds.outputs.have-creds == 'true' && steps.drift-bot-config.outputs.configured == 'true'
+
+      # Pure Node stdlib + psql — no dependency install needed.
+      - name: Sweep the tracker (probe + remove decommissioned entries)
+        if: steps.creds.outputs.have-creds == 'true' && steps.drift-bot-config.outputs.configured == 'true'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          LIVE_DB_URL_BASE: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}
+        run: node scripts/sweep-drift-tracker.mjs

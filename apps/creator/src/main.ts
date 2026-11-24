@@ -51,7 +51,7 @@ async function bootstrap(): Promise<void> {
   }
   const allowedOrigins = process.env.CREATOR_ALLOWED_ORIGINS?.split(',') || [
     'http://localhost:4014',
-    'http://localhost:4104',
+    'http://localhost:5174',
   ];
 
   configureCors(app, {

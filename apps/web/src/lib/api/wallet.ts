@@ -1,5 +1,6 @@
 // Wallet domain methods
 
+import { generateIdempotencyKey } from './base';
 import type {
   ApiResponse,
   PaginatedResponse,
@@ -42,23 +43,29 @@ export function createWalletMethods(client: RequestClient) {
       });
     },
 
+    // The server requires a client idempotency key on withdraw/transfer
+    // (AUD-03). Callers performing a user-visible action should generate one
+    // key per intent and pass it here so their retries dedupe; the default
+    // per-call key only satisfies the contract.
     withdraw: async (
       amount: number,
-      bankDetails: Record<string, string>
+      bankDetails: Record<string, string>,
+      idempotencyKey: string = generateIdempotencyKey()
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>('/api/v1/wallet/withdraw', {
         method: 'POST',
-        body: JSON.stringify({ amount, bankDetails }),
+        body: JSON.stringify({ amount, bankDetails, idempotencyKey }),
       });
     },
 
     transfer: async (
       amount: number,
-      recipientId: string
+      recipientId: string,
+      idempotencyKey: string = generateIdempotencyKey()
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>('/api/v1/wallet/transfer', {
         method: 'POST',
-        body: JSON.stringify({ amount, recipientId }),
+        body: JSON.stringify({ amount, recipientId, idempotencyKey }),
       });
     },
 
@@ -68,30 +75,6 @@ export function createWalletMethods(client: RequestClient) {
         {},
         WALLET_READ_RETRY
       );
-    },
-
-    getEarnings: async (params: {
-      range: string;
-    }): Promise<
-      ApiResponse<{
-        totalEarnings: number;
-        pendingEarnings: number;
-        withdrawableBalance: number;
-        withdrawableChangePercentage: number;
-        avgEarningPerContent: number;
-        avgEarningChangePercentage: number;
-        earningsTrend: { date: string; amount: number }[];
-      }>
-    > => {
-      return client.request<{
-        totalEarnings: number;
-        pendingEarnings: number;
-        withdrawableBalance: number;
-        withdrawableChangePercentage: number;
-        avgEarningPerContent: number;
-        avgEarningChangePercentage: number;
-        earningsTrend: { date: string; amount: number }[];
-      }>(`/api/v1/wallet/earnings?range=${params.range}`, {}, WALLET_READ_RETRY);
     },
   };
 }

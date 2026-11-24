@@ -10,12 +10,14 @@ import {
   Request,
   Param,
   Query,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, AdminGuard, Public } from '@azeebo/security';
+import { FeatureFlag, FeatureFlagGuard, realityFlags } from '@azeebo/feature-flags';
 
 import { RealityService } from './reality.service.js';
+import { RealityGateway } from './reality.gateway.js';
+import { VoteFraudDetectionService } from './vote-fraud-detection.service.js';
 import { RealityResponse } from './interfaces/reality-response.interface.js';
 import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto.js';
 import {
@@ -33,8 +35,13 @@ import { CreateCommentDto, ShareShowDto } from './dto/social.dto.js';
 @ApiBearerAuth()
 @Controller('reality')
 export class RealityController {
-  constructor(@Inject(RealityService) private readonly realityService: RealityService) {}
+  constructor(
+    @Inject(RealityService) private readonly realityService: RealityService,
+    @Inject(RealityGateway) private readonly gateway: RealityGateway,
+    @Inject(VoteFraudDetectionService) private readonly fraudDetection: VoteFraudDetectionService
+  ) {}
 
+  @Public()
   @Get('shows')
   @Get('shows/current')
   @Get('featured')
@@ -42,29 +49,36 @@ export class RealityController {
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Reality shows / current / featured' })
   @ApiResponse({ status: 200, description: 'Reality shows' })
-  async getShows(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
+  async listShows(): Promise<RealityResponse> {
+    return this.realityService.listShows();
   }
 
+  async getShows(): Promise<RealityResponse> {
+    return this.listShows();
+  }
+
+  @Public()
   @Get('contestants')
   @ApiOperation({ summary: 'All contestants across shows' })
   @ApiResponse({ status: 200, description: 'Contestants list' })
   async getAllContestants(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
+    return this.realityService.listAllContestants();
   }
 
+  @Public()
   @Get('live-chat/messages')
   @ApiOperation({ summary: 'Live chat message history' })
   @ApiResponse({ status: 200, description: 'Chat messages' })
   async getLiveChatMessages(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
+    return { success: true, data: { messages: [] } };
   }
 
+  @Public()
   @Get('live-chat/participants')
   @ApiOperation({ summary: 'Live chat participants' })
   @ApiResponse({ status: 200, description: 'Chat participants' })
   async getLiveChatParticipants(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
+    return { success: true, data: { participants: [] } };
   }
 
   @Post('live-chat/send')
@@ -72,21 +86,18 @@ export class RealityController {
   @ApiResponse({ status: 201, description: 'Message sent' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async sendLiveChatMessage(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
+    return { success: true, data: { sent: true } };
   }
 
+  @Public()
   @Get('votes/quantity')
   @ApiOperation({ summary: 'Get vote quantities/pricing' })
   @ApiResponse({ status: 200, description: 'Vote quantities' })
   async getVoteQuantities(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
-  }
-  @ApiOperation({ summary: 'List reality shows' })
-  @ApiResponse({ status: 200, description: 'Reality shows' })
-  async listShows(): Promise<RealityResponse> {
-    return this.realityService.listShows();
+    return this.realityService.getPricing();
   }
 
+  @Public()
   @Get('shows/:showId')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
@@ -126,6 +137,7 @@ export class RealityController {
     return this.realityService.deleteShow(showId);
   }
 
+  @Public()
   @Get('shows/:showId/episodes')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -167,13 +179,14 @@ export class RealityController {
     return this.realityService.deleteEpisode(episodeId);
   }
 
+  @Public()
   @Get('episodes/:episodeId')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get episode detail' })
   @ApiResponse({ status: 200, description: 'Episode detail' })
   @ApiResponse({ status: 404, description: 'Episode not found' })
-  async getEpisode(@Param('episodeId', ParseUUIDPipe) episodeId: string): Promise<RealityResponse> {
+  async getEpisode(@Param('episodeId') episodeId: string): Promise<RealityResponse> {
     return this.realityService.getEpisode(episodeId);
   }
 
@@ -189,6 +202,7 @@ export class RealityController {
     return this.realityService.createSeason(showId, body);
   }
 
+  @Public()
   @Get('shows/:showId/contestants')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -230,18 +244,18 @@ export class RealityController {
     return this.realityService.deleteContestant(contestantId);
   }
 
+  @Public()
   @Get('contestants/:contestantId')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get contestant detail' })
   @ApiResponse({ status: 200, description: 'Contestant detail' })
   @ApiResponse({ status: 404, description: 'Contestant not found' })
-  async getContestant(
-    @Param('contestantId', ParseUUIDPipe) contestantId: string
-  ): Promise<RealityResponse> {
+  async getContestant(@Param('contestantId') contestantId: string): Promise<RealityResponse> {
     return this.realityService.getContestant(contestantId);
   }
 
+  @Public()
   @Get('shows/:showId/leaderboard')
   @UseGuards(RateLimitGuard)
   @RateLimit(60, 60000)
@@ -251,26 +265,28 @@ export class RealityController {
     return this.realityService.getLeaderboard(showId);
   }
 
+  @Public()
   @Get('shows/:showId/votes')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'List votes for a show' })
   @ApiResponse({ status: 200, description: 'Paginated vote list' })
   async listVotesForShow(
-    @Param('showId', ParseUUIDPipe) showId: string,
+    @Param('showId') showId: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string
   ): Promise<RealityResponse> {
     return this.realityService.listVotesForShow(showId, Number(page) || 1, Number(limit) || 20);
   }
 
+  @Public()
   @Get('shows/:showId/predictions')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'List predictions for a show' })
   @ApiResponse({ status: 200, description: 'Paginated prediction list' })
   async listPredictionsForShow(
-    @Param('showId', ParseUUIDPipe) showId: string,
+    @Param('showId') showId: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string
   ): Promise<RealityResponse> {
@@ -289,10 +305,22 @@ export class RealityController {
     return this.realityService.getShowAnalytics(showId);
   }
 
+  @Public()
+  @Get('shows/:showId/viewers')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(60, 60000)
+  @ApiOperation({ summary: 'Get current viewer count for a show' })
+  @ApiResponse({ status: 200, description: 'Viewer count' })
+  async getViewerCount(@Param('showId') showId: string): Promise<RealityResponse> {
+    const count = await this.gateway.getViewerCount(showId);
+    return { success: true, data: { count } };
+  }
+
   // NOTE: This is an alias for /votes with a stricter rate limit (10/min vs 50/min).
   // Consider removing this endpoint and using /votes with a consistent rate limit.
   @Post('shows/:showId/vote')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(realityFlags.votingEnabled)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Vote for contestant (alias for /votes)' })
   @ApiResponse({ status: 201, description: 'Vote submitted' })
@@ -309,20 +337,38 @@ export class RealityController {
   }
 
   @Post('votes')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(realityFlags.votingEnabled)
   @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit vote' })
   @ApiResponse({ status: 201, description: 'Vote submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitVote(
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; ip?: string } },
     @Body() body: CastVoteDto
   ): Promise<RealityResponse> {
+    // Run fraud detection before submitting vote
+    const fraudResult = await this.fraudDetection.checkVote({
+      userId: req.user.id,
+      showId: body.showId,
+      contestantId: body.contestantId,
+      voteType: 'regular',
+      ipAddress: req.user.ip,
+    });
+
+    if (!fraudResult.passed) {
+      return {
+        success: false,
+        error: { code: 'FRAUD_DETECTED', message: `Vote blocked: ${fraudResult.flags.join(', ')}` },
+      } as RealityResponse;
+    }
+
     return this.realityService.submitVote(req.user.id, body);
   }
 
   @Post('votes/quantity')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(realityFlags.votingEnabled)
   @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit multiple votes with quantity selector' })
   @ApiResponse({ status: 201, description: 'Votes submitted' })
@@ -334,7 +380,8 @@ export class RealityController {
   }
 
   @Post('supervotes')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(realityFlags.votingEnabled)
   @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit supervote' })
   @ApiResponse({ status: 201, description: 'Supervote submitted' })
@@ -347,7 +394,8 @@ export class RealityController {
   }
 
   @Post('predictions')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(realityFlags.predictionsEnabled)
   @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit prediction' })
   @ApiResponse({ status: 201, description: 'Prediction submitted' })
@@ -360,6 +408,8 @@ export class RealityController {
   }
 
   @Get('predictions/:showId')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(realityFlags.predictionsEnabled)
   @ApiOperation({ summary: 'Get prediction dashboard' })
   @ApiResponse({ status: 200, description: 'Prediction dashboard' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -370,6 +420,7 @@ export class RealityController {
     return this.realityService.getPredictionDashboard(req.user.id, showId);
   }
 
+  @Public()
   @Get('clips')
   @ApiOperation({ summary: 'Get reality clips feed' })
   @ApiResponse({ status: 200, description: 'Clips feed' })
@@ -384,6 +435,7 @@ export class RealityController {
     return this.realityService.getWalletBalance(req.user.id);
   }
 
+  @Public()
   @Get('pricing')
   @ApiOperation({ summary: 'Get voting pricing' })
   @ApiResponse({ status: 200, description: 'Pricing info' })
@@ -391,6 +443,7 @@ export class RealityController {
     return this.realityService.getPricing();
   }
 
+  @Public()
   @Get('premium-extras')
   @ApiOperation({ summary: 'Get premium extras' })
   @ApiResponse({ status: 200, description: 'Premium extras list' })
@@ -434,6 +487,15 @@ export class RealityController {
     return this.realityService.detectVoteFraud(showId);
   }
 
+  @Get('votes/:voteId/audit')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Get vote audit trail with integrity hash' })
+  @ApiResponse({ status: 200, description: 'Vote audit trail' })
+  async getVoteAuditTrail(@Param('voteId') voteId: string) {
+    const trail = await this.fraudDetection.getVoteAuditTrail(voteId);
+    return { success: true, data: trail };
+  }
+
   @Get('shows/:showId/fraud/supervotes')
   @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Detect supervote fraud for a show' })
@@ -472,6 +534,7 @@ export class RealityController {
     return this.realityService.likeShow(req.user.id, showId);
   }
 
+  @Public()
   @Get('shows/:showId/likes')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -494,6 +557,7 @@ export class RealityController {
     return this.realityService.addComment(req.user.id, showId, body.content);
   }
 
+  @Public()
   @Get('shows/:showId/comments')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)

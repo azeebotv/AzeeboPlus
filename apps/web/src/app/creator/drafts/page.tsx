@@ -1,14 +1,18 @@
 'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, api } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton } from '@azeebo/ui/web';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { FileText, Edit3, Trash2, Plus, Film } from 'lucide-react';
 
 interface DraftContent {
   id: string;
@@ -40,7 +44,7 @@ export default function DraftsPage(): React.JSX.Element {
     queryKey: ['creator', 'drafts'],
     queryFn: async () => {
       const response = await apiFetch<DraftContent[] | { items?: DraftContent[] }>(
-        '/v1/content/me?status=draft'
+        '/v1/creator/drafts'
       );
       if (response.success && response.data) {
         const items: DraftContent[] = Array.isArray(response.data)
@@ -72,171 +76,115 @@ export default function DraftsPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 1000,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <div style={{ marginBottom: 32 }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: 14,
-              marginBottom: 16,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
+      <PageHero
+        badge="Work in Progress"
+        title="Unpublished Drafts"
+        description="Resume working on story drafts, character profiles, and pending video uploads."
+        actions={
+          <motion.button
+            type="button"
+            onClick={() => router.push('/creator/upload')}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="az-btn-primary flex items-center gap-2"
           >
-            <span>←</span> Back
-          </button>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Drafts</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-            Continue editing your unpublished content
-          </p>
-        </div>
+            <Plus className="w-4 h-4" />
+            New Content
+          </motion.button>
+        }
+      />
 
+      <div className="max-w-4xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
         {isLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="az-glass"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: 16,
-                  borderRadius: 16,
-                }}
-              >
-                <Skeleton width="120px" height="68px" borderRadius="8px" />
-                <div style={{ flex: 1 }}>
-                  <Skeleton width="60%" height="16px" className="mb-2" />
-                  <Skeleton width="40%" height="12px" />
-                </div>
-                <Skeleton width="80px" height="32px" borderRadius="999px" />
+              <div key={i} className="az-glass p-5 border border-az-glass-border space-y-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-32" />
               </div>
             ))}
           </div>
         ) : drafts.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📝</div>
-            <h3 style={{ fontSize: 18, marginBottom: 8 }}>No drafts yet</h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
-              Start creating content to see your drafts here
+          <div className="az-glass p-16 text-center border border-az-glass-border">
+            <FileText className="w-12 h-12 text-az-ink/30 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-az-ink mb-2">No Drafts Stored</h3>
+            <p className="text-xs text-az-ink/50 max-w-sm mx-auto mb-6">
+              All your creations have either been published or not yet started.
             </p>
-            <a
-              href="/creator/content-manager"
-              style={{
-                display: 'inline-block',
-                padding: '12px 32px',
-                background:
-                  'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-                borderRadius: 999,
-                color: 'var(--brand-white)',
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
+            <button
+              type="button"
+              onClick={() => router.push('/creator/upload')}
+              className="az-btn-primary"
             >
-              Create Content
-            </a>
+              Start New Creation
+            </button>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="space-y-3">
             {drafts.map((draft: DraftContent) => (
-              <div
-                key={draft.id}
-                className="az-glass"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: 16,
-                  borderRadius: 16,
-                }}
-              >
-                {draft.thumbnail && (
-                  <OptimizedImage
-                    src={draft.thumbnail}
-                    alt={draft.title}
-                    width={120}
-                    height={68}
-                    className="object-cover rounded-lg flex-shrink-0"
-                  />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{draft.title}</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                    Last edited {new Date(draft.lastEdited).toLocaleDateString()}
-                    {draft.duration ? ` · ${Math.floor(draft.duration / 60)}m` : ''}
-                  </p>
+              <ScrollReveal key={draft.id}>
+                <div className="az-glass p-4 sm:p-5 border border-az-glass-border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <div className="w-20 sm:w-24 aspect-video rounded-xl bg-az-glass-fill relative overflow-hidden flex-shrink-0 border border-az-glass-border">
+                      {draft.thumbnail ? (
+                        <OptimizedImage
+                          src={draft.thumbnail}
+                          alt={draft.title}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-az-ink/30">
+                          <Film className="w-5 h-5" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-bold text-az-ink truncate">{draft.title}</h3>
+                      <p className="text-xs text-az-ink/40 mt-1">
+                        Last edited {new Date(draft.lastEdited).toLocaleDateString()}
+                        {draft.duration ? ` • ${Math.floor(draft.duration / 60)}m` : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/creator/upload?edit=${draft.id}`)}
+                      className="az-btn-primary flex items-center gap-1.5"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      Resume Edit
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Delete draft"
+                      onClick={() => {
+                        setConfirmDialog({
+                          open: true,
+                          title: 'Purge Draft',
+                          message: 'Are you sure you want to permanently delete this draft?',
+                          destructive: true,
+                          onConfirm: () => {
+                            setConfirmDialog((prev) => ({ ...prev, open: false }));
+                            deleteMutation.mutate(draft.id);
+                          },
+                        });
+                      }}
+                      className="p-2 rounded-full bg-az-error-500/10 border border-az-error-500/20 text-az-error-400 hover:bg-az-error-500/20 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                  <a
-                    href={`/creator/upload?edit=${draft.id}`}
-                    style={{
-                      padding: '8px 20px',
-                      borderRadius: 999,
-                      background:
-                        'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-                      color: 'var(--brand-white)',
-                      fontWeight: 600,
-                      fontSize: 14,
-                      textDecoration: 'none',
-                    }}
-                  >
-                    Edit
-                  </a>
-                  <button
-                    onClick={() => {
-                      setConfirmDialog({
-                        open: true,
-                        title: 'Delete Draft',
-                        message: 'Are you sure you want to delete this draft?',
-                        destructive: true,
-                        onConfirm: () => {
-                          setConfirmDialog((prev) => ({ ...prev, open: false }));
-                          deleteMutation.mutate(draft.id);
-                        },
-                      });
-                    }}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: 999,
-                      border: '1px solid var(--brand-red)',
-                      background: 'transparent',
-                      color: 'var(--brand-red)',
-                      fontWeight: 500,
-                      fontSize: 14,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         )}
-      </main>
-      <AppFooter />
+      </div>
+
       <ConfirmDialog
         open={confirmDialog.open}
         title={confirmDialog.title}
@@ -245,6 +193,6 @@ export default function DraftsPage(): React.JSX.Element {
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
       />
-    </div>
+    </PageShell>
   );
 }

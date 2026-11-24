@@ -10,19 +10,25 @@ import {
   Post,
   Delete,
   Param,
-  ParseUUIDPipe,
   Query,
   UnauthorizedException,
+  UseInterceptors,
+  UploadedFile,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 import { UsersService } from './users.service.js';
+import { AvatarService } from './avatar.service.js';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto.js';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto.js';
 import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto.js';
 import { ContentIdDto } from './dto/content-id.dto.js';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { FeatureFlag, FeatureFlagGuard, userFlags } from '@azeebo/feature-flags';
 
 interface AuthenticatedRequest {
   user: {
@@ -36,7 +42,10 @@ interface AuthenticatedRequest {
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(@Inject(UsersService) private readonly usersService: UsersService) {}
+  constructor(
+    @Inject(UsersService) private readonly usersService: UsersService,
+    @Inject(AvatarService) private readonly avatarService: AvatarService
+  ) {}
 
   private getUserId(req: AuthenticatedRequest): string {
     const userId = req.user?.sub;
@@ -45,6 +54,56 @@ export class UsersController {
     }
     return userId;
   }
+  @Post('me/avatar')
+  @UseInterceptors(FileInterceptor('avatar'))
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 3600000)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Upload avatar image' })
+  @ApiResponse({ status: 200, description: 'Avatar uploaded' })
+  @ApiResponse({ status: 400, description: 'Invalid file' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async uploadAvatar(
+    @Request() req: AuthenticatedRequest,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    if (!file) {
+      throw new UnauthorizedException('No file provided');
+    }
+    const result = await this.avatarService.uploadAvatar(this.getUserId(req), {
+      buffer: file.buffer,
+      mimetype: file.mimetype,
+      size: file.size,
+      originalname: file.originalname,
+    });
+    return { success: true, data: result };
+  }
+
+  @Delete('me/avatar')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 3600000)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete avatar image' })
+  @ApiResponse({ status: 200, description: 'Avatar deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async deleteAvatar(@Request() req: AuthenticatedRequest) {
+    await this.avatarService.deleteAvatar(this.getUserId(req));
+    return { success: true };
+  }
+
+  @Get('me/avatar/upload-url')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 3600000)
+  @ApiOperation({ summary: 'Get pre-signed upload URL for avatar' })
+  @ApiResponse({ status: 200, description: 'Upload URL generated' })
+  async getAvatarUploadUrl(
+    @Request() req: AuthenticatedRequest,
+    @Query('format') format: string = 'image/jpeg'
+  ) {
+    const result = await this.avatarService.getUploadUrl(this.getUserId(req), format);
+    return { success: true, data: result };
+  }
+
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'User profile' })
@@ -76,27 +135,31 @@ export class UsersController {
   }
 
   @Post(':id/follow')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(userFlags.followSystem)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Follow a user' })
   @ApiResponse({ status: 201, description: 'User followed' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async followUser(@Request() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
+  async followUser(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.usersService.followUser(this.getUserId(req), id);
   }
 
   @Delete(':id/follow')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @FeatureFlag(userFlags.followSystem)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Unfollow a user' })
   @ApiResponse({ status: 200, description: 'User unfollowed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async unfollowUser(@Request() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
+  async unfollowUser(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.usersService.unfollowUser(this.getUserId(req), id);
   }
 
   @Public()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.followSystem)
   @Get(':id/followers')
   @ApiOperation({ summary: 'Get user followers' })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -113,6 +176,8 @@ export class UsersController {
   }
 
   @Public()
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.followSystem)
   @Get(':id/following')
   @ApiOperation({ summary: 'Get users being followed' })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -163,6 +228,22 @@ export class UsersController {
     return this.usersService.getWatchHistory(this.getUserId(req), Number(page), safeLimit);
   }
 
+  @Post('me/history')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Record a watch-history entry (upsert)' })
+  @ApiResponse({ status: 200, description: 'Watch history updated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async addToWatchHistory(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { contentId: string; contentType?: string; universe?: string }
+  ): Promise<unknown> {
+    if (!body?.contentId) {
+      return { success: false, message: 'contentId is required' };
+    }
+    await this.usersService.addWatchHistoryEntry(this.getUserId(req), body);
+    return { success: true, message: 'Watch history updated' };
+  }
+
   @Get('me/saved')
   @ApiOperation({ summary: 'Get user saved items' })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -195,12 +276,14 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unsaveItem(
     @Request() req: AuthenticatedRequest,
-    @Param('contentId', ParseUUIDPipe) contentId: string
+    @Param('contentId') contentId: string
   ): Promise<{ message: string }> {
     return this.usersService.unsaveItem(this.getUserId(req), contentId);
   }
 
   @Get('me/universe-affinity')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.universeAffinity)
   @ApiOperation({ summary: 'Get user universe affinity' })
   @ApiResponse({ status: 200, description: 'Universe affinity' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -210,6 +293,8 @@ export class UsersController {
   }
 
   @Patch('me/universe-affinity')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.universeAffinity)
   @ApiOperation({ summary: 'Update user universe affinity' })
   @ApiResponse({ status: 200, description: 'Universe affinity updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -251,6 +336,8 @@ export class UsersController {
   }
 
   @Get('me/continue-watching')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.continueWatching)
   @ApiOperation({ summary: 'Get continue watching list' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Continue watching items' })
@@ -274,6 +361,8 @@ export class UsersController {
   }
 
   @Put('me/privacy-settings')
+  @UseGuards(FeatureFlagGuard)
+  @FeatureFlag(userFlags.privacySettingsV2)
   @ApiOperation({ summary: 'Update user privacy settings' })
   @ApiResponse({ status: 200, description: 'Privacy settings updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -284,5 +373,33 @@ export class UsersController {
   ) {
     const result = await this.usersService.updatePrivacySettings(this.getUserId(req), settings);
     return ApiResponseWrapper.success((result as { data: unknown }).data ?? result);
+  }
+
+  @Delete('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request account erasure (NDPA / GDPR Right to Erasure)' })
+  @ApiResponse({ status: 200, description: 'Account scheduled for deletion' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async deleteAccount(@Request() req: AuthenticatedRequest, @Body('reason') reason?: string) {
+    const result = await this.usersService.scheduleDataDeletion(this.getUserId(req), reason);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get('me/export')
+  @ApiOperation({ summary: 'Export user data archive (Data Portability)' })
+  @ApiResponse({ status: 200, description: 'User data archive package' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async exportUserData(@Request() req: AuthenticatedRequest) {
+    const result = await this.usersService.exportUserData(this.getUserId(req));
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get('me/deletion-status')
+  @ApiOperation({ summary: 'Get status of scheduled account deletion' })
+  @ApiResponse({ status: 200, description: 'Deletion status' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getDeletionStatus(@Request() req: AuthenticatedRequest) {
+    const result = await this.usersService.getDeletionStatus(this.getUserId(req));
+    return ApiResponseWrapper.success(result);
   }
 }

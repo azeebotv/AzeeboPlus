@@ -7,6 +7,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl   = env("DIRECT_DATABASE_URL")
 }
 
 // Stub model for cross-service references
@@ -33,9 +34,11 @@ model Movie {
   status      String // draft, published, archived
   viewCount   Int      @default(0)
   metadata    Json?
+  genreId     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  genre          Genre?          @relation(fields: [genreId], references: [id])
   rentals        Rental[]
   watchlistItems WatchlistItem[]
   viewingWindows ViewingWindow[]
@@ -45,6 +48,23 @@ model Movie {
   @@index([universeId])
   @@index([creatorId])
   @@index([status])
+  @@index([genreId])
+}
+
+model Genre {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  movies Movie[]
+
+  @@map("genres")
 }
 
 model Rental {
