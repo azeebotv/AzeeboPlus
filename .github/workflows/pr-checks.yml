@@ -2,7 +2,7 @@ name: PR Checks
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, Dev-Branch, Major-Upgrade]
 
 env:
   NODE_VERSION: '22.16.0'

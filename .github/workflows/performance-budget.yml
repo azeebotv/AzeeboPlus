@@ -2,9 +2,9 @@ name: Performance Budget
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, Dev-Branch, Major-Upgrade]
   pull_request:
-    branches: [main]
+    branches: [main, Dev-Branch, Major-Upgrade]
 
 env:
   NODE_VERSION: '22.16.0'

@@ -2,9 +2,9 @@ name: Supply Chain Security
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, Dev-Branch, Major-Upgrade]
   pull_request:
-    branches: [main, develop]
+    branches: [main, Dev-Branch, Major-Upgrade]
   release:
     types: [published]
 
@@ -96,7 +96,7 @@ jobs:
     needs: [vulnerability-scan, sbom-generation]
     permissions:
       id-token: write # Required for SLSA provenance
-      contents: write
+      contents: read
       attestations: write
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7

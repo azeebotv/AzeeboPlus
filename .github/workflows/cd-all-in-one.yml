@@ -114,7 +114,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-and-push]
     timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
     steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Test image starts and health endpoint responds
         run: |
           echo "==> Pulling image..."

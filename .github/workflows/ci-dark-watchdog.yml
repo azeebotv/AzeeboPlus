@@ -38,7 +38,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          # Narrow the sweep to the long-lived branch carrying current work.
-          # Unset → repo-wide (main, develop, and PR-head batteries).
-          WATCHDOG_BRANCH: Major-Upgrade
         run: node scripts/ci-dark-watchdog.mjs

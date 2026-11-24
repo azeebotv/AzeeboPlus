@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, Dev-Branch, Major-Upgrade]
 
 env:
   NODE_VERSION: '22.16.0'
@@ -184,11 +184,11 @@ jobs:
       - name: Build admin client
         run: pnpm --filter @azeebo/admin run build:client
       - name: Run admin E2E tests
-        run: pnpm --filter @azeebo/admin test:e2e -- --project=chromium
+        run: pnpm --filter @azeebo/admin test:e2e --project=chromium
       - name: Build creator client
         run: pnpm --filter @azeebo/creator run build:client
       - name: Run creator E2E tests
-        run: pnpm --filter @azeebo/creator test:e2e -- --project=chromium
+        run: pnpm --filter @azeebo/creator test:e2e --project=chromium
 
   web-e2e:
     name: E2E Tests (Web App — Playwright)
@@ -208,7 +208,7 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm --filter @azeebo/web exec playwright install chromium --with-deps
       - name: Run web E2E tests (Chromium only on CI)
-        run: pnpm --filter @azeebo/web test:e2e -- --project=chromium
+        run: pnpm --filter @azeebo/web test:e2e --project=chromium
         env:
           CI: true
           BASE_URL: 'http://localhost:4000'
@@ -226,6 +226,7 @@ jobs:
     permissions:
       contents: read # checkout of a private repo; a permissions block with
                      # only security-events: write strips the default contents grant
+      actions: read  # required by github/codeql-action/analyze for status reporting
       security-events: write
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7

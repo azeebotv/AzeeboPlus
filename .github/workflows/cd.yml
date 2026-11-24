@@ -41,7 +41,7 @@ jobs:
   verify-ci-checks:
     name: Verify Required Checks
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 75
     if: github.event_name == 'push'
     permissions:
       contents: read
@@ -60,7 +60,7 @@ jobs:
             "Dockerized e2e suites"
           )
           SHA="${{ github.sha }}"
-          DEADLINE=$((SECONDS + 1200))
+          DEADLINE=$((SECONDS + 3600))
           while [ $SECONDS -lt $DEADLINE ]; do
             gh api "repos/${{ github.repository }}/commits/$SHA/check-runs" \
               --jq '[.check_runs[] | {name, status, conclusion}]' > /tmp/checks.json
