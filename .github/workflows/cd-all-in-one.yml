@@ -7,7 +7,7 @@ name: Build & Push All-in-One Image
 # the main CI/CD pipeline triggered from main/develop branches.
 on:
   push:
-    branches: [Dev-Branch, Major-Upgrade]
+    branches: [Dev-Branch]
   workflow_dispatch:
     inputs:
       no_cache:

@@ -15,7 +15,7 @@ name: Federation Drill
 
 on:
   pull_request:
-    branches: [main, Dev-Branch, Major-Upgrade]
+    branches: [main, Dev-Branch]
     paths:
       - 'scripts/database/**'
       - '.github/workflows/federation-drill.yml'

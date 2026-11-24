@@ -66,9 +66,9 @@ permissions:
 
 on:
   pull_request:
-    branches: [main, Dev-Branch, Major-Upgrade]
+    branches: [main, Dev-Branch]
   push:
-    branches: [main, Dev-Branch, Major-Upgrade]
+    branches: [main, Dev-Branch]
   workflow_dispatch:
 
 env:

@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, Dev-Branch, Major-Upgrade]
+    branches: [main, Dev-Branch]
 
 env:
   NODE_VERSION: '22.16.0'
