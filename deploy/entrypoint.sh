@@ -79,6 +79,11 @@ else
   fi
 fi
 
+# 6. Allowed Origins (required by services in production)
+if [ "${NODE_ENV:-production}" = "production" ] && [ -z "${ALLOWED_ORIGINS:-}" ]; then
+  MISSING_VARS+=("ALLOWED_ORIGINS (Required in production, e.g. https://app.example.com,https://admin.example.com)")
+fi
+
 if [ ${#MISSING_VARS[@]} -gt 0 ] || [ ${#INVALID_VARS[@]} -gt 0 ]; then
   echo "" >&2
   echo "╔══════════════════════════════════════════════════════════════════════════════╗" >&2
@@ -697,7 +702,7 @@ JWT_REFRESH_SECRET="$(printf '%s' "$JWT_REFRESH_SECRET" | tr -d '\r\n')"
 GATEWAY_SECRET="$(printf '%s' "$GATEWAY_SECRET" | tr -d '\r\n')"
 WEBHOOK_SECRET="$(printf '%s' "$WEBHOOK_SECRET" | tr -d '\r\n')"
 # In all-in-one mode, localhost origins are expected for inter-service communication
-ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-https://${APP_HOST},https://${ADMIN_HOST},https://${CREATOR_HOST}}"
+export ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-https://${APP_HOST},https://${ADMIN_HOST},https://${CREATOR_HOST}}"
 REDIS_URL_VAL="redis://:${REDIS_PASSWORD}@127.0.0.1:6379"
 
 # Service URLs (all services run on localhost in all-in-one mode)
