@@ -274,7 +274,8 @@ export class FeatureFlagService {
   private readonly autoDisableInFlight = new Map<string, Promise<void>>();
 
   constructor(config: FeatureFlagConfig = {}) {
-    const redisUrl = config.redisUrl || process.env.FEATURE_FLAG_REDIS_URL;
+    const redisUrl =
+      config.redisUrl || process.env.FEATURE_FLAG_REDIS_URL || process.env.REDIS_URL;
     if (!redisUrl && !config.redis && process.env.NODE_ENV === 'production') {
       throw new Error('FeatureFlagService: FEATURE_FLAG_REDIS_URL is required in production');
     }
@@ -285,6 +286,11 @@ export class FeatureFlagService {
     // clients are the caller's connection and are NOT re-targeted.
     this.redis =
       config.redis || new Redis(resolveFeatureFlagRedisUrl(redisUrl || 'redis://localhost:6379'));
+    if (!config.redis) {
+      this.redis.on('error', (err: Error) => {
+        console.error(`[FeatureFlagService] Redis error: ${err.message}`);
+      });
+    }
     this.prefix = config.prefix || 'feature_flags:';
     this.defaultFlags = { ...config.defaultFlags };
     this.defaultValues = { ...config.defaultValues };

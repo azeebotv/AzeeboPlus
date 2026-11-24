@@ -497,12 +497,23 @@ export class EventBusModule {
 
     const redisProvider: Provider = {
       provide: 'EVENT_BUS_REDIS',
-      useFactory: () =>
-        new Redis(config.redisUrl || 'redis://localhost:6379', {
-          maxRetriesPerRequest: 3,
-          enableReadyCheck: true,
-          retryStrategy: (times) => Math.min(times * 50, 2000),
-        }),
+      useFactory: () => {
+        const client = new Redis(
+          config.redisUrl ||
+            process.env.EVENT_BUS_REDIS_URL ||
+            process.env.REDIS_URL ||
+            'redis://localhost:6379',
+          {
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: true,
+            retryStrategy: (times) => Math.min(times * 50, 2000),
+          }
+        );
+        client.on('error', (err: Error) => {
+          console.error(`[EventBusModule] Redis error: ${err.message}`);
+        });
+        return client;
+      },
     };
 
     const schemaRegistryProvider: Provider = {
@@ -570,12 +581,23 @@ export class EventBusModule {
 
     const redisProvider: Provider = {
       provide: 'EVENT_BUS_REDIS',
-      useFactory: (config: EventBusConfig) =>
-        new Redis(config.redisUrl || 'redis://localhost:6379', {
-          maxRetriesPerRequest: 3,
-          enableReadyCheck: true,
-          retryStrategy: (times) => Math.min(times * 50, 2000),
-        }),
+      useFactory: (config: EventBusConfig) => {
+        const client = new Redis(
+          config.redisUrl ||
+            process.env.EVENT_BUS_REDIS_URL ||
+            process.env.REDIS_URL ||
+            'redis://localhost:6379',
+          {
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: true,
+            retryStrategy: (times) => Math.min(times * 50, 2000),
+          }
+        );
+        client.on('error', (err: Error) => {
+          console.error(`[EventBusModule] Redis error: ${err.message}`);
+        });
+        return client;
+      },
       inject: (options.inject as (InjectionToken | OptionalFactoryDependency)[]) || [],
     };
 
