@@ -377,13 +377,13 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
             prisma migrate resolve --rolled-back "$stuck_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || true
         done <<< "$stuck_migrations"
       fi
-      # SAFETY: Never allow schema drop in production, all-in-one or not.
-      # P3018 should be resolved manually in production to prevent data loss.
-      if [ "$NODE_ENV" = "production" ]; then
+      # SAFETY: Never allow schema drop in production unless explicitly opted in
+      # via ALLOW_UNSAFE_P3018_RECOVERY=true or DEMO_MODE=true.
+      if [ "$NODE_ENV" = "production" ] && [ "${ALLOW_UNSAFE_P3018_RECOVERY:-false}" != "true" ] && [ "${DEMO_MODE:-false}" != "true" ]; then
         echo "    FATAL: P3018 recovery with schema drop is NOT allowed in production."
         echo "    Resolve the stuck migration manually:"
         echo "      prisma migrate resolve --rolled-back <migration_name> --schema=$svc_dir/prisma/schema.prisma"
-        echo "    Then re-run the deployment."
+        echo "    Then re-run the deployment (or set ALLOW_UNSAFE_P3018_RECOVERY=true for demo/test environments)."
         exit 1
       fi
       echo "    WARNING: Dropping partially-applied migration objects for $svc_name (P3018 recovery, non-production only)..."

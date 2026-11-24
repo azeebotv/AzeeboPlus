@@ -17,7 +17,14 @@ BEGIN
     JOIN pg_namespace n ON n.oid = c.relnamespace
     WHERE c.relname = 'users' AND n.nspname = 'public' AND c.relkind IN ('r', 'p')
   ) THEN
-    ALTER TABLE "users" ALTER COLUMN "role" TYPE "UserRole" USING "role"::text::"UserRole";
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'role' AND data_type = 'text'
+    ) THEN
+      ALTER TABLE "users" ALTER COLUMN "role" DROP DEFAULT;
+      ALTER TABLE "users" ALTER COLUMN "role" TYPE "UserRole" USING "role"::text::"UserRole";
+      ALTER TABLE "users" ALTER COLUMN "role" SET DEFAULT 'user'::"UserRole";
+    END IF;
   END IF;
 END
 $$;
