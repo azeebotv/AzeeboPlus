@@ -7,6 +7,9 @@ const nextConfig = {
   // deterministic (avoids Next.js picking up stray parent-directory
   // lockfiles and emitting a wrong standalone layout).
   outputFileTracingRoot: path.resolve(__dirname, '../../'),
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
+  },
   reactStrictMode: true,
   transpilePackages: [
     '@azeebo/ui',
