@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
-import { Check, Drama, Film, Gamepad2, Music, Sparkles, Trophy } from 'lucide-react';
+import { Check, Drama, Film, Gamepad2, Music, Sparkles, Trophy, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/components/ToastProvider';
@@ -113,6 +113,10 @@ export default function CreatorSignupPage(): React.JSX.Element {
     socialLink: '',
     goals: '',
   });
+  const [agreedTerms, setAgreedTerms] = useState(false);
+  const [agreedCopyright, setAgreedCopyright] = useState(false);
+  const [enableTipping, setEnableTipping] = useState(true);
+  const [enablePPV, setEnablePPV] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -151,6 +155,10 @@ export default function CreatorSignupPage(): React.JSX.Element {
       toast.showToast('Please complete all required fields', 'error');
       return;
     }
+    if (!agreedTerms || !agreedCopyright) {
+      toast.showToast('Please agree to the Creator Terms and Copyright verification', 'error');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -163,6 +171,10 @@ export default function CreatorSignupPage(): React.JSX.Element {
           bio: formData.bio,
           socialLink: formData.socialLink,
           goals: formData.goals,
+          enableTipping,
+          enablePPV,
+          agreedTerms: true,
+          agreedCopyright: true,
         }),
       });
 
@@ -199,6 +211,7 @@ export default function CreatorSignupPage(): React.JSX.Element {
           { num: 1, label: 'Category' },
           { num: 2, label: 'Format' },
           { num: 3, label: 'Profile' },
+          { num: 4, label: 'Monetization' },
         ].map((s) => (
           <div key={s.num} className="flex items-center gap-2">
             <div
@@ -217,7 +230,7 @@ export default function CreatorSignupPage(): React.JSX.Element {
             >
               {s.label}
             </span>
-            {s.num < 3 && <div className="mx-1 h-0.5 w-8 bg-az-glass-card sm:w-12" />}
+            {s.num < 4 && <div className="mx-1 h-0.5 w-6 bg-az-glass-card sm:w-10" />}
           </div>
         ))}
       </div>
@@ -325,7 +338,7 @@ export default function CreatorSignupPage(): React.JSX.Element {
         )}
 
         {step === 3 && (
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-6">
             <div>
               <h2 className="az-section-title mb-2 text-az-ink">Creator Profile Details</h2>
               <p className="az-body text-az-ink-muted">
@@ -384,6 +397,132 @@ export default function CreatorSignupPage(): React.JSX.Element {
               <button
                 type="button"
                 onClick={handleBack}
+                className="az-body-strong rounded-az-pill bg-az-glass-fill px-6 py-3 text-az-ink-dim transition-colors hover:bg-az-glass-card hover:text-az-ink"
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!formData.displayName.trim()}
+                className="az-btn-primary az-btn-primary--inline az-btn-primary--sm disabled:cursor-not-allowed"
+              >
+                Continue to Monetization Terms →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <h2 className="az-section-title mb-2 text-az-ink">
+                Monetization & Creator Agreement
+              </h2>
+              <p className="az-body text-az-ink-muted">
+                Review payout policies, revenue sharing, content guidelines, and finalize your
+                registration.
+              </p>
+            </div>
+
+            {/* Revenue Share Highlight Box */}
+            <div className="rounded-az-card border border-az-glass-border bg-az-surface-raised p-5 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-az-control border border-az-flame/30 bg-az-flame/15 text-az-flame">
+                  <ShieldCheck className="size-5" />
+                </div>
+                <div>
+                  <h3 className="az-body-strong text-az-ink">85% Creator Payout Guarantee</h3>
+                  <p className="az-caption text-az-ink-muted">
+                    15% platform infrastructure, zero hidden processing deductions.
+                  </p>
+                </div>
+              </div>
+              <p className="az-caption text-az-ink-dim pt-2 border-t border-az-ink/5">
+                Automated weekly payouts via bank transfer (Flutterwave / Paystack) or instant
+                Azeebo wallet withdrawal.
+              </p>
+            </div>
+
+            {/* Monetization Feature Toggles */}
+            <div className="space-y-3 pt-2">
+              <label className="flex items-start gap-3 cursor-pointer rounded-az-card border border-az-glass-border bg-az-glass-fill p-4 hover:bg-az-glass-fill-hover transition-colors">
+                <input
+                  type="checkbox"
+                  checked={enableTipping}
+                  onChange={(e) => setEnableTipping(e.target.checked)}
+                  className="mt-1 size-4 rounded border-az-glass-border bg-az-surface-root text-az-scarlet focus:ring-az-scarlet"
+                />
+                <div>
+                  <span className="az-body-strong block text-az-ink">
+                    Enable Direct Viewer Tipping
+                  </span>
+                  <span className="az-caption text-az-ink-muted">
+                    Allow fans to send coin tips on your livestreams, series, and video drops.
+                  </span>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer rounded-az-card border border-az-glass-border bg-az-glass-fill p-4 hover:bg-az-glass-fill-hover transition-colors">
+                <input
+                  type="checkbox"
+                  checked={enablePPV}
+                  onChange={(e) => setEnablePPV(e.target.checked)}
+                  className="mt-1 size-4 rounded border-az-glass-border bg-az-surface-root text-az-scarlet focus:ring-az-scarlet"
+                />
+                <div>
+                  <span className="az-body-strong block text-az-ink">
+                    Enable Pay-Per-View & Exclusive Bundles
+                  </span>
+                  <span className="az-caption text-az-ink-muted">
+                    Gate premiere drops behind custom ticket pricing and passes.
+                  </span>
+                </div>
+              </label>
+            </div>
+
+            {/* Mandatory Compliance Checkboxes */}
+            <div className="space-y-3 pt-2 border-t border-az-ink/5">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  required
+                  checked={agreedCopyright}
+                  onChange={(e) => setAgreedCopyright(e.target.checked)}
+                  className="mt-1 size-4 rounded border-az-glass-border bg-az-surface-root text-az-scarlet focus:ring-az-scarlet"
+                />
+                <span className="az-caption text-az-ink">
+                  I confirm that I own all intellectual property rights or hold authorized licenses
+                  for materials uploaded to Azeebo+.
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  required
+                  checked={agreedTerms}
+                  onChange={(e) => setAgreedTerms(e.target.checked)}
+                  className="mt-1 size-4 rounded border-az-glass-border bg-az-surface-root text-az-scarlet focus:ring-az-scarlet"
+                />
+                <span className="az-caption text-az-ink">
+                  I have read and agree to the{' '}
+                  <Link href="/terms" className="text-az-flame underline" target="_blank">
+                    Creator Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link href="/guidelines" className="text-az-flame underline" target="_blank">
+                    Community Guidelines
+                  </Link>
+                  .
+                </span>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between pt-6">
+              <button
+                type="button"
+                onClick={handleBack}
                 disabled={isSubmitting}
                 className="az-body-strong rounded-az-pill bg-az-glass-fill px-6 py-3 text-az-ink-dim transition-colors hover:bg-az-glass-card hover:text-az-ink disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -391,12 +530,10 @@ export default function CreatorSignupPage(): React.JSX.Element {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || !formData.displayName.trim()}
+                disabled={isSubmitting || !agreedTerms || !agreedCopyright}
                 className="az-btn-primary az-btn-primary--inline az-btn-primary--sm disabled:cursor-not-allowed"
               >
-                {isSubmitting
-                  ? 'Submitting Application...'
-                  : 'Complete & Launch Creator Studio Rocket'}
+                {isSubmitting ? 'Submitting Application...' : 'Complete & Launch Creator Studio →'}
               </button>
             </div>
           </form>

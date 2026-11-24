@@ -16,7 +16,7 @@ import { resolveActorId } from '../../common/resolve-actor-id';
 @Injectable()
 export class DualControlInterceptor implements NestInterceptor {
   constructor(
-    private readonly reflector: Reflector,
+    @Inject(Reflector) private readonly reflector: Reflector,
     @Inject(DualControlService) private readonly dualControlService: DualControlService
   ) {}
 

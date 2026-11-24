@@ -387,16 +387,18 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
         exit 1
       fi
       echo "    WARNING: Dropping partially-applied migration objects for $svc_name (P3018 recovery, non-production only)..."
+      gosu postgres psql -d "$db_name" -c \
+        "DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO \"$db_user\"; ALTER SCHEMA public OWNER TO \"$db_user\";" >/dev/null 2>&1 || \
       PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -c \
         "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" >/dev/null 2>&1 || true
       echo "    Re-running migration for $svc_name..."
-      DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
-        prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
+      if ! rerun_output=$(DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
+        prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1); then
         echo "    FATAL: Migration still failed for $svc_name after P3018 resolve"
         echo "    Migration output:"
-        echo "$migrate_output" | head -20
+        echo "$rerun_output" | head -20
         exit 1
-      }
+      fi
     else
       echo "    FATAL: Migration failed for $svc_name"
       echo "    Migration output:"

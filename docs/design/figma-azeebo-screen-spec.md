@@ -1,6 +1,6 @@
 # Azeebo Figma — Design Extraction & Screen Spec
 
-**Source:** [Figma · Azeebo](https://www.figma.com/design/X2wuwXqlRqgRZcb4d9qttJ/Azeebo?node-id=0-1&p=f) (Page 1 + Page 2)
+**Source:** [Figma · Azeebo](https://www.figma.com/design/X2wuwXqlRqgRZcb4d9qttJ/Azeebo?node-id=0-1&p=f) (Page 1 Authoritative; Page 2 excluded per desktop spec)
 **Extracted:** 2026-09-29, via anonymous view-only access (layer tree + canvas inspection)
 **Extraction fidelity:** ~145 top-level frames inventoried by exact layer name; design language confirmed from canvas. **Per-component measurements, exact hex values, and text content require Dev Mode access** (see §6).
 

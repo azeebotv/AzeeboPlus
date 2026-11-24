@@ -1,6 +1,6 @@
 import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, Reflector } from '@nestjs/core';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthCookieController } from './modules/auth/auth-cookie.controller';
@@ -106,6 +106,7 @@ import { DualControlInterceptor } from './modules/dual-control/dual-control.inte
   ],
   controllers: [AuthCookieController],
   providers: [
+    Reflector,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,

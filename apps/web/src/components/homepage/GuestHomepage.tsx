@@ -11,6 +11,7 @@ import AppHeader from '../layout/AppHeader';
 import AppFooter from '../layout/AppFooter';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { Play } from 'lucide-react';
 
 /* ─── Types ─── */
 type PosterItem = {
@@ -688,26 +689,40 @@ export default function GuestHomepage(): React.JSX.Element {
             One Platform. Endless Universes.
           </h1>
 
-          {/* Subtitle */}
+          {/* Subtitle matching Figma Desktop specification */}
           <p className="az-body sm:az-lead max-w-2xl text-az-ink-muted">
-            Stream Nollywood, reality shows, live events and creator content all in one place.
-            Discover stories that inspire, entertain, and connect.
+            Discover movies, comedy, reality TV, sports, music, games, live entertainment, and
+            immersive storyworlds—all in one place.
           </p>
 
-          {/* Start Watching CTA */}
-          <div className="pt-2">
+          {/* Dual CTAs matching Figma Desktop: Get Started + How it works */}
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <Link href="/auth/register" tabIndex={-1}>
               <motion.button
                 type="button"
                 className="az-btn-primary az-btn-primary--inline az-ripple flex items-center gap-2"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
-                aria-label="Start Watching"
+                aria-label="Get Started"
               >
-                <span>Start Watching</span>
-                <span aria-hidden="true">▶</span>
+                <span>Get Started</span>
+                <span aria-hidden="true">&rarr;</span>
               </motion.button>
             </Link>
+
+            <a
+              href="#devices"
+              className="az-btn-secondary flex items-center gap-2"
+              aria-label="How it works"
+            >
+              <span
+                className="flex size-5 items-center justify-center rounded-full bg-az-flame/20 text-xs text-az-flame"
+                aria-hidden="true"
+              >
+                <Play className="size-3 fill-current" />
+              </span>
+              <span>How it works</span>
+            </a>
           </div>
 
           {/* 8x3 Poster Wall Grid (24 Real Images) — scaled sleekly */}
@@ -778,16 +793,16 @@ export default function GuestHomepage(): React.JSX.Element {
           {/* Top 2-column header */}
           <div className="flex flex-col lg:flex-row items-start justify-between gap-6 lg:gap-16 mb-12">
             <div className="lg:w-7/12">
-              <span className="az-overline mb-3 block text-az-flame">DEVICE STREAMING</span>
+              <span className="az-overline mb-3 block text-az-flame">CREATE</span>
               <h2 className="az-headline uppercase text-az-ink text-3xl sm:text-4xl lg:az-display">
                 WE PROVIDE YOU STREAMING EXPERIENCE ACROSS VARIOUS DEVICES.
               </h2>
             </div>
             <div className="lg:w-5/12 pt-2">
               <p className="az-body sm:az-lead text-az-ink-muted">
-                With Azeebo+, you can enjoy your favorite shows, movies, and live events seamlessly
-                across all your devices. Whether on your phone, tablet, smart TV, or desktop,
-                we&apos;ve got you covered with synchronized progress.
+                With Azeebo+, you can enjoy your favorite movies and TV shows anytime, anywhere. Our
+                platform is designed to be compatible with a wide range of devices, ensuring that
+                you never miss a moment of entertainment.
               </p>
             </div>
           </div>
@@ -829,7 +844,7 @@ export default function GuestHomepage(): React.JSX.Element {
       >
         <ScrollReveal direction="up">
           <div className="text-center mb-14">
-            <span className="az-overline mb-2 block text-az-flame">EXPERIENCE THE PLATFORM</span>
+            <span className="az-overline mb-2 block text-az-flame">SMART SUGGESTIONS</span>
             <h2 className="az-headline uppercase text-az-ink text-3xl sm:text-4xl lg:az-display">
               WHY AZEEBO+
             </h2>
@@ -886,20 +901,20 @@ export default function GuestHomepage(): React.JSX.Element {
               </div>
             </div>
 
-            {/* Right: 3 Feature Bullet Points */}
+            {/* Right: 3 Feature Bullet Points matching Figma Desktop specifications */}
             <div className="w-full lg:w-1/2 space-y-8">
               {[
                 {
-                  title: 'Stream Anytime, Anywhere',
-                  desc: 'Enjoy instant access to an expansive library of African cinema and international hits without ads or interruptions.',
+                  title: 'Fast & Smooth Streaming',
+                  desc: 'Enjoy instant access to ultra-high-definition streaming optimized for low-latency playback even on variable mobile connections.',
                 },
                 {
-                  title: 'Offline Downloads & 4K Quality',
-                  desc: 'Download your favorite movies and shows to watch on flights, road trips, or off-grid in crisp high definition.',
+                  title: 'Watch Anywhere',
+                  desc: 'Download your favorite movies and episodes for offline viewing across flights, road trips, or off-grid entertainment.',
                 },
                 {
-                  title: 'Multi-Profile Family Sharing',
-                  desc: 'Create unique profiles for everyone in your household with custom recommendations and parental controls.',
+                  title: 'New Content Regularly',
+                  desc: 'Fresh Nollywood premieres, weekly reality show drops, live sports matches, and creator exclusives updated daily.',
                 },
               ].map((item) => (
                 <div key={item.title} className="flex flex-col gap-1.5">
@@ -920,10 +935,10 @@ export default function GuestHomepage(): React.JSX.Element {
         aria-label="Browse Azeebo+ Universes"
       >
         <ScrollReveal direction="up">
-          {/* Header with BROWSE ALL button */}
+          {/* Header matching Figma Desktop: high-quality + explore now */}
           <div className="flex items-center justify-between flex-wrap gap-4 mb-10">
             <div>
-              <span className="az-overline mb-2 block text-az-flame">CATEGORIES</span>
+              <span className="az-overline mb-2 block text-az-flame">HIGH-QUALITY</span>
               <h2 className="az-headline uppercase text-az-ink text-2xl sm:text-3xl lg:text-4xl">
                 EXPLORE OUR WIDE VARIETY OF CATEGORIES
               </h2>
@@ -935,7 +950,7 @@ export default function GuestHomepage(): React.JSX.Element {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.96 }}
               >
-                <span>BROWSE ALL</span>
+                <span>explore now</span>
                 <span aria-hidden="true">&rarr;</span>
               </motion.button>
             </Link>
@@ -1007,6 +1022,22 @@ export default function GuestHomepage(): React.JSX.Element {
           size={700}
           className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
         />
+
+        {/* Signature Display Headline matching Figma Desktop */}
+        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center mb-8">
+          <span className="az-overline mb-2 block text-az-flame">IMMERSIVE WORLDS</span>
+          <h2 className="az-headline uppercase text-az-ink text-3xl sm:text-4xl lg:text-5xl flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
+            <span>Enter A World</span>
+            <span className="text-az-flame text-xl sm:text-2xl" aria-hidden="true">
+              &#9733;
+            </span>
+            <span>Beyond The</span>
+            <span className="text-az-flame text-xl sm:text-2xl" aria-hidden="true">
+              &#9733;
+            </span>
+            <span>Screen</span>
+          </h2>
+        </div>
 
         {/* Continuous Marquee Ticker */}
         <div className="w-full overflow-hidden py-3 border-y border-az-ink/5 bg-black/40 mb-12">
@@ -1130,92 +1161,7 @@ export default function GuestHomepage(): React.JSX.Element {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          §7 READY TO ENTER YOUR UNIVERSE? (App Download + Hand Mockup)
-          ═══════════════════════════════════════════════════════════ */}
-      <section
-        className="relative py-16 sm:py-24 px-4 sm:px-8 max-w-7xl mx-auto overflow-hidden"
-        aria-label="Download the Azeebo+ app"
-      >
-        <ScrollReveal direction="up">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
-            {/* Left Column: Heading & Download Buttons */}
-            <div className="w-full lg:w-1/2 text-left">
-              <span className="az-overline mb-3 block text-az-flame">
-                AVAILABLE ON ALL PLATFORMS
-              </span>
-              <h2 className="az-headline mb-5 text-az-ink text-4xl sm:text-5xl lg:text-6xl">
-                Ready to Enter Your Universe?
-              </h2>
-              <p className="az-body sm:az-lead mb-8 max-w-lg text-az-ink-muted">
-                Download the Azeebo+ app now and start your 7-day free trial today. Stream
-                seamlessly, vote in reality shows, and earn rewards anywhere.
-              </p>
-
-              <div className="flex flex-wrap items-center gap-4">
-                <a href="#download" className="az-btn-social group text-left">
-                  <svg
-                    className="h-6 w-6 fill-current text-az-ink transition-colors group-hover:text-az-flame"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.09 1.73-.95 2.76.99.08 2.02-.51 2.68-1.26z" />
-                  </svg>
-                  <div className="text-left leading-tight">
-                    <p className="text-[10px] text-az-ink-muted">Download on the</p>
-                    <p className="az-body-strong text-az-ink">App Store</p>
-                  </div>
-                </a>
-
-                <a href="#download" className="az-btn-social group text-left">
-                  <svg
-                    className="h-6 w-6 fill-current text-az-ink transition-colors group-hover:text-az-flame"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path d="M3.609 1.814L13.792 12 3.61 22.186a2.38 2.38 0 0 1-.61-.714V2.528c.17-.282.38-.528.61-.714zm11.24 11.24l2.128 2.129-12.016 6.94 9.888-9.069zm0-2.108L4.96 1.878l12.016 6.94-2.127 2.128zm1.094 1.054l3.197 1.848a1.59 1.59 0 0 1 0 2.296l-3.197 1.848-1.414-1.414 1.414-4.578z" />
-                  </svg>
-                  <div className="text-left leading-tight">
-                    <p className="text-[10px] uppercase text-az-ink-muted">GET IT ON</p>
-                    <p className="az-body-strong text-az-ink">Google Play</p>
-                  </div>
-                </a>
-
-                <Link href="/auth/register">
-                  <button type="button" className="az-btn-primary az-btn-primary--inline">
-                    Start on Web
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Right Column: High-Res Smartphone held in hand */}
-            <div className="w-full lg:w-1/2 flex justify-center">
-              <div className="relative aspect-[4/5] w-full max-w-sm overflow-hidden rounded-az-feature shadow-az-lifted">
-                <Image
-                  src="/images/hand_phone_mockup.jpg"
-                  alt="Azeebo+ mobile application running on a modern smartphone held in hand"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 420px"
-                  priority
-                />
-                {/* Natural dark vignette fade on edges */}
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    boxShadow:
-                      'inset 0 0 60px color-mix(in srgb, var(--color-az-surface-root) 85%, transparent)',
-                  }}
-                  aria-hidden="true"
-                />
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════
-          §8 LOVED & TRUSTED (2 Side-by-Side Testimonial Cards)
+          §7 LOVED & TRUSTED (2 Side-by-Side Testimonial Cards)
           ═══════════════════════════════════════════════════════════ */}
       <section
         className="relative py-16 sm:py-24 px-4 sm:px-8 max-w-7xl mx-auto"
@@ -1285,7 +1231,7 @@ export default function GuestHomepage(): React.JSX.Element {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          §9 SIGNUP FOR THE NEWSLETTER (Red Nebula Glow on Left)
+          §8 SIGNUP FOR THE NEWSLETTER (Red Nebula Glow on Left)
           ═══════════════════════════════════════════════════════════ */}
       <section
         className="relative py-12 sm:py-16 px-4 sm:px-8 max-w-7xl mx-auto"
@@ -1358,6 +1304,92 @@ export default function GuestHomepage(): React.JSX.Element {
                   )}
                 </form>
               )}
+            </div>
+          </div>
+        </ScrollReveal>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          §9 READY TO ENTER YOUR UNIVERSE? (App Download + Hand Mockup)
+          ═══════════════════════════════════════════════════════════ */}
+      <section
+        id="download"
+        className="relative py-16 sm:py-24 px-4 sm:px-8 max-w-7xl mx-auto overflow-hidden"
+        aria-label="Download the Azeebo+ app"
+      >
+        <ScrollReveal direction="up">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
+            {/* Left Column: Heading & Download Buttons */}
+            <div className="w-full lg:w-1/2 text-left">
+              <span className="az-overline mb-3 block text-az-flame">
+                AVAILABLE ON ALL PLATFORMS
+              </span>
+              <h2 className="az-headline mb-5 text-az-ink text-4xl sm:text-5xl lg:text-6xl">
+                Ready to Enter Your Universe?
+              </h2>
+              <p className="az-body sm:az-lead mb-8 max-w-lg text-az-ink-muted">
+                Movies. Comedy. Sports. Reality. Games. entertainment. And worlds waiting to be
+                explored. Download the Azeebo+ app now and start your 7-day free trial today.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4">
+                <a href="#download" className="az-btn-social group text-left">
+                  <svg
+                    className="h-6 w-6 fill-current text-az-ink transition-colors group-hover:text-az-flame"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.09 1.73-.95 2.76.99.08 2.02-.51 2.68-1.26z" />
+                  </svg>
+                  <div className="text-left leading-tight">
+                    <p className="text-[10px] text-az-ink-muted">Download on the</p>
+                    <p className="az-body-strong text-az-ink">App Store</p>
+                  </div>
+                </a>
+
+                <a href="#download" className="az-btn-social group text-left">
+                  <svg
+                    className="h-6 w-6 fill-current text-az-ink transition-colors group-hover:text-az-flame"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path d="M3.609 1.814L13.792 12 3.61 22.186a2.38 2.38 0 0 1-.61-.714V2.528c.17-.282.38-.528.61-.714zm11.24 11.24l2.128 2.129-12.016 6.94 9.888-9.069zm0-2.108L4.96 1.878l12.016 6.94-2.127 2.128zm1.094 1.054l3.197 1.848a1.59 1.59 0 0 1 0 2.296l-3.197 1.848-1.414-1.414 1.414-4.578z" />
+                  </svg>
+                  <div className="text-left leading-tight">
+                    <p className="text-[10px] uppercase text-az-ink-muted">GET IT ON</p>
+                    <p className="az-body-strong text-az-ink">Google Play</p>
+                  </div>
+                </a>
+
+                <Link href="/auth/register">
+                  <button type="button" className="az-btn-primary az-btn-primary--inline">
+                    GET STARTED
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Column: High-Res Smartphone held in hand */}
+            <div className="w-full lg:w-1/2 flex justify-center">
+              <div className="relative aspect-[4/5] w-full max-w-sm overflow-hidden rounded-az-feature shadow-az-lifted">
+                <Image
+                  src="/images/hand_phone_mockup.jpg"
+                  alt="Azeebo+ mobile application running on a modern smartphone held in hand"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 420px"
+                  priority
+                />
+                {/* Natural dark vignette fade on edges */}
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    boxShadow:
+                      'inset 0 0 60px color-mix(in srgb, var(--color-az-surface-root) 85%, transparent)',
+                  }}
+                  aria-hidden="true"
+                />
+              </div>
             </div>
           </div>
         </ScrollReveal>
