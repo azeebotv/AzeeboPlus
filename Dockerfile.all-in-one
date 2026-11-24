@@ -101,6 +101,7 @@ ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_URL}
 
 ARG COMMIT_SHA=""
 ENV COMMIT_SHA=${COMMIT_SHA}
+ENV NODE_PATH="/app/node_modules"
 
 ARG NEXT_PUBLIC_BASE_URL=""
 ARG NEXT_PUBLIC_AUTH_URL=""
@@ -330,7 +331,7 @@ RUN echo "==> Verifying build outputs..." && \
 # silently skip the others (which was the root cause of the dist-missing bug).
 RUN echo "Cache bust: $CACHEBUST" && \
     mkdir -p /runtime/node_modules && \
-    cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ && \
+    cp package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc /runtime/ && \
     find . -maxdepth 4 -name "package.json" \
       -not -path "*/node_modules/*" \
       -not -path "*/dist/*" \
@@ -432,6 +433,7 @@ ENV LC_ALL=en_US.UTF-8
 
 ARG COMMIT_SHA=""
 ENV COMMIT_SHA=${COMMIT_SHA}
+ENV NODE_PATH="/app/node_modules"
 
 WORKDIR /app
 

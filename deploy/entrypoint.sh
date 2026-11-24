@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+export NODE_PATH="/app/node_modules${NODE_PATH:+:$NODE_PATH}"
 
 # ============================================================
 # Azeebo+ All-in-One Entrypoint
@@ -773,6 +774,7 @@ for entry in "${SERVICES[@]}"; do
 #!/bin/bash
 # Runtime wrapper for ${svc_name} (dynamic configuration loaded from environment)
 export ALL_IN_ONE="true"
+export NODE_PATH="/app/node_modules\${NODE_PATH:+:\$NODE_PATH}"
 export DATABASE_USER="${db_user}"
 export DATABASE_NAME="${db_name}"
 export DATABASE_HOST="localhost"
@@ -862,6 +864,7 @@ cat > /app/service-wrappers/api-gateway.sh << WRAPPER
 #!/bin/bash
 # Runtime wrapper for API Gateway (secrets read from process environment)
 export ALL_IN_ONE="true"
+export NODE_PATH="/app/node_modules\${NODE_PATH:+:\$NODE_PATH}"
 export NODE_ENV="production"
 export NODE_OPTIONS="--max-old-space-size=512"
 export PORT="3013"
@@ -918,6 +921,7 @@ cat > /app/service-wrappers/admin-app.sh << WRAPPER
 #!/bin/bash
 # Runtime wrapper for Admin App (secrets read from process environment)
 export ALL_IN_ONE="true"
+export NODE_PATH="/app/node_modules\${NODE_PATH:+:\$NODE_PATH}"
 export NODE_OPTIONS="--max-old-space-size=512"
 export DATABASE_USER="azeebo"
 export DATABASE_NAME="azeebo_admin"
@@ -977,6 +981,7 @@ cat > /app/service-wrappers/creator-app.sh << WRAPPER
 #!/bin/bash
 # Runtime wrapper for Creator App (secrets read from process environment)
 export ALL_IN_ONE="true"
+export NODE_PATH="/app/node_modules\${NODE_PATH:+:\$NODE_PATH}"
 export NODE_OPTIONS="--max-old-space-size=512"
 export DATABASE_USER="azeebo"
 export DATABASE_NAME="azeebo_creator"
@@ -1037,6 +1042,7 @@ cat > /app/service-wrappers/web-app.sh << WRAPPER
 #!/bin/bash
 # Runtime wrapper for Web App (secrets read from process environment)
 export ALL_IN_ONE="true"
+export NODE_PATH="/app/node_modules\${NODE_PATH:+:\$NODE_PATH}"
 export NODE_ENV="production"
 export NODE_OPTIONS="--max-old-space-size=512"
 export PORT="4000"

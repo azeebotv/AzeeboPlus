@@ -21,7 +21,11 @@
     "test:cov": "jest --coverage",
     "lint": "eslint src"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@nestjs/common": "^11.1.27",
+    "@nestjs/core": "^11.1.27",
+    "ioredis": "^5.11.1"
+  },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
