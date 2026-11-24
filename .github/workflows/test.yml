@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [main, Dev-Branch]
+    branches: [Dev-Branch]
   pull_request:
-    branches: [main, Dev-Branch]
+    branches: [Dev-Branch]
 
 env:
   NODE_VERSION: '22.16.0'

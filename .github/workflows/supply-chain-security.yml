@@ -2,9 +2,9 @@ name: Supply Chain Security
 
 on:
   push:
-    branches: [main, Dev-Branch]
+    branches: [Dev-Branch]
   pull_request:
-    branches: [main, Dev-Branch]
+    branches: [Dev-Branch]
   release:
     types: [published]
 

@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [main]
+    branches: [Dev-Branch]
   workflow_dispatch:
     inputs:
       environment:
@@ -104,7 +104,7 @@ jobs:
       contents: read
       packages: write
     needs: [verify-ci-checks]
-    if: (github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging') && (needs.verify-ci-checks.result == 'success' || needs.verify-ci-checks.result == 'skipped')
+    if: (github.ref == 'refs/heads/Dev-Branch' || github.event.inputs.environment == 'staging') && (needs.verify-ci-checks.result == 'success' || needs.verify-ci-checks.result == 'skipped')
     environment: staging
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
