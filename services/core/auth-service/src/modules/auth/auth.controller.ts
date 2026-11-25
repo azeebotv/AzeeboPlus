@@ -1,4 +1,15 @@
-import { Inject, Controller, Get, Post, UseGuards, Request, Body, Res } from '@nestjs/common';
+import {
+  Inject,
+  Controller,
+  Get,
+  Post,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Request,
+  Body,
+  Res,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Response } from 'express';
 import { COOKIE_OPTIONS } from './auth-cookie.controller.js';
@@ -60,6 +71,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000) // 10 attempts per minute

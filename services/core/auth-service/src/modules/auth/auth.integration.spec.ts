@@ -550,7 +550,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
           email: 'test@example.com',
           password: 'password123',
         })
-        .expect(201);
+        .expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.access_token).toBeDefined();
