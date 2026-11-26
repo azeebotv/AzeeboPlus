@@ -383,24 +383,47 @@ export class UsersService {
     }
   }
 
-  async getProfile(userId: string): Promise<Record<string, unknown>> {
+  async getProfile(
+    userId: string,
+    authClaims?: { email?: string; role?: string }
+  ): Promise<Record<string, unknown>> {
     try {
       const cacheK = cacheKey('user', `profile:${userId}`);
       const cached = await this.cache.get<Record<string, unknown>>(cacheK);
       if (cached) return cached;
 
-      const user = await this.prisma.user.findUnique({
+      const userSelect = {
+        id: true,
+        email: true,
+        displayName: true,
+        avatar: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      } as const;
+
+      let user = await this.prisma.user.findUnique({
         where: { id: userId },
-        select: {
-          id: true,
-          email: true,
-          displayName: true,
-          avatar: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: userSelect,
       });
+
+      // auth-service and user-service own separate databases (azeebo_auth vs
+      // azeebo_user); lazily provision the shadow user row from verified JWT
+      // claims on first /users/me access so newly registered users resolve.
+      if (!user && authClaims?.email) {
+        const fallbackDisplayName = authClaims.email.split('@')[0] || 'User';
+        user = await this.prisma.user.upsert({
+          where: { id: userId },
+          update: {},
+          create: {
+            id: userId,
+            email: authClaims.email,
+            displayName: fallbackDisplayName,
+            role: authClaims.role || 'user',
+          },
+          select: userSelect,
+        });
+      }
 
       if (!user) {
         throw new NotFoundException(`User not found`);

@@ -109,7 +109,10 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'User profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@Request() req: AuthenticatedRequest) {
-    return this.usersService.getProfile(this.getUserId(req));
+    return this.usersService.getProfile(this.getUserId(req), {
+      email: req.user?.email,
+      role: req.user?.role,
+    });
   }
 
   @Patch('me')
