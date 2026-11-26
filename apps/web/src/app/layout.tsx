@@ -21,13 +21,14 @@ import { WebVitalsInit } from '../components/WebVitalsInit';
 import { PageViewTracker } from '../components/PageViewTracker';
 import { Suspense } from 'react';
 
-import { Inter, Montserrat } from 'next/font/google';
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  weight: ['600', '700', '800', '900'],
-  variable: '--font-display-base',
-});
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import '@fontsource/montserrat/600.css';
+import '@fontsource/montserrat/700.css';
+import '@fontsource/montserrat/800.css';
+import '@fontsource/montserrat/900.css';
 
 // AUD-06: the middleware CSP is nonce-based, and nonces only work when HTML
 // is rendered per request — prerendered (SSG/ISR) HTML is baked at build time
@@ -104,7 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
-        className={`${inter.variable} ${montserrat.variable} min-h-screen`}
+        className="min-h-screen"
         style={{ backgroundColor: 'var(--color-az-surface-root)', color: 'var(--text-primary)' }}
       >
         <a href="#main-content" className="skip-link">

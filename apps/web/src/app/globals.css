@@ -71,6 +71,8 @@
   --glow-red-ambient: radial-gradient(circle at 50% 100%, rgba(227, 30, 36, 0.25), transparent 70%);
 
   /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display-base: 'Montserrat';
   --font-display: var(--font-display-base), 'Montserrat', var(--font-sans), sans-serif;
 
   /* Legacy Primary Brand (kept for non-auth surfaces) */
