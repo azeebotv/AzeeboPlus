@@ -667,7 +667,7 @@ export default function GuestHomepage(): React.JSX.Element {
           ═══════════════════════════════════════════════════════════ */}
       <section
         ref={heroRef}
-        className="relative w-full overflow-hidden pt-24 sm:pt-32 lg:pt-36 pb-24 sm:pb-32"
+        className="relative w-full overflow-hidden pt-24 sm:pt-32 lg:pt-36 pb-36 sm:pb-48 lg:pb-56"
         style={{
           background:
             'radial-gradient(ellipse at 50% 20%, color-mix(in srgb, var(--color-az-flame) 15%, transparent) 0%, color-mix(in srgb, var(--color-az-surface-root) 98%, transparent) 75%)',
