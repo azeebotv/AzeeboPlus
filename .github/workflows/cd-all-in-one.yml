@@ -185,7 +185,19 @@ jobs:
           }
 
           echo "==> Bootstrapping CSRF cookie (GET /api/v1/content/home)..."
-          CODE=$(curl -s -c /tmp/cookies.txt -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/content/home")
+          CODE="000"
+          for i in $(seq 1 12); do
+            CODE=$(curl -s -c /tmp/cookies.txt -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/content/home")
+            if [ "$CODE" = "200" ]; then
+              break
+            fi
+            if [ "$CODE" = "502" ] || [ "$CODE" = "503" ] || [ "$CODE" = "000" ]; then
+              echo "⏳ content-service not ready yet (HTTP $CODE), retrying ($i/12)..."
+              sleep 5
+            else
+              break
+            fi
+          done
           [ "$CODE" = "200" ] || fail "content/home returned $CODE (expected 200)"
           echo "✅ content/home 200"
           CSRF=$(awk '$6=="_csrf" {print $7}' /tmp/cookies.txt)
