@@ -62,6 +62,10 @@ const ALLOWLIST = {
   '@img/sharp-libvips-darwin-arm64': 'LGPL-3.0-or-later libvips binary — SaaS use permitted, dynamically linked',
   '@img/sharp-libvips-linux-x64': 'LGPL-3.0-or-later libvips binary — SaaS use permitted, dynamically linked',
   '@img/sharp-libvips-linuxmusl-x64': 'LGPL-3.0-or-later libvips binary — SaaS use permitted, dynamically linked',
+  // SIL Open Font License 1.1 — standard permissive font license for self-hosted
+  // Inter & Montserrat fonts in apps/web (bundled instead of next/font/google).
+  '@fontsource/inter': 'OFL-1.1 (SIL Open Font License — permissive, self-hosted web font)',
+  '@fontsource/montserrat': 'OFL-1.1 (SIL Open Font License — permissive, self-hosted web font)',
 };
 
 const ATTRIBUTION_FILE = 'THIRD_PARTY_NOTICES.md';
