@@ -14,7 +14,7 @@ LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"
 LABEL org.opencontainers.image.description="Azeebo+ API Gateway"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
-RUN apk add --no-cache tini && \
+RUN apk add --no-cache tini bash && \
     addgroup -g 65532 -S nodejs && \
     adduser -S nodejs -u 65532 && \
     for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
