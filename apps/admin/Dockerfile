@@ -21,6 +21,7 @@ RUN apk add --no-cache tini bash && \
 
 COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json .npmrc ./
 COPY --chown=nodejs:nodejs packages ./packages
+COPY --chown=nodejs:nodejs scripts/build-package.sh ./scripts/build-package.sh
 COPY --chown=nodejs:nodejs apps/admin/package.json ./apps/admin/
 
 RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done

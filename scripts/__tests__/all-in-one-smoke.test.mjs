@@ -68,8 +68,8 @@ const SMOKE_ENV = {
   REDIS_PASSWORD: 'smoke_redis_pw',
   JWT_ACCESS_SECRET: 'smoke_jwt_access_secret_0123456789abcdef0123456789abcdef0123456789abcdef',
   JWT_REFRESH_SECRET: 'smoke_jwt_refresh_secret_0123456789abcdef0123456789abcdef0123456789abcdef',
-  INTERNAL_API_KEY: 'smoke_internal_api_key',
-  GATEWAY_SECRET: 'smoke_gateway_secret',
+  INTERNAL_API_KEY: 'smoke_internal_api_key_0123456789abcdef',
+  GATEWAY_SECRET: 'smoke_gateway_secret_0123456789abcdef',
   WEBHOOK_SECRET: 'smoke_webhook_secret',
   ALLOWED_ORIGINS: 'http://localhost:80,http://localhost:3013',
 };
